@@ -1,0 +1,32 @@
+name: Build
+
+on: [push, pull_request]
+
+jobs:
+    test:
+        runs-on: ${{ matrix.os }}
+        strategy:
+            fail-fast: false
+            matrix:
+                os: [ubuntu-latest, windows-latest, macOS-latest]
+        steps:
+            - uses: actions/checkout@v1
+            - name: Setup macOS
+              # Fix 'nvm is not compatible with the npm config "prefix" option' error on macOS
+              run: unset npm_config_prefix
+              if: runner.os == 'macOS'
+            - name: Setup NodeJS
+              uses: actions/setup-node@v1
+              with:
+                  node-version: '10.x'
+            - name: Install
+              run: npm i
+            - name: Lint
+              run: npm run lint
+            - name: Tests on macOS, Windows
+              run: npm t
+              if: runner.os != 'Linux'
+            - name: Tests on Linux
+              # Run tests with Virtual framebuffer to allow running VS-Code without a display
+              run: xvfb-run npm t
+              if: runner.os == 'Linux'
