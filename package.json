@@ -1,6 +1,7 @@
 {
     "name": "jfrog-vscode-extension",
-    "displayName": "JFrog",
+    "displayName": "jfrog",
+    "description": "The extension adds JFrog Xray scanning of npm project dependencies. It allows developers to view vulnerabilities and licensing information about dependencies used by the project.",
     "version": "1.0.0",
     "license": "Apache-2.0",
     "icon": "resources/extensionIcon.png",
@@ -154,6 +155,7 @@
         "vscode-test": "^1.2.0"
     },
     "keywords": [
+        "vulnerabilities",
         "artifactory",
         "javascript",
         "typescript",
@@ -163,6 +165,7 @@
         "jfrog",
         "xray",
         "scan",
+        "npm",
         "js",
         "ts"
     ]
