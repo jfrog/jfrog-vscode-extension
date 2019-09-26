@@ -14,33 +14,33 @@ With this information, a developer can make an informed decision on whether to u
 
 ## Using JFrog Visual Studio Code Extension
 
-Connect to JFrog Xray by clicking on the green Connect <img src="https://github.com/jfrog/jfrog-vscode-extension/blob/master/resources/connect.png" width="16" height="16"> button:
-![Connect](resources/gifs/connect.gif)
+Connect to JFrog Xray by clicking on the green Connect ![Connect](resources/readme/connect.png) button:
+![Connect](resources/readme/gifs/connect.gif)
 
 View the project's dependency tree
-![Open_Extension](resources/gifs/open.gif)
+![Open_Extension](resources/readme/gifs/open.gif)
 
 The JFrog extension automatically triggers a scan of the project's npm dependencies whenever a change in the **package-lock.json** file is detected.
-To invoke a scan manually, click on the Refresh <img src="https://github.com/jfrog/jfrog-vscode-extension/blob/master/resources/light/refresh.png" width="16" height="16"> button or click on *Start Xray Scan* from within the **package.json** (above the *dependencies* section).
-![Refresh](resources/gifs/refresh.gif)
+To invoke a scan manually, click on the Refresh ![Refresh](resources/readme/refresh.png) button or click on *Start Xray Scan* from within the **package.json** (above the *dependencies* section).
+![Refresh](resources/readme/gifs/refresh.gif)
 
 View existing issues
-![Vulnerabilities](resources/gifs/show_vulnerabilities.gif)
+![Vulnerabilities](resources/readme/gifs/show_vulnerabilities.gif)
 
 View licenses directly from within the **package.json**:
-![License](resources/gifs/license.gif)
+![License](resources/readme/gifs/license.gif)
 
 View additional information about a dependency:
-![Show_In_Deps_Tree](resources/gifs/show_deps.gif)
+![Show_In_Deps_Tree](resources/readme/gifs/show_deps.gif)
 
 View dependency in package.json:
-![Show_In_Pkg_Json](resources/gifs/show_in_pkg_json.gif)
+![Show_In_Pkg_Json](resources/readme/gifs/show_in_pkg_json.gif)
 
 Search in tree:
-![Search_In_Tree](resources/gifs/search.gif)
+![Search_In_Tree](resources/readme/gifs/search.gif)
 
-To filter scan results, click on the Filter <img src="https://github.com/jfrog/jfrog-vscode-extension/blob/master/resources/light/filter.png" width="16" height="16"> button.
-![Filter](resources/gifs/filter.gif)
+To filter scan results, click on the Filter ![Filter](resources/readme/filter.png) button.
+![Filter](resources/readme/gifs/filter.gif)
 
 ## Building and Testing the Sources
 
