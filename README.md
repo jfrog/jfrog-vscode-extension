@@ -17,11 +17,11 @@ With this information, a developer can make an informed decision on whether to u
 Connect to JFrog Xray by clicking on the green Connect ![Connect](resources/readme/connect.png) button:
 ![Connect](resources/readme/gifs/connect.gif)
 
-View the project's dependency tree
+View the project's dependency tree:
 ![Open_Extension](resources/readme/gifs/open.gif)
 
 The JFrog extension automatically triggers a scan of the project's npm dependencies whenever a change in the **package-lock.json** file is detected.
-To invoke a scan manually, click on the Refresh ![Refresh](resources/readme/refresh.png) button or click on *Start Xray Scan* from within the **package.json** (above the *dependencies* section).
+To invoke a scan manually, click on the Refresh ![Refresh](resources/readme/refresh.png) button or click on *Start Xray Scan* from within the **package.json** (above the *dependencies* section):
 ![Refresh](resources/readme/gifs/refresh.gif)
 
 View existing issues
@@ -39,8 +39,40 @@ View dependency in package.json:
 Search in tree:
 ![Search_In_Tree](resources/readme/gifs/search.gif)
 
-To filter scan results, click on the Filter ![Filter](resources/readme/filter.png) button.
+To filter scan results, click on the Filter ![Filter](resources/readme/filter.png) button:
 ![Filter](resources/readme/gifs/filter.gif)
+
+### Proxy
+
+To use HTTP/S proxy:
+
+1. Go to Preferences --> Settings --> Application --> Proxy
+1. Set the proxy URL under 'Proxy'.
+1. Make sure 'Proxy Support' is 'override' or 'on'.
+
+- As alternative, you can use the http_proxy and https_proxy environment variables.
+
+#### Proxy Authorization
+
+To use authenticated proxy:
+
+1. Follow 1-3 steps under [Proxy](#Proxy).
+1. Encode with base64: `[Username]:[Password]`.
+1. Under 'Proxy Authorization' click on 'Edit in settings.json'.
+1. Add to settings.json: `"http.proxyAuthorization": "Basic [Encoded credentials]"`.
+
+##### Example
+
+- `Username: foo`
+- `Password: bar`
+
+settings.json:
+
+```json
+{
+   "http.proxyAuthorization": "Basic Zm9vOmJhcg=="
+}
+```
 
 ## Building and Testing the Sources
 
