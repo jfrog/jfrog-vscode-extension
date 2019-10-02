@@ -1,3 +1,4 @@
+import { execSync } from 'child_process';
 import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
@@ -80,6 +81,14 @@ export class NpmUtils {
         quickScan: boolean
     ): Promise<NpmTreeNode[]> {
         let packageJsons: Collections.Set<vscode.Uri> = await NpmUtils.locatePackageJsons(workspaceFolders, progress);
+        if (packageJsons.isEmpty()) {
+            // This is necessary for 
+            return [];
+        }
+        if (!NpmUtils.verifyNpmInstalled()) {
+            vscode.window.showErrorMessage('Could not scan npm project dependencies, because npm CLI is not in the PATH.');
+            return [];
+        }
         let npmTreeNodes: NpmTreeNode[] = [];
         for (let packageJson of packageJsons.toArray()) {
             progress.report({ message: 'Analyzing package.json files' });
@@ -88,5 +97,14 @@ export class NpmUtils {
             npmTreeNodes.push(dependenciesTreeNode);
         }
         return npmTreeNodes;
+    }
+
+    public static verifyNpmInstalled(): boolean {
+        try {
+            execSync('npm --version');
+        } catch (error) {
+            return false;
+        }
+        return true;
     }
 }

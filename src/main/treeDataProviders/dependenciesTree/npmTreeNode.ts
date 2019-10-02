@@ -25,7 +25,9 @@ export class NpmTreeNode extends DependenciesTreeNode {
             npmList = JSON.parse(exec.execSync('npm ls --json', { cwd: this._workspaceFolder }).toString());
         } catch (error) {
             vscode.window.showWarningMessage(error.toString());
-            vscode.window.showInformationMessage('Possible cause: The project needs to be installed by npm.');
+            vscode.window.showInformationMessage(
+                'Possible cause: The project needs to be installed by npm. Install in by running "npm install" from "' + this._workspaceFolder + '".'
+            );
             npmList = JSON.parse(error.stdout.toString());
             npmList.name += ' [Not installed]';
         }
