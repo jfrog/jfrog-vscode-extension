@@ -56,15 +56,21 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async populateCredentials(prompt: boolean) {
-        if (!(await this.retrieveUrl(prompt))) {
+        let url: string = await this.retrieveUrl(prompt);
+        if (!url) {
             return Promise.resolve(false);
         }
-        if (!(await this.retrieveUsername(prompt))) {
+        let username: string = await this.retrieveUsername(prompt);
+        if (!username) {
             return Promise.resolve(false);
         }
-        if (!(await this.retrievePassword(prompt))) {
+        let password: string = await this.retrievePassword(prompt, url, username);
+        if (!password) {
             return Promise.resolve(false);
         }
+        this._url = url;
+        this._username = username;
+        this._password = password;
         return Promise.resolve(true);
     }
 
@@ -79,10 +85,10 @@ export class ConnectionManager implements ExtensionComponent {
         return new XrayClient(clientConfig);
     }
 
-    private async retrieveUrl(prompt: boolean) {
-        this._url = (await vscode.workspace.getConfiguration().get(ConnectionManager.XRAY_URL_KEY)) || '';
+    private async retrieveUrl(prompt: boolean): Promise<string> {
+        let url: string = (await vscode.workspace.getConfiguration().get(ConnectionManager.XRAY_URL_KEY)) || '';
         if (prompt) {
-            this._url =
+            url =
                 (await vscode.window.showInputBox({
                     prompt: 'Enter Xray url',
                     value: this._url ? this._url : 'https://',
@@ -90,17 +96,17 @@ export class ConnectionManager implements ExtensionComponent {
                     validateInput: ConnectionUtils.validateUrl
                 })) || '';
         }
-        return Promise.resolve(!!this._url);
+        return Promise.resolve(url);
     }
 
     private async storeUrl() {
         await vscode.workspace.getConfiguration().update(ConnectionManager.XRAY_URL_KEY, this._url, vscode.ConfigurationTarget.Global);
     }
 
-    private async retrieveUsername(prompt: boolean): Promise<boolean> {
-        this._username = (await vscode.workspace.getConfiguration().get(ConnectionManager.XRAY_URL_USERNAME)) || '';
+    private async retrieveUsername(prompt: boolean): Promise<string> {
+        let username: string = (await vscode.workspace.getConfiguration().get(ConnectionManager.XRAY_URL_USERNAME)) || '';
         if (prompt) {
-            this._username =
+            username =
                 (await vscode.window.showInputBox({
                     prompt: 'Enter Xray username',
                     value: this._username,
@@ -108,20 +114,17 @@ export class ConnectionManager implements ExtensionComponent {
                     validateInput: ConnectionUtils.validateFieldNotEmpty
                 })) || '';
         }
-        return Promise.resolve(!!this._username);
+        return Promise.resolve(username);
     }
 
     private async storeUsername() {
         await vscode.workspace.getConfiguration().update(ConnectionManager.XRAY_URL_USERNAME, this._username, vscode.ConfigurationTarget.Global);
     }
 
-    private async retrievePassword(prompt: boolean): Promise<boolean> {
-        if (!this._url || !this._username) {
-            return Promise.resolve(false);
-        }
-        this._password = (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId())) || '';
+    private async retrievePassword(prompt: boolean, url: string, username: string): Promise<string> {
+        let password: string = (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(url, username))) || '';
         if (prompt) {
-            this._password =
+            password =
                 (await vscode.window.showInputBox({
                     prompt: 'Enter Xray password',
                     password: true,
@@ -129,11 +132,11 @@ export class ConnectionManager implements ExtensionComponent {
                     validateInput: ConnectionUtils.validateFieldNotEmpty
                 })) || '';
         }
-        return Promise.resolve(!!this._password);
+        return Promise.resolve(password);
     }
 
     private async storePassword() {
-        await keytar.setPassword(ConnectionManager.SERVICE_ID, this.createAccountId(), this._password);
+        await keytar.setPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username), this._password);
     }
 
     /**
@@ -142,10 +145,10 @@ export class ConnectionManager implements ExtensionComponent {
      * @param username Xray username
      * @returns hashed account id
      */
-    private createAccountId(): string {
+    private createAccountId(url: string, username: string): string {
         return crypto
             .createHash('sha256')
-            .update(this._url + this._username)
+            .update(url + username)
             .digest('hex');
     }
 
