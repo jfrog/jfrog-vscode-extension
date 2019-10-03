@@ -1,0 +1,10 @@
+{
+    "name": "release-scripts",
+    "version": "1.0.0",
+    "private": true,
+    "license": "Apache-2.0",
+    "dependencies": {
+        "@actions/github": "^1.0.0",
+        "@actions/core": "^1.1.3"
+    }
+}
