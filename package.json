@@ -24,21 +24,6 @@
     ],
     "main": "./out/extension.js",
     "contributes": {
-        "configuration": {
-            "title": "JFrog Xray",
-            "properties": {
-                "jfrog.xray.url": {
-                    "type": "string",
-                    "scope": "application",
-                    "description": "JFrog Xray url"
-                },
-                "jfrog.xray.username": {
-                    "type": "string",
-                    "scope": "application",
-                    "description": "JFrog Xray username"
-                }
-            }
-        },
         "viewsContainers": {
             "activitybar": [
                 {
