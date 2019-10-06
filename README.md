@@ -42,19 +42,19 @@ Search in tree:
 To filter scan results, click on the Filter ![Filter](resources/readme/filter.png) button:
 ![Filter](resources/readme/gifs/filter.gif)
 
-### Proxy
+### Proxy configuration
 
-To use HTTP/S proxy:
+If your JFrog Xray instance is behind an HTTP/S proxy, follow these steps to configure the proxy server:
 
 1. Go to Preferences --> Settings --> Application --> Proxy
 1. Set the proxy URL under 'Proxy'.
 1. Make sure 'Proxy Support' is 'override' or 'on'.
 
-- As alternative, you can use the http_proxy and https_proxy environment variables.
+- Alternatively, you can use the HTTP_PROXY and HTTPS_PROXY environment variables.
 
 #### Proxy Authorization
 
-To use authenticated proxy:
+If your proxy servers requires credentials, follow these steps:
 
 1. Follow 1-3 steps under [Proxy](#Proxy).
 1. Encode with base64: `[Username]:[Password]`.
