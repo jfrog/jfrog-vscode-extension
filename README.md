@@ -56,7 +56,7 @@ If your JFrog Xray instance is behind an HTTP/S proxy, follow these steps to con
 
 If your proxy server requires credentials, follow these steps:
 
-1. Follow 1-3 steps under [Proxy](#Proxy).
+1. Follow 1-3 steps under [Proxy configuration](#proxy-configuration).
 1. Encode with base64: `[Username]:[Password]`.
 1. Under 'Proxy Authorization' click on 'Edit in settings.json'.
 1. Add to settings.json: `"http.proxyAuthorization": "Basic [Encoded credentials]"`.
