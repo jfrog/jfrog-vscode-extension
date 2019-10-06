@@ -53,6 +53,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         try {
             this._scanInProgress = true;
             await this.repopulateTree(quickScan);
+            vscode.commands.executeCommand('jfrog.xray.focus');
         } catch (error) {
             if (error.message !== DependenciesTreeDataProvider.CANCELLATION_ERROR.message) {
                 // Unexpected error
