@@ -13,11 +13,13 @@ export class ConnectionManager implements ExtensionComponent {
     private static readonly XRAY_URL_USERNAME: string = 'jfrog.xray.username';
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
     private static readonly XRAY_URL_KEY: string = 'jfrog.xray.url';
+    private _context!: vscode.ExtensionContext;
     private _username: string = '';
     private _password: string = '';
     private _url: string = '';
 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
+        this._context = context;
         await this.populateCredentials(false);
         return this;
     }
@@ -86,7 +88,7 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async retrieveUrl(prompt: boolean): Promise<string> {
-        let url: string = (await vscode.workspace.getConfiguration().get(ConnectionManager.XRAY_URL_KEY)) || '';
+        let url: string = (await this._context.globalState.get(ConnectionManager.XRAY_URL_KEY)) || '';
         if (prompt) {
             url =
                 (await vscode.window.showInputBox({
@@ -100,11 +102,11 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async storeUrl() {
-        await vscode.workspace.getConfiguration().update(ConnectionManager.XRAY_URL_KEY, this._url, vscode.ConfigurationTarget.Global);
+        await this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, this._url);
     }
 
     private async retrieveUsername(prompt: boolean): Promise<string> {
-        let username: string = (await vscode.workspace.getConfiguration().get(ConnectionManager.XRAY_URL_USERNAME)) || '';
+        let username: string = (await this._context.globalState.get(ConnectionManager.XRAY_URL_USERNAME)) || '';
         if (prompt) {
             username =
                 (await vscode.window.showInputBox({
@@ -118,7 +120,7 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async storeUsername() {
-        await vscode.workspace.getConfiguration().update(ConnectionManager.XRAY_URL_USERNAME, this._username, vscode.ConfigurationTarget.Global);
+        await this._context.globalState.update(ConnectionManager.XRAY_URL_USERNAME, this._username);
     }
 
     private async retrievePassword(prompt: boolean, url: string, username: string): Promise<string> {
