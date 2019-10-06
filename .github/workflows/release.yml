@@ -1,0 +1,36 @@
+name: Release
+
+on:
+    release:
+        types: published
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v1
+            - name: Config Github
+              run: git config --global user.name ${{ github.actor }}
+            - name: Setup NodeJS
+              uses: actions/setup-node@v1
+              with:
+                  node-version: '10.x'
+            - name: Install vsce
+              run: npm i -g vsce
+            - name: Install
+              run: npm i
+            - name: Lint
+              run: npm run lint
+            - name: Test
+              run: xvfb-run npm t
+            - name: Build
+              run: vsce package
+            - name: Publish to marketplace
+              run: echo ${{ github.ref }} | cut -c 11- | xargs vsce publish -p=${{ secrets.VS_MARKETPLACE_TOKEN }}
+            - name: Push changes
+              uses: ad-m/github-push-action@master
+              with:
+                  github_token: ${{ secrets.GITHUB_TOKEN }}
+            - name: Upload asset
+              run: cd releaseScripts && npm i && node uploadReleaseAsset.js
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -8,3 +8,4 @@ src/**
 **/*.map
 **/*.ts
 resources/readme/**
+releaseScripts/**
