@@ -74,6 +74,10 @@ settings.json:
 }
 ```
 
+## License
+
+The extension is licensed under [Apache License 2.0](LICENSE).
+
 ## Building and Testing the Sources
 
 To build the extension sources, please follow these steps:
