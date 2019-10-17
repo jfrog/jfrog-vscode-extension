@@ -25,12 +25,12 @@ jobs:
             - name: Build
               run: vsce package
             - name: Publish to marketplace
-              run: echo ${{ github.ref }} | cut -c 11- | xargs vsce publish -p=${{ secrets.VS_MARKETPLACE_TOKEN }}
+              run: echo ${{ github.ref }} | cut -c 11- | xargs vsce publish -p ${{ secrets.VS_MARKETPLACE_TOKEN }}
             - name: Push changes
               uses: ad-m/github-push-action@master
               with:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
             - name: Upload asset
-              run: cd releaseScripts && npm i && node uploadReleaseAsset.js
+              run: cd releaseScripts && npm i && node uploadAsset.js
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
