@@ -3,6 +3,7 @@ import { ExtensionComponent } from '../extensionComponent';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 import { NpmCodeActionProvider } from './npmCodeActionProvider';
+import { GoCodeActionProvider } from './goCodeActionProvider';
 
 /**
  * In case of project descriptor (i.e package.json) open, perform:
@@ -14,7 +15,10 @@ export class DiagnosticsManager implements ExtensionComponent {
 
     constructor(treesManager: TreesManager) {
         let diagnosticCollection: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection();
-        this._codeActionProviders.push(new NpmCodeActionProvider(diagnosticCollection, treesManager));
+        this._codeActionProviders.push(
+            new NpmCodeActionProvider(diagnosticCollection, treesManager),
+            new GoCodeActionProvider(diagnosticCollection, treesManager)
+        );
     }
 
     public activate(context: vscode.ExtensionContext) {
