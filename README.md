@@ -1,6 +1,8 @@
 
 # JFrog Visual Studio Code Extension
 
+[![Visual Studio Marketplace](https://vsmarketplacebadge.apphb.com/version/JFrog.jfrog-vscode-extension.svg)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension)
+
 ## General
 
 The cost of remediating a vulnerability is akin to the cost of fixing a bug.
