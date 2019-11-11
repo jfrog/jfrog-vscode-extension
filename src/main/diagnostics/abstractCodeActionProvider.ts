@@ -1,4 +1,3 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -8,6 +7,8 @@ import { TreesManager } from '../treeDataProviders/treesManager';
  * @see DiagnosticsManager
  */
 export abstract class AbstractCodeActionProvider implements vscode.CodeActionProvider, ExtensionComponent {
+    static readonly DIAGNOSTIC_SOURCE: string = 'JFrog Xray';
+
     constructor(
         protected _documentSelector: vscode.DocumentSelector,
         protected _diagnosticCollection: vscode.DiagnosticCollection,
@@ -17,9 +18,7 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
 
     public abstract updateDiagnostics(document: vscode.TextDocument): void;
 
-    protected getDependenciesTree(document: vscode.TextDocument): DependenciesTreeNode | undefined {
-        return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(this._pkgType, path.dirname(document.uri.fsPath));
-    }
+    protected abstract getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined;
 
     public activate(context: vscode.ExtensionContext) {
         this.registerListeners(context.subscriptions);
@@ -38,7 +37,8 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
     }
 
     provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext): vscode.Command[] | undefined {
-        if (context.diagnostics.length === 0) {
+        let diagnostic: vscode.Diagnostic[] = context.diagnostics.filter(diagnostic => diagnostic.source === AbstractCodeActionProvider.DIAGNOSTIC_SOURCE);
+        if (diagnostic.length === 0) {
             return undefined;
         }
         let dependenciesTree: DependenciesTreeNode | undefined = this.getDependenciesTree(document);
@@ -46,7 +46,7 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
             return undefined;
         }
         for (let child of dependenciesTree.children) {
-            if (child.componentId === context.diagnostics[0].code) {
+            if (child.componentId === diagnostic[0].code) {
                 return [
                     {
                         command: 'jfrog.xray.codeAction',

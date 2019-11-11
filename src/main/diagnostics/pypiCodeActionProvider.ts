@@ -3,18 +3,17 @@ import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { Severity, SeverityUtils } from '../types/severity';
-import { NpmUtils } from '../utils/npmUtils';
 import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 import { DiagnosticsUtils } from './diagnosticsUtils';
-import * as path from 'path';
+import { PypiUtils } from '../utils/pypiUtils';
 
-export class NpmCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
+export class PypiCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
     constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager) {
-        super(NpmUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager, 'npm');
+        super(PypiUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager, 'pypi');
     }
 
     protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
-        return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(this._pkgType, document ? path.dirname(document.uri.fsPath) : document);
+        return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(this._pkgType);
     }
 
     public updateDiagnostics(document: vscode.TextDocument): void {
@@ -22,12 +21,12 @@ export class NpmCodeActionProvider extends AbstractCodeActionProvider implements
             return;
         }
         let diagnostics: vscode.Diagnostic[] = [];
-        let npmDependenciesTree: DependenciesTreeNode | undefined = this.getDependenciesTree(document);
-        if (!npmDependenciesTree) {
+        let pyPiDependenciesTree: DependenciesTreeNode | undefined = this.getDependenciesTree();
+        if (!pyPiDependenciesTree) {
             return;
         }
-        npmDependenciesTree.children.forEach(child => {
-            let dependencyPos: vscode.Position[] = NpmUtils.getDependencyPos(document, child);
+        pyPiDependenciesTree.children.forEach(child => {
+            let dependencyPos: vscode.Position[] = PypiUtils.getDependencyPos(document, child);
             if (dependencyPos.length === 0) {
                 return;
             }

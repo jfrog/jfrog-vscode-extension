@@ -20,8 +20,6 @@ jobs:
               run: npm i
             - name: Lint
               run: npm run lint
-            - name: Test
-              run: xvfb-run npm t
             - name: Publish to marketplace
               run: echo ${{ github.ref }} | cut -c 11- | xargs vsce publish -p ${{ secrets.VS_MARKETPLACE_TOKEN }}
             - name: Push changes
