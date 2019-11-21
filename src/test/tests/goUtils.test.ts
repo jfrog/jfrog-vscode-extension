@@ -96,11 +96,11 @@ describe('Go Utils Tests', () => {
         assert.deepEqual(res[0].label, 'github.com/shield/black-widow');
         assert.deepEqual(res[1].label, 'github.com/shield/falcon');
 
-        // // Check parents
+        // Check parents
         assert.deepEqual(res[0].parent, parent);
         assert.deepEqual(res[1].parent, parent);
 
-        // // Check children
+        // Check children
         assert.lengthOf(res[0].children, 1);
         let child: DependenciesTreeNode = res[0].children[0];
         assert.deepEqual(child.componentId, 'github.com/jfrog/gofrog:1.0.5');
