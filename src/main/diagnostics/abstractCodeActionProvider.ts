@@ -15,6 +15,10 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
         protected _pkgType: string
     ) {}
 
+    /**
+     * 1. Populate the 'Problems' view with top severities of the project dependencies.
+     * 2. Provide red, yellow, green or white line under a dependency in the project descriptor.
+     */ 
     public abstract updateDiagnostics(document: vscode.TextDocument): void;
 
     protected getDependenciesTree(document: vscode.TextDocument): DependenciesTreeNode | undefined {
