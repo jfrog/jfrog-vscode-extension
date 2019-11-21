@@ -4,6 +4,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 import { NpmCodeActionProvider } from './npmCodeActionProvider';
 import { PypiCodeActionProvider } from './pypiCodeActionProvider';
+import { GoCodeActionProvider } from './goCodeActionProvider';
 
 /**
  * In case of project descriptor (i.e package.json) open, perform:
@@ -18,6 +19,7 @@ export class DiagnosticsManager implements ExtensionComponent {
         this._codeActionProviders.push(
             new NpmCodeActionProvider(diagnosticCollection, treesManager),
             new PypiCodeActionProvider(diagnosticCollection, treesManager)
+            new GoCodeActionProvider(diagnosticCollection, treesManager)
         );
     }
 

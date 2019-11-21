@@ -52,7 +52,7 @@ export class NpmTreeNode extends DependenciesTreeNode {
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
                 let componentId: string = key + ':' + version;
                 if (!quickScan || !this._scanCacheManager.validateOrDelete(componentId)) {
-                    this._componentsToScan.add(new ComponentDetails(NpmTreeNode.COMPONENT_PREFIX + key + ':' + version));
+                    this._componentsToScan.add(new ComponentDetails(NpmTreeNode.COMPONENT_PREFIX + componentId));
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan);
             }

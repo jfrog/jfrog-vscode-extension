@@ -13,6 +13,7 @@ import { Translators } from '../../utils/translators';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { SetCredentialsNode } from '../utils/setCredentialsNode';
 import { PypiUtils } from '../../utils/pypiUtils';
+import { GoUtils } from '../../utils/goUtils';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode | SetCredentialsNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -157,6 +158,14 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 quickScan
             );
             await PypiUtils.createPypiDependenciesTrees(
+                this._workspaceFolders,
+                progress,
+                this._componentsToScan,
+                this._scanCacheManager,
+                dependenciesTree,
+                quickScan
+            );
+            await GoUtils.createGoDependenciesTrees(
                 this._workspaceFolders,
                 progress,
                 this._componentsToScan,
