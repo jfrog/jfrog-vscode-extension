@@ -2,10 +2,8 @@ import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { Severity, SeverityUtils } from '../types/severity';
-import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
-import { DiagnosticsUtils } from './diagnosticsUtils';
 import { PypiUtils } from '../utils/pypiUtils';
+import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 
 export class PypiCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
     constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager) {
@@ -25,21 +23,19 @@ export class PypiCodeActionProvider extends AbstractCodeActionProvider implement
         if (!pyPiDependenciesTree) {
             return;
         }
+        let requirementsContent: string = document.getText().toLowerCase();
         pyPiDependenciesTree.children.forEach(child => {
-            let dependencyPos: vscode.Position[] = PypiUtils.getDependencyPos(document, child);
-            if (dependencyPos.length === 0) {
+            let dependencyPos: vscode.Position[] = PypiUtils.getDependencyPos(document, requirementsContent, child);
+            if (dependencyPos.length > 0) {
+                this.addDiagnostics(diagnostics, child, dependencyPos);
                 return;
             }
-            let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
-                new vscode.Range(dependencyPos[0], dependencyPos[1]),
-                child.topIssue.severity === Severity.Normal
-                    ? 'No issues found.'
-                    : 'Top issue severity: ' + SeverityUtils.getString(child.topIssue.severity),
-                DiagnosticsUtils.getDiagnosticSeverity(child.topIssue.severity)
-            );
-            diagnostic.source = 'JFrog Xray';
-            diagnostic.code = child.componentId;
-            diagnostics.push(diagnostic);
+            for (let grandChild of child.children) {
+                dependencyPos = PypiUtils.getDependencyPos(document, requirementsContent, grandChild);
+                if (dependencyPos.length > 0) {
+                    this.addDiagnostics(diagnostics, grandChild, dependencyPos);
+                }
+            }
         });
         this._diagnosticCollection.set(document.uri, diagnostics);
     }

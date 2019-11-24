@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractHoverProvider } from './abstractHoverProvider';
+import { GoHover } from './goHover';
 import { NpmHover } from './npmHover';
 import { PypiHover } from './pypiHover';
-import { GoHover } from './goHover';
 
 /**
  * Hover on a dependency in the project descriptor (i.e. package.json) to show its licenses.

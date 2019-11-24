@@ -1,15 +1,15 @@
 import { assert } from 'chai';
 import * as exec from 'child_process';
+import * as fs from 'fs-extra';
 import * as path from 'path';
+import * as tmp from 'tmp';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { PypiTreeNode } from '../../main/treeDataProviders/dependenciesTree/pypiTreeNode';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { PypiUtils } from '../../main/utils/pypiUtils';
-import * as tmp from 'tmp';
-import * as fs from 'fs-extra';
-import { PypiTreeNode } from '../../main/treeDataProviders/dependenciesTree/pypiTreeNode';
 
 /**
  * Test functionality of @class PypiUtils.
@@ -47,6 +47,23 @@ describe('Pypi Utils Tests', () => {
     });
 
     /**
+     * Test PypiUtils.getDependenciesPos.
+     */
+    it('Get dependencies position', async () => {
+        // Test 'resources/python/setup'
+        let setupPy: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'setup', 'setup.py'));
+        let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(setupPy);
+        let dependenciesPos: vscode.Position[] = PypiUtils.getDependenciesPos(textDocument);
+        assert.deepEqual(dependenciesPos[0], new vscode.Position(5, 4));
+
+        // Test 'resources/python/setupAndRequirements'
+        setupPy = vscode.Uri.file(path.join(tmpDir.fsPath, 'setupAndRequirements', 'setup.py'));
+        textDocument = await vscode.workspace.openTextDocument(setupPy);
+        dependenciesPos = PypiUtils.getDependenciesPos(textDocument);
+        assert.deepEqual(dependenciesPos[0], new vscode.Position(14, 4));
+    });
+
+    /**
      * Test PypiUtils.getDependencyPos.
      */
     it('Get dependency position', async () => {
@@ -54,13 +71,13 @@ describe('Pypi Utils Tests', () => {
         let requirements: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'requirements', 'requirements.txt'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(requirements);
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('newrelic', '2.0.0.1', '', ''));
-        let dependencyPos: vscode.Position[] = PypiUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        let dependencyPos: vscode.Position[] = PypiUtils.getDependencyPos(textDocument, textDocument.getText().toLowerCase(), dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(2, 0));
 
         // Test 'resources/python/setupAndRequirements'
         requirements = vscode.Uri.file(path.join(tmpDir.fsPath, 'setupAndRequirements', 'requirements.txt'));
         textDocument = await vscode.workspace.openTextDocument(requirements);
-        dependencyPos = PypiUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = PypiUtils.getDependencyPos(textDocument, textDocument.getText().toLowerCase(), dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(2, 0));
     });
 

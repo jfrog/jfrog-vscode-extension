@@ -4,13 +4,11 @@ import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
 import { ScanCacheManager } from '../../scanCache/scanCacheManager';
 import { GeneralInfo } from '../../types/generalInfo';
-import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { PypiUtils } from '../../utils/pypiUtils';
+import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class PypiTreeNode extends DependenciesTreeNode {
-
     private static readonly COMPONENT_PREFIX: string = 'pypi://';
-    private static readonly PACKAGE_TYPE: string = 'pypi';
 
     constructor(
         private _projectDir: string,
@@ -28,7 +26,7 @@ export class PypiTreeNode extends DependenciesTreeNode {
             pypiList = JSON.parse(
                 exec.execSync(this._pythonPath + ' ' + PypiUtils.PIP_DEP_TREE_SCRIPT + ' --json-tree', { cwd: this._projectDir }).toString()
             );
-            this.generalInfo = new GeneralInfo(this._projectDir.replace(/^.*[\\\/]/, ''), '', this._projectDir, PypiTreeNode.PACKAGE_TYPE);
+            this.generalInfo = new GeneralInfo(this._projectDir.replace(/^.*[\\\/]/, ''), '', this._projectDir, PypiUtils.PKG_TYPE);
         } catch (error) {
             vscode.window.showWarningMessage(error.toString());
         }
@@ -45,7 +43,7 @@ export class PypiTreeNode extends DependenciesTreeNode {
             let version: string = dependency.installed_version;
             if (version) {
                 let childDependencies: any = dependency.dependencies;
-                let generalInfo: GeneralInfo = new GeneralInfo(dependency.key, version, '', PypiTreeNode.PACKAGE_TYPE);
+                let generalInfo: GeneralInfo = new GeneralInfo(dependency.key, version, '', PypiUtils.PKG_TYPE);
                 let treeCollapsibleState: vscode.TreeItemCollapsibleState =
                     childDependencies && childDependencies.length > 0
                         ? vscode.TreeItemCollapsibleState.Collapsed

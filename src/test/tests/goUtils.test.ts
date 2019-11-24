@@ -110,7 +110,7 @@ describe('Go Utils Tests', () => {
     });
 
     async function runCreateGoDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        let dependenciesTrees: DependenciesTreeNode[] = await GoUtils.createGoDependenciesTrees(
+        let dependenciesTrees: DependenciesTreeNode[] = await GoUtils.createDependenciesTrees(
             workspaceFolders,
             dummyProgress,
             componentsToScan,

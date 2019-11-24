@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
+import { SeverityUtils, Severity } from '../types/severity';
+import { DiagnosticsUtils } from './diagnosticsUtils';
 
 /**
  * @see DiagnosticsManager
@@ -19,7 +21,8 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
     /**
      * 1. Populate the 'Problems' view with top severities of the project dependencies.
      * 2. Provide red, yellow, green or white line under a dependency in the project descriptor.
-     */ 
+     */
+
     public abstract updateDiagnostics(document: vscode.TextDocument): void;
 
     protected abstract getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined;
@@ -41,7 +44,9 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
     }
 
     provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext): vscode.Command[] | undefined {
-        let diagnostic: vscode.Diagnostic[] = context.diagnostics.filter(diagnostic => diagnostic.source === AbstractCodeActionProvider.DIAGNOSTIC_SOURCE);
+        let diagnostic: vscode.Diagnostic[] = context.diagnostics.filter(
+            diagnostic => diagnostic.source === AbstractCodeActionProvider.DIAGNOSTIC_SOURCE
+        );
         if (diagnostic.length === 0) {
             return undefined;
         }
@@ -51,16 +56,36 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
         }
         for (let child of dependenciesTree.children) {
             if (child.componentId === diagnostic[0].code) {
-                return [
-                    {
-                        command: 'jfrog.xray.codeAction',
-                        title: 'Show in dependencies tree',
-                        arguments: [child]
-                    } as vscode.Command
-                ];
+                return [this.createCommand(child)];
+            }
+            for (let grandchild of child.children) {
+                if (grandchild.componentId === diagnostic[0].code) {
+                    return [this.createCommand(grandchild)];
+                }
             }
         }
         return undefined;
+    }
+
+    private createCommand(node: DependenciesTreeNode) {
+        return {
+            command: 'jfrog.xray.codeAction',
+            title: 'Show in dependencies tree',
+            arguments: [node]
+        } as vscode.Command;
+    }
+
+    addDiagnostics(diagnostics: vscode.Diagnostic[], node: DependenciesTreeNode, dependencyPos: vscode.Position[]) {
+        let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
+            new vscode.Range(dependencyPos[0], dependencyPos[1]),
+            node.topIssue.severity === Severity.Normal
+                ? 'No issues found.'
+                : 'Top issue severity: ' + SeverityUtils.getString(node.topIssue.severity),
+            DiagnosticsUtils.getDiagnosticSeverity(node.topIssue.severity)
+        );
+        diagnostic.source = 'JFrog Xray';
+        diagnostic.code = node.componentId;
+        diagnostics.push(diagnostic);
     }
 
     deleteDiagnostics(document: vscode.TextDocument) {

@@ -1,12 +1,10 @@
+import * as path from 'path';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { Severity, SeverityUtils } from '../types/severity';
 import { NpmUtils } from '../utils/npmUtils';
 import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
-import { DiagnosticsUtils } from './diagnosticsUtils';
-import * as path from 'path';
 
 export class NpmCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
     constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager) {
@@ -14,7 +12,10 @@ export class NpmCodeActionProvider extends AbstractCodeActionProvider implements
     }
 
     protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
-        return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(this._pkgType, document ? path.dirname(document.uri.fsPath) : document);
+        return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(
+            this._pkgType,
+            document ? path.dirname(document.uri.fsPath) : document
+        );
     }
 
     public updateDiagnostics(document: vscode.TextDocument): void {
@@ -31,16 +32,7 @@ export class NpmCodeActionProvider extends AbstractCodeActionProvider implements
             if (dependencyPos.length === 0) {
                 return;
             }
-            let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
-                new vscode.Range(dependencyPos[0], dependencyPos[1]),
-                child.topIssue.severity === Severity.Normal
-                    ? 'No issues found.'
-                    : 'Top issue severity: ' + SeverityUtils.getString(child.topIssue.severity),
-                DiagnosticsUtils.getDiagnosticSeverity(child.topIssue.severity)
-            );
-            diagnostic.source = 'JFrog Xray';
-            diagnostic.code = child.componentId;
-            diagnostics.push(diagnostic);
+            this.addDiagnostics(diagnostics, child, dependencyPos);
         });
         this._diagnosticCollection.set(document.uri, diagnostics);
     }

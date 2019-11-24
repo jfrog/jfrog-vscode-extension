@@ -1,3 +1,4 @@
+import * as exec from 'child_process';
 import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
@@ -5,23 +6,43 @@ import { ComponentDetails } from 'xray-client-js';
 import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/pypiTreeNode';
-import * as exec from 'child_process';
 
 export class PypiUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/*requirements*.txt' };
     public static readonly PYTHON_SCRIPTS: string = path.join(__dirname, '..', '..', '..', 'resources', 'python');
     public static readonly PIP_DEP_TREE_SCRIPT: string = path.join(PypiUtils.PYTHON_SCRIPTS, 'pipDepTree.py');
     public static readonly CHECK_VENV_SCRIPT: string = path.join(PypiUtils.PYTHON_SCRIPTS, 'checkVenv.py');
+    public static readonly PKG_TYPE: string = 'pypi';
+
+    /**
+     * Get setup.py file and return the position of 'install_requires' section.
+     * @param document - setup.py file
+     */
+    public static getDependenciesPos(document: vscode.TextDocument): vscode.Position[] {
+        let res: vscode.Position[] = [];
+        let packageJsonContent: string = document.getText();
+        let dependenciesMatch: RegExpMatchArray | null = packageJsonContent.match('install_requires(s*)=');
+        if (!dependenciesMatch) {
+            return res;
+        }
+        res.push(document.positionAt(<number>dependenciesMatch.index));
+        res.push(new vscode.Position(res[0].line, res[0].character + dependenciesMatch[0].length));
+        return res;
+    }
 
     /**
      * Get requirements file and dependencies tree node. return the position of the dependency in the requirements file.
      * @param document             - requirements file
+     * @param requirementsContent  - requirements file content - For optimization
      * @param dependenciesTreeNode - dependencies tree node
      */
-    public static getDependencyPos(document: vscode.TextDocument, dependenciesTreeNode: DependenciesTreeNode): vscode.Position[] {
+    public static getDependencyPos(
+        document: vscode.TextDocument,
+        requirementsContent: string,
+        dependenciesTreeNode: DependenciesTreeNode
+    ): vscode.Position[] {
         let res: vscode.Position[] = [];
-        let setupPyContent: string = document.getText().toLowerCase();
-        let dependencyMatch: RegExpMatchArray | null = setupPyContent.match(dependenciesTreeNode.generalInfo.artifactId);
+        let dependencyMatch: RegExpMatchArray | null = requirementsContent.match(dependenciesTreeNode.generalInfo.artifactId);
         if (!dependencyMatch) {
             return res;
         }
@@ -52,7 +73,7 @@ export class PypiUtils {
      * @param parent           - The base tree node
      * @param quickScan        - True to allow using the scan cache
      */
-    public static async createPypiDependenciesTrees(
+    public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Collections.Set<ComponentDetails>,

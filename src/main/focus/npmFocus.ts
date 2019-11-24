@@ -5,6 +5,10 @@ import { NpmUtils } from '../utils/npmUtils';
 import { AbstractFocus } from './abstractFocus';
 
 export class NpmFocus extends AbstractFocus {
+    constructor() {
+        super(NpmUtils.PKG_TYPE);
+    }
+
     public async focusOnDependency(dependenciesTreeNode: DependenciesTreeNode) {
         while (dependenciesTreeNode.parent && dependenciesTreeNode.parent.parent && dependenciesTreeNode.parent.parent.parent) {
             dependenciesTreeNode = dependenciesTreeNode.parent;

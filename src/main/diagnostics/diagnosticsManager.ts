@@ -18,7 +18,7 @@ export class DiagnosticsManager implements ExtensionComponent {
         let diagnosticCollection: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection();
         this._codeActionProviders.push(
             new NpmCodeActionProvider(diagnosticCollection, treesManager),
-            new PypiCodeActionProvider(diagnosticCollection, treesManager)
+            new PypiCodeActionProvider(diagnosticCollection, treesManager),
             new GoCodeActionProvider(diagnosticCollection, treesManager)
         );
     }

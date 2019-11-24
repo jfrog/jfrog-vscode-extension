@@ -7,13 +7,11 @@ import { GeneralInfo } from '../../types/generalInfo';
 import { Issue } from '../../types/issue';
 import { License } from '../../types/license';
 import { Severity, SeverityUtils } from '../../types/severity';
-import { NpmUtils } from '../../utils/npmUtils';
 import { ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
-import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { SetCredentialsNode } from '../utils/setCredentialsNode';
-import { PypiUtils } from '../../utils/pypiUtils';
-import { GoUtils } from '../../utils/goUtils';
+import { DependenciesTreesFactory } from './dependenciesTreeFactory';
+import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode | SetCredentialsNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -149,23 +147,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
             this.clearTree();
             let dependenciesTree: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
-            await NpmUtils.createNpmDependenciesTrees(
-                this._workspaceFolders,
-                progress,
-                this._componentsToScan,
-                this._scanCacheManager,
-                dependenciesTree,
-                quickScan
-            );
-            await PypiUtils.createPypiDependenciesTrees(
-                this._workspaceFolders,
-                progress,
-                this._componentsToScan,
-                this._scanCacheManager,
-                dependenciesTree,
-                quickScan
-            );
-            await GoUtils.createGoDependenciesTrees(
+            await DependenciesTreesFactory.createDependenciesTrees(
                 this._workspaceFolders,
                 progress,
                 this._componentsToScan,

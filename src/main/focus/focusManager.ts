@@ -1,10 +1,10 @@
+import * as vscode from 'vscode';
+import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { AbstractFocus } from './abstractFocus';
-import { NpmFocus } from './npmFocus';
-import { ExtensionComponent } from '../extensionComponent';
-import * as vscode from 'vscode';
-import { PypiFocus } from './pypiFocus';
 import { GoFocus } from './goFocus';
+import { NpmFocus } from './npmFocus';
+import { PypiFocus } from './pypiFocus';
 
 /**
  * Show the dependency in the project descriptor (i.e package.json) file after right click on the components tree and a left click on "Show in project descriptor".
@@ -13,7 +13,7 @@ export class FocusManager implements ExtensionComponent {
     private _focuses: AbstractFocus[] = [];
 
     constructor() {
-        this._focuses.push(new NpmFocus('npm'), new PypiFocus('pypi'), new GoFocus('go'));
+        this._focuses.push(new NpmFocus(), new PypiFocus(), new GoFocus());
     }
 
     public activate(context: vscode.ExtensionContext) {
