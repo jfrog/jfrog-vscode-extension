@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { SeverityUtils, Severity } from '../types/severity';
+import { Severity, SeverityUtils } from '../types/severity';
 import { DiagnosticsUtils } from './diagnosticsUtils';
 
 /**
@@ -21,7 +21,6 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
      * 1. Populate the 'Problems' view with top severities of the project dependencies.
      * 2. Provide red, yellow, green or white line under a dependency in the project descriptor.
      */
-
     public abstract updateDiagnostics(document: vscode.TextDocument): void;
 
     protected abstract getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined;
