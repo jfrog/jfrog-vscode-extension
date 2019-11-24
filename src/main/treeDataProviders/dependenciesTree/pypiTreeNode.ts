@@ -7,6 +7,11 @@ import { GeneralInfo } from '../../types/generalInfo';
 import { PypiUtils } from '../../utils/pypiUtils';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 
+/**
+ * Pypi packages can be installed in two different ways:
+ * 1. 'pip install [Path to setup.py]' - With this method, the top level in the tree would be the project name.
+ * 2. 'pip install -r [Path to requirements.txt]' - With this method, the top level in the tree would be the dependencies of the project.
+ */
 export class PypiTreeNode extends DependenciesTreeNode {
     private static readonly COMPONENT_PREFIX: string = 'pypi://';
 

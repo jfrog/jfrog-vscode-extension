@@ -7,11 +7,11 @@ import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 
 export class GoCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
     constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager) {
-        super(GoUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager, GoUtils.PKG_TYPE);
+        super(GoUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager);
     }
 
     protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
-        return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(this._pkgType);
+        return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(GoUtils.PKG_TYPE);
     }
 
     public updateDiagnostics(document: vscode.TextDocument): void {

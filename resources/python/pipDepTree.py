@@ -1,12 +1,15 @@
 from __future__ import print_function
+
+import argparse
+import json
 import os
 import sys
-from itertools import chain
 from collections import defaultdict
-import argparse
-from operator import attrgetter
-import json
 from importlib import import_module
+from itertools import chain
+from operator import attrgetter
+
+import pkg_resources
 
 try:
     from collections import OrderedDict
@@ -19,7 +22,6 @@ try:
 except ImportError:
     from pip import get_installed_distributions, FrozenRequirement
 
-import pkg_resources
 # inline:
 # from graphviz import backend, Digraph
 
@@ -244,7 +246,8 @@ class ReqPackage(Package):
 
     @property
     def version_spec(self):
-        specs = sorted(self._obj.specs, reverse=True)  # `reverse` makes '>' prior to '<'
+        # `reverse` makes '>' prior to '<'
+        specs = sorted(self._obj.specs, reverse=True)
         return ','.join([''.join(sp) for sp in specs]) if specs else None
 
     @property
@@ -276,7 +279,7 @@ class ReqPackage(Package):
             req_ver = self.version_spec if self.version_spec else 'Any'
             return (
                 '{0} [required: {1}, installed: {2}]'
-                ).format(self.project_name, req_ver, self.installed_version)
+            ).format(self.project_name, req_ver, self.installed_version)
         else:
             return self.render_as_root(frozen)
 
@@ -310,7 +313,7 @@ def render_tree(tree, list_all=True, show_only=None, frozen=False, exclude=None)
     use_bullets = not frozen
 
     key_tree = dict((k.key, v) for k, v in tree.items())
-    get_children = lambda n: key_tree.get(n.key, [])
+    def get_children(n): return key_tree.get(n.key, [])
 
     if show_only:
         nodes = [p for p in nodes
@@ -378,7 +381,7 @@ def render_json_tree(tree, indent):
     branch_keys = set(r.key for r in flatten(tree.values()))
     nodes = [p for p in tree.keys() if p.key not in branch_keys]
     key_tree = dict((k.key, v) for k, v in tree.items())
-    get_children = lambda n: key_tree.get(n.key, [])
+    def get_children(n): return key_tree.get(n.key, [])
 
     def aux(node, parent=None, chain=None):
         if chain is None:
@@ -488,7 +491,7 @@ def cyclic_deps(tree):
 
     """
     key_tree = dict((k.key, v) for k, v in tree.items())
-    get_children = lambda n: key_tree.get(n.key, [])
+    def get_children(n): return key_tree.get(n.key, [])
     cyclic = []
     for p, rs in tree.items():
         for req in rs:
@@ -622,7 +625,8 @@ def main():
     exclude = set(args.exclude.split(',')) if args.exclude else None
 
     if show_only and exclude and (show_only & exclude):
-        print('Conflicting packages found in --packages and --exclude lists.', file=sys.stderr)
+        print(
+            'Conflicting packages found in --packages and --exclude lists.', file=sys.stderr)
         sys.exit(1)
 
     tree = render_tree(tree if not args.reverse else reverse_tree(tree),

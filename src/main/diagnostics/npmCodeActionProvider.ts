@@ -8,12 +8,12 @@ import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 
 export class NpmCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
     constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager) {
-        super(NpmUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager, 'npm');
+        super(NpmUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager);
     }
 
     protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
         return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(
-            this._pkgType,
+            NpmUtils.PKG_TYPE,
             document ? path.dirname(document.uri.fsPath) : document
         );
     }

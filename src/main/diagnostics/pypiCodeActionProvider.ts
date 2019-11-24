@@ -7,11 +7,11 @@ import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 
 export class PypiCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
     constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager) {
-        super(PypiUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager, 'pypi');
+        super(PypiUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager);
     }
 
     protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
-        return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(this._pkgType);
+        return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(PypiUtils.PKG_TYPE);
     }
 
     public updateDiagnostics(document: vscode.TextDocument): void {

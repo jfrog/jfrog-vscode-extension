@@ -14,8 +14,7 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
     constructor(
         protected _documentSelector: vscode.DocumentSelector,
         protected _diagnosticCollection: vscode.DiagnosticCollection,
-        protected _treesManager: TreesManager,
-        protected _pkgType: string
+        protected _treesManager: TreesManager
     ) {}
 
     /**
