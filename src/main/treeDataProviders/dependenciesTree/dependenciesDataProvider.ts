@@ -1,14 +1,13 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'xray-client-js';
-import { ConnectionManager } from '../../connect/connectionManager';
-import { ScanCacheManager } from '../../scanCache/scanCacheManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Issue } from '../../types/issue';
 import { License } from '../../types/license';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
+import { TreesManager } from '../treesManager';
 import { SetCredentialsNode } from '../utils/setCredentialsNode';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
@@ -26,18 +25,14 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     protected _dependenciesTree!: DependenciesTreeNode | SetCredentialsNode;
     private _scanInProgress: boolean = false;
 
-    constructor(
-        protected _workspaceFolders: vscode.WorkspaceFolder[],
-        protected _connectionManager: ConnectionManager,
-        protected _scanCacheManager: ScanCacheManager
-    ) {}
+    constructor(protected _workspaceFolders: vscode.WorkspaceFolder[], protected _treesManager: TreesManager) {}
 
     public get dependenciesTree() {
         return this._dependenciesTree;
     }
 
     public async refresh(quickScan: boolean) {
-        if (!this._connectionManager.areCredentialsSet()) {
+        if (!this._treesManager.connectionManager.areCredentialsSet()) {
             if (!quickScan) {
                 vscode.window.showErrorMessage('Xray server is not configured.');
             }
@@ -52,6 +47,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
         try {
             this._scanInProgress = true;
+            this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow') + ' Xray scan...', 'INFO');
             await this.repopulateTree(quickScan);
             vscode.commands.executeCommand('jfrog.xray.focus');
         } catch (error) {
@@ -110,9 +106,9 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             progress.report({ message: 0 + '/' + componentDetails.length + ' components scanned' });
             for (let currentIndex: number = 0; currentIndex < componentDetails.length; currentIndex += 100) {
                 let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
-                let artifacts: IArtifact[] = await this._connectionManager.getComponents(partialComponents);
+                let artifacts: IArtifact[] = await this._treesManager.connectionManager.getComponents(partialComponents);
                 this.addMissingComponents(partialComponents, artifacts);
-                await this._scanCacheManager.addComponents(artifacts);
+                await this._treesManager.scanCacheManager.addComponents(artifacts);
                 progress.report({ message: currentIndex + 100 + '/' + componentDetails.length + ' components scanned', increment: step });
                 checkCanceled();
             }
@@ -128,7 +124,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     private addXrayInfoToTree(root: DependenciesTreeNode) {
         root.children.forEach(child => {
             let generalInfo: GeneralInfo = child.generalInfo;
-            let artifact: IArtifact | undefined = this._scanCacheManager.get(generalInfo.artifactId + ':' + generalInfo.version);
+            let artifact: IArtifact | undefined = this._treesManager.scanCacheManager.get(generalInfo.artifactId + ':' + generalInfo.version);
             if (artifact) {
                 let pkgType: string = child.generalInfo.pkgType;
                 child.generalInfo = Translators.toGeneralInfo(artifact.general);
@@ -151,7 +147,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 this._workspaceFolders,
                 progress,
                 this._componentsToScan,
-                this._scanCacheManager,
+                this._treesManager,
                 dependenciesTree,
                 quickScan
             );

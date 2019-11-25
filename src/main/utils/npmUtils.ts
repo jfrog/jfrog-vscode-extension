@@ -3,9 +3,9 @@ import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/npmTreeNode';
+import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
 
 export class NpmUtils {
@@ -78,15 +78,16 @@ export class NpmUtils {
         workspaceFolders: vscode.WorkspaceFolder[],
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Collections.Set<ComponentDetails>,
-        scanCacheManager: ScanCacheManager,
+        treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<NpmTreeNode[]> {
         let packageJsons: Collections.Set<vscode.Uri> = await NpmUtils.locatePackageJsons(workspaceFolders, progress);
         if (packageJsons.isEmpty()) {
-            // This is necessary for
+            treesManager.logManager.logMessage('No package.json files found in workspaces.', 'DEBUG');
             return [];
         }
+        treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
         if (!NpmUtils.verifyNpmInstalled()) {
             vscode.window.showErrorMessage('Could not scan npm project dependencies, because npm CLI is not in the PATH.');
             return [];
@@ -94,7 +95,7 @@ export class NpmUtils {
         let npmTreeNodes: NpmTreeNode[] = [];
         for (let packageJson of packageJsons.toArray()) {
             progress.report({ message: 'Analyzing package.json files' });
-            let dependenciesTreeNode: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), componentsToScan, scanCacheManager, parent);
+            let dependenciesTreeNode: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), componentsToScan, treesManager, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
             npmTreeNodes.push(dependenciesTreeNode);
         }

@@ -7,6 +7,7 @@ import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { NpmUtils } from '../../main/utils/npmUtils';
 
@@ -151,7 +152,7 @@ describe('Npm Utils Tests', () => {
             workspaceFolders,
             dummyProgress,
             componentsToScan,
-            dummyScanCacheManager,
+            { scanCacheManager: dummyScanCacheManager } as TreesManager,
             parent,
             false
         );

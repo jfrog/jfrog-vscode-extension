@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { PypiTreeNode } from '../../main/treeDataProviders/dependenciesTree/pypiTreeNode';
+import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { PypiUtils } from '../../main/utils/pypiUtils';
 
@@ -90,7 +91,7 @@ describe('Pypi Utils Tests', () => {
         let dependenciesTreeNode: PypiTreeNode = new PypiTreeNode(
             workspaceFolders[0].uri.fsPath,
             new Collections.Set(),
-            dummyScanCacheManager,
+            { scanCacheManager: dummyScanCacheManager } as TreesManager,
             path.join(workspaceFolders[0].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''))
         );
@@ -103,7 +104,7 @@ describe('Pypi Utils Tests', () => {
         dependenciesTreeNode = new PypiTreeNode(
             workspaceFolders[1].uri.fsPath,
             new Collections.Set(),
-            dummyScanCacheManager,
+            { scanCacheManager: dummyScanCacheManager } as TreesManager,
             path.join(workspaceFolders[1].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''))
         );
@@ -119,7 +120,7 @@ describe('Pypi Utils Tests', () => {
         dependenciesTreeNode = new PypiTreeNode(
             workspaceFolders[2].uri.fsPath,
             new Collections.Set(),
-            dummyScanCacheManager,
+            { scanCacheManager: dummyScanCacheManager } as TreesManager,
             path.join(workspaceFolders[2].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''))
         );

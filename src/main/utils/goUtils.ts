@@ -3,9 +3,9 @@ import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { GoTreeNode } from '../treeDataProviders/dependenciesTree/goTreeNode';
+import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
 
 export class GoUtils {
@@ -78,15 +78,16 @@ export class GoUtils {
         workspaceFolders: vscode.WorkspaceFolder[],
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Collections.Set<ComponentDetails>,
-        scanCacheManager: ScanCacheManager,
+        treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<GoTreeNode[]> {
         let goMods: Collections.Set<vscode.Uri> = await GoUtils.locateGoMods(workspaceFolders, progress);
         if (goMods.isEmpty()) {
-            // This is necessary for
+            treesManager.logManager.logMessage('No go.mod files found in workspaces.', 'DEBUG');
             return [];
         }
+        treesManager.logManager.logMessage('go.mod files to scan: [' + goMods.toString() + ']', 'DEBUG');
         if (!GoUtils.verifyGoInstalled()) {
             vscode.window.showErrorMessage('Could not scan go project dependencies, because go CLI is not in the PATH.');
             return [];
@@ -94,7 +95,7 @@ export class GoUtils {
         let goTreeNodes: GoTreeNode[] = [];
         for (let goMod of goMods.toArray()) {
             progress.report({ message: 'Analyzing go.mod files' });
-            let dependenciesTreeNode: GoTreeNode = new GoTreeNode(path.dirname(goMod.fsPath), componentsToScan, scanCacheManager, parent);
+            let dependenciesTreeNode: GoTreeNode = new GoTreeNode(path.dirname(goMod.fsPath), componentsToScan, treesManager, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
             goTreeNodes.push(dependenciesTreeNode);
         }
