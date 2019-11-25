@@ -8,7 +8,15 @@ import { FilterManager } from './filterManager';
 export abstract class AbstractFilter {
     protected _choice: vscode.QuickPickItem[] | undefined;
 
+    /**
+     * Get all filter values
+     */
     protected abstract getValues(): vscode.QuickPickItem[];
+
+    /**
+     * Get a dependencies tree node and return true iff the node doesn't filtered out.
+     * @param dependenciesTreeNode - The dependencies tree node
+     */
     public abstract isNodePicked(dependenciesTreeNode: DependenciesTreeNode): boolean;
 
     public showFilterMenu(filterManager: FilterManager) {

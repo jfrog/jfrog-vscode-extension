@@ -8,6 +8,7 @@ export class SeverityFilter extends AbstractFilter {
         super();
     }
 
+    /** @override */
     protected getValues(): vscode.QuickPickItem[] {
         return Object.values(SeverityStrings).map(
             severity =>
@@ -18,6 +19,7 @@ export class SeverityFilter extends AbstractFilter {
         );
     }
 
+    /** @override */
     public isNodePicked(dependenciesTreeNode: DependenciesTreeNode): boolean {
         if (!this._choice || (this.isPicked(SeverityStrings.Normal) && dependenciesTreeNode.issues.isEmpty())) {
             return true;

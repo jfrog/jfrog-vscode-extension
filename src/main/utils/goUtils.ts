@@ -9,6 +9,7 @@ import { GoTreeNode } from '../treeDataProviders/dependenciesTree/goTreeNode';
 
 export class GoUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/go.mod' };
+    public static readonly PKG_TYPE: string = 'go';
 
     /**
      * Get go.mod file and return the position of 'require' section.
@@ -55,9 +56,7 @@ export class GoUtils {
         let goMods: Collections.Set<vscode.Uri> = new Collections.Set();
         for (let workspace of workspaceFolders) {
             progress.report({ message: 'Locating go.mod files in workspace ' + workspace.name });
-            let wsGoMods: vscode.Uri[] = await vscode.workspace.findFiles(
-                { base: workspace.uri.fsPath, pattern: '**/go.mod' }
-            );
+            let wsGoMods: vscode.Uri[] = await vscode.workspace.findFiles({ base: workspace.uri.fsPath, pattern: '**/go.mod' });
             wsGoMods.forEach(goMod => goMods.add(goMod));
         }
         return Promise.resolve(goMods);
@@ -71,7 +70,7 @@ export class GoUtils {
      * @param parent           - The base tree node
      * @param quickScan        - True to allow using the scan cache
      */
-    public static async createGoDependenciesTrees(
+    public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Collections.Set<ComponentDetails>,
@@ -81,7 +80,7 @@ export class GoUtils {
     ): Promise<GoTreeNode[]> {
         let goMods: Collections.Set<vscode.Uri> = await GoUtils.locateGoMods(workspaceFolders, progress);
         if (goMods.isEmpty()) {
-            // This is necessary for 
+            // This is necessary for
             return [];
         }
         if (!GoUtils.verifyGoInstalled()) {

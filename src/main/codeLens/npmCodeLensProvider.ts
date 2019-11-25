@@ -7,6 +7,7 @@ export class NpmCodeLensProvider extends AbstractCodeLensProvider {
         super(NpmUtils.DOCUMENT_SELECTOR);
     }
 
+    /** @override */
     protected getDependenciesPos(document: vscode.TextDocument): vscode.Position[] {
         return NpmUtils.getDependenciesPos(document);
     }

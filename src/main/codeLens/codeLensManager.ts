@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { AbstractCodeLensProvider } from './abstractCodeLensProvider';
 import { NpmCodeLensProvider } from './npmCodeLensProvider';
+import { PypiCodeLensProvider } from './pypiCodeLensProvider';
 import { GoCodeLensProvider } from './goCodeLensProvider';
 
 /**
@@ -11,7 +12,7 @@ export class CodeLensManager implements ExtensionComponent {
     private _codeLensProviders: AbstractCodeLensProvider[] = [];
 
     constructor() {
-        this._codeLensProviders.push(new NpmCodeLensProvider(), new GoCodeLensProvider());
+        this._codeLensProviders.push(new NpmCodeLensProvider(), new PypiCodeLensProvider(), new GoCodeLensProvider());
     }
 
     public activate(context: vscode.ExtensionContext) {

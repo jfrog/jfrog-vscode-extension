@@ -1,6 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
 import { runTests } from 'vscode-test';
+import { TestOptions } from 'vscode-test/out/runTest';
 
 let targetResourcesDir: string = path.join(__dirname, 'resources');
 
@@ -20,7 +21,7 @@ async function main() {
             extensionDevelopmentPath,
             extensionTestsPath,
             launchArgs: ['--disable-extensions', '-n', targetResourcesDir]
-        });
+        } as TestOptions );
     } catch (err) {
         console.error('Failed to run tests', err);
         process.exit(1);

@@ -14,7 +14,7 @@ export function run(): Promise<void> {
 
     const testsRoot: string = path.join(__dirname, 'tests');
     return new Promise((resolve, reject) => {
-        glob('**/**.test.js', { cwd: testsRoot } as glob.IOptions, (err: Error | null, testFiles: string[]) => {
+        glob('**/*.test.js', { cwd: testsRoot } as glob.IOptions, (err: Error | null, testFiles: string[]) => {
             if (err) {
                 return reject(err);
             }

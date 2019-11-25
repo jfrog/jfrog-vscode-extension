@@ -7,6 +7,7 @@ export class GoCodeLensProvider extends AbstractCodeLensProvider {
         super(GoUtils.DOCUMENT_SELECTOR);
     }
 
+    /** @override */
     protected getDependenciesPos(document: vscode.TextDocument): vscode.Position[] {
         return GoUtils.getDependenciesPos(document);
     }

@@ -7,12 +7,11 @@ import { GeneralInfo } from '../../types/generalInfo';
 import { Issue } from '../../types/issue';
 import { License } from '../../types/license';
 import { Severity, SeverityUtils } from '../../types/severity';
-import { NpmUtils } from '../../utils/npmUtils';
 import { ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
-import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { SetCredentialsNode } from '../utils/setCredentialsNode';
-import { GoUtils } from '../../utils/goUtils';
+import { DependenciesTreesFactory } from './dependenciesTreeFactory';
+import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode | SetCredentialsNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -131,7 +130,11 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             let generalInfo: GeneralInfo = child.generalInfo;
             let artifact: IArtifact | undefined = this._scanCacheManager.get(generalInfo.artifactId + ':' + generalInfo.version);
             if (artifact) {
+                let pkgType: string = child.generalInfo.pkgType;
                 child.generalInfo = Translators.toGeneralInfo(artifact.general);
+                if (!child.generalInfo.pkgType) {
+                    child.generalInfo.pkgType = pkgType;
+                }
                 artifact.issues.map(Translators.toIssue).forEach(issue => child.issues.add(issue));
                 artifact.licenses.map(Translators.toLicense).forEach(license => child.licenses.add(license));
                 this.filterLicenses.union(child.licenses);
@@ -144,15 +147,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
             this.clearTree();
             let dependenciesTree: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
-            await NpmUtils.createNpmDependenciesTrees(
-                this._workspaceFolders,
-                progress,
-                this._componentsToScan,
-                this._scanCacheManager,
-                dependenciesTree,
-                quickScan
-            );
-            await GoUtils.createGoDependenciesTrees(
+            await DependenciesTreesFactory.createDependenciesTrees(
                 this._workspaceFolders,
                 progress,
                 this._componentsToScan,
@@ -194,21 +189,21 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
 
         missingComponents.forEach(missingComponent => {
             artifacts.push(<IArtifact>{
-                general: <IGeneral>{ component_id: missingComponent, pkg_type: 'npm' },
+                general: <IGeneral>{ component_id: missingComponent },
                 issues: [<IIssue>{ summary: 'Component is missing in Xray', severity: 'Unknown', issue_type: 'Unknown' }],
                 licenses: [<ILicense>{ name: License.UNKNOWN_LICENSE, full_name: License.UNKNOWN_LICENSE_FULL_NAME }]
             });
         });
     }
 
-    public getDependenciesTreeNode(pkgType: string, path: string): DependenciesTreeNode | undefined {
+    public getDependenciesTreeNode(pkgType: string, path?: string): DependenciesTreeNode | undefined {
         if (!(this.dependenciesTree instanceof DependenciesTreeNode)) {
             return undefined;
         }
         let root: DependenciesTreeNode = this._filteredDependenciesTree || this.dependenciesTree;
         for (let dependenciesTree of root.children) {
             let generalInfo: GeneralInfo = dependenciesTree.generalInfo;
-            if (generalInfo.pkgType === pkgType && generalInfo.path === path) {
+            if (generalInfo.pkgType === pkgType && (!path || generalInfo.path === path)) {
                 return dependenciesTree;
             }
         }

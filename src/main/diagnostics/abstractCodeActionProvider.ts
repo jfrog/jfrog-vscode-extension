@@ -1,29 +1,35 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
+import { Severity, SeverityUtils } from '../types/severity';
+import { DiagnosticsUtils } from './diagnosticsUtils';
 
 /**
  * @see DiagnosticsManager
  */
 export abstract class AbstractCodeActionProvider implements vscode.CodeActionProvider, ExtensionComponent {
+    static readonly DIAGNOSTIC_SOURCE: string = 'JFrog Xray';
+
     constructor(
         protected _documentSelector: vscode.DocumentSelector,
         protected _diagnosticCollection: vscode.DiagnosticCollection,
-        protected _treesManager: TreesManager,
-        protected _pkgType: string
+        protected _treesManager: TreesManager
     ) {}
 
     /**
+     * Update diagnostics of the input project descriptor file:
      * 1. Populate the 'Problems' view with top severities of the project dependencies.
      * 2. Provide red, yellow, green or white line under a dependency in the project descriptor.
-     */ 
+     * @param document - Project descriptor file
+     */
     public abstract updateDiagnostics(document: vscode.TextDocument): void;
 
-    protected getDependenciesTree(document: vscode.TextDocument): DependenciesTreeNode | undefined {
-        return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(this._pkgType, path.dirname(document.uri.fsPath));
-    }
+    /**
+     * Get the dependencies tree node according to the package type.
+     * @param document - Project descriptor file
+     */
+    protected abstract getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined;
 
     public activate(context: vscode.ExtensionContext) {
         this.registerListeners(context.subscriptions);
@@ -42,7 +48,10 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
     }
 
     provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext): vscode.Command[] | undefined {
-        if (context.diagnostics.length === 0) {
+        let diagnostic: vscode.Diagnostic[] = context.diagnostics.filter(
+            diagnostic => diagnostic.source === AbstractCodeActionProvider.DIAGNOSTIC_SOURCE
+        );
+        if (diagnostic.length === 0) {
             return undefined;
         }
         let dependenciesTree: DependenciesTreeNode | undefined = this.getDependenciesTree(document);
@@ -50,17 +59,44 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
             return undefined;
         }
         for (let child of dependenciesTree.children) {
-            if (child.componentId === context.diagnostics[0].code) {
-                return [
-                    {
-                        command: 'jfrog.xray.codeAction',
-                        title: 'Show in dependencies tree',
-                        arguments: [child]
-                    } as vscode.Command
-                ];
+            if (child.componentId === diagnostic[0].code) {
+                return [this.createCommand(child)];
+            }
+            for (let grandchild of child.children) {
+                if (grandchild.componentId === diagnostic[0].code) {
+                    return [this.createCommand(grandchild)];
+                }
             }
         }
         return undefined;
+    }
+
+    private createCommand(node: DependenciesTreeNode) {
+        return {
+            command: 'jfrog.xray.codeAction',
+            title: 'Show in dependencies tree',
+            arguments: [node]
+        } as vscode.Command;
+    }
+
+    /**
+     * Add a new diagnostic to the input diagnostics list. 
+     * Fill up the new diagnostic with information from the input dependencies tree node and the input position in the project descriptor.
+     * @param diagnostics The diagnostics list
+     * @param node The dependencies tree node
+     * @param dependencyPos The position of the diagnostics in the descriptor
+     */
+    addDiagnostic(diagnostics: vscode.Diagnostic[], node: DependenciesTreeNode, dependencyPos: vscode.Position[]) {
+        let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
+            new vscode.Range(dependencyPos[0], dependencyPos[1]),
+            node.topIssue.severity === Severity.Normal
+                ? 'No issues found.'
+                : 'Top issue severity: ' + SeverityUtils.getString(node.topIssue.severity),
+            DiagnosticsUtils.getDiagnosticSeverity(node.topIssue.severity)
+        );
+        diagnostic.source = 'JFrog Xray';
+        diagnostic.code = node.componentId;
+        diagnostics.push(diagnostic);
     }
 
     deleteDiagnostics(document: vscode.TextDocument) {

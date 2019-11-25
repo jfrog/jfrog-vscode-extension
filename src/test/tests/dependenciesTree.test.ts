@@ -11,6 +11,7 @@ import { Severity } from '../../main/types/severity';
  * Test functionality of @class DependenciesTreeNode.
  */
 describe('Dependencies Tree Tests', () => {
+    let issueSerialNumber: number = 0;
     let root: DependenciesTreeNode = createNode('root');
     let one: DependenciesTreeNode = createNode('one');
     let two: DependenciesTreeNode = createNode('two');
@@ -102,6 +103,6 @@ describe('Dependencies Tree Tests', () => {
     }
 
     function createDummyIssue(severity: Severity) {
-        return new Issue(faker.random.words(1), severity, faker.random.words(), faker.random.word(), [faker.random.word()]);
+        return new Issue(faker.random.words(1) + issueSerialNumber++, severity, faker.random.words(), faker.random.word(), [faker.random.word()]);
     }
 });

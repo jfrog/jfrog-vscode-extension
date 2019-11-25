@@ -1,10 +1,15 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { AbstractFocus } from './abstractFocus';
 import { GoUtils } from '../utils/goUtils';
+import { AbstractFocus } from './abstractFocus';
 
 export class GoFocus extends AbstractFocus {
+    constructor() {
+        super(GoUtils.PKG_TYPE);
+    }
+
+    /** @override */
     public async focusOnDependency(dependenciesTreeNode: DependenciesTreeNode) {
         while (dependenciesTreeNode.parent && dependenciesTreeNode.parent.parent && dependenciesTreeNode.parent.parent.parent) {
             dependenciesTreeNode = dependenciesTreeNode.parent;

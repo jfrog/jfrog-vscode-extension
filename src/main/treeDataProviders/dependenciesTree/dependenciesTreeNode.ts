@@ -134,7 +134,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
             .sort((lhs, rhs) => lhs.issues.size() - rhs.issues.size())
 
             // 2nd priority - Sort by number of children
-            .sort((lhs, rhs) => lhs.children.length - rhs.children.length)
+            .sort((lhs, rhs) => rhs.children.length - lhs.children.length)
 
             // 1st priority - Sort by top severity
             .sort((lhs, rhs) => rhs.topIssue.severity - lhs.topIssue.severity);

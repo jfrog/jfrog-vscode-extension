@@ -10,6 +10,7 @@ export class NpmHover extends AbstractHoverProvider {
         super(NpmUtils.DOCUMENT_SELECTOR, treesManager);
     }
 
+    /** @override */
     public getNodeByLocation(document: vscode.TextDocument, cursorPosition: vscode.Position): DependenciesTreeNode | undefined {
         let dependenciesTree: DependenciesTreeNode | undefined = this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(
             'npm',

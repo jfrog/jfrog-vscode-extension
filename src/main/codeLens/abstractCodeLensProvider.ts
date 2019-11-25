@@ -9,8 +9,17 @@ export abstract class AbstractCodeLensProvider implements vscode.CodeLensProvide
 
     constructor(private _documentSelector: vscode.DocumentSelector) {}
 
+    /**
+     * Get the position of the dependencies in the project descriptor file.
+     * For example in package.json - The position of "dependencies:{"
+     * @param document - Project descriptor file
+     */
     protected abstract getDependenciesPos(document: vscode.TextDocument): vscode.Position[];
 
+    /**
+     * Add "Start xray scan" button abode the dependencies section of the project descriptor file.
+     * @param document - Project descriptor file
+     */
     provideCodeLenses(document: vscode.TextDocument): vscode.ProviderResult<vscode.CodeLens[]> {
         let dependenciesPos: vscode.Position[] = this.getDependenciesPos(document);
         let range: vscode.Range = new vscode.Range(dependenciesPos[0], dependenciesPos[1]);

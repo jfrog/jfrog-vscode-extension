@@ -3,6 +3,7 @@ import { ExtensionComponent } from '../extensionComponent';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 import { NpmCodeActionProvider } from './npmCodeActionProvider';
+import { PypiCodeActionProvider } from './pypiCodeActionProvider';
 import { GoCodeActionProvider } from './goCodeActionProvider';
 
 /**
@@ -17,6 +18,7 @@ export class DiagnosticsManager implements ExtensionComponent {
         let diagnosticCollection: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection();
         this._codeActionProviders.push(
             new NpmCodeActionProvider(diagnosticCollection, treesManager),
+            new PypiCodeActionProvider(diagnosticCollection, treesManager),
             new GoCodeActionProvider(diagnosticCollection, treesManager)
         );
     }

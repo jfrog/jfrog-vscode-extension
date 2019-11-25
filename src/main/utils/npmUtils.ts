@@ -9,6 +9,7 @@ import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/npmTreeNode';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
+    public static readonly PKG_TYPE: string = 'npm';
 
     /**
      * Get package.json file and return the position of 'dependencies' section.
@@ -72,7 +73,7 @@ export class NpmUtils {
      * @param parent           - The base tree node
      * @param quickScan        - True to allow using the scan cache
      */
-    public static async createNpmDependenciesTrees(
+    public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Collections.Set<ComponentDetails>,
@@ -82,7 +83,7 @@ export class NpmUtils {
     ): Promise<NpmTreeNode[]> {
         let packageJsons: Collections.Set<vscode.Uri> = await NpmUtils.locatePackageJsons(workspaceFolders, progress);
         if (packageJsons.isEmpty()) {
-            // This is necessary for 
+            // This is necessary for
             return [];
         }
         if (!NpmUtils.verifyNpmInstalled()) {

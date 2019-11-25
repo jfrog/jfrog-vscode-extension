@@ -147,7 +147,7 @@ describe('Npm Utils Tests', () => {
     });
 
     async function runCreateNpmDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        let dependenciesTrees: DependenciesTreeNode[] = await NpmUtils.createNpmDependenciesTrees(
+        let dependenciesTrees: DependenciesTreeNode[] = await NpmUtils.createDependenciesTrees(
             workspaceFolders,
             dummyProgress,
             componentsToScan,
