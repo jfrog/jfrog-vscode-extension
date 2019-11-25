@@ -56,7 +56,7 @@
                     "type": "string",
                     "default": "**/*{test,venv,node_modules}*",
                     "scope": "resource",
-                    "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) that will be matched on file paths to exclude files and directories to scan."
+                    "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) used to exclude specific paths from being scanned by JFrog Xray. For example, go.mod files under directories named testdata will not be scanned."
                 }
             }
         },
