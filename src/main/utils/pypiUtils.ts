@@ -6,6 +6,7 @@ import { ComponentDetails } from 'xray-client-js';
 import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/pypiTreeNode';
+import { ScanUtils } from './scanUtils';
 
 export class PypiUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/*requirements*.txt' };
@@ -61,7 +62,10 @@ export class PypiUtils {
         progress: vscode.Progress<{ message?: string; increment?: number }>
     ): Promise<boolean> {
         progress.report({ message: 'Locating python files in workspace ' + workspaceFolder.name });
-        let wsPythonFiles: vscode.Uri[] = await vscode.workspace.findFiles({ base: workspaceFolder.uri.fsPath, pattern: '**/*.py' }, '.*venv*');
+        let wsPythonFiles: vscode.Uri[] = await vscode.workspace.findFiles(
+            { base: workspaceFolder.uri.fsPath, pattern: '**/*{setup.py,requirements*.txt}' },
+            ScanUtils.getScanExcludePattern(workspaceFolder)
+        );
         return Promise.resolve(wsPythonFiles.length > 0);
     }
 
@@ -162,6 +166,6 @@ export class PypiUtils {
      * @param fsPath - The base path to search
      */
     public static async getRequirementsFiles(fsPath: string): Promise<vscode.Uri[]> {
-        return await vscode.workspace.findFiles({ base: fsPath, pattern: '**/*requirements*.txt' }, '*venv*');
+        return await vscode.workspace.findFiles({ base: fsPath, pattern: '**/*requirements*.txt' }, ScanUtils.getScanExcludePattern());
     }
 }

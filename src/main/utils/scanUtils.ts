@@ -27,4 +27,13 @@ export class ScanUtils {
     public static getHomePath(): string {
         return path.join(os.homedir(), '.jfrog-vscode-extension');
     }
+
+    /**
+     * Get scan exclude pattern. This pattern will exclude scan from some files or directories.
+     * @param workspaceFolder - The workspace folder
+     */
+    public static getScanExcludePattern(workspaceFolder?: vscode.WorkspaceFolder): string | undefined {
+        let resource: vscode.Uri | null = workspaceFolder ? workspaceFolder.uri : null;
+        return vscode.workspace.getConfiguration('jfrog', resource).get('xray.exclusions');
+    }
 }

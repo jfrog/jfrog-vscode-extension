@@ -49,6 +49,17 @@
                 }
             ]
         },
+        "configuration": {
+            "title": "JFrog",
+            "properties": {
+                "jfrog.xray.exclusions": {
+                    "type": "string",
+                    "default": "**/*{test,venv,node_modules}*",
+                    "scope": "resource",
+                    "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) that will be matched on file paths to exclude files and directories to scan."
+                }
+            }
+        },
         "commands": [
             {
                 "command": "jfrog.xray.refresh",
