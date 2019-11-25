@@ -6,6 +6,7 @@ import { ComponentDetails } from 'xray-client-js';
 import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/npmTreeNode';
+import { ScanUtils } from './scanUtils';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
@@ -58,7 +59,7 @@ export class NpmUtils {
             progress.report({ message: 'Locating package json files in workspace ' + workspace.name });
             let wsPackageJsons: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/package.json' },
-                '**/node_modules'
+                ScanUtils.getScanExcludePattern(workspace)
             );
             wsPackageJsons.forEach(packageJson => packageJsons.add(packageJson));
         }

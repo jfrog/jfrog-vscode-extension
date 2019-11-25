@@ -42,7 +42,7 @@ describe('Pypi Utils Tests', () => {
         // Assert that results contains all projects
         for (let workspaceFolder of workspaceFolders) {
             let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, dummyProgress);
-            assert.isTrue(pythonFilesExist, workspaceFolder.name + ' should contain Python files');
+            assert.isTrue(pythonFilesExist, workspaceFolder.uri + ' should contain Python files');
         }
     });
 
