@@ -10,10 +10,12 @@ export class GoCodeActionProvider extends AbstractCodeActionProvider implements 
         super(GoUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager);
     }
 
+    /** @override */
     protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
         return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(GoUtils.PKG_TYPE);
     }
 
+    /** @override */
     public updateDiagnostics(document: vscode.TextDocument): void {
         if (!vscode.languages.match(this._documentSelector, document)) {
             return;
@@ -28,7 +30,7 @@ export class GoCodeActionProvider extends AbstractCodeActionProvider implements 
             if (dependencyPos.length === 0) {
                 return;
             }
-            this.addDiagnostics(diagnostics, child, dependencyPos);
+            this.addDiagnostic(diagnostics, child, dependencyPos);
         });
         this._diagnosticCollection.set(document.uri, diagnostics);
     }

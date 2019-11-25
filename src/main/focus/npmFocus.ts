@@ -9,6 +9,7 @@ export class NpmFocus extends AbstractFocus {
         super(NpmUtils.PKG_TYPE);
     }
 
+    /** @override */
     public async focusOnDependency(dependenciesTreeNode: DependenciesTreeNode) {
         while (dependenciesTreeNode.parent && dependenciesTreeNode.parent.parent && dependenciesTreeNode.parent.parent.parent) {
             dependenciesTreeNode = dependenciesTreeNode.parent;

@@ -10,10 +10,12 @@ export class PypiCodeActionProvider extends AbstractCodeActionProvider implement
         super(PypiUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager);
     }
 
+    /** @override */
     protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
         return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(PypiUtils.PKG_TYPE);
     }
 
+    /** @override */
     public updateDiagnostics(document: vscode.TextDocument): void {
         if (!vscode.languages.match(this._documentSelector, document)) {
             return;
@@ -27,13 +29,13 @@ export class PypiCodeActionProvider extends AbstractCodeActionProvider implement
         pyPiDependenciesTree.children.forEach(child => {
             let dependencyPos: vscode.Position[] = PypiUtils.getDependencyPos(document, requirementsContent, child);
             if (dependencyPos.length > 0) {
-                this.addDiagnostics(diagnostics, child, dependencyPos);
+                this.addDiagnostic(diagnostics, child, dependencyPos);
                 return;
             }
             for (let grandChild of child.children) {
                 dependencyPos = PypiUtils.getDependencyPos(document, requirementsContent, grandChild);
                 if (dependencyPos.length > 0) {
-                    this.addDiagnostics(diagnostics, grandChild, dependencyPos);
+                    this.addDiagnostic(diagnostics, grandChild, dependencyPos);
                 }
             }
         });

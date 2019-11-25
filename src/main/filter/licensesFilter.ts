@@ -8,6 +8,7 @@ export class LicensesFilter extends AbstractFilter {
         super();
     }
 
+    /** @override */
     protected getValues(): vscode.QuickPickItem[] {
         return this._treesManager.dependenciesTreeDataProvider.filterLicenses.toArray().map(license => {
             return <vscode.QuickPickItem>{
@@ -18,6 +19,7 @@ export class LicensesFilter extends AbstractFilter {
         });
     }
 
+    /** @override */
     public isNodePicked(dependenciesTreeNode: DependenciesTreeNode): boolean {
         if (!this._choice) {
             return true;

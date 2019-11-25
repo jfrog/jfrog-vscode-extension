@@ -18,11 +18,17 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
     ) {}
 
     /**
+     * Update diagnostics of the input project descriptor file:
      * 1. Populate the 'Problems' view with top severities of the project dependencies.
      * 2. Provide red, yellow, green or white line under a dependency in the project descriptor.
+     * @param document - Project descriptor file
      */
     public abstract updateDiagnostics(document: vscode.TextDocument): void;
 
+    /**
+     * Get the dependencies tree node according to the package type.
+     * @param document - Project descriptor file
+     */
     protected abstract getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined;
 
     public activate(context: vscode.ExtensionContext) {
@@ -73,7 +79,14 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
         } as vscode.Command;
     }
 
-    addDiagnostics(diagnostics: vscode.Diagnostic[], node: DependenciesTreeNode, dependencyPos: vscode.Position[]) {
+    /**
+     * Add a new diagnostic to the input diagnostics list. 
+     * Fill up the new diagnostic with information from the input dependencies tree node and the input position in the project descriptor.
+     * @param diagnostics The diagnostics list
+     * @param node The dependencies tree node
+     * @param dependencyPos The position of the diagnostics in the descriptor
+     */
+    addDiagnostic(diagnostics: vscode.Diagnostic[], node: DependenciesTreeNode, dependencyPos: vscode.Position[]) {
         let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
             new vscode.Range(dependencyPos[0], dependencyPos[1]),
             node.topIssue.severity === Severity.Normal

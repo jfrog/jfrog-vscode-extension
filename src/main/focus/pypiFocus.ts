@@ -10,6 +10,7 @@ export class PypiFocus extends AbstractFocus {
         super(PypiUtils.PKG_TYPE);
     }
 
+    /** @override */
     public async focusOnDependency(dependenciesTreeNode: DependenciesTreeNode) {
         if (dependenciesTreeNode.isDependenciesTreeRoot()) {
             return;
@@ -52,10 +53,15 @@ export class PypiFocus extends AbstractFocus {
         this.tryOpenSetupPy(fsPath);
     }
 
-    private async revealRange(textDocument: vscode.TextDocument, pos: vscode.Position[]) {
+    /**
+     * Open the input file and show the lines as specified in the input position.
+     * @param textDocument - requirements.txt or setup.py
+     * @param position - The position in the file to show
+     */
+    private async revealRange(textDocument: vscode.TextDocument, position: vscode.Position[]) {
         let textEditor: vscode.TextEditor = await vscode.window.showTextDocument(textDocument);
-        textEditor.selection = new vscode.Selection(pos[0], pos[1]);
-        textEditor.revealRange(new vscode.Range(pos[0], pos[1]), vscode.TextEditorRevealType.InCenter);
+        textEditor.selection = new vscode.Selection(position[0], position[1]);
+        textEditor.revealRange(new vscode.Range(position[0], position[1]), vscode.TextEditorRevealType.InCenter);
     }
 
     /**

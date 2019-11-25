@@ -9,6 +9,7 @@ export class GoFocus extends AbstractFocus {
         super(GoUtils.PKG_TYPE);
     }
 
+    /** @override */
     public async focusOnDependency(dependenciesTreeNode: DependenciesTreeNode) {
         while (dependenciesTreeNode.parent && dependenciesTreeNode.parent.parent && dependenciesTreeNode.parent.parent.parent) {
             dependenciesTreeNode = dependenciesTreeNode.parent;
