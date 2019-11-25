@@ -29,7 +29,7 @@ export class ScanUtils {
     }
 
     /**
-     * Get scan exclude pattern. This pattern will exclude scan from some files or directories.
+     * Get scan exclude pattern. This pattern will exclude paths from scanning.
      * @param workspaceFolder - The workspace folder
      */
     public static getScanExcludePattern(workspaceFolder?: vscode.WorkspaceFolder): string | undefined {

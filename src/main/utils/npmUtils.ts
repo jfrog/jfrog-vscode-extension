@@ -56,11 +56,10 @@ export class NpmUtils {
     ): Promise<Collections.Set<vscode.Uri>> {
         let packageJsons: Collections.Set<vscode.Uri> = new Collections.Set();
         for (let workspace of workspaceFolders) {
-            let excludePatterns: string | null = ScanUtils.getScanExcludePattern(workspace) || null;
             progress.report({ message: 'Locating package json files in workspace ' + workspace.name });
             let wsPackageJsons: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/package.json' },
-                excludePatterns
+                ScanUtils.getScanExcludePattern(workspace)
             );
             wsPackageJsons.forEach(packageJson => packageJsons.add(packageJson));
         }
