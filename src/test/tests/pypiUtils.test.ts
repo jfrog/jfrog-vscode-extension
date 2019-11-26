@@ -5,6 +5,8 @@ import * as path from 'path';
 import * as tmp from 'tmp';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
+import { ConnectionManager } from '../../main/connect/connectionManager';
+import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { PypiTreeNode } from '../../main/treeDataProviders/dependenciesTree/pypiTreeNode';
@@ -19,6 +21,12 @@ describe('Pypi Utils Tests', () => {
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
         workspaceState: { get(key: string) {} } as vscode.Memento
     } as vscode.ExtensionContext);
+    let treesManager: TreesManager = new TreesManager(
+        [],
+        new ConnectionManager(),
+        dummyScanCacheManager,
+        new LogManager().activate({} as vscode.ExtensionContext)
+    );
     let dummyProgress: vscode.Progress<{ message?: string; increment?: number }> = { report: () => {} };
     let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements'];
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
@@ -91,7 +99,7 @@ describe('Pypi Utils Tests', () => {
         let dependenciesTreeNode: PypiTreeNode = new PypiTreeNode(
             workspaceFolders[0].uri.fsPath,
             new Collections.Set(),
-            { scanCacheManager: dummyScanCacheManager } as TreesManager,
+            treesManager,
             path.join(workspaceFolders[0].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''))
         );
@@ -104,7 +112,7 @@ describe('Pypi Utils Tests', () => {
         dependenciesTreeNode = new PypiTreeNode(
             workspaceFolders[1].uri.fsPath,
             new Collections.Set(),
-            { scanCacheManager: dummyScanCacheManager } as TreesManager,
+            treesManager,
             path.join(workspaceFolders[1].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''))
         );
@@ -120,7 +128,7 @@ describe('Pypi Utils Tests', () => {
         dependenciesTreeNode = new PypiTreeNode(
             workspaceFolders[2].uri.fsPath,
             new Collections.Set(),
-            { scanCacheManager: dummyScanCacheManager } as TreesManager,
+            treesManager,
             path.join(workspaceFolders[2].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''))
         );

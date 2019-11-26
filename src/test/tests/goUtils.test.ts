@@ -4,6 +4,8 @@ import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
+import { ConnectionManager } from '../../main/connect/connectionManager';
+import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
@@ -17,6 +19,12 @@ describe('Go Utils Tests', () => {
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
         workspaceState: { get(key: string) {} } as vscode.Memento
     } as vscode.ExtensionContext);
+    let treesManager: TreesManager = new TreesManager(
+        [],
+        new ConnectionManager(),
+        dummyScanCacheManager,
+        new LogManager().activate({} as vscode.ExtensionContext)
+    );
     let dummyProgress: vscode.Progress<{ message?: string; increment?: number }> = { report: () => {} };
     let projectDirs: string[] = ['dependency', 'empty'];
     let workspaceFolders: vscode.WorkspaceFolder[];
@@ -115,7 +123,7 @@ describe('Go Utils Tests', () => {
             workspaceFolders,
             dummyProgress,
             componentsToScan,
-            { scanCacheManager: dummyScanCacheManager } as TreesManager,
+            treesManager,
             parent,
             false
         );
