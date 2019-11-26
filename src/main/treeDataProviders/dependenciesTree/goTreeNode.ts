@@ -2,9 +2,9 @@ import * as exec from 'child_process';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { ScanCacheManager } from '../../scanCache/scanCacheManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { GoUtils } from '../../utils/goUtils';
+import { TreesManager } from '../treesManager';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class GoTreeNode extends DependenciesTreeNode {
@@ -15,7 +15,7 @@ export class GoTreeNode extends DependenciesTreeNode {
     constructor(
         private _workspaceFolder: string,
         private _componentsToScan: Collections.Set<ComponentDetails>,
-        private _scanCacheManager: ScanCacheManager,
+        private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
         super(new GeneralInfo('', '', _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent);
@@ -32,7 +32,7 @@ export class GoTreeNode extends DependenciesTreeNode {
             goList.pop(); // Remove the last new line
             rootPackageName = this.getModuleName();
         } catch (error) {
-            vscode.window.showWarningMessage(error.toString());
+            this._treesManager.logManager.logError(error, !quickScan);
             this.label = this._workspaceFolder + ' [Not installed]';
             this.generalInfo = new GeneralInfo(this.label, '', this._workspaceFolder, GoUtils.PKG_TYPE);
             return;
@@ -94,7 +94,7 @@ export class GoTreeNode extends DependenciesTreeNode {
 
     private addComponentToScan(dependenciesTreeNode: DependenciesTreeNode, quickScan: boolean) {
         let componentId: string = dependenciesTreeNode.generalInfo.artifactId + ':' + dependenciesTreeNode.generalInfo.version;
-        if (!quickScan || !this._scanCacheManager.validateOrDelete(componentId)) {
+        if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(componentId)) {
             this._componentsToScan.add(new ComponentDetails(GoTreeNode.COMPONENT_PREFIX + componentId));
         }
     }

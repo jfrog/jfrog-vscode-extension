@@ -9,6 +9,7 @@ import { HoverManager } from './main/hover/hoverManager';
 import { ScanCacheManager } from './main/scanCache/scanCacheManager';
 import { TreesManager } from './main/treeDataProviders/treesManager';
 import { WatcherManager } from './main/watchers/watcherManager';
+import { LogManager } from './main/log/logManager';
 
 /**
  * This method is called when the extension is activated.
@@ -17,9 +18,10 @@ import { WatcherManager } from './main/watchers/watcherManager';
 export async function activate(context: vscode.ExtensionContext) {
     let workspaceFolders: vscode.WorkspaceFolder[] = vscode.workspace.workspaceFolders || [];
 
+    let logManager: LogManager = new LogManager().activate(context);
     let connectionManager: ConnectionManager = await new ConnectionManager().activate(context);
     let scanCacheManager: ScanCacheManager = new ScanCacheManager().activate(context);
-    let treesManager: TreesManager = await new TreesManager(workspaceFolders, connectionManager, scanCacheManager).activate(context);
+    let treesManager: TreesManager = await new TreesManager(workspaceFolders, connectionManager, scanCacheManager, logManager).activate(context);
     let filterManager: FilterManager = new FilterManager(treesManager).activate(context);
     let focusManager: FocusManager = new FocusManager().activate(context);
 

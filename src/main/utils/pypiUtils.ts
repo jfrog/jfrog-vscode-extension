@@ -3,9 +3,10 @@ import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/pypiTreeNode';
+import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
 
 export class PypiUtils {
@@ -59,13 +60,17 @@ export class PypiUtils {
      */
     public static async arePythonFilesExist(
         workspaceFolder: vscode.WorkspaceFolder,
-        progress: vscode.Progress<{ message?: string; increment?: number }>
+        progress: vscode.Progress<{ message?: string; increment?: number }>,
+        logManager?: LogManager
     ): Promise<boolean> {
         progress.report({ message: 'Locating python files in workspace ' + workspaceFolder.name });
         let wsPythonFiles: vscode.Uri[] = await vscode.workspace.findFiles(
             { base: workspaceFolder.uri.fsPath, pattern: '**/*{setup.py,requirements*.txt}' },
             ScanUtils.getScanExcludePattern(workspaceFolder)
         );
+        if (logManager && wsPythonFiles.length > 0) {
+            logManager.logMessage('Detected python files in workspace ' + workspaceFolder.name + ': [' + wsPythonFiles.toString() + ']', 'DEBUG');
+        }
         return Promise.resolve(wsPythonFiles.length > 0);
     }
 
@@ -81,7 +86,7 @@ export class PypiUtils {
         workspaceFolders: vscode.WorkspaceFolder[],
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Collections.Set<ComponentDetails>,
-        scanCacheManager: ScanCacheManager,
+        treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<PypiTreeNode[]> {
@@ -95,8 +100,9 @@ export class PypiUtils {
 
         let pypiTreeNodes: PypiTreeNode[] = [];
         for (let workspaceFolder of workspaceFolders) {
-            let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, progress);
+            let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, progress, treesManager.logManager);
             if (!pythonFilesExist) {
+                treesManager.logManager.logMessage('No setup.py and requirements files found in workspace ' + workspaceFolder.name + '.', 'DEBUG');
                 continue;
             }
 
@@ -113,13 +119,7 @@ export class PypiUtils {
             }
 
             progress.report({ message: 'Analyzing setup.py and requirements files of ' + workspaceFolder.name });
-            let dependenciesTreeNode: PypiTreeNode = new PypiTreeNode(
-                workspaceFolder.uri.fsPath,
-                componentsToScan,
-                scanCacheManager,
-                pythonPath,
-                parent
-            );
+            let dependenciesTreeNode: PypiTreeNode = new PypiTreeNode(workspaceFolder.uri.fsPath, componentsToScan, treesManager, pythonPath, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
             pypiTreeNodes.push(dependenciesTreeNode);
         }

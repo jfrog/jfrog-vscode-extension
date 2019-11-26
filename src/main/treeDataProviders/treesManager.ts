@@ -7,6 +7,7 @@ import { DependenciesTreeDataProvider } from './dependenciesTree/dependenciesDat
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { IssuesDataProvider } from './issuesDataProvider';
 import { SetCredentialsNode } from './utils/setCredentialsNode';
+import { LogManager } from '../log/logManager';
 
 /**
  * Manages all 3 trees in the extension: Components, component details and component issues details.
@@ -17,8 +18,8 @@ export class TreesManager implements ExtensionComponent {
     private _dependenciesDataProvider: DependenciesTreeDataProvider;
     private _issuesDataProvider: IssuesDataProvider;
 
-    constructor(workspaceFolders: vscode.WorkspaceFolder[], connectionManager: ConnectionManager, scanCacheManager: ScanCacheManager) {
-        this._dependenciesDataProvider = new DependenciesTreeDataProvider(workspaceFolders, connectionManager, scanCacheManager);
+    constructor(workspaceFolders: vscode.WorkspaceFolder[], private _connectionManager: ConnectionManager, private _scanCacheManager: ScanCacheManager, private _logManager: LogManager) {
+        this._dependenciesDataProvider = new DependenciesTreeDataProvider(workspaceFolders, this);
         this._componentDetailsDataProvider = new ComponentDetailsDataProvider();
         this._issuesDataProvider = new IssuesDataProvider();
     }
@@ -51,5 +52,17 @@ export class TreesManager implements ExtensionComponent {
 
     public get dependenciesTreeDataProvider(): DependenciesTreeDataProvider {
         return this._dependenciesDataProvider;
+    }
+
+    public get connectionManager(): ConnectionManager {
+        return this._connectionManager;
+    }
+
+    public get scanCacheManager(): ScanCacheManager {
+        return this._scanCacheManager;
+    }
+
+    public get logManager(): LogManager {
+        return this._logManager;
     }
 }

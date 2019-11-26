@@ -3,9 +3,9 @@ import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { ScanCacheManager } from '../../scanCache/scanCacheManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { NpmUtils } from '../../utils/npmUtils';
+import { TreesManager } from '../treesManager';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class NpmTreeNode extends DependenciesTreeNode {
@@ -14,7 +14,7 @@ export class NpmTreeNode extends DependenciesTreeNode {
     constructor(
         private _workspaceFolder: string,
         private _componentsToScan: Collections.Set<ComponentDetails>,
-        private _scanCacheManager: ScanCacheManager,
+        private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
         super(new GeneralInfo('', '', _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent);
@@ -25,9 +25,10 @@ export class NpmTreeNode extends DependenciesTreeNode {
         try {
             npmList = JSON.parse(exec.execSync('npm ls --json', { cwd: this._workspaceFolder }).toString());
         } catch (error) {
-            vscode.window.showWarningMessage(error.toString());
-            vscode.window.showInformationMessage(
-                'Possible cause: The project needs to be installed by npm. Install in by running "npm install" from "' + this._workspaceFolder + '".'
+            this._treesManager.logManager.logError(error, !quickScan);
+            this._treesManager.logManager.logMessage(
+                'Possible cause: The project needs to be installed by npm. Install in by running "npm install" from "' + this._workspaceFolder + '".',
+                'INFO'
             );
             npmList = JSON.parse(error.stdout.toString());
             npmList.name += ' [Not installed]';
@@ -52,7 +53,7 @@ export class NpmTreeNode extends DependenciesTreeNode {
                     : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
                 let componentId: string = key + ':' + version;
-                if (!quickScan || !this._scanCacheManager.validateOrDelete(componentId)) {
+                if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(componentId)) {
                     this._componentsToScan.add(new ComponentDetails(NpmTreeNode.COMPONENT_PREFIX + componentId));
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan);
