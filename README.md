@@ -10,7 +10,7 @@
 - [Configuring JFrog Xray](#configuring-jfrog-xray)
   - [Proxy configuration](#proxy-configuration)
     - [Proxy Authorization](#proxy-authorization)
-- [Npm Project](#npm-projects)
+- [Npm Projects](#npm-projects)
 - [Go Projects](#go-projects)
 - [Pypi Projects](#pypi-projects)
 - [Troubleshooting](#troubleshooting)
@@ -39,7 +39,7 @@ The JFrog extension automatically triggers a scan of the project's npm dependenc
 To invoke a scan manually, click on the Refresh ![Refresh](resources/readme/refresh.png) button or click on *Start Xray Scan* from within the **package.json** (above the *dependencies* section):
 ![Refresh](resources/readme/gifs/refresh.gif)
 
-View existing issues
+View existing issues:
 ![Vulnerabilities](resources/readme/gifs/show_vulnerabilities.gif)
 
 View licenses directly from within the **package.json**:
@@ -96,7 +96,7 @@ settings.json:
 
 ## Npm Projects
 
-The extension builds the npm dependencies tree by running `npm list`.
+The extension builds the npm dependencies tree by running `npm list`. View licenses and top issue severities directly from package.json.
 To scan your npm dependencies, make sure to fulfill the following requirements:
 
 1. npm cli is installed in your system PATH.
@@ -104,12 +104,12 @@ To scan your npm dependencies, make sure to fulfill the following requirements:
 
 ## Go Projects
 
-The extension build the Go dependencies tree by running `go mod graph`.
+The extension build the Go dependencies tree by running `go mod graph`. View licenses and top issue severities directly from go.mod.
 To scan your Go dependencies, just make sure to have Go CLI in your system PATH.
 
 ## Pypi Projects
 
-The extension build the Pypi dependencies tree by running `pipdeptree` on your Python virtual environment. It also takes the Python interpreter path from the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python). The scan your Pypi dependencies, make sure to fulfill the following requirements:
+The extension build the Pypi dependencies tree by running `pipdeptree` on your Python virtual environment. It also takes the Python interpreter path from the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python). View licenses and top issue severities directly from your requirements.txt files. The scan your Pypi dependencies, make sure to fulfill the following requirements:
 
 1. Install the [Python extension for VS Code](https://code.visualstudio.com/docs/python/python-tutorial#_install-visual-studio-code-and-the-python-extension).
 1. According to your project, Python 2 or 3 most be your system PATH.
