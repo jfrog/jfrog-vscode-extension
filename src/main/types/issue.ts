@@ -1,6 +1,7 @@
 import { Severity } from './severity';
 
 export class Issue {
+    public static readonly MISSING_COMPONENT: Issue = new Issue('Component is missing in Xray', Severity.Unknown, '', 'Unknown');
     private _component: string = '';
 
     constructor(

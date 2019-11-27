@@ -186,7 +186,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         missingComponents.forEach(missingComponent => {
             artifacts.push(<IArtifact>{
                 general: <IGeneral>{ component_id: missingComponent },
-                issues: [<IIssue>{ summary: 'Component is missing in Xray', severity: 'Unknown', issue_type: 'Unknown' }],
+                issues: [<IIssue>{ summary: Issue.MISSING_COMPONENT.summary, severity: Issue.MISSING_COMPONENT.severity.toString() }],
                 licenses: [<ILicense>{ name: License.UNKNOWN_LICENSE, full_name: License.UNKNOWN_LICENSE_FULL_NAME }]
             });
         });
