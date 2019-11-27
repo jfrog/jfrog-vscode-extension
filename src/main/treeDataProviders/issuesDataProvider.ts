@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { Severity, SeverityUtils } from '../types/severity';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from './utils/treeDataHolder';
+import { Issue } from '../types/issue';
 
 /**
  * The component issues details tree.
@@ -36,6 +37,9 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
         if (!element) {
             let children: IssueNode[] = [];
             this._selectedNode.issues.forEach(issue => {
+                if (issue.summary === Issue.MISSING_COMPONENT.summary) {
+                    return;
+                }
                 let issueNode: IssueNode = new IssueNode(issue.severity, issue.summary, issue.issueType, issue.component, issue.fixedVersions);
                 children.push(issueNode);
             });
