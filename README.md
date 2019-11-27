@@ -10,6 +10,8 @@
 - [Configuring JFrog Xray](#configuring-jfrog-xray)
   - [Proxy configuration](#proxy-configuration)
     - [Proxy Authorization](#proxy-authorization)
+  - [Exclude Paths from Scan](#exclude-paths-from-scan)
+  - [Extension Settings](#extension-settings)
 - [Npm Projects](#npm-projects)
 - [Go Projects](#go-projects)
 - [Pypi Projects](#pypi-projects)
@@ -93,6 +95,18 @@ settings.json:
    "http.proxyAuthorization": "Basic Zm9vOmJhcg=="
 }
 ```
+
+### Exclude Paths from Scan
+
+By default, paths containing the words `test`, `venv` and `node_modules` will be excluded from Xray scan.
+The exclude pattern can be configured in the [extension settings](#extension-settings).
+
+### Extension Settings
+
+To open the extension settings, use the following VS Code menu command:
+
+- On Windows/Linux - File > Preferences > Settings > Extensions > JFrog
+- On macOS - Code > Preferences > Settings > Extensions > JFrog
 
 ## Npm Projects
 
