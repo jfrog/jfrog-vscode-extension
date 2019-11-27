@@ -111,6 +111,7 @@ To open the extension settings, use the following VS Code menu command:
 ## Npm Projects
 
 Behind the scenes, the extension builds the npm dependencies tree by running `npm list`. View licenses and top issue severities directly from the package.json.
+
 Important:
 To have your project dependencies scanned by JFrog Xray, make sure the npm CLI is installed on your local machine and that it is in your system PATH.
 In addition, the project dependencies must be installed using npm.
