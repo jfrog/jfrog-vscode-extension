@@ -42,7 +42,9 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             return;
         }
         if (this._scanInProgress) {
-            vscode.window.showInformationMessage('Previous scan still running...');
+            if (!quickScan) {
+                vscode.window.showInformationMessage('Previous scan still running...');
+            }
             return;
         }
         try {
