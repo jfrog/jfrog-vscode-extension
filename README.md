@@ -7,16 +7,19 @@
 
 - [General](#general)
 - [Viewing Project Dependencies Information](#viewing-project-dependencies-information)
-- [Configuring JFrog Xray](#configuring-jfrog-xray)
-  - [Proxy configuration](#proxy-configuration)
+- [General Configuration](#general-configuration)
+  - [Configuring JFrog Xray](#configuring-jfrog-xray)
+  - [Proxy Configuration](#proxy-configuration)
     - [Proxy Authorization](#proxy-authorization)
+  - [Exclude Paths from Scan](#exclude-paths-from-scan)
+  - [Extension Settings](#extension-settings)
 - [Npm Projects](#npm-projects)
 - [Go Projects](#go-projects)
 - [Pypi Projects](#pypi-projects)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 - [Building and Testing the Sources](#building-and-testing-the-sources)
-- [Code contributions](#code-contributions)
+- [Code Contributions](#code-contributions)
   - [Guidelines](#guidelines)
 
 ## General
@@ -57,12 +60,14 @@ Search for a dependency in the tree:
 To filter scan results, click on the Filter ![Filter](resources/readme/filter.png) button:
 ![Filter](resources/readme/gifs/filter.gif)
 
-## Configuring JFrog Xray
+## General Configuration
+
+### Configuring JFrog Xray
 
 Connect to JFrog Xray by clicking on the green Connect ![Connect](resources/readme/connect.png) button:
 ![Connect](resources/readme/gifs/connect.gif)
 
-### Proxy configuration
+### Proxy Configuration
 
 If your JFrog Xray instance is behind an HTTP/S proxy, follow these steps to configure the proxy server:
 
@@ -94,9 +99,22 @@ settings.json:
 }
 ```
 
+### Exclude Paths from Scan
+
+By default, paths containing the words `test`, `venv` and `node_modules` are excluded from Xray scan.
+The exclude pattern can be configured in the [Extension Settings](#extension-settings).
+
+### Extension Settings
+
+To open the extension settings, use the following VS Code menu command:
+
+- On Windows/Linux - File > Preferences > Settings > Extensions > JFrog
+- On macOS - Code > Preferences > Settings > Extensions > JFrog
+
 ## Npm Projects
 
 Behind the scenes, the extension builds the npm dependencies tree by running `npm list`. View licenses and top issue severities directly from the package.json.
+
 Important:
 To have your project dependencies scanned by JFrog Xray, make sure the npm CLI is installed on your local machine and that it is in your system PATH.
 In addition, the project dependencies must be installed using npm.
@@ -145,7 +163,7 @@ To run the tests:
 npm t
 ```
 
-## Code contributions
+## Code Contributions
 
 We welcome community contribution through pull requests.
 
