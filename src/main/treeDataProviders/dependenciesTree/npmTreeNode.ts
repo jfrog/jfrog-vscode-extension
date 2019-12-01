@@ -27,7 +27,7 @@ export class NpmTreeNode extends DependenciesTreeNode {
         } catch (error) {
             this._treesManager.logManager.logError(error, !quickScan);
             this._treesManager.logManager.logMessage(
-                'Possible cause: The project needs to be installed by npm. Install in by running "npm install" from "' + this._workspaceFolder + '".',
+                'Possible cause: The project needs to be installed by npm. Install it by running "npm install" from "' + this._workspaceFolder + '".',
                 'INFO'
             );
             npmList = JSON.parse(error.stdout.toString());
