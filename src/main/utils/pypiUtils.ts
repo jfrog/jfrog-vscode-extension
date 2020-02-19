@@ -90,20 +90,20 @@ export class PypiUtils {
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<PypiTreeNode[]> {
-        if (!(await PypiUtils.verifyAndActivatePythonExtension())) {
-            vscode.window.showErrorMessage(
-                'Could not scan Pypi project dependencies, because python extension is not installed.' +
-                    'Please install Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python'
-            );
-            return [];
-        }
-
+        let pythonExtensionInstalled: boolean = await PypiUtils.verifyAndActivatePythonExtension();
         let pypiTreeNodes: PypiTreeNode[] = [];
         for (let workspaceFolder of workspaceFolders) {
             let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, progress, treesManager.logManager);
             if (!pythonFilesExist) {
                 treesManager.logManager.logMessage('No setup.py and requirements files found in workspace ' + workspaceFolder.name + '.', 'DEBUG');
                 continue;
+            }
+            if (!pythonExtensionInstalled) {
+                vscode.window.showErrorMessage(
+                    'Could not scan Pypi project dependencies, because python extension is not installed. ' +
+                        'Please install Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python'
+                );
+                return [];
             }
 
             let pythonPath: string | undefined = PypiUtils.getPythonPath(workspaceFolder);
