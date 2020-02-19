@@ -23,7 +23,9 @@ export class NpmTreeNode extends DependenciesTreeNode {
     public async refreshDependencies(quickScan: boolean) {
         let npmList: any;
         try {
-            npmList = JSON.parse(exec.execSync('npm ls --json', { cwd: this._workspaceFolder }).toString());
+            npmList = JSON.parse(
+                exec.execSync('npm ls --json', { cwd: this._workspaceFolder, maxBuffer: this.SPAWN_PROCESS_BUFFER_SIZE }).toString()
+            );
         } catch (error) {
             this._treesManager.logManager.logError(error, !quickScan);
             this._treesManager.logManager.logMessage(
