@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuite tests="0" failures="0" name="artifactory.test.AppTest" time="0" errors="0" skipped="0">
+  <properties>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="sun.boot.library.path" value="/Users/orgab/.sdkman/candidates/java/8.0.222-zulu/jre/lib"/>
+    <property name="java.vm.version" value="25.222-b10"/>
+    <property name="gopherProxySet" value="false"/>
+    <property name="java.vm.vendor" value="Azul Systems, Inc."/>
+    <property name="maven.multiModuleProjectDirectory" value="/Users/orgab/Desktop/project-examples/maven-example"/>
+    <property name="java.vendor.url" value="http://www.azulsystems.com/"/>
+    <property name="path.separator" value=":"/>
+    <property name="guice.disable.misplaced.annotation.check" value="true"/>
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+    <property name="file.encoding.pkg" value="sun.io"/>
+    <property name="user.country" value="IL"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="sun.os.patch.level" value="unknown"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="user.dir" value="/Users/orgab/Desktop/project-examples/maven-example"/>
+    <property name="java.runtime.version" value="1.8.0_222-b10"/>
+    <property name="java.awt.graphicsenv" value="sun.awt.CGraphicsEnvironment"/>
+    <property name="java.endorsed.dirs" value="/Users/orgab/.sdkman/candidates/java/8.0.222-zulu/jre/lib/endorsed"/>
+    <property name="os.arch" value="x86_64"/>
+    <property name="java.io.tmpdir" value="/var/folders/g3/5l_0ygvs6cn8p9wc4y3xtz2w0000gn/T/"/>
+    <property name="line.separator" value="
+"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="os.name" value="Mac OS X"/>
+    <property name="classworlds.conf" value="/Users/orgab/.jfrog/dependencies/maven/2.13.13/classworlds.conf"/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="java.library.path" value="/Users/orgab/Library/Java/Extensions:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java:."/>
+    <property name="artifactory.publish.buildInfo" value="true"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.class.version" value="52.0"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="os.version" value="10.15.2"/>
+    <property name="user.home" value="/Users/orgab"/>
+    <property name="user.timezone" value="Asia/Jerusalem"/>
+    <property name="java.awt.printerjob" value="sun.lwawt.macosx.CPrinterJob"/>
+    <property name="java.specification.version" value="1.8"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="buildInfoConfig.propertiesFile" value="/var/folders/g3/5l_0ygvs6cn8p9wc4y3xtz2w0000gn/T/jfrog/properties/buildInfoProperties802587149"/>
+    <property name="user.name" value="orgab"/>
+    <property name="java.class.path" value="/Users/orgab/.sdkman/candidates/maven/current/boot/plexus-classworlds-2.6.0.jar"/>
+    <property name="java.vm.specification.version" value="1.8"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.home" value="/Users/orgab/.sdkman/candidates/java/8.0.222-zulu/jre"/>
+    <property name="sun.java.command" value="org.codehaus.plexus.classworlds.launcher.Launcher clean install -Dartifactory.publish.buildInfo=true"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="user.language" value="en"/>
+    <property name="awt.toolkit" value="sun.lwawt.macosx.LWCToolkit"/>
+    <property name="java.vm.info" value="mixed mode"/>
+    <property name="java.version" value="1.8.0_222"/>
+    <property name="java.ext.dirs" value="/Users/orgab/Library/Java/Extensions:/Users/orgab/.sdkman/candidates/java/8.0.222-zulu/jre/lib/ext:/Library/Java/Extensions:/Network/Library/Java/Extensions:/System/Library/Java/Extensions:/usr/lib/java"/>
+    <property name="sun.boot.class.path" value="/Users/orgab/.sdkman/candidates/java/8.0.222-zulu/jre/lib/resources.jar:/Users/orgab/.sdkman/candidates/java/8.0.222-zulu/jre/lib/rt.jar:/Users/orgab/.sdkman/candidates/java/8.0.222-zulu/jre/lib/sunrsasign.jar:/Users/orgab/.sdkman/candidates/java/8.0.222-zulu/jre/lib/jsse.jar:/Users/orgab/.sdkman/candidates/java/8.0.222-zulu/jre/lib/jce.jar:/Users/orgab/.sdkman/candidates/java/8.0.222-zulu/jre/lib/charsets.jar:/Users/orgab/.sdkman/candidates/java/8.0.222-zulu/jre/lib/jfr.jar:/Users/orgab/.sdkman/candidates/java/8.0.222-zulu/jre/classes"/>
+    <property name="java.vendor" value="Azul Systems, Inc."/>
+    <property name="maven.home" value="/Users/orgab/.sdkman/candidates/maven/current"/>
+    <property name="m3plugin.lib" value="/Users/orgab/.jfrog/dependencies/maven/2.13.13"/>
+    <property name="file.separator" value="/"/>
+    <property name="java.vendor.url.bug" value="http://www.azulsystems.com/support/"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeBig"/>
+    <property name="sun.cpu.isalist" value=""/>
+  </properties>
+</testsuite>
