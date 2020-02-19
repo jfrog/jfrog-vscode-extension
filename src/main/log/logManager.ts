@@ -30,7 +30,7 @@ export class LogManager implements ExtensionComponent {
      * @param shouldToast - True iff toast should be shown
      */
     public logError(error: Error, shouldToast: boolean) {
-        this.logMessage(error.name, 'ERR');
+        this.logMessage(error.name || error.message, 'ERR');
         if (error.message) {
             this._outputChannel.appendLine(error.message);
             if (shouldToast) {

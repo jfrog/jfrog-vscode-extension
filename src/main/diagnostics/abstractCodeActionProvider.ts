@@ -80,23 +80,25 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
     }
 
     /**
-     * Add a new diagnostic to the input diagnostics list. 
+     * Add a new diagnostic to the input diagnostics list.
      * Fill up the new diagnostic with information from the input dependencies tree node and the input position in the project descriptor.
      * @param diagnostics The diagnostics list
      * @param node The dependencies tree node
      * @param dependencyPos The position of the diagnostics in the descriptor
      */
     addDiagnostic(diagnostics: vscode.Diagnostic[], node: DependenciesTreeNode, dependencyPos: vscode.Position[]) {
-        let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
-            new vscode.Range(dependencyPos[0], dependencyPos[1]),
-            node.topIssue.severity === Severity.Normal
-                ? 'No issues found.'
-                : 'Top issue severity: ' + SeverityUtils.getString(node.topIssue.severity),
-            DiagnosticsUtils.getDiagnosticSeverity(node.topIssue.severity)
-        );
-        diagnostic.source = 'JFrog Xray';
-        diagnostic.code = node.componentId;
-        diagnostics.push(diagnostic);
+        for (let i: number = 0; i < dependencyPos.length; i += 2) {
+            let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
+                new vscode.Range(dependencyPos[i], dependencyPos[i + 1]),
+                node.topIssue.severity === Severity.Normal
+                    ? 'No issues found.'
+                    : 'Top issue severity: ' + SeverityUtils.getString(node.topIssue.severity),
+                DiagnosticsUtils.getDiagnosticSeverity(node.topIssue.severity)
+            );
+            diagnostic.source = 'JFrog Xray';
+            diagnostic.code = node.componentId;
+            diagnostics.push(diagnostic);
+        }
     }
 
     deleteDiagnostics(document: vscode.TextDocument) {

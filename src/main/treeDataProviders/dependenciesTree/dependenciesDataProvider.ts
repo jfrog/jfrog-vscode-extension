@@ -11,6 +11,8 @@ import { TreesManager } from '../treesManager';
 import { SetCredentialsNode } from '../utils/setCredentialsNode';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
+import { GavGeneralInfo } from '../../types/gavGeneralinfo';
+import { MavenUtils } from '../../utils/mavenUtils';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode | SetCredentialsNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -125,8 +127,8 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
 
     private addXrayInfoToTree(root: DependenciesTreeNode) {
         root.children.forEach(child => {
-            let generalInfo: GeneralInfo = child.generalInfo;
-            let artifact: IArtifact | undefined = this._treesManager.scanCacheManager.get(generalInfo.artifactId + ':' + generalInfo.version);
+            let generalInfo: GeneralInfo | GavGeneralInfo = child.generalInfo;
+            let artifact: IArtifact | undefined = this._treesManager.scanCacheManager.get(generalInfo.getComponentId());
             if (artifact) {
                 let pkgType: string = child.generalInfo.pkgType;
                 child.generalInfo = Translators.toGeneralInfo(artifact.general);
@@ -198,9 +200,12 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         if (!(this.dependenciesTree instanceof DependenciesTreeNode)) {
             return undefined;
         }
+        if (pkgType === 'maven') {
+            return MavenUtils.pathToNode.get(path || '');
+        }
         let root: DependenciesTreeNode = this._filteredDependenciesTree || this.dependenciesTree;
         for (let dependenciesTree of root.children) {
-            let generalInfo: GeneralInfo = dependenciesTree.generalInfo;
+            let generalInfo: GeneralInfo | GavGeneralInfo = dependenciesTree.generalInfo;
             if (generalInfo.pkgType === pkgType && (!path || generalInfo.path === path)) {
                 return dependenciesTree;
             }

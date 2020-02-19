@@ -3,11 +3,14 @@ import { GeneralInfo } from '../types/generalInfo';
 import { Issue } from '../types/issue';
 import { License } from '../types/license';
 import { Severity } from '../types/severity';
+import { GavGeneralInfo } from '../types/gavGeneralinfo';
 
 export class Translators {
-    public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
+    public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo | GavGeneralInfo {
         let components: string[] = clientGeneral.component_id.split(':');
-        return new GeneralInfo(components[0], components[1], clientGeneral.path, clientGeneral.pkg_type);
+        return components.length === 2
+            ? new GeneralInfo(components[0], components[1], clientGeneral.path, clientGeneral.pkg_type)
+            : new GavGeneralInfo(components[0], components[1], components[2], clientGeneral.path, clientGeneral.pkg_type);
     }
 
     public static toIssue(clientIssue: IIssue) {
