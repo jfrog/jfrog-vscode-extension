@@ -76,7 +76,7 @@ export class MavenUtils {
     public static async locatePomXmls(
         workspaceFolders: vscode.WorkspaceFolder[],
         progress: vscode.Progress<{ message?: string; increment?: number }>
-    ): Promise<Collections.Set<vscode.Uri>> {
+    ): Promise<vscode.Uri[]> {
         let pomXmls: Collections.Set<vscode.Uri> = new Collections.Set();
         for (let workspace of workspaceFolders) {
             progress.report({ message: 'Locating pom.xml files in workspace ' + workspace.name });
@@ -86,7 +86,10 @@ export class MavenUtils {
             );
             wsPomXmls.forEach(pomXml => pomXmls.add(pomXml));
         }
-        return Promise.resolve(pomXmls);
+        let result: vscode.Uri[] = pomXmls.toArray();
+        
+        // we need to sort so on each time adn on each OS we will get the same order
+        return Promise.resolve(result.length > 1 ? result.sort((a: vscode.Uri, b: vscode.Uri) => a.fsPath.localeCompare(b.fsPath)) : result);
     }
 
     public static getRawDependenciesList(pathToPomXml: string, treesManager: TreesManager): string[] {
@@ -131,8 +134,8 @@ export class MavenUtils {
         root: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<MavenTreeNode[]> {
-        let pomXmls: Collections.Set<vscode.Uri> = await MavenUtils.locatePomXmls(workspaceFolders, progress);
-        if (pomXmls.isEmpty()) {
+        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, progress);
+        if (pomXmls.length === 0) {
             treesManager.logManager.logMessage('No pom.xml files found in workspaces.', 'DEBUG');
             return [];
         }
@@ -143,7 +146,7 @@ export class MavenUtils {
         }
         let mavenTreeNodes: MavenTreeNode[] = [];
         progress.report({ message: 'Analyzing pom.xml files' });
-        let prototyeTree: PomTree[] = this.buildPrototypePomTree(pomXmls.toArray(), treesManager);
+        let prototyeTree: PomTree[] = this.buildPrototypePomTree(pomXmls, treesManager);
         for (let ProjectTree of prototyeTree) {
             progress.report({ message: 'Analyzing pom.xml files' });
             let projectDependenciesList: string[] = this.getRawDependenciesList(ProjectTree.pomPath, treesManager);
@@ -175,6 +178,7 @@ export class MavenUtils {
                 let parentId: string = this.getParentInfo(pom);
                 let index: number = this.searchPomId(result, currPomId);
                 let currNode: PomTree;
+                // If the node already exists get it and remove it from tree other wise create a new node
                 if (index > -1) {
                     currNode = result[index];
                     result.splice(index, 1);
@@ -199,11 +203,21 @@ export class MavenUtils {
         });
         return result;
     }
-
+    // If the node have parent do:
+    // 1. check if the parent already in the tree,
+    //     1.1 if its add to its child
+    //     1.2 else create the parent and add the parent to the array
+    // 2.otherwise add the node to the array
     public static addNode(array: PomTree[], node: PomTree) {
-        const parentNode: PomTree | undefined = this.deepSearchNode(array, node.parentId);
-        if (!!parentNode) {
-            parentNode.addChild(node);
+        if (!!node.parentId) {
+            const parentNode: PomTree | undefined = this.deepSearchNode(array, node.parentId);
+            if (!!parentNode) {
+                parentNode.addChild(node);
+            } else {
+                const ParentPom: PomTree = new PomTree(node.parentId);
+                ParentPom.addChild(node);
+                array.push(ParentPom);
+            }
         } else {
             array.push(node);
         }

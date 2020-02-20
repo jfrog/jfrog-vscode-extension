@@ -46,13 +46,13 @@ describe('Maven Utils Tests', () => {
      * Test MavenUtils.locatePomXml.
      */
     it('Locate pom.xml', async () => {
-        let pomXmls: Collections.Set<vscode.Uri> = await MavenUtils.locatePomXmls(workspaceFolders, dummyProgress);
-        assert.strictEqual(pomXmls.size(), 6);
+        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, dummyProgress);
+        assert.strictEqual(pomXmls.length, 6);
 
         // Assert that results contains all projects
         for (let expectedProjectDir of projectDirs) {
-            let expectedPomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, expectedProjectDir, 'pom.xml'));
-            assert.isTrue(pomXmls.contains(expectedPomXml), 'Should contain ' + expectedPomXml.fsPath);
+            let expectedPomXml: string = path.join(tmpDir.fsPath, expectedProjectDir, 'pom.xml');
+            assert.isTrue(!!pomXmls.find(el => el.fsPath === expectedPomXml), 'Should contain ' + expectedPomXml);
         }
     });
 
@@ -149,8 +149,8 @@ describe('Maven Utils Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
-        let pomXmls: Collections.Set<vscode.Uri> = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
-        let got: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls.toArray(), treesManager);
+        let pomXmlsArray: vscode.Uri[] = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
+        let got: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager);
         let want: PomTree[];
         assert.deepEqual(got, [new PomTree('org.jfrog.test:multi2:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'dependency'))]);
 
@@ -162,13 +162,13 @@ describe('Maven Utils Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
-        pomXmls = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
-        got = MavenUtils.buildPrototypePomTree(pomXmls.toArray(), treesManager);
+        pomXmlsArray = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
+        got = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager);
         want = [new PomTree('org.jfrog.test:multi:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency'))];
         want[0].addChild(
             new PomTree(
-                'org.jfrog.test:multi3:3.7-SNAPSHOT',
-                path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi3'),
+                'org.jfrog.test:multi1:3.7-SNAPSHOT',
+                path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi1'),
                 [],
                 undefined,
                 'org.jfrog.test:multi:3.7-SNAPSHOT'
@@ -185,13 +185,14 @@ describe('Maven Utils Tests', () => {
         );
         want[0].addChild(
             new PomTree(
-                'org.jfrog.test:multi1:3.7-SNAPSHOT',
-                path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi1'),
+                'org.jfrog.test:multi3:3.7-SNAPSHOT',
+                path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi3'),
                 [],
                 undefined,
                 'org.jfrog.test:multi:3.7-SNAPSHOT'
             )
         );
+
         assert.deepEqual(got, want);
     });
 
@@ -232,9 +233,9 @@ describe('Maven Utils Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
-        let pomXmls: Collections.Set<vscode.Uri> = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
+        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
 
-        let pomId: string = MavenUtils.getPomId(pomXmls.toArray()[0], treesManager);
+        let pomId: string = MavenUtils.getPomId(pomXmls[0], treesManager);
         assert.equal(pomId, 'org.jfrog.test:multi2:3.7-SNAPSHOT');
         // Multi pom
         localWorkspaceFolders = [
@@ -245,8 +246,8 @@ describe('Maven Utils Tests', () => {
             } as vscode.WorkspaceFolder
         ];
         pomXmls = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
-        pomId = MavenUtils.getPomId(pomXmls.toArray()[0], treesManager);
-        assert.equal(pomId, 'org.jfrog.test:multi:3.7-SNAPSHOT');
+        pomId = MavenUtils.getPomId(pomXmls[0], treesManager);
+        assert.equal(pomId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
     });
 
     /**
@@ -346,24 +347,24 @@ describe('Maven Utils Tests', () => {
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
         let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
         let toCompare: string[] = [
-            'gav://junit:junit:3.8.1',
-            'gav://org.jfrog.test:multi1:3.7-SNAPSHOT',
-            'gav://org.apache.commons:commons-email:1.1',
-            'gav://javax.mail:mail:1.4',
-            'gav://javax.activation:activation:1.1',
-            'gav://org.codehaus.plexus:plexus-utils:1.5.1',
-            'gav://javax.servlet.jsp:jsp-api:2.1',
-            'gav://commons-io:commons-io:1.4',
-            'gav://org.springframework:spring-aop:2.5.6',
             'gav://aopalliance:aopalliance:1.0',
+            'gav://commons-io:commons-io:1.4',
             'gav://commons-logging:commons-logging:1.1.1',
+            'gav://hsqldb:hsqldb:1.8.0.10',
+            'gav://javax.activation:activation:1.1',
+            'gav://javax.mail:mail:1.4',
+            'gav://javax.servlet:servlet-api:2.5',
+            'gav://javax.servlet.jsp:jsp-api:2.1',
+            'gav://junit:junit:3.8.1',
+            'gav://org.apache.commons:commons-email:1.1',
+            'gav://org.codehaus.plexus:plexus-utils:1.5.1',
+            'gav://org.jfrog.test:multi1:3.7-SNAPSHOT',
+            'gav://org.springframework:spring-aop:2.5.6',
             'gav://org.springframework:spring-beans:2.5.6',
             'gav://org.springframework:spring-core:2.5.6',
-            'gav://hsqldb:hsqldb:1.8.0.10',
-            'gav://javax.servlet:servlet-api:2.5',
             'gav://org.testng:testng:5.9'
         ];
-        const componentArray = componentsToScan.toArray();
+        const componentArray = componentsToScan.toArray().sort((a: ComponentDetails, b: ComponentDetails) => a.component_id.localeCompare(b.component_id));
         // Check that components to scan contains progress:2.0.3
         for (let i = 0; i < componentsToScan.size(); i++) {
             assert.deepEqual(componentArray[i], new ComponentDetails(toCompare[i]));
@@ -385,51 +386,51 @@ describe('Maven Utils Tests', () => {
         assert.deepEqual(res[0].children[0].parent, res[0]);
         assert.equal(res[0].children[0].componentId, 'junit:junit:3.8.1');
         assert.isTrue(res[0].children[0] instanceof DependenciesTreeNode);
-        assert.lengthOf(res[0].children[1].children, 3);
-        assert.deepEqual(res[0].children[1].parent, res[0]);
-        assert.equal(res[0].children[1].componentId, 'org.jfrog.test:multi3:3.7-SNAPSHOT');
+        assert.lengthOf(res[0].children[3].children, 3);
+        assert.deepEqual(res[0].children[3].parent, res[0]);
+        assert.equal(res[0].children[3].componentId, 'org.jfrog.test:multi3:3.7-SNAPSHOT');
         assert.isTrue(res[0] instanceof MavenTreeNode);
         assert.lengthOf(res[0].children[2].children, 0);
         assert.deepEqual(res[0].children[2].parent, res[0]);
         assert.equal(res[0].children[2].componentId, 'org.jfrog.test:multi2:3.7-SNAPSHOT');
         assert.isTrue(res[0] instanceof MavenTreeNode);
-        assert.lengthOf(res[0].children[3].children, 6);
-        assert.deepEqual(res[0].children[3].parent, res[0]);
-        assert.equal(res[0].children[3].componentId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
+        assert.lengthOf(res[0].children[1].children, 6);
+        assert.deepEqual(res[0].children[1].parent, res[0]);
+        assert.equal(res[0].children[1].componentId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
         assert.isTrue(res[0] instanceof MavenTreeNode);
 
         // Check grandchildren
         // First
-        assert.equal(res[0].children[1].children[0].componentId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
-        assert.isTrue(res[0].children[1].children[0] instanceof DependenciesTreeNode);
-        assert.deepEqual(res[0].children[1].children[0].parent, res[0].children[1]);
-        assert.equal(res[0].children[1].children[1].componentId, 'hsqldb:hsqldb:1.8.0.10');
-        assert.isTrue(res[0].children[1].children[1] instanceof DependenciesTreeNode);
-        assert.deepEqual(res[0].children[1].children[1].parent, res[0].children[1]);
-        assert.equal(res[0].children[1].children[2].componentId, 'javax.servlet:servlet-api:2.5');
-        assert.isTrue(res[0].children[1].children[2] instanceof DependenciesTreeNode);
-        assert.deepEqual(res[0].children[1].children[2].parent, res[0].children[1]);
+        assert.equal(res[0].children[3].children[0].componentId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
+        assert.isTrue(res[0].children[3].children[0] instanceof DependenciesTreeNode);
+        assert.deepEqual(res[0].children[3].children[0].parent, res[0].children[3]);
+        assert.equal(res[0].children[3].children[1].componentId, 'hsqldb:hsqldb:1.8.0.10');
+        assert.isTrue(res[0].children[3].children[1] instanceof DependenciesTreeNode);
+        assert.deepEqual(res[0].children[3].children[1].parent, res[0].children[3]);
+        assert.equal(res[0].children[3].children[2].componentId, 'javax.servlet:servlet-api:2.5');
+        assert.isTrue(res[0].children[3].children[2] instanceof DependenciesTreeNode);
+        assert.deepEqual(res[0].children[3].children[2].parent, res[0].children[3]);
         // Second
         assert.lengthOf(res[0].children[2].children, 0);
         // Third
-        assert.equal(res[0].children[3].children[0].componentId, 'org.apache.commons:commons-email:1.1');
-        assert.isTrue(res[0].children[3].children[0] instanceof DependenciesTreeNode);
-        assert.deepEqual(res[0].children[3].children[0].parent, res[0].children[3]);
-        assert.equal(res[0].children[3].children[1].componentId, 'org.codehaus.plexus:plexus-utils:1.5.1');
-        assert.isTrue(res[0].children[3].children[1] instanceof DependenciesTreeNode);
-        assert.deepEqual(res[0].children[3].children[1].parent, res[0].children[3]);
-        assert.equal(res[0].children[3].children[2].componentId, 'javax.servlet.jsp:jsp-api:2.1');
-        assert.isTrue(res[0].children[3].children[2] instanceof DependenciesTreeNode);
-        assert.deepEqual(res[0].children[3].children[2].parent, res[0].children[3]);
-        assert.equal(res[0].children[3].children[3].componentId, 'commons-io:commons-io:1.4');
-        assert.isTrue(res[0].children[3].children[3] instanceof DependenciesTreeNode);
-        assert.deepEqual(res[0].children[3].children[3].parent, res[0].children[3]);
-        assert.equal(res[0].children[3].children[4].componentId, 'org.springframework:spring-aop:2.5.6');
-        assert.isTrue(res[0].children[3].children[4] instanceof DependenciesTreeNode);
-        assert.deepEqual(res[0].children[3].children[4].parent, res[0].children[3]);
-        assert.equal(res[0].children[3].children[5].componentId, 'org.testng:testng:5.9');
-        assert.isTrue(res[0].children[3].children[5] instanceof DependenciesTreeNode);
-        assert.deepEqual(res[0].children[3].children[5].parent, res[0].children[3]);
+        assert.equal(res[0].children[1].children[0].componentId, 'org.apache.commons:commons-email:1.1');
+        assert.isTrue(res[0].children[1].children[0] instanceof DependenciesTreeNode);
+        assert.deepEqual(res[0].children[1].children[0].parent, res[0].children[1]);
+        assert.equal(res[0].children[1].children[1].componentId, 'org.codehaus.plexus:plexus-utils:1.5.1');
+        assert.isTrue(res[0].children[1].children[1] instanceof DependenciesTreeNode);
+        assert.deepEqual(res[0].children[1].children[1].parent, res[0].children[1]);
+        assert.equal(res[0].children[1].children[2].componentId, 'javax.servlet.jsp:jsp-api:2.1');
+        assert.isTrue(res[0].children[1].children[2] instanceof DependenciesTreeNode);
+        assert.deepEqual(res[0].children[1].children[2].parent, res[0].children[1]);
+        assert.equal(res[0].children[1].children[3].componentId, 'commons-io:commons-io:1.4');
+        assert.isTrue(res[0].children[1].children[3] instanceof DependenciesTreeNode);
+        assert.deepEqual(res[0].children[1].children[3].parent, res[0].children[1]);
+        assert.equal(res[0].children[1].children[4].componentId, 'org.springframework:spring-aop:2.5.6');
+        assert.isTrue(res[0].children[1].children[4] instanceof DependenciesTreeNode);
+        assert.deepEqual(res[0].children[1].children[4].parent, res[0].children[1]);
+        assert.equal(res[0].children[1].children[5].componentId, 'org.testng:testng:5.9');
+        assert.isTrue(res[0].children[1].children[5] instanceof DependenciesTreeNode);
+        assert.deepEqual(res[0].children[1].children[5].parent, res[0].children[1]);
     });
 
     async function runCreateMavenDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
