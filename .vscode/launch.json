@@ -27,6 +27,17 @@
                 "${workspaceRoot}/out/**/*.js"
             ],
             "preLaunchTask": "npm: watch"
+        },
+        {
+            "name": "Launch Tests runTest",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": ["${workspaceRoot}/out/test/resources","--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test/runTest.js" ],
+            "outFiles":  [
+                "${workspaceRoot}/out/**/*.js"
+            ],
+            "preLaunchTask": "npm: watch"
         }
     ]
 }
