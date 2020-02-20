@@ -29,7 +29,7 @@ export class ScanUtils {
     }
 
     /**
-     * Get scan exclude pattern. This pattern is used to exclude specific file descriptors (go.mod, package.json, etc.) from being scanned by Xray. 
+     * Get scan exclude pattern. This pattern is used to exclude specific file descriptors (go.mod, package.json, etc.) from being scanned by Xray.
      * Descriptor files which are under a directory which matches the pattern will not be scanned.
      * @param workspaceFolder - The workspace folder
      */

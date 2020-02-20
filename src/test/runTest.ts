@@ -21,7 +21,7 @@ async function main() {
             extensionDevelopmentPath,
             extensionTestsPath,
             launchArgs: ['--disable-extensions', '-n', targetResourcesDir]
-        } as TestOptions );
+        } as TestOptions);
     } catch (err) {
         console.error('Failed to run tests', err);
         process.exit(1);

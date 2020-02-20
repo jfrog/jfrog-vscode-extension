@@ -44,7 +44,8 @@ export class MavenUtils {
         let pomXmlContent: string = document.getText();
         let [groupId, artifactId, version] = dependenciesTreeNode.generalInfo.getComponentId().split(':');
         let dependencyMatch: string[] | undefined = pomXmlContent
-            .match(/<dependency>(.|\s)*?<\/dependency>/gi)?.filter(group => group.includes(groupId) && group.includes(artifactId));
+            .match(/<dependency>(.|\s)*?<\/dependency>/gi)
+            ?.filter(group => group.includes(groupId) && group.includes(artifactId));
         if (dependencyMatch && dependencyMatch.length > 0) {
             let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyMatch[0]));
             let arr: string[] = dependencyMatch[0].split('\n').filter(line => line.trim() !== '');
@@ -170,7 +171,7 @@ export class MavenUtils {
         let result: PomTree[] = [];
         pomArray.forEach(pom => {
             try {
-                let currPomId: string = this.getPomId(pom,treesManager);
+                let currPomId: string = this.getPomId(pom, treesManager);
                 let parentId: string = this.getParentInfo(pom);
                 let index: number = this.searchPomId(result, currPomId);
                 let currNode: PomTree;
@@ -232,9 +233,9 @@ export class MavenUtils {
     }
 
     public static getPomId(pomXml: vscode.Uri, treesManager: TreesManager): string {
-        let x: string[] = MavenUtils.getRawDependenciesList(path.dirname(pomXml.fsPath),treesManager);
+        let x: string[] = MavenUtils.getRawDependenciesList(path.dirname(pomXml.fsPath), treesManager);
         let [groupId, ArtifactId, version] = MavenUtils.getProjectInfo(x[0]);
-        return groupId + ":" + ArtifactId + ":" + version;
+        return groupId + ':' + ArtifactId + ':' + version;
     }
 
     public static deepSearchNode(array: PomTree[], pomId: string): PomTree | undefined {

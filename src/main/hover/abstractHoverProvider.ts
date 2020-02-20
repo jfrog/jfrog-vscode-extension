@@ -24,7 +24,7 @@ export abstract class AbstractHoverProvider implements vscode.HoverProvider, Ext
     /**
      * Show licenses above the dependency when the user point the mouse above it.
      * @param document - The project descriptor
-     * @param position - The position of the 
+     * @param position - The position of the
      */
     provideHover(document: vscode.TextDocument, position: vscode.Position): vscode.ProviderResult<vscode.Hover> {
         let node: DependenciesTreeNode | undefined = this.getNodeByLocation(document, position);
