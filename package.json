@@ -27,14 +27,14 @@
         "viewsContainers": {
             "activitybar": [
                 {
-                    "id": "package-explorer",
-                    "title": "Package Explorer",
+                    "id": "jfrog",
+                    "title": "JFrog",
                     "icon": "resources/extensionIcon.png"
                 }
             ]
         },
         "views": {
-            "package-explorer": [
+            "jfrog": [
                 {
                     "id": "jfrog.xray",
                     "name": "Components Tree"
