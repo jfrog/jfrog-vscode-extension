@@ -12,8 +12,19 @@ import { ComponentDetails } from 'xray-client-js';
 import { GavGeneralInfo } from '../../main/types/gavGeneralinfo';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/mavenTreeNode';
-import { locatePomXmls, getParentInfo, buildPrototypePomTree, getProjectInfo, getDependencyInfo, getPomDetails, getDependenciesPos, getDependencyPos, createMavenDependenciesTrees } from '../../main/utils/mavenUtils';
+import {
+    locatePomXmls,
+    getParentInfo,
+    buildPrototypePomTree,
+    getProjectInfo,
+    getDependencyInfo,
+    getPomDetails,
+    getDependenciesPos,
+    getDependencyPos,
+    createMavenDependenciesTrees
+} from '../../main/utils/mavenUtils';
 import { PomTree } from '../../main/utils/prototypePomTree';
+import { readFileIfExists } from '../../main/utils/contextUtils';
 
 /**
  * Test functionality of @class NpmUtils.
@@ -32,7 +43,17 @@ describe('Maven Utils Tests', () => {
     let projectDirs: string[] = ['dependency', 'empty', 'multiPomDependency'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
-
+    let outputPath: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'testdata', '1'));
+    const multiDep: string | undefined = readFileIfExists(outputPath.fsPath);
+    tmpDir = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
+    outputPath = vscode.Uri.file(path.join(tmpDir.fsPath, 'testdata', '2'));
+    const multi1Dep: string | undefined = readFileIfExists(outputPath.fsPath);
+    tmpDir = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
+    outputPath = vscode.Uri.file(path.join(tmpDir.fsPath, 'testdata', '3'));
+    const multi2Dep: string | undefined = readFileIfExists(outputPath.fsPath);
+    tmpDir = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
+    outputPath = vscode.Uri.file(path.join(tmpDir.fsPath, 'testdata', '4'));
+    const multi3Dep: string | undefined = readFileIfExists(outputPath.fsPath);
     before(() => {
         workspaceFolders = [
             {
@@ -63,109 +84,25 @@ describe('Maven Utils Tests', () => {
      */
     it('Get Pom Details', async () => {
         let pathToPomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'pom.xml'));
-        let [pomId, rawDependencies]: string[] = getPomDetails(pathToPomXml.fsPath, treesManager );
-        assert.equal(
-            pomId,
-            "org.jfrog.test:multi:3.7-SNAPSHOT"
-        );
-        assert.equal(
-            rawDependencies,
-`\\- junit:junit:jar:3.8.1:test
-org.jfrog.test:multi1:jar:3.7-SNAPSHOT
-+- org.apache.commons:commons-email:jar:1.1:compile
-|  +- javax.mail:mail:jar:1.4:compile
-|  \\- javax.activation:activation:jar:1.1:compile
-+- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
-+- javax.servlet.jsp:jsp-api:jar:2.1:compile
-+- commons-io:commons-io:jar:1.4:compile
-+- org.springframework:spring-aop:jar:2.5.6:compile
-|  +- aopalliance:aopalliance:jar:1.0:compile
-|  +- commons-logging:commons-logging:jar:1.1.1:compile
-|  +- org.springframework:spring-beans:jar:2.5.6:compile
-|  \\- org.springframework:spring-core:jar:2.5.6:compile
-+- org.testng:testng:jar:jdk15:5.9:test
-\\- junit:junit:jar:3.8.1:test
-org.jfrog.test:multi2:jar:3.7-SNAPSHOT
-\\- junit:junit:jar:3.8.1:test
-org.jfrog.test:multi3:war:3.7-SNAPSHOT
-+- org.jfrog.test:multi1:jar:3.7-SNAPSHOT:compile
-|  +- org.apache.commons:commons-email:jar:1.1:compile
-|  |  +- javax.mail:mail:jar:1.4:compile
-|  |  \\- javax.activation:activation:jar:1.1:compile
-|  +- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
-|  +- javax.servlet.jsp:jsp-api:jar:2.1:compile
-|  +- commons-io:commons-io:jar:1.4:compile
-|  \\- org.springframework:spring-aop:jar:2.5.6:compile
-|     +- aopalliance:aopalliance:jar:1.0:compile
-|     +- commons-logging:commons-logging:jar:1.1.1:compile
-|     +- org.springframework:spring-beans:jar:2.5.6:compile
-|     \\- org.springframework:spring-core:jar:2.5.6:compile
-+- hsqldb:hsqldb:jar:1.8.0.10:runtime
-+- javax.servlet:servlet-api:jar:2.5:provided
-\\- junit:junit:jar:3.8.1:test
-`);
+        let [pomId, rawDependencies]: string[] = getPomDetails(pathToPomXml.fsPath, treesManager);
+        assert.equal(pomId, 'org.jfrog.test:multi:3.7-SNAPSHOT');
+        assert.equal(rawDependencies, multiDep);
 
-pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency','multi1', 'pom.xml'));
-[pomId, rawDependencies] = getPomDetails(pathToPomXml.fsPath, treesManager );
+        pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi1', 'pom.xml'));
+        [pomId, rawDependencies] = getPomDetails(pathToPomXml.fsPath, treesManager);
+        assert.equal(pomId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
+        assert.equal(rawDependencies, multi1Dep);
 
-        assert.equal(
-            pomId,
-            "org.jfrog.test:multi1:3.7-SNAPSHOT"
-        );
-        assert.equal(
-            rawDependencies,
-`+- org.apache.commons:commons-email:jar:1.1:compile
-|  +- javax.mail:mail:jar:1.4:compile
-|  \\- javax.activation:activation:jar:1.1:compile
-+- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
-+- javax.servlet.jsp:jsp-api:jar:2.1:compile
-+- commons-io:commons-io:jar:1.4:compile
-+- org.springframework:spring-aop:jar:2.5.6:compile
-|  +- aopalliance:aopalliance:jar:1.0:compile
-|  +- commons-logging:commons-logging:jar:1.1.1:compile
-|  +- org.springframework:spring-beans:jar:2.5.6:compile
-|  \\- org.springframework:spring-core:jar:2.5.6:compile
-+- org.testng:testng:jar:jdk15:5.9:test
-\\- junit:junit:jar:3.8.1:test
-`);
+        pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi2', 'pom.xml'));
+        [pomId, rawDependencies] = getPomDetails(pathToPomXml.fsPath, treesManager);
+        assert.equal(pomId, 'org.jfrog.test:multi2:3.7-SNAPSHOT');
+        assert.equal(rawDependencies, multi2Dep);
 
-pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency','multi2', 'pom.xml'));
-[pomId, rawDependencies] = getPomDetails(pathToPomXml.fsPath, treesManager );
-
-        assert.equal(
-            pomId,
-            "org.jfrog.test:multi2:3.7-SNAPSHOT"
-        );
-        assert.equal(
-            rawDependencies,
-`\\- junit:junit:jar:3.8.1:test
-`);
-    pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency','multi3', 'pom.xml'));
-    [pomId, rawDependencies] = getPomDetails(pathToPomXml.fsPath, treesManager );
-
-            assert.equal(
-                pomId,
-                "org.jfrog.test:multi3:3.7-SNAPSHOT"
-            );
-            assert.equal(
-                rawDependencies,
-`+- org.jfrog.test:multi1:jar:3.7-SNAPSHOT:compile
-|  +- org.apache.commons:commons-email:jar:1.1:compile
-|  |  +- javax.mail:mail:jar:1.4:compile
-|  |  \\- javax.activation:activation:jar:1.1:compile
-|  +- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
-|  +- javax.servlet.jsp:jsp-api:jar:2.1:compile
-|  +- commons-io:commons-io:jar:1.4:compile
-|  \\- org.springframework:spring-aop:jar:2.5.6:compile
-|     +- aopalliance:aopalliance:jar:1.0:compile
-|     +- commons-logging:commons-logging:jar:1.1.1:compile
-|     +- org.springframework:spring-beans:jar:2.5.6:compile
-|     \\- org.springframework:spring-core:jar:2.5.6:compile
-+- hsqldb:hsqldb:jar:1.8.0.10:runtime
-+- javax.servlet:servlet-api:jar:2.5:provided
-\\- junit:junit:jar:3.8.1:test
-`);
-        });
+        pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi3', 'pom.xml'));
+        [pomId, rawDependencies] = getPomDetails(pathToPomXml.fsPath, treesManager);
+        assert.equal(pomId, 'org.jfrog.test:multi3:3.7-SNAPSHOT');
+        assert.equal(rawDependencies, multi3Dep);
+    });
 
     /**
      * Test getParentInfo.
@@ -196,7 +133,7 @@ pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency','mu
         ];
         let pomXmlsArray: vscode.Uri[] = await locatePomXmls(localWorkspaceFolders, dummyProgress);
         let got: PomTree[] = buildPrototypePomTree(pomXmlsArray, treesManager);
-        let want: PomTree[][]= expectedBuildPrototypePomTree();
+        let want: PomTree[][] = expectedBuildPrototypePomTree();
         assert.deepEqual(got, want[0]);
 
         //Multi pom
@@ -216,9 +153,7 @@ pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency','mu
      * Test getProjectInfo.
      */
     it('Get Project Info', async () => {
-        const [groupId, ArtifactId, version] = getProjectInfo(
-                ' org.jfrog.test:multi2:jar:3.7-SNAPSHOT\n' 
-        );
+        const [groupId, ArtifactId, version] = getProjectInfo(' org.jfrog.test:multi2:jar:3.7-SNAPSHOT');
         assert.equal(groupId, 'org.jfrog.test');
         assert.equal(ArtifactId, 'multi2');
         assert.equal(version, '3.7-SNAPSHOT');
@@ -348,7 +283,9 @@ pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency','mu
             'gav://org.springframework:spring-core:2.5.6',
             'gav://org.testng:testng:5.9'
         ];
-        const componentArray: ComponentDetails[] = componentsToScan.toArray().sort((a: ComponentDetails, b: ComponentDetails) => a.component_id.localeCompare(b.component_id));
+        const componentArray: ComponentDetails[] = componentsToScan
+            .toArray()
+            .sort((a: ComponentDetails, b: ComponentDetails) => a.component_id.localeCompare(b.component_id));
         // Check that components to scan contains progress:2.0.3
         for (let i: number = 0; i < componentsToScan.size(); i++) {
             assert.deepEqual(componentArray[i], new ComponentDetails(toCompare[i]));
@@ -429,79 +366,43 @@ pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency','mu
         return dependenciesTrees.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 
-function expectedBuildPrototypePomTree():PomTree[][] {
-return[[new PomTree('org.jfrog.test:multi2:3.7-SNAPSHOT',
-`\\- javax.servlet.jsp:jsp-api:jar:2.1:compile
-`,path.join(__dirname, '..', 'resources', 'maven', 'dependency'))],
-[new PomTree('org.jfrog.test:multi:3.7-SNAPSHOT',
-`\\- junit:junit:jar:3.8.1:test
-org.jfrog.test:multi1:jar:3.7-SNAPSHOT
-+- org.apache.commons:commons-email:jar:1.1:compile
-|  +- javax.mail:mail:jar:1.4:compile
-|  \\- javax.activation:activation:jar:1.1:compile
-+- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
-+- javax.servlet.jsp:jsp-api:jar:2.1:compile
-+- commons-io:commons-io:jar:1.4:compile
-+- org.springframework:spring-aop:jar:2.5.6:compile
-|  +- aopalliance:aopalliance:jar:1.0:compile
-|  +- commons-logging:commons-logging:jar:1.1.1:compile
-|  +- org.springframework:spring-beans:jar:2.5.6:compile
-|  \\- org.springframework:spring-core:jar:2.5.6:compile
-+- org.testng:testng:jar:jdk15:5.9:test
-\\- junit:junit:jar:3.8.1:test
-org.jfrog.test:multi2:jar:3.7-SNAPSHOT
-\\- junit:junit:jar:3.8.1:test
-org.jfrog.test:multi3:war:3.7-SNAPSHOT
-+- org.jfrog.test:multi1:jar:3.7-SNAPSHOT:compile
-|  +- org.apache.commons:commons-email:jar:1.1:compile
-|  |  +- javax.mail:mail:jar:1.4:compile
-|  |  \\- javax.activation:activation:jar:1.1:compile
-|  +- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
-|  +- javax.servlet.jsp:jsp-api:jar:2.1:compile
-|  +- commons-io:commons-io:jar:1.4:compile
-|  \\- org.springframework:spring-aop:jar:2.5.6:compile
-|     +- aopalliance:aopalliance:jar:1.0:compile
-|     +- commons-logging:commons-logging:jar:1.1.1:compile
-|     +- org.springframework:spring-beans:jar:2.5.6:compile
-|     \\- org.springframework:spring-core:jar:2.5.6:compile
-+- hsqldb:hsqldb:jar:1.8.0.10:runtime
-+- javax.servlet:servlet-api:jar:2.5:provided
-\\- junit:junit:jar:3.8.1:test
-`, path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency'),[new PomTree('org.jfrog.test:multi1:3.7-SNAPSHOT',
-`+- org.apache.commons:commons-email:jar:1.1:compile
-|  +- javax.mail:mail:jar:1.4:compile
-|  \\- javax.activation:activation:jar:1.1:compile
-+- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
-+- javax.servlet.jsp:jsp-api:jar:2.1:compile
-+- commons-io:commons-io:jar:1.4:compile
-+- org.springframework:spring-aop:jar:2.5.6:compile
-|  +- aopalliance:aopalliance:jar:1.0:compile
-|  +- commons-logging:commons-logging:jar:1.1.1:compile
-|  +- org.springframework:spring-beans:jar:2.5.6:compile
-|  \\- org.springframework:spring-core:jar:2.5.6:compile
-+- org.testng:testng:jar:jdk15:5.9:test
-\\- junit:junit:jar:3.8.1:test
-`,path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi1'),[],undefined,"org.jfrog.test:multi:3.7-SNAPSHOT"),
-new PomTree('org.jfrog.test:multi2:3.7-SNAPSHOT',
-`\\- junit:junit:jar:3.8.1:test
-`,path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi2'),[],undefined,"org.jfrog.test:multi:3.7-SNAPSHOT"),
-new PomTree('org.jfrog.test:multi3:3.7-SNAPSHOT',
-`+- org.jfrog.test:multi1:jar:3.7-SNAPSHOT:compile
-|  +- org.apache.commons:commons-email:jar:1.1:compile
-|  |  +- javax.mail:mail:jar:1.4:compile
-|  |  \\- javax.activation:activation:jar:1.1:compile
-|  +- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
-|  +- javax.servlet.jsp:jsp-api:jar:2.1:compile
-|  +- commons-io:commons-io:jar:1.4:compile
-|  \\- org.springframework:spring-aop:jar:2.5.6:compile
-|     +- aopalliance:aopalliance:jar:1.0:compile
-|     +- commons-logging:commons-logging:jar:1.1.1:compile
-|     +- org.springframework:spring-beans:jar:2.5.6:compile
-|     \\- org.springframework:spring-core:jar:2.5.6:compile
-+- hsqldb:hsqldb:jar:1.8.0.10:runtime
-+- javax.servlet:servlet-api:jar:2.5:provided
-\\- junit:junit:jar:3.8.1:test
-`,path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi3'),[],undefined,"org.jfrog.test:multi:3.7-SNAPSHOT")])],
-];
-}
+    function expectedBuildPrototypePomTree(): PomTree[][] {
+        return [
+            [
+                new PomTree(
+                    'org.jfrog.test:multi2:3.7-SNAPSHOT',
+                    `\\- javax.servlet.jsp:jsp-api:jar:2.1:compile`,
+                    path.join(__dirname, '..', 'resources', 'maven', 'dependency')
+                )
+            ],
+            [
+                new PomTree('org.jfrog.test:multi:3.7-SNAPSHOT', multiDep, path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency'), [
+                    new PomTree(
+                        'org.jfrog.test:multi1:3.7-SNAPSHOT',
+                        multi1Dep,
+                        path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi1'),
+                        [],
+                        undefined,
+                        'org.jfrog.test:multi:3.7-SNAPSHOT'
+                    ),
+                    new PomTree(
+                        'org.jfrog.test:multi2:3.7-SNAPSHOT',
+                        `\\- junit:junit:jar:3.8.1:test`,
+                        path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi2'),
+                        [],
+                        undefined,
+                        'org.jfrog.test:multi:3.7-SNAPSHOT'
+                    ),
+                    new PomTree(
+                        'org.jfrog.test:multi3:3.7-SNAPSHOT',
+                        multi3Dep,
+                        path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi3'),
+                        [],
+                        undefined,
+                        'org.jfrog.test:multi:3.7-SNAPSHOT'
+                    )
+                ])
+            ]
+        ];
+    }
 });

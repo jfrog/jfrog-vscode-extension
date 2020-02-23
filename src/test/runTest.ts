@@ -18,7 +18,7 @@ async function main() {
         const extensionTestsPath: string = path.join(__dirname, 'index');
 
         // Install maven dependencies
-        exec.execSync('mvn clean install',{ cwd: path.join(__dirname, 'resources', 'maven', 'multiPomDependency')});
+        exec.execSync('mvn clean install', { cwd: path.join(__dirname, 'resources', 'maven', 'multiPomDependency') });
 
         // Download VS Code, unzip it and run the integration tests
         await runTests({

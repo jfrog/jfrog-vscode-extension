@@ -35,20 +35,18 @@ export class MavenTreeNode extends DependenciesTreeNode {
         const [group, name, version] = projectTree.pomId.split(':');
         this.generalInfo = new GavGeneralInfo(group, name, version, this._workspaceFolder, PKG_TYPE);
         this.label = group + ':' + name;
-            let rawDependenciesList: string[] = projectTree.rawDependencies
-                .split(/\r?\n/)
-                .filter(line => line.trim() !== '');
-            // Pass a pointer to sync index while Recursion
-            if (rawDependenciesList.length > 0) {
-                this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
-                this.populateDependenciesTree(this, rawDependenciesList, { index: 0 }, quickScan);
-            }
-            for (const iterator of projectTree.children) {
-                const dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(iterator.pomPath, this._componentsToScan, this._treesManager, this);
-                FilterParentDependencies(this.children,iterator);
-                mavenTreeNode.push(dependenciesTreeNode);
-                dependenciesTreeNode.refreshDependencies(quickScan, iterator, mavenTreeNode);
-            }
+        let rawDependenciesList: string[] = projectTree.rawDependencies.split(/\r?\n/).filter(line => line.trim() !== '');
+        // Pass a pointer to sync index while Recursion
+        if (rawDependenciesList.length > 0) {
+            this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+            this.populateDependenciesTree(this, rawDependenciesList, { index: 0 }, quickScan);
+        }
+        for (const iterator of projectTree.children) {
+            const dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(iterator.pomPath, this._componentsToScan, this._treesManager, this);
+            FilterParentDependencies(this.children, iterator);
+            mavenTreeNode.push(dependenciesTreeNode);
+            dependenciesTreeNode.refreshDependencies(quickScan, iterator, mavenTreeNode);
+        }
     }
 
     private populateDependenciesTree(parent: DependenciesTreeNode, rawDependenciesList: string[], pointer: { index: number }, quickScan: boolean) {
