@@ -5,7 +5,6 @@ import { Issue } from '../../types/issue';
 import { License } from '../../types/license';
 import { Severity } from '../../types/severity';
 import { IconsPaths } from '../../utils/iconsPaths';
-import { GavGeneralInfo } from '../../types/gavGeneralinfo';
 
 export class DependenciesTreeNode extends vscode.TreeItem {
     readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
@@ -14,11 +13,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
     private _issues: Collections.Set<Issue> = new Collections.Set(issue => issue.summary);
     private _topIssue: Issue;
 
-    constructor(
-        private _generalInfo: GeneralInfo | GavGeneralInfo,
-        collapsibleState?: vscode.TreeItemCollapsibleState,
-        private _parent?: DependenciesTreeNode
-    ) {
+    constructor(private _generalInfo: GeneralInfo, collapsibleState?: vscode.TreeItemCollapsibleState, private _parent?: DependenciesTreeNode) {
         super(_generalInfo.artifactId, collapsibleState);
         this._topIssue = new Issue('', Severity.Normal, '', '');
         this.iconPath = IconsPaths.NORMAL_SEVERITY;
@@ -39,7 +34,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         return this.generalInfo.getComponentId();
     }
 
-    public get generalInfo(): GeneralInfo | GavGeneralInfo {
+    public get generalInfo(): GeneralInfo {
         return this._generalInfo;
     }
 
@@ -83,7 +78,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         this._topIssue = value;
     }
 
-    public set generalInfo(generalInfo: GeneralInfo | GavGeneralInfo) {
+    public set generalInfo(generalInfo: GeneralInfo) {
         this._generalInfo = generalInfo;
     }
 

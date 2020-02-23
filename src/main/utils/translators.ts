@@ -6,7 +6,7 @@ import { Severity } from '../types/severity';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
 
 export class Translators {
-    public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo | GavGeneralInfo {
+    public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
         let components: string[] = clientGeneral.component_id.split(':');
         return components.length === 2
             ? new GeneralInfo(components[0], components[1], clientGeneral.path, clientGeneral.pkg_type)

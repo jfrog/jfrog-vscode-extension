@@ -42,7 +42,10 @@ export function getDependencyPos(document: vscode.TextDocument, dependenciesTree
     }
     let res: vscode.Position[] = [];
     let pomXmlContent: string = document.getText();
-    let [groupId, artifactId, version] = dependenciesTreeNode.generalInfo.getComponentId().split(':');
+    let [groupId, artifactId, version] = dependenciesTreeNode.generalInfo
+        .getComponentId()
+        .toLowerCase()
+        .split(':');
     let dependencyMatch: string[] | undefined = pomXmlContent
         .match(/<dependency>(.|\s)*?<\/dependency>/gi)
         ?.filter(group => group.includes(groupId) && group.includes(artifactId));
@@ -50,19 +53,19 @@ export function getDependencyPos(document: vscode.TextDocument, dependenciesTree
         let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyMatch[0]));
         let arr: string[] = dependencyMatch[0].split(/\r?\n/).filter(line => line.trim() !== '');
         for (let i: number = 0; i < arr.length; i++) {
-            let depInfo: string = arr[i].trim();
+            let depInfo: string = arr[i].trim().toLowerCase();
             if (
-                depInfo.toLowerCase() === ('<groupId>' + groupId + '</groupId>').toLowerCase() ||
-                depInfo.toLowerCase() === ('<artifactId>' + artifactId + '</artifactId>').toLowerCase() ||
-                depInfo.toLowerCase() === ('<version>' + version + '</version>').toLowerCase()
+                depInfo === '<groupid>' + groupId + '</groupid>' ||
+                depInfo === '<artifactid>' + artifactId + '</artifactid>' ||
+                depInfo === '<version>' + version + '</version>'
             ) {
-                res.push(new vscode.Position(startIndex.line + i, arr[i].length - arr[i].trimLeft().length));
+                res.push(new vscode.Position(startIndex.line + i, arr[i].indexOf('<')));
                 res.push(new vscode.Position(startIndex.line + i, arr[i].length));
             }
         }
         return res;
     }
-    if (dependenciesTreeNode instanceof MavenTreeNode === false) {
+    if (!(dependenciesTreeNode instanceof MavenTreeNode)) {
         return getDependencyPos(document, dependenciesTreeNode.parent);
     }
     return [];
@@ -143,10 +146,9 @@ export async function createMavenDependenciesTrees(
         return [];
     }
     let mavenTreeNodes: MavenTreeNode[] = [];
-    progress.report({ message: 'Analyzing pom.xml files' });
-    let prototyeTree: PomTree[] = buildPrototypePomTree(pomXmls, treesManager);
-    for (let ProjectTree of prototyeTree) {
-        progress.report({ message: 'Analyzing pom.xml files' });
+    let prototypeTree: PomTree[] = buildPrototypePomTree(pomXmls, treesManager);
+    for (let ProjectTree of prototypeTree) {
+        progress.report({ message: 'Analyzing pom.xml at ' + ProjectTree.pomPath });
         // let projectDependenciesList: string[] = await getRawDependenciesList(ProjectTree.pomPath, treesManager);
         // if (projectDependenciesList.length === 0) {
         //     break;

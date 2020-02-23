@@ -11,7 +11,6 @@ import { TreesManager } from '../treesManager';
 import { SetCredentialsNode } from '../utils/setCredentialsNode';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
-import { GavGeneralInfo } from '../../types/gavGeneralinfo';
 import { pathToNode } from '../../utils/mavenUtils';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode | SetCredentialsNode> {
@@ -127,7 +126,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
 
     private addXrayInfoToTree(root: DependenciesTreeNode) {
         root.children.forEach(child => {
-            let generalInfo: GeneralInfo | GavGeneralInfo = child.generalInfo;
+            let generalInfo: GeneralInfo = child.generalInfo;
             let artifact: IArtifact | undefined = this._treesManager.scanCacheManager.get(generalInfo.getComponentId());
             if (artifact) {
                 let pkgType: string = child.generalInfo.pkgType;
@@ -205,7 +204,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
         let root: DependenciesTreeNode = this._filteredDependenciesTree || this.dependenciesTree;
         for (let dependenciesTree of root.children) {
-            let generalInfo: GeneralInfo | GavGeneralInfo = dependenciesTree.generalInfo;
+            let generalInfo: GeneralInfo = dependenciesTree.generalInfo;
             if (generalInfo.pkgType === pkgType && (!path || generalInfo.path === path)) {
                 return dependenciesTree;
             }
