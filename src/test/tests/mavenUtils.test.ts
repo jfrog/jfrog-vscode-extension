@@ -7,12 +7,13 @@ import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
-import { MavenUtils, PomTree } from '../../main/utils/mavenUtils';
 import { assert } from 'chai';
 import { ComponentDetails } from 'xray-client-js';
 import { GavGeneralInfo } from '../../main/types/gavGeneralinfo';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/mavenTreeNode';
+import { locatePomXmls, getParentInfo, buildPrototypePomTree, getProjectInfo, getDependencyInfo, getPomDetails, getDependenciesPos, getDependencyPos, createMavenDependenciesTrees } from '../../main/utils/mavenUtils';
+import { PomTree } from '../../main/utils/prototypePomTree';
 
 /**
  * Test functionality of @class NpmUtils.
@@ -43,10 +44,10 @@ describe('Maven Utils Tests', () => {
     });
 
     /**
-     * Test MavenUtils.locatePomXml.
+     * Test locatePomXml.
      */
     it('Locate pom.xml', async () => {
-        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, dummyProgress);
+        let pomXmls: vscode.Uri[] = await locatePomXmls(workspaceFolders, dummyProgress);
         assert.strictEqual(pomXmls.length, 6);
 
         // Assert that results contains all projects
@@ -57,87 +58,131 @@ describe('Maven Utils Tests', () => {
     });
 
     /**
-     * Test MavenUtils.getRawDependenciesList.
+     * Test getPomDetails.
      * Validate the output from 'mvn dependency:tree' command
      */
-    it('Get Raw Dependencies List', async () => {
-        let pathToPomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency'));
-        let rawDependenciesList: string[] = MavenUtils.getRawDependenciesList(pathToPomXml.fsPath, treesManager);
+    it('Get Pom Details', async () => {
+        let pathToPomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'pom.xml'));
+        let [pomId, rawDependencies]: string[] = getPomDetails(pathToPomXml.fsPath, treesManager );
         assert.equal(
-            rawDependenciesList[0],
-            ' --- maven-dependency-plugin:2.8:tree (default-cli) @ multi ---\n org.jfrog.test:multi:pom:3.7-SNAPSHOT\n \\- junit:junit:jar:3.8.1:test\n'
+            pomId,
+            "org.jfrog.test:multi:3.7-SNAPSHOT"
         );
         assert.equal(
-            rawDependenciesList[1],
-            ' --- maven-dependency-plugin:2.8:tree (default-cli) @ multi1 ---\n' +
-                ' org.jfrog.test:multi1:jar:3.7-SNAPSHOT\n' +
-                ' +- org.apache.commons:commons-email:jar:1.1:compile\n' +
-                ' |  +- javax.mail:mail:jar:1.4:compile\n' +
-                ' |  \\- javax.activation:activation:jar:1.1:compile\n' +
-                ' +- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile\n' +
-                ' +- javax.servlet.jsp:jsp-api:jar:2.1:compile\n' +
-                ' +- commons-io:commons-io:jar:1.4:compile\n' +
-                ' +- org.springframework:spring-aop:jar:2.5.6:compile\n' +
-                ' |  +- aopalliance:aopalliance:jar:1.0:compile\n' +
-                ' |  +- commons-logging:commons-logging:jar:1.1.1:compile\n' +
-                ' |  +- org.springframework:spring-beans:jar:2.5.6:compile\n' +
-                ' |  \\- org.springframework:spring-core:jar:2.5.6:compile\n' +
-                ' +- org.testng:testng:jar:jdk15:5.9:test\n' +
-                ' \\- junit:junit:jar:3.8.1:test\n'
+            rawDependencies,
+`\\- junit:junit:jar:3.8.1:test
+org.jfrog.test:multi1:jar:3.7-SNAPSHOT
++- org.apache.commons:commons-email:jar:1.1:compile
+|  +- javax.mail:mail:jar:1.4:compile
+|  \\- javax.activation:activation:jar:1.1:compile
++- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
++- javax.servlet.jsp:jsp-api:jar:2.1:compile
++- commons-io:commons-io:jar:1.4:compile
++- org.springframework:spring-aop:jar:2.5.6:compile
+|  +- aopalliance:aopalliance:jar:1.0:compile
+|  +- commons-logging:commons-logging:jar:1.1.1:compile
+|  +- org.springframework:spring-beans:jar:2.5.6:compile
+|  \\- org.springframework:spring-core:jar:2.5.6:compile
++- org.testng:testng:jar:jdk15:5.9:test
+\\- junit:junit:jar:3.8.1:test
+org.jfrog.test:multi2:jar:3.7-SNAPSHOT
+\\- junit:junit:jar:3.8.1:test
+org.jfrog.test:multi3:war:3.7-SNAPSHOT
++- org.jfrog.test:multi1:jar:3.7-SNAPSHOT:compile
+|  +- org.apache.commons:commons-email:jar:1.1:compile
+|  |  +- javax.mail:mail:jar:1.4:compile
+|  |  \\- javax.activation:activation:jar:1.1:compile
+|  +- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
+|  +- javax.servlet.jsp:jsp-api:jar:2.1:compile
+|  +- commons-io:commons-io:jar:1.4:compile
+|  \\- org.springframework:spring-aop:jar:2.5.6:compile
+|     +- aopalliance:aopalliance:jar:1.0:compile
+|     +- commons-logging:commons-logging:jar:1.1.1:compile
+|     +- org.springframework:spring-beans:jar:2.5.6:compile
+|     \\- org.springframework:spring-core:jar:2.5.6:compile
++- hsqldb:hsqldb:jar:1.8.0.10:runtime
++- javax.servlet:servlet-api:jar:2.5:provided
+\\- junit:junit:jar:3.8.1:test
+`);
+
+pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency','multi1', 'pom.xml'));
+[pomId, rawDependencies] = getPomDetails(pathToPomXml.fsPath, treesManager );
+
+        assert.equal(
+            pomId,
+            "org.jfrog.test:multi1:3.7-SNAPSHOT"
         );
         assert.equal(
-            rawDependenciesList[2],
-            ' --- maven-dependency-plugin:2.8:tree (default-cli) @ multi2 ---\n' +
-                ' org.jfrog.test:multi2:jar:3.7-SNAPSHOT\n' +
-                ' \\- junit:junit:jar:3.8.1:test\n'
+            rawDependencies,
+`+- org.apache.commons:commons-email:jar:1.1:compile
+|  +- javax.mail:mail:jar:1.4:compile
+|  \\- javax.activation:activation:jar:1.1:compile
++- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
++- javax.servlet.jsp:jsp-api:jar:2.1:compile
++- commons-io:commons-io:jar:1.4:compile
++- org.springframework:spring-aop:jar:2.5.6:compile
+|  +- aopalliance:aopalliance:jar:1.0:compile
+|  +- commons-logging:commons-logging:jar:1.1.1:compile
+|  +- org.springframework:spring-beans:jar:2.5.6:compile
+|  \\- org.springframework:spring-core:jar:2.5.6:compile
++- org.testng:testng:jar:jdk15:5.9:test
+\\- junit:junit:jar:3.8.1:test
+`);
+
+pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency','multi2', 'pom.xml'));
+[pomId, rawDependencies] = getPomDetails(pathToPomXml.fsPath, treesManager );
+
+        assert.equal(
+            pomId,
+            "org.jfrog.test:multi2:3.7-SNAPSHOT"
         );
         assert.equal(
-            rawDependenciesList[3],
-            ' --- maven-dependency-plugin:2.8:tree (default-cli) @ multi3 ---\n' +
-                ' org.jfrog.test:multi3:war:3.7-SNAPSHOT\n' +
-                ' +- org.jfrog.test:multi1:jar:3.7-SNAPSHOT:compile\n' +
-                ' |  +- org.apache.commons:commons-email:jar:1.1:compile\n' +
-                ' |  |  +- javax.mail:mail:jar:1.4:compile\n' +
-                ' |  |  \\- javax.activation:activation:jar:1.1:compile\n' +
-                ' |  +- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile\n' +
-                ' |  +- javax.servlet.jsp:jsp-api:jar:2.1:compile\n' +
-                ' |  +- commons-io:commons-io:jar:1.4:compile\n' +
-                ' |  \\- org.springframework:spring-aop:jar:2.5.6:compile\n' +
-                ' |     +- aopalliance:aopalliance:jar:1.0:compile\n' +
-                ' |     +- commons-logging:commons-logging:jar:1.1.1:compile\n' +
-                ' |     +- org.springframework:spring-beans:jar:2.5.6:compile\n' +
-                ' |     \\- org.springframework:spring-core:jar:2.5.6:compile\n' +
-                ' +- hsqldb:hsqldb:jar:1.8.0.10:runtime\n' +
-                ' +- javax.servlet:servlet-api:jar:2.5:provided\n' +
-                ' \\- junit:junit:jar:3.8.1:test\n '
-        );
-        pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency'));
-        rawDependenciesList = MavenUtils.getRawDependenciesList(pathToPomXml.fsPath, treesManager);
-        assert.equal(
-            rawDependenciesList[0],
-            ' --- maven-dependency-plugin:2.8:tree (default-cli) @ multi2 ---\n org.jfrog.test:multi2:jar:3.7-SNAPSHOT\n \\- javax.servlet.jsp:jsp-api:jar:2.1:compile\n '
-        );
-        pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty'));
-        rawDependenciesList = MavenUtils.getRawDependenciesList(pathToPomXml.fsPath, treesManager);
-        assert.isEmpty(rawDependenciesList);
-    });
+            rawDependencies,
+`\\- junit:junit:jar:3.8.1:test
+`);
+    pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency','multi3', 'pom.xml'));
+    [pomId, rawDependencies] = getPomDetails(pathToPomXml.fsPath, treesManager );
+
+            assert.equal(
+                pomId,
+                "org.jfrog.test:multi3:3.7-SNAPSHOT"
+            );
+            assert.equal(
+                rawDependencies,
+`+- org.jfrog.test:multi1:jar:3.7-SNAPSHOT:compile
+|  +- org.apache.commons:commons-email:jar:1.1:compile
+|  |  +- javax.mail:mail:jar:1.4:compile
+|  |  \\- javax.activation:activation:jar:1.1:compile
+|  +- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
+|  +- javax.servlet.jsp:jsp-api:jar:2.1:compile
+|  +- commons-io:commons-io:jar:1.4:compile
+|  \\- org.springframework:spring-aop:jar:2.5.6:compile
+|     +- aopalliance:aopalliance:jar:1.0:compile
+|     +- commons-logging:commons-logging:jar:1.1.1:compile
+|     +- org.springframework:spring-beans:jar:2.5.6:compile
+|     \\- org.springframework:spring-core:jar:2.5.6:compile
++- hsqldb:hsqldb:jar:1.8.0.10:runtime
++- javax.servlet:servlet-api:jar:2.5:provided
+\\- junit:junit:jar:3.8.1:test
+`);
+        });
 
     /**
-     * Test MavenUtils.getParentInfo.
+     * Test getParentInfo.
      * Get parent info from pom.xml.
      */
     it('Get parent info', async () => {
         let pomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi1', 'pom.xml'));
-        let parentInfo: string = MavenUtils.getParentInfo(pomXml);
+        let parentInfo: string = getParentInfo(pomXml);
         assert.equal(parentInfo, 'org.jfrog.test:multi:3.7-SNAPSHOT');
 
         pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'pom.xml'));
-        parentInfo = MavenUtils.getParentInfo(pomXml);
+        parentInfo = getParentInfo(pomXml);
         assert.isEmpty(parentInfo);
     });
 
     /**
-     * Test MavenUtils.buildPrototypePomTree.
+     * Test buildPrototypePomTree.
      * create Prototype Pom Tree from pom.xml list .
      */
     it('Build Prototype Pom Tree', async () => {
@@ -149,10 +194,10 @@ describe('Maven Utils Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
-        let pomXmlsArray: vscode.Uri[] = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
-        let got: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager);
-        let want: PomTree[];
-        assert.deepEqual(got, [new PomTree('org.jfrog.test:multi2:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'dependency'))]);
+        let pomXmlsArray: vscode.Uri[] = await locatePomXmls(localWorkspaceFolders, dummyProgress);
+        let got: PomTree[] = buildPrototypePomTree(pomXmlsArray, treesManager);
+        let want: PomTree[][]= expectedBuildPrototypePomTree();
+        assert.deepEqual(got, want[0]);
 
         //Multi pom
         localWorkspaceFolders = [
@@ -162,49 +207,17 @@ describe('Maven Utils Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
-        pomXmlsArray = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
-        got = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager);
-        want = [new PomTree('org.jfrog.test:multi:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency'))];
-        want[0].addChild(
-            new PomTree(
-                'org.jfrog.test:multi1:3.7-SNAPSHOT',
-                path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi1'),
-                [],
-                undefined,
-                'org.jfrog.test:multi:3.7-SNAPSHOT'
-            )
-        );
-        want[0].addChild(
-            new PomTree(
-                'org.jfrog.test:multi2:3.7-SNAPSHOT',
-                path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi2'),
-                [],
-                undefined,
-                'org.jfrog.test:multi:3.7-SNAPSHOT'
-            )
-        );
-        want[0].addChild(
-            new PomTree(
-                'org.jfrog.test:multi3:3.7-SNAPSHOT',
-                path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi3'),
-                [],
-                undefined,
-                'org.jfrog.test:multi:3.7-SNAPSHOT'
-            )
-        );
-
-        assert.deepEqual(got, want);
+        pomXmlsArray = await locatePomXmls(localWorkspaceFolders, dummyProgress);
+        got = buildPrototypePomTree(pomXmlsArray, treesManager);
+        assert.deepEqual(got, want[1]);
     });
 
     /**
-     * Test MavenUtils.getProjectInfo.
+     * Test getProjectInfo.
      */
     it('Get Project Info', async () => {
-        const [groupId, ArtifactId, version] = MavenUtils.getProjectInfo(
-            '--- maven-dependency-plugin:2.8:tree (default-cli) @ multi2 ---\n' +
-                ' org.jfrog.test:multi2:jar:3.7-SNAPSHOT\n' +
-                ' - javax.servlet.jsp:jsp-api:jar:2.1:compile\n' +
-                'org.jfrog.test:multi2:3.7-SNAPSHOT\n'
+        const [groupId, ArtifactId, version] = getProjectInfo(
+                ' org.jfrog.test:multi2:jar:3.7-SNAPSHOT\n' 
         );
         assert.equal(groupId, 'org.jfrog.test');
         assert.equal(ArtifactId, 'multi2');
@@ -212,64 +225,35 @@ describe('Maven Utils Tests', () => {
     });
 
     /**
-     * Test MavenUtils.getDependencyInfo.
+     * Test getDependencyInfo.
      */
     it('Get dependency Info', async () => {
-        const [groupId, ArtifactId, version] = MavenUtils.getDependencyInfo('org.testng:testng:jar:jdk15:5.9:test');
+        const [groupId, ArtifactId, version] = getDependencyInfo('org.testng:testng:jar:jdk15:5.9:test');
         assert.equal(groupId, 'org.testng');
         assert.equal(ArtifactId, 'testng');
         assert.equal(version, '5.9');
     });
 
     /**
-     * Test MavenUtils.getPomId.
-     */
-    it('Get Pom Id', async () => {
-        // Single pom
-        let localWorkspaceFolders: vscode.WorkspaceFolder[] = [
-            {
-                uri: vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven', 'dependency')),
-                name: '',
-                index: 0
-            } as vscode.WorkspaceFolder
-        ];
-        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
-
-        let pomId: string = MavenUtils.getPomId(pomXmls[0], treesManager);
-        assert.equal(pomId, 'org.jfrog.test:multi2:3.7-SNAPSHOT');
-        // Multi pom
-        localWorkspaceFolders = [
-            {
-                uri: vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency')),
-                name: '',
-                index: 0
-            } as vscode.WorkspaceFolder
-        ];
-        pomXmls = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
-        pomId = MavenUtils.getPomId(pomXmls[0], treesManager);
-        assert.equal(pomId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
-    });
-
-    /**
-     * Test MavenUtils.getDependenciesPos.
+     * Test getDependenciesPos.
      * Locate 'dependencies' element in pom.xml editor, in order to locate 'xray scan' codelens.
      */
     it('Get dependencies position', async () => {
         // Test 'resources/maven/multiPomDependency/pom.xml'
         let pomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'pom.xml'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(pomXml);
-        let dependenciesPos: vscode.Position[] = MavenUtils.getDependenciesPos(textDocument);
+        let dependenciesPos: vscode.Position[] = getDependenciesPos(textDocument);
         assert.deepEqual(dependenciesPos[0], new vscode.Position(7, 4));
 
         // Test 'resources/maven/empty/pom.xml'
         pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'pom.xml'));
         textDocument = await vscode.workspace.openTextDocument(pomXml);
-        dependenciesPos = MavenUtils.getDependenciesPos(textDocument);
+        dependenciesPos = getDependenciesPos(textDocument);
         assert.isEmpty(dependenciesPos);
     });
 
     /**
-     * Test MavenUtils.getDependencyPos.
+     * Test getDependencyPos.
      * Locate 'groupId', 'artifactId' & 'version' in pom.xml regardless the order.
      */
     it('Get dependency position', async () => {
@@ -277,7 +261,7 @@ describe('Maven Utils Tests', () => {
         let pomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'pom.xml'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(pomXml);
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('javax.servlet.jsp', 'jsp-api', '2.1', '', ''));
-        let dependencyPos: vscode.Position[] = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        let dependencyPos: vscode.Position[] = getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(9, 12));
         assert.deepEqual(dependencyPos[1], new vscode.Position(9, 48));
         assert.deepEqual(dependencyPos[2], new vscode.Position(10, 12));
@@ -288,7 +272,7 @@ describe('Maven Utils Tests', () => {
         pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi1', 'pom.xml'));
         textDocument = await vscode.workspace.openTextDocument(pomXml);
         dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('org.apache.commons', 'commons-email', '1.1', '', ''));
-        dependencyPos = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(51, 12));
         assert.deepEqual(dependencyPos[1], new vscode.Position(51, 49));
         assert.deepEqual(dependencyPos[2], new vscode.Position(52, 12));
@@ -297,7 +281,7 @@ describe('Maven Utils Tests', () => {
         assert.deepEqual(dependencyPos[5], new vscode.Position(53, 34));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('org.codehaus.plexus', 'plexus-utils', '1.5.1', '', ''));
-        dependencyPos = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(57, 12));
         assert.deepEqual(dependencyPos[1], new vscode.Position(57, 50));
         assert.deepEqual(dependencyPos[2], new vscode.Position(58, 12));
@@ -306,7 +290,7 @@ describe('Maven Utils Tests', () => {
         assert.deepEqual(dependencyPos[5], new vscode.Position(59, 36));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('javax.servlet.jsp', 'jsp-api', '2.1', '', ''));
-        dependencyPos = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(62, 12));
         assert.deepEqual(dependencyPos[1], new vscode.Position(62, 48));
         assert.deepEqual(dependencyPos[2], new vscode.Position(63, 12));
@@ -315,7 +299,7 @@ describe('Maven Utils Tests', () => {
         assert.deepEqual(dependencyPos[5], new vscode.Position(65, 34));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('commons-io', 'commons-io', '1.4', '', ''));
-        dependencyPos = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(68, 12));
         assert.deepEqual(dependencyPos[1], new vscode.Position(68, 41));
         assert.deepEqual(dependencyPos[2], new vscode.Position(69, 12));
@@ -324,7 +308,7 @@ describe('Maven Utils Tests', () => {
         assert.deepEqual(dependencyPos[5], new vscode.Position(70, 34));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('org.springframework', 'spring-aop', '2.5.6', '', ''));
-        dependencyPos = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(73, 12));
         assert.deepEqual(dependencyPos[1], new vscode.Position(73, 50));
         assert.deepEqual(dependencyPos[2], new vscode.Position(74, 12));
@@ -335,12 +319,12 @@ describe('Maven Utils Tests', () => {
         // Test 'resources/maven/empty/pom.xml'
         pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'pom.xml'));
         textDocument = await vscode.workspace.openTextDocument(pomXml);
-        dependencyPos = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = getDependencyPos(textDocument, dependenciesTreeNode);
         assert.isEmpty(dependencyPos);
     });
 
     /**
-     * Test MavenUtils.createMavenDependenciesTrees.
+     * Test createMavenDependenciesTrees.
      */
     it('Create Maven Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''));
@@ -364,9 +348,9 @@ describe('Maven Utils Tests', () => {
             'gav://org.springframework:spring-core:2.5.6',
             'gav://org.testng:testng:5.9'
         ];
-        const componentArray = componentsToScan.toArray().sort((a: ComponentDetails, b: ComponentDetails) => a.component_id.localeCompare(b.component_id));
+        const componentArray: ComponentDetails[] = componentsToScan.toArray().sort((a: ComponentDetails, b: ComponentDetails) => a.component_id.localeCompare(b.component_id));
         // Check that components to scan contains progress:2.0.3
-        for (let i = 0; i < componentsToScan.size(); i++) {
+        for (let i: number = 0; i < componentsToScan.size(); i++) {
             assert.deepEqual(componentArray[i], new ComponentDetails(toCompare[i]));
         }
         // Validate 4 maven project was built
@@ -434,7 +418,7 @@ describe('Maven Utils Tests', () => {
     });
 
     async function runCreateMavenDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        let dependenciesTrees: DependenciesTreeNode[] = await MavenUtils.createDependenciesTrees(
+        let dependenciesTrees: DependenciesTreeNode[] = await createMavenDependenciesTrees(
             workspaceFolders,
             dummyProgress,
             componentsToScan,
@@ -444,4 +428,80 @@ describe('Maven Utils Tests', () => {
         );
         return dependenciesTrees.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
+
+function expectedBuildPrototypePomTree():PomTree[][] {
+return[[new PomTree('org.jfrog.test:multi2:3.7-SNAPSHOT',
+`\\- javax.servlet.jsp:jsp-api:jar:2.1:compile
+`,path.join(__dirname, '..', 'resources', 'maven', 'dependency'))],
+[new PomTree('org.jfrog.test:multi:3.7-SNAPSHOT',
+`\\- junit:junit:jar:3.8.1:test
+org.jfrog.test:multi1:jar:3.7-SNAPSHOT
++- org.apache.commons:commons-email:jar:1.1:compile
+|  +- javax.mail:mail:jar:1.4:compile
+|  \\- javax.activation:activation:jar:1.1:compile
++- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
++- javax.servlet.jsp:jsp-api:jar:2.1:compile
++- commons-io:commons-io:jar:1.4:compile
++- org.springframework:spring-aop:jar:2.5.6:compile
+|  +- aopalliance:aopalliance:jar:1.0:compile
+|  +- commons-logging:commons-logging:jar:1.1.1:compile
+|  +- org.springframework:spring-beans:jar:2.5.6:compile
+|  \\- org.springframework:spring-core:jar:2.5.6:compile
++- org.testng:testng:jar:jdk15:5.9:test
+\\- junit:junit:jar:3.8.1:test
+org.jfrog.test:multi2:jar:3.7-SNAPSHOT
+\\- junit:junit:jar:3.8.1:test
+org.jfrog.test:multi3:war:3.7-SNAPSHOT
++- org.jfrog.test:multi1:jar:3.7-SNAPSHOT:compile
+|  +- org.apache.commons:commons-email:jar:1.1:compile
+|  |  +- javax.mail:mail:jar:1.4:compile
+|  |  \\- javax.activation:activation:jar:1.1:compile
+|  +- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
+|  +- javax.servlet.jsp:jsp-api:jar:2.1:compile
+|  +- commons-io:commons-io:jar:1.4:compile
+|  \\- org.springframework:spring-aop:jar:2.5.6:compile
+|     +- aopalliance:aopalliance:jar:1.0:compile
+|     +- commons-logging:commons-logging:jar:1.1.1:compile
+|     +- org.springframework:spring-beans:jar:2.5.6:compile
+|     \\- org.springframework:spring-core:jar:2.5.6:compile
++- hsqldb:hsqldb:jar:1.8.0.10:runtime
++- javax.servlet:servlet-api:jar:2.5:provided
+\\- junit:junit:jar:3.8.1:test
+`, path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency'),[new PomTree('org.jfrog.test:multi1:3.7-SNAPSHOT',
+`+- org.apache.commons:commons-email:jar:1.1:compile
+|  +- javax.mail:mail:jar:1.4:compile
+|  \\- javax.activation:activation:jar:1.1:compile
++- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
++- javax.servlet.jsp:jsp-api:jar:2.1:compile
++- commons-io:commons-io:jar:1.4:compile
++- org.springframework:spring-aop:jar:2.5.6:compile
+|  +- aopalliance:aopalliance:jar:1.0:compile
+|  +- commons-logging:commons-logging:jar:1.1.1:compile
+|  +- org.springframework:spring-beans:jar:2.5.6:compile
+|  \\- org.springframework:spring-core:jar:2.5.6:compile
++- org.testng:testng:jar:jdk15:5.9:test
+\\- junit:junit:jar:3.8.1:test
+`,path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi1'),[],undefined,"org.jfrog.test:multi:3.7-SNAPSHOT"),
+new PomTree('org.jfrog.test:multi2:3.7-SNAPSHOT',
+`\\- junit:junit:jar:3.8.1:test
+`,path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi2'),[],undefined,"org.jfrog.test:multi:3.7-SNAPSHOT"),
+new PomTree('org.jfrog.test:multi3:3.7-SNAPSHOT',
+`+- org.jfrog.test:multi1:jar:3.7-SNAPSHOT:compile
+|  +- org.apache.commons:commons-email:jar:1.1:compile
+|  |  +- javax.mail:mail:jar:1.4:compile
+|  |  \\- javax.activation:activation:jar:1.1:compile
+|  +- org.codehaus.plexus:plexus-utils:jar:1.5.1:compile
+|  +- javax.servlet.jsp:jsp-api:jar:2.1:compile
+|  +- commons-io:commons-io:jar:1.4:compile
+|  \\- org.springframework:spring-aop:jar:2.5.6:compile
+|     +- aopalliance:aopalliance:jar:1.0:compile
+|     +- commons-logging:commons-logging:jar:1.1.1:compile
+|     +- org.springframework:spring-beans:jar:2.5.6:compile
+|     \\- org.springframework:spring-core:jar:2.5.6:compile
++- hsqldb:hsqldb:jar:1.8.0.10:runtime
++- javax.servlet:servlet-api:jar:2.5:provided
+\\- junit:junit:jar:3.8.1:test
+`,path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi3'),[],undefined,"org.jfrog.test:multi:3.7-SNAPSHOT")])],
+];
+}
 });

@@ -1,11 +1,12 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { MavenUtils, PomTree } from '../../utils/mavenUtils';
 import { ComponentDetails } from 'xray-client-js';
 import { GeneralInfo } from '../../types/generalInfo';
 import { TreesManager } from '../treesManager';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { GavGeneralInfo } from '../../types/gavGeneralinfo';
+import { pathToNode, PKG_TYPE, getDependencyInfo, FilterParentDependencies } from '../../utils/mavenUtils';
+import { PomTree } from '../../utils/prototypePomTree';
 
 export class MavenTreeNode extends DependenciesTreeNode {
     private static readonly COMPONENT_PREFIX: string = 'gav://';
@@ -17,7 +18,7 @@ export class MavenTreeNode extends DependenciesTreeNode {
         parent?: DependenciesTreeNode
     ) {
         super(new GeneralInfo('', '', _workspaceFolder, ''), vscode.TreeItemCollapsibleState.None, parent);
-        MavenUtils.pathToNode.set(_workspaceFolder, this);
+        pathToNode.set(_workspaceFolder, this);
     }
 
     get workspaceFolder() {
@@ -30,15 +31,12 @@ export class MavenTreeNode extends DependenciesTreeNode {
      * @param projectDependenciesList
      * @param mavenTreeNode
      */
-    public refreshDependencies(quickScan: boolean, projectTree: PomTree, projectDependenciesList: string[], mavenTreeNode: MavenTreeNode[]) {
+    public refreshDependencies(quickScan: boolean, projectTree: PomTree, mavenTreeNode: MavenTreeNode[]) {
         const [group, name, version] = projectTree.pomId.split(':');
-        this.generalInfo = new GavGeneralInfo(group, name, version, this._workspaceFolder, MavenUtils.PKG_TYPE);
+        this.generalInfo = new GavGeneralInfo(group, name, version, this._workspaceFolder, PKG_TYPE);
         this.label = group + ':' + name;
-        let dependenciesText: string | undefined = MavenUtils.searchPomDependencies(projectTree.pomId, projectDependenciesList);
-        if (!!dependenciesText) {
-            let rawDependenciesList: string[] = dependenciesText
-                .split('\n')
-                .slice(2)
+            let rawDependenciesList: string[] = projectTree.rawDependencies
+                .split(/\r?\n/)
                 .filter(line => line.trim() !== '');
             // Pass a pointer to sync index while Recursion
             if (rawDependenciesList.length > 0) {
@@ -47,17 +45,17 @@ export class MavenTreeNode extends DependenciesTreeNode {
             }
             for (const iterator of projectTree.children) {
                 const dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(iterator.pomPath, this._componentsToScan, this._treesManager, this);
+                FilterParentDependencies(this.children,iterator);
                 mavenTreeNode.push(dependenciesTreeNode);
-                dependenciesTreeNode.refreshDependencies(quickScan, iterator, projectDependenciesList, mavenTreeNode);
+                dependenciesTreeNode.refreshDependencies(quickScan, iterator, mavenTreeNode);
             }
-        }
     }
 
     private populateDependenciesTree(parent: DependenciesTreeNode, rawDependenciesList: string[], pointer: { index: number }, quickScan: boolean) {
         for (; pointer.index < rawDependenciesList.length; pointer.index++) {
             let dependency: string = rawDependenciesList[pointer.index];
-            const [group, name, version] = MavenUtils.getDependencyInfo(dependency);
-            const gavGeneralInfo: GavGeneralInfo = new GavGeneralInfo(group, name, version, '', MavenUtils.PKG_TYPE);
+            const [group, name, version] = getDependencyInfo(dependency);
+            const gavGeneralInfo: GavGeneralInfo = new GavGeneralInfo(group, name, version, '', PKG_TYPE);
             let treeCollapsibleState: vscode.TreeItemCollapsibleState = this.isParent(rawDependenciesList, pointer.index)
                 ? vscode.TreeItemCollapsibleState.Collapsed
                 : vscode.TreeItemCollapsibleState.None;

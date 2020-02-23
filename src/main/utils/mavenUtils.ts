@@ -3,23 +3,23 @@ import * as Collections from 'typescript-collections';
 import * as path from 'path';
 import fs from 'fs';
 import * as exec from 'child_process';
-import { execSync } from 'child_process';
 import { ScanUtils } from './scanUtils';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ComponentDetails } from 'xray-client-js';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/mavenTreeNode';
+import { getTempFolder, readFileIfExists, removeFile } from './contextUtils';
+import { PomTree } from './prototypePomTree';
 
-export class MavenUtils {
-    public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
-    public static readonly PKG_TYPE: string = 'maven';
-    public static pathToNode: Map<string, MavenTreeNode> = new Map<string, MavenTreeNode>();
+    export const DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
+    export const PKG_TYPE: string = 'maven';
+    export let pathToNode: Map<string, MavenTreeNode> = new Map<string, MavenTreeNode>();
 
     /**
      * Get pom.xml file and return the position of 'require' section.
      * @param document - pom.xml file
      */
-    public static getDependenciesPos(document: vscode.TextDocument): vscode.Position[] {
+    export function getDependenciesPos(document: vscode.TextDocument): vscode.Position[] {
         let res: vscode.Position[] = [];
         let mavenModContent: string = document.getText();
         let dependenciesMatch: RegExpMatchArray | null = mavenModContent.match('<dependencies>');
@@ -36,7 +36,7 @@ export class MavenUtils {
      * @param document             - pom.xml file
      * @param dependenciesTreeNode - dependencies tree node
      */
-    public static getDependencyPos(document: vscode.TextDocument, dependenciesTreeNode: DependenciesTreeNode | undefined): vscode.Position[] {
+    export function getDependencyPos(document: vscode.TextDocument, dependenciesTreeNode: DependenciesTreeNode | undefined): vscode.Position[] {
         if (!dependenciesTreeNode) {
             return [];
         }
@@ -63,7 +63,7 @@ export class MavenUtils {
             return res;
         }
         if (dependenciesTreeNode instanceof MavenTreeNode === false) {
-            return this.getDependencyPos(document, dependenciesTreeNode.parent);
+            return getDependencyPos(document, dependenciesTreeNode.parent);
         }
         return [];
     }
@@ -73,7 +73,7 @@ export class MavenUtils {
      * @param workspaceFolders - Base workspace folders to search
      * @param progress         - progress bar
      */
-    public static async locatePomXmls(
+    export async function  locatePomXmls(
         workspaceFolders: vscode.WorkspaceFolder[],
         progress: vscode.Progress<{ message?: string; increment?: number }>
     ): Promise<vscode.Uri[]> {
@@ -87,24 +87,22 @@ export class MavenUtils {
             wsPomXmls.forEach(pomXml => pomXmls.add(pomXml));
         }
         let result: vscode.Uri[] = pomXmls.toArray();
-        
+
         // we need to sort so on each time adn on each OS we will get the same order
         return Promise.resolve(result.length > 1 ? result.sort((a: vscode.Uri, b: vscode.Uri) => a.fsPath.localeCompare(b.fsPath)) : result);
     }
 
-    public static getRawDependenciesList(pathToPomXml: string, treesManager: TreesManager): string[] {
+    // Get raw dependencies list for the root of the project
+    export  function getPomDetails(pathToPomXml: string, treesManager: TreesManager): string[] {
         try {
-            let result: string[] = exec
-                .execSync('mvn dependency:tree', { cwd: pathToPomXml })
-                .toString()
-                .split('\n')
-                .filter(line => line.includes('[INFO]'))
-                .join('\n')
-                .split('[INFO] \n')
-                .map(text => text.replace(/\[INFO\]/g, ''))
-                .filter(text => text.includes('maven-dependency-plugin'));
-            result[result.length - 1] = result[result.length - 1].split('------')[0];
-            return result;
+            const outputPath: string = getTempFolder(pathToPomXml);
+            executeMavenCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile="${outputPath}"`, pathToPomXml);
+            const pomDetails: string | undefined = readFileIfExists(outputPath);
+            removeFile(outputPath);
+            const rawPomDetails: RegExpMatchArray = pomDetails?.match(/^[^\s]*\s/)!;
+            const pomDependencies: string | undefined = pomDetails?.slice(rawPomDetails![0].length);
+            const [groupId, artifactId, version] = getProjectInfo(rawPomDetails![0]);
+            return [groupId+':'+artifactId+':'+version,pomDependencies!];
         } catch (error) {
             treesManager.logManager.logError(error, false);
             treesManager.logManager.logMessage(
@@ -125,8 +123,8 @@ export class MavenUtils {
      * @param scanCacheManager - Scan cache manager
      * @param root           - The base tree node
      * @param quickScan        - True to allow using the scan cache
-     */
-    public static async createDependenciesTrees(
+      */
+    export async function  createMavenDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Collections.Set<ComponentDetails>,
@@ -134,28 +132,28 @@ export class MavenUtils {
         root: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<MavenTreeNode[]> {
-        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, progress);
+        let pomXmls: vscode.Uri[] = await locatePomXmls(workspaceFolders, progress);
         if (pomXmls.length === 0) {
             treesManager.logManager.logMessage('No pom.xml files found in workspaces.', 'DEBUG');
             return [];
         }
         treesManager.logManager.logMessage('pom.xml files to scan: [' + pomXmls.toString() + ']', 'DEBUG');
-        if (!MavenUtils.verifyMavenInstalled()) {
+        if (!verifyMavenInstalled()) {
             vscode.window.showErrorMessage('Could not scan Maven project dependencies, because "mvn" is not in the PATH.');
             return [];
         }
         let mavenTreeNodes: MavenTreeNode[] = [];
         progress.report({ message: 'Analyzing pom.xml files' });
-        let prototyeTree: PomTree[] = this.buildPrototypePomTree(pomXmls, treesManager);
+        let prototyeTree: PomTree[] = buildPrototypePomTree(pomXmls, treesManager);
         for (let ProjectTree of prototyeTree) {
             progress.report({ message: 'Analyzing pom.xml files' });
-            let projectDependenciesList: string[] = this.getRawDependenciesList(ProjectTree.pomPath, treesManager);
-            if (projectDependenciesList.length === 0) {
-                break;
-            }
-            this.FilterParentDependencies(projectDependenciesList);
-            let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath!, componentsToScan, treesManager, root);
-            dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree, projectDependenciesList, mavenTreeNodes);
+            // let projectDependenciesList: string[] = await getRawDependenciesList(ProjectTree.pomPath, treesManager);
+            // if (projectDependenciesList.length === 0) {
+            //     break;
+            // }
+            // FilterParentDependencies(projectDependenciesList);
+            let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, componentsToScan, treesManager, root);
+            dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree, mavenTreeNodes);
             mavenTreeNodes.push(dependenciesTreeNode);
         }
         return mavenTreeNodes;
@@ -170,24 +168,27 @@ export class MavenUtils {
      * 3/ update the path/parent of node from step 3
      * 4. try to add the node to its parent's children otherwise add it to the root of the tree.
      */
-    public static buildPrototypePomTree(pomArray: vscode.Uri[], treesManager: TreesManager): PomTree[] {
+    export function buildPrototypePomTree(pomArray: vscode.Uri[], treesManager: TreesManager): PomTree[] {
         let result: PomTree[] = [];
-        pomArray.forEach(pom => {
+        pomArray.forEach( pom => {
             try {
-                let currPomId: string = this.getPomId(pom, treesManager);
-                let parentId: string = this.getParentInfo(pom);
-                let index: number = this.searchPomId(result, currPomId);
-                let currNode: PomTree;
-                // If the node already exists get it and remove it from tree other wise create a new node
-                if (index > -1) {
-                    currNode = result[index];
-                    result.splice(index, 1);
-                } else {
-                    currNode = new PomTree(currPomId);
+                const [pomId, rawDependencies]: string[] = getPomDetails(pom.fsPath, treesManager);
+                if(!!pomId) {
+                    let parentId: string = getParentInfo(pom);
+                    let index: number = searchPomId(result, pomId);
+                    let currNode: PomTree;
+                    // If the node already exists get it and remove it from tree other wise create a new node
+                    if (index > -1) {
+                        currNode = result[index];
+                        result.splice(index, 1);
+                    } else {
+                        currNode = new PomTree(pomId);
+                    }
+                    currNode.pomPath = path.dirname(pom.fsPath);
+                    currNode.rawDependencies = rawDependencies;
+                    currNode.parentId = parentId;
+                    addNode(result, currNode);
                 }
-                currNode.pomPath = path.dirname(pom.fsPath);
-                currNode.parentId = parentId;
-                this.addNode(result, currNode);
             } catch (error) {
                 treesManager.logManager.logError(error, false);
                 treesManager.logManager.logMessage(
@@ -208,9 +209,9 @@ export class MavenUtils {
     //     1.1 if its add to its child
     //     1.2 else create the parent and add the parent to the array
     // 2.otherwise add the node to the array
-    public static addNode(array: PomTree[], node: PomTree) {
+    export function addNode(array: PomTree[], node: PomTree) {
         if (!!node.parentId) {
-            const parentNode: PomTree | undefined = this.deepSearchNode(array, node.parentId);
+            const parentNode: PomTree | undefined = deepSearchNode(array, node.parentId);
             if (!!parentNode) {
                 parentNode.addChild(node);
             } else {
@@ -223,16 +224,16 @@ export class MavenUtils {
         }
     }
 
-    public static verifyMavenInstalled(): boolean {
+    export function verifyMavenInstalled(): boolean {
         try {
-            execSync('mvn -version');
+            exec.execSync('mvn -version');
         } catch (error) {
             return false;
         }
         return true;
     }
 
-    public static getParentInfo(pomXml: vscode.Uri): string {
+    export function getParentInfo(pomXml: vscode.Uri): string {
         const parentText: RegExpMatchArray | null = fs
             .readFileSync(pomXml.fsPath)
             .toString()
@@ -246,25 +247,19 @@ export class MavenUtils {
         return '';
     }
 
-    public static getPomId(pomXml: vscode.Uri, treesManager: TreesManager): string {
-        let x: string[] = MavenUtils.getRawDependenciesList(path.dirname(pomXml.fsPath), treesManager);
-        let [groupId, ArtifactId, version] = MavenUtils.getProjectInfo(x[0]);
-        return groupId + ':' + ArtifactId + ':' + version;
-    }
-
-    public static deepSearchNode(array: PomTree[], pomId: string): PomTree | undefined {
+    export function deepSearchNode(array: PomTree[], pomId: string): PomTree | undefined {
         for (let index: number = 0; index < array.length; index++) {
             if (pomId === array[index].pomId) {
                 return array[index];
             }
             if (!!array[index].children) {
-                this.deepSearchNode(array[index].children!, pomId);
+                deepSearchNode(array[index].children!, pomId);
             }
         }
         return;
     }
 
-    public static searchPomId(array: PomTree[], pomId: string): number {
+    export function searchPomId(array: PomTree[], pomId: string): number {
         for (let index: number = 0; index < array.length; index++) {
             if (pomId === array[index].pomId) {
                 return index;
@@ -281,9 +276,8 @@ export class MavenUtils {
      * @returns 'org.jfrog.test:multi2:3.7-SNAPSHOT'
      * @param rawDependency Raw dependency text
      */
-    public static getProjectInfo(rawDependency: string): [string, string, string] {
-        const rawMainProjectText: string = rawDependency.split('\n')[1];
-        return this.getDependencyInfo(rawMainProjectText + ':dummyText');
+    export function getProjectInfo(rawDependency: string): [string, string, string] {
+        return getDependencyInfo(rawDependency.replace(/\s/g,'') + ':dummyText');
     }
 
     /**
@@ -291,16 +285,15 @@ export class MavenUtils {
      * @param rawDependency
      * @returns [groupId,ArtifactId,verion] aka [javax.mail, mail, 1.4]
      */
-    public static getDependencyInfo(rawDependency: string): [string, string, string] {
+    export function getDependencyInfo(rawDependency: string): [string, string, string] {
         let result: string[] = rawDependency.split(':');
         //skip none alphabet letters
         let startIndex: number = result[0].search(/[A-Za-z0-9]/);
         return [result[0].slice(startIndex), result[1], result[result.length - 2]];
     }
-
-    public static searchPomDependencies(pomId: string, dependenciesList: string[]): string | undefined {
+    export function searchPomDependencies(pomId: string, dependenciesList: string[]): string | undefined {
         for (const iterator of dependenciesList) {
-            const [groupId, artifactId, version] = this.getProjectInfo(iterator);
+            const [groupId, artifactId, version] = getProjectInfo(iterator);
             if (groupId + ':' + artifactId + ':' + version === pomId) {
                 return iterator;
             }
@@ -310,74 +303,16 @@ export class MavenUtils {
 
     // 'mvn dependency:tree' duplicate the parent dependencies to its child.
     // this method filter out parent dependencies from child dependency
-    public static FilterParentDependencies(rawDepList: string[]) {
-        let parentPomDep: string[] = rawDepList[0]
-            .split('\n')
-            .slice(2)
-            .map(dep => dep.slice(dep.search(/[A-Za-z0-9]/)))
-            .filter(x => x !== '');
-
-        for (let index: number = 1; index < rawDepList.length; index++) {
-            let element: string[] = rawDepList[index].split('\n');
-            element = element.filter(currPomDep => !parentPomDep.some(v => currPomDep.indexOf(v) !== -1));
-            rawDepList[index] = element.join('\n');
-        }
-    }
-}
-
-export class PomTree {
-    constructor(
-        private _pomId: string = '',
-        private _pomPath: string = '',
-        private _children: PomTree[] = [],
-        private _parent?: PomTree,
-        private _parentId: string = ''
-    ) {}
-
-    public get pomId(): string {
-        return this._pomId;
+    export function FilterParentDependencies(parentDeps: DependenciesTreeNode[], childNode: PomTree) {
+        parentDeps.forEach(element => {
+            if(!(element instanceof MavenTreeNode)){
+                const regex: RegExp = new RegExp(`^.*${element.label}.*$`,"mg");
+                childNode.rawDependencies = childNode.rawDependencies.replace(regex,"").trim();
+            }
+        });
     }
 
-    public get pomPath(): string {
-        return this._pomPath;
-    }
 
-    public get children(): PomTree[] {
-        return this._children;
-    }
-
-    public get parent(): PomTree | undefined {
-        return this._parent;
-    }
-
-    public get parentId(): string {
-        return this._parentId;
-    }
-
-    public set pomId(v: string) {
-        this._pomId = v;
-    }
-
-    public set pomPath(v: string) {
-        this._pomPath = v;
-    }
-
-    public set children(v: PomTree[]) {
-        this._children = v;
-    }
-
-    public set parent(v: PomTree | undefined) {
-        this._parent = v;
-    }
-
-    public set parentId(v: string) {
-        this._parentId = v;
-    }
-
-    public addChild(v: PomTree) {
-        this._children?.push(v);
-    }
-    public isEqual(pomId: string): boolean {
-        return this.pomId === pomId;
-    }
+function executeMavenCmd(mvnCommand: string, pomPath: string): void {
+    exec.execSync(mvnCommand, { cwd: path.dirname(pomPath) });
 }

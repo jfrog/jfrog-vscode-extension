@@ -1,13 +1,13 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { MavenUtils } from '../utils/mavenUtils';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { AbstractFocus } from './abstractFocus';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/mavenTreeNode';
+import { PKG_TYPE, getDependencyPos } from '../utils/mavenUtils';
 
 export class MavenFocus extends AbstractFocus {
     constructor() {
-        super(MavenUtils.PKG_TYPE);
+        super(PKG_TYPE);
     }
 
     /** @override */
@@ -19,7 +19,7 @@ export class MavenFocus extends AbstractFocus {
         if (dependenciesTreeNode.isDependenciesTreeRoot()) {
             return;
         }
-        let [startPos, endPosition] = MavenUtils.getDependencyPos(textEditor.document, dependenciesTreeNode);
+        let [startPos, endPosition] = getDependencyPos(textEditor.document, dependenciesTreeNode);
         if (!startPos || !endPosition) {
             return;
         }

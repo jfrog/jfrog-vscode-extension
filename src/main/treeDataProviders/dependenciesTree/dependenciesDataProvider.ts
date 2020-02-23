@@ -12,7 +12,7 @@ import { SetCredentialsNode } from '../utils/setCredentialsNode';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { GavGeneralInfo } from '../../types/gavGeneralinfo';
-import { MavenUtils } from '../../utils/mavenUtils';
+import { pathToNode } from '../../utils/mavenUtils';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode | SetCredentialsNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -201,7 +201,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             return undefined;
         }
         if (pkgType === 'maven') {
-            return MavenUtils.pathToNode.get(path || '');
+            return pathToNode.get(path || '');
         }
         let root: DependenciesTreeNode = this._filteredDependenciesTree || this.dependenciesTree;
         for (let dependenciesTree of root.children) {
