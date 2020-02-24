@@ -32,7 +32,7 @@ export class PypiTreeNode extends DependenciesTreeNode {
                 exec
                     .execSync(this._pythonPath + ' ' + PypiUtils.PIP_DEP_TREE_SCRIPT + ' --json-tree', {
                         cwd: this._projectDir,
-                        maxBuffer: this.SPAWN_PROCESS_BUFFER_SIZE
+                        maxBuffer: DependenciesTreeNode.SPAWN_PROCESS_BUFFER_SIZE
                     })
                     .toString()
             );

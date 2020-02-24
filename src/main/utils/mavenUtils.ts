@@ -306,6 +306,6 @@ export class MavenUtils {
     }
 
     public static executeMavenCmd(mvnCommand: string, pomPath: string): void {
-        exec.execSync(mvnCommand, { cwd: path.dirname(pomPath) });
+        exec.execSync(mvnCommand, { cwd: path.dirname(pomPath), maxBuffer: DependenciesTreeNode.SPAWN_PROCESS_BUFFER_SIZE });
     }
 }

@@ -7,7 +7,7 @@ import { Severity } from '../../types/severity';
 import { IconsPaths } from '../../utils/iconsPaths';
 
 export class DependenciesTreeNode extends vscode.TreeItem {
-    readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
+    public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
     private _children: DependenciesTreeNode[] = [];
     private _licenses: Collections.Set<License> = new Collections.Set(license => license.fullName);
     private _issues: Collections.Set<Issue> = new Collections.Set(issue => issue.summary);
