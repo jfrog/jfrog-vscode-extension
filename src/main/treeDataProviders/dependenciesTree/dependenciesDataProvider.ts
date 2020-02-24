@@ -11,7 +11,7 @@ import { TreesManager } from '../treesManager';
 import { SetCredentialsNode } from '../utils/setCredentialsNode';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
-import { pathToNode } from '../../utils/mavenUtils';
+import { MavenUtils } from '../../utils/mavenUtils';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode | SetCredentialsNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -199,8 +199,11 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         if (!(this.dependenciesTree instanceof DependenciesTreeNode)) {
             return undefined;
         }
+        // Unlike other build tools, witch rely that each direct dep can be found in the root's child, Maven can have direct dep in each node because,
+        // Maven has parent pom witch is the root of the tree all the other poms are located beneath it.
+        // In order to solve this, we create a map  (fs-path -> node) find the correct pom in the tree.
         if (pkgType === 'maven') {
-            return pathToNode.get(path || '');
+            return MavenUtils.pathToNode.get(path || '');
         }
         let root: DependenciesTreeNode = this._filteredDependenciesTree || this.dependenciesTree;
         for (let dependenciesTree of root.children) {

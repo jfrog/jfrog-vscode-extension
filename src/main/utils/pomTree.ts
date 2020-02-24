@@ -11,6 +11,7 @@ export class PomTree {
     public get pomId(): string {
         return this._pomId;
     }
+    
     public get rawDependencies(): string {
         return this._rawDependencies;
     }
@@ -34,6 +35,7 @@ export class PomTree {
     public set pomId(v: string) {
         this._pomId = v;
     }
+
     public set rawDependencies(v: string) {
         this._rawDependencies = v;
     }
@@ -57,7 +59,14 @@ export class PomTree {
     public addChild(v: PomTree) {
         this._children?.push(v);
     }
-    public isEqual(pomId: string): boolean {
-        return this.pomId === pomId;
+
+    public deepSearch(pomId: string): PomTree | undefined {
+        if (this.pomId === pomId) {
+            return this;
+        }
+        for (const pom of this._children) {
+            pom.deepSearch(pomId);
+        }
+        return;
     }
 }

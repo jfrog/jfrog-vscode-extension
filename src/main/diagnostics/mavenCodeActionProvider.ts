@@ -5,17 +5,17 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/mavenTreeNode';
-import { DOCUMENT_SELECTOR, PKG_TYPE, getDependencyPos } from '../utils/mavenUtils';
+import { MavenUtils } from '../utils/mavenUtils';
 
 export class MavenCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
     constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager) {
-        super(DOCUMENT_SELECTOR, diagnosticCollection, treesManager);
+        super(MavenUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager);
     }
 
     /** @override */
     protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
         return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(
-            PKG_TYPE,
+            MavenUtils.PKG_TYPE,
             document ? path.dirname(document.uri.fsPath) : document
         );
     }
@@ -34,7 +34,7 @@ export class MavenCodeActionProvider extends AbstractCodeActionProvider implemen
             if (child instanceof MavenTreeNode) {
                 return;
             }
-            let dependencyPos: vscode.Position[] = getDependencyPos(document, child);
+            let dependencyPos: vscode.Position[] = MavenUtils.getDependencyPos(document, child);
             if (dependencyPos.length === 0) {
                 return;
             }

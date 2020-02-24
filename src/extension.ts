@@ -10,7 +10,6 @@ import { ScanCacheManager } from './main/scanCache/scanCacheManager';
 import { TreesManager } from './main/treeDataProviders/treesManager';
 import { WatcherManager } from './main/watchers/watcherManager';
 import { LogManager } from './main/log/logManager';
-import { loadPackageInfo } from './main/utils/contextUtils';
 
 /**
  * This method is called when the extension is activated.
@@ -18,7 +17,6 @@ import { loadPackageInfo } from './main/utils/contextUtils';
  */
 export async function activate(context: vscode.ExtensionContext) {
     let workspaceFolders: vscode.WorkspaceFolder[] = vscode.workspace.workspaceFolders || [];
-    await loadPackageInfo(context);
 
     let logManager: LogManager = new LogManager().activate(context);
     let connectionManager: ConnectionManager = await new ConnectionManager().activate(context);

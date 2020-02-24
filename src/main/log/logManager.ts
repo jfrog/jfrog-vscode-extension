@@ -20,8 +20,10 @@ export class LogManager implements ExtensionComponent {
      * @param level - The log level
      */
     public logMessage(message: string, level: LogLevel): void {
-        const title: string = new Date().toLocaleTimeString();
-        this._outputChannel.appendLine(`[${level} - ${title}] ${message}`);
+        if (!!message) {
+            const title: string = new Date().toLocaleTimeString();
+            this._outputChannel.appendLine(`[${level} - ${title}] ${message}`);
+        }
     }
 
     /**
@@ -30,7 +32,7 @@ export class LogManager implements ExtensionComponent {
      * @param shouldToast - True iff toast should be shown
      */
     public logError(error: Error, shouldToast: boolean) {
-        this.logMessage(error.name || error.message, 'ERR');
+        this.logMessage(error.name, 'ERR');
         if (error.message) {
             this._outputChannel.appendLine(error.message);
             if (shouldToast) {

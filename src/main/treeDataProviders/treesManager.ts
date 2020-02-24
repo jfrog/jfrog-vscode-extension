@@ -17,6 +17,7 @@ export class TreesManager implements ExtensionComponent {
     private _componentDetailsDataProvider: ComponentDetailsDataProvider;
     private _dependenciesDataProvider: DependenciesTreeDataProvider;
     private _issuesDataProvider: IssuesDataProvider;
+    private _storagePath: string | undefined;
 
     constructor(
         workspaceFolders: vscode.WorkspaceFolder[],
@@ -40,6 +41,7 @@ export class TreesManager implements ExtensionComponent {
             vscode.window.registerTreeDataProvider('jfrog.xray.component', this._componentDetailsDataProvider),
             vscode.window.registerTreeDataProvider('jfrog.xray.issues', this._issuesDataProvider)
         );
+        this._storagePath = context.storagePath;
         return Promise.resolve(this);
     }
 
@@ -69,5 +71,9 @@ export class TreesManager implements ExtensionComponent {
 
     public get logManager(): LogManager {
         return this._logManager;
+    }
+
+    public get storagePath(): string | undefined {
+        return this._storagePath;
     }
 }

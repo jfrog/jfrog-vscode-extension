@@ -12,19 +12,9 @@ import { ComponentDetails } from 'xray-client-js';
 import { GavGeneralInfo } from '../../main/types/gavGeneralinfo';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/mavenTreeNode';
-import {
-    locatePomXmls,
-    getParentInfo,
-    buildPrototypePomTree,
-    getProjectInfo,
-    getDependencyInfo,
-    getPomDetails,
-    getDependenciesPos,
-    getDependencyPos,
-    createMavenDependenciesTrees
-} from '../../main/utils/mavenUtils';
-import { PomTree } from '../../main/utils/prototypePomTree';
-import { readFileIfExists } from '../../main/utils/contextUtils';
+import { PomTree } from '../../main/utils/pomTree';
+import { MavenUtils } from '../../main/utils/mavenUtils';
+import { ContextUtils } from '../../main/utils/contextUtils';
 
 /**
  * Test functionality of @class NpmUtils.
@@ -44,16 +34,16 @@ describe('Maven Utils Tests', () => {
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
     let outputPath: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'testdata', '1'));
-    const multiDep: string | undefined = readFileIfExists(outputPath.fsPath);
+    const multiDep: string | undefined = ContextUtils.readFileIfExists(outputPath.fsPath);
     tmpDir = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
     outputPath = vscode.Uri.file(path.join(tmpDir.fsPath, 'testdata', '2'));
-    const multi1Dep: string | undefined = readFileIfExists(outputPath.fsPath);
+    const multi1Dep: string | undefined = ContextUtils.readFileIfExists(outputPath.fsPath);
     tmpDir = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
     outputPath = vscode.Uri.file(path.join(tmpDir.fsPath, 'testdata', '3'));
-    const multi2Dep: string | undefined = readFileIfExists(outputPath.fsPath);
+    const multi2Dep: string | undefined = ContextUtils.readFileIfExists(outputPath.fsPath);
     tmpDir = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
     outputPath = vscode.Uri.file(path.join(tmpDir.fsPath, 'testdata', '4'));
-    const multi3Dep: string | undefined = readFileIfExists(outputPath.fsPath);
+    const multi3Dep: string | undefined = ContextUtils.readFileIfExists(outputPath.fsPath);
     before(() => {
         workspaceFolders = [
             {
@@ -68,7 +58,7 @@ describe('Maven Utils Tests', () => {
      * Test locatePomXml.
      */
     it('Locate pom.xml', async () => {
-        let pomXmls: vscode.Uri[] = await locatePomXmls(workspaceFolders, dummyProgress);
+        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, dummyProgress);
         assert.strictEqual(pomXmls.length, 6);
 
         // Assert that results contains all projects
@@ -84,22 +74,22 @@ describe('Maven Utils Tests', () => {
      */
     it('Get Pom Details', async () => {
         let pathToPomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'pom.xml'));
-        let [pomId, rawDependencies]: string[] = getPomDetails(pathToPomXml.fsPath, treesManager);
+        let [pomId, rawDependencies]: string[] = MavenUtils.getPomDetails(pathToPomXml.fsPath, treesManager);
         assert.equal(pomId, 'org.jfrog.test:multi:3.7-SNAPSHOT');
         assert.equal(rawDependencies, multiDep);
 
         pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi1', 'pom.xml'));
-        [pomId, rawDependencies] = getPomDetails(pathToPomXml.fsPath, treesManager);
+        [pomId, rawDependencies] = MavenUtils.getPomDetails(pathToPomXml.fsPath, treesManager);
         assert.equal(pomId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
         assert.equal(rawDependencies, multi1Dep);
 
         pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi2', 'pom.xml'));
-        [pomId, rawDependencies] = getPomDetails(pathToPomXml.fsPath, treesManager);
+        [pomId, rawDependencies] = MavenUtils.getPomDetails(pathToPomXml.fsPath, treesManager);
         assert.equal(pomId, 'org.jfrog.test:multi2:3.7-SNAPSHOT');
         assert.equal(rawDependencies, multi2Dep);
 
         pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi3', 'pom.xml'));
-        [pomId, rawDependencies] = getPomDetails(pathToPomXml.fsPath, treesManager);
+        [pomId, rawDependencies] = MavenUtils.getPomDetails(pathToPomXml.fsPath, treesManager);
         assert.equal(pomId, 'org.jfrog.test:multi3:3.7-SNAPSHOT');
         assert.equal(rawDependencies, multi3Dep);
     });
@@ -110,11 +100,11 @@ describe('Maven Utils Tests', () => {
      */
     it('Get parent info', async () => {
         let pomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi1', 'pom.xml'));
-        let parentInfo: string = getParentInfo(pomXml);
+        let parentInfo: string = MavenUtils.getParentInfo(pomXml);
         assert.equal(parentInfo, 'org.jfrog.test:multi:3.7-SNAPSHOT');
 
         pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'pom.xml'));
-        parentInfo = getParentInfo(pomXml);
+        parentInfo = MavenUtils.getParentInfo(pomXml);
         assert.isEmpty(parentInfo);
     });
 
@@ -131,8 +121,8 @@ describe('Maven Utils Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
-        let pomXmlsArray: vscode.Uri[] = await locatePomXmls(localWorkspaceFolders, dummyProgress);
-        let got: PomTree[] = buildPrototypePomTree(pomXmlsArray, treesManager);
+        let pomXmlsArray: vscode.Uri[] = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
+        let got: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager);
         let want: PomTree[][] = expectedBuildPrototypePomTree();
         assert.deepEqual(got, want[0]);
 
@@ -144,8 +134,8 @@ describe('Maven Utils Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
-        pomXmlsArray = await locatePomXmls(localWorkspaceFolders, dummyProgress);
-        got = buildPrototypePomTree(pomXmlsArray, treesManager);
+        pomXmlsArray = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
+        got = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager);
         assert.deepEqual(got, want[1]);
     });
 
@@ -153,7 +143,7 @@ describe('Maven Utils Tests', () => {
      * Test getProjectInfo.
      */
     it('Get Project Info', async () => {
-        const [groupId, ArtifactId, version] = getProjectInfo(' org.jfrog.test:multi2:jar:3.7-SNAPSHOT');
+        const [groupId, ArtifactId, version] = MavenUtils.getProjectInfo(' org.jfrog.test:multi2:jar:3.7-SNAPSHOT');
         assert.equal(groupId, 'org.jfrog.test');
         assert.equal(ArtifactId, 'multi2');
         assert.equal(version, '3.7-SNAPSHOT');
@@ -163,7 +153,7 @@ describe('Maven Utils Tests', () => {
      * Test getDependencyInfo.
      */
     it('Get dependency Info', async () => {
-        const [groupId, ArtifactId, version] = getDependencyInfo('org.testng:testng:jar:jdk15:5.9:test');
+        const [groupId, ArtifactId, version] = MavenUtils.getDependencyInfo('org.testng:testng:jar:jdk15:5.9:test');
         assert.equal(groupId, 'org.testng');
         assert.equal(ArtifactId, 'testng');
         assert.equal(version, '5.9');
@@ -177,13 +167,13 @@ describe('Maven Utils Tests', () => {
         // Test 'resources/maven/multiPomDependency/pom.xml'
         let pomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'pom.xml'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(pomXml);
-        let dependenciesPos: vscode.Position[] = getDependenciesPos(textDocument);
+        let dependenciesPos: vscode.Position[] = MavenUtils.getDependenciesPos(textDocument);
         assert.deepEqual(dependenciesPos[0], new vscode.Position(7, 4));
 
         // Test 'resources/maven/empty/pom.xml'
         pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'pom.xml'));
         textDocument = await vscode.workspace.openTextDocument(pomXml);
-        dependenciesPos = getDependenciesPos(textDocument);
+        dependenciesPos = MavenUtils.getDependenciesPos(textDocument);
         assert.isEmpty(dependenciesPos);
     });
 
@@ -196,7 +186,7 @@ describe('Maven Utils Tests', () => {
         let pomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'pom.xml'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(pomXml);
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('javax.servlet.jsp', 'jsp-api', '2.1', '', ''));
-        let dependencyPos: vscode.Position[] = getDependencyPos(textDocument, dependenciesTreeNode);
+        let dependencyPos: vscode.Position[] = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(9, 12));
         assert.deepEqual(dependencyPos[1], new vscode.Position(9, 48));
         assert.deepEqual(dependencyPos[2], new vscode.Position(10, 12));
@@ -207,7 +197,7 @@ describe('Maven Utils Tests', () => {
         pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi1', 'pom.xml'));
         textDocument = await vscode.workspace.openTextDocument(pomXml);
         dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('org.apache.commons', 'commons-email', '1.1', '', ''));
-        dependencyPos = getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(51, 12));
         assert.deepEqual(dependencyPos[1], new vscode.Position(51, 49));
         assert.deepEqual(dependencyPos[2], new vscode.Position(52, 12));
@@ -216,7 +206,7 @@ describe('Maven Utils Tests', () => {
         assert.deepEqual(dependencyPos[5], new vscode.Position(53, 34));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('org.codehaus.plexus', 'plexus-utils', '1.5.1', '', ''));
-        dependencyPos = getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(57, 12));
         assert.deepEqual(dependencyPos[1], new vscode.Position(57, 50));
         assert.deepEqual(dependencyPos[2], new vscode.Position(58, 12));
@@ -225,7 +215,7 @@ describe('Maven Utils Tests', () => {
         assert.deepEqual(dependencyPos[5], new vscode.Position(59, 36));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('javax.servlet.jsp', 'jsp-api', '2.1', '', ''));
-        dependencyPos = getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(62, 12));
         assert.deepEqual(dependencyPos[1], new vscode.Position(62, 48));
         assert.deepEqual(dependencyPos[2], new vscode.Position(63, 12));
@@ -234,7 +224,7 @@ describe('Maven Utils Tests', () => {
         assert.deepEqual(dependencyPos[5], new vscode.Position(65, 34));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('commons-io', 'commons-io', '1.4', '', ''));
-        dependencyPos = getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(68, 12));
         assert.deepEqual(dependencyPos[1], new vscode.Position(68, 41));
         assert.deepEqual(dependencyPos[2], new vscode.Position(69, 12));
@@ -243,7 +233,7 @@ describe('Maven Utils Tests', () => {
         assert.deepEqual(dependencyPos[5], new vscode.Position(70, 34));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('org.springframework', 'spring-aop', '2.5.6', '', ''));
-        dependencyPos = getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(73, 12));
         assert.deepEqual(dependencyPos[1], new vscode.Position(73, 50));
         assert.deepEqual(dependencyPos[2], new vscode.Position(74, 12));
@@ -254,7 +244,7 @@ describe('Maven Utils Tests', () => {
         // Test 'resources/maven/empty/pom.xml'
         pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'pom.xml'));
         textDocument = await vscode.workspace.openTextDocument(pomXml);
-        dependencyPos = getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = MavenUtils.getDependencyPos(textDocument, dependenciesTreeNode);
         assert.isEmpty(dependencyPos);
     });
 
@@ -290,8 +280,6 @@ describe('Maven Utils Tests', () => {
         for (let i: number = 0; i < componentsToScan.size(); i++) {
             assert.deepEqual(componentArray[i], new ComponentDetails(toCompare[i]));
         }
-        // Validate 4 maven project was built
-        assert.lengthOf(res, 4);
         // Check multi pom tree
         // Check node
         assert.deepEqual(res[0].label, 'org.jfrog.test:multi');
@@ -355,7 +343,7 @@ describe('Maven Utils Tests', () => {
     });
 
     async function runCreateMavenDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        let dependenciesTrees: DependenciesTreeNode[] = await createMavenDependenciesTrees(
+        let dependenciesTrees: DependenciesTreeNode[] = await MavenUtils.createMavenDependenciesTrees(
             workspaceFolders,
             dummyProgress,
             componentsToScan,

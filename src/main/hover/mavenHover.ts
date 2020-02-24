@@ -3,11 +3,11 @@ import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractHoverProvider } from './abstractHoverProvider';
-import { DOCUMENT_SELECTOR, getDependencyPos } from '../utils/mavenUtils';
+import { MavenUtils } from '../utils/mavenUtils';
 
 export class MavenHover extends AbstractHoverProvider {
     constructor(treesManager: TreesManager) {
-        super(DOCUMENT_SELECTOR, treesManager);
+        super(MavenUtils.DOCUMENT_SELECTOR, treesManager);
     }
 
     /** @override */
@@ -20,10 +20,12 @@ export class MavenHover extends AbstractHoverProvider {
             return;
         }
         for (const child of dependenciesTree.children) {
-            let [startPos, endPos] = getDependencyPos(document, child);
-            let range: vscode.Range = new vscode.Range(startPos, endPos);
-            if (range.contains(cursorPosition)) {
-                return child;
+            let positionList: vscode.Position[] = MavenUtils.getDependencyPos(document, child);
+            for (let i: number = 0; i < positionList.length; i += 2) {
+                let range: vscode.Range = new vscode.Range(positionList[i], positionList[i + 1]);
+                if (range.contains(cursorPosition)) {
+                    return child;
+                }
             }
         }
         return;

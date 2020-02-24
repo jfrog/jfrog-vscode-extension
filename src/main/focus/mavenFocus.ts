@@ -3,11 +3,11 @@ import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { AbstractFocus } from './abstractFocus';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/mavenTreeNode';
-import { PKG_TYPE, getDependencyPos } from '../utils/mavenUtils';
+import { MavenUtils } from '../utils/mavenUtils';
 
 export class MavenFocus extends AbstractFocus {
     constructor() {
-        super(PKG_TYPE);
+        super(MavenUtils.PKG_TYPE);
     }
 
     /** @override */
@@ -19,7 +19,7 @@ export class MavenFocus extends AbstractFocus {
         if (dependenciesTreeNode.isDependenciesTreeRoot()) {
             return;
         }
-        let [startPos, endPosition] = getDependencyPos(textEditor.document, dependenciesTreeNode);
+        let [startPos, endPosition] = MavenUtils.getDependencyPos(textEditor.document, dependenciesTreeNode);
         if (!startPos || !endPosition) {
             return;
         }
@@ -28,11 +28,16 @@ export class MavenFocus extends AbstractFocus {
     }
 
     private async openPomXml(dependenciesTreeNode: DependenciesTreeNode): Promise<vscode.TextEditor | undefined> {
-        // Search for the nearest pom.xml(MavenTreeNode) witch locate the fs path
+        // Search for the nearest pom.xml (MavenTreeNode) which matches the fs path of the input node
         while (dependenciesTreeNode.parent && dependenciesTreeNode instanceof MavenTreeNode === false) {
             dependenciesTreeNode = dependenciesTreeNode.parent;
         }
-        let fsPath: string = (<MavenTreeNode>dependenciesTreeNode).workspaceFolder;
+        let fsPath: string | undefined = dependenciesTreeNode.isDependenciesTreeRoot()
+            ? dependenciesTreeNode.generalInfo.path
+            : dependenciesTreeNode.parent?.generalInfo.path;
+        if (!fsPath) {
+            return;
+        }
         let openPath: vscode.Uri = vscode.Uri.file(path.join(fsPath, 'pom.xml'));
         if (!openPath) {
             return;
