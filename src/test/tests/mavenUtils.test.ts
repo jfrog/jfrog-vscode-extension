@@ -74,22 +74,22 @@ describe('Maven Utils Tests', () => {
      */
     it('Get Pom Details', async () => {
         let pathToPomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'pom.xml'));
-        let [pomId, rawDependencies]: string[] = MavenUtils.getPomDetails(pathToPomXml.fsPath, treesManager);
+        let [pomId, rawDependencies]: string[] = MavenUtils.runMavenDependencyCmd(pathToPomXml.fsPath, treesManager);
         assert.equal(pomId, 'org.jfrog.test:multi:3.7-SNAPSHOT');
         assert.equal(rawDependencies, multiDep);
 
         pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi1', 'pom.xml'));
-        [pomId, rawDependencies] = MavenUtils.getPomDetails(pathToPomXml.fsPath, treesManager);
+        [pomId, rawDependencies] = MavenUtils.runMavenDependencyCmd(pathToPomXml.fsPath, treesManager);
         assert.equal(pomId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
         assert.equal(rawDependencies, multi1Dep);
 
         pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi2', 'pom.xml'));
-        [pomId, rawDependencies] = MavenUtils.getPomDetails(pathToPomXml.fsPath, treesManager);
+        [pomId, rawDependencies] = MavenUtils.runMavenDependencyCmd(pathToPomXml.fsPath, treesManager);
         assert.equal(pomId, 'org.jfrog.test:multi2:3.7-SNAPSHOT');
         assert.equal(rawDependencies, multi2Dep);
 
         pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi3', 'pom.xml'));
-        [pomId, rawDependencies] = MavenUtils.getPomDetails(pathToPomXml.fsPath, treesManager);
+        [pomId, rawDependencies] = MavenUtils.runMavenDependencyCmd(pathToPomXml.fsPath, treesManager);
         assert.equal(pomId, 'org.jfrog.test:multi3:3.7-SNAPSHOT');
         assert.equal(rawDependencies, multi3Dep);
     });

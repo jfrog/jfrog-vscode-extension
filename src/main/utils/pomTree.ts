@@ -1,7 +1,11 @@
+import { MavenUtils } from './mavenUtils';
+import { TreesManager } from '../treeDataProviders/treesManager';
+import { ContextUtils } from './contextUtils';
+import * as path from 'path';
+
 export class PomTree {
     constructor(
         private _pomId: string = '',
-        private _rawDependencies: string = '',
         private _pomPath: string = '',
         private _children: PomTree[] = [],
         private _parent?: PomTree,
@@ -10,10 +14,6 @@ export class PomTree {
 
     public get pomId(): string {
         return this._pomId;
-    }
-    
-    public get rawDependencies(): string {
-        return this._rawDependencies;
     }
 
     public get pomPath(): string {
@@ -34,10 +34,6 @@ export class PomTree {
 
     public set pomId(v: string) {
         this._pomId = v;
-    }
-
-    public set rawDependencies(v: string) {
-        this._rawDependencies = v;
     }
 
     public set pomPath(v: string) {
@@ -66,6 +62,33 @@ export class PomTree {
         }
         for (const pom of this._children) {
             pom.deepSearch(pomId);
+        }
+        return;
+    }
+    public runMavenDependencyTree(): void {
+        MavenUtils.executeMavenCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog/maven`, this.pomPath);
+    }
+
+    public getRawDependencies(treesManager: TreesManager): string[] | undefined {
+        const dependencyTreeFile: string = path.join(this._pomPath, '.jfrog', 'maven');
+        try {
+            const pomContent: string | undefined = ContextUtils.readFileIfExists(dependencyTreeFile);
+            if (!pomContent) {
+                throw new Error('Could not parse dependencies tree');
+            }
+            const pomDependencies: string | undefined = pomContent?.substring(pomContent.indexOf('\n') + 1);
+            return pomDependencies.split(/\r?\n/).filter(line => line.trim() !== '');
+        } catch (error) {
+            treesManager.logManager.logError(error, false);
+            treesManager.logManager.logMessage(
+                `Could not get dependencies tree from pom.xml (path: ${path.dirname(this._pomPath)}).
+            'Possible cause: The project needs to be installed by maven. Install it by running "mvn clean install" from ${path.dirname(
+                this._pomPath
+            )}.`,
+                'ERR'
+            );
+        } finally {
+            ContextUtils.removeFile(path.join(dependencyTreeFile,'..'));
         }
         return;
     }
