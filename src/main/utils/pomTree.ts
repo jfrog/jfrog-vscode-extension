@@ -79,12 +79,11 @@ export class PomTree {
             const pomDependencies: string | undefined = pomContent?.substring(pomContent.indexOf('\n') + 1);
             return pomDependencies.split(/\r?\n/).filter(line => line.trim() !== '');
         } catch (error) {
-            treesManager.logManager.logError(error, false);
             treesManager.logManager.logMessage(
-                `Could not get dependencies tree from pom.xml (path: ${path.dirname(this._pomPath)}).
-            'Possible cause: The project needs to be installed by maven. Install it by running "mvn clean install" from ${path.dirname(
-                this._pomPath
-            )}.`,
+                'Could not get dependencies tree from pom.xml.\n' +
+                    'Possible cause: The project needs to be installed by maven. Install it by running "mvn clean install" from ' +
+                    this._pomPath +
+                    '.',
                 'ERR'
             );
         } finally {

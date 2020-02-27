@@ -61,14 +61,16 @@ describe('Maven Utils Tests', () => {
      * Test getParentInfo.
      * Get parent info from pom.xml.
      */
-    it('Get parent info', async () => {
+    it('Get pom.xml details', async () => {
         let pomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi1', 'pom.xml'));
-        let parentInfo: string = MavenUtils.getParentInfo(pomXml);
-        assert.equal(parentInfo, 'org.jfrog.test:multi:3.7-SNAPSHOT');
+        let [pomGav, parentGav]: string[] = MavenUtils.getPomDetails(pomXml.fsPath, treesManager);
+        assert.equal(pomGav, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
+        assert.equal(parentGav, 'org.jfrog.test:multi:3.7-SNAPSHOT');
 
-        pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'pom.xml'));
-        parentInfo = MavenUtils.getParentInfo(pomXml);
-        assert.isEmpty(parentInfo);
+        pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'pom.xml'));
+        [pomGav, parentGav] = MavenUtils.getPomDetails(pomXml.fsPath, treesManager);
+        assert.equal(pomGav, 'org.jfrog.test:multi:3.7-SNAPSHOT');
+        assert.isEmpty(parentGav);
     });
 
     /**
