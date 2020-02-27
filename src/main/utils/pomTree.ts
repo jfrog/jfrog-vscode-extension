@@ -88,7 +88,7 @@ export class PomTree {
                 'ERR'
             );
         } finally {
-            ContextUtils.removeFile(path.join(dependencyTreeFile,'..'));
+            ContextUtils.removeFile(path.join(dependencyTreeFile, '..'));
         }
         return;
     }

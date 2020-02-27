@@ -30,20 +30,20 @@ export class MavenTreeNode extends DependenciesTreeNode {
      * @param quickScan - True to allow reading from scan cache.
      * @param prototypeTree - Tree that each node contain pom.xml path.
      */
-    public refreshDependencies(quickScan: boolean, prototypeTree: PomTree,parentDependencies?: string[]) {
+    public refreshDependencies(quickScan: boolean, prototypeTree: PomTree, parentDependencies?: string[]) {
         const [group, name, version] = prototypeTree.pomId.split(':');
         this.generalInfo = new GavGeneralInfo(group, name, version, this._workspaceFolder, MavenUtils.PKG_TYPE);
         this.label = group + ':' + name;
         let rawDependenciesList: string[] | undefined = prototypeTree.getRawDependencies(this._treesManager);
         if (!!rawDependenciesList && rawDependenciesList.length > 0) {
-            rawDependenciesList =  MavenUtils.FilterParentDependencies(rawDependenciesList, parentDependencies) || rawDependenciesList;
+            rawDependenciesList = MavenUtils.FilterParentDependencies(rawDependenciesList, parentDependencies) || rawDependenciesList;
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
             this.populateDependenciesTree(this, rawDependenciesList, { index: 0 }, quickScan);
         }
         for (const childPom of prototypeTree.children) {
             const dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(childPom.pomPath, this._componentsToScan, this._treesManager, this);
             dependenciesTreeNode.refreshDependencies(quickScan, childPom, rawDependenciesList);
-            if (dependenciesTreeNode.children.length === 0){
+            if (dependenciesTreeNode.children.length === 0) {
                 this.children.splice(this.children.indexOf(dependenciesTreeNode), 1);
             }
         }
@@ -76,7 +76,10 @@ export class MavenTreeNode extends DependenciesTreeNode {
                 this._componentsToScan.add(new ComponentDetails(MavenTreeNode.COMPONENT_PREFIX + componentId));
             }
             if (rawDependenciesPtr.index + 1 < rawDependenciesList.length) {
-                while (rawDependenciesPtr.index + 1 < rawDependenciesList.length && this.isChild(dependency, rawDependenciesList[rawDependenciesPtr.index + 1])) {
+                while (
+                    rawDependenciesPtr.index + 1 < rawDependenciesList.length &&
+                    this.isChild(dependency, rawDependenciesList[rawDependenciesPtr.index + 1])
+                ) {
                     rawDependenciesPtr.index++;
                     this.populateDependenciesTree(child, rawDependenciesList, rawDependenciesPtr, quickScan);
                 }

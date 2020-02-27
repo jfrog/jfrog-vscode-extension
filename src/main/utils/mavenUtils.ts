@@ -111,19 +111,19 @@ export class MavenUtils {
     }
 
     public static getPomId(pathToPomXml: string): string {
-        const groupId:string = this.executeMavenCmd(
+        const groupId: string = this.executeMavenCmd(
             `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate  -Dexpression=project.groupId -q -DforceStdout`,
             path.dirname(pathToPomXml)
         );
-        const artifactId:string = this.executeMavenCmd(
+        const artifactId: string = this.executeMavenCmd(
             `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -q -DforceStdout`,
             path.dirname(pathToPomXml)
         );
-        const version:string = this.executeMavenCmd(
+        const version: string = this.executeMavenCmd(
             `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate  -Dexpression=project.version -q -DforceStdout`,
             path.dirname(pathToPomXml)
         );
-        return groupId+":"+artifactId+":"+version;
+        return groupId + ':' + artifactId + ':' + version;
     }
 
     /**
@@ -160,9 +160,9 @@ export class MavenUtils {
                 ProjectTree.runMavenDependencyTree();
                 let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, componentsToScan, treesManager, root);
                 dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree);
-                if (dependenciesTreeNode.children.length === 0){
+                if (dependenciesTreeNode.children.length === 0) {
                     root.children.splice(root.children.indexOf(dependenciesTreeNode), 1);
-                }else{
+                } else {
                     mavenTreeNodes.push(dependenciesTreeNode);
                 }
             } catch (error) {
@@ -175,7 +175,6 @@ export class MavenUtils {
                     'ERR'
                 );
             }
-
         }
         return mavenTreeNodes;
     }
@@ -315,13 +314,13 @@ export class MavenUtils {
 
     // 'mvn dependency:tree' duplicate the parent dependencies to its child.
     // this method filter out parent dependencies from child dependency
-    public static FilterParentDependencies(childDependencies: string[],parentDeps?: string[]): string[] | undefined {
-        if(parentDeps){
-            const rawParentDep = parentDeps.join(' ');
+    public static FilterParentDependencies(childDependencies: string[], parentDeps?: string[]): string[] | undefined {
+        if (parentDeps) {
+            const rawParentDep: string = parentDeps.join(' ');
             return childDependencies.filter(childDep => {
-                    const index: number =childDep.search(/\w/);
-                    const regex: RegExp = new RegExp(`^.*${childDep.slice(index)}.*$`, 'mg');
-                    return !!rawParentDep.match(regex) === false;
+                const index: number = childDep.search(/\w/);
+                const regex: RegExp = new RegExp(`^.*${childDep.slice(index)}.*$`, 'mg');
+                return !!rawParentDep.match(regex) === false;
             });
         }
         return;
@@ -331,13 +330,12 @@ export class MavenUtils {
         return exec.execSync(mvnCommand, { cwd: pomPath });
     }
 
-    public static haveDependencies(pomPath: string): boolean{
+    public static haveDependencies(pomPath: string): boolean {
         const parentText: RegExpMatchArray | null = fs
-        .readFileSync(pomPath)
-        .toString()
-        .match(/<dependencies>(.|\s)*?<\/dependencies>/);
+            .readFileSync(pomPath)
+            .toString()
+            .match(/<dependencies>(.|\s)*?<\/dependencies>/);
 
-        return !!parentText && !!(parentText[0]);
-
+        return !!parentText && !!parentText[0];
     }
 }

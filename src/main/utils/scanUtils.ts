@@ -3,6 +3,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 export class ScanUtils {
+    public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
+
     public static async scanWithProgress(
         scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => void
     ) {

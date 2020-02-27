@@ -199,8 +199,8 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         if (!(this.dependenciesTree instanceof DependenciesTreeNode)) {
             return undefined;
         }
-        // Unlike other build tools, witch rely that each direct dep can be found in the root's child, Maven can have direct dep in each node because,
-        // Maven has parent pom witch is the root of the tree all the other poms are located beneath it.
+        // Unlike other build tools, which rely that each direct dep can be found in the root's child, Maven can have direct dep in each node because,
+        // Maven has parent pom which is the root of the tree all the other poms are located beneath it.
         // In order to solve this, we create a map  (fs-path -> node) find the correct pom in the tree.
         if (pkgType === 'maven') {
             return MavenUtils.pathToNode.get(path || '');

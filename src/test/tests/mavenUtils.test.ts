@@ -14,7 +14,6 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/mavenTreeNode';
 import { PomTree } from '../../main/utils/pomTree';
 import { MavenUtils } from '../../main/utils/mavenUtils';
-import { ContextUtils } from '../../main/utils/contextUtils';
 
 /**
  * Test functionality of @class NpmUtils.
@@ -33,18 +32,8 @@ describe('Maven Utils Tests', () => {
     let projectDirs: string[] = ['dependency', 'empty', 'multiPomDependency'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
-    let outputPath: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'testdata', '1'));
-    const multiDep: string | undefined = ContextUtils.readFileIfExists(outputPath.fsPath);
-    tmpDir = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
-    outputPath = vscode.Uri.file(path.join(tmpDir.fsPath, 'testdata', '2'));
-    const multi1Dep: string | undefined = ContextUtils.readFileIfExists(outputPath.fsPath);
-    tmpDir = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
-    outputPath = vscode.Uri.file(path.join(tmpDir.fsPath, 'testdata', '3'));
-    const multi2Dep: string | undefined = ContextUtils.readFileIfExists(outputPath.fsPath);
-    tmpDir = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
-    outputPath = vscode.Uri.file(path.join(tmpDir.fsPath, 'testdata', '4'));
-    const multi3Dep: string | undefined = ContextUtils.readFileIfExists(outputPath.fsPath);
-    before(() => {
+
+    before(function() {
         workspaceFolders = [
             {
                 uri: tmpDir,
@@ -66,32 +55,6 @@ describe('Maven Utils Tests', () => {
             let expectedPomXml: string = path.join(tmpDir.fsPath, expectedProjectDir, 'pom.xml');
             assert.isTrue(!!pomXmls.find(el => el.fsPath === expectedPomXml), 'Should contain ' + expectedPomXml);
         }
-    });
-
-    /**
-     * Test getPomDetails.
-     * Validate the output from 'mvn dependency:tree' command
-     */
-    it('Get Pom Details', async () => {
-        let pathToPomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'pom.xml'));
-        let [pomId, rawDependencies]: string[] = MavenUtils.runMavenDependencyCmd(pathToPomXml.fsPath, treesManager);
-        assert.equal(pomId, 'org.jfrog.test:multi:3.7-SNAPSHOT');
-        assert.equal(rawDependencies, multiDep);
-
-        pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi1', 'pom.xml'));
-        [pomId, rawDependencies] = MavenUtils.runMavenDependencyCmd(pathToPomXml.fsPath, treesManager);
-        assert.equal(pomId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
-        assert.equal(rawDependencies, multi1Dep);
-
-        pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi2', 'pom.xml'));
-        [pomId, rawDependencies] = MavenUtils.runMavenDependencyCmd(pathToPomXml.fsPath, treesManager);
-        assert.equal(pomId, 'org.jfrog.test:multi2:3.7-SNAPSHOT');
-        assert.equal(rawDependencies, multi2Dep);
-
-        pathToPomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi3', 'pom.xml'));
-        [pomId, rawDependencies] = MavenUtils.runMavenDependencyCmd(pathToPomXml.fsPath, treesManager);
-        assert.equal(pomId, 'org.jfrog.test:multi3:3.7-SNAPSHOT');
-        assert.equal(rawDependencies, multi3Dep);
     });
 
     /**
@@ -290,37 +253,33 @@ describe('Maven Utils Tests', () => {
         assert.deepEqual(res[0].parent, parent);
 
         // Check children
-        assert.lengthOf(res[0].children, 4);
+        assert.lengthOf(res[0].children, 3);
         assert.lengthOf(res[0].children[0].children, 0);
         assert.deepEqual(res[0].children[0].parent, res[0]);
         assert.equal(res[0].children[0].componentId, 'junit:junit:3.8.1');
         assert.isTrue(res[0].children[0] instanceof DependenciesTreeNode);
-        assert.lengthOf(res[0].children[3].children, 3);
-        assert.deepEqual(res[0].children[3].parent, res[0]);
-        assert.equal(res[0].children[3].componentId, 'org.jfrog.test:multi3:3.7-SNAPSHOT');
-        assert.isTrue(res[0] instanceof MavenTreeNode);
-        assert.lengthOf(res[0].children[2].children, 0);
+        assert.lengthOf(res[0].children[2].children, 3);
         assert.deepEqual(res[0].children[2].parent, res[0]);
-        assert.equal(res[0].children[2].componentId, 'org.jfrog.test:multi2:3.7-SNAPSHOT');
-        assert.isTrue(res[0] instanceof MavenTreeNode);
+        assert.equal(res[0].children[2].componentId, 'org.jfrog.test:multi3:3.7-SNAPSHOT');
+        assert.isTrue(res[0].children[2] instanceof MavenTreeNode);
+
         assert.lengthOf(res[0].children[1].children, 6);
         assert.deepEqual(res[0].children[1].parent, res[0]);
         assert.equal(res[0].children[1].componentId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
-        assert.isTrue(res[0] instanceof MavenTreeNode);
+        assert.isTrue(res[0].children[1] instanceof MavenTreeNode);
 
         // Check grandchildren
         // First
-        assert.equal(res[0].children[3].children[0].componentId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
-        assert.isTrue(res[0].children[3].children[0] instanceof DependenciesTreeNode);
-        assert.deepEqual(res[0].children[3].children[0].parent, res[0].children[3]);
-        assert.equal(res[0].children[3].children[1].componentId, 'hsqldb:hsqldb:1.8.0.10');
-        assert.isTrue(res[0].children[3].children[1] instanceof DependenciesTreeNode);
-        assert.deepEqual(res[0].children[3].children[1].parent, res[0].children[3]);
-        assert.equal(res[0].children[3].children[2].componentId, 'javax.servlet:servlet-api:2.5');
-        assert.isTrue(res[0].children[3].children[2] instanceof DependenciesTreeNode);
-        assert.deepEqual(res[0].children[3].children[2].parent, res[0].children[3]);
-        // Second
-        assert.lengthOf(res[0].children[2].children, 0);
+        assert.equal(res[0].children[2].children[0].componentId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
+        assert.isTrue(res[0].children[2].children[0] instanceof DependenciesTreeNode);
+        assert.deepEqual(res[0].children[2].children[0].parent, res[0].children[2]);
+        assert.equal(res[0].children[2].children[1].componentId, 'hsqldb:hsqldb:1.8.0.10');
+        assert.isTrue(res[0].children[2].children[1] instanceof DependenciesTreeNode);
+        assert.deepEqual(res[0].children[2].children[1].parent, res[0].children[2]);
+        assert.equal(res[0].children[2].children[2].componentId, 'javax.servlet:servlet-api:2.5');
+        assert.isTrue(res[0].children[2].children[2] instanceof DependenciesTreeNode);
+        assert.deepEqual(res[0].children[2].children[2].parent, res[0].children[2]);
+
         // Third
         assert.equal(res[0].children[1].children[0].componentId, 'org.apache.commons:commons-email:1.1');
         assert.isTrue(res[0].children[1].children[0] instanceof DependenciesTreeNode);
@@ -356,18 +315,11 @@ describe('Maven Utils Tests', () => {
 
     function expectedBuildPrototypePomTree(): PomTree[][] {
         return [
+            [new PomTree('org.jfrog.test:multi2:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'dependency'))],
             [
-                new PomTree(
-                    'org.jfrog.test:multi2:3.7-SNAPSHOT',
-                    `\\- javax.servlet.jsp:jsp-api:jar:2.1:compile`,
-                    path.join(__dirname, '..', 'resources', 'maven', 'dependency')
-                )
-            ],
-            [
-                new PomTree('org.jfrog.test:multi:3.7-SNAPSHOT', multiDep, path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency'), [
+                new PomTree('org.jfrog.test:multi:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency'), [
                     new PomTree(
                         'org.jfrog.test:multi1:3.7-SNAPSHOT',
-                        multi1Dep,
                         path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi1'),
                         [],
                         undefined,
@@ -375,7 +327,6 @@ describe('Maven Utils Tests', () => {
                     ),
                     new PomTree(
                         'org.jfrog.test:multi2:3.7-SNAPSHOT',
-                        `\\- junit:junit:jar:3.8.1:test`,
                         path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi2'),
                         [],
                         undefined,
@@ -383,7 +334,6 @@ describe('Maven Utils Tests', () => {
                     ),
                     new PomTree(
                         'org.jfrog.test:multi3:3.7-SNAPSHOT',
-                        multi3Dep,
                         path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi3'),
                         [],
                         undefined,
