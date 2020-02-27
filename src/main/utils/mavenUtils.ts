@@ -3,6 +3,7 @@ import * as Collections from 'typescript-collections';
 import * as path from 'path';
 import fs from 'fs';
 import * as exec from 'child_process';
+import parser from 'fast-xml-parser';
 import { ScanUtils } from './scanUtils';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
@@ -110,20 +111,39 @@ export class MavenUtils {
         }
     }
 
-    public static getPomId(pathToPomXml: string): string {
-        const groupId: string = this.executeMavenCmd(
-            `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate  -Dexpression=project.groupId -q -DforceStdout`,
-            path.dirname(pathToPomXml)
-        );
-        const artifactId: string = this.executeMavenCmd(
-            `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -q -DforceStdout`,
-            path.dirname(pathToPomXml)
-        );
-        const version: string = this.executeMavenCmd(
-            `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate  -Dexpression=project.version -q -DforceStdout`,
-            path.dirname(pathToPomXml)
-        );
-        return groupId + ':' + artifactId + ':' + version;
+    public static getPomDetails(pathToPomXml: string): [string, string] {
+        const rawText: string = fs.readFileSync(pathToPomXml, 'utf8').toString();
+        let pomXmlData: any = parser.parse(rawText).project;
+        let groupId: string = pomXmlData.groupId;
+        if (!groupId || groupId.includes('$')) {
+            groupId = this.executeMavenCmd(
+                `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate  -Dexpression=project.groupId -q -DforceStdout`,
+                path.dirname(pathToPomXml)
+            );
+        }
+
+        let artifactId: string = pomXmlData.artifactId;
+        if (!artifactId || artifactId.includes('$')) {
+            artifactId = this.executeMavenCmd(
+                `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -q -DforceStdout`,
+                path.dirname(pathToPomXml)
+            );
+        }
+        let version: string = pomXmlData.version;
+        if (!version || version.includes('$')) {
+            version = this.executeMavenCmd(
+                `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout`,
+                path.dirname(pathToPomXml)
+            );
+        }
+        let parentArtifactId: string = pomXmlData.parent?.artifactId;
+        let parentGroupId: string = pomXmlData.parent?.groupId;
+        let parentVersion: string = pomXmlData.parent?.version;
+        let parent: string = "";
+        if(parentArtifactId && parentGroupId&& parentVersion){
+            parent = parentGroupId + ':' + parentArtifactId + ':' + parentVersion
+        }
+        return [groupId + ':' + artifactId + ':' + version, parent];
     }
 
     /**
@@ -193,20 +213,20 @@ export class MavenUtils {
         let prototypeTree: PomTree[] = [];
         pomArray.forEach(pom => {
             try {
-                const pomId: string = MavenUtils.getPomId(pom.fsPath);
-                if (!!pomId) {
-                    let parentId: string = MavenUtils.getParentInfo(pom);
-                    let index: number = MavenUtils.searchPomId(prototypeTree, pomId);
+                const [pomGav,parentGav]: string[] = MavenUtils.getPomDetails(pom.fsPath);
+                if (!!pomGav) {
+                    //let parentId: string = MavenUtils.getParentInfo(pom);
+                    let index: number = MavenUtils.searchPomId(prototypeTree, pomGav);
                     let currNode: PomTree;
                     // If the node already exists get it and remove it from tree other wise create a new node
                     if (index > -1) {
                         currNode = prototypeTree[index];
                         prototypeTree.splice(index, 1);
                     } else {
-                        currNode = new PomTree(pomId);
+                        currNode = new PomTree(pomGav);
                     }
                     currNode.pomPath = path.dirname(pom.fsPath);
-                    currNode.parentId = parentId;
+                    currNode.parentId = parentGav;
                     MavenUtils.addPrototypeNode(prototypeTree, currNode);
                 }
             } catch (error) {
