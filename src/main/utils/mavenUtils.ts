@@ -96,42 +96,28 @@ export class MavenUtils {
         return Promise.resolve(result.length > 1 ? result.sort((a: vscode.Uri, b: vscode.Uri) => a.fsPath.localeCompare(b.fsPath)) : result);
     }
 
-    public static runMavenDependencyCmd(pathToPomXml: string, treesManager: TreesManager): void {
-        try {
-            this.executeMavenCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog/maven`, pathToPomXml);
-        } catch (error) {
-            treesManager.logManager.logMessage(
-                'Could not get dependencies tree from pom.xml.\n' +
-                    'Possible cause: The project needs to be installed by maven. Install it by running "mvn clean install" from ' +
-                    pathToPomXml +
-                    '.',
-                'ERR'
-            );
-        }
-    }
-
     /**
-     * return pom Gav and parent GAV.if not found, empty string will be returned 
+     * return pom Gav and parent GAV.if not found, empty string will be returned
      */
     public static getPomDetails(pathToPomXml: string, treesManager: TreesManager): [string, string] {
         try {
             const rawText: string = fs.readFileSync(pathToPomXml, 'utf8').toString();
             let pomXmlData: any = parser.parse(rawText).project;
-            let groupId: string = pomXmlData.groupId;
+            let groupId: string = pomXmlData.groupId?.toString();
             if (!groupId || groupId.includes('$')) {
                 groupId = this.executeMavenCmd(
                     `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate  -Dexpression=project.groupId -q -DforceStdout`,
                     path.dirname(pathToPomXml)
                 );
             }
-            let artifactId: string = pomXmlData.artifactId;
+            let artifactId: string = pomXmlData.artifactId?.toString();
             if (!artifactId || artifactId.includes('$')) {
                 artifactId = this.executeMavenCmd(
                     `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -q -DforceStdout`,
                     path.dirname(pathToPomXml)
                 );
             }
-            let version: string = pomXmlData.version;
+            let version: string = pomXmlData.version?.toString();
             if (!version || version.includes('$')) {
                 version = this.executeMavenCmd(
                     `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout`,
@@ -148,12 +134,13 @@ export class MavenUtils {
             return [groupId + ':' + artifactId + ':' + version, parent];
         } catch (error) {
             treesManager.logManager.logMessage(
-                'Could not get dependencies tree from pom.xml.\n' +
-                    'Possible cause: The project needs to be installed by maven. Install it by running "mvn clean install" from ' +
+                'Could not get parse pom.xml GAV.\n' +
+                    'Try Install it by running "mvn clean install" from ' +
                     pathToPomXml +
                     '.',
                 'ERR'
             );
+            treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
         }
         return ['', ''];
     }
@@ -200,11 +187,12 @@ export class MavenUtils {
             } catch (error) {
                 treesManager.logManager.logMessage(
                     'Could not get dependencies tree from pom.xml.\n' +
-                        'Possible cause: The project needs to be installed by maven. Install it by running "mvn clean install" from ' +
+                        'Try Install it by running "mvn clean install" from ' +
                         ProjectTree.pomPath +
                         '.',
                     'ERR'
                 );
+                treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }
         }
         return mavenTreeNodes;
@@ -212,9 +200,9 @@ export class MavenUtils {
 
     /**
      * for each pom:
-     * 1. get the pomId(groupId,artifactId,version)
-     * 2. search pomId from step 1 in pomTree
-     *  2.1 if found remove from tree and otherwise create new node with pomId
+     * 1. get the pomGav(groupId,artifactId,version)
+     * 2. search pomGav from step 1 in pomTree
+     *  2.1 if found remove from tree and otherwise create new node with pomGav
      * 3. update the path/parent of node from step 3
      * 4. try to add the node to its parent's children otherwise add it to the root of the tree.
      * @param pomArray list of all pom.xml uri inside root dir
@@ -225,10 +213,8 @@ export class MavenUtils {
         pomArray.forEach(pom => {
             const [pomGav, parentGav]: string[] = MavenUtils.getPomDetails(pom.fsPath, treesManager);
             if (!!pomGav) {
-                //let parentId: string = MavenUtils.getParentInfo(pom);
-                let index: number = MavenUtils.searchPomId(prototypeTree, pomGav);
+                let index: number = MavenUtils.searchPomGav(prototypeTree, pomGav);
                 let currNode: PomTree;
-                // If the node already exists get it and remove it from tree other wise create a new node
                 if (index > -1) {
                     currNode = prototypeTree[index];
                     prototypeTree.splice(index, 1);
@@ -236,7 +222,7 @@ export class MavenUtils {
                     currNode = new PomTree(pomGav);
                 }
                 currNode.pomPath = path.dirname(pom.fsPath);
-                currNode.parentId = parentGav;
+                currNode.parentGav = parentGav;
                 MavenUtils.addPrototypeNode(prototypeTree, currNode);
             }
         });
@@ -261,12 +247,12 @@ export class MavenUtils {
      * @param node - Node to be added
      */
     static addPrototypeNode(pomArray: PomTree[], node: PomTree) {
-        if (!!node.parentId) {
-            const parentNode: PomTree | undefined = MavenUtils.getPrototypeNode(pomArray, node.parentId);
+        if (!!node.parentGav) {
+            const parentNode: PomTree | undefined = MavenUtils.getPrototypeNode(pomArray, node.parentGav);
             if (!!parentNode) {
                 parentNode.addChild(node);
             } else {
-                const parentPom: PomTree = new PomTree(node.parentId);
+                const parentPom: PomTree = new PomTree(node.parentGav);
                 parentPom.addChild(node);
                 pomArray.push(parentPom);
             }
@@ -284,9 +270,9 @@ export class MavenUtils {
         return true;
     }
 
-    public static getPrototypeNode(prototypeTreeArray: PomTree[], pomId: string): PomTree | undefined {
+    public static getPrototypeNode(prototypeTreeArray: PomTree[], pomGav: string): PomTree | undefined {
         for (const prototypeTree of prototypeTreeArray) {
-            const node: PomTree | undefined = prototypeTree.deepSearch(pomId);
+            const node: PomTree | undefined = prototypeTree.deepSearch(pomGav);
             if (node) {
                 return node;
             }
@@ -294,8 +280,8 @@ export class MavenUtils {
         return;
     }
 
-    public static searchPomId(pomTreeArray: PomTree[], pomId: string): number {
-        return pomTreeArray.findIndex(pomTree => pomTree.pomId === pomId);
+    public static searchPomGav(pomTreeArray: PomTree[], pomGav: string): number {
+        return pomTreeArray.findIndex(pomTree => pomTree.pomGav === pomGav);
     }
 
     /**
@@ -332,14 +318,5 @@ export class MavenUtils {
 
     public static executeMavenCmd(mvnCommand: string, pomPath: string): any {
         return exec.execSync(mvnCommand, { cwd: pomPath });
-    }
-
-    public static haveDependencies(pomPath: string): boolean {
-        const parentText: RegExpMatchArray | null = fs
-            .readFileSync(pomPath)
-            .toString()
-            .match(/<dependencies>(.|\s)*?<\/dependencies>/);
-
-        return !!parentText && !!parentText[0];
     }
 }

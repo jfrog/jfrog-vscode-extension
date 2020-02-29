@@ -5,15 +5,15 @@ import * as path from 'path';
 
 export class PomTree {
     constructor(
-        private _pomId: string = '',
+        private _pomGav: string = '',
         private _pomPath: string = '',
         private _children: PomTree[] = [],
         private _parent?: PomTree,
-        private _parentId: string = ''
+        private _parentGav: string = ''
     ) {}
 
-    public get pomId(): string {
-        return this._pomId;
+    public get pomGav(): string {
+        return this._pomGav;
     }
 
     public get pomPath(): string {
@@ -28,12 +28,12 @@ export class PomTree {
         return this._parent;
     }
 
-    public get parentId(): string {
-        return this._parentId;
+    public get parentGav(): string {
+        return this._parentGav;
     }
 
-    public set pomId(v: string) {
-        this._pomId = v;
+    public set pomGav(v: string) {
+        this._pomGav = v;
     }
 
     public set pomPath(v: string) {
@@ -48,44 +48,38 @@ export class PomTree {
         this._parent = v;
     }
 
-    public set parentId(v: string) {
-        this._parentId = v;
+    public set parentGav(v: string) {
+        this._parentGav = v;
     }
 
     public addChild(v: PomTree) {
         this._children?.push(v);
     }
 
-    public deepSearch(pomId: string): PomTree | undefined {
-        if (this.pomId === pomId) {
+    public deepSearch(pomGav: string): PomTree | undefined {
+        if (this.pomGav === pomGav) {
             return this;
         }
         for (const pom of this._children) {
-            pom.deepSearch(pomId);
+            pom.deepSearch(pomGav);
         }
         return;
     }
     public runMavenDependencyTree(): void {
-        MavenUtils.executeMavenCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog/maven`, this.pomPath);
+        MavenUtils.executeMavenCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog_vscode/maven`, this.pomPath);
     }
 
     public getRawDependencies(treesManager: TreesManager): string[] | undefined {
-        const dependencyTreeFile: string = path.join(this._pomPath, '.jfrog', 'maven');
+        const dependencyTreeFile: string = path.join(this._pomPath, '.jfrog_vscode', 'maven');
         try {
             const pomContent: string | undefined = ContextUtils.readFileIfExists(dependencyTreeFile);
             if (!pomContent) {
-                throw new Error('Could not parse dependencies tree');
+                throw new Error();
             }
             const pomDependencies: string | undefined = pomContent?.substring(pomContent.indexOf('\n') + 1);
             return pomDependencies.split(/\r?\n/).filter(line => line.trim() !== '');
         } catch (error) {
-            treesManager.logManager.logMessage(
-                'Could not get dependencies tree from pom.xml.\n' +
-                    'Possible cause: The project needs to be installed by maven. Install it by running "mvn clean install" from ' +
-                    this._pomPath +
-                    '.',
-                'ERR'
-            );
+            treesManager.logManager.logMessage('Dependencies were not found. at pom.xml.\n' + this._pomPath + '.', 'ERR');
         } finally {
             ContextUtils.removeFile(path.join(dependencyTreeFile, '..'));
         }

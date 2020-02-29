@@ -32,9 +32,7 @@ export class MavenFocus extends AbstractFocus {
         while (dependenciesTreeNode.parent && dependenciesTreeNode instanceof MavenTreeNode === false) {
             dependenciesTreeNode = dependenciesTreeNode.parent;
         }
-        let fsPath: string | undefined = dependenciesTreeNode.isDependenciesTreeRoot()
-            ? dependenciesTreeNode.generalInfo.path
-            : dependenciesTreeNode.parent?.generalInfo.path;
+        let fsPath: string | undefined = (<MavenTreeNode>dependenciesTreeNode).workspaceFolder;
         if (!fsPath) {
             return;
         }

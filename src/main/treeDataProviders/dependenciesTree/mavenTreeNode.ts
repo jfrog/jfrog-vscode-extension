@@ -31,7 +31,7 @@ export class MavenTreeNode extends DependenciesTreeNode {
      * @param prototypeTree - Tree that each node contain pom.xml path.
      */
     public refreshDependencies(quickScan: boolean, prototypeTree: PomTree, parentDependencies?: string[]) {
-        const [group, name, version] = prototypeTree.pomId.split(':');
+        const [group, name, version] = prototypeTree.pomGav.split(':');
         this.generalInfo = new GavGeneralInfo(group, name, version, this._workspaceFolder, MavenUtils.PKG_TYPE);
         this.label = group + ':' + name;
         let rawDependenciesList: string[] | undefined = prototypeTree.getRawDependencies(this._treesManager);
