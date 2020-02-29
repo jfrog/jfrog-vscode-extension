@@ -21,9 +21,9 @@ jobs:
               with:
                   node-version: '10.x'
             - name: Set up Maven
-              uses: stCarolas/setup-maven@v3
+              uses: aahmed-se/setup-maven@v3
               with:
-                  maven-version: 3.5.4
+                maven-version: 3.6.1
             - name: Install
               run: npm i
             - name: Lint
