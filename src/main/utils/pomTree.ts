@@ -80,10 +80,10 @@ export class PomTree {
             return pomDependencies.split(/\r?\n/).filter(line => line.trim() !== '');
         } catch (error) {
             treesManager.logManager.logMessage(
-                'Dependencies were not found. at pom.xml.\n' +
-                    this._pomPath +
+                'Dependencies were not found at ' +
+                    path.join(this._pomPath,'pom.xml') +
                     '.\n' +
-                    "Hint: pom.xml contain 'org.apache.maven.plugins:maven-dependency-plugin'?",
+                    "Hint: For projects which include the 'org.apache.maven.plugins:maven-dependency-plugin' the scanning functionality is disabled",
                 'ERR'
             );
         } finally {
