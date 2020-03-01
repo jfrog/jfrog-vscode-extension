@@ -158,42 +158,45 @@ export class MavenUtils {
         root: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<MavenTreeNode[]> {
-        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, progress);
-        if (pomXmls.length === 0) {
-            treesManager.logManager.logMessage('No pom.xml files found in workspaces.', 'DEBUG');
-            return [];
-        }
-        treesManager.logManager.logMessage('pom.xml files to scan: [' + pomXmls.toString() + ']', 'DEBUG');
-        if (!MavenUtils.verifyMavenInstalled()) {
-            vscode.window.showErrorMessage('Could not scan Maven project dependencies, because "mvn" is not in the PATH.');
-            return [];
-        }
-        treesManager.logManager.logMessage('Found pom.xml. Analyzing ...', 'DEBUG');
-        let mavenTreeNodes: MavenTreeNode[] = [];
-        let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, treesManager);
-        for (let ProjectTree of prototypeTree) {
-            try {
-                progress.report({ message: 'Analyzing pom.xml at ' + ProjectTree.pomPath });
-                ProjectTree.runMavenDependencyTree();
-                let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, componentsToScan, treesManager, root);
-                await dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree);
-                if (dependenciesTreeNode.children.length === 0) {
-                    root.children.splice(root.children.indexOf(dependenciesTreeNode), 1);
-                } else {
-                    mavenTreeNodes.push(dependenciesTreeNode);
-                }
-            } catch (error) {
-                treesManager.logManager.logMessage(
-                    'Could not get dependencies tree from pom.xml.\n' +
-                        'Try Install it by running "mvn clean install" from ' +
-                        ProjectTree.pomPath +
-                        '.',
-                    'ERR'
-                );
-                treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
+        return await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification }, async (p: vscode.Progress<{}>) => {
+            p.report({ message: 'Generating Maven Dependency Tree' });
+            let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, progress);
+            if (pomXmls.length === 0) {
+                treesManager.logManager.logMessage('No pom.xml files found in workspaces.', 'DEBUG');
+                return [];
             }
-        }
-        return mavenTreeNodes;
+            treesManager.logManager.logMessage('pom.xml files to scan: [' + pomXmls.toString() + ']', 'DEBUG');
+            if (!MavenUtils.verifyMavenInstalled()) {
+                vscode.window.showErrorMessage('Could not scan Maven project dependencies, because "mvn" is not in the PATH.');
+                return [];
+            }
+            treesManager.logManager.logMessage('Found pom.xml. Analyzing ...', 'DEBUG');
+            let mavenTreeNodes: MavenTreeNode[] = [];
+            let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, treesManager);
+            for (let ProjectTree of prototypeTree) {
+                try {
+                    progress.report({ message: 'Analyzing pom.xml at ' + ProjectTree.pomPath });
+                    ProjectTree.runMavenDependencyTree();
+                    let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, componentsToScan, treesManager, root);
+                    await dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree);
+                    if (dependenciesTreeNode.children.length === 0) {
+                        root.children.splice(root.children.indexOf(dependenciesTreeNode), 1);
+                    } else {
+                        mavenTreeNodes.push(dependenciesTreeNode);
+                    }
+                } catch (error) {
+                    treesManager.logManager.logMessage(
+                        'Could not get dependencies tree from pom.xml.\n' +
+                            'Try Install it by running "mvn clean install" from ' +
+                            ProjectTree.pomPath +
+                            '.',
+                        'ERR'
+                    );
+                    treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
+                }
+            }
+            return mavenTreeNodes;
+        });
     }
 
     /**
