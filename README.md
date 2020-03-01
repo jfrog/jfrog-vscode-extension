@@ -30,7 +30,7 @@ The earlier you remediate a vulnerability in the release cycle, the lower the co
 JFrog Xray is instrumental in flagging components when vulnerabilities are discovered in production systems at runtime,
 or even sooner, during the development.
 
-The JFrog VS Code Extension adds JFrog Xray scanning of **maven**, **npm**, **Go** and **Python** project dependencies to your VS Code IDE.
+The JFrog VS Code Extension adds JFrog Xray scanning of **Maven**, **npm**, **Go** and **Python** project dependencies to your VS Code IDE.
 It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE.
 With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
@@ -114,11 +114,22 @@ To open the extension settings, use the following VS Code menu command:
 
 ## Maven Projects
 
-Behind the scenes, the extension builds the maven dependencies tree by running `mvn dependency:tree`. View licenses and top issue severities directly from the pom.xml.
+Behind the scenes, the extension builds the Maven dependencies tree by running `mvn dependency:tree`. View licenses and top issue severities directly from the pom.xml.
 
 Important notes:
-1. To have your project dependencies scanned by JFrog Xray, make sure maven is installed, and that the mvn command is in your system PATH.
-2. For projects which include the [dependency:tree](https://maven.apache.org/plugins/maven-dependency-plugin/examples/resolving-conflicts-using-the-dependency-tree.html) plugin as a depedency, the scanning functionality is disabled.
+1. To have your project dependencies scanned by JFrog Xray, make sure Maven is installed, and that the mvn command is in your system PATH.
+2. For projects which include the [Maven Dependency Plugin](https://maven.apache.org/plugins/maven-dependency-plugin/examples/resolving-conflicts-using-the-dependency-tree.html) as a build plugin, with include or exclude configurations, the scanning functionality is disabled. For example:
+```xml
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <configuration>
+            <includes>org.apache.*</includes>
+          </configuration>
+        </plugin>
+      </plugins>
+```
 
 ## Npm Projects
 
