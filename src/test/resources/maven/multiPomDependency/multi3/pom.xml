@@ -8,7 +8,6 @@
     </parent>
 
     <artifactId>multi3</artifactId>
-    <packaging>war</packaging>
     <name>Multi 3</name>
 
     <dependencies>
