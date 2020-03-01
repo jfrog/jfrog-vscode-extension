@@ -1,6 +1,7 @@
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as fse from 'fs-extra';
 
 export class ScanUtils {
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
@@ -38,5 +39,18 @@ export class ScanUtils {
     public static getScanExcludePattern(workspaceFolder?: vscode.WorkspaceFolder): string | undefined {
         let resource: vscode.Uri | null = workspaceFolder ? workspaceFolder.uri : null;
         return vscode.workspace.getConfiguration('jfrog', resource).get('xray.exclusions');
+    }
+
+    static readFileIfExists(filePase: string): string | undefined {
+        if (fse.pathExistsSync(filePase)) {
+            return fse.readFileSync(filePase).toString();
+        }
+        return undefined;
+    }
+
+    static async removeFile(filePase: string): Promise<void> {
+        if (fse.pathExists(filePase)) {
+            await fse.remove(filePase);
+        }
     }
 }

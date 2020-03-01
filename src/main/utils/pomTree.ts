@@ -1,6 +1,7 @@
 import { MavenUtils } from './mavenUtils';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import * as path from 'path';
+import { ScanUtils } from './scanUtils';
 
 export class PomTree {
     constructor(
@@ -71,16 +72,22 @@ export class PomTree {
     public async getRawDependencies(treesManager: TreesManager): Promise<string[] | undefined> {
         const dependencyTreeFile: string = path.join(this._pomPath, '.jfrog_vscode', 'maven');
         try {
-            const pomContent: string | undefined = MavenUtils.readFileIfExists(dependencyTreeFile);
+            const pomContent: string | undefined = ScanUtils.readFileIfExists(dependencyTreeFile);
             if (!pomContent) {
                 throw new Error();
             }
             const pomDependencies: string | undefined = pomContent?.substring(pomContent.indexOf('\n') + 1);
             return pomDependencies.split(/\r?\n/).filter(line => line.trim() !== '');
         } catch (error) {
-            treesManager.logManager.logMessage('Dependencies were not found. at pom.xml.\n' + this._pomPath + '.', 'ERR');
+            treesManager.logManager.logMessage(
+                'Dependencies were not found. at pom.xml.\n' +
+                    this._pomPath +
+                    '.\n' +
+                    "Hint: pom.xml contain 'org.apache.maven.plugins:maven-dependency-plugin'?",
+                'ERR'
+            );
         } finally {
-            MavenUtils.removeFile(path.join(dependencyTreeFile, '..'));
+            ScanUtils.removeFile(path.join(dependencyTreeFile, '..'));
         }
         return;
     }

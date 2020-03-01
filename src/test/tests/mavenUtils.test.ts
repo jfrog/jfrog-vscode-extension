@@ -14,6 +14,7 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/mavenTreeNode';
 import { PomTree } from '../../main/utils/pomTree';
 import { MavenUtils } from '../../main/utils/mavenUtils';
+import * as exec from 'child_process';
 
 /**
  * Test functionality of @class NpmUtils.
@@ -41,6 +42,8 @@ describe('Maven Utils Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
+        // Install maven dependencies
+        exec.execSync('mvn clean install', { cwd: path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency') });
     });
 
     /**

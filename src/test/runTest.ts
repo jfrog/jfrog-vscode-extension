@@ -2,7 +2,6 @@ import fs from 'fs-extra';
 import path from 'path';
 import { runTests } from 'vscode-test';
 import { TestOptions } from 'vscode-test/out/runTest';
-import * as exec from 'child_process';
 
 let targetResourcesDir: string = path.join(__dirname, 'resources');
 
@@ -16,9 +15,6 @@ async function main() {
 
         // The path to test runner
         const extensionTestsPath: string = path.join(__dirname, 'index');
-
-        // Install maven dependencies
-        exec.execSync('mvn clean install', { cwd: path.join(__dirname, 'resources', 'maven', 'multiPomDependency') });
 
         // Download VS Code, unzip it and run the integration tests
         await runTests({

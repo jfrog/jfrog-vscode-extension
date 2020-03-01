@@ -10,7 +10,6 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { ComponentDetails } from 'xray-client-js';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/mavenTreeNode';
 import { PomTree } from './pomTree';
-import * as fse from 'fs-extra';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
@@ -82,8 +81,7 @@ export class MavenUtils {
         workspaceFolders: vscode.WorkspaceFolder[],
         progress: vscode.Progress<{ message?: string; increment?: number }>
     ): Promise<vscode.Uri[]> {
-        progress.report({ message: 'Locating pom.xml files in workspace '});
-
+        progress.report({ message: 'Locating pom.xml files in workspace ' });
         let pomXmls: Collections.Set<vscode.Uri> = new Collections.Set();
         for (let workspace of workspaceFolders) {
             progress.report({ message: 'Locating pom.xml files in workspace ' + workspace.name });
@@ -94,7 +92,6 @@ export class MavenUtils {
             wsPomXmls.forEach(pomXml => pomXmls.add(pomXml));
         }
         let result: vscode.Uri[] = pomXmls.toArray();
-
         // We need to sort so on each time and on each OS we will get the same order
         return Promise.resolve(result.length > 1 ? result.sort((a: vscode.Uri, b: vscode.Uri) => a.fsPath.localeCompare(b.fsPath)) : result);
     }
@@ -137,10 +134,7 @@ export class MavenUtils {
             return [groupId + ':' + artifactId + ':' + version, parent];
         } catch (error) {
             treesManager.logManager.logMessage(
-                'Could not get parse pom.xml GAV.\n' +
-                    'Try Install it by running "mvn clean install" from ' +
-                    pathToPomXml +
-                    '.',
+                'Could not get parse pom.xml GAV.\n' + 'Try Install it by running "mvn clean install" from ' + pathToPomXml + '.',
                 'ERR'
             );
             treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
@@ -174,6 +168,7 @@ export class MavenUtils {
             vscode.window.showErrorMessage('Could not scan Maven project dependencies, because "mvn" is not in the PATH.');
             return [];
         }
+        treesManager.logManager.logMessage('Found pom.xml. Analyzing ...', 'DEBUG');
         let mavenTreeNodes: MavenTreeNode[] = [];
         let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, treesManager);
         for (let ProjectTree of prototypeTree) {
@@ -320,19 +315,6 @@ export class MavenUtils {
     }
 
     public static executeMavenCmd(mvnCommand: string, pomPath: string): any {
-        return exec.execSync(mvnCommand, { cwd: pomPath });
-    }
-
-    public static readFileIfExists(filePase: string): string | undefined {
-        if (fse.pathExistsSync(filePase)) {
-            return fse.readFileSync(filePase).toString();
-        }
-        return undefined;
-    }
-
-    public static async removeFile(filePase: string): Promise<void> {
-        if (fse.pathExists(filePase)) {
-           await fse.remove(filePase);
-        }
+        return exec.execSync(mvnCommand, { cwd: pomPath, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
     }
 }
