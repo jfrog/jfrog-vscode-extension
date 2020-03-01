@@ -48,7 +48,7 @@ export class ScanUtils {
         return undefined;
     }
 
-    static async removeFile(filePase: string): Promise<void> {
+    static async removeFolder(filePase: string): Promise<void> {
         if (fse.pathExists(filePase)) {
             await fse.remove(filePase);
         }

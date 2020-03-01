@@ -87,7 +87,7 @@ export class PomTree {
                 'ERR'
             );
         } finally {
-            ScanUtils.removeFile(path.join(dependencyTreeFile, '..'));
+            ScanUtils.removeFolder(path.join(dependencyTreeFile, '..'));
         }
         return;
     }
