@@ -41,16 +41,16 @@ export class ScanUtils {
         return vscode.workspace.getConfiguration('jfrog', resource).get('xray.exclusions');
     }
 
-    static readFileIfExists(filePase: string): string | undefined {
-        if (fse.pathExistsSync(filePase)) {
-            return fse.readFileSync(filePase).toString();
+    static readFileIfExists(filePath: string): string | undefined {
+        if (fse.pathExistsSync(filePath)) {
+            return fse.readFileSync(filePath).toString();
         }
         return undefined;
     }
 
-    static async removeFolder(filePase: string): Promise<void> {
-        if (fse.pathExists(filePase)) {
-            await fse.remove(filePase);
+    static async removeFolder(folderPath: string): Promise<void> {
+        if (fse.pathExists(folderPath)) {
+            await fse.remove(folderPath);
         }
     }
 }
