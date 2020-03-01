@@ -7,6 +7,7 @@ import { GeneralInfo } from '../../types/generalInfo';
 import { NpmUtils } from '../../utils/npmUtils';
 import { TreesManager } from '../treesManager';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
+import { ScanUtils } from '../../utils/scanUtils';
 
 export class NpmTreeNode extends DependenciesTreeNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
@@ -24,7 +25,7 @@ export class NpmTreeNode extends DependenciesTreeNode {
         let npmList: any;
         try {
             npmList = JSON.parse(
-                exec.execSync('npm ls --json', { cwd: this._workspaceFolder, maxBuffer: this.SPAWN_PROCESS_BUFFER_SIZE }).toString()
+                exec.execSync('npm ls --json', { cwd: this._workspaceFolder, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE }).toString()
             );
         } catch (error) {
             this._treesManager.logManager.logError(error, !quickScan);

@@ -18,7 +18,12 @@ export class TreesManager implements ExtensionComponent {
     private _dependenciesDataProvider: DependenciesTreeDataProvider;
     private _issuesDataProvider: IssuesDataProvider;
 
-    constructor(workspaceFolders: vscode.WorkspaceFolder[], private _connectionManager: ConnectionManager, private _scanCacheManager: ScanCacheManager, private _logManager: LogManager) {
+    constructor(
+        workspaceFolders: vscode.WorkspaceFolder[],
+        private _connectionManager: ConnectionManager,
+        private _scanCacheManager: ScanCacheManager,
+        private _logManager: LogManager
+    ) {
         this._dependenciesDataProvider = new DependenciesTreeDataProvider(workspaceFolders, this);
         this._componentDetailsDataProvider = new ComponentDetailsDataProvider();
         this._issuesDataProvider = new IssuesDataProvider();

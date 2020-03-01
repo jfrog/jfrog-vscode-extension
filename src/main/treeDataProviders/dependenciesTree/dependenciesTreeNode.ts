@@ -7,7 +7,6 @@ import { Severity } from '../../types/severity';
 import { IconsPaths } from '../../utils/iconsPaths';
 
 export class DependenciesTreeNode extends vscode.TreeItem {
-    readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
     private _children: DependenciesTreeNode[] = [];
     private _licenses: Collections.Set<License> = new Collections.Set(license => license.fullName);
     private _issues: Collections.Set<Issue> = new Collections.Set(issue => issue.summary);
@@ -31,10 +30,10 @@ export class DependenciesTreeNode extends vscode.TreeItem {
     }
 
     public get componentId(): string {
-        return this.generalInfo.artifactId + ':' + this.generalInfo.version;
+        return this.generalInfo.getComponentId();
     }
 
-    public get generalInfo() {
+    public get generalInfo(): GeneralInfo {
         return this._generalInfo;
     }
 
@@ -111,13 +110,9 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         return this.issues;
     }
 
-    private getComponentId(): string {
-        return this.generalInfo.artifactId + ':' + this.generalInfo.version;
-    }
-
     private setIssuesComponent() {
         this.issues.forEach(issue => {
-            issue.component = this.getComponentId();
+            issue.component = this.componentId;
         });
     }
 

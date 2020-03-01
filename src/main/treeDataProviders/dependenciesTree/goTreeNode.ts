@@ -6,6 +6,7 @@ import { GeneralInfo } from '../../types/generalInfo';
 import { GoUtils } from '../../utils/goUtils';
 import { TreesManager } from '../treesManager';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
+import { ScanUtils } from '../../utils/scanUtils';
 
 export class GoTreeNode extends DependenciesTreeNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
@@ -26,7 +27,7 @@ export class GoTreeNode extends DependenciesTreeNode {
         let rootPackageName: string = '';
         try {
             goList = exec
-                .execSync('go mod graph', { cwd: this._workspaceFolder, maxBuffer: this.SPAWN_PROCESS_BUFFER_SIZE })
+                .execSync('go mod graph', { cwd: this._workspaceFolder, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE })
                 .toString()
                 .split(/\s+/);
             goList.pop(); // Remove the last new line

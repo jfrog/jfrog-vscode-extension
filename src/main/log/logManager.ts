@@ -20,8 +20,10 @@ export class LogManager implements ExtensionComponent {
      * @param level - The log level
      */
     public logMessage(message: string, level: LogLevel): void {
-        const title: string = new Date().toLocaleTimeString();
-        this._outputChannel.appendLine(`[${level} - ${title}] ${message}`);
+        if (!!message) {
+            const title: string = new Date().toLocaleTimeString();
+            this._outputChannel.appendLine(`[${level} - ${title}] ${message}`);
+        }
     }
 
     /**

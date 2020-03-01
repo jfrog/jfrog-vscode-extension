@@ -32,4 +32,8 @@ export class GeneralInfo {
     public set pkgType(pkgType: string) {
         this._pkgType = pkgType;
     }
+
+    public getComponentId(): string {
+        return this._artifactId + ':' + this._version;
+    }
 }

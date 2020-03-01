@@ -36,7 +36,12 @@ export class PypiHover extends AbstractHoverProvider {
      * @param requirementsContent - The content of requirements.txt - For optimization
      * @param cursorPosition - The position of the mouse on the screen
      */
-    private isNodeInRange(node: DependenciesTreeNode, document: vscode.TextDocument, requirementsContent: string, cursorPosition: vscode.Position): boolean {
+    private isNodeInRange(
+        node: DependenciesTreeNode,
+        document: vscode.TextDocument,
+        requirementsContent: string,
+        cursorPosition: vscode.Position
+    ): boolean {
         let pos: vscode.Position[] = PypiUtils.getDependencyPos(document, requirementsContent, node);
         if (pos.length > 0) {
             let range: vscode.Range = new vscode.Range(pos[0], pos[1]);

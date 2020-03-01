@@ -11,6 +11,7 @@ import { TreesManager } from '../treesManager';
 import { SetCredentialsNode } from '../utils/setCredentialsNode';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
+import { MavenUtils } from '../../utils/mavenUtils';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode | SetCredentialsNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -126,7 +127,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     private addXrayInfoToTree(root: DependenciesTreeNode) {
         root.children.forEach(child => {
             let generalInfo: GeneralInfo = child.generalInfo;
-            let artifact: IArtifact | undefined = this._treesManager.scanCacheManager.get(generalInfo.artifactId + ':' + generalInfo.version);
+            let artifact: IArtifact | undefined = this._treesManager.scanCacheManager.get(generalInfo.getComponentId());
             if (artifact) {
                 let pkgType: string = child.generalInfo.pkgType;
                 child.generalInfo = Translators.toGeneralInfo(artifact.general);
@@ -197,6 +198,12 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     public getDependenciesTreeNode(pkgType: string, path?: string): DependenciesTreeNode | undefined {
         if (!(this.dependenciesTree instanceof DependenciesTreeNode)) {
             return undefined;
+        }
+        // Unlike other build tools, which rely that each direct dep can be found in the root's child, Maven can have direct dep in each node because,
+        // Maven has parent pom which is the root of the tree all the other poms are located beneath it.
+        // In order to solve this, we create a map  (fs-path -> node) find the correct pom in the tree.
+        if (pkgType === 'maven') {
+            return MavenUtils.pathToNode.get(path || '');
         }
         let root: DependenciesTreeNode = this._filteredDependenciesTree || this.dependenciesTree;
         for (let dependenciesTree of root.children) {

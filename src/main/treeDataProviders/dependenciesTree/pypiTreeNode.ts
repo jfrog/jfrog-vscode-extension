@@ -6,6 +6,7 @@ import { GeneralInfo } from '../../types/generalInfo';
 import { PypiUtils } from '../../utils/pypiUtils';
 import { TreesManager } from '../treesManager';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
+import { ScanUtils } from '../../utils/scanUtils';
 
 /**
  * Pypi packages can be installed in two different ways:
@@ -32,7 +33,7 @@ export class PypiTreeNode extends DependenciesTreeNode {
                 exec
                     .execSync(this._pythonPath + ' ' + PypiUtils.PIP_DEP_TREE_SCRIPT + ' --json-tree', {
                         cwd: this._projectDir,
-                        maxBuffer: this.SPAWN_PROCESS_BUFFER_SIZE
+                        maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE
                     })
                     .toString()
             );
