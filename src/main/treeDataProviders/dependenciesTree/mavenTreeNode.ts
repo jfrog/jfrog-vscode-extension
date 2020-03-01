@@ -30,11 +30,11 @@ export class MavenTreeNode extends DependenciesTreeNode {
      * @param quickScan - True to allow reading from scan cache.
      * @param prototypeTree - Tree that each node contain pom.xml path.
      */
-    public refreshDependencies(quickScan: boolean, prototypeTree: PomTree, parentDependencies?: string[]) {
+    public async refreshDependencies(quickScan: boolean, prototypeTree: PomTree, parentDependencies?: string[]) {
         const [group, name, version] = prototypeTree.pomGav.split(':');
         this.generalInfo = new GavGeneralInfo(group, name, version, this._workspaceFolder, MavenUtils.PKG_TYPE);
         this.label = group + ':' + name;
-        let rawDependenciesList: string[] | undefined = prototypeTree.getRawDependencies(this._treesManager);
+        let rawDependenciesList: string[] | undefined = await prototypeTree.getRawDependencies(this._treesManager);
         if (!!rawDependenciesList && rawDependenciesList.length > 0) {
             rawDependenciesList = MavenUtils.FilterParentDependencies(rawDependenciesList, parentDependencies) || rawDependenciesList;
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
@@ -42,7 +42,7 @@ export class MavenTreeNode extends DependenciesTreeNode {
         }
         for (const childPom of prototypeTree.children) {
             const dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(childPom.pomPath, this._componentsToScan, this._treesManager, this);
-            dependenciesTreeNode.refreshDependencies(quickScan, childPom, rawDependenciesList);
+            await dependenciesTreeNode.refreshDependencies(quickScan, childPom, rawDependenciesList);
             if (dependenciesTreeNode.children.length === 0) {
                 this.children.splice(this.children.indexOf(dependenciesTreeNode), 1);
             }
@@ -51,8 +51,8 @@ export class MavenTreeNode extends DependenciesTreeNode {
 
     /**
      * Parse rawDependenciesList in order to build dependencies for the parent node
-     * @param parent - The parent node of the dependency nodes, which will be created from raw Dependencies Lis
-     * @param rawDependenciesList - raw text of dependencies
+     * @param parent - The parent node of the dependency nodes, which will be created from raw dependencies list
+     * @param rawDependenciesList - Raw text of dependencies
      * @param rawDependenciesPtr - Pointer to current index in raw dependencies list
      * @param quickScan - True to allow reading from scan cache.
      */
@@ -91,7 +91,7 @@ export class MavenTreeNode extends DependenciesTreeNode {
     }
 
     /**
-     * In order to understand if two consecutive dependencies are child/brother/parent one to another, we compare the number of white spaces i.g.:
+     * In order to understand if two consecutive dependencies are child/brother/parent one to another, we compare the number of white spaces e.g.:
      *  brothers:
      *  +- hsqldb:hsqldb:jar:1.8.0.10:runtime
      *  +- javax.servlet:servlet-api:jar:2.5:provided
@@ -111,8 +111,8 @@ export class MavenTreeNode extends DependenciesTreeNode {
         return rawDependenciesList.length <= index;
     }
 
-    private isParent(RawDependenciesList: string[], index: number): boolean {
-        return !this.isEndOfDependenciesList(RawDependenciesList, index + 1) && this.isUpperInTree(RawDependenciesList, index, index + 1);
+    private isParent(rawDependenciesList: string[], index: number): boolean {
+        return !this.isEndOfDependenciesList(rawDependenciesList, index + 1) && this.isUpperInTree(rawDependenciesList, index, index + 1);
     }
 
     private isChild(toCompare: string, against: string) {
@@ -123,7 +123,7 @@ export class MavenTreeNode extends DependenciesTreeNode {
         return this.getDependenciesLevel(against) === this.getDependenciesLevel(toCompare);
     }
 
-    private isUpperInTree(RawDependenciesList: string[], toCompare: number, against: number) {
-        return this.getDependenciesLevel(RawDependenciesList[against]) > this.getDependenciesLevel(RawDependenciesList[toCompare]);
+    private isUpperInTree(rawDependenciesList: string[], toCompare: number, against: number) {
+        return this.getDependenciesLevel(rawDependenciesList[against]) > this.getDependenciesLevel(rawDependenciesList[toCompare]);
     }
 }

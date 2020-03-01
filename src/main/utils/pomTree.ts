@@ -1,6 +1,5 @@
 import { MavenUtils } from './mavenUtils';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { ContextUtils } from './contextUtils';
 import * as path from 'path';
 
 export class PomTree {
@@ -69,10 +68,10 @@ export class PomTree {
         MavenUtils.executeMavenCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog_vscode/maven`, this.pomPath);
     }
 
-    public getRawDependencies(treesManager: TreesManager): string[] | undefined {
+    public async getRawDependencies(treesManager: TreesManager): Promise<string[] | undefined> {
         const dependencyTreeFile: string = path.join(this._pomPath, '.jfrog_vscode', 'maven');
         try {
-            const pomContent: string | undefined = ContextUtils.readFileIfExists(dependencyTreeFile);
+            const pomContent: string | undefined = MavenUtils.readFileIfExists(dependencyTreeFile);
             if (!pomContent) {
                 throw new Error();
             }
@@ -81,7 +80,7 @@ export class PomTree {
         } catch (error) {
             treesManager.logManager.logMessage('Dependencies were not found. at pom.xml.\n' + this._pomPath + '.', 'ERR');
         } finally {
-            ContextUtils.removeFile(path.join(dependencyTreeFile, '..'));
+            MavenUtils.removeFile(path.join(dependencyTreeFile, '..'));
         }
         return;
     }

@@ -10,6 +10,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { ComponentDetails } from 'xray-client-js';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/mavenTreeNode';
 import { PomTree } from './pomTree';
+import * as fse from 'fs-extra';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
@@ -81,6 +82,8 @@ export class MavenUtils {
         workspaceFolders: vscode.WorkspaceFolder[],
         progress: vscode.Progress<{ message?: string; increment?: number }>
     ): Promise<vscode.Uri[]> {
+        progress.report({ message: 'Locating pom.xml files in workspace '});
+
         let pomXmls: Collections.Set<vscode.Uri> = new Collections.Set();
         for (let workspace of workspaceFolders) {
             progress.report({ message: 'Locating pom.xml files in workspace ' + workspace.name });
@@ -178,7 +181,7 @@ export class MavenUtils {
                 progress.report({ message: 'Analyzing pom.xml at ' + ProjectTree.pomPath });
                 ProjectTree.runMavenDependencyTree();
                 let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, componentsToScan, treesManager, root);
-                dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree);
+                await dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree);
                 if (dependenciesTreeNode.children.length === 0) {
                     root.children.splice(root.children.indexOf(dependenciesTreeNode), 1);
                 } else {
@@ -318,5 +321,18 @@ export class MavenUtils {
 
     public static executeMavenCmd(mvnCommand: string, pomPath: string): any {
         return exec.execSync(mvnCommand, { cwd: pomPath });
+    }
+
+    public static readFileIfExists(filePase: string): string | undefined {
+        if (fse.pathExistsSync(filePase)) {
+            return fse.readFileSync(filePase).toString();
+        }
+        return undefined;
+    }
+
+    public static async removeFile(filePase: string): Promise<void> {
+        if (fse.pathExists(filePase)) {
+           await fse.remove(filePase);
+        }
     }
 }
