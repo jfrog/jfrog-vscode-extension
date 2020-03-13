@@ -7,6 +7,7 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/npmTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
+import { LogManager } from '../log/logManager';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
@@ -48,15 +49,12 @@ export class NpmUtils {
     /**
      * Find package.json files in workspaces.
      * @param workspaceFolders - Base workspace folders to search
-     * @param progress         - progress bar
+     * @param logManager       - Log manager
      */
-    public static async locatePackageJsons(
-        workspaceFolders: vscode.WorkspaceFolder[],
-        progress: vscode.Progress<{ message?: string; increment?: number }>
-    ): Promise<Collections.Set<vscode.Uri>> {
+    public static async locatePackageJsons(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Collections.Set<vscode.Uri>> {
         let packageJsons: Collections.Set<vscode.Uri> = new Collections.Set();
         for (let workspace of workspaceFolders) {
-            progress.report({ message: 'Locating package json files in workspace ' + workspace.name });
+            logManager.logMessage('Locating package json files in workspace' + workspace.name, 'INFO');
             let wsPackageJsons: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/package.json' },
                 ScanUtils.getScanExcludePattern(workspace)
@@ -68,7 +66,6 @@ export class NpmUtils {
 
     /**
      * @param workspaceFolders - Base workspace folders
-     * @param progress         - Progress bar
      * @param componentsToScan - Set of npm components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
      * @param scanCacheManager - Scan cache manager
      * @param parent           - The base tree node
@@ -76,25 +73,23 @@ export class NpmUtils {
      */
     public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
-        progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Collections.Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<NpmTreeNode[]> {
-        let packageJsons: Collections.Set<vscode.Uri> = await NpmUtils.locatePackageJsons(workspaceFolders, progress);
+        let packageJsons: Collections.Set<vscode.Uri> = await NpmUtils.locatePackageJsons(workspaceFolders, treesManager.logManager);
         if (packageJsons.isEmpty()) {
             treesManager.logManager.logMessage('No package.json files found in workspaces.', 'DEBUG');
             return [];
         }
-        treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
         if (!NpmUtils.verifyNpmInstalled()) {
             vscode.window.showErrorMessage('Could not scan npm project dependencies, because npm CLI is not in the PATH.');
             return [];
         }
+        treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
         let npmTreeNodes: NpmTreeNode[] = [];
         for (let packageJson of packageJsons.toArray()) {
-            progress.report({ message: 'Analyzing package.json files' });
             let dependenciesTreeNode: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), componentsToScan, treesManager, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
             npmTreeNodes.push(dependenciesTreeNode);

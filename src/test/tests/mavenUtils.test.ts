@@ -29,7 +29,6 @@ describe('Maven Utils Tests', () => {
         dummyScanCacheManager,
         new LogManager().activate({} as vscode.ExtensionContext)
     );
-    let dummyProgress: vscode.Progress<{ message?: string; increment?: number }> = { report: () => {} };
     let projectDirs: string[] = ['dependency', 'empty', 'multiPomDependency'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
@@ -50,7 +49,7 @@ describe('Maven Utils Tests', () => {
      * Test locatePomXml.
      */
     it('Locate pom.xml', async () => {
-        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, dummyProgress);
+        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, treesManager.logManager);
         assert.strictEqual(pomXmls.length, 6);
 
         // Assert that results contains all projects
@@ -89,7 +88,7 @@ describe('Maven Utils Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
-        let pomXmlsArray: vscode.Uri[] = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
+        let pomXmlsArray: vscode.Uri[] = await MavenUtils.locatePomXmls(localWorkspaceFolders, treesManager.logManager);
         let got: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager);
         let want: PomTree[][] = expectedBuildPrototypePomTree();
         assert.deepEqual(got, want[0]);
@@ -102,7 +101,7 @@ describe('Maven Utils Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
-        pomXmlsArray = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
+        pomXmlsArray = await MavenUtils.locatePomXmls(localWorkspaceFolders, treesManager.logManager);
         got = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager);
         assert.deepEqual(got, want[1]);
     });
@@ -309,7 +308,6 @@ describe('Maven Utils Tests', () => {
     async function runCreateMavenDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
         let dependenciesTrees: DependenciesTreeNode[] = await MavenUtils.createMavenDependenciesTrees(
             workspaceFolders,
-            dummyProgress,
             componentsToScan,
             treesManager,
             parent,

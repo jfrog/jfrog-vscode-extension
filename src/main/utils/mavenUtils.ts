@@ -10,6 +10,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { ComponentDetails } from 'xray-client-js';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/mavenTreeNode';
 import { PomTree } from './pomTree';
+import { LogManager } from '../log/logManager';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
@@ -75,16 +76,12 @@ export class MavenUtils {
     /**
      * Find pom.xml files in workspaces.
      * @param workspaceFolders - Base workspace folders to search
-     * @param progress         - progress bar
+     * @param logManager       - Log manager
      */
-    public static async locatePomXmls(
-        workspaceFolders: vscode.WorkspaceFolder[],
-        progress: vscode.Progress<{ message?: string; increment?: number }>
-    ): Promise<vscode.Uri[]> {
-        progress.report({ message: 'Locating pom.xml files in workspace ' });
+    public static async locatePomXmls(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<vscode.Uri[]> {
         let pomXmls: Collections.Set<vscode.Uri> = new Collections.Set();
         for (let workspace of workspaceFolders) {
-            progress.report({ message: 'Locating pom.xml files in workspace ' + workspace.name });
+            logManager.logMessage('Locating pom.xml files in workspace ' + workspace.name, 'INFO');
             let wsPomXmls: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/pom.xml' },
                 ScanUtils.getScanExcludePattern(workspace)
@@ -106,7 +103,7 @@ export class MavenUtils {
             let groupId: string = pomXmlData.groupId?.toString();
             if (!groupId || groupId.includes('$')) {
                 groupId = this.executeMavenCmd(
-                    `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate  -Dexpression=project.groupId -q -DforceStdout`,
+                    `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -q -DforceStdout`,
                     path.dirname(pathToPomXml)
                 );
             }
@@ -144,7 +141,6 @@ export class MavenUtils {
 
     /**
      * @param workspaceFolders - Base workspace folders
-     * @param progress         - Progress bar
      * @param componentsToScan - Set of maven components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
      * @param scanCacheManager - Scan cache manager
      * @param root             - The base tree node
@@ -152,51 +148,47 @@ export class MavenUtils {
      */
     public static async createMavenDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
-        progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Collections.Set<ComponentDetails>,
         treesManager: TreesManager,
         root: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<MavenTreeNode[]> {
-        return await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification }, async (p: vscode.Progress<{}>) => {
-            p.report({ message: 'Generating Maven Dependency Tree' });
-            let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, progress);
-            if (pomXmls.length === 0) {
-                treesManager.logManager.logMessage('No pom.xml files found in workspaces.', 'DEBUG');
-                return [];
-            }
-            treesManager.logManager.logMessage('pom.xml files to scan: [' + pomXmls.toString() + ']', 'DEBUG');
-            if (!MavenUtils.verifyMavenInstalled()) {
-                vscode.window.showErrorMessage('Could not scan Maven project dependencies, because "mvn" is not in the PATH.');
-                return [];
-            }
-            treesManager.logManager.logMessage('Found pom.xml. Analyzing ...', 'DEBUG');
-            let mavenTreeNodes: MavenTreeNode[] = [];
-            let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, treesManager);
-            for (let ProjectTree of prototypeTree) {
-                try {
-                    progress.report({ message: 'Analyzing pom.xml at ' + ProjectTree.pomPath });
-                    ProjectTree.runMavenDependencyTree();
-                    let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, componentsToScan, treesManager, root);
-                    await dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree);
-                    if (dependenciesTreeNode.children.length === 0) {
-                        root.children.splice(root.children.indexOf(dependenciesTreeNode), 1);
-                    } else {
-                        mavenTreeNodes.push(dependenciesTreeNode);
-                    }
-                } catch (error) {
-                    treesManager.logManager.logMessage(
-                        'Could not get dependencies tree from pom.xml.\n' +
-                            'Try Install it by running "mvn clean install" from ' +
-                            ProjectTree.pomPath +
-                            '.',
-                        'ERR'
-                    );
-                    treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
+        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, treesManager.logManager);
+        if (pomXmls.length === 0) {
+            treesManager.logManager.logMessage('No pom.xml files found in workspaces.', 'DEBUG');
+            return [];
+        }
+        treesManager.logManager.logMessage('pom.xml files to scan: [' + pomXmls.toString() + ']', 'DEBUG');
+        if (!MavenUtils.verifyMavenInstalled()) {
+            vscode.window.showErrorMessage('Could not scan Maven project dependencies, because "mvn" is not in the PATH.');
+            return [];
+        }
+        treesManager.logManager.logMessage('Generating Maven Dependency Tree', 'INFO');
+        let mavenTreeNodes: MavenTreeNode[] = [];
+        let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, treesManager);
+        for (let ProjectTree of prototypeTree) {
+            try {
+                treesManager.logManager.logMessage('Analyzing pom.xml at' + ProjectTree.pomPath, 'INFO');
+                ProjectTree.runMavenDependencyTree();
+                let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, componentsToScan, treesManager, root);
+                await dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree);
+                if (dependenciesTreeNode.children.length === 0) {
+                    root.children.splice(root.children.indexOf(dependenciesTreeNode), 1);
+                } else {
+                    mavenTreeNodes.push(dependenciesTreeNode);
                 }
+            } catch (error) {
+                treesManager.logManager.logMessage(
+                    'Could not get dependencies tree from pom.xml.\n' +
+                        'Try Install it by running "mvn clean install" from ' +
+                        ProjectTree.pomPath +
+                        '.',
+                    'ERR'
+                );
+                treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }
-            return mavenTreeNodes;
-        });
+        }
+        return mavenTreeNodes;
     }
 
     /**
