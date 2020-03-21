@@ -24,6 +24,8 @@ jobs:
               run: npm i
             - name: Lint
               run: npm run lint
+            - name: Pack Maven GAV Reader
+              run: mvn clean package -f resources/maven-gav-reader/pom.xml
             - name: Tests on macOS, Windows
               run: npm t
               if: runner.os != 'Linux'

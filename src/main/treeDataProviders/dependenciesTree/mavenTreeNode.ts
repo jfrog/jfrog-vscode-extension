@@ -36,7 +36,7 @@ export class MavenTreeNode extends DependenciesTreeNode {
         this.label = group + ':' + name;
         let rawDependenciesList: string[] | undefined = await prototypeTree.getRawDependencies(this._treesManager);
         if (!!rawDependenciesList && rawDependenciesList.length > 0) {
-            rawDependenciesList = MavenUtils.FilterParentDependencies(rawDependenciesList, parentDependencies) || rawDependenciesList;
+            rawDependenciesList = MavenUtils.filterParentDependencies(rawDependenciesList, parentDependencies) || rawDependenciesList;
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
             this.populateDependenciesTree(this, rawDependenciesList, { index: 0 }, quickScan);
         }

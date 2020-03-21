@@ -26,8 +26,7 @@ export class GoTreeNode extends DependenciesTreeNode {
         let goList: string[] = [];
         let rootPackageName: string = '';
         try {
-            goList = exec
-                .execSync('go mod graph', { cwd: this._workspaceFolder, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE })
+            goList = ScanUtils.executeCmd('go mod graph', this._workspaceFolder)
                 .toString()
                 .split(/\s+/);
             goList.pop(); // Remove the last new line

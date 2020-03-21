@@ -8,4 +8,5 @@ src/**
 **/*.map
 **/*.ts
 resources/readme/**
+resources/maven-gav-reader
 releaseScripts/**

@@ -1,20 +1,20 @@
+import { assert } from 'chai';
+import * as exec from 'child_process';
 import { before } from 'mocha';
 import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
+import { ComponentDetails } from 'xray-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/mavenTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
-import { assert } from 'chai';
-import { ComponentDetails } from 'xray-client-js';
 import { GavGeneralInfo } from '../../main/types/gavGeneralinfo';
 import { GeneralInfo } from '../../main/types/generalInfo';
-import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/mavenTreeNode';
-import { PomTree } from '../../main/utils/pomTree';
 import { MavenUtils } from '../../main/utils/mavenUtils';
-import * as exec from 'child_process';
+import { PomTree } from '../../main/utils/pomTree';
 
 /**
  * Test functionality of @class NpmUtils.
@@ -44,6 +44,7 @@ describe('Maven Utils Tests', () => {
         ];
         // Install maven dependencies
         exec.execSync('mvn clean install', { cwd: path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency') });
+        MavenUtils.installMavenGavReader();
     });
 
     /**
@@ -65,13 +66,14 @@ describe('Maven Utils Tests', () => {
      * Get parent info from pom.xml.
      */
     it('Get pom.xml details', async () => {
+        let pomIdCache: Map<string, [string, string]> = new Map<string, [string, string]>();
         let pomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi1', 'pom.xml'));
-        let [pomGav, parentGav]: string[] = MavenUtils.getPomDetails(pomXml.fsPath, treesManager);
+        let [pomGav, parentGav]: string[] = MavenUtils.getPomDetails(pomXml.fsPath, treesManager.logManager, pomIdCache);
         assert.equal(pomGav, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
         assert.equal(parentGav, 'org.jfrog.test:multi:3.7-SNAPSHOT');
 
         pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'pom.xml'));
-        [pomGav, parentGav] = MavenUtils.getPomDetails(pomXml.fsPath, treesManager);
+        [pomGav, parentGav] = MavenUtils.getPomDetails(pomXml.fsPath, treesManager.logManager, pomIdCache);
         assert.equal(pomGav, 'org.jfrog.test:multi:3.7-SNAPSHOT');
         assert.isEmpty(parentGav);
     });
@@ -90,7 +92,7 @@ describe('Maven Utils Tests', () => {
             } as vscode.WorkspaceFolder
         ];
         let pomXmlsArray: vscode.Uri[] = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
-        let got: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager);
+        let got: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager.logManager);
         let want: PomTree[][] = expectedBuildPrototypePomTree();
         assert.deepEqual(got, want[0]);
 
@@ -103,7 +105,7 @@ describe('Maven Utils Tests', () => {
             } as vscode.WorkspaceFolder
         ];
         pomXmlsArray = await MavenUtils.locatePomXmls(localWorkspaceFolders, dummyProgress);
-        got = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager);
+        got = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager.logManager);
         assert.deepEqual(got, want[1]);
     });
 
