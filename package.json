@@ -114,7 +114,8 @@
         }
     },
     "mocha": {
-        "spec": "out/test/unit"
+        "spec": "out/test/unit",
+        "color": true
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
