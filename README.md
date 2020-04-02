@@ -178,7 +178,13 @@ npm run package
    After the build finishes, you'll find the vsix file in the _jfrog-vscode-extension_ directory.
    The vsix file can be loaded into VS-Code
 
-To run the tests:
+To run only unit tests:
+
+```bash
+npm run unittest
+```
+
+To run unit and integration tests:
 
 ```bash
 npm t

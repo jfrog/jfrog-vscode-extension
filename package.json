@@ -113,14 +113,18 @@
             ]
         }
     },
+    "mocha": {
+        "spec": "out/test/unit"
+    },
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "format": "prettier --write \"src/**/*.ts\" \"package.json\" \"tsconfig.json\" \"tslint.json\"",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "lint": "tslint -p tsconfig.json",
-        "pretest": "npm run compile",
-        "test": "node ./out/test/runTest.js",
+        "preunittest": "npm run compile",
+        "unittest": "mocha",
+        "test": "npm run unittest && node ./out/test/runTest.js",
         "package": "vsce package"
     },
     "dependencies": {
