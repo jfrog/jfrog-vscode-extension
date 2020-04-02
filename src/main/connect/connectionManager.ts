@@ -4,6 +4,9 @@ import { URL } from 'url';
 import * as vscode from 'vscode';
 import { ComponentDetails, IArtifact, IClientConfig, IProxyConfig, ISummaryRequestModel, ISummaryResponse, XrayClient } from 'xray-client-js';
 import { ExtensionComponent } from '../extensionComponent';
+import { GoCenterClient } from '../goCenterClient/GoCenterClient';
+import { IComponentMetadata } from '../goCenterClient/model/ComponentMetadata';
+import { IModuleResponse } from '../goCenterClient/model/ModuleResponse';
 import { ConnectionUtils } from './connectionUtils';
 
 /**
@@ -11,6 +14,7 @@ import { ConnectionUtils } from './connectionUtils';
  */
 export class ConnectionManager implements ExtensionComponent {
     private static readonly XRAY_URL_USERNAME: string = 'jfrog.xray.username';
+    private static readonly USER_AGENT: string = 'jfrog-vscode-extension';
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
     private static readonly XRAY_URL_KEY: string = 'jfrog.xray.url';
     private _context!: vscode.ExtensionContext;
@@ -53,6 +57,13 @@ export class ConnectionManager implements ExtensionComponent {
         return Promise.resolve(summaryResponse.artifacts);
     }
 
+    public async getGoCenterModules(componentDetails: ComponentDetails[]): Promise<IComponentMetadata[]> {
+        let goCenterClient: GoCenterClient = this.createGoCenterClient();
+        let summaryRequest: ISummaryRequestModel = { component_details: componentDetails };
+        let moduleResponse: IModuleResponse = await goCenterClient.getMetadataForModules(summaryRequest);
+        return Promise.resolve(moduleResponse.components_metadata);
+    }
+
     public areCredentialsSet(): boolean {
         return !!(this._url && this._username && this._password);
     }
@@ -81,10 +92,22 @@ export class ConnectionManager implements ExtensionComponent {
             serverUrl: this._url,
             username: this._username,
             password: this._password,
+            headers: {},
             proxy: this.getProxyConfig()
         } as IClientConfig;
+        this.addUserAgentHeader(clientConfig);
         this.addProxyAuthHeader(clientConfig);
         return new XrayClient(clientConfig);
+    }
+
+    private createGoCenterClient(): GoCenterClient {
+        let clientConfig: IClientConfig = {
+            headers: {},
+            proxy: this.getProxyConfig()
+        } as IClientConfig;
+        this.addUserAgentHeader(clientConfig);
+        this.addProxyAuthHeader(clientConfig);
+        return new GoCenterClient(clientConfig);
     }
 
     private async retrieveUrl(prompt: boolean): Promise<string> {
@@ -170,6 +193,12 @@ export class ConnectionManager implements ExtensionComponent {
             }
         }
         return proxyConfig;
+    }
+
+    private addUserAgentHeader(clientConfig: IClientConfig) {
+        if (clientConfig.headers) {
+            clientConfig.headers['User-Agent'] = ConnectionManager.USER_AGENT;
+        }
     }
 
     private addProxyAuthHeader(clientConfig: IClientConfig) {
