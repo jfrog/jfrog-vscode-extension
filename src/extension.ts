@@ -29,5 +29,5 @@ export async function activate(context: vscode.ExtensionContext) {
     new WatcherManager(treesManager).activate(context);
     new HoverManager(treesManager).activate(context);
     new CodeLensManager().activate(context);
-    new CommandManager(connectionManager, treesManager, filterManager, focusManager).activate(context);
+    new CommandManager(logManager, connectionManager, treesManager, filterManager, focusManager).activate(context);
 }
