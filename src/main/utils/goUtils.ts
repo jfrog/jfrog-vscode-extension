@@ -7,6 +7,7 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { GoTreeNode } from '../treeDataProviders/dependenciesTree/goTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
+import { LogManager } from '../log/logManager';
 
 export class GoUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/go.mod' };
@@ -48,15 +49,12 @@ export class GoUtils {
     /**
      * Find go.mod files in workspaces.
      * @param workspaceFolders - Base workspace folders to search
-     * @param progress         - progress bar
+     * @param logManager       - Log manager
      */
-    public static async locateGoMods(
-        workspaceFolders: vscode.WorkspaceFolder[],
-        progress: vscode.Progress<{ message?: string; increment?: number }>
-    ): Promise<Collections.Set<vscode.Uri>> {
+    public static async locateGoMods(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Collections.Set<vscode.Uri>> {
         let goMods: Collections.Set<vscode.Uri> = new Collections.Set();
         for (let workspace of workspaceFolders) {
-            progress.report({ message: 'Locating go.mod files in workspace ' + workspace.name });
+            logManager.logMessage('Locating go.mod files in workspace' + workspace.name, 'INFO');
             let wsGoMods: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/go.mod' },
                 ScanUtils.getScanExcludePattern(workspace)
@@ -76,13 +74,12 @@ export class GoUtils {
      */
     public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
-        progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Collections.Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<GoTreeNode[]> {
-        let goMods: Collections.Set<vscode.Uri> = await GoUtils.locateGoMods(workspaceFolders, progress);
+        let goMods: Collections.Set<vscode.Uri> = await GoUtils.locateGoMods(workspaceFolders, treesManager.logManager);
         if (goMods.isEmpty()) {
             treesManager.logManager.logMessage('No go.mod files found in workspaces.', 'DEBUG');
             return [];
@@ -94,7 +91,7 @@ export class GoUtils {
         }
         let goTreeNodes: GoTreeNode[] = [];
         for (let goMod of goMods.toArray()) {
-            progress.report({ message: 'Analyzing go.mod files' });
+            treesManager.logManager.logMessage('Analyzing go.mod files', 'INFO');
             let dependenciesTreeNode: GoTreeNode = new GoTreeNode(path.dirname(goMod.fsPath), componentsToScan, treesManager, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
             goTreeNodes.push(dependenciesTreeNode);

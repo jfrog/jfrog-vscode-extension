@@ -26,7 +26,6 @@ describe('Npm Utils Tests', () => {
         dummyScanCacheManager,
         new LogManager().activate({} as vscode.ExtensionContext)
     );
-    let dummyProgress: vscode.Progress<{ message?: string; increment?: number }> = { report: () => {} };
     let projectDirs: string[] = ['dependency', 'dependencyPackageLock', 'empty'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'npm'));
@@ -45,7 +44,7 @@ describe('Npm Utils Tests', () => {
      * Test NpmUtils.locatePackageJsons.
      */
     it('Locate package jsons', async () => {
-        let packageJsons: Collections.Set<vscode.Uri> = await NpmUtils.locatePackageJsons(workspaceFolders, dummyProgress);
+        let packageJsons: Collections.Set<vscode.Uri> = await NpmUtils.locatePackageJsons(workspaceFolders, treesManager.logManager);
         assert.strictEqual(packageJsons.size(), projectDirs.length);
 
         // Assert that results contains all projects
@@ -158,7 +157,6 @@ describe('Npm Utils Tests', () => {
     async function runCreateNpmDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
         let dependenciesTrees: DependenciesTreeNode[] = await NpmUtils.createDependenciesTrees(
             workspaceFolders,
-            dummyProgress,
             componentsToScan,
             treesManager,
             parent,

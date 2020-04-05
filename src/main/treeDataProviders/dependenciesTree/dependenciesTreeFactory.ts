@@ -11,15 +11,14 @@ import { MavenUtils } from '../../utils/mavenUtils';
 export class DependenciesTreesFactory {
     public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
-        progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Collections.Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ) {
-        await NpmUtils.createDependenciesTrees(workspaceFolders, progress, componentsToScan, treesManager, parent, quickScan);
-        await PypiUtils.createDependenciesTrees(workspaceFolders, progress, componentsToScan, treesManager, parent, quickScan);
-        await GoUtils.createDependenciesTrees(workspaceFolders, progress, componentsToScan, treesManager, parent, quickScan);
-        await MavenUtils.createMavenDependenciesTrees(workspaceFolders, progress, componentsToScan, treesManager, parent, quickScan);
+        await NpmUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
+        await PypiUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
+        await GoUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
+        await MavenUtils.createMavenDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
     }
 }

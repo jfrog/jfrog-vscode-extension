@@ -27,7 +27,6 @@ describe('Pypi Utils Tests', () => {
         dummyScanCacheManager,
         new LogManager().activate({} as vscode.ExtensionContext)
     );
-    let dummyProgress: vscode.Progress<{ message?: string; increment?: number }> = { report: () => {} };
     let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements'];
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
     let tmpDir: vscode.Uri = vscode.Uri.file(tmp.dirSync({} as tmp.DirOptions).name);
@@ -50,7 +49,7 @@ describe('Pypi Utils Tests', () => {
     it('Python files exist', async () => {
         // Assert that results contains all projects
         for (let workspaceFolder of workspaceFolders) {
-            let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, dummyProgress);
+            let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, treesManager.logManager);
             assert.isTrue(pythonFilesExist, workspaceFolder.uri + ' should contain Python files');
         }
     });

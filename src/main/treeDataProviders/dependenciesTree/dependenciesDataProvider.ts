@@ -148,7 +148,6 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             let dependenciesTree: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
             await DependenciesTreesFactory.createDependenciesTrees(
                 this._workspaceFolders,
-                progress,
                 this._componentsToScan,
                 this._treesManager,
                 dependenciesTree,

@@ -56,14 +56,14 @@ export class PypiUtils {
     /**
      * Find *.py files in workspaces.
      * @param workspaceFolders - Base workspace folders to search
-     * @param progress         - progress bar
+     * @param logManager       - Log manager
      */
     public static async arePythonFilesExist(
         workspaceFolder: vscode.WorkspaceFolder,
-        progress: vscode.Progress<{ message?: string; increment?: number }>,
-        logManager?: LogManager
+        logManager: LogManager
     ): Promise<boolean> {
-        progress.report({ message: 'Locating python files in workspace ' + workspaceFolder.name });
+        logManager.logMessage('Locating python files in workspace ' + workspaceFolder.name, 'INFO');
+
         let wsPythonFiles: vscode.Uri[] = await vscode.workspace.findFiles(
             { base: workspaceFolder.uri.fsPath, pattern: '**/*{setup.py,requirements*.txt}' },
             ScanUtils.getScanExcludePattern(workspaceFolder)
@@ -76,7 +76,6 @@ export class PypiUtils {
 
     /**
      * @param workspaceFolders - Base workspace folders
-     * @param progress         - Progress bar
      * @param componentsToScan - Set of setup.py components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
      * @param scanCacheManager - Scan cache manager
      * @param parent           - The base tree node
@@ -84,7 +83,6 @@ export class PypiUtils {
      */
     public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
-        progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Collections.Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
@@ -93,13 +91,13 @@ export class PypiUtils {
         let pythonExtensionActivated: boolean = false;
         let pypiTreeNodes: PypiTreeNode[] = [];
         for (let workspaceFolder of workspaceFolders) {
-            let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, progress, treesManager.logManager);
+            let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, treesManager.logManager);
             if (!pythonFilesExist) {
                 treesManager.logManager.logMessage('No setup.py and requirements files found in workspace ' + workspaceFolder.name + '.', 'DEBUG');
                 continue;
             }
             if (!pythonExtensionActivated) {
-                if (!await PypiUtils.verifyAndActivatePythonExtension()) {
+                if (!(await PypiUtils.verifyAndActivatePythonExtension())) {
                     vscode.window.showErrorMessage(
                         'Could not scan Pypi project dependencies, because python extension is not installed. ' +
                             'Please install Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python'
@@ -121,7 +119,7 @@ export class PypiUtils {
                 return [];
             }
 
-            progress.report({ message: 'Analyzing setup.py and requirements files of ' + workspaceFolder.name });
+            treesManager.logManager.logMessage('Analyzing setup.py and requirements files of ' + workspaceFolder.name, 'INFO');
             let dependenciesTreeNode: PypiTreeNode = new PypiTreeNode(workspaceFolder.uri.fsPath, componentsToScan, treesManager, pythonPath, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
             pypiTreeNodes.push(dependenciesTreeNode);

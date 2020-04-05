@@ -25,7 +25,6 @@ describe('Go Utils Tests', () => {
         dummyScanCacheManager,
         new LogManager().activate({} as vscode.ExtensionContext)
     );
-    let dummyProgress: vscode.Progress<{ message?: string; increment?: number }> = { report: () => {} };
     let projectDirs: string[] = ['dependency', 'empty'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'go'));
@@ -44,7 +43,7 @@ describe('Go Utils Tests', () => {
      * Test GoUtils.locateGoMods.
      */
     it('Locate go mods', async () => {
-        let goMods: Collections.Set<vscode.Uri> = await GoUtils.locateGoMods(workspaceFolders, dummyProgress);
+        let goMods: Collections.Set<vscode.Uri> = await GoUtils.locateGoMods(workspaceFolders, treesManager.logManager);
         assert.strictEqual(goMods.size(), projectDirs.length);
 
         // Assert that results contains all projects
@@ -121,7 +120,6 @@ describe('Go Utils Tests', () => {
     async function runCreateGoDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
         let dependenciesTrees: DependenciesTreeNode[] = await GoUtils.createDependenciesTrees(
             workspaceFolders,
-            dummyProgress,
             componentsToScan,
             treesManager,
             parent,
