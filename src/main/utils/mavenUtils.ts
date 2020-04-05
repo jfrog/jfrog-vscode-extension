@@ -14,6 +14,7 @@ export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
     public static readonly MAVEN_GAV_READER: string = path.join(__dirname, '..', '..', '..', 'resources', 'maven-gav-reader.jar');
     public static readonly PKG_TYPE: string = 'maven';
+    private static mavenGavReaderInstalled: boolean;
     static pathToNode: Map<string, MavenTreeNode> = new Map<string, MavenTreeNode>();
 
     /**
@@ -190,7 +191,9 @@ export class MavenUtils {
     public static buildPrototypePomTree(pomArray: vscode.Uri[], logManager: LogManager): PomTree[] {
         let prototypeTree: PomTree[] = [];
         let pomIdCache: Map<string, [string, string]> = new Map<string, [string, string]>();
-        MavenUtils.installMavenGavReader();
+        if (!MavenUtils.mavenGavReaderInstalled) {
+            MavenUtils.installMavenGavReader();
+        }
         pomArray
             .sort((pomPath1, pomPath2) => pomPath1.fsPath.length - pomPath2.fsPath.length)
             .forEach(pom => {
@@ -304,5 +307,6 @@ export class MavenUtils {
      */
     public static installMavenGavReader() {
         ScanUtils.executeCmd('mvn org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file -Dfile=' + MavenUtils.MAVEN_GAV_READER);
+        MavenUtils.mavenGavReaderInstalled = true;
     }
 }
