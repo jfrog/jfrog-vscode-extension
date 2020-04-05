@@ -9,7 +9,7 @@ describe('Connection Manager Tests', () => {
 
     before(async () => {});
 
-    it('User agent', () => {
+    it('User agent header', () => {
         let clientConfig: IClientConfig = {
             headers: {}
         } as IClientConfig;
@@ -19,7 +19,7 @@ describe('Connection Manager Tests', () => {
         assert.match(userAgent, new RegExp(/^jfrog-vscode-extension\/\d.\d.\d$/));
     });
 
-    it('Proxy authorization', async () => {
+    it('Proxy authorization header', async () => {
         let clientConfig: IClientConfig = {
             headers: {},
             proxy: {} as IProxyConfig

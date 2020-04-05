@@ -13,10 +13,14 @@ import { ConnectionUtils } from './connectionUtils';
  * Manage the Xray credentials and perform connection with Xray server.
  */
 export class ConnectionManager implements ExtensionComponent {
-    private static readonly XRAY_URL_USERNAME: string = 'jfrog.xray.username';
-    private static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
-    private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
+    // The username and URL keys in VS-Code global configuration
+    private static readonly XRAY_USERNAME_KEY: string = 'jfrog.xray.username';
     private static readonly XRAY_URL_KEY: string = 'jfrog.xray.url';
+
+    // Service ID in the OS key store to store and retrieve the password
+    private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
+
+    private static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
     private _context!: vscode.ExtensionContext;
     private _username: string = '';
     private _password: string = '';
@@ -129,7 +133,7 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async retrieveUsername(prompt: boolean): Promise<string> {
-        let username: string = (await this._context.globalState.get(ConnectionManager.XRAY_URL_USERNAME)) || '';
+        let username: string = (await this._context.globalState.get(ConnectionManager.XRAY_USERNAME_KEY)) || '';
         if (prompt) {
             username =
                 (await vscode.window.showInputBox({
@@ -143,7 +147,7 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async storeUsername() {
-        await this._context.globalState.update(ConnectionManager.XRAY_URL_USERNAME, this._username);
+        await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, this._username);
     }
 
     private async retrievePassword(prompt: boolean, url: string, username: string): Promise<string> {
