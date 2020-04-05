@@ -155,7 +155,7 @@ export class MavenUtils {
         let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, treesManager.logManager);
         for (let ProjectTree of prototypeTree) {
             try {
-                treesManager.logManager.logMessage('Analyzing pom.xml at' + ProjectTree.pomPath, 'INFO');
+                treesManager.logManager.logMessage('Analyzing pom.xml at ' + ProjectTree.pomPath, 'INFO');
                 ProjectTree.runMavenDependencyTree();
                 let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, componentsToScan, treesManager, root);
                 await dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree);
