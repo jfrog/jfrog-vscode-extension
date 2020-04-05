@@ -3,6 +3,7 @@ import { ConnectionManager } from '../connect/connectionManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { FilterManager } from '../filter/filterManager';
 import { FocusManager } from '../focus/focusManager';
+import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { SetCredentialsNode } from '../treeDataProviders/utils/setCredentialsNode';
@@ -12,6 +13,7 @@ import { SetCredentialsNode } from '../treeDataProviders/utils/setCredentialsNod
  */
 export class CommandManager implements ExtensionComponent {
     constructor(
+        private _logManager: LogManager,
         private _connectionManager: ConnectionManager,
         private _treesManager: TreesManager,
         private _filterManager: FilterManager,
@@ -22,6 +24,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.showInProjectDesc', dependenciesTreeNode => this.doShowInProjectDesc(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.codeAction', dependenciesTreeNode => this.doCodeAction(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
+        this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
         this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
         this.registerCommand(context, 'jfrog.xray.filter', () => this.doFilter());
@@ -54,6 +57,13 @@ export class CommandManager implements ExtensionComponent {
      */
     private doFocus(dependenciesTreeNode: DependenciesTreeNode) {
         this.onSelectNode(dependenciesTreeNode);
+    }
+
+    /**
+     * Show JFrog Output tab.
+     */
+    private showOutput() {
+        this._logManager.showOutput();
     }
 
     /**

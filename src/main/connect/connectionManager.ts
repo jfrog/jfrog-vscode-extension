@@ -4,15 +4,23 @@ import { URL } from 'url';
 import * as vscode from 'vscode';
 import { ComponentDetails, IArtifact, IClientConfig, IProxyConfig, ISummaryRequestModel, ISummaryResponse, XrayClient } from 'xray-client-js';
 import { ExtensionComponent } from '../extensionComponent';
+import { GoCenterClient } from '../goCenterClient/GoCenterClient';
+import { IComponentMetadata } from '../goCenterClient/model/ComponentMetadata';
+import { IModuleResponse } from '../goCenterClient/model/ModuleResponse';
 import { ConnectionUtils } from './connectionUtils';
 
 /**
  * Manage the Xray credentials and perform connection with Xray server.
  */
 export class ConnectionManager implements ExtensionComponent {
-    private static readonly XRAY_URL_USERNAME: string = 'jfrog.xray.username';
-    private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
+    // The username and URL keys in VS-Code global configuration
+    private static readonly XRAY_USERNAME_KEY: string = 'jfrog.xray.username';
     private static readonly XRAY_URL_KEY: string = 'jfrog.xray.url';
+
+    // Service ID in the OS key store to store and retrieve the password
+    private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
+
+    private static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
     private _context!: vscode.ExtensionContext;
     private _username: string = '';
     private _password: string = '';
@@ -53,6 +61,13 @@ export class ConnectionManager implements ExtensionComponent {
         return Promise.resolve(summaryResponse.artifacts);
     }
 
+    public async getGoCenterModules(componentDetails: ComponentDetails[]): Promise<IComponentMetadata[]> {
+        let goCenterClient: GoCenterClient = this.createGoCenterClient();
+        let summaryRequest: ISummaryRequestModel = { component_details: componentDetails };
+        let moduleResponse: IModuleResponse = await goCenterClient.getMetadataForModules(summaryRequest);
+        return Promise.resolve(moduleResponse.components_metadata);
+    }
+
     public areCredentialsSet(): boolean {
         return !!(this._url && this._username && this._password);
     }
@@ -81,10 +96,22 @@ export class ConnectionManager implements ExtensionComponent {
             serverUrl: this._url,
             username: this._username,
             password: this._password,
+            headers: {},
             proxy: this.getProxyConfig()
         } as IClientConfig;
+        this.addUserAgentHeader(clientConfig);
         this.addProxyAuthHeader(clientConfig);
         return new XrayClient(clientConfig);
+    }
+
+    private createGoCenterClient(): GoCenterClient {
+        let clientConfig: IClientConfig = {
+            headers: {},
+            proxy: this.getProxyConfig()
+        } as IClientConfig;
+        this.addUserAgentHeader(clientConfig);
+        this.addProxyAuthHeader(clientConfig);
+        return new GoCenterClient(clientConfig);
     }
 
     private async retrieveUrl(prompt: boolean): Promise<string> {
@@ -106,7 +133,7 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async retrieveUsername(prompt: boolean): Promise<string> {
-        let username: string = (await this._context.globalState.get(ConnectionManager.XRAY_URL_USERNAME)) || '';
+        let username: string = (await this._context.globalState.get(ConnectionManager.XRAY_USERNAME_KEY)) || '';
         if (prompt) {
             username =
                 (await vscode.window.showInputBox({
@@ -120,7 +147,7 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async storeUsername() {
-        await this._context.globalState.update(ConnectionManager.XRAY_URL_USERNAME, this._username);
+        await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, this._username);
     }
 
     private async retrievePassword(prompt: boolean, url: string, username: string): Promise<string> {
@@ -172,11 +199,15 @@ export class ConnectionManager implements ExtensionComponent {
         return proxyConfig;
     }
 
-    private addProxyAuthHeader(clientConfig: IClientConfig) {
+    public addUserAgentHeader(clientConfig: IClientConfig) {
+        clientConfig.headers!['User-Agent'] = ConnectionManager.USER_AGENT;
+    }
+
+    public addProxyAuthHeader(clientConfig: IClientConfig) {
         if (clientConfig.proxy) {
             let proxyAuthHeader: string | undefined = vscode.workspace.getConfiguration().get('http.proxyAuthorization');
             if (proxyAuthHeader) {
-                clientConfig.headers = { 'Proxy-Authorization': proxyAuthHeader };
+                clientConfig.headers!['Proxy-Authorization'] = proxyAuthHeader;
             }
         }
     }

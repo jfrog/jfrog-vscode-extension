@@ -53,6 +53,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow') + ' Xray scan...', 'INFO');
             await this.repopulateTree(quickScan);
             vscode.commands.executeCommand('jfrog.xray.focus');
+            this._treesManager.logManager.setSuccess();
         } catch (error) {
             if (error.message !== DependenciesTreeDataProvider.CANCELLATION_ERROR.message) {
                 // Unexpected error
@@ -148,7 +149,6 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             let dependenciesTree: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
             await DependenciesTreesFactory.createDependenciesTrees(
                 this._workspaceFolders,
-                progress,
                 this._componentsToScan,
                 this._treesManager,
                 dependenciesTree,

@@ -17,7 +17,7 @@ export class ScanUtils {
                 cancellable: true
             },
             async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {
-                scanCbk(progress, () => ScanUtils.checkCanceled(token));
+                await scanCbk(progress, () => ScanUtils.checkCanceled(token));
             }
         );
     }
