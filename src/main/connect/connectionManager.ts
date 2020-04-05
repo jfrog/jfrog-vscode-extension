@@ -14,7 +14,7 @@ import { ConnectionUtils } from './connectionUtils';
  */
 export class ConnectionManager implements ExtensionComponent {
     private static readonly XRAY_URL_USERNAME: string = 'jfrog.xray.username';
-    private static readonly USER_AGENT: string = 'jfrog-vscode-extension';
+    private static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
     private static readonly XRAY_URL_KEY: string = 'jfrog.xray.url';
     private _context!: vscode.ExtensionContext;
@@ -195,17 +195,15 @@ export class ConnectionManager implements ExtensionComponent {
         return proxyConfig;
     }
 
-    private addUserAgentHeader(clientConfig: IClientConfig) {
-        if (clientConfig.headers) {
-            clientConfig.headers['User-Agent'] = ConnectionManager.USER_AGENT;
-        }
+    public addUserAgentHeader(clientConfig: IClientConfig) {
+        clientConfig.headers!['User-Agent'] = ConnectionManager.USER_AGENT;
     }
 
-    private addProxyAuthHeader(clientConfig: IClientConfig) {
+    public addProxyAuthHeader(clientConfig: IClientConfig) {
         if (clientConfig.proxy) {
             let proxyAuthHeader: string | undefined = vscode.workspace.getConfiguration().get('http.proxyAuthorization');
             if (proxyAuthHeader) {
-                clientConfig.headers = { 'Proxy-Authorization': proxyAuthHeader };
+                clientConfig.headers!['Proxy-Authorization'] = proxyAuthHeader;
             }
         }
     }

@@ -54,9 +54,9 @@ describe('Go Center Tests', () => {
         assert.deepEqual(vulnerabilities.gocenter_security_url, goCenterLink + '&tab=security');
         let severityCount: ISeverityCount = vulnerabilities.severity;
         assert.isDefined(severityCount);
-        assert.equal(severityCount.High, 1);
-        assert.equal(severityCount.Medium, 11);
-        assert.equal(severityCount.Low, 2);
+        assert.isAtLeast(severityCount.High, 1);
+        assert.isAtLeast(severityCount.Medium, 15);
+        assert.isAtLeast(severityCount.Low, 3);
         assert.isUndefined(severityCount.Information);
         assert.isUndefined(severityCount.Pending);
         assert.isUndefined(severityCount.Unknown);
