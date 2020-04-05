@@ -1,6 +1,5 @@
-import { AxiosRequestConfig } from 'axios';
-import { HttpClient, ISummaryRequestModel, IClientConfig } from 'xray-client-js';
-import { IHttpConfig } from 'xray-client-js/dist/src/HttpClient';
+import { HttpClient, IClientConfig, ISummaryRequestModel } from 'xray-client-js';
+import { IHttpConfig, IRequestParams } from 'xray-client-js/dist/src/HttpClient';
 import { IModuleResponse } from './model/ModuleResponse';
 
 export class GoCenterClient {
@@ -14,9 +13,9 @@ export class GoCenterClient {
     }
 
     public async getMetadataForModules(model: ISummaryRequestModel): Promise<IModuleResponse> {
-        const httpOptions: AxiosRequestConfig = {
+        const httpOptions: IRequestParams = {
             url: this.getMetadataForModulesEndpoint,
-            method: 'post',
+            method: 'POST',
             data: model
         };
         return await this.httpClient.doRequest(httpOptions);
