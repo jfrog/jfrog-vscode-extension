@@ -1,4 +1,5 @@
 import { IconsPaths } from '../utils/iconsPaths';
+import { Translators } from '../utils/translators';
 
 export enum Severity {
     Normal = 0,
@@ -56,6 +57,27 @@ export class SeverityUtils {
                 return IconsPaths.HIGH_SEVERITY;
             default:
                 return IconsPaths.NORMAL_SEVERITY;
+        }
+    }
+
+    public static getSeverity(severity: string) {
+        switch (Translators.capitalize(severity)) {
+            case 'Normal':
+                return Severity.Normal;
+            case 'Pending':
+                return Severity.Pending;
+            case 'Unknown':
+                return Severity.Unknown;
+            case 'Information':
+                return Severity.Information;
+            case 'Low':
+                return Severity.Low;
+            case 'Medium':
+                return Severity.Medium;
+            case 'High':
+                return Severity.High;
+            default:
+                throw new Error(`Unknown severity type in 'getSeverity' function`);
         }
     }
 }

@@ -9,7 +9,8 @@ import { DiagnosticsUtils } from './diagnosticsUtils';
  * @see DiagnosticsManager
  */
 export abstract class AbstractCodeActionProvider implements vscode.CodeActionProvider, ExtensionComponent {
-    static readonly DIAGNOSTIC_SOURCE: string = 'JFrog Xray';
+    static readonly XRAY_DIAGNOSTIC_SOURCE: string = 'JFrog Xray';
+    static readonly GOCENTER_DIAGNOSTIC_SOURCE: string = 'JFrog GoCenter';
 
     constructor(
         protected _documentSelector: vscode.DocumentSelector,
@@ -48,9 +49,7 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
     }
 
     provideCodeActions(document: vscode.TextDocument, range: vscode.Range, context: vscode.CodeActionContext): vscode.Command[] | undefined {
-        let diagnostic: vscode.Diagnostic[] = context.diagnostics.filter(
-            diagnostic => diagnostic.source === AbstractCodeActionProvider.DIAGNOSTIC_SOURCE
-        );
+        let diagnostic: vscode.Diagnostic[] = context.diagnostics.filter(diagnostic => this.isJFrogSource(diagnostic.source));
         if (diagnostic.length === 0) {
             return undefined;
         }
@@ -90,12 +89,10 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
         for (let i: number = 0; i < dependencyPos.length; i += 2) {
             let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
                 new vscode.Range(dependencyPos[i], dependencyPos[i + 1]),
-                node.topIssue.severity === Severity.Normal
-                    ? 'No issues found.'
-                    : 'Top issue severity: ' + SeverityUtils.getString(node.topIssue.severity),
+                this.getSeverityMessage(node),
                 DiagnosticsUtils.getDiagnosticSeverity(node.topIssue.severity)
             );
-            diagnostic.source = 'JFrog Xray';
+            diagnostic.source = this.getSource();
             diagnostic.code = node.componentId;
             diagnostics.push(diagnostic);
         }
@@ -110,5 +107,19 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
     dispose() {
         this._diagnosticCollection.clear();
         this._diagnosticCollection.dispose();
+    }
+
+    protected getSeverityMessage(node: DependenciesTreeNode): string {
+        return node.topIssue.severity === Severity.Normal
+            ? 'No issues found.'
+            : 'Top issue severity: ' + SeverityUtils.getString(node.topIssue.severity);
+    }
+
+    protected getSource(): string {
+        return 'JFrog Xray';
+    }
+
+    private isJFrogSource(source: string | undefined) {
+        return source === AbstractCodeActionProvider.XRAY_DIAGNOSTIC_SOURCE || source === AbstractCodeActionProvider.GOCENTER_DIAGNOSTIC_SOURCE;
     }
 }

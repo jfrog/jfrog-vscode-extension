@@ -4,6 +4,8 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { GoUtils } from '../utils/goUtils';
 import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
+import { Severity, SeverityUtils } from '../types/severity';
+import { GoDependenciesTreeNode } from '../treeDataProviders/dependenciesTree/goDependenciesTreeNode';
 
 export class GoCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
     constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager) {
@@ -33,5 +35,21 @@ export class GoCodeActionProvider extends AbstractCodeActionProvider implements 
             this.addDiagnostic(diagnostics, child, dependencyPos);
         });
         this._diagnosticCollection.set(document.uri, diagnostics);
+    }
+
+    protected getSeverityMessage(node: DependenciesTreeNode): string {
+        if (node instanceof GoDependenciesTreeNode || this._treesManager.connectionManager.areCredentialsSet()) {
+            return node.topIssue.severity === Severity.Normal
+                ? 'No security issues currently found from JFrog GoCenter'
+                : `Top issue severity: ${SeverityUtils.getString(node.topIssue.severity)}`;
+        }
+        return super.getSeverityMessage(node);
+    }
+
+    protected getSource(): string {
+        if (this._treesManager.connectionManager.areCredentialsSet()) {
+            return super.getSource();
+        }
+        return 'JFrog GoCenter';
     }
 }

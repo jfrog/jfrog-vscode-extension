@@ -12,7 +12,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
     private _issues: Collections.Set<Issue> = new Collections.Set(issue => issue.summary);
     private _topIssue: Issue;
 
-    constructor(private _generalInfo: GeneralInfo, collapsibleState?: vscode.TreeItemCollapsibleState, private _parent?: DependenciesTreeNode) {
+    constructor(protected _generalInfo: GeneralInfo, collapsibleState?: vscode.TreeItemCollapsibleState, private _parent?: DependenciesTreeNode) {
         super(_generalInfo.artifactId, collapsibleState);
         this._topIssue = new Issue('', Severity.Normal, '', '');
         this.iconPath = IconsPaths.NORMAL_SEVERITY;

@@ -12,6 +12,9 @@ import { SetCredentialsNode } from '../utils/setCredentialsNode';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { MavenUtils } from '../../utils/mavenUtils';
+import { IComponentMetadata } from '../../goCenterClient/model/ComponentMetadata';
+import { GoDependenciesTreeNode } from './goDependenciesTreeNode';
+import { GoTreeNode } from './goTreeNode';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode | SetCredentialsNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -22,6 +25,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     readonly onDidChangeTreeData: vscode.Event<DependenciesTreeNode | SetCredentialsNode | undefined> = this._onDidChangeTreeData.event;
     private _filterLicenses: Collections.Set<License> = new Collections.Set(license => license.fullName);
     private _componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+    private _goCenterComponentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
     protected _dependenciesTree!: DependenciesTreeNode | SetCredentialsNode;
     private _scanInProgress: boolean = false;
@@ -33,15 +37,6 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     }
 
     public async refresh(quickScan: boolean) {
-        if (!this._treesManager.connectionManager.areCredentialsSet()) {
-            if (!quickScan) {
-                vscode.window.showErrorMessage('Xray server is not configured.');
-            }
-            this.clearTree();
-            this._dependenciesTree = new SetCredentialsNode();
-            this._onDidChangeTreeData.fire();
-            return;
-        }
         if (this._scanInProgress) {
             if (!quickScan) {
                 vscode.window.showInformationMessage('Previous scan still running...');
@@ -50,8 +45,14 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
         try {
             this._scanInProgress = true;
-            this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow') + ' Xray scan...', 'INFO');
-            await this.repopulateTree(quickScan);
+            const XrayUser: boolean = this._treesManager.connectionManager.areCredentialsSet();
+            this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow'), 'INFO');
+            if (!XrayUser) {
+                this._treesManager.logManager.logMessage(' Xray scan...', 'INFO');
+            } else {
+                this._treesManager.logManager.logMessage(' GoCenter scan...', 'INFO');
+            }
+            await this.repopulateTree(quickScan, XrayUser);
             vscode.commands.executeCommand('jfrog.xray.focus');
             this._treesManager.logManager.setSuccess();
         } catch (error) {
@@ -102,7 +103,18 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         this._onDidChangeTreeData.fire();
     }
 
-    private async scanAndCacheArtifact(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
+    private async ScanAndCacheComponents(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
+        await Promise.all([
+            (async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
+                await this.XrayScanAndCache(progress, checkCanceled);
+            })(progress, checkCanceled),
+            (async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
+                await this.GoCenterScanAndCache(progress, checkCanceled);
+            })(progress, checkCanceled)
+        ]);
+    }
+
+    private async XrayScanAndCache(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
         try {
             checkCanceled();
             let componentDetails: ComponentDetails[] = this._componentsToScan.toArray();
@@ -112,7 +124,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
                 let artifacts: IArtifact[] = await this._treesManager.connectionManager.getComponents(partialComponents);
                 this.addMissingComponents(partialComponents, artifacts);
-                await this._treesManager.scanCacheManager.addComponents(artifacts);
+                await this._treesManager.scanCacheManager.addIArtifactComponents(artifacts);
                 progress.report({ message: currentIndex + 100 + '/' + componentDetails.length + ' components scanned', increment: step });
                 checkCanceled();
             }
@@ -125,42 +137,104 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
     }
 
-    private addXrayInfoToTree(root: DependenciesTreeNode) {
+    private async GoCenterScanAndCache(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
+        try {
+            checkCanceled();
+            let componentDetails: ComponentDetails[] = this._goCenterComponentsToScan.toArray();
+            let step: number = (100 / componentDetails.length) * 100;
+            progress.report({ message: 0 + '/' + componentDetails.length + ' components scanned' });
+            for (let currentIndex: number = 0; currentIndex < componentDetails.length; currentIndex += 100) {
+                let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
+                let module: IComponentMetadata[] = await this._treesManager.connectionManager.getGoCenterModules(partialComponents);
+                await this._treesManager.scanCacheManager.addIMetadataComponents(module);
+                progress.report({ message: currentIndex + 100 + '/' + componentDetails.length + ' GoCenter modules scanned', increment: step });
+                checkCanceled();
+            }
+        } catch (error) {
+            if (error.message === DependenciesTreeDataProvider.CANCELLATION_ERROR.message) {
+                // If it's not a cancellation error, throw it up
+                throw error;
+            }
+            vscode.window.showErrorMessage(error.toString());
+        }
+    }
+
+    public addXrayInfoToTree(root: DependenciesTreeNode) {
         root.children.forEach(child => {
             let generalInfo: GeneralInfo = child.generalInfo;
-            let artifact: IArtifact | undefined = this._treesManager.scanCacheManager.get(generalInfo.getComponentId());
+            let artifact: IArtifact | undefined = this._treesManager.scanCacheManager.getArtifact(generalInfo.getComponentId());
             if (artifact) {
                 let pkgType: string = child.generalInfo.pkgType;
                 child.generalInfo = Translators.toGeneralInfo(artifact.general);
                 if (!child.generalInfo.pkgType) {
                     child.generalInfo.pkgType = pkgType;
                 }
-                artifact.issues.map(Translators.toIssue).forEach(issue => child.issues.add(issue));
-                artifact.licenses.map(Translators.toLicense).forEach(license => child.licenses.add(license));
+                artifact.issues.map(Translators.IIssueToIssue).forEach(issue => child.issues.add(issue));
+                artifact.licenses.map(Translators.ILicenseToLicense).forEach(license => child.licenses.add(license));
                 this.filterLicenses.union(child.licenses);
             }
             this.addXrayInfoToTree(child);
         });
     }
 
-    private async repopulateTree(quickScan: boolean) {
+    public addGoCenterInfoToTree(root: DependenciesTreeNode, xrayUser: boolean) {
+        root.children.forEach(child => {
+            if (child instanceof GoDependenciesTreeNode) {
+                let componentMetadata: IComponentMetadata | undefined = this._treesManager.scanCacheManager.getMetadata(
+                    child.getGoCenterComponentId()
+                );
+                if (componentMetadata) {
+                    // Use xray issue instead of GoCenter
+                    if (!xrayUser) {
+                        if (componentMetadata.vulnerabilities.severity) {
+                            Translators.ISeverityToIssue(componentMetadata.vulnerabilities.severity).forEach(issue => child.issues.add(issue));
+                        }
+                        if (componentMetadata.licenses) {
+                            componentMetadata.licenses.map(Translators.stringToLicense).forEach(license => child.licenses.add(license));
+                            this.filterLicenses.union(child.licenses);
+                        }
+                    }
+                    // Load GoCenter info(e.g. readme url) to each go node
+                    child.loadMetaData(componentMetadata);
+                }
+                this.addGoCenterInfoToTree(child, xrayUser);
+            }
+        });
+    }
+
+    private async repopulateTree(quickScan: boolean, XrayUser: boolean) {
         await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
             this.clearTree();
             let dependenciesTree: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
             await DependenciesTreesFactory.createDependenciesTrees(
                 this._workspaceFolders,
                 this._componentsToScan,
+                this._goCenterComponentsToScan,
                 this._treesManager,
                 dependenciesTree,
                 quickScan
             );
-            await this.scanAndCacheArtifact(progress, checkCanceled);
-            for (let dependenciesTreeNode of dependenciesTree.children) {
-                this.addXrayInfoToTree(dependenciesTreeNode);
-                dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
+            if (XrayUser) {
+                // Xray + GoCenter, Paid JFrog Users
+                await this.ScanAndCacheComponents(progress, checkCanceled);
+                for (let dependenciesTreeNode of dependenciesTree.children) {
+                    this.addXrayInfoToTree(dependenciesTreeNode);
+                    if (dependenciesTreeNode instanceof GoTreeNode) {
+                        this.addGoCenterInfoToTree(dependenciesTreeNode, XrayUser);
+                    }
+                    dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
+                }
+            } else {
+                // GoCenter, Non-Paid Users
+                vscode.window.showInformationMessage('Xray server is not configured.');
+                await this.GoCenterScanAndCache(progress, checkCanceled);
+                for (let dependenciesTreeNode of dependenciesTree.children) {
+                    this.addGoCenterInfoToTree(dependenciesTreeNode, XrayUser);
+                    dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
+                }
             }
             this._onDidChangeTreeData.fire();
-        });
+        }, XrayUser);
     }
 
     private clearTree() {
@@ -196,7 +270,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     }
 
     public getDependenciesTreeNode(pkgType: string, path?: string): DependenciesTreeNode | undefined {
-        if (!(this.dependenciesTree instanceof DependenciesTreeNode)) {
+        if (!(this.dependenciesTree instanceof DependenciesTreeNode) && !(this.dependenciesTree instanceof GoDependenciesTreeNode)) {
             return undefined;
         }
         // Unlike other build tools, which rely that each direct dep can be found in the root's child, Maven can have direct dep in each node because,
