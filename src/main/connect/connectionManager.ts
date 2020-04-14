@@ -73,7 +73,7 @@ export class ConnectionManager implements ExtensionComponent {
         return !!(this._url && this._username && this._password);
     }
 
-    private async populateCredentials(prompt: boolean) {
+    private async populateCredentials(prompt: boolean): Promise<boolean> {
         let url: string = await this.retrieveUrl(prompt);
         if (!url) {
             return Promise.resolve(false);

@@ -10,6 +10,9 @@
         "esModuleInterop": true,
         "moduleResolution": "node",
 
+        // Remove comments from js files
+        "removeComments": true,
+
         // Type checking:
         "strict": true,
         "noImplicitReturns": true,

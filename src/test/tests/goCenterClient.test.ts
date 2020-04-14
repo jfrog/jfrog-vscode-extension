@@ -30,6 +30,11 @@ describe('Go Center Tests', () => {
         done();
     });
 
+    it('Latest Version', async done => {
+        assert.deepEqual(componentMetadata.latest_version, 'v12.40.0+incompatible');
+        done();
+    });
+
     it('Metrics', async done => {
         assert.isAtLeast(componentMetadata.contributors, 200);
         assert.isAtLeast(componentMetadata.stars, 200);
