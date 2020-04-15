@@ -24,7 +24,9 @@ import { Severity } from '../../main/types/severity';
  * Test functionality of @class GoUtils.
  */
 describe('Go Utils Tests', () => {
-    let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate(new utils.TestExtensionContext());
+    let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
+        workspaceState: new TestMemento() as vscode.Memento
+    } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager(
         [],
         new ConnectionManager(),
@@ -104,7 +106,7 @@ describe('Go Utils Tests', () => {
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
         let goCenterComponentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
         let res: GoTreeNode[] = await runCreateGoDependenciesTrees(componentsToScan, goCenterComponentsToScan, parent, false);
-        // Check that components to scan contains github.com/machinebox/progress:0.1.0
+        // Check that components to scan contains github.com/machinebox/progress:0.1.0.
         assert.equal(componentsToScan.size(), 3);
         assert.deepEqual(componentsToScan.toArray()[0], new ComponentDetails('go://github.com/jfrog/gofrog:1.0.5'));
         assert.deepEqual(componentsToScan.toArray()[1], new ComponentDetails('go://github.com/pkg/errors:0.8.0'));
@@ -114,15 +116,15 @@ describe('Go Utils Tests', () => {
         assert.deepEqual(goCenterComponentsToScan.toArray()[1], new ComponentDetails('github.com/pkg/errors:v0.8.0'));
         assert.deepEqual(goCenterComponentsToScan.toArray()[2], new ComponentDetails('github.com/opencontainers/runc:v1.0.0-rc2'));
 
-        // Check labels
+        // Check labels.
         assert.deepEqual(res[0].label, 'github.com/shield/black-widow');
         assert.deepEqual(res[1].label, 'github.com/shield/falcon');
 
-        // Check parents
+        // Check parents.
         assert.deepEqual(res[0].parent, parent);
         assert.deepEqual(res[1].parent, parent);
 
-        // Check children
+        // Check children.
         assert.lengthOf(res[0].children, 2);
         let child: GoDependenciesTreeNode = <GoDependenciesTreeNode>res[0].children[0];
         assert.deepEqual(child.componentId, 'github.com/jfrog/gofrog:1.0.5');
@@ -130,8 +132,8 @@ describe('Go Utils Tests', () => {
         assert.deepEqual(child.description, '1.0.5');
         assert.deepEqual(child.parent, res[0]);
 
-        // Xray general data
-        // First child
+        // Xray general data.
+        // First child.
         let actualLicense: License = child.licenses.toArray()[0];
         let expectedLicense: ILicense[] = utils.TestArtifact[0].licenses;
         assert.deepEqual(actualLicense.name, expectedLicense[0].name);
@@ -139,7 +141,7 @@ describe('Go Utils Tests', () => {
         assert.deepEqual(actualLicense.fullName, expectedLicense[0].full_name);
         assert.deepEqual(actualLicense.components, expectedLicense[0].components);
 
-        // Second child
+        // Second child.
         child = <GoDependenciesTreeNode>res[0].children[1];
         actualLicense = child.licenses.toArray()[0];
         expectedLicense = utils.TestArtifact[1].licenses;
@@ -148,25 +150,25 @@ describe('Go Utils Tests', () => {
         assert.deepEqual(actualLicense.fullName, expectedLicense[0].full_name);
         assert.deepEqual(actualLicense.components, expectedLicense[0].components);
 
-        // Check transformation types from xray IIssue or GoCenter ComponentMetadata to Issue
+        // Check transformation types from xray IIssue or GoCenter ComponentMetadata to Issue.
         let actualIssues: Issue[] = child.issues.toArray();
         let expectedIssues: IIssue[] = utils.TestArtifact[1].issues;
-        //Issue created by XRay data
+        // Issue created by XRay data.
         for (let i: number = 0; i < 2; i++) {
-            assert.deepEqual(actualIssues[i], Translators.IIssueToIssue(expectedIssues[i]));
+            assert.deepEqual(actualIssues[i], Translators.toIssue(expectedIssues[i]));
         }
-        //Issue created by GoCenter
+        // Issue created by GoCenter.
         assert.deepEqual(actualIssues[2].severity, Severity.Medium);
         assert.deepEqual(actualIssues[3].severity, Severity.High);
 
-        //GoCenter  general data
-        // First child
+        // GoCenter  general data.
+        // First child.
         child = <GoDependenciesTreeNode>res[0].children[0];
         let actualGoCenterDetails: IComponentMetadata = (<GoDependenciesTreeNode>child).goCenter;
         let expectedGoCenterDetails: IComponentMetadata[] = utils.TestMetadata;
         assert.deepEqual(actualGoCenterDetails, expectedGoCenterDetails[0]);
 
-        // Second child
+        // Second child.
         child = <GoDependenciesTreeNode>res[0].children[1];
         actualGoCenterDetails = (<GoDependenciesTreeNode>child).goCenter;
         expectedGoCenterDetails = utils.TestMetadata;
@@ -196,3 +198,20 @@ describe('Go Utils Tests', () => {
         return dependenciesTrees.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 });
+
+class TestMemento implements vscode.Memento {
+    storage: Collections.Dictionary<string, any>;
+    constructor() {
+        this.storage = new Collections.Dictionary<string, any>();
+    }
+    get(key: any, defaultValue?: any) {
+        if (typeof key === 'string') {
+            return this.storage.getValue(key);
+        }
+        return;
+    }
+    update(key: string, value: any): Thenable<void> {
+        this.storage.setValue(key, value);
+        return Promise.resolve();
+    }
+}

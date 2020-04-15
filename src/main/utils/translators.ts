@@ -14,7 +14,7 @@ export class Translators {
             : new GavGeneralInfo(components[0], components[1], components[2], clientGeneral.path, clientGeneral.pkg_type);
     }
 
-    public static IIssueToIssue(clientIssue: IIssue): Issue {
+    public static toIssue(clientIssue: IIssue): Issue {
         return new Issue(
             clientIssue.summary,
             Translators.toSeverity(clientIssue.severity),
@@ -24,13 +24,13 @@ export class Translators {
         );
     }
 
-    public static ISeverityToIssue(clientIssue: ISeverityCount): Issue[] {
+    public static severityCountToIssues(clientIssue: ISeverityCount): Issue[] {
         let issues: Issue[] = [];
         if (clientIssue) {
             for (let [key, value] of Object.entries(clientIssue)) {
                 if (value > 0) {
                     for (let i: number = 0; i < value; i++) {
-                        issues.push(new Issue(`Severity Level ${key} (${i + 1}/${value})`, Translators.toSeverity(key), '', '', []));
+                        issues.push(new Issue(`${key} level Issue (${i + 1}/${value})`, Translators.toSeverity(key), '', '', []));
                     }
                 }
             }
@@ -57,7 +57,7 @@ export class Translators {
         }
     }
 
-    public static ILicenseToLicense(clientLicense: ILicense): License {
+    public static toLicense(clientLicense: ILicense): License {
         return new License(clientLicense.more_info_url, clientLicense.components, clientLicense.full_name, clientLicense.name);
     }
 

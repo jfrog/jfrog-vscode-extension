@@ -9,7 +9,7 @@ import { Severity, SeverityUtils } from '../types/severity';
 import { ISeverityCount } from '../goCenterClient/model/SeverityCount';
 
 export class GoHover extends AbstractHoverProvider {
-    private static readonly goCenterUrl: string = 'https://www.jfrog.com/confluence/display/XRAY2X/Xray+Vulnerability+Scanning+in+GoCenter';
+    private static readonly XRAY_IN_GOCENTER_URL: string = 'https://www.jfrog.com/confluence/display/XRAY2X/Xray+Vulnerability+Scanning+in+GoCenter';
     constructor(treesManager: TreesManager) {
         super(GoUtils.DOCUMENT_SELECTOR, treesManager);
     }
@@ -44,7 +44,7 @@ export class GoHover extends AbstractHoverProvider {
         let hoverText: vscode.MarkdownString = new vscode.MarkdownString(
             `${node.goCenter?.description ? `${node.goCenter.description.slice(0, 100)}` : ''}${
                 node.goCenter.description.length > 100 ? ` ...` : ` `
-            }[Read Me](${node.goCenter?.gocenter_readme_url})${
+            }[Readme](${node.goCenter?.gocenter_readme_url})${
                 node.goCenter?.gocenter_metrics_url ? ` | [Metrics-Info](${node.goCenter.gocenter_metrics_url})\n\n` : '\n\n'
             }`
         );
@@ -58,29 +58,27 @@ export class GoHover extends AbstractHoverProvider {
                 }
             });
             hoverText.appendMarkdown(
-                `${node.goCenter?.latest_version ? `Latest Version: : ${node.goCenter.latest_version} ` : ''}` +
+                `${node.goCenter?.latest_version ? `Latest Version: ${node.goCenter.latest_version} ` : ''}` +
                     `${licenses ? ` | License: ${licenses}\n\n` : '\n\n'}`
             );
         } else {
             licenses = node.goCenter.licenses;
             if (node.topIssue.severity === Severity.Normal) {
                 hoverText.appendMarkdown(
-                    `[No vulnerabilities found](${GoHover.goCenterUrl})${
-                        node.goCenter?.latest_version ? ` Latest Version: : ${node.goCenter.latest_version} ` : ''
+                    `[No vulnerabilities found](${GoHover.XRAY_IN_GOCENTER_URL})\n\n${
+                        node.goCenter?.latest_version ? ` Latest Version: ${node.goCenter.latest_version} ` : ''
                     }` + `${licenses ? ` | License: ${licenses}\n\n` : '\n\n'}`
                 );
             } else {
-                let [summery, totalNum] = this.getSeveritySummery(node.goCenter?.vulnerabilities?.severity);
+                let [summery, issuesCount] = this.getSeveritySummary(node.goCenter?.vulnerabilities?.severity);
                 hoverText.appendMarkdown(
-                    `${totalNum ? `${totalNum} ` : ``}` +
-                        `&nbsp; &nbsp; &nbsp; ${
-                            node.goCenter?.latest_version
-                                ? `Latest Version: : ${node.goCenter.latest_version.slice(0, 5)}${
-                                      node.goCenter.latest_version.length > 5 ? `...` : ``
-                                  } `
-                                : ''
-                        }` +
+                    `${
+                        node.goCenter?.latest_version
+                            ? `Latest Version: ${node.goCenter.latest_version.slice(0, 5)}${node.goCenter.latest_version.length > 5 ? `...` : ``} `
+                            : ''
+                    }` +
                         `${licenses ? ` | License: ${licenses}\n\n` : '\n\n'}` +
+                        `${issuesCount ? `${issuesCount}\n\n` : ``}` +
                         `${
                             summery
                                 ? `${summery} &nbsp; &nbsp; &nbsp; CVE information available in: [JFrog GoCenter](${node.goCenter?.vulnerabilities?.gocenter_security_url})\n\n`
@@ -92,24 +90,29 @@ export class GoHover extends AbstractHoverProvider {
         return new vscode.Hover(hoverText);
     }
 
-    private getSeveritySummery(severities: ISeverityCount): [string, string] {
+    /**
+     * Creates two strings from 'ISeverityCount', both are in markdown syntax.
+     * The first string is one line contains all the severities with an icon corresponding to the severities level,
+     * Second is the sum of all severities..
+     */
+    private getSeveritySummary(severities: ISeverityCount): [string, string] {
         if (!severities) {
             return ['', ''];
         }
-        let summery: string = '';
-        let totalNum: string = '';
+        let summary: string = '';
+        let TotalVulnerabilities: string = '';
         let totalNumOfSeverities: number = 0;
         for (let [severityLevel, numOfSeverity] of Object.entries(severities)) {
             if (numOfSeverity > 0) {
                 totalNumOfSeverities += numOfSeverity;
-                summery += `![severity.icon](${SeverityUtils.getIcon(
+                summary += `![severity.icon](${SeverityUtils.getIcon(
                     SeverityUtils.getSeverity(severityLevel)
                 )}) ${severityLevel} (${numOfSeverity})&nbsp; &nbsp;`;
             }
         }
-        if (summery !== '') {
-            totalNum = `**Total number of vulnerabilities: ${totalNumOfSeverities}**`;
+        if (summary !== '') {
+            TotalVulnerabilities = `**Total vulnerabilities found: ${totalNumOfSeverities}**`;
         }
-        return [summery, totalNum];
+        return [summary, TotalVulnerabilities];
     }
 }

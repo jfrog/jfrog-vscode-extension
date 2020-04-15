@@ -1,39 +1,5 @@
-import * as vscode from 'vscode';
-import * as Collections from 'typescript-collections';
 import { IArtifact } from 'xray-client-js';
 import { IComponentMetadata } from '../../../main/goCenterClient/model/ComponentMetadata';
-
-export class TestMemento implements vscode.Memento {
-    storage: Collections.Dictionary<string, any>;
-    constructor() {
-        this.storage = new Collections.Dictionary<string, any>();
-    }
-    get<T>(key: string): T | undefined;
-    get<T>(key: string, defaultValue: T): T;
-    get(key: any, defaultValue?: any) {
-        if (typeof key === 'string') {
-            return this.storage.getValue(key);
-        }
-        return;
-    }
-    update(key: string, value: any): Thenable<void> {
-        this.storage.setValue(key, value);
-        return Promise.resolve();
-    }
-}
-
-export class TestExtensionContext implements vscode.ExtensionContext {
-    subscriptions!: { dispose(): any }[];
-    workspaceState: vscode.Memento = new TestMemento();
-    globalState!: vscode.Memento;
-    extensionPath!: string;
-    asAbsolutePath(relativePath: string): string {
-        throw new Error('Method not implemented.');
-    }
-    storagePath: string | undefined;
-    globalStoragePath!: string;
-    logPath!: string;
-}
 
 export const TestArtifact: IArtifact[] = [
     {

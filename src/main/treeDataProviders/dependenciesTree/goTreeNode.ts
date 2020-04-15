@@ -96,7 +96,7 @@ export class GoTreeNode extends DependenciesTreeNode {
 
     private addComponentToScan(dependenciesTreeNode: DependenciesTreeNode, quickScan: boolean) {
         let componentId: string = dependenciesTreeNode.generalInfo.artifactId + ':' + dependenciesTreeNode.generalInfo.version;
-        let goCenterComponentId: string = componentId.replace(':', ':v');
+        let goCenterComponentId: string = dependenciesTreeNode.generalInfo.artifactId + ':v' + dependenciesTreeNode.generalInfo.version;
         if (
             !quickScan ||
             !this._treesManager.scanCacheManager.validateOrDelete(componentId) ||

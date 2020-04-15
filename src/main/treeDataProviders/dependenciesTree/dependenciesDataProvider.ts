@@ -169,8 +169,8 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 if (!child.generalInfo.pkgType) {
                     child.generalInfo.pkgType = pkgType;
                 }
-                artifact.issues.map(Translators.IIssueToIssue).forEach(issue => child.issues.add(issue));
-                artifact.licenses.map(Translators.ILicenseToLicense).forEach(license => child.licenses.add(license));
+                artifact.issues.map(Translators.toIssue).forEach(issue => child.issues.add(issue));
+                artifact.licenses.map(Translators.toLicense).forEach(license => child.licenses.add(license));
                 this.filterLicenses.union(child.licenses);
             }
             this.addXrayInfoToTree(child);
@@ -187,7 +187,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     // Use xray issue instead of GoCenter
                     if (!xrayUser) {
                         if (componentMetadata.vulnerabilities.severity) {
-                            Translators.ISeverityToIssue(componentMetadata.vulnerabilities.severity).forEach(issue => child.issues.add(issue));
+                            Translators.severityCountToIssues(componentMetadata.vulnerabilities.severity).forEach(issue => child.issues.add(issue));
                         }
                         if (componentMetadata.licenses) {
                             componentMetadata.licenses.map(Translators.stringToLicense).forEach(license => child.licenses.add(license));
