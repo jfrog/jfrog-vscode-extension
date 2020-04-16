@@ -29,7 +29,6 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
     protected _dependenciesTree!: DependenciesTreeNode | SetCredentialsNode;
     private _scanInProgress: boolean = false;
-    protected _totalComponentsToScan: number = this._componentsToScan.size() + this._goCenterComponentsToScan.size() || 1;
 
     constructor(protected _workspaceFolders: vscode.WorkspaceFolder[], protected _treesManager: TreesManager) {}
 
@@ -105,21 +104,29 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     }
 
     private async scanAndCacheComponents(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
-        await Promise.all([await this.xrayScanAndCache(progress, checkCanceled), await this.goCenterScanAndCache(progress, checkCanceled)]);
+        const totalComponents: number = this._componentsToScan.size() + this._goCenterComponentsToScan.size() || 1;
+        progress.report({ message: 0 + '/' + totalComponents + ' components scanned' });
+        await Promise.all([
+            await this.xrayScanAndCache(progress, checkCanceled, totalComponents),
+            await this.goCenterScanAndCache(progress, checkCanceled, totalComponents)
+        ]);
     }
 
-    private async xrayScanAndCache(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
+    private async xrayScanAndCache(
+        progress: vscode.Progress<{ message?: string; increment?: number }>,
+        checkCanceled: () => void,
+        totalComponents: number
+    ) {
         try {
             checkCanceled();
             let componentDetails: ComponentDetails[] = this._componentsToScan.toArray();
-            let step: number = (100 / this._totalComponentsToScan) * 100;
-            progress.report({ message: 0 + '/' + componentDetails.length + ' components scanned' });
+            let step: number = (100 / totalComponents) * 100;
             for (let currentIndex: number = 0; currentIndex < componentDetails.length; currentIndex += 100) {
                 let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
                 let artifacts: IArtifact[] = await this._treesManager.connectionManager.getComponents(partialComponents);
                 this.addMissingComponents(partialComponents, artifacts);
                 await this._treesManager.scanCacheManager.addIArtifactComponents(artifacts);
-                progress.report({ message: currentIndex + 100 + '/' + componentDetails.length + ' components scanned', increment: step });
+                progress.report({ message: currentIndex + 100 + '/' + totalComponents + ' components scanned', increment: step });
                 checkCanceled();
             }
         } catch (error) {
@@ -131,17 +138,20 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
     }
 
-    private async goCenterScanAndCache(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
+    private async goCenterScanAndCache(
+        progress: vscode.Progress<{ message?: string; increment?: number }>,
+        checkCanceled: () => void,
+        totalComponents: number
+    ) {
         try {
             checkCanceled();
             let componentDetails: ComponentDetails[] = this._goCenterComponentsToScan.toArray();
-            let step: number = (100 / this._totalComponentsToScan) * 100;
-            progress.report({ message: 0 + '/' + componentDetails.length + ' components scanned' });
+            let step: number = (100 / totalComponents) * 100;
             for (let currentIndex: number = 0; currentIndex < componentDetails.length; currentIndex += 100) {
                 let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
                 let module: IComponentMetadata[] = await this._treesManager.connectionManager.getGoCenterModules(partialComponents);
                 await this._treesManager.scanCacheManager.addIMetadataComponents(module);
-                progress.report({ message: currentIndex + 100 + '/' + componentDetails.length + ' GoCenter modules scanned', increment: step });
+                progress.report({ message: currentIndex + 100 + '/' + totalComponents + ' GoCenter modules scanned', increment: step });
                 checkCanceled();
             }
         } catch (error) {
@@ -220,8 +230,10 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 }
             } else {
                 // GoCenter users
+                const totalComponents: number = this._goCenterComponentsToScan.size();
                 vscode.window.showInformationMessage('Xray server is not configured.');
-                await this.goCenterScanAndCache(progress, checkCanceled);
+                progress.report({ message: 0 + '/' + totalComponents + ' components scanned' });
+                await this.goCenterScanAndCache(progress, checkCanceled, totalComponents);
                 for (let dependenciesTreeNode of dependenciesTree.children) {
                     this.addGoCenterInfoToTree(dependenciesTreeNode, credentialsSet);
                     dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();

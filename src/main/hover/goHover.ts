@@ -41,7 +41,7 @@ export class GoHover extends AbstractHoverProvider {
         const credentialsSet: boolean = this._treesManager.connectionManager.areCredentialsSet();
         let hoverText: vscode.MarkdownString = new vscode.MarkdownString(
             `${node.componentMetadata?.description ? `${node.componentMetadata.description.slice(0, 100)}` : ''}${
-                node.componentMetadata.description.length > 100 ? ` ...` : ` `
+                node.componentMetadata.description?.length > 100 ? ` ...` : ` `
             }[ReadMe](${node.componentMetadata?.gocenter_readme_url})${
                 node.componentMetadata?.gocenter_metrics_url ? ` | [Metrics-Info](${node.componentMetadata.gocenter_metrics_url})\n\n` : '\n\n'
             }`
@@ -55,13 +55,13 @@ export class GoHover extends AbstractHoverProvider {
                 hoverText.appendMarkdown(
                     `[No vulnerabilities found](${GoHover.XRAY_IN_GOCENTER_URL})\n\n${this.createLatestVersionText(
                         node.componentMetadata?.latest_version
-                    )}` + this.createLicensesText(node.componentMetadata.licenses)
+                    )}` + this.createLicensesText(node.componentMetadata?.licenses)
                 );
             } else {
                 let [summary, issuesCount] = this.getSeveritySummary(node.componentMetadata?.vulnerabilities?.severity);
                 hoverText.appendMarkdown(
                     `${this.createLatestVersionText(node.componentMetadata?.latest_version)}` +
-                        this.createLicensesText(node.componentMetadata.licenses) +
+                        this.createLicensesText(node.componentMetadata?.licenses) +
                         `${issuesCount ? `${issuesCount}\n\n` : ``}` +
                         `${
                             summary
