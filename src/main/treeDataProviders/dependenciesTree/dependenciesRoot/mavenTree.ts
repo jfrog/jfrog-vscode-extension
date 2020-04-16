@@ -1,12 +1,12 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { GeneralInfo } from '../../types/generalInfo';
-import { TreesManager } from '../treesManager';
-import { DependenciesTreeNode } from './dependenciesTreeNode';
-import { GavGeneralInfo } from '../../types/gavGeneralinfo';
-import { PomTree } from '../../utils/pomTree';
-import { MavenUtils } from '../../utils/mavenUtils';
+import { GeneralInfo } from '../../../types/generalInfo';
+import { TreesManager } from '../../treesManager';
+import { DependenciesTreeNode } from '../dependenciesTreeNode';
+import { GavGeneralInfo } from '../../../types/gavGeneralinfo';
+import { PomTree } from '../../../utils/pomTree';
+import { MavenUtils } from '../../../utils/mavenUtils';
 
 export class MavenTreeNode extends DependenciesTreeNode {
     private static readonly COMPONENT_PREFIX: string = 'gav://';

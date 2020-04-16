@@ -58,7 +58,7 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
             new TreeDataHolder('Issues count', String(this._selectedNode.issues.size()))
         ];
         if (this._selectedNode instanceof GoDependenciesTreeNode) {
-            children.push(new GoCenterNode(this._selectedNode.goCenter));
+            children.push(new GoCenterNode(this._selectedNode.componentMetadata));
         }
         let path: string = this._selectedNode.generalInfo.path;
         if (path) {
@@ -104,7 +104,7 @@ class GoCenterNode extends vscode.TreeItem {
             new TreeDataHolder('Description', String(this._goCenter.description)),
             new TreeDataHolder('Latest Version', String(this._goCenter.latest_version)),
             new TreeDataHolder('stars', String(this._goCenter.stars)),
-            new TreeDataHolder('Readme', 'Click Here', String(this._goCenter.gocenter_readme_url)),
+            new TreeDataHolder('ReadMe', 'Click Here', String(this._goCenter.gocenter_readme_url)),
             new TreeDataHolder('Metrics', 'Click Here', String(this._goCenter.gocenter_metrics_url))
         );
         return children;

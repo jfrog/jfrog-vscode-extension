@@ -6,11 +6,9 @@ export class ScanCacheObject {
     private static readonly NOW: number = Date.now();
     private static readonly INVALIDATE_TIME: number = ScanCacheObject.NOW - ScanCacheObject.MILLISECONDS_IN_WEEK;
 
-    public _artifact!: IArtifact;
-    public _ComponentMetadata!: IComponentMetadata;
     public _lastUpdated: number;
 
-    constructor() {
+    private constructor(public _artifact: IArtifact, public _componentMetadata: IComponentMetadata) {
         this._lastUpdated = ScanCacheObject.NOW;
     }
 
@@ -18,13 +16,11 @@ export class ScanCacheObject {
         return lastUpdated < ScanCacheObject.INVALIDATE_TIME;
     }
 
-    setArtifact(artifact: IArtifact) {
-        this._artifact = artifact;
-        return this;
+    static createXrayCache(artifact: IArtifact) {
+        return new this(artifact, {} as IComponentMetadata);
     }
 
-    setComponentMetadata(componentMetadata: IComponentMetadata) {
-        this._ComponentMetadata = componentMetadata;
-        return this;
+    static createGoCenterCache(componentMetadata: IComponentMetadata) {
+        return new this({} as IArtifact, componentMetadata);
     }
 }

@@ -14,7 +14,7 @@ import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { MavenUtils } from '../../utils/mavenUtils';
 import { IComponentMetadata } from '../../goCenterClient/model/ComponentMetadata';
 import { GoDependenciesTreeNode } from './goDependenciesTreeNode';
-import { GoTreeNode } from './goTreeNode';
+import { GoTreeNode } from './dependenciesRoot/goTree';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode | SetCredentialsNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -29,6 +29,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
     protected _dependenciesTree!: DependenciesTreeNode | SetCredentialsNode;
     private _scanInProgress: boolean = false;
+    protected _totalComponentsToScan: number = this._componentsToScan.size() + this._goCenterComponentsToScan.size() || 1;
 
     constructor(protected _workspaceFolders: vscode.WorkspaceFolder[], protected _treesManager: TreesManager) {}
 
@@ -45,14 +46,14 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
         try {
             this._scanInProgress = true;
-            const XrayUser: boolean = this._treesManager.connectionManager.areCredentialsSet();
+            const credentialsSet: boolean = this._treesManager.connectionManager.areCredentialsSet();
             this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow'), 'INFO');
-            if (!XrayUser) {
+            if (!credentialsSet) {
                 this._treesManager.logManager.logMessage(' Xray scan...', 'INFO');
             } else {
                 this._treesManager.logManager.logMessage(' GoCenter scan...', 'INFO');
             }
-            await this.repopulateTree(quickScan, XrayUser);
+            await this.repopulateTree(quickScan, credentialsSet);
             vscode.commands.executeCommand('jfrog.xray.focus');
             this._treesManager.logManager.setSuccess();
         } catch (error) {
@@ -103,22 +104,15 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         this._onDidChangeTreeData.fire();
     }
 
-    private async ScanAndCacheComponents(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
-        await Promise.all([
-            (async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
-                await this.XrayScanAndCache(progress, checkCanceled);
-            })(progress, checkCanceled),
-            (async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
-                await this.GoCenterScanAndCache(progress, checkCanceled);
-            })(progress, checkCanceled)
-        ]);
+    private async scanAndCacheComponents(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
+        await Promise.all([await this.xrayScanAndCache(progress, checkCanceled), await this.goCenterScanAndCache(progress, checkCanceled)]);
     }
 
-    private async XrayScanAndCache(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
+    private async xrayScanAndCache(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
         try {
             checkCanceled();
             let componentDetails: ComponentDetails[] = this._componentsToScan.toArray();
-            let step: number = (100 / componentDetails.length) * 100;
+            let step: number = (100 / this._totalComponentsToScan) * 100;
             progress.report({ message: 0 + '/' + componentDetails.length + ' components scanned' });
             for (let currentIndex: number = 0; currentIndex < componentDetails.length; currentIndex += 100) {
                 let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
@@ -137,11 +131,11 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
     }
 
-    private async GoCenterScanAndCache(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
+    private async goCenterScanAndCache(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
         try {
             checkCanceled();
             let componentDetails: ComponentDetails[] = this._goCenterComponentsToScan.toArray();
-            let step: number = (100 / componentDetails.length) * 100;
+            let step: number = (100 / this._totalComponentsToScan) * 100;
             progress.report({ message: 0 + '/' + componentDetails.length + ' components scanned' });
             for (let currentIndex: number = 0; currentIndex < componentDetails.length; currentIndex += 100) {
                 let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
@@ -177,7 +171,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         });
     }
 
-    public addGoCenterInfoToTree(root: DependenciesTreeNode, xrayUser: boolean) {
+    public addGoCenterInfoToTree(root: DependenciesTreeNode, credentialsSet: boolean) {
         root.children.forEach(child => {
             if (child instanceof GoDependenciesTreeNode) {
                 let componentMetadata: IComponentMetadata | undefined = this._treesManager.scanCacheManager.getMetadata(
@@ -185,7 +179,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 );
                 if (componentMetadata) {
                     // Use xray issue instead of GoCenter
-                    if (!xrayUser) {
+                    if (!credentialsSet) {
                         if (componentMetadata.vulnerabilities.severity) {
                             Translators.severityCountToIssues(componentMetadata.vulnerabilities.severity).forEach(issue => child.issues.add(issue));
                         }
@@ -195,14 +189,14 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                         }
                     }
                     // Load GoCenter info(e.g. readme url) to each go node
-                    child.loadMetaData(componentMetadata);
+                    child.componentMetadata = componentMetadata;
                 }
-                this.addGoCenterInfoToTree(child, xrayUser);
+                this.addGoCenterInfoToTree(child, credentialsSet);
             }
         });
     }
 
-    private async repopulateTree(quickScan: boolean, XrayUser: boolean) {
+    private async repopulateTree(quickScan: boolean, credentialsSet: boolean) {
         await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
             this.clearTree();
             let dependenciesTree: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
@@ -214,27 +208,27 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 dependenciesTree,
                 quickScan
             );
-            if (XrayUser) {
-                // Xray + GoCenter, Paid JFrog Users
-                await this.ScanAndCacheComponents(progress, checkCanceled);
+            if (credentialsSet) {
+                // Xray + GoCenter users
+                await this.scanAndCacheComponents(progress, checkCanceled);
                 for (let dependenciesTreeNode of dependenciesTree.children) {
                     this.addXrayInfoToTree(dependenciesTreeNode);
                     if (dependenciesTreeNode instanceof GoTreeNode) {
-                        this.addGoCenterInfoToTree(dependenciesTreeNode, XrayUser);
+                        this.addGoCenterInfoToTree(dependenciesTreeNode, credentialsSet);
                     }
                     dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
                 }
             } else {
-                // GoCenter, Non-Paid Users
+                // GoCenter users
                 vscode.window.showInformationMessage('Xray server is not configured.');
-                await this.GoCenterScanAndCache(progress, checkCanceled);
+                await this.goCenterScanAndCache(progress, checkCanceled);
                 for (let dependenciesTreeNode of dependenciesTree.children) {
-                    this.addGoCenterInfoToTree(dependenciesTreeNode, XrayUser);
+                    this.addGoCenterInfoToTree(dependenciesTreeNode, credentialsSet);
                     dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
                 }
             }
             this._onDidChangeTreeData.fire();
-        }, XrayUser);
+        }, credentialsSet);
     }
 
     private clearTree() {

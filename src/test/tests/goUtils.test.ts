@@ -16,7 +16,7 @@ import { Translators } from '../../main/utils/translators';
 import { Issue } from '../../main/types/issue';
 import { License } from '../../main/types/license';
 import { GoDependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/goDependenciesTreeNode';
-import { GoTreeNode } from '../../main/treeDataProviders/dependenciesTree/goTreeNode';
+import { GoTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { IComponentMetadata } from '../../main/goCenterClient/model/ComponentMetadata';
 import { Severity } from '../../main/types/severity';
 import { TestMemento } from './utils/testMemento.test';
@@ -165,13 +165,13 @@ describe('Go Utils Tests', () => {
         // GoCenter  general data.
         // First child.
         child = <GoDependenciesTreeNode>res[0].children[0];
-        let actualGoCenterDetails: IComponentMetadata = (<GoDependenciesTreeNode>child).goCenter;
+        let actualGoCenterDetails: IComponentMetadata = (<GoDependenciesTreeNode>child).componentMetadata;
         let expectedGoCenterDetails: IComponentMetadata[] = utils.TestMetadata;
         assert.deepEqual(actualGoCenterDetails, expectedGoCenterDetails[0]);
 
         // Second child.
         child = <GoDependenciesTreeNode>res[0].children[1];
-        actualGoCenterDetails = (<GoDependenciesTreeNode>child).goCenter;
+        actualGoCenterDetails = (<GoDependenciesTreeNode>child).componentMetadata;
         expectedGoCenterDetails = utils.TestMetadata;
         assert.deepEqual(actualGoCenterDetails, expectedGoCenterDetails[1]);
     });
@@ -180,7 +180,7 @@ describe('Go Utils Tests', () => {
         componentsToScan: Collections.Set<ComponentDetails>,
         goCenterComponentsToScan: Collections.Set<ComponentDetails>,
         parent: DependenciesTreeNode,
-        xrayUser: boolean
+        credentialsSet: boolean
     ) {
         let dependenciesTrees: GoTreeNode[] = await GoUtils.createDependenciesTrees(
             workspaceFolders,
@@ -194,10 +194,8 @@ describe('Go Utils Tests', () => {
         await dummyScanCacheManager.addIMetadataComponents(utils.TestMetadata);
         dependenciesTrees.forEach(child => {
             treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);
-            treesManager.dependenciesTreeDataProvider.addGoCenterInfoToTree(child, xrayUser);
+            treesManager.dependenciesTreeDataProvider.addGoCenterInfoToTree(child, credentialsSet);
         });
         return dependenciesTrees.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 });
-
-

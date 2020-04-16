@@ -9,12 +9,12 @@ export class ScanUtils {
 
     public static async scanWithProgress(
         scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => void,
-        XrayUser: boolean
+        credentialsSet: boolean
     ) {
         await vscode.window.withProgress(
             <vscode.ProgressOptions>{
                 location: vscode.ProgressLocation.Notification,
-                title: XrayUser ? 'Xray Scanning' : 'GoCenter Scanning',
+                title: credentialsSet ? 'Xray Scanning' : 'GoCenter Scanning',
                 cancellable: true
             },
             async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {

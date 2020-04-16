@@ -2,12 +2,12 @@ import * as exec from 'child_process';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { GeneralInfo } from '../../types/generalInfo';
-import { GoUtils } from '../../utils/goUtils';
-import { TreesManager } from '../treesManager';
-import { DependenciesTreeNode } from './dependenciesTreeNode';
-import { ScanUtils } from '../../utils/scanUtils';
-import { GoDependenciesTreeNode } from './goDependenciesTreeNode';
+import { GeneralInfo } from '../../../types/generalInfo';
+import { GoUtils } from '../../../utils/goUtils';
+import { TreesManager } from '../../treesManager';
+import { DependenciesTreeNode } from '../dependenciesTreeNode';
+import { ScanUtils } from '../../../utils/scanUtils';
+import { GoDependenciesTreeNode } from '../goDependenciesTreeNode';
 
 export class GoTreeNode extends DependenciesTreeNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';

@@ -1,17 +1,14 @@
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { IComponentMetadata } from '../../goCenterClient/model/ComponentMetadata';
 export class GoDependenciesTreeNode extends DependenciesTreeNode {
-    private _goCenter!: IComponentMetadata;
+    private _componentMetadata!: IComponentMetadata;
 
-    public set goCenter(value: IComponentMetadata) {
-        this._goCenter = value;
+    public set componentMetadata(value: IComponentMetadata) {
+        this._componentMetadata = value;
     }
 
-    public get goCenter(): IComponentMetadata {
-        return this._goCenter;
-    }
-    public loadMetaData(metaData: IComponentMetadata) {
-        this._goCenter = { ...metaData };
+    public get componentMetadata(): IComponentMetadata {
+        return this._componentMetadata;
     }
 
     public getGoCenterComponentId(): string {

@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
+import * as Collections from 'typescript-collections';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
+import { License } from '../types/license';
 
 /**
  * @see HoverManager
@@ -31,17 +33,21 @@ export abstract class AbstractHoverProvider implements vscode.HoverProvider, Ext
         if (!node) {
             return;
         }
+        let markdownString: vscode.MarkdownString = new vscode.MarkdownString(
+            'Licenses: ' + this.licensesToMarkdown(node.licenses) + ' (JFrog Xray)'
+        );
+        return new vscode.Hover(markdownString);
+    }
 
-        let licenses: string[] = [];
-        node.licenses.forEach(license => {
+    protected licensesToMarkdown(licenses: Collections.Set<License>) {
+        let markDownSyntax: string[] = [];
+        licenses.forEach(license => {
             if (license.moreInfoUrl) {
-                licenses.push('[' + license.name + '](' + license.moreInfoUrl[0] + ')');
+                markDownSyntax.push('[' + license.name + '](' + license.moreInfoUrl[0] + ')');
             } else {
-                licenses.push(license.name);
+                markDownSyntax.push(license.name);
             }
         });
-        let markdownString: vscode.MarkdownString = new vscode.MarkdownString('Licenses: ' + licenses + ' (JFrog Xray)');
-
-        return new vscode.Hover(markdownString);
+        return markDownSyntax;
     }
 }

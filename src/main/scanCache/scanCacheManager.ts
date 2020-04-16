@@ -33,7 +33,7 @@ export class ScanCacheManager implements ExtensionComponent {
         if (!scanCacheObject) {
             return;
         }
-        return scanCacheObject._ComponentMetadata;
+        return scanCacheObject._componentMetadata;
     }
 
     /**
@@ -62,13 +62,13 @@ export class ScanCacheManager implements ExtensionComponent {
 
     public async addIArtifactComponents(artifacts: IArtifact[]) {
         for (let artifact of artifacts) {
-            await this._scanCache.update(artifact.general.component_id, new ScanCacheObject().setArtifact(artifact));
+            await this._scanCache.update(artifact.general.component_id, ScanCacheObject.createXrayCache(artifact));
         }
     }
 
     public async addIMetadataComponents(Components: IComponentMetadata[]) {
         for (let component of Components) {
-            await this._scanCache.update(component.component_id, new ScanCacheObject().setComponentMetadata(component));
+            await this._scanCache.update(component.component_id, ScanCacheObject.createGoCenterCache(component));
         }
     }
 }

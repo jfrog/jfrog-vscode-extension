@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
 import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/pypiTreeNode';
+import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
 
