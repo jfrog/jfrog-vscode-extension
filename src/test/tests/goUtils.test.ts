@@ -11,7 +11,7 @@ import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesT
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { GoUtils } from '../../main/utils/goUtils';
-import * as utils from './utils/utils';
+import * as utils from './utils/utils.test';
 import { Translators } from '../../main/utils/translators';
 import { Issue } from '../../main/types/issue';
 import { License } from '../../main/types/license';
@@ -19,6 +19,7 @@ import { GoDependenciesTreeNode } from '../../main/treeDataProviders/dependencie
 import { GoTreeNode } from '../../main/treeDataProviders/dependenciesTree/goTreeNode';
 import { IComponentMetadata } from '../../main/goCenterClient/model/ComponentMetadata';
 import { Severity } from '../../main/types/severity';
+import { TestMemento } from './utils/testMemento.test';
 
 /**
  * Test functionality of @class GoUtils.
@@ -199,19 +200,4 @@ describe('Go Utils Tests', () => {
     }
 });
 
-class TestMemento implements vscode.Memento {
-    storage: Collections.Dictionary<string, any>;
-    constructor() {
-        this.storage = new Collections.Dictionary<string, any>();
-    }
-    get(key: any, defaultValue?: any) {
-        if (typeof key === 'string') {
-            return this.storage.getValue(key);
-        }
-        return;
-    }
-    update(key: string, value: any): Thenable<void> {
-        this.storage.setValue(key, value);
-        return Promise.resolve();
-    }
-}
+
