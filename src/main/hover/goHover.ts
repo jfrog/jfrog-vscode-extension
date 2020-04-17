@@ -33,6 +33,7 @@ export class GoHover extends AbstractHoverProvider {
         return undefined;
     }
 
+    /** @override */
     provideHover(document: vscode.TextDocument, position: vscode.Position): vscode.ProviderResult<vscode.Hover> {
         let node: DependenciesTreeNode | undefined = this.getNodeByLocation(document, position);
         if (!node || !(node instanceof GoDependenciesTreeNode)) {
@@ -77,7 +78,10 @@ export class GoHover extends AbstractHoverProvider {
     /**
      * Creates two strings from 'ISeverityCount', both are in markdown syntax.
      * The first string is one line contains all the severities with an icon corresponding to the severities level,
-     * the second is the sum of all severities..
+     * the second is the sum of all severities.
+     * 
+     * @param severities - Severities to parse.
+     * @returns [string, string] Returns Markdown text of the total vulnerabilities found.
      */
     private getSeveritySummary(severities: ISeverityCount): [string, string] {
         if (!severities) {
@@ -91,7 +95,7 @@ export class GoHover extends AbstractHoverProvider {
                 totalNumOfSeverities += numOfSeverity;
                 summary += `![severity.icon](${SeverityUtils.getIcon(
                     SeverityUtils.getSeverity(severityLevel)
-                )}) ${severityLevel} (${numOfSeverity})&nbsp; &nbsp;`;
+                )}) ${severityLevel} (${numOfSeverity}) `;
             }
         }
         if (summary !== '') {

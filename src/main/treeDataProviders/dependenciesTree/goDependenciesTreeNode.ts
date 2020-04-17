@@ -1,5 +1,6 @@
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { IComponentMetadata } from '../../goCenterClient/model/ComponentMetadata';
+
 export class GoDependenciesTreeNode extends DependenciesTreeNode {
     private _componentMetadata!: IComponentMetadata;
 

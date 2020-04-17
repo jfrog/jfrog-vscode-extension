@@ -190,8 +190,8 @@ describe('Go Utils Tests', () => {
             parent,
             false
         );
-        await dummyScanCacheManager.addIArtifactComponents(utils.TestArtifact);
-        await dummyScanCacheManager.addIMetadataComponents(utils.TestMetadata);
+        await dummyScanCacheManager.addArtifactComponents(utils.TestArtifact);
+        await dummyScanCacheManager.addMetadataComponents(utils.TestMetadata);
         dependenciesTrees.forEach(child => {
             treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);
             treesManager.dependenciesTreeDataProvider.addGoCenterInfoToTree(child, credentialsSet);
