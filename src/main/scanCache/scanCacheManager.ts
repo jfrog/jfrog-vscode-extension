@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { ScanCacheObject } from './scanCacheObject';
 import { IComponentMetadata } from '../goCenterClient/model/ComponentMetadata';
-import { ISeverityCount } from '../goCenterClient/model/SeverityCount';
 
 /**
  * Provide the scan results cache in a key-value style map.
@@ -74,18 +73,11 @@ export class ScanCacheManager implements ExtensionComponent {
 
     /**
      * Iterate and cache each component.
-     * If a component is not found in Go Center, override as an unknown node.
      * 
      * @param components - The components that need to be cached.
      */
     public async addMetadataComponents(components: IComponentMetadata[]) {
         for (let component of components) {
-            if (component.error) {
-                component.description = 'Component not found in Go Center';
-                component.latest_version = 'Unknown';
-                component.licenses = ['Unknown'];
-                component.vulnerabilities.severity = { Unknown: 1 } as ISeverityCount;
-            }
             await this._scanCache.update(component.component_id, ScanCacheObject.createGoCenterCache(component));
         }
     }

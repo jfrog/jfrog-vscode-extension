@@ -107,10 +107,10 @@ class GoCenterNode extends vscode.TreeItem {
             children.push(new TreeDataHolder('Latest Version', this._goCenter.latest_version));
         }
         if (this._goCenter?.gocenter_readme_url) {
-            children.push(new TreeDataHolder('ReadMe', 'Click Here', this._goCenter.gocenter_readme_url));
+            children.push(new TreeDataHolder('ReadMe', this._goCenter.gocenter_readme_url, this._goCenter.gocenter_readme_url));
         }
         if (this._goCenter.gocenter_metrics_url) {
-            children.push(new TreeDataHolder('Metrics', 'Click Here', this._goCenter.gocenter_metrics_url));
+            children.push(new TreeDataHolder('Metrics',  this._goCenter.gocenter_metrics_url, this._goCenter.gocenter_metrics_url));
         }
         children.push(new TreeDataHolder('Stars', String(this._goCenter?.stars)));
         return children;

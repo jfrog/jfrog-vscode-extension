@@ -15,6 +15,7 @@ import { MavenUtils } from '../../utils/mavenUtils';
 import { IComponentMetadata } from '../../goCenterClient/model/ComponentMetadata';
 import { GoDependenciesTreeNode } from './goDependenciesTreeNode';
 import { GoTreeNode } from './dependenciesRoot/goTree';
+import { ISeverityCount } from '../../goCenterClient/model/SeverityCount';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode | SetCredentialsNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -131,6 +132,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 }
                 if (destination === Destination.GoCenter) {
                     let module: IComponentMetadata[] = await this._treesManager.connectionManager.getGoCenterModules(partialComponents);
+                    this.adjustFailedComponents(module);
                     await this._treesManager.scanCacheManager.addMetadataComponents(module);
                 }
                 progress.report({ message: `Scanning ${totalComponents} components`, increment: step });
@@ -255,6 +257,17 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 licenses: [<ILicense>{ name: License.UNKNOWN_LICENSE, full_name: License.UNKNOWN_LICENSE_FULL_NAME }]
             });
         });
+    }
+
+    private adjustFailedComponents(components: IComponentMetadata[]) {  
+        for (let i:number = 0; i < components.length; i++) {
+            if (components[i].error) {
+                components[i].description = 'Component not found in Go Center';
+                components[i].latest_version = 'Unknown';
+                components[i].licenses = ['Unknown'];
+                components[i].vulnerabilities.severity = { Unknown: 1 } as ISeverityCount;
+            }
+        }
     }
 
     public getDependenciesTreeNode(pkgType: string, path?: string): DependenciesTreeNode | undefined {
