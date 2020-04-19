@@ -67,7 +67,6 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
         let topIssue: Issue = this._selectedNode.topIssue;
         if (topIssue) {
             children.push(new TreeDataHolder('Top Issue Severity', SeverityUtils.getString(topIssue.severity)));
-            children.push(new TreeDataHolder('Top Issue Type', topIssue.issueType));
         }
         return Promise.resolve(children);
     }

@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as Collections from 'typescript-collections';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractHoverProvider } from './abstractHoverProvider';
@@ -7,6 +8,7 @@ import { GoUtils } from '../utils/goUtils';
 import { GoDependenciesTreeNode } from '../treeDataProviders/dependenciesTree/goDependenciesTreeNode';
 import { Severity, SeverityUtils } from '../types/severity';
 import { ISeverityCount } from '../goCenterClient/model/SeverityCount';
+import { Issue } from '../types/issue';
 
 export class GoHover extends AbstractHoverProvider {
     private static readonly XRAY_IN_GOCENTER_URL: string = 'https://www.jfrog.com/confluence/display/XRAY2X/Xray+Vulnerability+Scanning+in+GoCenter';
@@ -51,6 +53,10 @@ export class GoHover extends AbstractHoverProvider {
             hoverText.appendMarkdown(
                 this.createLatestVersionText(node.componentMetadata?.latest_version) + this.createLicensesText(this.licensesToMarkdown(node.licenses))
             );
+            if (node.topIssue.severity !== Severity.Normal) {
+                let [summary, issuesCount] = this.getIssueSummary(node.issues);
+                hoverText.appendMarkdown(`${issuesCount ? `${issuesCount}\n\n` : ``}` + `${summary ? `${summary}\n\n` : ``} `);
+            }
         } else {
             if (node.topIssue.severity === Severity.Normal) {
                 hoverText.appendMarkdown(
@@ -100,6 +106,30 @@ export class GoHover extends AbstractHoverProvider {
         }
         if (summary !== '') {
             TotalVulnerabilities = `**Total vulnerabilities found: ${totalNumOfSeverities}**`;
+        }
+        return [summary, TotalVulnerabilities];
+    }
+
+    private getIssueSummary(issues: Collections.Set<Issue>): [string, string] {
+        if (!issues) {
+            return ['', ''];
+        }
+        let summary: string = '';
+        let TotalVulnerabilities: string = '';
+        let totalNumOfSeverities: Array<number> = new Array<number>(Object.keys(Severity).length / 2);
+        issues.forEach(issue => {
+            totalNumOfSeverities[issue.severity] = totalNumOfSeverities[issue.severity] ? totalNumOfSeverities[issue.severity] + 1 : 1;
+        });
+        for (let i: number = 0; i < totalNumOfSeverities.length; i++) {
+            if (!totalNumOfSeverities[i]) {
+                continue;
+            }
+            summary += `![severity.icon](${SeverityUtils.getIcon(i)}) ${SeverityUtils.getString(i)} (${totalNumOfSeverities[i]}) `;
+        }
+        if (summary !== '') {
+            TotalVulnerabilities = `**Total vulnerabilities found: ${totalNumOfSeverities.reduce(
+                (accumulator, currentValue) => accumulator + currentValue
+            )}**`;
         }
         return [summary, TotalVulnerabilities];
     }

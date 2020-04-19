@@ -50,11 +50,10 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
         // Issue selected - Show severity, type, component and fixed versions
         let children: TreeDataHolder[] = [
             new TreeDataHolder('Severity', SeverityUtils.getString(element.severity)),
-            new TreeDataHolder('Issue Type', element.issueType),
             new TreeDataHolder('Component', element.component)
         ];
         let fixedVersions: string[] | undefined = element.fixedVersions;
-        if (fixedVersions) {
+        if (fixedVersions && fixedVersions.length > 0) {
             children.push(new TreeDataHolder('Fixed Versions', fixedVersions.toString()));
         }
         return Promise.resolve(children);
