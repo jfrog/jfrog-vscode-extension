@@ -24,7 +24,14 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
             let holder: TreeDataHolder = <TreeDataHolder>element;
             treeItem = new vscode.TreeItem(holder.key);
             treeItem.description = holder.value;
+            if (holder.link) {
+                treeItem.command = {
+                    command: 'vscode.open',
+                    arguments: [vscode.Uri.parse(holder.link)]
+                } as vscode.Command;
+            }
         }
+
         return treeItem;
     }
 
@@ -40,7 +47,14 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
                 if (issue.summary === Issue.MISSING_COMPONENT.summary) {
                     return;
                 }
-                let issueNode: IssueNode = new IssueNode(issue.severity, issue.summary, issue.issueType, issue.component, issue.fixedVersions);
+                let issueNode: IssueNode = new IssueNode(
+                    issue.severity,
+                    issue.summary,
+                    issue.issueType,
+                    issue.component,
+                    issue.fixedVersions,
+                    issue.gocenter_security_url
+                );
                 children.push(issueNode);
             });
             // Sort issues by severity
@@ -55,6 +69,10 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
         let fixedVersions: string[] | undefined = element.fixedVersions;
         if (fixedVersions && fixedVersions.length > 0) {
             children.push(new TreeDataHolder('Fixed Versions', fixedVersions.toString()));
+        }
+        let securityUrl: string | undefined = element.gocenter_security_url;
+        if (securityUrl) {
+            children.push(new TreeDataHolder('CVE Security Information', securityUrl, securityUrl));
         }
         return Promise.resolve(children);
     }
@@ -71,7 +89,8 @@ export class IssueNode extends vscode.TreeItem {
         readonly summary: string,
         readonly issueType?: string,
         readonly component?: string,
-        readonly fixedVersions?: string[]
+        readonly fixedVersions?: string[],
+        readonly gocenter_security_url?: string
     ) {
         super(summary, vscode.TreeItemCollapsibleState.Collapsed);
         this.iconPath = SeverityUtils.getIcon(severity ? severity : Severity.Normal);

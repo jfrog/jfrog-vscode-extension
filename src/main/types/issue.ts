@@ -9,7 +9,8 @@ export class Issue {
         private _severity: Severity = Severity.Normal,
         private _description: string,
         private _issueType: string,
-        private _fixedVersions: string[] = []
+        private _fixedVersions: string[] = [],
+        private _gocenter_security_url?: string
     ) {}
 
     public get description(): string {
@@ -36,6 +37,10 @@ export class Issue {
         return this._fixedVersions;
     }
 
+    public get gocenter_security_url(): string | undefined {
+        return this._gocenter_security_url;
+    }
+
     public set description(value: string) {
         this._description = value;
     }
@@ -58,5 +63,9 @@ export class Issue {
 
     public set fixedVersions(value: string[]) {
         this._fixedVersions = value;
+    }
+
+    public set gocenter_security_url(value: string | undefined) {
+        this._gocenter_security_url = value;
     }
 }

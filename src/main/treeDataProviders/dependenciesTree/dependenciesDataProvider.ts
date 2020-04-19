@@ -178,7 +178,10 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     // Use xray issue instead of GoCenter
                     if (!credentialsSet) {
                         if (componentMetadata.vulnerabilities.severity) {
-                            Translators.severityCountToIssues(componentMetadata.vulnerabilities.severity).forEach(issue => child.issues.add(issue));
+                            Translators.severityCountToIssues(
+                                componentMetadata.vulnerabilities.severity,
+                                componentMetadata.vulnerabilities.gocenter_security_url
+                            ).forEach(issue => child.issues.add(issue));
                         }
                         if (componentMetadata.licenses) {
                             componentMetadata.licenses.map(Translators.stringToLicense).forEach(license => child.licenses.add(license));
