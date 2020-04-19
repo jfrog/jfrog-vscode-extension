@@ -108,8 +108,8 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         const totalComponents: number = this._componentsToScan.size() + this._goCenterComponentsToScan.size() || 1;
         progress.report({ message: `Scanning ${totalComponents} components` });
         await Promise.all([
-            await this.scanAndCache(progress, checkCanceled, totalComponents, Destination.XRay),
-            await this.scanAndCache(progress, checkCanceled, totalComponents, Destination.GoCenter)
+            await this.scanAndCache(progress, checkCanceled, totalComponents, Destination.XRay, this._componentsToScan.toArray()),
+            await this.scanAndCache(progress, checkCanceled, totalComponents, Destination.GoCenter, this._goCenterComponentsToScan.toArray())
         ]);
     }
 
@@ -117,11 +117,11 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void,
         totalComponents: number,
-        destination: Destination
+        destination: Destination,
+        componentDetails: ComponentDetails[]
     ) {
         try {
             checkCanceled();
-            let componentDetails: ComponentDetails[] = this._componentsToScan.toArray();
             let step: number = (100 / totalComponents) * 100;
             for (let currentIndex: number = 0; currentIndex < componentDetails.length; currentIndex += 100) {
                 let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
@@ -132,7 +132,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 }
                 if (destination === Destination.GoCenter) {
                     let module: IComponentMetadata[] = await this._treesManager.connectionManager.getGoCenterModules(partialComponents);
-                    this.adjustFailedComponents(module);
+                    this.adjustFailedComponents(partialComponents, module);
                     await this._treesManager.scanCacheManager.addMetadataComponents(module);
                 }
                 progress.report({ message: `Scanning ${totalComponents} components`, increment: step });
@@ -216,8 +216,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 // GoCenter users
                 const totalComponents: number = this._goCenterComponentsToScan.size();
                 vscode.window.showInformationMessage('Xray server is not configured.');
-                progress.report({ message: 0 + '/' + totalComponents + ' components scanned' });
-                await this.scanAndCache(progress, checkCanceled, totalComponents, Destination.GoCenter);
+                await this.scanAndCache(progress, checkCanceled, totalComponents, Destination.GoCenter, this._goCenterComponentsToScan.toArray());
                 for (let dependenciesTreeNode of dependenciesTree.children) {
                     this.addGoCenterInfoToTree(dependenciesTreeNode, credentialsSet);
                     dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
@@ -259,14 +258,24 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         });
     }
 
-    private adjustFailedComponents(components: IComponentMetadata[]) {  
-        for (let i:number = 0; i < components.length; i++) {
-            if (components[i].error) {
-                components[i].description = 'Component not found in Go Center';
-                components[i].latest_version = 'Unknown';
-                components[i].licenses = ['Unknown'];
-                components[i].vulnerabilities.severity = { Unknown: 1 } as ISeverityCount;
-            }
+    private adjustFailedComponents(partialComponents: ComponentDetails[], components: IComponentMetadata[]) {
+        if (partialComponents.length !== components.length) {
+            partialComponents.forEach(component => {
+                let found: IComponentMetadata | undefined = components.find(element => element.component_id === component.component_id);
+                if (!found) {
+                    found = {
+                        component_id: component.component_id,
+                        error: 'Error'
+                    } as IComponentMetadata;
+                    components.push(found);
+                }
+                if (found.error) {
+                    found.description = 'Component not found in Go Center';
+                    found.latest_version = 'Unknown';
+                    found.licenses = ['Unknown'];
+                    found.vulnerabilities.severity = { Unknown: 1 } as ISeverityCount;
+                }
+            });
         }
     }
 

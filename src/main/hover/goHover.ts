@@ -79,7 +79,7 @@ export class GoHover extends AbstractHoverProvider {
      * Creates two strings from 'ISeverityCount', both are in markdown syntax.
      * The first string is one line contains all the severities with an icon corresponding to the severities level,
      * the second is the sum of all severities.
-     * 
+     *
      * @param severities - Severities to parse.
      * @returns [string, string] Returns Markdown text of the total vulnerabilities found.
      */

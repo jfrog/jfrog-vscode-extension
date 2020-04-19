@@ -73,7 +73,7 @@ export class ScanCacheManager implements ExtensionComponent {
 
     /**
      * Iterate and cache each component.
-     * 
+     *
      * @param components - The components that need to be cached.
      */
     public async addMetadataComponents(components: IComponentMetadata[]) {
