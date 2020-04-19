@@ -14,7 +14,7 @@ export class ScanUtils {
         await vscode.window.withProgress(
             <vscode.ProgressOptions>{
                 location: vscode.ProgressLocation.Notification,
-                title: credentialsSet ? 'Xray ' : 'GoCenter ',
+                title: credentialsSet ? 'Xray Scanning ' : 'GoCenter Scanning ',
                 cancellable: true
             },
             async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {

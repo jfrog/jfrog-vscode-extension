@@ -154,7 +154,7 @@ describe('Go Utils Tests', () => {
         // Check transformation types from xray IIssue or GoCenter ComponentMetadata to Issue.
         let actualIssues: Issue[] = child.issues.toArray();
         let expectedIssues: IIssue[] = utils.TestArtifact[1].issues;
-        // Issue created by XRay data.
+        // Issue created by Xray data.
         for (let i: number = 0; i < 2; i++) {
             assert.deepEqual(actualIssues[i], Translators.toIssue(expectedIssues[i]));
         }
