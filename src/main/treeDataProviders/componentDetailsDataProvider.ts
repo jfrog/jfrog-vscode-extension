@@ -1,11 +1,8 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { Issue } from '../types/issue';
 import { License } from '../types/license';
-import { SeverityUtils } from '../types/severity';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from './utils/treeDataHolder';
-import { IComponentMetadata } from '../goCenterClient/model/ComponentMetadata';
 import { GoDependenciesTreeNode } from './dependenciesTree/goDependenciesTreeNode';
 
 /**
@@ -21,7 +18,7 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
     }
 
     getTreeItem(element: any): vscode.TreeItem {
-        if (element instanceof LicensesNode || element instanceof GoCenterNode) {
+        if (element instanceof LicensesNode) {
             return element;
         }
         let holder: TreeDataHolder = <TreeDataHolder>element;
@@ -45,29 +42,23 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
         if (element instanceof LicensesNode) {
             return Promise.resolve(element.getChildren());
         }
-        // Go Center node - Return Go Center Information
-        if (element instanceof GoCenterNode) {
-            return Promise.resolve(element.getChildren());
-        }
         // Component details node
-        let children: (TreeDataHolder | LicensesNode | GoCenterNode)[] = [
+        let children: (TreeDataHolder | LicensesNode)[] = [
             new TreeDataHolder('Artifact', this._selectedNode.generalInfo.artifactId),
-            new TreeDataHolder('Version', this._selectedNode.generalInfo.version),
-            new TreeDataHolder('Type', this._selectedNode.generalInfo.pkgType),
-            new LicensesNode(this._selectedNode.licenses),
-            new TreeDataHolder('Issues count', String(this._selectedNode.issues.size()))
+            new TreeDataHolder('Version', this._selectedNode.generalInfo.version)
         ];
         if (this._selectedNode instanceof GoDependenciesTreeNode) {
-            children.push(new GoCenterNode(this._selectedNode.componentMetadata));
+            children.push(new TreeDataHolder('Latest Version', this._selectedNode.componentMetadata.latest_version));
+            children.push(new TreeDataHolder('Description', this._selectedNode.componentMetadata.description));
+            children.push(new TreeDataHolder('Stars', String(this._selectedNode.componentMetadata.stars)));
         }
+        children.push(new TreeDataHolder('Type', this._selectedNode.generalInfo.pkgType));
+        children.push(new TreeDataHolder('Issues count', String(this._selectedNode.issues.size())));
         let path: string = this._selectedNode.generalInfo.path;
         if (path) {
             children.push(new TreeDataHolder('Path', path));
         }
-        let topIssue: Issue = this._selectedNode.topIssue;
-        if (topIssue) {
-            children.push(new TreeDataHolder('Top Issue Severity', SeverityUtils.getString(topIssue.severity)));
-        }
+        children.push(new LicensesNode(this._selectedNode.licenses));
         return Promise.resolve(children);
     }
 
@@ -88,32 +79,6 @@ export class LicensesNode extends vscode.TreeItem {
             let moreInfoUrl: string | undefined = license.moreInfoUrl ? license.moreInfoUrl[0] : undefined;
             children.push(new TreeDataHolder(license.createLicenseString(), moreInfoUrl, moreInfoUrl));
         });
-        return children;
-    }
-}
-
-class GoCenterNode extends vscode.TreeItem {
-    constructor(private _goCenter: IComponentMetadata) {
-        super('Go Center Information', vscode.TreeItemCollapsibleState.Expanded);
-    }
-
-    public getChildren(): any[] {
-        let children: any[] = [];
-        if (this._goCenter?.description) {
-            children.push(new TreeDataHolder('Description', this._goCenter.description));
-        }
-        if (this._goCenter?.latest_version) {
-            children.push(new TreeDataHolder('Latest Version', this._goCenter.latest_version));
-        }
-        if (this._goCenter?.gocenter_readme_url) {
-            children.push(new TreeDataHolder('ReadMe', this._goCenter.gocenter_readme_url, this._goCenter.gocenter_readme_url));
-        }
-        if (this._goCenter?.gocenter_metrics_url) {
-            children.push(new TreeDataHolder('Metrics', this._goCenter.gocenter_metrics_url, this._goCenter.gocenter_metrics_url));
-        }
-        if (this._goCenter) {
-            children.push(new TreeDataHolder('Stars', String(this._goCenter.stars)));
-        }
         return children;
     }
 }

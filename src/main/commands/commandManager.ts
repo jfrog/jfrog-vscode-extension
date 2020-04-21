@@ -28,6 +28,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
         this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
         this.registerCommand(context, 'jfrog.xray.filter', () => this.doFilter());
+        this.registerCommand(context, 'jfrog.xray.openLink', url => this.doOpenLink(url));
     }
 
     /**
@@ -40,6 +41,17 @@ export class CommandManager implements ExtensionComponent {
         }
         this._focusManager.focusOnDependency(dependenciesTreeNode);
         this.onSelectNode(dependenciesTreeNode);
+    }
+
+    /**
+     * Open a webpage with the desired url.
+     * @param url - The url to be opened.
+     */
+    private doOpenLink(url: string) {
+        if (!url) {
+            return;
+        }
+        vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
     }
 
     /**

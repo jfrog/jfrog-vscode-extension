@@ -41,20 +41,20 @@ export class SeverityUtils {
         }
     }
 
-    public static getIcon(severity: Severity | undefined) {
+    public static getIcon(severity: Severity | undefined, hover: boolean = false) {
         switch (severity) {
             case Severity.Pending:
                 return IconsPaths.PENDING_SEVERITY;
             case Severity.Unknown:
-                return IconsPaths.UNKNOWN_SEVERITY;
+                return hover ? IconsPaths.UNKNOWN_HOVER_SEVERITY : IconsPaths.UNKNOWN_SEVERITY;
             case Severity.Information:
                 return IconsPaths.INFORMATION_SEVERITY;
             case Severity.Low:
-                return IconsPaths.LOW_SEVERITY;
+                return hover ? IconsPaths.LOW_HOVER_SEVERITY : IconsPaths.LOW_SEVERITY;
             case Severity.Medium:
-                return IconsPaths.MEDIUM_SEVERITY;
+                return hover ? IconsPaths.MEDIUM_HOVER_SEVERITY : IconsPaths.MEDIUM_SEVERITY;
             case Severity.High:
-                return IconsPaths.HIGH_SEVERITY;
+                return hover ? IconsPaths.HIGH_HOVER_SEVERITY : IconsPaths.HIGH_SEVERITY;
             default:
                 return IconsPaths.NORMAL_SEVERITY;
         }

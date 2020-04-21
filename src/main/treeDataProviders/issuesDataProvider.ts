@@ -70,10 +70,6 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
         if (fixedVersions && fixedVersions.length > 0) {
             children.push(new TreeDataHolder('Fixed Versions', fixedVersions.toString()));
         }
-        let securityUrl: string | undefined = element.gocenter_security_url;
-        if (securityUrl) {
-            children.push(new TreeDataHolder('CVE Security Information', securityUrl, securityUrl));
-        }
         return Promise.resolve(children);
     }
 

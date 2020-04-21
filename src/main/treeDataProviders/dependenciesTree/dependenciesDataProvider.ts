@@ -222,7 +222,6 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 // GoCenter users
                 const totalComponents: number = this._goCenterComponentsToScan.size();
                 progress.report({ message: `${totalComponents} components` });
-                vscode.window.showInformationMessage('Xray server is not configured.');
                 await this.scanAndCache(progress, checkCanceled, totalComponents, Source.GoCenter, this._goCenterComponentsToScan.toArray());
                 for (let dependenciesTreeNode of dependenciesTree.children) {
                     this.addGoCenterInfoToTree(dependenciesTreeNode, credentialsSet);
