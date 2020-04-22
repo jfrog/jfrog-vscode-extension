@@ -84,6 +84,6 @@ export class GoHover extends AbstractHoverProvider {
     }
 
     private createStarsText(stars: number) {
-        return stars ? `**Stars**: ${stars}\n\n` : '';
+        return stars ? `**Stars**: ${stars} ★\n\n` : '';
     }
 }
