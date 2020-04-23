@@ -49,7 +49,7 @@ export abstract class AbstractHoverProvider implements vscode.HoverProvider, Ext
     protected getDetailsFromXray(node: DependenciesTreeNode): string {
         let xrayText: string = '### Details from Xray:\n\n' + this.createLicensesText(this.licensesToMarkdown(node.licenses));
         if (node.topIssue.severity !== Severity.Normal) {
-            xrayText += '**Vulnerabilities**: '+this.getIssueSummary(node.issues);
+            xrayText += '**Vulnerabilities**: ' + this.getIssueSummary(node.issues);
         }
         return xrayText;
     }

@@ -1,5 +1,6 @@
-import { IArtifact } from 'xray-client-js';
+import { IArtifact, IClientConfig } from 'xray-client-js';
 import { IComponentMetadata } from '../../../main/goCenterClient/model/ComponentMetadata';
+import { ConnectionManager } from '../../../main/connect/connectionManager';
 
 export const TestArtifact: IArtifact[] = [
     {
@@ -136,3 +137,12 @@ export const TestMetadata: IComponentMetadata[] = [
         error: ''
     } as IComponentMetadata
 ];
+
+export function createGoCenterConfig(): IClientConfig {
+    let connectionManager: ConnectionManager = new ConnectionManager();
+    let clientConfig: IClientConfig = {
+        headers: {}
+    } as IClientConfig;
+    connectionManager.addUserAgentHeader(clientConfig);
+    return clientConfig;
+}

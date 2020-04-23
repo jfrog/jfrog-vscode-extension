@@ -1,18 +1,19 @@
 import { assert } from 'chai';
-import { ComponentDetails, IClientConfig, ISummaryRequestModel } from 'xray-client-js';
+import { ComponentDetails, ISummaryRequestModel } from 'xray-client-js';
 import { GoCenterClient } from '../../main/goCenterClient/GoCenterClient';
 import { IComponentMetadata } from '../../main/goCenterClient/model/ComponentMetadata';
 import { IModuleResponse } from '../../main/goCenterClient/model/ModuleResponse';
 import { ISeverityCount } from '../../main/goCenterClient/model/SeverityCount';
 import { IVulnerabilities } from '../../main/goCenterClient/model/Vulnerabilities';
+import { createGoCenterConfig } from './utils/utils.test';
 
 describe('Go Center Tests', () => {
-    const goCenterLink: string = 'https://search.gocenter.io/github.com/cloudfoundry/cf-deployment?v1.0.0';
+    const goCenterLink: string = 'https://search.gocenter.io/github.com/cloudfoundry/cf-deployment?version=v1.0.0';
     const testComponentId: string = 'github.com/cloudfoundry/cf-deployment:v1.0.0';
     let componentMetadata: IComponentMetadata;
 
     before(async () => {
-        let goCenterClient: GoCenterClient = new GoCenterClient({} as IClientConfig);
+        let goCenterClient: GoCenterClient = new GoCenterClient(createGoCenterConfig());
         let summaryRequest: ISummaryRequestModel = {
             component_details: [new ComponentDetails(testComponentId)]
         } as ISummaryRequestModel;
