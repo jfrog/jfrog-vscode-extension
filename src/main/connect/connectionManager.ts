@@ -29,6 +29,8 @@ export class ConnectionManager implements ExtensionComponent {
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
         await this.populateCredentials(false);
+        // Reload the correct view.
+        vscode.commands.executeCommand('setContext', 'AreCredentialsSet', this.areCredentialsSet());
         return this;
     }
 
@@ -38,17 +40,35 @@ export class ConnectionManager implements ExtensionComponent {
         }
         return await vscode.window.withProgress(
             <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with Xray server...' },
-            async () => {
-                let xrayClient: XrayClient = this.createXrayClient();
-                if (!(await ConnectionUtils.checkConnection(xrayClient))) {
-                    this.deleteCredentialFromMemory();
-                    return false;
-                }
-                await this.storeUrl();
-                await this.storeUsername();
-                await this.storePassword();
-                return true;
-            }
+            async () =>
+                new Promise<boolean>(
+                    async (resolve): Promise<void> => {
+                        let xrayClient: XrayClient = this.createXrayClient();
+                        if (!(await ConnectionUtils.checkConnection(xrayClient))) {
+                            this.deleteCredentialFromMemory();
+                            resolve(false);
+                        }
+                        await this.storeUrl();
+                        await this.storeUsername();
+                        await this.storePassword();
+                        resolve(true);
+                    }
+                )
+        );
+    }
+
+    public async disconnect(): Promise<boolean> {
+        return await vscode.window.withProgress(
+            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Notification, title: 'Delete Xray connection details...' },
+            async () =>
+                new Promise<boolean>(
+                    async (resolve): Promise<void> => {
+                        await this.deleteUrl();
+                        await this.deleteUsername();
+                        await this.deletePassword();
+                        resolve(true);
+                    }
+                )
         );
     }
 
@@ -133,6 +153,12 @@ export class ConnectionManager implements ExtensionComponent {
         await this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, this._url);
     }
 
+    // Setting the value to undefined will remove the key https://github.com/microsoft/vscode/issues/11528
+    private async deleteUrl() {
+        await this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined);
+        this._url = '';
+    }
+
     private async retrieveUsername(prompt: boolean): Promise<string> {
         let username: string = (await this._context.globalState.get(ConnectionManager.XRAY_USERNAME_KEY)) || '';
         if (prompt) {
@@ -151,6 +177,11 @@ export class ConnectionManager implements ExtensionComponent {
         await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, this._username);
     }
 
+    private async deleteUsername() {
+        await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined);
+        this._url = '';
+    }
+
     private async retrievePassword(prompt: boolean, url: string, username: string): Promise<string> {
         let password: string = (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(url, username))) || '';
         if (prompt) {
@@ -167,6 +198,11 @@ export class ConnectionManager implements ExtensionComponent {
 
     private async storePassword() {
         await keytar.setPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username), this._password);
+    }
+
+    private async deletePassword() {
+        await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username));
+        this._password = '';
     }
 
     /**

@@ -27,6 +27,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
         this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
+        this.registerCommand(context, 'jfrog.xray.disconnect', () => this.doDisconnect());
         this.registerCommand(context, 'jfrog.xray.filter', () => this.doFilter());
         this.registerCommand(context, 'jfrog.xray.openLink', url => this.doOpenLink(url));
     }
@@ -92,6 +93,25 @@ export class CommandManager implements ExtensionComponent {
     private async doConnect() {
         let credentialsSet: boolean = await this._connectionManager.connect();
         if (credentialsSet) {
+            vscode.commands.executeCommand('setContext', 'AreCredentialsSet', true);
+            this._treesManager.dependenciesTreeView = vscode.window.createTreeView('jfrog.xray.connected', {
+                treeDataProvider: this._treesManager.dependenciesTreeDataProvider,
+                showCollapseAll: true
+            });
+            this.doRefresh(true);
+        }
+    }
+
+    /**
+     * Disconnect to Xray server. Delete the URL, username & password from FS.
+     */
+    private async doDisconnect() {
+        if (await this._connectionManager.disconnect()) {
+            vscode.commands.executeCommand('setContext', 'AreCredentialsSet', false);
+            this._treesManager.dependenciesTreeView = vscode.window.createTreeView('jfrog.xray.disconnected', {
+                treeDataProvider: this._treesManager.dependenciesTreeDataProvider,
+                showCollapseAll: true
+            });
             this.doRefresh(true);
         }
     }

@@ -67,7 +67,8 @@ export abstract class AbstractHoverProvider implements vscode.HoverProvider, Ext
         issues.forEach(issue => {
             totalNumOfSeverities[issue.severity] = totalNumOfSeverities[issue.severity] ? totalNumOfSeverities[issue.severity] + 1 : 1;
         });
-        for (let i: number = 0; i < totalNumOfSeverities.length; i++) {
+        // Print severities from high to low.
+        for (let i: number = totalNumOfSeverities.length - 1; i >= 0; i--) {
             if (!totalNumOfSeverities[i]) {
                 continue;
             }
