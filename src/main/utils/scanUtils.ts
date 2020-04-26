@@ -2,6 +2,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as fse from 'fs-extra';
+import * as exec from 'child_process';
 
 export class ScanUtils {
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
@@ -52,5 +53,9 @@ export class ScanUtils {
         if (fse.pathExists(folderPath)) {
             await fse.remove(folderPath);
         }
+    }
+
+    public static executeCmd(command: string, cwd?: string): any {
+        return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
     }
 }

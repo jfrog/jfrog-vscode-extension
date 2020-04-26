@@ -1,6 +1,5 @@
-import { MavenUtils } from './mavenUtils';
-import { TreesManager } from '../treeDataProviders/treesManager';
 import * as path from 'path';
+import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
 
 export class PomTree {
@@ -61,12 +60,12 @@ export class PomTree {
             return this;
         }
         for (const pom of this._children) {
-            pom.deepSearch(pomGav);
+            return pom.deepSearch(pomGav);
         }
         return;
     }
     public runMavenDependencyTree(): void {
-        MavenUtils.executeMavenCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog_vscode/maven`, this.pomPath);
+        ScanUtils.executeCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog_vscode/maven`, this.pomPath);
     }
 
     public async getRawDependencies(treesManager: TreesManager): Promise<string[] | undefined> {
@@ -81,7 +80,7 @@ export class PomTree {
         } catch (error) {
             treesManager.logManager.logMessage(
                 'Dependencies were not found at ' +
-                    path.join(this._pomPath,'pom.xml') +
+                    path.join(this._pomPath, 'pom.xml') +
                     '.\n' +
                     "Hint: For projects which include the 'org.apache.maven.plugins:maven-dependency-plugin' the scanning functionality is disabled",
                 'ERR'

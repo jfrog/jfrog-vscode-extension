@@ -1,13 +1,12 @@
-import * as exec from 'child_process';
 import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
 import { GeneralInfo } from '../../types/generalInfo';
 import { NpmUtils } from '../../utils/npmUtils';
+import { ScanUtils } from '../../utils/scanUtils';
 import { TreesManager } from '../treesManager';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
-import { ScanUtils } from '../../utils/scanUtils';
 
 export class NpmTreeNode extends DependenciesTreeNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
@@ -24,9 +23,7 @@ export class NpmTreeNode extends DependenciesTreeNode {
     public async refreshDependencies(quickScan: boolean) {
         let npmList: any;
         try {
-            npmList = JSON.parse(
-                exec.execSync('npm ls --json', { cwd: this._workspaceFolder, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE }).toString()
-            );
+            npmList = JSON.parse(ScanUtils.executeCmd('npm ls --json', this._workspaceFolder).toString());
         } catch (error) {
             this._treesManager.logManager.logError(error, !quickScan);
             this._treesManager.logManager.logMessage(

@@ -1,12 +1,11 @@
-import * as exec from 'child_process';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
 import { GeneralInfo } from '../../types/generalInfo';
 import { PypiUtils } from '../../utils/pypiUtils';
+import { ScanUtils } from '../../utils/scanUtils';
 import { TreesManager } from '../treesManager';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
-import { ScanUtils } from '../../utils/scanUtils';
 
 /**
  * Pypi packages can be installed in two different ways:
@@ -30,12 +29,7 @@ export class PypiTreeNode extends DependenciesTreeNode {
         let pypiList: any;
         try {
             pypiList = JSON.parse(
-                exec
-                    .execSync(this._pythonPath + ' ' + PypiUtils.PIP_DEP_TREE_SCRIPT + ' --json-tree', {
-                        cwd: this._projectDir,
-                        maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE
-                    })
-                    .toString()
+                ScanUtils.executeCmd(this._pythonPath + ' ' + PypiUtils.PIP_DEP_TREE_SCRIPT + ' --json-tree', this._projectDir).toString()
             );
             this.generalInfo = new GeneralInfo(this._projectDir.replace(/^.*[\\\/]/, ''), '', this._projectDir, PypiUtils.PKG_TYPE);
         } catch (error) {

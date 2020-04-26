@@ -1,20 +1,20 @@
-import * as vscode from 'vscode';
-import * as Collections from 'typescript-collections';
-import * as path from 'path';
-import fs from 'fs';
 import * as exec from 'child_process';
-import parser from 'fast-xml-parser';
-import { ScanUtils } from './scanUtils';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { TreesManager } from '../treeDataProviders/treesManager';
+import * as path from 'path';
+import * as Collections from 'typescript-collections';
+import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/mavenTreeNode';
-import { PomTree } from './pomTree';
 import { LogManager } from '../log/logManager';
+import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/mavenTreeNode';
+import { TreesManager } from '../treeDataProviders/treesManager';
+import { PomTree } from './pomTree';
+import { ScanUtils } from './scanUtils';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
+    public static readonly MAVEN_GAV_READER: string = path.join(__dirname, '..', '..', '..', 'resources', 'maven-gav-reader.jar');
     public static readonly PKG_TYPE: string = 'maven';
+    private static mavenGavReaderInstalled: boolean;
     static pathToNode: Map<string, MavenTreeNode> = new Map<string, MavenTreeNode>();
 
     /**
@@ -94,47 +94,34 @@ export class MavenUtils {
     }
 
     /**
-     * return pom Gav and parent GAV.if not found, empty string will be returned
+     * @return [POM-GAV, Parent-GAV]. If not found, return empty strings.
      */
-    public static getPomDetails(pathToPomXml: string, treesManager: TreesManager): [string, string] {
+    public static getPomDetails(pathToPomXml: string, logManager: LogManager, pomIdCache: Map<string, [string, string]>): [string, string] {
+        let gav: [string, string] | undefined = pomIdCache.get(pathToPomXml);
+        if (!!gav) {
+            return gav;
+        }
         try {
-            const rawText: string = fs.readFileSync(pathToPomXml, 'utf8').toString();
-            let pomXmlData: any = parser.parse(rawText).project;
-            let groupId: string = pomXmlData.groupId?.toString();
-            if (!groupId || groupId.includes('$')) {
-                groupId = this.executeMavenCmd(
-                    `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.groupId -q -DforceStdout`,
-                    path.dirname(pathToPomXml)
-                );
-            }
-            let artifactId: string = pomXmlData.artifactId?.toString();
-            if (!artifactId || artifactId.includes('$')) {
-                artifactId = this.executeMavenCmd(
-                    `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.artifactId -q -DforceStdout`,
-                    path.dirname(pathToPomXml)
-                );
-            }
-            let version: string = pomXmlData.version?.toString();
-            if (!version || version.includes('$')) {
-                version = this.executeMavenCmd(
-                    `mvn org.apache.maven.plugins:maven-help-plugin:3.2.0:evaluate -Dexpression=project.version -q -DforceStdout`,
-                    path.dirname(pathToPomXml)
-                );
-            }
-            let parentArtifactId: string = pomXmlData.parent?.artifactId;
-            let parentGroupId: string = pomXmlData.parent?.groupId;
-            let parentVersion: string = pomXmlData.parent?.version;
-            let parent: string = '';
-            if (parentArtifactId && parentGroupId && parentVersion) {
-                parent = parentGroupId + ':' + parentArtifactId + ':' + parentVersion;
-            }
-            return [groupId + ':' + artifactId + ':' + version, parent];
+            let mvnGavRes: string = ScanUtils.executeCmd('mvn com.jfrog.ide:maven-gav-reader:gav -q', path.dirname(pathToPomXml));
+            mvnGavRes
+                .toString()
+                .split(/\r\n|\r|\n/)
+                .filter(mvnGav => !!mvnGav)
+                .map(mvnGav => mvnGav.replace(/\\/g, '\\\\')) // Escape '\' character
+                .forEach(mvnGav => {
+                    let mvnGavJson: any = JSON.parse(mvnGav);
+                    let pomXmlPath: string = mvnGavJson['pomPath'];
+                    let gav: string = mvnGavJson['gav'];
+                    let parentGav: string = mvnGavJson['parentGav'];
+                    pomIdCache.set(pomXmlPath, [gav, parentGav]);
+                });
+            return pomIdCache.get(pathToPomXml) || ['', ''];
         } catch (error) {
-            treesManager.logManager.logMessage(
+            logManager.logMessage(
                 'Could not get parse pom.xml GAV.\n' + 'Try Install it by running "mvn clean install" from ' + pathToPomXml + '.',
                 'ERR'
             );
-            treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
+            logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
         }
         return ['', ''];
     }
@@ -165,10 +152,10 @@ export class MavenUtils {
         }
         treesManager.logManager.logMessage('Generating Maven Dependency Tree', 'INFO');
         let mavenTreeNodes: MavenTreeNode[] = [];
-        let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, treesManager);
+        let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, treesManager.logManager);
         for (let ProjectTree of prototypeTree) {
             try {
-                treesManager.logManager.logMessage('Analyzing pom.xml at' + ProjectTree.pomPath, 'INFO');
+                treesManager.logManager.logMessage('Analyzing pom.xml at ' + ProjectTree.pomPath, 'INFO');
                 ProjectTree.runMavenDependencyTree();
                 let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, componentsToScan, treesManager, root);
                 await dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree);
@@ -199,26 +186,32 @@ export class MavenUtils {
      * 3. update the path/parent of node from step 3
      * 4. try to add the node to its parent's children otherwise add it to the root of the tree.
      * @param pomArray list of all pom.xml uri inside root dir
-     * @param treesManager
+     * @param logManager the log manager
      */
-    public static buildPrototypePomTree(pomArray: vscode.Uri[], treesManager: TreesManager): PomTree[] {
+    public static buildPrototypePomTree(pomArray: vscode.Uri[], logManager: LogManager): PomTree[] {
         let prototypeTree: PomTree[] = [];
-        pomArray.forEach(pom => {
-            const [pomGav, parentGav]: string[] = MavenUtils.getPomDetails(pom.fsPath, treesManager);
-            if (!!pomGav) {
-                let index: number = MavenUtils.searchPomGav(prototypeTree, pomGav);
-                let currNode: PomTree;
-                if (index > -1) {
-                    currNode = prototypeTree[index];
-                    prototypeTree.splice(index, 1);
-                } else {
-                    currNode = new PomTree(pomGav);
+        let pomIdCache: Map<string, [string, string]> = new Map<string, [string, string]>();
+        if (!MavenUtils.mavenGavReaderInstalled) {
+            MavenUtils.installMavenGavReader();
+        }
+        pomArray
+            .sort((pomPath1, pomPath2) => pomPath1.fsPath.length - pomPath2.fsPath.length)
+            .forEach(pom => {
+                const [pomGav, parentGav]: string[] = MavenUtils.getPomDetails(pom.fsPath, logManager, pomIdCache);
+                if (!!pomGav) {
+                    let index: number = MavenUtils.searchPomGav(prototypeTree, pomGav);
+                    let currNode: PomTree;
+                    if (index > -1) {
+                        currNode = prototypeTree[index];
+                        prototypeTree.splice(index, 1);
+                    } else {
+                        currNode = new PomTree(pomGav);
+                    }
+                    currNode.pomPath = path.dirname(pom.fsPath);
+                    currNode.parentGav = parentGav;
+                    MavenUtils.addPrototypeNode(prototypeTree, currNode);
                 }
-                currNode.pomPath = path.dirname(pom.fsPath);
-                currNode.parentGav = parentGav;
-                MavenUtils.addPrototypeNode(prototypeTree, currNode);
-            }
-        });
+            });
 
         // Remove the root node if not found in the project directories
         for (let i: number = 0; i < prototypeTree.length; i++) {
@@ -297,7 +290,7 @@ export class MavenUtils {
 
     // 'mvn dependency:tree' duplicate the parent dependencies to its child.
     // this method filter out parent dependencies from child dependency
-    public static FilterParentDependencies(childDependencies: string[], parentDeps?: string[]): string[] | undefined {
+    public static filterParentDependencies(childDependencies: string[], parentDeps?: string[]): string[] | undefined {
         if (parentDeps) {
             const rawParentDep: string = parentDeps.join(' ');
             return childDependencies.filter(childDep => {
@@ -309,7 +302,11 @@ export class MavenUtils {
         return;
     }
 
-    public static executeMavenCmd(mvnCommand: string, pomPath: string): any {
-        return exec.execSync(mvnCommand, { cwd: pomPath, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
+    /**
+     * Install Maven GAV Reader to maven local repository.
+     */
+    public static installMavenGavReader() {
+        ScanUtils.executeCmd('mvn org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file -Dfile=' + MavenUtils.MAVEN_GAV_READER);
+        MavenUtils.mavenGavReaderInstalled = true;
     }
 }

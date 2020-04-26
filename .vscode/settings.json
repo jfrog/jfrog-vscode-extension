@@ -1,10 +1,14 @@
 // Place your settings in this file to overwrite default and user settings.
 {
     "files.exclude": {
-        "out": true, // set this to true to hide the "out" folder with the compiled JS files
+        "out": true,
         "node_modules": true,
         "releaseScripts/node_modules": true,
-        ".vscode-test": true
+        ".vscode-test": true,
+        "**/.classpath": true,
+        "**/.project": true,
+        "**/.settings": true,
+        "**/.factorypath": true
     },
     "search.exclude": {
         "out": true // set this to false to include "out" folder in search results
@@ -14,5 +18,6 @@
     "workbench.editor.enablePreview": false,
     "workbench.editor.enablePreviewFromQuickOpen": false,
     "workbench.editor.showTabs": true,
-    "files.autoSave": "afterDelay"
+    "files.autoSave": "afterDelay",
+    "java.configuration.updateBuildConfiguration": "automatic"
 }

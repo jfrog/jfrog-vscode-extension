@@ -54,7 +54,7 @@
             "properties": {
                 "jfrog.xray.exclusions": {
                     "type": "string",
-                    "default": "**/*{test,venv,node_modules}*",
+                    "default": "**/*{test,venv,node_modules,target}*",
                     "scope": "resource",
                     "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) used to exclude specific paths from being scanned by JFrog Xray. For example, go.mod files under directories named testdata will not be scanned."
                 }
@@ -124,7 +124,6 @@
         "package": "vsce package"
     },
     "dependencies": {
-        "fast-xml-parser": "^3.16.0",
         "fs-extra": "^8.1.0",
         "keytar": "5.3.0",
         "semver": "7.1.3",
