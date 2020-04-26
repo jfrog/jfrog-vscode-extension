@@ -39,36 +39,30 @@ export class ConnectionManager implements ExtensionComponent {
             return Promise.resolve(false);
         }
         return await vscode.window.withProgress(
-            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with Xray server...' },
-            async () =>
-                new Promise<boolean>(
-                    async (resolve): Promise<void> => {
-                        let xrayClient: XrayClient = this.createXrayClient();
-                        if (!(await ConnectionUtils.checkConnection(xrayClient))) {
-                            this.deleteCredentialFromMemory();
-                            resolve(false);
-                        }
-                        await this.storeUrl();
-                        await this.storeUsername();
-                        await this.storePassword();
-                        resolve(true);
-                    }
-                )
+            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Notification, title: 'Checking connection with Xray server...' },
+            async (): Promise<boolean> => {
+                let xrayClient: XrayClient = this.createXrayClient();
+                if (!(await ConnectionUtils.checkConnection(xrayClient))) {
+                    this.deleteCredentialFromMemory();
+                    return false;
+                }
+                await this.storeUrl();
+                await this.storeUsername();
+                await this.storePassword();
+                return true;
+            }
         );
     }
 
     public async disconnect(): Promise<boolean> {
         return await vscode.window.withProgress(
             <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Notification, title: 'Delete Xray connection details...' },
-            async () =>
-                new Promise<boolean>(
-                    async (resolve): Promise<void> => {
-                        await this.deleteUrl();
-                        await this.deleteUsername();
-                        await this.deletePassword();
-                        resolve(true);
-                    }
-                )
+            async (): Promise<boolean> => {
+                await this.deleteUrl();
+                await this.deleteUsername();
+                await this.deletePassword();
+                return true;
+            }
         );
     }
 
