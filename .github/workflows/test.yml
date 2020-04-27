@@ -10,7 +10,7 @@ jobs:
             matrix:
                 os: [ubuntu-latest, windows-latest, macOS-latest]
         steps:
-            - uses: actions/checkout@v1
+            - uses: actions/checkout@v2
             - name: Setup macOS
               # Fix 'nvm is not compatible with the npm config "prefix" option' error on macOS
               run: unset npm_config_prefix
