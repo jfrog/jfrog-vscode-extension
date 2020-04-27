@@ -62,7 +62,7 @@ export class ConnectionManager implements ExtensionComponent {
             async (): Promise<boolean> => {
                 // Delete password must be executed first. in order to find the password in he key chain, we must create its hash key using the url & username.
                 if (!(await this.deletePassword())) {
-                    this._logManager.logMessage('Failed to delete the password from the file system', 'WARN');
+                    this._logManager.logMessage('Failed to delete the password from the system password manager', 'WARN');
                 }
                 await this.deleteUrl();
                 await this.deleteUsername();

@@ -30,7 +30,7 @@ describe('Go Utils Tests', () => {
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager(
         [],
-        new ConnectionManager(),
+        new ConnectionManager(new LogManager()),
         dummyScanCacheManager,
         new LogManager().activate({} as vscode.ExtensionContext)
     );
