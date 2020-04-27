@@ -101,12 +101,12 @@
                 },
                 {
                     "command": "jfrog.xray.connect",
-                    "when": "view == jfrog.xray && AreCredentialsSet == false",
+                    "when": "view == jfrog.xray && areCredentialsSet == false",
                     "group": "navigation"
                 },
                 {
                     "command": "jfrog.xray.disconnect",
-                    "when": "view == jfrog.xray && AreCredentialsSet",
+                    "when": "view == jfrog.xray && areCredentialsSet",
                     "group": "navigation"
                 },
                 {

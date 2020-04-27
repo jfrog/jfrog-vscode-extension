@@ -38,7 +38,7 @@ export class ConnectionManager implements ExtensionComponent {
             return Promise.resolve(false);
         }
         return await vscode.window.withProgress(
-            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Notification, title: 'Checking connection with Xray server...' },
+            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with Xray server...' },
             async (): Promise<boolean> => {
                 let xrayClient: XrayClient = this.createXrayClient();
                 if (!(await ConnectionUtils.checkConnection(xrayClient))) {
@@ -56,7 +56,7 @@ export class ConnectionManager implements ExtensionComponent {
 
     public async disconnect(): Promise<boolean> {
         return await vscode.window.withProgress(
-            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Notification, title: 'Delete Xray connection details...' },
+            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Delete Xray connection details...' },
             async (): Promise<boolean> => {
                 await this.deleteUrl();
                 await this.deleteUsername();
@@ -232,7 +232,7 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private updateConnectionIcon() {
-        vscode.commands.executeCommand('setContext', 'AreCredentialsSet', this.areCredentialsSet());
+        vscode.commands.executeCommand('setContext', 'areCredentialsSet', this.areCredentialsSet());
     }
 
     public addUserAgentHeader(clientConfig: IClientConfig) {

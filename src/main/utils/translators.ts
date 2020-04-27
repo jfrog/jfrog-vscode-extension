@@ -27,14 +27,12 @@ export class Translators {
     public static severityCountToIssues(clientIssue: ISeverityCount, gocenter_security_url: string): Issue[] {
         let issues: Issue[] = [];
         if (clientIssue) {
-            for (let [key, value] of Object.entries(clientIssue)) {
-                if (value > 0) {
-                    for (let i: number = 0; i < value; i++) {
+            for (let [issueLevel, issueCount] of Object.entries(clientIssue)) {
+                    for (let i: number = 0; i < issueCount; i++) {
                         issues.push(
-                            new Issue(`${key} level Issue (${i + 1}/${value})`, Translators.toSeverity(key), '', '', [], gocenter_security_url)
+                            new Issue(`${issueLevel} level Issue (${i + 1}/${issueCount})`, Translators.toSeverity(issueLevel), '', '', [], gocenter_security_url)
                         );
                     }
-                }
             }
         }
         return issues;

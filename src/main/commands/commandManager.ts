@@ -98,7 +98,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Disconnect to Xray server. Delete the URL, username & password from FS.
+     * Disconnect from Xray server. Delete the URL, username & password from FS.
      */
     private async doDisconnect() {
         if (await this._connectionManager.disconnect()) {
