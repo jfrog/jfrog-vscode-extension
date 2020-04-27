@@ -8,6 +8,7 @@ import { GoCenterClient } from '../goCenterClient/GoCenterClient';
 import { IComponentMetadata } from '../goCenterClient/model/ComponentMetadata';
 import { IModuleResponse } from '../goCenterClient/model/ModuleResponse';
 import { ConnectionUtils } from './connectionUtils';
+import { LogManager } from '../log/logManager';
 
 /**
  * Manage the Xray credentials and perform connection with Xray server.
@@ -25,6 +26,7 @@ export class ConnectionManager implements ExtensionComponent {
     private _username: string = '';
     private _password: string = '';
     private _url: string = '';
+    constructor(private _logManager: LogManager) {}
 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
@@ -58,9 +60,12 @@ export class ConnectionManager implements ExtensionComponent {
         return await vscode.window.withProgress(
             <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Delete Xray connection details...' },
             async (): Promise<boolean> => {
+                // Delete password must be executed first. in order to find the password in he key chain, we must create its hash key using the url & username.
+                if (!(await this.deletePassword())) {
+                    this._logManager.logMessage('Failed to delete the password from the file system', 'WARN');
+                }
                 await this.deleteUrl();
                 await this.deleteUsername();
-                await this.deletePassword();
                 this.updateConnectionIcon();
                 return true;
             }
@@ -195,9 +200,9 @@ export class ConnectionManager implements ExtensionComponent {
         await keytar.setPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username), this._password);
     }
 
-    private async deletePassword() {
-        await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username));
+    private async deletePassword(): Promise<boolean> {
         this._password = '';
+        return await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username));
     }
 
     /**
