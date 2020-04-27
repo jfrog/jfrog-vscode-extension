@@ -93,11 +93,6 @@ export class CommandManager implements ExtensionComponent {
     private async doConnect() {
         let credentialsSet: boolean = await this._connectionManager.connect();
         if (credentialsSet) {
-            vscode.commands.executeCommand('setContext', 'AreCredentialsSet', true);
-            this._treesManager.dependenciesTreeView = vscode.window.createTreeView('jfrog.xray.connected', {
-                treeDataProvider: this._treesManager.dependenciesTreeDataProvider,
-                showCollapseAll: true
-            });
             this.doRefresh(true);
         }
     }
@@ -107,11 +102,6 @@ export class CommandManager implements ExtensionComponent {
      */
     private async doDisconnect() {
         if (await this._connectionManager.disconnect()) {
-            vscode.commands.executeCommand('setContext', 'AreCredentialsSet', false);
-            this._treesManager.dependenciesTreeView = vscode.window.createTreeView('jfrog.xray.disconnected', {
-                treeDataProvider: this._treesManager.dependenciesTreeDataProvider,
-                showCollapseAll: true
-            });
             this.doRefresh(true);
         }
     }

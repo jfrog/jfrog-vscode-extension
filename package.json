@@ -36,14 +36,8 @@
         "views": {
             "jfrog": [
                 {
-                    "id": "jfrog.xray.connected",
-                    "name": "Components Tree",
-                    "when": "AreCredentialsSet"
-                },
-                {
-                    "id": "jfrog.xray.disconnected",
-                    "name": "Components Tree",
-                    "when": "AreCredentialsSet == false"
+                    "id": "jfrog.xray",
+                    "name": "Components Tree"
                 },
                 {
                     "id": "jfrog.xray.component",
@@ -102,29 +96,29 @@
             "view/title": [
                 {
                     "command": "jfrog.xray.refresh",
-                    "when": "view == jfrog.xray.connected || view == jfrog.xray.disconnected",
+                    "when": "view == jfrog.xray",
                     "group": "navigation"
                 },
                 {
                     "command": "jfrog.xray.connect",
-                    "when": "view == jfrog.xray.disconnected",
+                    "when": "view == jfrog.xray && AreCredentialsSet == false",
                     "group": "navigation"
                 },
                 {
                     "command": "jfrog.xray.disconnect",
-                    "when": "view == jfrog.xray.connected",
+                    "when": "view == jfrog.xray && AreCredentialsSet",
                     "group": "navigation"
                 },
                 {
                     "command": "jfrog.xray.filter",
-                    "when": "view == jfrog.xray.connected || view == jfrog.xray.disconnected",
+                    "when": "view == jfrog.xray",
                     "group": "navigation"
                 }
             ],
             "view/item/context": [
                 {
                     "command": "jfrog.xray.showInProjectDesc",
-                    "when": "view == jfrog.xray.connected || view == jfrog.xray.disconnected"
+                    "when": "view == jfrog.xray"
                 }
             ]
         }

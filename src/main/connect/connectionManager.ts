@@ -29,8 +29,7 @@ export class ConnectionManager implements ExtensionComponent {
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
         await this.populateCredentials(false);
-        // Reload the correct view.
-        vscode.commands.executeCommand('setContext', 'AreCredentialsSet', this.areCredentialsSet());
+        this.updateConnectionIcon();
         return this;
     }
 
@@ -49,6 +48,7 @@ export class ConnectionManager implements ExtensionComponent {
                 await this.storeUrl();
                 await this.storeUsername();
                 await this.storePassword();
+                this.updateConnectionIcon();
                 return true;
             }
         );
@@ -61,6 +61,7 @@ export class ConnectionManager implements ExtensionComponent {
                 await this.deleteUrl();
                 await this.deleteUsername();
                 await this.deletePassword();
+                this.updateConnectionIcon();
                 return true;
             }
         );
@@ -228,6 +229,10 @@ export class ConnectionManager implements ExtensionComponent {
             }
         }
         return proxyConfig;
+    }
+
+    private updateConnectionIcon() {
+        vscode.commands.executeCommand('setContext', 'AreCredentialsSet', this.areCredentialsSet());
     }
 
     public addUserAgentHeader(clientConfig: IClientConfig) {

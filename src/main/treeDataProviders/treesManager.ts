@@ -31,9 +31,10 @@ export class TreesManager implements ExtensionComponent {
 
     public async activate(context: vscode.ExtensionContext): Promise<TreesManager> {
         await this._dependenciesDataProvider.refresh(true);
-        this._dependenciesTreeView = this.connectionManager.areCredentialsSet()
-            ? vscode.window.createTreeView('jfrog.xray.connected', { treeDataProvider: this._dependenciesDataProvider, showCollapseAll: true })
-            : vscode.window.createTreeView('jfrog.xray.disconnected', { treeDataProvider: this._dependenciesDataProvider, showCollapseAll: true });
+        this._dependenciesTreeView = vscode.window.createTreeView('jfrog.xray', {
+            treeDataProvider: this._dependenciesDataProvider,
+            showCollapseAll: true
+        });
         context.subscriptions.push(
             this._dependenciesTreeView,
             vscode.window.registerTreeDataProvider('jfrog.xray.component', this._componentDetailsDataProvider),
@@ -68,9 +69,5 @@ export class TreesManager implements ExtensionComponent {
 
     public get logManager(): LogManager {
         return this._logManager;
-    }
-
-    public set dependenciesTreeView(value: vscode.TreeView<DependenciesTreeNode | SetCredentialsNode>) {
-        this._dependenciesTreeView = value;
     }
 }
