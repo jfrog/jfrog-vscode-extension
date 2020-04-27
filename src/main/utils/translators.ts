@@ -28,11 +28,18 @@ export class Translators {
         let issues: Issue[] = [];
         if (clientIssue) {
             for (let [issueLevel, issueCount] of Object.entries(clientIssue)) {
-                    for (let i: number = 0; i < issueCount; i++) {
-                        issues.push(
-                            new Issue(`${issueLevel} level Issue (${i + 1}/${issueCount})`, Translators.toSeverity(issueLevel), '', '', [], gocenter_security_url)
-                        );
-                    }
+                for (let i: number = 0; i < issueCount; i++) {
+                    issues.push(
+                        new Issue(
+                            `${issueLevel} level Issue (${i + 1}/${issueCount})`,
+                            Translators.toSeverity(issueLevel),
+                            '',
+                            '',
+                            [],
+                            gocenter_security_url
+                        )
+                    );
+                }
             }
         }
         return issues;
