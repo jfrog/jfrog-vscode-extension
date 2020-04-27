@@ -15,10 +15,9 @@ export class MavenTreeNode extends DependenciesTreeNode {
         private _workspaceFolder: string,
         private _componentsToScan: Collections.Set<ComponentDetails>,
         private _treesManager: TreesManager,
-        parent?: DependenciesTreeNode,
-        generalInfo?: GeneralInfo
+        parent?: DependenciesTreeNode
     ) {
-        super(generalInfo ?? new GeneralInfo('', '', _workspaceFolder, ''), vscode.TreeItemCollapsibleState.None, parent);
+        super(new GeneralInfo('', '', _workspaceFolder, ''), vscode.TreeItemCollapsibleState.None, parent);
         MavenUtils.pathToNode.set(_workspaceFolder, this);
     }
 
@@ -93,13 +92,8 @@ export class MavenTreeNode extends DependenciesTreeNode {
 
     /** @override */
     public shallowClone(): MavenTreeNode {
-        const clone: MavenTreeNode = new MavenTreeNode(
-            this._workspaceFolder,
-            this._componentsToScan,
-            this._treesManager,
-            undefined,
-            this.generalInfo
-        );
+        const clone: MavenTreeNode = new MavenTreeNode(this._workspaceFolder, this._componentsToScan, this._treesManager, undefined);
+        clone.generalInfo = this.generalInfo;
         clone.licenses = this.licenses;
         clone.issues = this.issues;
         clone.topIssue = this.topIssue;
