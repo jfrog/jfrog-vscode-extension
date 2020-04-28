@@ -39,20 +39,19 @@ export class GoHover extends AbstractHoverProvider {
             return;
         }
         const credentialsSet: boolean = this._treesManager.connectionManager.areCredentialsSet();
-        let hoverText: string =
-            `### Details from GoCenter:\n\n${
-                node.componentMetadata?.description ? `**Description**: ${node.componentMetadata.description}\n\n` : ''
-            }` +
-            this.createLatestVersionText(node.componentMetadata?.latest_version) +
-            this.createStarsText(node.componentMetadata?.stars);
+        let hoverText: string = `### Details from GoCenter:\n\n`;
         if (credentialsSet) {
             hoverText = this.getDetailsFromXray(node) + '\n\n' + hoverText;
         } else {
             if (node.topIssue.severity !== Severity.Normal) {
                 let summary: string = this.getSeveritySummary(node.componentMetadata?.vulnerabilities?.severity);
-                hoverText += `${summary ? `**Vulnerabilities**: ${summary}\n\n` : ``} `;
+                hoverText += `${summary ? `**Vulnerabilities**: ${summary}\n\n` : ``} ` + this.createLicensesText(node.componentMetadata?.licenses);
             }
         }
+        hoverText +=
+            ` ${node.componentMetadata?.description ? `**Description**: ${node.componentMetadata.description}\n\n` : ''}` +
+            this.createLatestVersionText(node.componentMetadata?.latest_version) +
+            this.createStarsText(node.componentMetadata?.stars);
         return new vscode.Hover(new vscode.MarkdownString(hoverText));
     }
 
