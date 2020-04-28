@@ -41,6 +41,7 @@ export class ConnectionManager implements ExtensionComponent {
             async () => {
                 let xrayClient: XrayClient = this.createXrayClient();
                 if (!(await ConnectionUtils.checkConnection(xrayClient))) {
+                    this.deleteCredentialFromMemory();
                     return false;
                 }
                 await this.storeUrl();
@@ -210,5 +211,11 @@ export class ConnectionManager implements ExtensionComponent {
                 clientConfig.headers!['Proxy-Authorization'] = proxyAuthHeader;
             }
         }
+    }
+
+    private deleteCredentialFromMemory() {
+        this._password = '';
+        this._username = '';
+        this._url = '';
     }
 }
