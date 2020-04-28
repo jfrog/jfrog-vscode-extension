@@ -2,11 +2,11 @@ import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { GeneralInfo } from '../../types/generalInfo';
-import { NpmUtils } from '../../utils/npmUtils';
-import { ScanUtils } from '../../utils/scanUtils';
-import { TreesManager } from '../treesManager';
-import { DependenciesTreeNode } from './dependenciesTreeNode';
+import { DependenciesTreeNode } from '../dependenciesTreeNode';
+import { TreesManager } from '../../treesManager';
+import { GeneralInfo } from '../../../types/generalInfo';
+import { ScanUtils } from '../../../utils/scanUtils';
+import { NpmUtils } from '../../../utils/npmUtils';
 
 export class NpmTreeNode extends DependenciesTreeNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';

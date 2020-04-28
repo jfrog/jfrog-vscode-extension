@@ -60,12 +60,8 @@ export class ConnectionManager implements ExtensionComponent {
         return await vscode.window.withProgress(
             <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Delete Xray connection details...' },
             async (): Promise<boolean> => {
-                // Delete password must be executed first. in order to find the password in he key chain, we must create its hash key using the url & username.
-                if (!(await this.deletePassword())) {
-                    this._logManager.logMessage('Failed to delete the password from the system password manager', 'WARN');
-                }
-                await this.deleteUrl();
-                await this.deleteUsername();
+                await this.deleteCredentialFromFileSystem();
+                await this.deleteCredentialFromMemory();
                 this.updateConnectionIcon();
                 return true;
             }
@@ -153,12 +149,6 @@ export class ConnectionManager implements ExtensionComponent {
         await this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, this._url);
     }
 
-    // Setting the value to undefined will remove the key https://github.com/microsoft/vscode/issues/11528
-    private async deleteUrl() {
-        await this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined);
-        this._url = '';
-    }
-
     private async retrieveUsername(prompt: boolean): Promise<string> {
         let username: string = (await this._context.globalState.get(ConnectionManager.XRAY_USERNAME_KEY)) || '';
         if (prompt) {
@@ -177,11 +167,6 @@ export class ConnectionManager implements ExtensionComponent {
         await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, this._username);
     }
 
-    private async deleteUsername() {
-        await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined);
-        this._url = '';
-    }
-
     private async retrievePassword(prompt: boolean, url: string, username: string): Promise<string> {
         let password: string = (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(url, username))) || '';
         if (prompt) {
@@ -198,11 +183,6 @@ export class ConnectionManager implements ExtensionComponent {
 
     private async storePassword() {
         await keytar.setPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username), this._password);
-    }
-
-    private async deletePassword(): Promise<boolean> {
-        this._password = '';
-        return await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username));
     }
 
     /**
@@ -257,5 +237,18 @@ export class ConnectionManager implements ExtensionComponent {
         this._password = '';
         this._username = '';
         this._url = '';
+    }
+
+    private async deleteCredentialFromFileSystem() {
+        // Delete password must be executed first. in order to find the password in he key chain, we must create its hash key using the url & username.
+        let ok: boolean = await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username));
+        if (!ok) {
+            this._logManager.logMessage('Failed to delete the password from the system password manager', 'WARN');
+            return false;
+        }
+        // Setting the value to undefined will remove the key https://github.com/microsoft/vscode/issues/11528
+        await this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined);
+        await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined);
+        return true;
     }
 }

@@ -1,11 +1,11 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { GeneralInfo } from '../../types/generalInfo';
-import { PypiUtils } from '../../utils/pypiUtils';
-import { ScanUtils } from '../../utils/scanUtils';
-import { TreesManager } from '../treesManager';
-import { DependenciesTreeNode } from './dependenciesTreeNode';
+import { DependenciesTreeNode } from '../dependenciesTreeNode';
+import { TreesManager } from '../../treesManager';
+import { GeneralInfo } from '../../../types/generalInfo';
+import { ScanUtils } from '../../../utils/scanUtils';
+import { PypiUtils } from '../../../utils/pypiUtils';
 
 /**
  * Pypi packages can be installed in two different ways:
