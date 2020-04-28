@@ -218,16 +218,4 @@ export class ConnectionManager implements ExtensionComponent {
         this._username = '';
         this._url = '';
     }
-
-    private async deleteCredentialFromFileSystem() {
-        // Delete password must be executed first. in order to find the password in he key chain, we must create its hash key using the url & username.
-        let ok: boolean = await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username));
-        if (!ok) {
-            return false;
-        }
-        // Setting the value to undefined will remove the key https://github.com/microsoft/vscode/issues/11528
-        await this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined);
-        await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined);
-        return true;
-    }
 }
