@@ -90,6 +90,18 @@ export class MavenTreeNode extends DependenciesTreeNode {
         }
     }
 
+    /** @override */
+    public shallowClone(): MavenTreeNode {
+        const clone: MavenTreeNode = new MavenTreeNode(this._workspaceFolder, this._componentsToScan, this._treesManager, undefined);
+        clone.generalInfo = this.generalInfo;
+        clone.licenses = this.licenses;
+        clone.issues = this.issues;
+        clone.topIssue = this.topIssue;
+        clone.label = this.label;
+        clone.collapsibleState = this.collapsibleState;
+        return clone;
+    }
+
     /**
      * In order to understand if two consecutive dependencies are child/brother/parent one to another, we compare the number of white spaces e.g.:
      *  brothers:

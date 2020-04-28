@@ -96,6 +96,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
 
     public shallowClone(): DependenciesTreeNode {
         let clone: DependenciesTreeNode = new DependenciesTreeNode(this.generalInfo, this.collapsibleState);
+        clone.label = this.label;
         clone.licenses = this.licenses;
         clone.issues = this.issues;
         clone.topIssue = this.topIssue;
