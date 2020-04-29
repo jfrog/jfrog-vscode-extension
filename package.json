@@ -9,6 +9,7 @@
         "type": "git",
         "url": "https://github.com/jfrog/jfrog-vscode-extension"
     },
+    "homepage": "https://jfrog.github.io/jfrog-vscode-extension",
     "bugs": {
         "url": "https://github.com/jfrog/jfrog-vscode-extension/issues"
     },
@@ -152,18 +153,24 @@
         "vscode-test": "^1.3.0"
     },
     "keywords": [
-        "vulnerabilities",
-        "artifactory",
+        "go",
+        "js",
+        "ts",
+        "npm",
+        "scan",
+        "xray",
+        "jfrog",
+        "maven",
+        "devops",
+        "golang",
+        "nodejs",
+        "python",
+        "gocenter",
+        "security",
+        "devsecops",
         "javascript",
         "typescript",
-        "security",
-        "nodejs",
-        "devops",
-        "jfrog",
-        "xray",
-        "scan",
-        "npm",
-        "js",
-        "ts"
+        "artifactory",
+        "vulnerabilities"
     ]
 }
