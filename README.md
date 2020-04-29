@@ -110,7 +110,7 @@ To open the extension settings, use the following VS Code menu command:
 ## Go Projects
 ### Free Security Scanning and Metadata from GoCenter
 Go Modules in GoCenter are scanned by Xray. You can read more about it in [this](https://jfrog.com/blog/gocenter-reveals-go-module-vulnerabilities-with-xray/) blog. The JFrog VS Code Extension pulls this security information from GoCenter and displays it inside the IDE. It also displays, for each module, the description summary, license and the number of starts.
-![Connect](resources/readme/gifs/gocenter-issues.gif)
+![Connect](resources/readme/gifs/gocenter_issues.gif)
 
 For each module there's a direct link to the GoCenter UI, with more information, like the actual CVEs, as well as other projects which use this module.
 ![Connect](resources/readme/gifs/gocenter_nav.gif)
