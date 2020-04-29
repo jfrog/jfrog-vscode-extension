@@ -40,9 +40,6 @@ With this information, a developer can make an informed decision on whether to u
 The JFrog Extension also includes free security scanning and metadata of Go Modules from [JFrog GoCenter](https://search.gocenter.io/). Read more in the [Go Projects](#go-projects) section.
 
 ## Viewing Project Dependencies Information
-View the dependencies used by the project in a tree, where the direct dependencies are at the top.
-![Open_Extension](resources/readme/gifs/open.gif)
-
 The JFrog extension automatically triggers a scan of the project's dependencies whenever a change is detected after building the code.
 To invoke a scan manually, click on the Refresh ![Refresh](resources/readme/refresh.png) button or click on *Start Xray Scan* from within the editor.
 ![Refresh](resources/readme/gifs/refresh.gif)
@@ -51,7 +48,7 @@ View the security information for a depedency by hovering over it in the editor.
 You can also navigate from the depedency declaration directly into the tree view. This allows you to see transitive (indirect) depedencies.
 ![Refresh](resources/readme/gifs/maven_pom_tree.gif)
 
-Search for a dependency in the tree:
+Search for a dependency in the tree by typing its name.
 ![Search_In_Tree](resources/readme/gifs/search.gif)
 
 View the issues associated with direct and transitive (indirect) dependencies.
