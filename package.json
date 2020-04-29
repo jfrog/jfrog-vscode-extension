@@ -1,7 +1,7 @@
 {
     "name": "jfrog-vscode-extension",
     "displayName": "JFrog",
-    "description": "JFrog Xray scanning of npm, Pypi, Maven and Go project dependencies.",
+    "description": "JFrog Xray scanning of Go, npm, Pypi, and Maven project dependencies, along with free Go Module vulnerability information and metadata from GoCenter.",
     "version": "1.2.0",
     "license": "Apache-2.0",
     "icon": "resources/extensionIcon.png",

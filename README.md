@@ -5,7 +5,9 @@
 
 # Table of Contents
 
-- [General](#general)
+- [About this Extension](#about-this-extension)
+  - [General](#general)
+  - [Free Go Modules Security Scanning and Metadata from GoCenter](#free-go-modules-security-scanning-and-metadata-from-gocenter)
 - [Viewing Project Dependencies Information](#viewing-project-dependencies-information)
 - [General Configuration](#general-configuration)
   - [Configuring JFrog Xray](#configuring-jfrog-xray)
@@ -38,30 +40,28 @@ With this information, a developer can make an informed decision on whether to u
 The JFrog Extension also includes free security scanning and metadata of Go Modules from [JFrog GoCenter](https://search.gocenter.io/). Read more in the [Go Projects](#go-projects) section.
 
 ## Viewing Project Dependencies Information
-View the dependencies used by the project in a tree, where the direct dependencies are at the top:
+View the dependencies used by the project in a tree, where the direct dependencies are at the top.
 ![Open_Extension](resources/readme/gifs/open.gif)
 
-The JFrog extension automatically triggers a scan of the project's npm dependencies whenever a change in the **package-lock.json** file is detected.
-To invoke a scan manually, click on the Refresh ![Refresh](resources/readme/refresh.png) button or click on *Start Xray Scan* from within the editor:
+The JFrog extension automatically triggers a scan of the project's dependencies whenever a change is detected after building the code.
+To invoke a scan manually, click on the Refresh ![Refresh](resources/readme/refresh.png) button or click on *Start Xray Scan* from within the editor.
 ![Refresh](resources/readme/gifs/refresh.gif)
 
-View existing issues:
-![Vulnerabilities](resources/readme/gifs/show_vulnerabilities.gif)
-
-View licenses directly from within the *package.json*, *requirements.txt* or *go.mod*:
-![License](resources/readme/gifs/license.gif)
-
-View additional information about a dependency:
-![Show_In_Deps_Tree](resources/readme/gifs/show_deps.gif)
-
-View dependency in *package.json*, *requirements.txt* or *go.mod*:
-![Show_In_Pkg_Json](resources/readme/gifs/show_in_pkg_json.gif)
+View the security information for a depedency by hovering over it in the editor.
+You can also navigate from the depedency declaration directly into the tree view. This allows you to see transitive (indirect) depedencies.
+![Refresh](resources/readme/gifs/maven_pom_tree.gif)
 
 Search for a dependency in the tree:
 ![Search_In_Tree](resources/readme/gifs/search.gif)
 
-To filter scan results, click on the Filter ![Filter](resources/readme/filter.png) button:
+View the issues associated with direct and transitive (indirect) dependencies.
+![Search_In_Tree](resources/readme/gifs/maven_issues.gif)
+
+To filter the dependencies viewed, click on the Filter ![Filter](resources/readme/filter.png) button.
 ![Filter](resources/readme/gifs/filter.gif)
+
+Navigate from the tree view to a depedency's declaration in the editor.
+![Filter](resources/readme/gifs/maven_tree_pom.gif)
 
 ## General Configuration
 ### Configuring JFrog Xray
@@ -110,13 +110,13 @@ To open the extension settings, use the following VS Code menu command:
 ## Go Projects
 ### Free Security Scanning and Metadata from GoCenter
 Go Modules in GoCenter are scanned by Xray. You can read more about it in [this](https://jfrog.com/blog/gocenter-reveals-go-module-vulnerabilities-with-xray/) blog. The JFrog VS Code Extension pulls this security information from GoCenter and displays it inside the IDE. It also displays, for each module, the description summary, license and the number of starts.
-![Connect](resources/readme/gifs/metadata.gif)
+![Connect](resources/readme/gifs/gocenter_issues.git)
 
 For each module there's a direct link to the GoCenter UI, with more information, like the actual CVEs, as well as other projects which use this module.
-![Connect](resources/readme/gifs/gocenter-links.gif)
+![Connect](resources/readme/gifs/gocenter_nav.gif)
 
 ### Enhanced Capabilities with JFrog Xray
-By [connecting VS Code to JFrog Xray](#configuring-jfrog-xray) the security information is pulled directly from JFrog Xray. This means that more security information becomes available for the developers insode VS Code. This includes the list of security issues, including the module versions with the fixes.
+By [connecting VS Code to JFrog Xray](#configuring-jfrog-xray) the security information is pulled directly from JFrog Xray. This means that more security information becomes available to the developers insode VS Code. This includes the list of security issues, including the module versions with the fixes.
 All the module metadata provided by GoCenter is still available when connecting to JFrog Xray.
 
 ### Behind the Scenes
