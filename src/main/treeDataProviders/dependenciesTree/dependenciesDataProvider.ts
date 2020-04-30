@@ -47,12 +47,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         try {
             this._scanInProgress = true;
             const credentialsSet: boolean = this._treesManager.connectionManager.areCredentialsSet();
-            this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow'), 'INFO');
-            if (!credentialsSet) {
-                this._treesManager.logManager.logMessage(' Xray scan...', 'INFO');
-            } else {
-                this._treesManager.logManager.logMessage(' GoCenter scan...', 'INFO');
-            }
+            this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow') + ' scan', 'INFO');
             await this.repopulateTree(quickScan, credentialsSet);
             vscode.commands.executeCommand('jfrog.xray.focus');
             this._treesManager.logManager.setSuccess();
@@ -210,6 +205,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             );
             if (credentialsSet) {
                 // Xray + GoCenter users
+                vscode.commands.executeCommand('setContext', 'isGoCenterMode', false);
                 await this.scanAndCacheComponents(progress, checkCanceled);
                 for (let dependenciesTreeNode of dependenciesTree.children) {
                     this.addXrayInfoToTree(dependenciesTreeNode);
@@ -218,8 +214,9 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     }
                     dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
                 }
-            } else {
+            } else if (this.isGoCenterMode(dependenciesTree)) {
                 // GoCenter users
+                vscode.commands.executeCommand('setContext', 'isGoCenterMode', true);
                 const totalComponents: number = this._goCenterComponentsToScan.size();
                 progress.report({ message: `${totalComponents} components` });
                 await this.scanAndCache(progress, checkCanceled, totalComponents, Source.GoCenter, this._goCenterComponentsToScan.toArray());
@@ -303,6 +300,10 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             }
         }
         return undefined;
+    }
+
+    private isGoCenterMode(node: DependenciesTreeNode) {
+        return node.children.filter(child => child instanceof GoTreeNode).length > 0;
     }
 }
 

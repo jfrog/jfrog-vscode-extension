@@ -24,6 +24,13 @@
     ],
     "main": "./out/extension.js",
     "contributes": {
+        "viewsWelcome": [
+            {
+                "view": "jfrog.xray.component",
+                "contents": "The JFrog extension currently pulls security information and metadata from [JFrog GoCenter](https://search.gocenter.io/).\nBy [connecting VS Code to JFrog Xray](https://github.com/jfrog/jfrog-vscode-extension#configuring-jfrog-xray) the security information can be pulled directly from Xray. This means that more security information becomes available to you, including the list of security issues and the module versions with the fixes. All the module metadata provided by GoCenter is still available when connecting to JFrog Xray.",
+                "when": "isGoCenterMode"
+            }
+        ],
         "viewsContainers": {
             "activitybar": [
                 {
@@ -101,7 +108,7 @@
                 },
                 {
                     "command": "jfrog.xray.connect",
-                    "when": "view == jfrog.xray && areCredentialsSet == false",
+                    "when": "view == jfrog.xray && !areCredentialsSet",
                     "group": "navigation"
                 },
                 {
