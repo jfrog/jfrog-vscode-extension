@@ -1,4 +1,3 @@
-
 # JFrog Visual Studio Code Extension
 
 [![Visual Studio Marketplace](https://vsmarketplacebadge.apphb.com/version/JFrog.jfrog-vscode-extension.svg)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension)
@@ -109,14 +108,14 @@ To open the extension settings, use the following VS Code menu command:
 
 ## Go Projects
 ### Free Security Scanning and Metadata from GoCenter
-Go Modules in GoCenter are scanned by Xray. You can read more about it in [this](https://jfrog.com/blog/gocenter-reveals-go-module-vulnerabilities-with-xray/) blog. The JFrog VS Code Extension pulls this security information from GoCenter and displays it inside the IDE. It also displays, for each module, the description summary, license and the number of starts.
+Go Modules in GoCenter are scanned by Xray. You can read more about it in [this](https://jfrog.com/blog/gocenter-reveals-go-module-vulnerabilities-with-xray/) blog. The JFrog VS Code Extension pulls this security information from GoCenter and displays it inside the IDE. It also displays, for each module, the description summary, license and the number of stars.
 ![Connect](resources/readme/gifs/gocenter_issues.gif)
 
 For each module there's a direct link to the GoCenter UI, with more information, like the actual CVEs, as well as other projects which use this module.
 ![Connect](resources/readme/gifs/gocenter_nav.gif)
 
 ### Enhanced Capabilities with JFrog Xray
-By [connecting VS Code to JFrog Xray](#configuring-jfrog-xray) the security information is pulled directly from JFrog Xray. This means that more security information becomes available to the developers insode VS Code. This includes the list of security issues, including the module versions with the fixes.
+By [connecting VS Code to JFrog Xray](#configuring-jfrog-xray) the security information is pulled directly from JFrog Xray. This means that more security information becomes available to the developers inside VS Code. This includes the list of security issues, including the module versions with the fixes.
 All the module metadata provided by GoCenter is still available when connecting to JFrog Xray.
 
 ### Behind the Scenes
