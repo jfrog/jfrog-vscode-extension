@@ -161,7 +161,7 @@
         "faker": "^4.1.0",
         "glob": "^7.1.6",
         "mocha": "^7.0.1",
-        "prettier": "^2.0.5",
+        "prettier": "^1.19.1",
         "tmp": "^0.2.0",
         "tslint": "^6.1.2",
         "tslint-config-prettier": "^1.18.0",
