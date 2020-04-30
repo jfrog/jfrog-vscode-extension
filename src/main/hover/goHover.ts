@@ -45,8 +45,9 @@ export class GoHover extends AbstractHoverProvider {
         } else {
             if (node.topIssue.severity !== Severity.Normal) {
                 let summary: string = this.getSeveritySummary(node.componentMetadata?.vulnerabilities?.severity);
-                hoverText += `${summary ? `**Vulnerabilities**: ${summary}\n\n` : ``} ` + this.createLicensesText(node.componentMetadata?.licenses);
+                hoverText += `${summary ? `**Vulnerabilities**: ${summary}\n\n` : ``}`;
             }
+            hoverText += this.createLicensesText(node.componentMetadata?.licenses);
         }
         hoverText +=
             ` ${node.componentMetadata?.description ? `**Description**: ${node.componentMetadata.description}\n\n` : ''}` +
