@@ -47,10 +47,10 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
             new TreeDataHolder('Artifact', this._selectedNode.generalInfo.artifactId),
             new TreeDataHolder('Version', this._selectedNode.generalInfo.version)
         ];
-        if (this._selectedNode instanceof GoDependenciesTreeNode) {
+        if (this._selectedNode instanceof GoDependenciesTreeNode && this._selectedNode.componentMetadata) {
             children.push(new TreeDataHolder('Latest Version', this._selectedNode.componentMetadata.latest_version));
             children.push(new TreeDataHolder('Description', this._selectedNode.componentMetadata.description));
-            children.push(new TreeDataHolder('Stars', String(this._selectedNode.componentMetadata.stars)));
+            children.push(new TreeDataHolder('Stars', String(this._selectedNode.componentMetadata.stars) + ' ★'));
         }
         children.push(new TreeDataHolder('Type', this._selectedNode.generalInfo.pkgType));
         children.push(new TreeDataHolder('Issues count', String(this._selectedNode.issues.size())));

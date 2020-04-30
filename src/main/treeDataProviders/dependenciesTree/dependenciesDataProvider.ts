@@ -226,7 +226,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 }
             }
             this._onDidChangeTreeData.fire();
-        }, credentialsSet);
+        });
     }
 
     private clearTree() {
