@@ -25,15 +25,11 @@ import { TestMemento } from './utils/testMemento.test';
  * Test functionality of @class GoUtils.
  */
 describe('Go Utils Tests', () => {
+    let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
         workspaceState: new TestMemento() as vscode.Memento
     } as vscode.ExtensionContext);
-    let treesManager: TreesManager = new TreesManager(
-        [],
-        new ConnectionManager(new LogManager()),
-        dummyScanCacheManager,
-        new LogManager().activate({} as vscode.ExtensionContext)
-    );
+    let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'empty'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'go'));

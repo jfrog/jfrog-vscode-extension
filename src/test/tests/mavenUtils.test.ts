@@ -20,15 +20,11 @@ import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/dep
  * Test functionality of @class NpmUtils.
  */
 describe('Maven Utils Tests', () => {
+    let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
         workspaceState: { get(key: string) {} } as vscode.Memento
     } as vscode.ExtensionContext);
-    let treesManager: TreesManager = new TreesManager(
-        [],
-        new ConnectionManager(new LogManager()),
-        dummyScanCacheManager,
-        new LogManager().activate({} as vscode.ExtensionContext)
-    );
+    let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'empty', 'multiPomDependency'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));

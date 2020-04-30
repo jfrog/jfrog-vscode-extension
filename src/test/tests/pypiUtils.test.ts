@@ -18,15 +18,11 @@ import { PypiUtils } from '../../main/utils/pypiUtils';
  * Test functionality of @class PypiUtils.
  */
 describe('Pypi Utils Tests', () => {
+    let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
         workspaceState: { get(key: string) {} } as vscode.Memento
     } as vscode.ExtensionContext);
-    let treesManager: TreesManager = new TreesManager(
-        [],
-        new ConnectionManager(new LogManager()),
-        dummyScanCacheManager,
-        new LogManager().activate({} as vscode.ExtensionContext)
-    );
+    let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements'];
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
     let tmpDir: vscode.Uri = vscode.Uri.file(tmp.dirSync({} as tmp.DirOptions).name);

@@ -55,7 +55,7 @@ export abstract class AbstractHoverProvider implements vscode.HoverProvider, Ext
     }
 
     protected createLicensesText(licenses: string[]) {
-        return `${licenses ? `**License**: ${licenses}\n\n` : '\n\n'}`;
+        return `${licenses ? `**Licenses**: ${licenses}\n\n` : '\n\n'}`;
     }
 
     protected getIssueSummary(issues: Collections.Set<Issue>): string {

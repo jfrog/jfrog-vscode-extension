@@ -130,13 +130,13 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
                 if (source === Source.Xray) {
                     let artifacts: IArtifact[] = await this._treesManager.connectionManager.getComponents(partialComponents);
-                    this.addMissingComponents(partialComponents, artifacts);
+                    this.addMissingXrayComponents(partialComponents, artifacts);
                     await this._treesManager.scanCacheManager.addArtifactComponents(artifacts);
                 }
                 if (source === Source.GoCenter) {
-                    let module: IComponentMetadata[] = await this._treesManager.connectionManager.getGoCenterModules(partialComponents);
-                    this.adjustFailedComponents(partialComponents, module);
-                    await this._treesManager.scanCacheManager.addMetadataComponents(module);
+                    let modules: IComponentMetadata[] = await this._treesManager.connectionManager.getGoCenterModules(partialComponents);
+                    this.addMissingGoCenterComponents(partialComponents, modules);
+                    await this._treesManager.scanCacheManager.addMetadataComponents(modules);
                 }
                 progress.report({ message: `${totalComponents} components`, increment: step });
                 checkCanceled();
@@ -242,7 +242,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         return this._filterLicenses;
     }
 
-    private addMissingComponents(partialComponents: ComponentDetails[], artifacts: IArtifact[]) {
+    private addMissingXrayComponents(partialComponents: ComponentDetails[], artifacts: IArtifact[]) {
         if (artifacts.length === partialComponents.length) {
             return;
         }
@@ -264,7 +264,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         });
     }
 
-    private adjustFailedComponents(partialComponents: ComponentDetails[], components: IComponentMetadata[]) {
+    private addMissingGoCenterComponents(partialComponents: ComponentDetails[], components: IComponentMetadata[]) {
         if (partialComponents.length !== components.length) {
             partialComponents.forEach(component => {
                 let found: IComponentMetadata | undefined = components.find(element => element.component_id === component.component_id);
