@@ -4,7 +4,7 @@ import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
-import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/mavenTreeNode';
+import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { MavenUtils } from '../utils/mavenUtils';
 
 export class MavenCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {

@@ -4,6 +4,7 @@ import { Issue } from '../types/issue';
 import { License } from '../types/license';
 import { Severity } from '../types/severity';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
+import { ISeverityCount } from '../goCenterClient/model/SeverityCount';
 
 export class Translators {
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
@@ -13,7 +14,7 @@ export class Translators {
             : new GavGeneralInfo(components[0], components[1], components[2], clientGeneral.path, clientGeneral.pkg_type);
     }
 
-    public static toIssue(clientIssue: IIssue) {
+    public static toIssue(clientIssue: IIssue): Issue {
         return new Issue(
             clientIssue.summary,
             Translators.toSeverity(clientIssue.severity),
@@ -23,14 +24,33 @@ export class Translators {
         );
     }
 
-    public static toSeverity(clientSeverity: ClientSeverity): Severity {
+    public static severityCountToIssues(clientIssue: ISeverityCount, gocenter_security_url: string): Issue[] {
+        let issues: Issue[] = [];
+        if (clientIssue) {
+            for (let [issueLevel, issueCount] of Object.entries(clientIssue)) {
+                for (let i: number = 0; i < issueCount; i++) {
+                    issues.push(
+                        new Issue(
+                            `${issueLevel} level Issue (${i + 1}/${issueCount})`,
+                            Translators.toSeverity(issueLevel),
+                            '',
+                            '',
+                            [],
+                            gocenter_security_url
+                        )
+                    );
+                }
+            }
+        }
+        return issues;
+    }
+
+    public static toSeverity(clientSeverity: ClientSeverity | string): Severity {
         switch (clientSeverity) {
             case 'Normal':
                 return Severity.Normal;
             case 'Pending':
                 return Severity.Pending;
-            case 'Unknown':
-                return Severity.Unknown;
             case 'Information':
                 return Severity.Information;
             case 'Low':
@@ -39,11 +59,17 @@ export class Translators {
                 return Severity.Medium;
             case 'High':
                 return Severity.High;
+            default:
+                return Severity.Unknown;
         }
     }
 
     public static toLicense(clientLicense: ILicense): License {
         return new License(clientLicense.more_info_url, clientLicense.components, clientLicense.full_name, clientLicense.name);
+    }
+
+    public static stringToLicense(clientLicense: string): License {
+        return new License([], [], '', clientLicense);
     }
 
     private static toFixedVersions(vulnerableComponents: IVulnerableComponent[]): string[] {
@@ -57,7 +83,7 @@ export class Translators {
         return fixed_versions;
     }
 
-    private static capitalize(str: string): string {
+    public static capitalize(str: string): string {
         return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
     }
 }

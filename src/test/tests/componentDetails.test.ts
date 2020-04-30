@@ -56,7 +56,7 @@ describe('Component Details Tests', () => {
 
     async function getAndAssertLicenses(): Promise<any[]> {
         let treeItem: any[] = await componentDetails.getChildren();
-        let licensesNode: LicensesNode = treeItem[3];
+        let licensesNode: LicensesNode = treeItem[5];
         assert.deepEqual(licensesNode.label, 'Licenses');
         assert.deepEqual(licensesNode.collapsibleState, vscode.TreeItemCollapsibleState.Expanded);
         return licensesNode.getChildren();

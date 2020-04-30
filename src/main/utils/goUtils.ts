@@ -4,7 +4,7 @@ import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { GoTreeNode } from '../treeDataProviders/dependenciesTree/goTreeNode';
+import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
 import { LogManager } from '../log/logManager';
@@ -75,6 +75,7 @@ export class GoUtils {
     public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
         componentsToScan: Collections.Set<ComponentDetails>,
+        goCenterComponentsToScan: Collections.Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
@@ -92,7 +93,13 @@ export class GoUtils {
         let goTreeNodes: GoTreeNode[] = [];
         for (let goMod of goMods.toArray()) {
             treesManager.logManager.logMessage('Analyzing go.mod files', 'INFO');
-            let dependenciesTreeNode: GoTreeNode = new GoTreeNode(path.dirname(goMod.fsPath), componentsToScan, treesManager, parent);
+            let dependenciesTreeNode: GoTreeNode = new GoTreeNode(
+                path.dirname(goMod.fsPath),
+                componentsToScan,
+                goCenterComponentsToScan,
+                treesManager,
+                parent
+            );
             dependenciesTreeNode.refreshDependencies(quickScan);
             goTreeNodes.push(dependenciesTreeNode);
         }

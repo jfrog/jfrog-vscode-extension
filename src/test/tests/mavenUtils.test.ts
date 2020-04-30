@@ -9,26 +9,22 @@ import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/mavenTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GavGeneralInfo } from '../../main/types/gavGeneralinfo';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenUtils } from '../../main/utils/mavenUtils';
 import { PomTree } from '../../main/utils/pomTree';
+import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 
 /**
  * Test functionality of @class NpmUtils.
  */
 describe('Maven Utils Tests', () => {
+    let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
         workspaceState: { get(key: string) {} } as vscode.Memento
     } as vscode.ExtensionContext);
-    let treesManager: TreesManager = new TreesManager(
-        [],
-        new ConnectionManager(),
-        dummyScanCacheManager,
-        new LogManager().activate({} as vscode.ExtensionContext)
-    );
+    let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'empty', 'multiPomDependency'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));

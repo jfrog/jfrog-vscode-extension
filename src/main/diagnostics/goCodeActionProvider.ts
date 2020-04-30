@@ -34,4 +34,12 @@ export class GoCodeActionProvider extends AbstractCodeActionProvider implements 
         });
         this._diagnosticCollection.set(document.uri, diagnostics);
     }
+
+    /** @override */
+    protected getSource(): string {
+        if (this._treesManager.connectionManager.areCredentialsSet()) {
+            return super.getSource();
+        }
+        return AbstractCodeActionProvider.GOCENTER_DIAGNOSTIC_SOURCE;
+    }
 }

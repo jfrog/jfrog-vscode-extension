@@ -4,7 +4,7 @@ import { IModuleResponse } from './model/ModuleResponse';
 
 export class GoCenterClient {
     private readonly goCenterUrl: string = 'https://search.gocenter.io';
-    private readonly getMetadataForModulesEndpoint: string = '/api/ui/getMetadataForModules';
+    private readonly getMetadataForModulesEndpoint: string = '/api/ui/v1/getMetadataForModules';
     private readonly httpClient: HttpClient;
 
     public constructor(config: IClientConfig) {

@@ -9,7 +9,7 @@ import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { PypiTreeNode } from '../../main/treeDataProviders/dependenciesTree/pypiTreeNode';
+import { PypiTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { PypiUtils } from '../../main/utils/pypiUtils';
@@ -18,15 +18,11 @@ import { PypiUtils } from '../../main/utils/pypiUtils';
  * Test functionality of @class PypiUtils.
  */
 describe('Pypi Utils Tests', () => {
+    let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
         workspaceState: { get(key: string) {} } as vscode.Memento
     } as vscode.ExtensionContext);
-    let treesManager: TreesManager = new TreesManager(
-        [],
-        new ConnectionManager(),
-        dummyScanCacheManager,
-        new LogManager().activate({} as vscode.ExtensionContext)
-    );
+    let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements'];
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
     let tmpDir: vscode.Uri = vscode.Uri.file(tmp.dirSync({} as tmp.DirOptions).name);

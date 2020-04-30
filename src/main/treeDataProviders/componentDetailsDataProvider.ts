@@ -1,10 +1,9 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { Issue } from '../types/issue';
 import { License } from '../types/license';
-import { SeverityUtils } from '../types/severity';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from './utils/treeDataHolder';
+import { GoDependenciesTreeNode } from './dependenciesTree/goDependenciesTreeNode';
 
 /**
  * The component details tree.
@@ -46,20 +45,20 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
         // Component details node
         let children: (TreeDataHolder | LicensesNode)[] = [
             new TreeDataHolder('Artifact', this._selectedNode.generalInfo.artifactId),
-            new TreeDataHolder('Version', this._selectedNode.generalInfo.version),
-            new TreeDataHolder('Type', this._selectedNode.generalInfo.pkgType),
-            new LicensesNode(this._selectedNode.licenses),
-            new TreeDataHolder('Issues count', String(this._selectedNode.issues.size()))
+            new TreeDataHolder('Version', this._selectedNode.generalInfo.version)
         ];
+        if (this._selectedNode instanceof GoDependenciesTreeNode) {
+            children.push(new TreeDataHolder('Latest Version', this._selectedNode.componentMetadata.latest_version));
+            children.push(new TreeDataHolder('Description', this._selectedNode.componentMetadata.description));
+            children.push(new TreeDataHolder('Stars', String(this._selectedNode.componentMetadata.stars)));
+        }
+        children.push(new TreeDataHolder('Type', this._selectedNode.generalInfo.pkgType));
+        children.push(new TreeDataHolder('Issues count', String(this._selectedNode.issues.size())));
         let path: string = this._selectedNode.generalInfo.path;
         if (path) {
             children.push(new TreeDataHolder('Path', path));
         }
-        let topIssue: Issue = this._selectedNode.topIssue;
-        if (topIssue) {
-            children.push(new TreeDataHolder('Top Issue Severity', SeverityUtils.getString(topIssue.severity)));
-            children.push(new TreeDataHolder('Top Issue Type', topIssue.issueType));
-        }
+        children.push(new LicensesNode(this._selectedNode.licenses));
         return Promise.resolve(children);
     }
 

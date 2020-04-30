@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
 import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/pypiTreeNode';
+import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
 
@@ -58,10 +58,7 @@ export class PypiUtils {
      * @param workspaceFolders - Base workspace folders to search
      * @param logManager       - Log manager
      */
-    public static async arePythonFilesExist(
-        workspaceFolder: vscode.WorkspaceFolder,
-        logManager: LogManager
-    ): Promise<boolean> {
+    public static async arePythonFilesExist(workspaceFolder: vscode.WorkspaceFolder, logManager: LogManager): Promise<boolean> {
         logManager.logMessage('Locating python files in workspace ' + workspaceFolder.name, 'INFO');
 
         let wsPythonFiles: vscode.Uri[] = await vscode.workspace.findFiles(

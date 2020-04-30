@@ -11,6 +11,10 @@ export class IconsPaths {
     static readonly LOW_SEVERITY: string = IconsPaths.getIconPath('low');
     static readonly MEDIUM_SEVERITY: string = IconsPaths.getIconPath('medium');
     static readonly HIGH_SEVERITY: string = IconsPaths.getIconPath('high');
+    static readonly UNKNOWN_HOVER_SEVERITY: string = IconsPaths.getIconPath('unknownHover');
+    static readonly LOW_HOVER_SEVERITY: string = IconsPaths.getIconPath('lowHover');
+    static readonly MEDIUM_HOVER_SEVERITY: string = IconsPaths.getIconPath('mediumHover');
+    static readonly HIGH_HOVER_SEVERITY: string = IconsPaths.getIconPath('highHover');
 
     private static getIconPath(iconName: string) {
         return path.join(IconsPaths.RESOURCES_PATH, iconName + '.png');

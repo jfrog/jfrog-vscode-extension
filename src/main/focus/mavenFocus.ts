@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { AbstractFocus } from './abstractFocus';
-import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/mavenTreeNode';
+import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { MavenUtils } from '../utils/mavenUtils';
 
 export class MavenFocus extends AbstractFocus {

@@ -8,6 +8,7 @@ import { GoCenterClient } from '../goCenterClient/GoCenterClient';
 import { IComponentMetadata } from '../goCenterClient/model/ComponentMetadata';
 import { IModuleResponse } from '../goCenterClient/model/ModuleResponse';
 import { ConnectionUtils } from './connectionUtils';
+import { LogManager } from '../log/logManager';
 
 /**
  * Manage the Xray credentials and perform connection with Xray server.
@@ -25,10 +26,12 @@ export class ConnectionManager implements ExtensionComponent {
     private _username: string = '';
     private _password: string = '';
     private _url: string = '';
+    constructor(private _logManager: LogManager) {}
 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
         await this.populateCredentials(false);
+        this.updateConnectionIcon();
         return this;
     }
 
@@ -38,7 +41,7 @@ export class ConnectionManager implements ExtensionComponent {
         }
         return await vscode.window.withProgress(
             <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with Xray server...' },
-            async () => {
+            async (): Promise<boolean> => {
                 let xrayClient: XrayClient = this.createXrayClient();
                 if (!(await ConnectionUtils.checkConnection(xrayClient))) {
                     this.deleteCredentialFromMemory();
@@ -47,6 +50,19 @@ export class ConnectionManager implements ExtensionComponent {
                 await this.storeUrl();
                 await this.storeUsername();
                 await this.storePassword();
+                this.updateConnectionIcon();
+                return true;
+            }
+        );
+    }
+
+    public async disconnect(): Promise<boolean> {
+        return await vscode.window.withProgress(
+            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Delete Xray connection details...' },
+            async (): Promise<boolean> => {
+                await this.deleteCredentialFromFileSystem();
+                this.deleteCredentialFromMemory();
+                this.updateConnectionIcon();
                 return true;
             }
         );
@@ -73,7 +89,7 @@ export class ConnectionManager implements ExtensionComponent {
         return !!(this._url && this._username && this._password);
     }
 
-    private async populateCredentials(prompt: boolean) {
+    private async populateCredentials(prompt: boolean): Promise<boolean> {
         let url: string = await this.retrieveUrl(prompt);
         if (!url) {
             return Promise.resolve(false);
@@ -200,6 +216,10 @@ export class ConnectionManager implements ExtensionComponent {
         return proxyConfig;
     }
 
+    private updateConnectionIcon() {
+        vscode.commands.executeCommand('setContext', 'areCredentialsSet', this.areCredentialsSet());
+    }
+
     public addUserAgentHeader(clientConfig: IClientConfig) {
         clientConfig.headers!['User-Agent'] = ConnectionManager.USER_AGENT;
     }
@@ -217,5 +237,20 @@ export class ConnectionManager implements ExtensionComponent {
         this._password = '';
         this._username = '';
         this._url = '';
+    }
+
+    private async deleteCredentialFromFileSystem(): Promise<boolean> {
+        // Delete password must be executed first. in order to find the password in he key chain, we must create its hash key using the url & username.
+        let ok: boolean = await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username));
+        if (!ok) {
+            this._logManager.logMessage('Failed to delete the password from the system password manager', 'WARN');
+            return false;
+        }
+        // Setting the value to undefined will remove the key https://github.com/microsoft/vscode/issues/11528
+        await Promise.all([
+            await this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined),
+            await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined)
+        ]);
+        return true;
     }
 }

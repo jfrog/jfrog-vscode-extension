@@ -17,15 +17,11 @@ import { NpmUtils } from '../../main/utils/npmUtils';
  * Test functionality of @class NpmUtils.
  */
 describe('Npm Utils Tests', () => {
+    let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
         workspaceState: { get(key: string) {} } as vscode.Memento
     } as vscode.ExtensionContext);
-    let treesManager: TreesManager = new TreesManager(
-        [],
-        new ConnectionManager(),
-        dummyScanCacheManager,
-        new LogManager().activate({} as vscode.ExtensionContext)
-    );
+    let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'dependencyPackageLock', 'empty'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'npm'));

@@ -2,11 +2,12 @@ import * as exec from 'child_process';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { GeneralInfo } from '../../types/generalInfo';
-import { GoUtils } from '../../utils/goUtils';
-import { TreesManager } from '../treesManager';
-import { DependenciesTreeNode } from './dependenciesTreeNode';
-import { ScanUtils } from '../../utils/scanUtils';
+import { GeneralInfo } from '../../../types/generalInfo';
+import { GoUtils } from '../../../utils/goUtils';
+import { TreesManager } from '../../treesManager';
+import { DependenciesTreeNode } from '../dependenciesTreeNode';
+import { ScanUtils } from '../../../utils/scanUtils';
+import { GoDependenciesTreeNode } from '../goDependenciesTreeNode';
 
 export class GoTreeNode extends DependenciesTreeNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
@@ -16,6 +17,7 @@ export class GoTreeNode extends DependenciesTreeNode {
     constructor(
         private _workspaceFolder: string,
         private _componentsToScan: Collections.Set<ComponentDetails>,
+        private _goCenterComponentsToScan: Collections.Set<ComponentDetails>,
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
@@ -53,7 +55,7 @@ export class GoTreeNode extends DependenciesTreeNode {
         let directDependenciesGeneralInfos: GeneralInfo[] = [];
         for (; i < goList.length && !goList[i].includes('@'); i += 2) {
             let nameVersionTuple: string[] = this.getNameVersionTuple(goList[i + 1]);
-            directDependenciesGeneralInfos.push(new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], this._workspaceFolder, GoUtils.PKG_TYPE));
+            directDependenciesGeneralInfos.push(new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], '', GoUtils.PKG_TYPE));
         }
 
         // Build dependencies map
@@ -65,7 +67,7 @@ export class GoTreeNode extends DependenciesTreeNode {
 
         // Add direct dependencies to tree
         directDependenciesGeneralInfos.forEach(generalInfo => {
-            this.addChild(new DependenciesTreeNode(generalInfo, this.getTreeCollapsibleState(generalInfo)));
+            this.addChild(new GoDependenciesTreeNode(generalInfo, this.getTreeCollapsibleState(generalInfo)));
         });
     }
 
@@ -76,7 +78,7 @@ export class GoTreeNode extends DependenciesTreeNode {
         childDependencies.forEach(childDependency => {
             let nameVersionTuple: string[] = this.getNameVersionTuple(childDependency);
             let generalInfo: GeneralInfo = new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], '', GoUtils.PKG_TYPE);
-            let grandchild: DependenciesTreeNode = new DependenciesTreeNode(
+            let grandchild: GoDependenciesTreeNode = new GoDependenciesTreeNode(
                 generalInfo,
                 this.getTreeCollapsibleState(generalInfo),
                 dependenciesTreeNode
@@ -94,8 +96,14 @@ export class GoTreeNode extends DependenciesTreeNode {
 
     private addComponentToScan(dependenciesTreeNode: DependenciesTreeNode, quickScan: boolean) {
         let componentId: string = dependenciesTreeNode.generalInfo.artifactId + ':' + dependenciesTreeNode.generalInfo.version;
-        if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(componentId)) {
+        let goCenterComponentId: string = dependenciesTreeNode.generalInfo.artifactId + ':v' + dependenciesTreeNode.generalInfo.version;
+        if (
+            !quickScan ||
+            !this._treesManager.scanCacheManager.validateOrDelete(componentId) ||
+            !this._treesManager.scanCacheManager.validateOrDelete(goCenterComponentId)
+        ) {
             this._componentsToScan.add(new ComponentDetails(GoTreeNode.COMPONENT_PREFIX + componentId));
+            this._goCenterComponentsToScan.add(new ComponentDetails(goCenterComponentId));
         }
     }
 

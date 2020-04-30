@@ -5,10 +5,10 @@ import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
 import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/mavenTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
+import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };

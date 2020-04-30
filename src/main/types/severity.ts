@@ -1,4 +1,5 @@
 import { IconsPaths } from '../utils/iconsPaths';
+import { Translators } from '../utils/translators';
 
 export enum Severity {
     Normal = 0,
@@ -40,22 +41,43 @@ export class SeverityUtils {
         }
     }
 
-    public static getIcon(severity: Severity | undefined) {
+    public static getIcon(severity: Severity | undefined, hover: boolean = false) {
         switch (severity) {
             case Severity.Pending:
                 return IconsPaths.PENDING_SEVERITY;
             case Severity.Unknown:
-                return IconsPaths.UNKNOWN_SEVERITY;
+                return hover ? IconsPaths.UNKNOWN_HOVER_SEVERITY : IconsPaths.UNKNOWN_SEVERITY;
             case Severity.Information:
                 return IconsPaths.INFORMATION_SEVERITY;
             case Severity.Low:
-                return IconsPaths.LOW_SEVERITY;
+                return hover ? IconsPaths.LOW_HOVER_SEVERITY : IconsPaths.LOW_SEVERITY;
             case Severity.Medium:
-                return IconsPaths.MEDIUM_SEVERITY;
+                return hover ? IconsPaths.MEDIUM_HOVER_SEVERITY : IconsPaths.MEDIUM_SEVERITY;
             case Severity.High:
-                return IconsPaths.HIGH_SEVERITY;
+                return hover ? IconsPaths.HIGH_HOVER_SEVERITY : IconsPaths.HIGH_SEVERITY;
             default:
                 return IconsPaths.NORMAL_SEVERITY;
+        }
+    }
+
+    public static getSeverity(severity: string) {
+        switch (Translators.capitalize(severity)) {
+            case 'Normal':
+                return Severity.Normal;
+            case 'Pending':
+                return Severity.Pending;
+            case 'Unknown':
+                return Severity.Unknown;
+            case 'Information':
+                return Severity.Information;
+            case 'Low':
+                return Severity.Low;
+            case 'Medium':
+                return Severity.Medium;
+            case 'High':
+                return Severity.High;
+            default:
+                throw new Error(`Unknown severity type in 'getSeverity' function`);
         }
     }
 }

@@ -1,7 +1,11 @@
 import * as vscode from 'vscode';
+import * as Collections from 'typescript-collections';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
+import { License } from '../types/license';
+import { Issue } from '../types/issue';
+import { Severity, SeverityUtils } from '../types/severity';
 
 /**
  * @see HoverManager
@@ -26,22 +30,50 @@ export abstract class AbstractHoverProvider implements vscode.HoverProvider, Ext
      * @param document - The project descriptor
      * @param position - The position of the mouse on the screen
      */
-    provideHover(document: vscode.TextDocument, position: vscode.Position): vscode.ProviderResult<vscode.Hover> {
+    public provideHover(document: vscode.TextDocument, position: vscode.Position): vscode.ProviderResult<vscode.Hover> {
         let node: DependenciesTreeNode | undefined = this.getNodeByLocation(document, position);
         if (!node) {
             return;
         }
+        return new vscode.Hover(new vscode.MarkdownString(this.getDetailsFromXray(node)));
+    }
 
-        let licenses: string[] = [];
-        node.licenses.forEach(license => {
-            if (license.moreInfoUrl) {
-                licenses.push('[' + license.name + '](' + license.moreInfoUrl[0] + ')');
-            } else {
-                licenses.push(license.name);
-            }
+    protected licensesToMarkdown(licenses: Collections.Set<License>) {
+        let markDownSyntax: string[] = [];
+        licenses.forEach(license => {
+            markDownSyntax.push(license.name);
         });
-        let markdownString: vscode.MarkdownString = new vscode.MarkdownString('Licenses: ' + licenses + ' (JFrog Xray)');
+        return markDownSyntax;
+    }
 
-        return new vscode.Hover(markdownString);
+    protected getDetailsFromXray(node: DependenciesTreeNode): string {
+        let xrayText: string = '### Details from Xray:\n\n';
+        if (node.topIssue.severity !== Severity.Normal) {
+            xrayText += '**Vulnerabilities**: ' + this.getIssueSummary(node.issues);
+        }
+        return xrayText + '\n\n' + this.createLicensesText(this.licensesToMarkdown(node.licenses));
+    }
+
+    protected createLicensesText(licenses: string[]) {
+        return `${licenses ? `**Licenses**: ${licenses}\n\n` : '\n\n'}`;
+    }
+
+    protected getIssueSummary(issues: Collections.Set<Issue>): string {
+        if (!issues) {
+            return '';
+        }
+        let summary: string = '';
+        let totalNumOfSeverities: Array<number> = new Array<number>(Object.keys(Severity).length / 2);
+        issues.forEach(issue => {
+            totalNumOfSeverities[issue.severity] = totalNumOfSeverities[issue.severity] ? totalNumOfSeverities[issue.severity] + 1 : 1;
+        });
+        // Print severities from high to low.
+        for (let i: number = totalNumOfSeverities.length - 1; i >= 0; i--) {
+            if (!totalNumOfSeverities[i]) {
+                continue;
+            }
+            summary += `![severity.icon](${SeverityUtils.getIcon(i, true)}) ${SeverityUtils.getString(i)} (${totalNumOfSeverities[i]})  &nbsp;`;
+        }
+        return summary;
     }
 }
