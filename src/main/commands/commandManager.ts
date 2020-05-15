@@ -91,7 +91,7 @@ export class CommandManager implements ExtensionComponent {
      * Connect to Xray server. If connection success, perform a quick scan.
      */
     private async doConnect() {
-        let credentialsSet: boolean = await this._connectionManager.connect();
+        let credentialsSet: boolean = await this._connectionManager.connect(true);
         if (credentialsSet) {
             this.doRefresh(true);
         }

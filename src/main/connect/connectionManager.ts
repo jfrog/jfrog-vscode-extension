@@ -21,6 +21,11 @@ export class ConnectionManager implements ExtensionComponent {
     // Service ID in the OS key store to store and retrieve the password
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
 
+    // URL, username and password environment variables keys
+    public static readonly USERNAME_ENV: string = 'JFROG_IDE_USERNAME';
+    public static readonly PASSWORD_ENV: string = 'JFROG_IDE_PASSWORD';
+    public static readonly URL_ENV: string = 'JFROG_IDE_URL';
+
     private static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
     private _context!: vscode.ExtensionContext;
     private _username: string = '';
@@ -30,20 +35,19 @@ export class ConnectionManager implements ExtensionComponent {
 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
-        await this.populateCredentials(false);
-        this.updateConnectionIcon();
+        await this.connect(false);
         return this;
     }
 
-    public async connect(): Promise<boolean> {
-        if (!(await this.populateCredentials(true))) {
+    public async connect(interactive: boolean): Promise<boolean> {
+        if (!(await this.populateCredentials(interactive))) {
             return Promise.resolve(false);
         }
         return await vscode.window.withProgress(
             <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with Xray server...' },
             async (): Promise<boolean> => {
                 let xrayClient: XrayClient = this.createXrayClient();
-                if (!(await ConnectionUtils.checkConnection(xrayClient))) {
+                if (!(await ConnectionUtils.checkConnection(xrayClient, interactive))) {
                     this.deleteCredentialFromMemory();
                     return false;
                 }
@@ -89,18 +93,27 @@ export class ConnectionManager implements ExtensionComponent {
         return !!(this._url && this._username && this._password);
     }
 
-    private async populateCredentials(prompt: boolean): Promise<boolean> {
-        let url: string = await this.retrieveUrl(prompt);
-        if (!url) {
-            return Promise.resolve(false);
-        }
-        let username: string = await this.retrieveUsername(prompt);
-        if (!username) {
-            return Promise.resolve(false);
-        }
-        let password: string = await this.retrievePassword(prompt, url, username);
-        if (!password) {
-            return Promise.resolve(false);
+    /**
+     * Populate credentials from environment variables or file system.
+     * @param prompt - True if the user is prompted to enter URL, username and password
+     */
+    public async populateCredentials(prompt: boolean): Promise<boolean> {
+        let url: string = process.env[ConnectionManager.URL_ENV] || '';
+        let username: string = process.env[ConnectionManager.USERNAME_ENV] || '';
+        let password: string = process.env[ConnectionManager.PASSWORD_ENV] || '';
+        if (!url || !username || !password) {
+            url = await this.retrieveUrl(prompt);
+            if (!url) {
+                return Promise.resolve(false);
+            }
+            username = await this.retrieveUsername(prompt);
+            if (!username) {
+                return Promise.resolve(false);
+            }
+            password = await this.retrievePassword(prompt, url, username);
+            if (!password) {
+                return Promise.resolve(false);
+            }
         }
         this._url = url;
         this._username = username;

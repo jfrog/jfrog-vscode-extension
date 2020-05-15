@@ -42,13 +42,16 @@ export class ConnectionUtils {
     /**
      * Check permissions and version.
      * @param xrayClient - The xray client.
+     * @param showSuccess - Show success message if credentials are correct.
      * @returns true iff success.
      */
-    public static async checkConnection(xrayClient: XrayClient): Promise<boolean> {
+    public static async checkConnection(xrayClient: XrayClient, showSuccess: boolean): Promise<boolean> {
         try {
             await ConnectionUtils.testComponentPermission(xrayClient);
             let xrayVersion: string = await ConnectionUtils.testXrayVersion(xrayClient);
-            vscode.window.showInformationMessage(xrayVersion);
+            if (showSuccess) {
+                vscode.window.showInformationMessage(xrayVersion);
+            }
         } catch (error) {
             vscode.window.showErrorMessage(error.toString(), <vscode.MessageOptions>{ modal: true });
             return Promise.resolve(false);
