@@ -21,6 +21,8 @@ export class ConnectionManager implements ExtensionComponent {
     // Service ID in the OS key store to store and retrieve the password
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
 
+    // Store connection details in file system after reading credentials from env
+    public static readonly STORE_CONNECTION_ENV: string = 'JFROG_IDE_STORE_CONNECTION';
     // URL, username and password environment variables keys
     public static readonly USERNAME_ENV: string = 'JFROG_IDE_USERNAME';
     public static readonly PASSWORD_ENV: string = 'JFROG_IDE_PASSWORD';
@@ -35,25 +37,24 @@ export class ConnectionManager implements ExtensionComponent {
 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
-        await this.connect(false);
+        await this.populateCredentials(false);
+        this.updateConnectionIcon();
         return this;
     }
 
-    public async connect(interactive: boolean): Promise<boolean> {
-        if (!(await this.populateCredentials(interactive))) {
+    public async connect(): Promise<boolean> {
+        if (!(await this.populateCredentials(true))) {
             return Promise.resolve(false);
         }
         return await vscode.window.withProgress(
             <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with Xray server...' },
             async (): Promise<boolean> => {
                 let xrayClient: XrayClient = this.createXrayClient();
-                if (!(await ConnectionUtils.checkConnection(xrayClient, interactive))) {
+                if (!(await ConnectionUtils.checkConnection(xrayClient))) {
                     this.deleteCredentialFromMemory();
                     return false;
                 }
-                await this.storeUrl();
-                await this.storeUsername();
-                await this.storePassword();
+                await this.storeConnection();
                 this.updateConnectionIcon();
                 return true;
             }
@@ -93,15 +94,13 @@ export class ConnectionManager implements ExtensionComponent {
         return !!(this._url && this._username && this._password);
     }
 
-    /**
-     * Populate credentials from environment variables or file system.
-     * @param prompt - True if the user is prompted to enter URL, username and password
-     */
     public async populateCredentials(prompt: boolean): Promise<boolean> {
+        let storeCredentials: boolean = false;
         let url: string = process.env[ConnectionManager.URL_ENV] || '';
         let username: string = process.env[ConnectionManager.USERNAME_ENV] || '';
         let password: string = process.env[ConnectionManager.PASSWORD_ENV] || '';
         if (!url || !username || !password) {
+            // Read credentials from file system
             url = await this.retrieveUrl(prompt);
             if (!url) {
                 return Promise.resolve(false);
@@ -114,10 +113,17 @@ export class ConnectionManager implements ExtensionComponent {
             if (!password) {
                 return Promise.resolve(false);
             }
+        } else if (process.env[ConnectionManager.STORE_CONNECTION_ENV]?.toUpperCase() === 'TRUE') {
+            // Store credentials in file system if JFROG_IDE_STORE_CONNECTION environment variable is true
+            storeCredentials = true;
         }
+
         this._url = url;
         this._username = username;
         this._password = password;
+        if (storeCredentials) {
+            await this.storeConnection();
+        }
         return Promise.resolve(true);
     }
 
@@ -244,6 +250,16 @@ export class ConnectionManager implements ExtensionComponent {
                 clientConfig.headers!['Proxy-Authorization'] = proxyAuthHeader;
             }
         }
+    }
+
+    /**
+     * Store Xray URL and username in VS-Code global state.
+     * Store Xray password in Keychain.
+     */
+    private async storeConnection(): Promise<void> {
+        await this.storeUrl();
+        await this.storeUsername();
+        await this.storePassword();
     }
 
     private deleteCredentialFromMemory() {

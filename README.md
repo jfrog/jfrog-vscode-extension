@@ -10,6 +10,7 @@
 - [Viewing Project Dependencies Information](#viewing-project-dependencies-information)
 - [General Configuration](#general-configuration)
   - [Configuring JFrog Xray](#configuring-jfrog-xray)
+    - [Environment Variables](#environment-variables)
   - [Proxy Configuration](#proxy-configuration)
     - [Proxy Authorization](#proxy-authorization)
   - [Exclude Paths from Scan](#exclude-paths-from-scan)
@@ -66,6 +67,14 @@ Navigate from the tree view to a depedency's declaration in the editor.
 ### Configuring JFrog Xray
 Connect to JFrog Xray by clicking on the green Connect ![Connect](resources/readme/connect.png) button:
 ![Connect](resources/readme/gifs/connect.gif)
+
+#### Environment variables
+The extension support connecting to JFrog Xray using environment variables. Please consider that this method is less secured.
+
+- `JFROG_IDE_URL` - JFrog Xray URL
+- `JFROG_IDE_USERNAME` - JFrog Xray username
+- `JFROG_IDE_PASSWORD` - JFrog Xray password
+- `JFROG_IDE_STORE_CONNECTION` - store Xray credentials in OS keychain after reading them from the environment variables.
 
 ### Proxy Configuration
 If your JFrog Xray instance is behind an HTTP/S proxy, follow these steps to configure the proxy server:
