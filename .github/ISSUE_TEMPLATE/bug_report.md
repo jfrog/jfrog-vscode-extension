@@ -22,7 +22,7 @@ If applicable, add screenshots to help explain your problem.
 **Versions**
 - JFrog VS-Code extension version: 
 - JFrog VS-Code extension operating system:
-- Xray Version:
+- JFrog Xray Version:
 
 **Additional context**
 Add any other context about the problem here.
