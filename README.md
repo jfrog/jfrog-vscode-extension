@@ -10,7 +10,6 @@
 - [Viewing Project Dependencies Information](#viewing-project-dependencies-information)
 - [General Configuration](#general-configuration)
   - [Configuring JFrog Xray](#configuring-jfrog-xray)
-    - [Environment Variables](#environment-variables)
   - [Proxy Configuration](#proxy-configuration)
     - [Proxy Authorization](#proxy-authorization)
   - [Exclude Paths from Scan](#exclude-paths-from-scan)
