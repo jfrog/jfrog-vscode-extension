@@ -21,6 +21,13 @@ export class ConnectionManager implements ExtensionComponent {
     // Service ID in the OS key store to store and retrieve the password
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
 
+    // Store connection details in file system after reading connection details from env
+    public static readonly STORE_CONNECTION_ENV: string = 'JFROG_IDE_STORE_CONNECTION';
+    // URL, username and password environment variables keys
+    public static readonly USERNAME_ENV: string = 'JFROG_IDE_USERNAME';
+    public static readonly PASSWORD_ENV: string = 'JFROG_IDE_PASSWORD';
+    public static readonly URL_ENV: string = 'JFROG_IDE_URL';
+
     private static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
     private _context!: vscode.ExtensionContext;
     private _username: string = '';
@@ -47,9 +54,7 @@ export class ConnectionManager implements ExtensionComponent {
                     this.deleteCredentialFromMemory();
                     return false;
                 }
-                await this.storeUrl();
-                await this.storeUsername();
-                await this.storePassword();
+                await this.storeConnection();
                 this.updateConnectionIcon();
                 return true;
             }
@@ -89,22 +94,36 @@ export class ConnectionManager implements ExtensionComponent {
         return !!(this._url && this._username && this._password);
     }
 
-    private async populateCredentials(prompt: boolean): Promise<boolean> {
-        let url: string = await this.retrieveUrl(prompt);
-        if (!url) {
-            return Promise.resolve(false);
+    public async populateCredentials(prompt: boolean): Promise<boolean> {
+        let storeCredentials: boolean = false;
+        let url: string = process.env[ConnectionManager.URL_ENV] || '';
+        let username: string = process.env[ConnectionManager.USERNAME_ENV] || '';
+        let password: string = process.env[ConnectionManager.PASSWORD_ENV] || '';
+        if (!url || !username || !password) {
+            // Read credentials from file system
+            url = await this.retrieveUrl(prompt);
+            if (!url) {
+                return Promise.resolve(false);
+            }
+            username = await this.retrieveUsername(prompt);
+            if (!username) {
+                return Promise.resolve(false);
+            }
+            password = await this.retrievePassword(prompt, url, username);
+            if (!password) {
+                return Promise.resolve(false);
+            }
+        } else if (process.env[ConnectionManager.STORE_CONNECTION_ENV]?.toUpperCase() === 'TRUE') {
+            // Store credentials in file system if JFROG_IDE_STORE_CONNECTION environment variable is true
+            storeCredentials = true;
         }
-        let username: string = await this.retrieveUsername(prompt);
-        if (!username) {
-            return Promise.resolve(false);
-        }
-        let password: string = await this.retrievePassword(prompt, url, username);
-        if (!password) {
-            return Promise.resolve(false);
-        }
+
         this._url = url;
         this._username = username;
         this._password = password;
+        if (storeCredentials) {
+            await this.storeConnection();
+        }
         return Promise.resolve(true);
     }
 
@@ -231,6 +250,16 @@ export class ConnectionManager implements ExtensionComponent {
                 clientConfig.headers!['Proxy-Authorization'] = proxyAuthHeader;
             }
         }
+    }
+
+    /**
+     * Store Xray URL and username in VS-Code global state.
+     * Store Xray password in Keychain.
+     */
+    private async storeConnection(): Promise<void> {
+        await this.storeUrl();
+        await this.storeUsername();
+        await this.storePassword();
     }
 
     private deleteCredentialFromMemory() {

@@ -30,4 +30,14 @@ describe('Connection Manager Tests', () => {
         assert.isDefined(proxyAuthorization);
         assert.deepEqual(proxyAuthorization, 'testProxyAuthorization');
     });
+
+    it('Populate credentials from env', async () => {
+        process.env[ConnectionManager.URL_ENV] = 'testUrl';
+        process.env[ConnectionManager.USERNAME_ENV] = 'testUser';
+        process.env[ConnectionManager.PASSWORD_ENV] = 'testPassword';
+
+        assert.isFalse(connectionManager.areCredentialsSet());
+        await connectionManager.populateCredentials(false);
+        assert.isTrue(connectionManager.areCredentialsSet());
+    });
 });
