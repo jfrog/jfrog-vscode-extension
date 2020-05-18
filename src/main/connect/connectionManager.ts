@@ -21,7 +21,7 @@ export class ConnectionManager implements ExtensionComponent {
     // Service ID in the OS key store to store and retrieve the password
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
 
-    // Store connection details in file system after reading credentials from env
+    // Store connection details in file system after reading connection details from env
     public static readonly STORE_CONNECTION_ENV: string = 'JFROG_IDE_STORE_CONNECTION';
     // URL, username and password environment variables keys
     public static readonly USERNAME_ENV: string = 'JFROG_IDE_USERNAME';
