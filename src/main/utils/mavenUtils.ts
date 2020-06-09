@@ -9,6 +9,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
+import { ContextKeys } from '../constants/contextKeys';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
@@ -175,7 +176,70 @@ export class MavenUtils {
                 treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }
         }
+        mavenTreeNodes.forEach(node => {
+            this.UpdateClickableNode(node);
+        });
         return mavenTreeNodes;
+    }
+
+    /**
+     * Check if 'node' has related dependency element in pom.xml.
+     * If no such line exists, disable right click on tree view.
+     * Update all node's children as well.
+     * @param node - Tree node.
+     */
+    public static async UpdateClickableNode(node: DependenciesTreeNode) {
+        const text: string | undefined = (await MavenUtils.openPomXml(node))?.getText();
+        if (text === undefined) {
+            node.contextValue = ContextKeys.DISABLED_TREE_NODE;
+        }
+        const dependenciesMatch: RegExpMatchArray | null | undefined = text?.match(/<dependency>(.|\s)*?<\/dependency>/gi);
+        node.children.forEach(c => {
+            if (!this.isExistInPom(c, dependenciesMatch)) {
+                c.contextValue = ContextKeys.DISABLED_TREE_NODE;
+            }
+            if (c.children.length > 0) {
+                this.UpdateClickableNode(c);
+            }
+        });
+    }
+
+    private static isExistInPom(node: DependenciesTreeNode | undefined, dependenciesMatch: RegExpMatchArray | null | undefined): boolean {
+        if (node === undefined || !dependenciesMatch) {
+            return false;
+        }
+        const [groupId, artifactId] = node.generalInfo
+            .getComponentId()
+            .toLowerCase()
+            .split(':');
+        if (groupId === '' || artifactId === '') {
+            return false;
+        }
+        let dependencyMatch: string[] | undefined = dependenciesMatch?.filter(group => group.includes(groupId) && group.includes(artifactId));
+        if (dependencyMatch === undefined || dependencyMatch?.length === 0) {
+            return this.isExistInPom(node.parent, dependenciesMatch);
+        }
+        return true;
+    }
+
+    /**
+     * Open 'dependenciesTreeNode' pom.xml. If not found, search in upper tree level (recursive).
+     * @param dependenciesTreeNode - Tree node.
+     */
+    public static async openPomXml(dependenciesTreeNode: DependenciesTreeNode): Promise<vscode.TextDocument | undefined> {
+        // Search for the nearest pom.xml (MavenTreeNode) which matches the fs path of the input node
+        while (dependenciesTreeNode.parent && dependenciesTreeNode instanceof MavenTreeNode === false) {
+            dependenciesTreeNode = dependenciesTreeNode.parent;
+        }
+        let fsPath: string | undefined = (<MavenTreeNode>dependenciesTreeNode).workspaceFolder;
+        if (!fsPath) {
+            return;
+        }
+        let openPath: vscode.Uri = vscode.Uri.file(path.join(fsPath, 'pom.xml'));
+        if (!openPath) {
+            return;
+        }
+        return await vscode.workspace.openTextDocument(openPath);
     }
 
     /**
