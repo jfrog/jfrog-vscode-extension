@@ -9,7 +9,6 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
-import { ContextKeys } from '../constants/contextKeys';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
@@ -177,7 +176,7 @@ export class MavenUtils {
             }
         }
         mavenTreeNodes.forEach(node => {
-            this.UpdateClickableNode(node);
+            this.updateClickableNode(node, undefined);
         });
         return mavenTreeNodes;
     }
@@ -188,24 +187,22 @@ export class MavenUtils {
      * Update all node's children as well.
      * @param node - Tree node.
      */
-    public static async UpdateClickableNode(node: DependenciesTreeNode) {
-        const text: string | undefined = (await MavenUtils.openPomXml(node))?.getText();
-        if (text === undefined) {
-            node.contextValue = ContextKeys.DISABLED_TREE_NODE;
+    public static async updateClickableNode(node: DependenciesTreeNode, dependenciesMatch: RegExpMatchArray | null | undefined) {
+        if (!dependenciesMatch || dependenciesMatch.length === 0 || !this.isExistInPom(node, dependenciesMatch)) {
+            node.contextValue = '';
         }
-        const dependenciesMatch: RegExpMatchArray | null | undefined = text?.match(/<dependency>(.|\s)*?<\/dependency>/gi);
-        node.children.forEach(c => {
-            if (!this.isExistInPom(c, dependenciesMatch)) {
-                c.contextValue = ContextKeys.DISABLED_TREE_NODE;
-            }
-            if (c.children.length > 0) {
-                this.UpdateClickableNode(c);
-            }
+        // Prepare the closer pom.xml for the children.
+        if (node instanceof MavenTreeNode) {
+            const text: string | undefined = (await MavenUtils.openPomXml(node))?.getText();
+            dependenciesMatch = text?.match(/<dependency>(.|\s)*?<\/dependency>/gi);
+        }
+        node.children.forEach(async c => {
+            this.updateClickableNode(c, dependenciesMatch);
         });
     }
 
-    private static isExistInPom(node: DependenciesTreeNode | undefined, dependenciesMatch: RegExpMatchArray | null | undefined): boolean {
-        if (node === undefined || !dependenciesMatch) {
+    private static isExistInPom(node: DependenciesTreeNode, dependenciesMatch: RegExpMatchArray | null | undefined): boolean {
+        if (!dependenciesMatch) {
             return false;
         }
         const [groupId, artifactId] = node.generalInfo
@@ -216,8 +213,12 @@ export class MavenUtils {
             return false;
         }
         let dependencyMatch: string[] | undefined = dependenciesMatch?.filter(group => group.includes(groupId) && group.includes(artifactId));
-        if (dependencyMatch === undefined || dependencyMatch?.length === 0) {
-            return this.isExistInPom(node.parent, dependenciesMatch);
+        if (!dependencyMatch || dependencyMatch.length === 0) {
+            // Check if the parent present in the pom.xml.
+            if (node.parent) {
+                return this.isExistInPom(node.parent, dependenciesMatch);
+            }
+            return false;
         }
         return true;
     }
