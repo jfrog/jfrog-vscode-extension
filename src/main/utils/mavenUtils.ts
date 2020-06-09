@@ -73,6 +73,24 @@ export class MavenUtils {
         return [];
     }
 
+    public static getDependency(document: vscode.TextDocument, dependenciesTreeNode: DependenciesTreeNode | undefined): string {
+        if (!dependenciesTreeNode) {
+            return '';
+        }
+        let pomXmlContent: string = document.getText();
+        let [groupId, artifactId] = dependenciesTreeNode.generalInfo
+            .getComponentId()
+            .toLowerCase()
+            .split(':');
+        let dependencyMatch: string[] | undefined = pomXmlContent
+            .match(/<dependency>(.|\s)*?<\/dependency>/gi)
+            ?.filter(group => group.includes(groupId) && group.includes(artifactId));
+        if (dependencyMatch && dependencyMatch.length > 0) {
+            return dependencyMatch[0];
+        }
+        return '';
+    }
+
     /**
      * Find pom.xml files in workspaces.
      * @param workspaceFolders - Base workspace folders to search
