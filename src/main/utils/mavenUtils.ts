@@ -176,18 +176,23 @@ export class MavenUtils {
                 treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }
         }
-        mavenTreeNodes.forEach(node => this.updateClickableNode(node));
+        mavenTreeNodes.forEach(node => this.updateShowInProjectDescriptor(node));
         return mavenTreeNodes;
     }
 
     /**
-     * Check if 'node' has related dependency element in pom.xml.
-     * If no such line exists, disable right click on tree view.
+     * Check if 'node' has related pom.xml in project dir.
+     * If no such exists, disable right click 'Show in project descriptor'.
      * Update all node's children as well.
      * @param node - Tree node.
      */
-    public static async updateClickableNode(node: DependenciesTreeNode, dependenciesMatch?: RegExpMatchArray | null, parentClickable?: boolean) {
-        if (!!dependenciesMatch && dependenciesMatch.length > 0 && !this.isExistInPom(node, dependenciesMatch, !!parentClickable)) {
+    public static async updateShowInProjectDescriptor(
+        node: DependenciesTreeNode,
+        dependenciesMatch?: RegExpMatchArray | null,
+        parentCanReachPom?: boolean
+    ) {
+        let nodeCanReachPom: boolean = this.isPomReachable(node, dependenciesMatch, parentCanReachPom);
+        if (!nodeCanReachPom) {
             node.contextValue = '';
         }
         // Prepare the closer pom.xml for the children.
@@ -195,12 +200,30 @@ export class MavenUtils {
             const text: string | undefined = (await MavenUtils.openPomXml(node))?.getText();
             dependenciesMatch = text?.match(/<dependency>(.|\s)*?<\/dependency>/gi);
         }
-        let nodeClickable: boolean = this.isNodeClickable(node);
-        node.children.forEach(async c => this.updateClickableNode(c, dependenciesMatch, nodeClickable));
+        node.children.forEach(async c => await this.updateShowInProjectDescriptor(c, dependenciesMatch, nodeCanReachPom));
     }
 
-    private static isExistInPom(node: DependenciesTreeNode, dependenciesMatch?: RegExpMatchArray, parentClickable?: boolean): boolean {
-        if (!dependenciesMatch) {
+    private static isPomReachable(node: DependenciesTreeNode, pomDependencies?: RegExpMatchArray | null, parentCanReachPom?: boolean): boolean {
+        // MavenTreeNode contains the path to Pom.xml.
+        if (node instanceof MavenTreeNode) {
+            return true;
+        }
+        if (this.searchNodeInPom(node, pomDependencies)) {
+            return true;
+        }
+        return this.isNodeDirectDependency(node) ? false : !!parentCanReachPom;
+    }
+
+    private static isNodeDirectDependency(node: DependenciesTreeNode) {
+        if (node.parent instanceof MavenTreeNode) {
+            return true;
+        }
+        return false;
+    }
+
+    private static searchNodeInPom(node: DependenciesTreeNode, pomDependencies?: RegExpMatchArray | null) {
+        // Pom without dependencies.
+        if (!pomDependencies || pomDependencies.length === 0) {
             return false;
         }
         const [groupId, artifactId] = node.generalInfo
@@ -210,20 +233,8 @@ export class MavenUtils {
         if (groupId === '' || artifactId === '') {
             return false;
         }
-        let dependencyMatch: string[] | undefined = dependenciesMatch?.filter(group => group.includes(groupId) && group.includes(artifactId));
-        if (!dependencyMatch || dependencyMatch.length === 0) {
-            // Pom.xml.
-            if (node instanceof MavenTreeNode) {
-                return true;
-            }
-            // Direct dependency.
-            if (node.parent instanceof MavenTreeNode) {
-                return false;
-            }
-            // Transitive dependency.
-            return !!parentClickable;
-        }
-        return true;
+        let dependencyMatch: string[] | undefined = pomDependencies?.filter(group => group.includes(groupId) && group.includes(artifactId));
+        return !!dependencyMatch && dependencyMatch.length > 0;
     }
 
     /**
@@ -376,9 +387,5 @@ export class MavenUtils {
     public static installMavenGavReader() {
         ScanUtils.executeCmd('mvn org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file -Dfile=' + MavenUtils.MAVEN_GAV_READER);
         MavenUtils.mavenGavReaderInstalled = true;
-    }
-
-    private static isNodeClickable(node: DependenciesTreeNode): boolean {
-        return node.contextValue === ContextKeys.SHOW_IN_PROJECT_DESC_ENABLED;
     }
 }
