@@ -9,7 +9,6 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
-import { ContextKeys } from '../constants/contextKeys';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
