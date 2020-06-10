@@ -175,7 +175,82 @@ export class MavenUtils {
                 treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }
         }
+        mavenTreeNodes.forEach(node => this.updateShowInProjectDescriptor(node));
         return mavenTreeNodes;
+    }
+
+    /**
+     * Check if 'node' has related pom.xml in project dir.
+     * If no such exists, disable right click 'Show in project descriptor'.
+     * Update all node's children as well.
+     * @param node - Tree node.
+     */
+    public static async updateShowInProjectDescriptor(
+        node: DependenciesTreeNode,
+        dependenciesMatch?: RegExpMatchArray | null,
+        parentCanReachPom?: boolean
+    ) {
+        let nodeCanReachPom: boolean = this.isPomReachable(node, dependenciesMatch, parentCanReachPom);
+        if (!nodeCanReachPom) {
+            node.contextValue = '';
+        }
+        // Prepare the closer pom.xml for the children.
+        if (node instanceof MavenTreeNode) {
+            const text: string | undefined = (await MavenUtils.openPomXml(node))?.getText();
+            dependenciesMatch = text?.match(/<dependency>(.|\s)*?<\/dependency>/gi);
+        }
+        node.children.forEach(async c => await this.updateShowInProjectDescriptor(c, dependenciesMatch, nodeCanReachPom));
+    }
+
+    private static isPomReachable(node: DependenciesTreeNode, pomDependencies?: RegExpMatchArray | null, parentCanReachPom?: boolean): boolean {
+        // MavenTreeNode contains the path to Pom.xml.
+        if (node instanceof MavenTreeNode) {
+            return true;
+        }
+        if (this.isNodeInPom(node, pomDependencies)) {
+            return true;
+        }
+        return !this.isNodeDirectDependency(node) && !!parentCanReachPom;
+    }
+
+    private static isNodeDirectDependency(node: DependenciesTreeNode) {
+        return node.parent instanceof MavenTreeNode;
+    }
+
+    private static isNodeInPom(node: DependenciesTreeNode, pomDependencies?: RegExpMatchArray | null) {
+        // Pom without dependencies.
+        if (!pomDependencies || pomDependencies.length === 0) {
+            return false;
+        }
+        const [groupId, artifactId] = node.generalInfo
+            .getComponentId()
+            .toLowerCase()
+            .split(':');
+        if (groupId === '' || artifactId === '') {
+            return false;
+        }
+        let dependencyMatch: string[] | undefined = pomDependencies?.filter(group => group.includes(groupId) && group.includes(artifactId));
+        return !!dependencyMatch && dependencyMatch.length > 0;
+    }
+
+    /**
+     * Open 'dependenciesTreeNode' pom.xml. If not found, search in upper tree level (recursive).
+     * @param dependenciesTreeNode - Tree node.
+     */
+    public static async openPomXml(dependenciesTreeNode: DependenciesTreeNode): Promise<vscode.TextDocument | undefined> {
+        // Search for the nearest pom.xml (MavenTreeNode) which matches the fs path of the input node
+        while (dependenciesTreeNode.parent && dependenciesTreeNode instanceof MavenTreeNode === false) {
+            dependenciesTreeNode = dependenciesTreeNode.parent;
+        }
+        let fsPath: string | undefined = (<MavenTreeNode>dependenciesTreeNode).workspaceFolder;
+        if (!fsPath) {
+            return;
+        }
+        let openPath: vscode.Uri = vscode.Uri.file(path.join(fsPath, 'pom.xml'));
+        if (!openPath) {
+            return;
+        }
+        return await vscode.workspace.openTextDocument(openPath);
     }
 
     /**

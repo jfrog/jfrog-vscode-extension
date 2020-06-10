@@ -126,7 +126,7 @@
             "view/item/context": [
                 {
                     "command": "jfrog.xray.showInProjectDesc",
-                    "when": "view == jfrog.xray"
+                    "when": "view == jfrog.xray && viewItem == jfrog.xray.showInProjectDesc.enabled"
                 }
             ]
         }

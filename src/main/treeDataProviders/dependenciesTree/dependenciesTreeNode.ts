@@ -5,6 +5,7 @@ import { Issue } from '../../types/issue';
 import { License } from '../../types/license';
 import { Severity } from '../../types/severity';
 import { IconsPaths } from '../../utils/iconsPaths';
+import { ContextKeys } from '../../constants/contextKeys';
 
 export class DependenciesTreeNode extends vscode.TreeItem {
     private _children: DependenciesTreeNode[] = [];
@@ -12,10 +13,16 @@ export class DependenciesTreeNode extends vscode.TreeItem {
     private _issues: Collections.Set<Issue> = new Collections.Set(issue => issue.summary);
     private _topIssue: Issue;
 
-    constructor(protected _generalInfo: GeneralInfo, collapsibleState?: vscode.TreeItemCollapsibleState, private _parent?: DependenciesTreeNode) {
+    constructor(
+        protected _generalInfo: GeneralInfo,
+        collapsibleState?: vscode.TreeItemCollapsibleState,
+        private _parent?: DependenciesTreeNode,
+        contextValue?: string
+    ) {
         super(_generalInfo.artifactId, collapsibleState);
         this._topIssue = new Issue('', Severity.Normal, '', '');
         this.iconPath = IconsPaths.NORMAL_SEVERITY;
+        this.contextValue = contextValue || ContextKeys.SHOW_IN_PROJECT_DESC_ENABLED;
         if (_parent) {
             _parent.children.push(this);
         }
