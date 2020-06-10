@@ -207,20 +207,17 @@ export class MavenUtils {
         if (node instanceof MavenTreeNode) {
             return true;
         }
-        if (this.searchNodeInPom(node, pomDependencies)) {
+        if (this.isNodeInPom(node, pomDependencies)) {
             return true;
         }
-        return this.isNodeDirectDependency(node) ? false : !!parentCanReachPom;
+        return !this.isNodeDirectDependency(node) && !!parentCanReachPom;
     }
 
     private static isNodeDirectDependency(node: DependenciesTreeNode) {
-        if (node.parent instanceof MavenTreeNode) {
-            return true;
-        }
-        return false;
+        return node.parent instanceof MavenTreeNode;
     }
 
-    private static searchNodeInPom(node: DependenciesTreeNode, pomDependencies?: RegExpMatchArray | null) {
+    private static isNodeInPom(node: DependenciesTreeNode, pomDependencies?: RegExpMatchArray | null) {
         // Pom without dependencies.
         if (!pomDependencies || pomDependencies.length === 0) {
             return false;
