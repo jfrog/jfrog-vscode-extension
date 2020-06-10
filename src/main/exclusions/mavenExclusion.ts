@@ -1,20 +1,19 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 import * as xml from 'xmlbuilder2';
 import { XMLSerializedAsObject, XMLSerializedAsObjectArray } from 'xmlbuilder2/lib/interfaces';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { TreesManager } from '../treeDataProviders/treesManager';
 import { MavenUtils } from '../utils/mavenUtils';
 import { AbstractExclusion } from './abstractExclusion';
 
 export class MavenExclusion extends AbstractExclusion {
-    constructor() {
+    constructor(private _treesManager: TreesManager) {
         super(MavenUtils.PKG_TYPE);
     }
 
     /** @override */
     public async excludeDependency(dependenciesTreeNode: DependenciesTreeNode) {
-        // Return if it is a node
         if (dependenciesTreeNode.isDependenciesTreeRoot() || dependenciesTreeNode.parent instanceof MavenTreeNode) {
             return;
         }
@@ -22,64 +21,55 @@ export class MavenExclusion extends AbstractExclusion {
         if (!directDependency) {
             return;
         }
-        let textEditor: vscode.TextEditor | undefined = await this.openPomXml(directDependency);
+        let textDocument: vscode.TextDocument | undefined = await MavenUtils.openPomXml(directDependency);
         // Return if pom.xml not found
-        if (!textEditor) {
+        if (!textDocument) {
             return;
         }
 
-        let dependencyStr: string = MavenUtils.getDependency(textEditor.document, directDependency);
+        let dependencyStr: string = MavenUtils.getDependency(textDocument, directDependency);
         if (dependencyStr === '') {
             return;
         }
         let dependencyObj: XMLSerializedAsObject = xml.fragment(dependencyStr).end({ format: 'object' }) as XMLSerializedAsObject;
 
         this.addExclusion(dependenciesTreeNode, dependencyObj);
-        let startPos: vscode.Position = textEditor.document.positionAt(textEditor.document.getText().indexOf(dependencyStr));
-        let endPos: vscode.Position = textEditor.document.positionAt(textEditor.document.getText().indexOf(dependencyStr) + dependencyStr.length);
-
-        dependencyStr = xml.fragment(dependencyObj).end({ prettyPrint: true, indent: ' '.repeat(startPos.character / 2), offset: 2 });
-        dependencyStr = dependencyStr.replace(/^(\s*)/, '');
-
-        await textEditor.edit(textEdit => {
-            textEdit.replace(new vscode.Range(startPos, endPos), dependencyStr);
-        });
-        await textEditor.document.save();
-        this.selectExclusionsText(textEditor, startPos);
+        let dependencyOffset: number = textDocument.getText().indexOf(dependencyStr);
+        let startPos: vscode.Position = textDocument.positionAt(dependencyOffset);
+        let endPos: vscode.Position = textDocument.positionAt(dependencyOffset + dependencyStr.length);
+        await this.saveExclusion(textDocument, startPos, endPos, dependencyObj);
+        this._treesManager.dependenciesTreeDataProvider.removeNode(dependenciesTreeNode);
+        this.highlightExclusionsTag(textDocument, startPos);
     }
 
+    /**
+     * Get the direct dependency of the input dependency
+     * @param dependenciesTreeNode - the dependencies tree node
+     */
     private getDirectDependency(dependenciesTreeNode: DependenciesTreeNode): DependenciesTreeNode {
-        // Search for the nearest pom.xml (MavenTreeNode) which matches the fs path of the input node
         while (
             dependenciesTreeNode.parent &&
-            !(dependenciesTreeNode instanceof MavenTreeNode) &&
-            !(dependenciesTreeNode.parent instanceof MavenTreeNode)
+            !(dependenciesTreeNode instanceof MavenTreeNode || dependenciesTreeNode.parent instanceof MavenTreeNode)
         ) {
-            dependenciesTreeNode = dependenciesTreeNode.parent;
+            dependenciesTreeNode = dependenciesTreeNode.parent as DependenciesTreeNode;
         }
         return dependenciesTreeNode;
     }
 
-    private async openPomXml(directDependency: DependenciesTreeNode): Promise<vscode.TextEditor | undefined> {
-        let fsPath: string | undefined = (directDependency.parent as MavenTreeNode).workspaceFolder;
-        if (!fsPath) {
-            return;
-        }
-        let openPath: vscode.Uri = vscode.Uri.file(path.join(fsPath, 'pom.xml'));
-        if (!openPath) {
-            return;
-        }
-        let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(openPath);
-        return await vscode.window.showTextDocument(textDocument);
-    }
-
+    /**
+     * Create exclusion node for the input group and artifact ID.
+     * @param groupId - The group ID
+     * @param artifactId - The artifact ID
+     */
     private createExclusion(groupId: string, artifactId: string): XMLSerializedAsObject {
         let exclusionStr: string = '<exclusion><groupId>' + groupId + '</groupId><artifactId>' + artifactId + '</artifactId></exclusion>';
         return xml.convert(exclusionStr, { format: 'object' }) as XMLSerializedAsObject;
     }
 
     /**
-     * Add exclusion to the dependency object
+     * Add exclusion to the dependency object.
+     * @exclusionNode - The dependencies tree node to exclude in the pom
+     * @dependencyObj - The direct dependency tag '<dependency>...</dependency>' object
      */
     private addExclusion(exclusionNode: DependenciesTreeNode, dependencyObj: XMLSerializedAsObject) {
         let dependencyXmlTag: XMLSerializedAsObject = dependencyObj['dependency'] as XMLSerializedAsObject;
@@ -108,20 +98,64 @@ export class MavenExclusion extends AbstractExclusion {
         dependencyXmlTag['exclusions'] = exclusionsXmlTag;
     }
 
+    /**
+     * Save exclusion to pom.xml.
+     * @param textDocument - The pom.xml
+     * @param startPos - The start position of the dependency
+     * @param endPos - The end position of the dependency
+     * @param dependencyObj - The direct dependency tag '<dependency>...</dependency>' object
+     */
+    private async saveExclusion(
+        textDocument: vscode.TextDocument,
+        startPos: vscode.Position,
+        endPos: vscode.Position,
+        dependencyObj: XMLSerializedAsObject
+    ) {
+        let dependencyWithExclusionStr: string = xml
+            .fragment(dependencyObj)
+            .end({ prettyPrint: true, indent: ' '.repeat(startPos.character / 2), offset: 2 })
+            .replace(/^(\s*)/, '');
+
+        let textEdit: vscode.TextEditor = await vscode.window.showTextDocument(textDocument);
+        await textEdit.edit(textEdit => {
+            textEdit.replace(new vscode.Range(startPos, endPos), dependencyWithExclusionStr);
+        });
+        await textDocument.save();
+    }
+
+    /**
+     * Return true if the exclusion is already exist in pom. This cover the case of many exclusions under <exclusions>...</exclusions> tag.
+     * @param exclusions - The candidate exclusion
+     * @param groupId - The group ID
+     * @param artifactId - The artifact ID
+     */
     private isExclusionExistInArray(exclusions: XMLSerializedAsObjectArray, groupId: string, artifactId: string): boolean {
         return !!exclusions.find(exclusion => this.isExclusionExist(exclusion as XMLSerializedAsObject, groupId, artifactId));
     }
 
+    /**
+     * Return true if the exclusion is already exist in pom. This cover the case of a single exclusion under <exclusions>...</exclusions> tag.
+     * @param exclusions - The candidate exclusion
+     * @param groupId - The group ID
+     * @param artifactId - The artifact ID
+     */
     private isExclusionExist(exclusion: XMLSerializedAsObject, groupId: string, artifactId: string): boolean {
         return exclusion.artifactId === artifactId && exclusion.groupId === groupId;
     }
 
-    private selectExclusionsText(textEditor: vscode.TextEditor, startPos: vscode.Position) {
-        let offset: number = textEditor.document.offsetAt(startPos);
-        let text: string = textEditor.document.getText();
-        textEditor.selection = new vscode.Selection(
-            textEditor.document.positionAt(text.indexOf('<exclusions>', offset)),
-            textEditor.document.positionAt(text.indexOf('</exclusions>', offset) + 13)
-        );
+    /**
+     * Select <exclusions>...</exclusions> text in the pom.
+     * @param textDocument - The document
+     * @param dependencyPos - The start position of the dependency in the pom.
+     */
+    private highlightExclusionsTag(textDocument: vscode.TextDocument, dependencyPos: vscode.Position) {
+        let offset: number = textDocument.offsetAt(dependencyPos);
+        let text: string = textDocument.getText();
+        vscode.window.showTextDocument(textDocument, {
+            selection: new vscode.Selection(
+                textDocument.positionAt(text.indexOf('<exclusions>', offset)),
+                textDocument.positionAt(text.indexOf('</exclusions>', offset) + 13)
+            )
+        } as vscode.TextDocumentShowOptions);
     }
 }

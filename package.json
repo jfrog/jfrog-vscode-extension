@@ -130,11 +130,11 @@
             "view/item/context": [
                 {
                     "command": "jfrog.xray.showInProjectDesc",
-                    "when": "view == jfrog.xray && viewItem == jfrog.xray.showInProjectDesc.enabled"
+                    "when": "viewItem == jfrog.xray.showInProjectDesc.enabled || viewItem == jfrog.xray.excludeDependency.enabled"
                 },
                 {
                     "command": "jfrog.xray.excludeDependency",
-                    "when": "view == jfrog.xray && viewItem == jfrog.xray.showInProjectDesc.enabled"
+                    "when": "viewItem == jfrog.xray.excludeDependency.enabled"
                 }
             ]
         }

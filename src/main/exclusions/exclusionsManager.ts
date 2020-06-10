@@ -3,14 +3,15 @@ import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { AbstractExclusion } from './abstractExclusion';
 import { MavenExclusion } from './mavenExclusion';
+import { TreesManager } from '../treeDataProviders/treesManager';
 /**
- * Show the dependency in the project descriptor (i.e package.json) file after right click on the components tree and a left click on "Show in project descriptor".
+ * Exclude the dependency in the project descriptor (i.e pom.xml) file after right click on the components tree and a left click on "Exclude dependency".
  */
 export class ExclusionsManager implements ExtensionComponent {
     private _exclusions: AbstractExclusion[] = [];
 
-    constructor() {
-        this._exclusions.push(new MavenExclusion());
+    constructor(treesManager: TreesManager) {
+        this._exclusions.push(new MavenExclusion(treesManager));
     }
 
     public activate(context: vscode.ExtensionContext) {
@@ -19,7 +20,7 @@ export class ExclusionsManager implements ExtensionComponent {
 
     public excludeDependency(dependenciesTreeNode: DependenciesTreeNode) {
         this._exclusions
-            .filter(focus => focus.isMatched(dependenciesTreeNode))
+            .filter(exclusion => exclusion.isMatched(dependenciesTreeNode))
             .forEach(exclusion => exclusion.excludeDependency(dependenciesTreeNode));
     }
 }

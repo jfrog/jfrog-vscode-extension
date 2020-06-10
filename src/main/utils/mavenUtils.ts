@@ -9,6 +9,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
+import { ContextKeys } from '../constants/contextKeys';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
@@ -211,6 +212,8 @@ export class MavenUtils {
         let nodeCanReachPom: boolean = this.isPomReachable(node, dependenciesMatch, parentCanReachPom);
         if (!nodeCanReachPom) {
             node.contextValue = '';
+        } else if (!(node.parent instanceof MavenTreeNode) && node.parent?.label) {
+            node.contextValue = ContextKeys.EXCLUDE_DEPENDENCY_ENABLED;
         }
         // Prepare the closer pom.xml for the children.
         if (node instanceof MavenTreeNode) {

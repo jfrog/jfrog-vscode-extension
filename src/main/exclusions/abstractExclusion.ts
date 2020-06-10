@@ -1,7 +1,7 @@
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 
 /**
- * @see FocusManager
+ * @see ExclusionManger
  */
 export abstract class AbstractExclusion {
     constructor(private _pkgType: string) {}

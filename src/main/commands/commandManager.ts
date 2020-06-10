@@ -19,7 +19,7 @@ export class CommandManager implements ExtensionComponent {
         private _treesManager: TreesManager,
         private _filterManager: FilterManager,
         private _focusManager: FocusManager,
-        private _exclusionManager: ExclusionsManager,
+        private _exclusionManager: ExclusionsManager
     ) {}
 
     public activate(context: vscode.ExtensionContext) {

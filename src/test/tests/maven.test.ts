@@ -15,16 +15,18 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenUtils } from '../../main/utils/mavenUtils';
 import { PomTree } from '../../main/utils/pomTree';
 import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
+import { MavenExclusion } from '../../main/exclusions/mavenExclusion';
 
 /**
- * Test functionality of @class NpmUtils.
+ * Test functionality of Maven.
  */
-describe('Maven Utils Tests', () => {
+describe('Maven Tests', () => {
     let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
         workspaceState: { get(key: string) {} } as vscode.Memento
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
+    let mavenExclusion: MavenExclusion = new MavenExclusion(treesManager);
     let projectDirs: string[] = ['dependency', 'empty', 'multiPomDependency'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
@@ -216,7 +218,7 @@ describe('Maven Utils Tests', () => {
     /**
      * Test createMavenDependenciesTrees.
      */
-    it('Create Maven Dependencies Trees', async () => {
+    it('Create Maven dependencies trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''));
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
         let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
@@ -301,6 +303,35 @@ describe('Maven Utils Tests', () => {
         assert.equal(res[0].children[1].children[5].componentId, 'org.testng:testng:5.9');
         assert.isTrue(res[0].children[1].children[5] instanceof DependenciesTreeNode);
         assert.deepEqual(res[0].children[1].children[5].parent, res[0].children[1]);
+    });
+
+    /**
+     * Test excludeDependency.
+     */
+    it('Exclude dependency', async () => {
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''));
+        let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+        let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
+
+        // Read two nodes from tree
+        let node1: DependenciesTreeNode = res[0]?.children[1]?.children[0]?.children[0];
+        let node2: DependenciesTreeNode = res[0]?.children[1]?.children[0]?.children[1];
+        assert.isDefined(node1);
+        assert.isDefined(node2);
+
+        // Exclude node 1 from tree
+        await mavenExclusion.excludeDependency(node1);
+
+        // Assert that node 1 is removed from tree
+        let directParent: DependenciesTreeNode = res[0]?.children[1]?.children[0];
+        assert.equal(1, directParent.children.length);
+        assert.equal(directParent.children[0].generalInfo.artifactId, node2.generalInfo.artifactId);
+
+        // Run scan again to verify correctness of the tree
+        res = await runCreateMavenDependenciesTrees(componentsToScan, parent);
+        directParent = res[0]?.children[1]?.children[0];
+        assert.equal(1, directParent.children.length);
+        assert.equal(directParent.children[0].generalInfo.artifactId, node2.generalInfo.artifactId);
     });
 
     async function runCreateMavenDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
