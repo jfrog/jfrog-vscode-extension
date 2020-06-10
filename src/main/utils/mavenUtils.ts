@@ -9,6 +9,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
+import { ContextKeys } from '../constants/contextKeys';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
@@ -175,7 +176,7 @@ export class MavenUtils {
                 treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }
         }
-        mavenTreeNodes.forEach(node => this.updateClickableNode(node, undefined, false));
+        mavenTreeNodes.forEach(node => this.updateClickableNode(node));
         return mavenTreeNodes;
     }
 
@@ -185,12 +186,8 @@ export class MavenUtils {
      * Update all node's children as well.
      * @param node - Tree node.
      */
-    public static async updateClickableNode(
-        node: DependenciesTreeNode,
-        dependenciesMatch: RegExpMatchArray | null | undefined,
-        parentClickable: boolean
-    ) {
-        if (!dependenciesMatch || dependenciesMatch.length === 0 || !this.isExistInPom(node, dependenciesMatch, parentClickable)) {
+    public static async updateClickableNode(node: DependenciesTreeNode, dependenciesMatch?: RegExpMatchArray | null, parentClickable?: boolean) {
+        if (!!dependenciesMatch && dependenciesMatch.length > 0 && !this.isExistInPom(node, dependenciesMatch, !!parentClickable)) {
             node.contextValue = '';
         }
         // Prepare the closer pom.xml for the children.
@@ -198,14 +195,11 @@ export class MavenUtils {
             const text: string | undefined = (await MavenUtils.openPomXml(node))?.getText();
             dependenciesMatch = text?.match(/<dependency>(.|\s)*?<\/dependency>/gi);
         }
-        node.children.forEach(async c => this.updateClickableNode(c, dependenciesMatch, this.isNodeClickable(node)));
+        let nodeClickable: boolean = this.isNodeClickable(node);
+        node.children.forEach(async c => this.updateClickableNode(c, dependenciesMatch, nodeClickable));
     }
 
-    private static isExistInPom(
-        node: DependenciesTreeNode,
-        dependenciesMatch: RegExpMatchArray | null | undefined,
-        parentClickable: boolean
-    ): boolean {
+    private static isExistInPom(node: DependenciesTreeNode, dependenciesMatch?: RegExpMatchArray, parentClickable?: boolean): boolean {
         if (!dependenciesMatch) {
             return false;
         }
@@ -218,7 +212,16 @@ export class MavenUtils {
         }
         let dependencyMatch: string[] | undefined = dependenciesMatch?.filter(group => group.includes(groupId) && group.includes(artifactId));
         if (!dependencyMatch || dependencyMatch.length === 0) {
-            return parentClickable;
+            // Pom.xml.
+            if (node instanceof MavenTreeNode) {
+                return true;
+            }
+            // Direct dependency.
+            if (node.parent instanceof MavenTreeNode) {
+                return false;
+            }
+            // Transitive dependency.
+            return !!parentClickable;
         }
         return true;
     }
@@ -376,6 +379,6 @@ export class MavenUtils {
     }
 
     private static isNodeClickable(node: DependenciesTreeNode): boolean {
-        return node.contextValue === 'jfrog.xray.showInProjectDesc.enabled';
+        return node.contextValue === ContextKeys.SHOW_IN_PROJECT_DESC_ENABLED;
     }
 }
