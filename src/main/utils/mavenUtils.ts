@@ -175,9 +175,7 @@ export class MavenUtils {
                 treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }
         }
-        mavenTreeNodes.forEach(node => {
-            this.updateClickableNode(node, undefined);
-        });
+        mavenTreeNodes.forEach(node => this.updateClickableNode(node, undefined, false));
         return mavenTreeNodes;
     }
 
@@ -187,8 +185,12 @@ export class MavenUtils {
      * Update all node's children as well.
      * @param node - Tree node.
      */
-    public static async updateClickableNode(node: DependenciesTreeNode, dependenciesMatch: RegExpMatchArray | null | undefined) {
-        if (!dependenciesMatch || dependenciesMatch.length === 0 || !this.isExistInPom(node, dependenciesMatch)) {
+    public static async updateClickableNode(
+        node: DependenciesTreeNode,
+        dependenciesMatch: RegExpMatchArray | null | undefined,
+        parentClickable: boolean
+    ) {
+        if (!dependenciesMatch || dependenciesMatch.length === 0 || !this.isExistInPom(node, dependenciesMatch, parentClickable)) {
             node.contextValue = '';
         }
         // Prepare the closer pom.xml for the children.
@@ -196,12 +198,14 @@ export class MavenUtils {
             const text: string | undefined = (await MavenUtils.openPomXml(node))?.getText();
             dependenciesMatch = text?.match(/<dependency>(.|\s)*?<\/dependency>/gi);
         }
-        node.children.forEach(async c => {
-            this.updateClickableNode(c, dependenciesMatch);
-        });
+        node.children.forEach(async c => this.updateClickableNode(c, dependenciesMatch, this.isNodeClickable(node)));
     }
 
-    private static isExistInPom(node: DependenciesTreeNode, dependenciesMatch: RegExpMatchArray | null | undefined): boolean {
+    private static isExistInPom(
+        node: DependenciesTreeNode,
+        dependenciesMatch: RegExpMatchArray | null | undefined,
+        parentClickable: boolean
+    ): boolean {
         if (!dependenciesMatch) {
             return false;
         }
@@ -214,11 +218,7 @@ export class MavenUtils {
         }
         let dependencyMatch: string[] | undefined = dependenciesMatch?.filter(group => group.includes(groupId) && group.includes(artifactId));
         if (!dependencyMatch || dependencyMatch.length === 0) {
-            // Check if the parent present in the pom.xml.
-            if (node.parent) {
-                return this.isExistInPom(node.parent, dependenciesMatch);
-            }
-            return false;
+            return parentClickable;
         }
         return true;
     }
@@ -373,5 +373,9 @@ export class MavenUtils {
     public static installMavenGavReader() {
         ScanUtils.executeCmd('mvn org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file -Dfile=' + MavenUtils.MAVEN_GAV_READER);
         MavenUtils.mavenGavReaderInstalled = true;
+    }
+
+    private static isNodeClickable(node: DependenciesTreeNode): boolean {
+        return node.contextValue === 'jfrog.xray.showInProjectDesc.enabled';
     }
 }
