@@ -198,25 +198,28 @@ export class MavenUtils {
                 treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }
         }
-        mavenTreeNodes.forEach(node => this.updateShowInProjectDescriptor(node));
+        mavenTreeNodes.forEach(node => this.updateContextValue(node));
         return mavenTreeNodes;
     }
 
     /**
-     * Check if 'node' has related pom.xml in project dir.
-     * If no such exists, disable right click 'Show in project descriptor'.
-     * Update all node's children as well.
+     * The value in 'contextValue' is read in the pom.xml to decide what to show components in the right click menu.
+     * if 'node' has not related pom.xml in project dir, disable right click 'Show in project descriptor'.
+     * If 'node' has a related pom.xml file and it is also a transitive dependency, enable 'Exclude dependency'. 
+     * Recursively update all node's children as well.
      * @param node - Tree node.
      */
-    public static async updateShowInProjectDescriptor(
+    public static async updateContextValue(
         node: DependenciesTreeNode,
         dependenciesMatch?: RegExpMatchArray | null,
         parentCanReachPom?: boolean
     ) {
         let nodeCanReachPom: boolean = this.isPomReachable(node, dependenciesMatch, parentCanReachPom);
         if (!nodeCanReachPom) {
+            // Disable right click menu on the dependency
             node.contextValue = '';
         } else if (!(node.parent instanceof MavenTreeNode) && node.parent?.label) {
+            // Enable 'Exclude dependency' and 'Show in project descriptor' in right click menu on the dependency
             node.contextValue = ContextKeys.EXCLUDE_DEPENDENCY_ENABLED;
         }
         // Prepare the closer pom.xml for the children.
@@ -224,9 +227,16 @@ export class MavenUtils {
             const text: string | undefined = (await MavenUtils.openPomXml(node))?.getText();
             dependenciesMatch = text?.match(/<dependency>(.|\s)*?<\/dependency>/gi);
         }
-        node.children.forEach(async c => await this.updateShowInProjectDescriptor(c, dependenciesMatch, nodeCanReachPom));
+        node.children.forEach(async c => await this.updateContextValue(c, dependenciesMatch, nodeCanReachPom));
     }
 
+    /**
+     * Return true if the dependency or an ancestor of the dependency appears in the pom.
+     * Return false if the pom is not in the project or if the dependency is defined by pom properties.
+     * @param node - The dependency node
+     * @param pomDependencies - The <dependency>...</dependency> tag in pom
+     * @param parentCanReachPom - True if one of the ancestors is pom reachable
+     */
     private static isPomReachable(node: DependenciesTreeNode, pomDependencies?: RegExpMatchArray | null, parentCanReachPom?: boolean): boolean {
         // MavenTreeNode contains the path to Pom.xml.
         if (node instanceof MavenTreeNode) {

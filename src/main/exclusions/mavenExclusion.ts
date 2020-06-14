@@ -23,7 +23,7 @@ export class MavenExclusion extends AbstractExclusion {
         if (dependenciesTreeNode.isDependenciesTreeRoot() || dependenciesTreeNode.parent instanceof MavenTreeNode) {
             return;
         }
-        let directDependency: DependenciesTreeNode = this.getDirectDependency(dependenciesTreeNode);
+        let directDependency: DependenciesTreeNode = this.getRootDependency(dependenciesTreeNode);
         if (!directDependency) {
             return;
         }
@@ -50,10 +50,10 @@ export class MavenExclusion extends AbstractExclusion {
     }
 
     /**
-     * Get the direct dependency of the input dependency
+     * Get the root dependency of the input dependency, i.e the dependency that appear in the pom.xml.
      * @param dependenciesTreeNode - the dependencies tree node
      */
-    private getDirectDependency(dependenciesTreeNode: DependenciesTreeNode): DependenciesTreeNode {
+    private getRootDependency(dependenciesTreeNode: DependenciesTreeNode): DependenciesTreeNode {
         while (
             dependenciesTreeNode.parent &&
             !(dependenciesTreeNode instanceof MavenTreeNode || dependenciesTreeNode.parent instanceof MavenTreeNode)
@@ -90,14 +90,14 @@ export class MavenExclusion extends AbstractExclusion {
             return;
         }
         if (exclusionsXmlTag.exclusion instanceof Array) {
-            // More than one exclusion exist in dependency
-            if (this.isExclusionExistInArray(exclusionsXmlTag.exclusion, groupId, artifactId)) {
+            // More than one exclusion exists in dependency
+            if (this.isExclusionExistsInArray(exclusionsXmlTag.exclusion, groupId, artifactId)) {
                 return;
             }
             exclusionsXmlTag.exclusion.push(exclusion.exclusion as XMLSerializedAsObject);
         } else {
-            // One exclusion exist in dependency
-            if (this.isExclusionExist(exclusionsXmlTag.exclusion as XMLSerializedAsObject, groupId, artifactId)) {
+            // One exclusion exists in dependency
+            if (this.isExclusionExists(exclusionsXmlTag.exclusion as XMLSerializedAsObject, groupId, artifactId)) {
                 return;
             }
             exclusionsXmlTag.exclusion = [exclusionsXmlTag.exclusion as XMLSerializedAsObject, exclusion.exclusion as XMLSerializedAsObject];
@@ -135,22 +135,22 @@ export class MavenExclusion extends AbstractExclusion {
     }
 
     /**
-     * Return true if the exclusion is already exist in pom. This cover the case of many exclusions under <exclusions>...</exclusions> tag.
+     * Return true if the exclusion already exists in the pom. This covers the case of many exclusions under <exclusions>...</exclusions> tag.
      * @param exclusions - The candidate exclusion
      * @param groupId - The group ID
      * @param artifactId - The artifact ID
      */
-    private isExclusionExistInArray(exclusions: XMLSerializedAsObjectArray, groupId: string, artifactId: string): boolean {
-        return !!exclusions.find(exclusion => this.isExclusionExist(exclusion as XMLSerializedAsObject, groupId, artifactId));
+    private isExclusionExistsInArray(exclusions: XMLSerializedAsObjectArray, groupId: string, artifactId: string): boolean {
+        return !!exclusions.find(exclusion => this.isExclusionExists(exclusion as XMLSerializedAsObject, groupId, artifactId));
     }
 
     /**
-     * Return true if the exclusion is already exist in pom. This cover the case of a single exclusion under <exclusions>...</exclusions> tag.
+     * Return true if the exclusion already exists in the pom. This covers the case of a single exclusion under <exclusions>...</exclusions> tag.
      * @param exclusions - The candidate exclusion
      * @param groupId - The group ID
      * @param artifactId - The artifact ID
      */
-    private isExclusionExist(exclusion: XMLSerializedAsObject, groupId: string, artifactId: string): boolean {
+    private isExclusionExists(exclusion: XMLSerializedAsObject, groupId: string, artifactId: string): boolean {
         return exclusion.artifactId === artifactId && exclusion.groupId === groupId;
     }
 
