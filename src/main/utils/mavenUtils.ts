@@ -48,7 +48,7 @@ export class MavenUtils {
         let [groupId, artifactId, version] = MavenUtils.getGavArray(dependenciesTreeNode);
         let dependencyTag: string = MavenUtils.getDependencyTag(pomXmlContent, groupId, artifactId);
         if (dependencyTag) {
-            let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyTag[0]));
+            let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyTag));
             let arr: string[] = dependencyTag.split(/\r?\n/).filter(line => line.trim() !== '');
             for (let i: number = 0; i < arr.length; i++) {
                 let depInfo: string = arr[i].trim().toLowerCase();
