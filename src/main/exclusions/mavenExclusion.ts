@@ -8,6 +8,12 @@ import { MavenUtils } from '../utils/mavenUtils';
 import { AbstractExclusion } from './abstractExclusion';
 
 export class MavenExclusion extends AbstractExclusion {
+    // The number of indentations for the <dependency> tag in the pom.xml:
+    // <project>        <-- 0
+    //   <dependencies> <-- 1
+    //     <dependency> <-- 2
+    private static readonly DEPENDENCY_INDENTATIONS: number = 2;
+
     constructor(private _treesManager: TreesManager) {
         super(MavenUtils.PKG_TYPE);
     }
@@ -26,15 +32,16 @@ export class MavenExclusion extends AbstractExclusion {
         if (!textDocument) {
             return;
         }
-
-        let dependencyStr: string = MavenUtils.getDependency(textDocument, directDependency);
+        let pomXmlContent: string = textDocument.getText();
+        let [groupId, artifactId] = MavenUtils.getGavArray(directDependency);
+        let dependencyStr: string = MavenUtils.getDependencyTag(pomXmlContent, groupId, artifactId);
         if (dependencyStr === '') {
             return;
         }
         let dependencyObj: XMLSerializedAsObject = xml.fragment(dependencyStr).end({ format: 'object' }) as XMLSerializedAsObject;
 
         this.addExclusion(dependenciesTreeNode, dependencyObj);
-        let dependencyOffset: number = textDocument.getText().indexOf(dependencyStr);
+        let dependencyOffset: number = pomXmlContent.indexOf(dependencyStr);
         let startPos: vscode.Position = textDocument.positionAt(dependencyOffset);
         let endPos: vscode.Position = textDocument.positionAt(dependencyOffset + dependencyStr.length);
         await this.saveExclusion(textDocument, startPos, endPos, dependencyObj);
@@ -73,7 +80,7 @@ export class MavenExclusion extends AbstractExclusion {
      */
     private addExclusion(exclusionNode: DependenciesTreeNode, dependencyObj: XMLSerializedAsObject) {
         let dependencyXmlTag: XMLSerializedAsObject = dependencyObj['dependency'] as XMLSerializedAsObject;
-        let [groupId, artifactId] = exclusionNode.generalInfo.getComponentId().split(':');
+        let [groupId, artifactId] = MavenUtils.getGavArray(exclusionNode);
         let exclusion: XMLSerializedAsObject = this.createExclusion(groupId, artifactId);
         let exclusionsXmlTag: XMLSerializedAsObject = dependencyXmlTag['exclusions'] as XMLSerializedAsObject;
 
@@ -113,7 +120,11 @@ export class MavenExclusion extends AbstractExclusion {
     ) {
         let dependencyWithExclusionStr: string = xml
             .fragment(dependencyObj)
-            .end({ prettyPrint: true, indent: ' '.repeat(startPos.character / 2), offset: 2 })
+            .end({
+                prettyPrint: true,
+                indent: ' '.repeat(startPos.character / MavenExclusion.DEPENDENCY_INDENTATIONS),
+                offset: MavenExclusion.DEPENDENCY_INDENTATIONS
+            })
             .replace(/^(\s*)/, '');
 
         let textEdit: vscode.TextEditor = await vscode.window.showTextDocument(textDocument);

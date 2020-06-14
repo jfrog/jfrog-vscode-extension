@@ -45,16 +45,11 @@ export class MavenUtils {
         }
         let res: vscode.Position[] = [];
         let pomXmlContent: string = document.getText();
-        let [groupId, artifactId, version] = dependenciesTreeNode.generalInfo
-            .getComponentId()
-            .toLowerCase()
-            .split(':');
-        let dependencyMatch: string[] | undefined = pomXmlContent
-            .match(/<dependency>(.|\s)*?<\/dependency>/gi)
-            ?.filter(group => group.includes(groupId) && group.includes(artifactId));
-        if (dependencyMatch && dependencyMatch.length > 0) {
-            let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyMatch[0]));
-            let arr: string[] = dependencyMatch[0].split(/\r?\n/).filter(line => line.trim() !== '');
+        let [groupId, artifactId, version] = MavenUtils.getGavArray(dependenciesTreeNode);
+        let dependencyTag: string = MavenUtils.getDependencyTag(pomXmlContent, groupId, artifactId);
+        if (dependencyTag) {
+            let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyTag[0]));
+            let arr: string[] = dependencyTag.split(/\r?\n/).filter(line => line.trim() !== '');
             for (let i: number = 0; i < arr.length; i++) {
                 let depInfo: string = arr[i].trim().toLowerCase();
                 if (
@@ -74,15 +69,13 @@ export class MavenUtils {
         return [];
     }
 
-    public static getDependency(document: vscode.TextDocument, dependenciesTreeNode: DependenciesTreeNode | undefined): string {
-        if (!dependenciesTreeNode) {
-            return '';
-        }
-        let pomXmlContent: string = document.getText();
-        let [groupId, artifactId] = dependenciesTreeNode.generalInfo
-            .getComponentId()
-            .toLowerCase()
-            .split(':');
+    /**
+     * Get <dependency>...</dependency> tag from the pom.xml.
+     * @param pomXmlContent - The pom.xml content
+     * @param groupId - The dependency's group ID
+     * @param artifactId  - The dependency's artifact ID
+     */
+    public static getDependencyTag(pomXmlContent: string, groupId: string, artifactId: string): string {
         let dependencyMatch: string[] | undefined = pomXmlContent
             .match(/<dependency>(.|\s)*?<\/dependency>/gi)
             ?.filter(group => group.includes(groupId) && group.includes(artifactId));
@@ -90,6 +83,17 @@ export class MavenUtils {
             return dependencyMatch[0];
         }
         return '';
+    }
+
+    /**
+     * Get an array of [groupId, artifactId, version] from dependencies tree node.
+     * @param dependenciesTreeNode - The dependencies tree node
+     */
+    public static getGavArray(dependenciesTreeNode: DependenciesTreeNode): string[] {
+        return dependenciesTreeNode.generalInfo
+            .getComponentId()
+            .toLowerCase()
+            .split(':');
     }
 
     /**
