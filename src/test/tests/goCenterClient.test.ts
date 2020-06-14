@@ -37,8 +37,8 @@ describe('Go Center Tests', () => {
     });
 
     it('Metrics', async done => {
-        assert.isAtLeast(componentMetadata.contributors, 200);
-        assert.isAtLeast(componentMetadata.stars, 200);
+        assert.isAtLeast(componentMetadata.contributors, 100);
+        assert.isAtLeast(componentMetadata.stars, 100);
         done();
     });
 
