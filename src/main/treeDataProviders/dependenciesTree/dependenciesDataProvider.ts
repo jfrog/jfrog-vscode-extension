@@ -99,6 +99,15 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         this._onDidChangeTreeData.fire();
     }
 
+    public removeNode(node: DependenciesTreeNode) {
+        let nodeIndex: number | undefined = node.parent?.children.indexOf(node);
+        if (nodeIndex === undefined || nodeIndex < 0) {
+            return;
+        }
+        node.parent?.children.splice(nodeIndex, 1);
+        this.refresh(true);
+    }
+
     private async scanAndCacheComponents(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
         const totalComponents: number = this._componentsToScan.size() + this._goCenterComponentsToScan.size();
         if (totalComponents === 0) {

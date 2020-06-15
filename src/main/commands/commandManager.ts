@@ -7,6 +7,7 @@ import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { SetCredentialsNode } from '../treeDataProviders/utils/setCredentialsNode';
+import { ExclusionsManager } from '../exclusions/exclusionsManager';
 
 /**
  * Register and execute all commands in the extension.
@@ -17,11 +18,13 @@ export class CommandManager implements ExtensionComponent {
         private _connectionManager: ConnectionManager,
         private _treesManager: TreesManager,
         private _filterManager: FilterManager,
-        private _focusManager: FocusManager
+        private _focusManager: FocusManager,
+        private _exclusionManager: ExclusionsManager
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
         this.registerCommand(context, 'jfrog.xray.showInProjectDesc', dependenciesTreeNode => this.doShowInProjectDesc(dependenciesTreeNode));
+        this.registerCommand(context, 'jfrog.xray.excludeDependency', dependenciesTreeNode => this.doExcludeDependency(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.codeAction', dependenciesTreeNode => this.doCodeAction(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
@@ -42,6 +45,10 @@ export class CommandManager implements ExtensionComponent {
         }
         this._focusManager.focusOnDependency(dependenciesTreeNode);
         this.onSelectNode(dependenciesTreeNode);
+    }
+
+    private doExcludeDependency(dependenciesTreeNode: DependenciesTreeNode) {
+        this._exclusionManager.excludeDependency(dependenciesTreeNode);
     }
 
     /**

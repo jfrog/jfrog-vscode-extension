@@ -9,6 +9,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
+import { ContextKeys } from '../constants/contextKeys';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
@@ -44,16 +45,11 @@ export class MavenUtils {
         }
         let res: vscode.Position[] = [];
         let pomXmlContent: string = document.getText();
-        let [groupId, artifactId, version] = dependenciesTreeNode.generalInfo
-            .getComponentId()
-            .toLowerCase()
-            .split(':');
-        let dependencyMatch: string[] | undefined = pomXmlContent
-            .match(/<dependency>(.|\s)*?<\/dependency>/gi)
-            ?.filter(group => group.includes(groupId) && group.includes(artifactId));
-        if (dependencyMatch && dependencyMatch.length > 0) {
-            let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyMatch[0]));
-            let arr: string[] = dependencyMatch[0].split(/\r?\n/).filter(line => line.trim() !== '');
+        let [groupId, artifactId, version] = MavenUtils.getGavArray(dependenciesTreeNode);
+        let dependencyTag: string = MavenUtils.getDependencyTag(pomXmlContent, groupId, artifactId);
+        if (dependencyTag) {
+            let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyTag));
+            let arr: string[] = dependencyTag.split(/\r?\n/).filter(line => line.trim() !== '');
             for (let i: number = 0; i < arr.length; i++) {
                 let depInfo: string = arr[i].trim().toLowerCase();
                 if (
@@ -71,6 +67,33 @@ export class MavenUtils {
             return MavenUtils.getDependencyPos(document, dependenciesTreeNode.parent);
         }
         return [];
+    }
+
+    /**
+     * Get <dependency>...</dependency> tag from the pom.xml.
+     * @param pomXmlContent - The pom.xml content
+     * @param groupId - The dependency's group ID
+     * @param artifactId  - The dependency's artifact ID
+     */
+    public static getDependencyTag(pomXmlContent: string, groupId: string, artifactId: string): string {
+        let dependencyMatch: string[] | undefined = pomXmlContent
+            .match(/<dependency>(.|\s)*?<\/dependency>/gi)
+            ?.filter(group => group.includes(groupId) && group.includes(artifactId));
+        if (dependencyMatch && dependencyMatch.length > 0) {
+            return dependencyMatch[0];
+        }
+        return '';
+    }
+
+    /**
+     * Get an array of [groupId, artifactId, version] from dependencies tree node.
+     * @param dependenciesTreeNode - The dependencies tree node
+     */
+    public static getGavArray(dependenciesTreeNode: DependenciesTreeNode): string[] {
+        return dependenciesTreeNode.generalInfo
+            .getComponentId()
+            .toLowerCase()
+            .split(':');
     }
 
     /**
@@ -175,33 +198,41 @@ export class MavenUtils {
                 treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }
         }
-        mavenTreeNodes.forEach(node => this.updateShowInProjectDescriptor(node));
+        mavenTreeNodes.forEach(node => this.updateContextValue(node));
         return mavenTreeNodes;
     }
 
     /**
-     * Check if 'node' has related pom.xml in project dir.
-     * If no such exists, disable right click 'Show in project descriptor'.
-     * Update all node's children as well.
+     * The value in 'contextValue' is read in the pom.xml to decide what to show components in the right click menu.
+     * if 'node' has not related pom.xml in project dir, disable right click 'Show in project descriptor'.
+     * If 'node' has a related pom.xml file and it is also a transitive dependency, enable 'Exclude dependency'.
+     * Recursively update all node's children as well.
      * @param node - Tree node.
      */
-    public static async updateShowInProjectDescriptor(
-        node: DependenciesTreeNode,
-        dependenciesMatch?: RegExpMatchArray | null,
-        parentCanReachPom?: boolean
-    ) {
+    public static async updateContextValue(node: DependenciesTreeNode, dependenciesMatch?: RegExpMatchArray | null, parentCanReachPom?: boolean) {
         let nodeCanReachPom: boolean = this.isPomReachable(node, dependenciesMatch, parentCanReachPom);
         if (!nodeCanReachPom) {
+            // Disable right click menu on the dependency
             node.contextValue = '';
+        } else if (!(node.parent instanceof MavenTreeNode) && node.parent?.label) {
+            // Enable 'Exclude dependency' and 'Show in project descriptor' in right click menu on the dependency
+            node.contextValue = ContextKeys.EXCLUDE_DEPENDENCY_ENABLED;
         }
         // Prepare the closer pom.xml for the children.
         if (node instanceof MavenTreeNode) {
             const text: string | undefined = (await MavenUtils.openPomXml(node))?.getText();
             dependenciesMatch = text?.match(/<dependency>(.|\s)*?<\/dependency>/gi);
         }
-        node.children.forEach(async c => await this.updateShowInProjectDescriptor(c, dependenciesMatch, nodeCanReachPom));
+        node.children.forEach(async c => await this.updateContextValue(c, dependenciesMatch, nodeCanReachPom));
     }
 
+    /**
+     * Return true if the dependency or an ancestor of the dependency appears in the pom.
+     * Return false if the pom is not in the project or if the dependency is defined by pom properties.
+     * @param node - The dependency node
+     * @param pomDependencies - The <dependency>...</dependency> tag in pom
+     * @param parentCanReachPom - True if one of the ancestors is pom reachable
+     */
     private static isPomReachable(node: DependenciesTreeNode, pomDependencies?: RegExpMatchArray | null, parentCanReachPom?: boolean): boolean {
         // MavenTreeNode contains the path to Pom.xml.
         if (node instanceof MavenTreeNode) {
