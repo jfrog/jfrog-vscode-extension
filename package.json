@@ -97,11 +97,13 @@
             },
             {
                 "command": "jfrog.xray.showInProjectDesc",
-                "title": "Show in project descriptor"
+                "title": "Show in project descriptor",
+                "icon": "$(eye)"
             },
             {
                 "command": "jfrog.xray.excludeDependency",
-                "title": "Exclude dependency"
+                "title": "Exclude dependency",
+                "icon": "$(exclude)"
             }
         ],
         "menus": {
@@ -129,12 +131,14 @@
             ],
             "view/item/context": [
                 {
-                    "command": "jfrog.xray.excludeDependency",
-                    "when": "viewItem == jfrog.xray.excludeDependency.enabled"
+                    "command": "jfrog.xray.showInProjectDesc",
+                    "when": "viewItem == jfrog.xray.showInProjectDesc.enabled || viewItem == jfrog.xray.excludeDependency.enabled",
+                    "group": "inline"
                 },
                 {
-                    "command": "jfrog.xray.showInProjectDesc",
-                    "when": "viewItem == jfrog.xray.showInProjectDesc.enabled || viewItem == jfrog.xray.excludeDependency.enabled"
+                    "command": "jfrog.xray.excludeDependency",
+                    "when": "viewItem == jfrog.xray.excludeDependency.enabled",
+                    "group": "inline"
                 }
             ]
         }

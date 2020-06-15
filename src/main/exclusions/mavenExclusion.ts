@@ -83,25 +83,34 @@ export class MavenExclusion extends AbstractExclusion {
         let [groupId, artifactId] = MavenUtils.getGavArray(exclusionNode);
         let exclusion: XMLSerializedAsObject = this.createExclusion(groupId, artifactId);
         let exclusionsXmlTag: XMLSerializedAsObject = dependencyXmlTag['exclusions'] as XMLSerializedAsObject;
-
-        // <exclusions> does not exist in dependency
         if (!exclusionsXmlTag) {
+            // '<exclusions> ... </exclusions>' does not exist.
             dependencyXmlTag['exclusions'] = exclusion;
             return;
         }
-        if (exclusionsXmlTag.exclusion instanceof Array) {
-            // More than one exclusion exists in dependency
-            if (this.isExclusionExistsInArray(exclusionsXmlTag.exclusion, groupId, artifactId)) {
-                return;
-            }
-            exclusionsXmlTag.exclusion.push(exclusion.exclusion as XMLSerializedAsObject);
-        } else {
-            // One exclusion exists in dependency
-            if (this.isExclusionExists(exclusionsXmlTag.exclusion as XMLSerializedAsObject, groupId, artifactId)) {
-                return;
-            }
-            exclusionsXmlTag.exclusion = [exclusionsXmlTag.exclusion as XMLSerializedAsObject, exclusion.exclusion as XMLSerializedAsObject];
+
+        let exclusionsArr: XMLSerializedAsObjectArray | XMLSerializedAsObject = exclusionsXmlTag['#'] as XMLSerializedAsObjectArray;
+        if (!exclusionsArr) {
+            exclusionsArr = [exclusionsXmlTag];
         }
+        exclusionsArr
+            .map(exclusionTagParent => exclusionTagParent as XMLSerializedAsObject)
+            .filter(exclusionTagParent => exclusionTagParent.exclusion)
+            .forEach((exclusionTagParent: XMLSerializedAsObject) => {
+                if (exclusionTagParent.exclusion instanceof Array) {
+                    // More than one exclusion exists in dependency
+                    if (this.isExclusionExistsInArray(exclusionTagParent.exclusion, groupId, artifactId)) {
+                        return;
+                    }
+                    exclusionTagParent.exclusion.push(exclusion.exclusion as XMLSerializedAsObject);
+                } else {
+                    // One exclusion exists in dependency
+                    if (this.isExclusionExists(exclusionTagParent.exclusion as XMLSerializedAsObject, groupId, artifactId)) {
+                        return;
+                    }
+                    exclusionTagParent.exclusion = [exclusionTagParent.exclusion, exclusion.exclusion as XMLSerializedAsObject];
+                }
+            });
         dependencyXmlTag['exclusions'] = exclusionsXmlTag;
     }
 

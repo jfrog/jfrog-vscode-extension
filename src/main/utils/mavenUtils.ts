@@ -205,15 +205,11 @@ export class MavenUtils {
     /**
      * The value in 'contextValue' is read in the pom.xml to decide what to show components in the right click menu.
      * if 'node' has not related pom.xml in project dir, disable right click 'Show in project descriptor'.
-     * If 'node' has a related pom.xml file and it is also a transitive dependency, enable 'Exclude dependency'. 
+     * If 'node' has a related pom.xml file and it is also a transitive dependency, enable 'Exclude dependency'.
      * Recursively update all node's children as well.
      * @param node - Tree node.
      */
-    public static async updateContextValue(
-        node: DependenciesTreeNode,
-        dependenciesMatch?: RegExpMatchArray | null,
-        parentCanReachPom?: boolean
-    ) {
+    public static async updateContextValue(node: DependenciesTreeNode, dependenciesMatch?: RegExpMatchArray | null, parentCanReachPom?: boolean) {
         let nodeCanReachPom: boolean = this.isPomReachable(node, dependenciesMatch, parentCanReachPom);
         if (!nodeCanReachPom) {
             // Disable right click menu on the dependency

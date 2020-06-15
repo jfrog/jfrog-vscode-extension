@@ -105,8 +105,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             return;
         }
         node.parent?.children.splice(nodeIndex, 1);
-        node.parent = undefined;
-        this._onDidChangeTreeData.fire();
+        this.refresh(true);
     }
 
     private async scanAndCacheComponents(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
