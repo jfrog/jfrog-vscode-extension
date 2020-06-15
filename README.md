@@ -118,10 +118,10 @@ To open the extension settings, use the following VS Code menu command:
 ## Go Projects
 ### Free Security Scanning and Metadata from GoCenter
 Go Modules in GoCenter are scanned by Xray. You can read more about it in [this](https://jfrog.com/blog/gocenter-reveals-go-module-vulnerabilities-with-xray/) blog. The JFrog VS Code Extension pulls this security information from GoCenter and displays it inside the IDE. It also displays, for each module, the description summary, license and the number of stars.
-![Connect](resources/readme/gifs/gocenter_issues.gif)
+![GoCenter_Issue](resources/readme/gifs/gocenter_issues.gif)
 
 For each module there's a direct link to the GoCenter UI, with more information, like the actual CVEs, as well as other projects which use this module.
-![Connect](resources/readme/gifs/gocenter_nav.gif)
+![GoCenter_Nav](resources/readme/gifs/gocenter_nav.gif)
 
 ### Enhanced Capabilities with JFrog Xray
 By [connecting VS Code to JFrog Xray](#configuring-jfrog-xray) the security information is pulled directly from JFrog Xray. This means that more security information becomes available to the developers inside VS Code. This includes the list of security issues, including the module versions with the fixes.
@@ -131,7 +131,13 @@ All the module metadata provided by GoCenter is still available when connecting 
 The JFrog VS Code Extension scans all of the project depedencies, both direct and indirect (transitive), even if they are not declared in the project's go.mod. It builds the Go dependencies tree by running `go mod graph`. Therefore, please make sure to have Go CLI in your system PATH.
 
 ## Maven Projects
-Behind the scenes, the extension builds the Maven dependencies tree by running `mvn dependency:tree`. View licenses and top issue severities directly from the pom.xml.
+
+### Excluding transitive dependency in pom.xml
+To exclude a transitive dependency from your project, click on the "Exclude dependency" button in the dependencies tree.
+![Exclude_Maven](resources/readme/maven_exclude.gif)
+
+### Behind the Scenes
+The JFrog VS Code Extension builds the Maven dependencies tree by running `mvn dependency:tree`. View licenses and top issue severities directly from the pom.xml.
 
 Important notes:
 1. To have your project dependencies scanned by JFrog Xray, make sure Maven is installed, and that the mvn command is in your system PATH.
