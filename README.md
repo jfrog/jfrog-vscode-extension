@@ -134,7 +134,7 @@ The JFrog VS Code Extension scans all of the project depedencies, both direct an
 
 ### Excluding transitive dependency in pom.xml
 To exclude a transitive dependency from your project, click on the "Exclude dependency" button in the dependencies tree.
-![Exclude_Maven](resources/readme/maven_exclude.gif)
+![Exclude_Maven](resources/readme/gifs/maven_exclude.gif)
 
 ### Behind the Scenes
 The JFrog VS Code Extension builds the Maven dependencies tree by running `mvn dependency:tree`. View licenses and top issue severities directly from the pom.xml.
