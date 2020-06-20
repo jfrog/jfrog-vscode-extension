@@ -165,10 +165,24 @@ In addition, the project dependencies must be installed using npm.
 Behind the scenes, the extension builds the Pypi dependencies tree by running `pipdeptree` on your Python virtual environment. It also uses the Python interpreter path configured by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python). View licenses and top issue severities directly from your requirements.txt files. The scan your Pypi dependencies, make sure the following requirements are met:
 
 1. The [Python extension for VS Code](https://code.visualstudio.com/docs/python/python-tutorial#_install-visual-studio-code-and-the-python-extension) is installed.
-1. Depending on your project, Python 2 or 3 most be your system PATH.
-1. Create and activate a virtual env as instructed in [VS-Code documentation](https://code.visualstudio.com/docs/python/environments#_global-virtual-and-conda-environments). Make sure that Virtualenv Python interpreter is selected as instructed [here](https://code.visualstudio.com/docs/python/environments#_select-and-activate-an-environment).
-1. Open a new terminal and activate your Virtualenv as instructed [here](https://virtualenv.pypa.io/en/latest/userguide/#activate-script).
-1. Install your python project and dependencies according to your project specifications.
+2. Depending on your project, Python 2 or 3 most be your system PATH.
+3. Create and activate a virtual env as instructed in [VS-Code documentation](https://code.visualstudio.com/docs/python/environments#_global-virtual-and-conda-environments). Make sure that Virtualenv Python interpreter is selected as instructed [here](https://code.visualstudio.com/docs/python/environments#_select-and-activate-an-environment).
+4. Open a new terminal and activate your Virtualenv:
+    * On macOS and Linux:
+      ```sh
+      source <venv-dir>/bin/activate
+
+      # For example:
+      source .env/bin/activate
+      ```
+    * On Windows:
+      ```powershell
+      .\<venv-dir>\Scripts\activate
+
+      # For example:
+      .\env\Scripts\activate
+      ```
+5. In the opened terminal, install your python project and dependencies according to your project specifications.
 
 ## Troubleshooting
 View the extension log:
