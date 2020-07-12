@@ -32,7 +32,7 @@ describe('Go Center Tests', () => {
     });
 
     it('Latest Version', async done => {
-        assert.deepEqual(componentMetadata.latest_version, 'v12.40.0+incompatible');
+        assert.isNotEmpty(componentMetadata.latest_version);
         done();
     });
 
