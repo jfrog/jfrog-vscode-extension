@@ -6,14 +6,13 @@ import { ComponentDetailsDataProvider } from './componentDetailsDataProvider';
 import { DependenciesTreeDataProvider } from './dependenciesTree/dependenciesDataProvider';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { IssuesDataProvider } from './issuesDataProvider';
-import { SetCredentialsNode } from './utils/setCredentialsNode';
 import { LogManager } from '../log/logManager';
 
 /**
  * Manages all 3 trees in the extension: Components, component details and component issues details.
  */
 export class TreesManager implements ExtensionComponent {
-    private _dependenciesTreeView!: vscode.TreeView<DependenciesTreeNode | SetCredentialsNode>;
+    private _dependenciesTreeView!: vscode.TreeView<DependenciesTreeNode>;
     private _componentDetailsDataProvider: ComponentDetailsDataProvider;
     private _dependenciesDataProvider: DependenciesTreeDataProvider;
     private _issuesDataProvider: IssuesDataProvider;
@@ -47,7 +46,7 @@ export class TreesManager implements ExtensionComponent {
         return this._componentDetailsDataProvider;
     }
 
-    public get dependenciesTreeView(): vscode.TreeView<DependenciesTreeNode | SetCredentialsNode> {
+    public get dependenciesTreeView(): vscode.TreeView<DependenciesTreeNode> {
         return this._dependenciesTreeView;
     }
 

@@ -8,7 +8,6 @@ import { Severity, SeverityUtils } from '../../types/severity';
 import { ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
 import { TreesManager } from '../treesManager';
-import { SetCredentialsNode } from '../utils/setCredentialsNode';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { MavenUtils } from '../../utils/mavenUtils';
@@ -17,18 +16,16 @@ import { GoDependenciesTreeNode } from './goDependenciesTreeNode';
 import { GoTreeNode } from './dependenciesRoot/goTree';
 import { ISeverityCount } from '../../goCenterClient/model/SeverityCount';
 
-export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode | SetCredentialsNode> {
+export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
 
-    private _onDidChangeTreeData: vscode.EventEmitter<DependenciesTreeNode | SetCredentialsNode | undefined> = new vscode.EventEmitter<
-        DependenciesTreeNode | SetCredentialsNode | undefined
-    >();
-    readonly onDidChangeTreeData: vscode.Event<DependenciesTreeNode | SetCredentialsNode | undefined> = this._onDidChangeTreeData.event;
+    private _onDidChangeTreeData: vscode.EventEmitter<DependenciesTreeNode | undefined> = new vscode.EventEmitter<DependenciesTreeNode | undefined>();
+    readonly onDidChangeTreeData: vscode.Event<DependenciesTreeNode | undefined> = this._onDidChangeTreeData.event;
     private _filterLicenses: Collections.Set<License> = new Collections.Set(license => license.fullName);
     private _componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
     private _goCenterComponentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
-    protected _dependenciesTree!: DependenciesTreeNode | SetCredentialsNode;
+    protected _dependenciesTree!: DependenciesTreeNode;
     private _scanInProgress: boolean = false;
 
     constructor(protected _workspaceFolders: vscode.WorkspaceFolder[], protected _treesManager: TreesManager) {}
@@ -74,15 +71,12 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         return element;
     }
 
-    public getChildren(element?: DependenciesTreeNode): Thenable<DependenciesTreeNode[] | SetCredentialsNode[]> {
+    public getChildren(element?: DependenciesTreeNode): Thenable<DependenciesTreeNode[]> {
         if (!this.dependenciesTree) {
             return Promise.resolve([]);
         }
         if (element) {
             return Promise.resolve(element.children);
-        }
-        if (this.dependenciesTree instanceof SetCredentialsNode) {
-            return Promise.resolve([this.dependenciesTree]);
         }
         let rootChildren: DependenciesTreeNode[] = this._filteredDependenciesTree
             ? this._filteredDependenciesTree.children
@@ -292,7 +286,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     }
 
     public getDependenciesTreeNode(pkgType: string, path?: string): DependenciesTreeNode | undefined {
-        if (!(this.dependenciesTree instanceof DependenciesTreeNode) && !(this.dependenciesTree instanceof GoDependenciesTreeNode)) {
+        if (!(this.dependenciesTree instanceof DependenciesTreeNode)) {
             return undefined;
         }
         // Unlike other build tools, which rely that each direct dep can be found in the root's child, Maven can have direct dep in each node because,

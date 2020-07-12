@@ -4,7 +4,6 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { LicensesFilter } from './licensesFilter';
 import { SeverityFilter as SeveritiesFilter } from './severitiesFilter';
-import { SetCredentialsNode } from '../treeDataProviders/utils/setCredentialsNode';
 
 enum FilterTypes {
     SEVERITY = '$(alert)   Issues severity',
@@ -48,7 +47,7 @@ export class FilterManager implements ExtensionComponent {
     }
 
     public applyFilters() {
-        let unfilteredRoot: DependenciesTreeNode | SetCredentialsNode = this._treesManager.dependenciesTreeDataProvider.dependenciesTree;
+        let unfilteredRoot: DependenciesTreeNode = this._treesManager.dependenciesTreeDataProvider.dependenciesTree;
         if (!(unfilteredRoot instanceof DependenciesTreeNode)) {
             return;
         }

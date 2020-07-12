@@ -6,7 +6,6 @@ import { FocusManager } from '../focus/focusManager';
 import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { SetCredentialsNode } from '../treeDataProviders/utils/setCredentialsNode';
 import { ExclusionsManager } from '../exclusions/exclusionsManager';
 
 /**
@@ -39,10 +38,7 @@ export class CommandManager implements ExtensionComponent {
      * Show the dependency in the project descriptor (i.e package.json) file after right click on the components tree and a left click on "Show in project descriptor".
      * @param dependenciesTreeNode - The dependency to show.
      */
-    private doShowInProjectDesc(dependenciesTreeNode: DependenciesTreeNode | SetCredentialsNode) {
-        if (dependenciesTreeNode instanceof SetCredentialsNode) {
-            return;
-        }
+    private doShowInProjectDesc(dependenciesTreeNode: DependenciesTreeNode) {
         this._focusManager.focusOnDependency(dependenciesTreeNode);
         this.onSelectNode(dependenciesTreeNode);
     }
@@ -133,10 +129,7 @@ export class CommandManager implements ExtensionComponent {
      * Populate component details and component issues details with information about dependenciesTreeNode.
      * @param dependenciesTreeNode - The selected node in the components tree.
      */
-    private onSelectNode(dependenciesTreeNode: DependenciesTreeNode | SetCredentialsNode) {
-        if (dependenciesTreeNode instanceof SetCredentialsNode) {
-            return;
-        }
+    private onSelectNode(dependenciesTreeNode: DependenciesTreeNode) {
         this._treesManager.componentDetailsDataProvider.selectNode(dependenciesTreeNode);
         this._treesManager.issuesDataProvider.selectNode(dependenciesTreeNode);
     }
