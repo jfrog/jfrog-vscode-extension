@@ -20,7 +20,7 @@ export class NugetUtils {
     public static async locateSolutions(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Collections.Set<vscode.Uri>> {
         let solutions: Collections.Set<vscode.Uri> = new Collections.Set();
         for (let workspace of workspaceFolders) {
-            logManager.logMessage('Locating *.sln files in workspace' + workspace.name, 'INFO');
+            logManager.logMessage('Locating *.sln files in workspace "' + workspace.name + '".', 'INFO');
             let wsSolutions: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/*.sln' },
                 ScanUtils.getScanExcludePattern(workspace)
@@ -50,10 +50,13 @@ export class NugetUtils {
             return [];
         }
     
-        treesManager.logManager.logMessage('.sln files to scan: [' + solutions.toString() + ']', 'DEBUG');
+        treesManager.logManager.logMessage('Solution files to scan: [' + solutions.toString() + ']', 'DEBUG');
         let nugetTreeNodes: NugetTreeNode[] = [];
         for (let solution of solutions.toArray()) {
             let tree: any = await NugetUtils.getProjects(solution.fsPath, treesManager.logManager, quickScan);
+            if (!tree) {
+                continue;
+            }
             for (let project of tree.projects) {
                 let dependenciesTreeNode: NugetTreeNode = new NugetTreeNode(path.dirname(solution.fsPath), componentsToScan, treesManager, parent);
                 dependenciesTreeNode.refreshDependencies(quickScan, project);
@@ -70,6 +73,17 @@ export class NugetUtils {
             nugetList = JSON.parse(NugetDepsTree.buildTree(slnFilePath));
         } catch (error) {
             logManager.logError(error, !quickScan);
+            logManager.logMessage('Failed building tree for solution "' + slnFilePath + '", due to the above error. Skipping to next solution... ', 'INFO');
+            return null;
+        }
+
+        if (!nugetList.projects) {
+            logManager.logError(new Error('No projects found for solution "' + slnFilePath + '".'), !quickScan);
+            logManager.logMessage(
+                'Possible cause: The solution needs to be restored. Restore it by running "nuget restore ' + slnFilePath + '.',
+                'INFO'
+            );
+            return null;
         }
         return nugetList;
     }
