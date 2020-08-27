@@ -28,14 +28,6 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         }
     }
 
-    get tooltip(): string {
-        return this.componentId;
-    }
-
-    get description(): string {
-        return this.generalInfo.version;
-    }
-
     public get componentId(): string {
         return this.generalInfo.getComponentId();
     }
@@ -86,6 +78,8 @@ export class DependenciesTreeNode extends vscode.TreeItem {
 
     public set generalInfo(generalInfo: GeneralInfo) {
         this._generalInfo = generalInfo;
+        this.description = this.generalInfo.version;
+        this.tooltip = this.componentId;
     }
 
     public set parent(parent: DependenciesTreeNode | undefined) {
