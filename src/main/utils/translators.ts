@@ -1,10 +1,11 @@
+import * as Collections from 'typescript-collections';
 import { IGeneral, IIssue, ILicense, IVulnerableComponent, Severity as ClientSeverity } from 'xray-client-js';
+import { ISeverityCount } from '../goCenterClient/model/SeverityCount';
+import { GavGeneralInfo } from '../types/gavGeneralinfo';
 import { GeneralInfo } from '../types/generalInfo';
 import { Issue } from '../types/issue';
 import { License } from '../types/license';
 import { Severity } from '../types/severity';
-import { GavGeneralInfo } from '../types/gavGeneralinfo';
-import { ISeverityCount } from '../goCenterClient/model/SeverityCount';
 
 export class Translators {
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
@@ -76,11 +77,12 @@ export class Translators {
         if (!vulnerableComponents) {
             return [];
         }
-        let fixed_versions: string[] = [];
+        let fixed_versions: Collections.Set<string> = new Collections.Set();
         vulnerableComponents
             .map(vulnerableComponent => vulnerableComponent.fixed_versions)
-            .forEach(fixedVersion => (fixed_versions = fixed_versions.concat(fixedVersion)));
-        return fixed_versions;
+            .reduce((acc, val) => acc.concat(val), []) // Flatten the array and filter falsy values
+            .forEach(fixedVersion => fixed_versions.add(fixedVersion));
+        return fixed_versions.toArray();
     }
 
     public static capitalize(str: string): string {
