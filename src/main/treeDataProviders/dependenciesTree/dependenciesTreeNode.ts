@@ -22,7 +22,9 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         super(_generalInfo.artifactId, collapsibleState);
         this._topIssue = new Issue('', Severity.Normal, '', '');
         this.iconPath = IconsPaths.NORMAL_SEVERITY;
-        this.contextValue = contextValue || ContextKeys.SHOW_IN_PROJECT_DESC_ENABLED;
+        if (contextValue === undefined) {
+            this.contextValue = ContextKeys.SHOW_IN_PROJECT_DESC_ENABLED;
+        }
         if (_parent) {
             _parent.children.push(this);
         }

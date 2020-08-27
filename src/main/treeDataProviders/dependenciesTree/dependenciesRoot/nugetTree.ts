@@ -15,7 +15,7 @@ export class NugetTreeNode extends DependenciesTreeNode {
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
-        super(new GeneralInfo('', '', _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent);
+        super(new GeneralInfo('', '', _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent, '');
     }
 
     public async refreshDependencies(quickScan: boolean, project: any) {
@@ -39,7 +39,7 @@ export class NugetTreeNode extends DependenciesTreeNode {
                 let treeCollapsibleState: vscode.TreeItemCollapsibleState = childDependencies
                     ? vscode.TreeItemCollapsibleState.Collapsed
                     : vscode.TreeItemCollapsibleState.None;
-                let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
+                let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode, '');
                 if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(dependency.id)) {
                     this._componentsToScan.add(new ComponentDetails(NugetTreeNode.COMPONENT_PREFIX + dependency.id));
                 }
