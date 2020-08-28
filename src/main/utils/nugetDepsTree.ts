@@ -1,7 +1,6 @@
 import { ScanUtils } from './scanUtils';
 import * as path from 'path';
 
-
 // TODO TO BE REPLACED WITH PACKAGE
 export class NugetDepsTree {
     public static buildTree(slnFilePath: string): string {

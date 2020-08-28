@@ -29,7 +29,7 @@ export class NugetUtils {
         }
         return Promise.resolve(solutions);
     }
-    
+
     /**
      * @param workspaceFolders - Base workspace folders
      * @param componentsToScan - Set of nuget components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
@@ -49,7 +49,7 @@ export class NugetUtils {
             treesManager.logManager.logMessage('No *.sln files found in workspaces.', 'DEBUG');
             return [];
         }
-    
+
         treesManager.logManager.logMessage('Solution files to scan: [' + solutions.toString() + ']', 'DEBUG');
         let nugetTreeNodes: NugetTreeNode[] = [];
         for (let solution of solutions.toArray()) {
@@ -64,7 +64,6 @@ export class NugetUtils {
             }
         }
         return nugetTreeNodes;
-
     }
 
     /**
@@ -73,13 +72,16 @@ export class NugetUtils {
      * @param logManager  - Log manager
      * @param quickScan   - True to allow using the scan cache
      */
-    private static async getProjects(slnFilePath: string, logManager: LogManager, quickScan: boolean) : Promise<any> {
+    private static async getProjects(slnFilePath: string, logManager: LogManager, quickScan: boolean): Promise<any> {
         let nugetList: any;
         try {
             nugetList = JSON.parse(NugetDepsTree.buildTree(slnFilePath));
         } catch (error) {
             logManager.logError(error, !quickScan);
-            logManager.logMessage('Failed building tree for solution "' + slnFilePath + '", due to the above error. Skipping to next solution... ', 'INFO');
+            logManager.logMessage(
+                'Failed building tree for solution "' + slnFilePath + '", due to the above error. Skipping to next solution... ',
+                'INFO'
+            );
             return null;
         }
 
