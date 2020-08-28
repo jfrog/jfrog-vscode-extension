@@ -54,7 +54,7 @@ export class GoUtils {
     public static async locateGoMods(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Collections.Set<vscode.Uri>> {
         let goMods: Collections.Set<vscode.Uri> = new Collections.Set();
         for (let workspace of workspaceFolders) {
-            logManager.logMessage('Locating go.mod files in workspace' + workspace.name, 'INFO');
+            logManager.logMessage('Locating go.mod files in workspace "' + workspace.name + '".', 'INFO');
             let wsGoMods: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/go.mod' },
                 ScanUtils.getScanExcludePattern(workspace)

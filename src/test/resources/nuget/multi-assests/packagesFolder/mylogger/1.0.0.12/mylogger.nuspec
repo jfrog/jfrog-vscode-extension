@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>MyLogger</id>
+    <version>1.0.0.12</version>
+    <title>MyLogger</title>
+    <authors>Capgemini</authors>
+    <owners>Capgemini</owners>
+    <licenseUrl>http://localhost</licenseUrl>
+    <projectUrl>http://localhost</projectUrl>
+    <iconUrl>http://localhost</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Hallo</description>
+    <releaseNotes>Hello</releaseNotes>
+    <copyright>Copyright 2015</copyright>
+    <tags>nl frats</tags>
+    <dependencies />
+  </metadata>
+</package>

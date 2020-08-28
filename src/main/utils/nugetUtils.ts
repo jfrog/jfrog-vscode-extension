@@ -67,6 +67,12 @@ export class NugetUtils {
 
     }
 
+    /**
+     * Get the projects tree for the provided solution file. Solution has to be pre restored.
+     * @param slnFilePath - Path to solution
+     * @param logManager  - Log manager
+     * @param quickScan   - True to allow using the scan cache
+     */
     private static async getProjects(slnFilePath: string, logManager: LogManager, quickScan: boolean) : Promise<any> {
         let nugetList: any;
         try {
@@ -80,7 +86,7 @@ export class NugetUtils {
         if (!nugetList.projects) {
             logManager.logError(new Error('No projects found for solution "' + slnFilePath + '".'), !quickScan);
             logManager.logMessage(
-                'Possible cause: The solution needs to be restored. Restore it by running "nuget restore ' + slnFilePath + '.',
+                'Possible cause: The solution needs to be restored. Restore it by running "nuget restore ' + slnFilePath + '".',
                 'INFO'
             );
             return null;

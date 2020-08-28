@@ -104,7 +104,7 @@ export class MavenUtils {
     public static async locatePomXmls(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<vscode.Uri[]> {
         let pomXmls: Collections.Set<vscode.Uri> = new Collections.Set();
         for (let workspace of workspaceFolders) {
-            logManager.logMessage('Locating pom.xml files in workspace ' + workspace.name, 'INFO');
+            logManager.logMessage('Locating pom.xml files in workspace "' + workspace.name + '".', 'INFO');
             let wsPomXmls: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/pom.xml' },
                 ScanUtils.getScanExcludePattern(workspace)

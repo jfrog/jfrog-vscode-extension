@@ -1,0 +1,190 @@
+{
+  "version": 3,
+  "targets": {
+    ".NETFramework,Version=v4.5": {
+      "MyLogger/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net45/MyLogger.dll": {}
+        },
+        "runtime": {
+          "lib/net45/MyLogger.dll": {}
+        }
+      },
+      "Newtonsoft.Json/4.5.11": {
+        "type": "package",
+        "compile": {
+          "lib/net40/Newtonsoft.Json.dll": {}
+        },
+        "runtime": {
+          "lib/net40/Newtonsoft.Json.dll": {}
+        }
+      },
+      "Ninject/3.0.1.10": {
+        "type": "package",
+        "compile": {
+          "lib/net45-full/Ninject.dll": {}
+        },
+        "runtime": {
+          "lib/net45-full/Ninject.dll": {}
+        }
+      }
+    },
+    ".NETFramework,Version=v4.5/win": {
+      "MyLogger/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net45/MyLogger.dll": {}
+        },
+        "runtime": {
+          "lib/net45/MyLogger.dll": {}
+        }
+      },
+      "Newtonsoft.Json/4.5.11": {
+        "type": "package",
+        "compile": {
+          "lib/net40/Newtonsoft.Json.dll": {}
+        },
+        "runtime": {
+          "lib/net40/Newtonsoft.Json.dll": {}
+        }
+      },
+      "Ninject/3.0.1.10": {
+        "type": "package",
+        "compile": {
+          "lib/net45-full/Ninject.dll": {}
+        },
+        "runtime": {
+          "lib/net45-full/Ninject.dll": {}
+        }
+      }
+    },
+    ".NETFramework,Version=v4.5/win-x64": {
+      "MyLogger/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net45/MyLogger.dll": {}
+        },
+        "runtime": {
+          "lib/net45/MyLogger.dll": {}
+        }
+      },
+      "Newtonsoft.Json/4.5.11": {
+        "type": "package",
+        "compile": {
+          "lib/net40/Newtonsoft.Json.dll": {}
+        },
+        "runtime": {
+          "lib/net40/Newtonsoft.Json.dll": {}
+        }
+      },
+      "Ninject/3.0.1.10": {
+        "type": "package",
+        "compile": {
+          "lib/net45-full/Ninject.dll": {}
+        },
+        "runtime": {
+          "lib/net45-full/Ninject.dll": {}
+        }
+      }
+    },
+    ".NETFramework,Version=v4.5/win-x86": {
+      "MyLogger/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net45/MyLogger.dll": {}
+        },
+        "runtime": {
+          "lib/net45/MyLogger.dll": {}
+        }
+      },
+      "Newtonsoft.Json/4.5.11": {
+        "type": "package",
+        "compile": {
+          "lib/net40/Newtonsoft.Json.dll": {}
+        },
+        "runtime": {
+          "lib/net40/Newtonsoft.Json.dll": {}
+        }
+      },
+      "Ninject/3.0.1.10": {
+        "type": "package",
+        "compile": {
+          "lib/net45-full/Ninject.dll": {}
+        },
+        "runtime": {
+          "lib/net45-full/Ninject.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "MyLogger/1.0.0": {
+      "sha512": "EfNxEQ07vZiXU0vZhT9E8+dNgX6KBIL4bS0oMIB76Sp3h1nntREbS6YAm8N06K3gPz6/eTCZ1GFrYqXwoVAiCw==",
+      "type": "package",
+      "path": "mylogger/1.0.0",
+      "files": [
+        "mylogger.1.0.0.nupkg.sha512"
+      ]
+    },
+    "Newtonsoft.Json/4.5.11": {
+      "sha512": "IZ0vmfvcJrUONMIG3St+1EzSlnHc9qFY6/FU2YMHNXaGtdm6sSwIUAdXPAw1k3IwpxjVmZ0w9Pzszd8GkyrpFA==",
+      "type": "package",
+      "path": "newtonsoft.json/4.5.11",
+      "files": [
+        "newtonsoft.json.4.5.11.nupkg.sha512"
+      ]
+    },
+    "Ninject/3.0.1.10": {
+      "sha512": "BNHckK1lO8pX/yi1cToGhGWswK3fEQzAGzbx4QK7i7GKnwaZEMQD2Re4NcWOIA6tNp4qrsHUDDzgBnVKTSML6Q==",
+      "type": "package",
+      "path": "ninject/3.0.1.10",
+      "files": [
+        "ninject.3.0.1.10.nupkg.sha512"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    ".NETFramework,Version=v4.5": [
+      "MyLogger >= 1.0.0",
+      "Newtonsoft.Json >= 4.5.11",
+      "Ninject >= 3.0.1.10"
+    ]
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectName": "core",
+      "packagesPath": "packagesFolder/"
+    },
+    "frameworks": {
+      "net45": {
+        "dependencies": {
+          "MyLogger": {
+            "target": "Package",
+            "version": "[1.0.0, )"
+          },
+          "Newtonsoft.Json": {
+            "target": "Package",
+            "version": "[4.5.11, )"
+          },
+          "Ninject": {
+            "target": "Package",
+            "version": "[3.0.1.10, )"
+          }
+        }
+      }
+    },
+    "runtimes": {
+      "win": {
+        "#import": []
+      },
+      "win-x64": {
+        "#import": []
+      },
+      "win-x86": {
+        "#import": []
+      }
+    }
+  }
+}
