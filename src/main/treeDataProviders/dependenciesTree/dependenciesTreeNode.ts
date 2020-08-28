@@ -22,6 +22,8 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         super(_generalInfo.artifactId, collapsibleState);
         this._topIssue = new Issue('', Severity.Normal, '', '');
         this.iconPath = IconsPaths.NORMAL_SEVERITY;
+        this.description = this.generalInfo.version;
+        this.tooltip = this.componentId;
         if (contextValue === undefined) {
             this.contextValue = ContextKeys.SHOW_IN_PROJECT_DESC_ENABLED;
         }
