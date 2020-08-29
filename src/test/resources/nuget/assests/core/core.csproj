@@ -2,8 +2,6 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <PackageReference Include="MyLogger" Version="1.0.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="4.5.11" />
-    <PackageReference Include="Ninject" Version="3.0.1.10" />
   </ItemGroup>
   <PropertyGroup>
   <TargetFrameworks>net45</TargetFrameworks>
