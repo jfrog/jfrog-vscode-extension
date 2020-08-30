@@ -18,6 +18,7 @@
 - [Maven Projects](#maven-projects)
 - [Npm Projects](#npm-projects)
 - [Pypi Projects](#pypi-projects)
+- [NuGet Projects](#nuget-projects)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 - [Building and Testing the Sources](#building-and-testing-the-sources)
@@ -159,7 +160,7 @@ Behind the scenes, the extension builds the npm dependencies tree by running `np
 
 Important:
 To have your project dependencies scanned by JFrog Xray, make sure the npm CLI is installed on your local machine and that it is in your system PATH.
-In addition, the project dependencies must be installed using npm.
+In addition, the project dependencies must be installed using `npm install`.
 
 ## Pypi Projects
 Behind the scenes, the extension builds the Pypi dependencies tree by running `pipdeptree` on your Python virtual environment. It also uses the Python interpreter path configured by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python). View licenses and top issue severities directly from your requirements.txt files. The scan your Pypi dependencies, make sure the following requirements are met:
@@ -169,6 +170,13 @@ Behind the scenes, the extension builds the Pypi dependencies tree by running `p
 1. Create and activate a virtual env as instructed in [VS-Code documentation](https://code.visualstudio.com/docs/python/environments#_global-virtual-and-conda-environments). Make sure that Virtualenv Python interpreter is selected as instructed [here](https://code.visualstudio.com/docs/python/environments#_select-and-activate-an-environment).
 1. Open a new terminal and activate your Virtualenv as instructed [here](https://virtualenv.pypa.io/en/latest/userguide/#activate-script).
 1. Install your python project and dependencies according to your project specifications.
+
+## NuGet Projects
+Behind the scenes, the extension builds the NuGet dependencies tree using [NuGet deps tree](https://github.com/JFrog/nuget-deps-tree).
+
+Important:
+To have your project dependencies scanned by JFrog Xray, make sure the `nuget` or `dotnet` CLI are installed on your local machine and that they are in your system PATH.
+In addition, the project dependencies must be restored using `nuget restore` or `dotnet restore`, respectfully.
 
 ## Troubleshooting
 View the extension log:
