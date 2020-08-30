@@ -52,10 +52,10 @@ describe('Nuget Utils Tests', () => {
     /**
      * Test NugetUtils.createDependenciesTrees.
      */
-    it('Create npm Dependencies Trees', async () => {
+    it('Create NuGet Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''));
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
-        let res: DependenciesTreeNode[] = await runCreateNpmDependenciesTrees(componentsToScan, parent);
+        let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(componentsToScan, parent);
 
         // Check that components to scan contains MyLogger:1.0.0
         assert.isTrue(componentsToScan.size() === 1);
@@ -80,7 +80,7 @@ describe('Nuget Utils Tests', () => {
         assert.deepEqual(child.parent, res[0]);
     });
 
-    async function runCreateNpmDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
+    async function runCreateNugetDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
         let dependenciesTrees: DependenciesTreeNode[] = await NugetUtils.createDependenciesTrees(
             workspaceFolders,
             componentsToScan,
