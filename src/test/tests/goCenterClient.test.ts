@@ -63,9 +63,6 @@ describe('Go Center Tests', () => {
         assert.isAtLeast(severityCount.High, 1);
         assert.isAtLeast(severityCount.Medium, 15);
         assert.isAtLeast(severityCount.Low, 3);
-        assert.isAtLeast(severityCount.Unknown, 2);
-        assert.isUndefined(severityCount.Information);
-        assert.isUndefined(severityCount.Pending);
         done();
     });
 });
