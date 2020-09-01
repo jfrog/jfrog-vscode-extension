@@ -7,7 +7,7 @@ import { NugetTreeNode } from '../treeDataProviders/dependenciesTree/dependencie
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
 import { LogManager } from '../log/logManager';
-import { NugetDepsTree } from './nugetDepsTree';
+import { NugetDepsTree } from 'nuget-deps-tree';
 
 export class NugetUtils {
     public static readonly PKG_TYPE: string = 'nuget';
@@ -75,7 +75,7 @@ export class NugetUtils {
     private static async getProjects(slnFilePath: string, logManager: LogManager, quickScan: boolean): Promise<any> {
         let nugetList: any;
         try {
-            nugetList = JSON.parse(NugetDepsTree.buildTree(slnFilePath));
+            nugetList = NugetDepsTree.generate(slnFilePath);
         } catch (error) {
             logManager.logError(error, !quickScan);
             logManager.logMessage(

@@ -30,18 +30,17 @@ export class NugetTreeNode extends DependenciesTreeNode {
         }
         for (let key in dependencies) {
             let dependency: any = dependencies[key];
-            let nameVersionTuple: string[] = this.getNameVersionTuple(dependency.id);
+            let nameVersionTuple: string[] = this.getNameVersionTuple(dependency.dependency.id);
             let name: string = nameVersionTuple[0];
             let version: string = nameVersionTuple[1];
             if (version) {
-                let childDependencies: any = dependency.dependencies;
+                let childDependencies: any = dependency.directDependencies;
                 let generalInfo: GeneralInfo = new GeneralInfo(name, version, '', NugetUtils.PKG_TYPE);
-                let treeCollapsibleState: vscode.TreeItemCollapsibleState = childDependencies
-                    ? vscode.TreeItemCollapsibleState.Collapsed
-                    : vscode.TreeItemCollapsibleState.None;
+                let treeCollapsibleState: vscode.TreeItemCollapsibleState =
+                    childDependencies.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode, '');
-                if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(dependency.id)) {
-                    this._componentsToScan.add(new ComponentDetails(NugetTreeNode.COMPONENT_PREFIX + dependency.id));
+                if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(dependency.dependency.id)) {
+                    this._componentsToScan.add(new ComponentDetails(NugetTreeNode.COMPONENT_PREFIX + dependency.dependency.id));
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan);
             }
