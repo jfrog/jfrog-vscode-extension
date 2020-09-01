@@ -175,7 +175,7 @@ Behind the scenes, the extension builds the Pypi dependencies tree by running `p
 Behind the scenes, the extension builds the NuGet dependencies tree using [NuGet deps tree](https://github.com/jfrog/nuget-deps-tree).
 
 Important:
-To have your .NET project dependencies scanned by JFrog Xray, make sure the `nuget` CLI are installed on your local machine and that they are in your system PATH.
+To have your .NET project dependencies scanned by JFrog Xray, make sure the `nuget` CLI is installed on your local machine and that it is in your system PATH.
 In addition, the project must be restored using `nuget restore` prior to scanning.
 After this action, you should click on the Refresh ![Refresh](resources/readme/refresh.png) button, for the view to be refreshed and updated.
 
