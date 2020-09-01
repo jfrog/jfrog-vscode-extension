@@ -18,7 +18,7 @@
 - [Maven Projects](#maven-projects)
 - [Npm Projects](#npm-projects)
 - [Pypi Projects](#pypi-projects)
-- [.NET Projects](#.net-projects)
+- [.NET Projects](#net-projects)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 - [Building and Testing the Sources](#building-and-testing-the-sources)
