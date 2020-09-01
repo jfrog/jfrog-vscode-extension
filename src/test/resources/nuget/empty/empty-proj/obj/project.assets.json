@@ -1,0 +1,32 @@
+{
+  "version": 3,
+  "targets": {},
+  "libraries": {},
+  "projectFileDependencyGroups": {
+    ".NETFramework,Version=v4.5": [
+    ]
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectName": "empty-proj"
+    },
+    "frameworks": {
+      "net45": {
+        "dependencies": {
+        }
+      }
+    },
+    "runtimes": {
+      "win": {
+        "#import": []
+      },
+      "win-x64": {
+        "#import": []
+      },
+      "win-x86": {
+        "#import": []
+      }
+    }
+  }
+}

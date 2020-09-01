@@ -1,0 +1,7 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Express 2012 for Windows Desktop
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "core", "core\core.csproj", "{AFCF5EBB-BC6A-42C7-AC40-38548680B845}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "api", "api\api.csproj", "{B8CD21CA-85E4-404A-8263-8E8A2B2834F6}"
+EndProject

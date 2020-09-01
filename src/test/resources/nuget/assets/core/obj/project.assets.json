@@ -1,0 +1,92 @@
+{
+  "version": 3,
+  "targets": {
+    ".NETFramework,Version=v4.5": {
+      "MyLogger/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net45/MyLogger.dll": {}
+        },
+        "runtime": {
+          "lib/net45/MyLogger.dll": {}
+        }
+      }
+    },
+    ".NETFramework,Version=v4.5/win": {
+      "MyLogger/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net45/MyLogger.dll": {}
+        },
+        "runtime": {
+          "lib/net45/MyLogger.dll": {}
+        }
+      }
+    },
+    ".NETFramework,Version=v4.5/win-x64": {
+      "MyLogger/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net45/MyLogger.dll": {}
+        },
+        "runtime": {
+          "lib/net45/MyLogger.dll": {}
+        }
+      }
+    },
+    ".NETFramework,Version=v4.5/win-x86": {
+      "MyLogger/1.0.0": {
+        "type": "package",
+        "compile": {
+          "lib/net45/MyLogger.dll": {}
+        },
+        "runtime": {
+          "lib/net45/MyLogger.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "MyLogger/1.0.0": {
+      "sha512": "EfNxEQ07vZiXU0vZhT9E8+dNgX6KBIL4bS0oMIB76Sp3h1nntREbS6YAm8N06K3gPz6/eTCZ1GFrYqXwoVAiCw==",
+      "type": "package",
+      "path": "mylogger/1.0.0",
+      "files": [
+        "mylogger.1.0.0.nupkg.sha512"
+      ]
+    }
+  },
+  "projectFileDependencyGroups": {
+    ".NETFramework,Version=v4.5": [
+      "MyLogger >= 1.0.0"
+    ]
+  },
+  "project": {
+    "version": "1.0.0",
+    "restore": {
+      "projectName": "core",
+      "packagesPath": "src/test/resources/nuget/assets/packagesFolder/"
+    },
+    "frameworks": {
+      "net45": {
+        "dependencies": {
+          "MyLogger": {
+            "target": "Package",
+            "version": "[1.0.0, )"
+          }
+        }
+      }
+    },
+    "runtimes": {
+      "win": {
+        "#import": []
+      },
+      "win-x64": {
+        "#import": []
+      },
+      "win-x86": {
+        "#import": []
+      }
+    }
+  }
+}

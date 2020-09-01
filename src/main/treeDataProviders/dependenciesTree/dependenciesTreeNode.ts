@@ -24,7 +24,9 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         this.iconPath = IconsPaths.NORMAL_SEVERITY;
         this.description = this.generalInfo.version;
         this.tooltip = this.componentId;
-        this.contextValue = contextValue || ContextKeys.SHOW_IN_PROJECT_DESC_ENABLED;
+        if (contextValue === undefined) {
+            this.contextValue = ContextKeys.SHOW_IN_PROJECT_DESC_ENABLED;
+        }
         if (_parent) {
             _parent.children.push(this);
         }

@@ -7,6 +7,7 @@ import { PypiUtils } from '../../utils/pypiUtils';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { TreesManager } from '../treesManager';
 import { MavenUtils } from '../../utils/mavenUtils';
+import { NugetUtils } from '../../utils/nugetUtils';
 
 export class DependenciesTreesFactory {
     public static async createDependenciesTrees(
@@ -22,6 +23,7 @@ export class DependenciesTreesFactory {
             await NpmUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
             await PypiUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
             await MavenUtils.createMavenDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
+            await NugetUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
         }
     }
 }

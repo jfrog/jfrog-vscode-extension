@@ -59,7 +59,7 @@ export class PypiUtils {
      * @param logManager       - Log manager
      */
     public static async arePythonFilesExist(workspaceFolder: vscode.WorkspaceFolder, logManager: LogManager): Promise<boolean> {
-        logManager.logMessage('Locating python files in workspace ' + workspaceFolder.name, 'INFO');
+        logManager.logMessage('Locating python files in workspace "' + workspaceFolder.name + '".', 'INFO');
 
         let wsPythonFiles: vscode.Uri[] = await vscode.workspace.findFiles(
             { base: workspaceFolder.uri.fsPath, pattern: '**/*{setup.py,requirements*.txt}' },

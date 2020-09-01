@@ -54,7 +54,7 @@ export class NpmUtils {
     public static async locatePackageJsons(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Collections.Set<vscode.Uri>> {
         let packageJsons: Collections.Set<vscode.Uri> = new Collections.Set();
         for (let workspace of workspaceFolders) {
-            logManager.logMessage('Locating package json files in workspace' + workspace.name, 'INFO');
+            logManager.logMessage('Locating package json files in workspace "' + workspace.name + '".', 'INFO');
             let wsPackageJsons: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/package.json' },
                 ScanUtils.getScanExcludePattern(workspace)
