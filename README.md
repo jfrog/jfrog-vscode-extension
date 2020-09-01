@@ -18,6 +18,7 @@
 - [Maven Projects](#maven-projects)
 - [Npm Projects](#npm-projects)
 - [Pypi Projects](#pypi-projects)
+- [.NET Projects](#net-projects)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 - [Building and Testing the Sources](#building-and-testing-the-sources)
@@ -159,7 +160,7 @@ Behind the scenes, the extension builds the npm dependencies tree by running `np
 
 Important:
 To have your project dependencies scanned by JFrog Xray, make sure the npm CLI is installed on your local machine and that it is in your system PATH.
-In addition, the project dependencies must be installed using npm.
+In addition, the project dependencies must be installed using `npm install`.
 
 ## Pypi Projects
 Behind the scenes, the extension builds the Pypi dependencies tree by running `pipdeptree` on your Python virtual environment. It also uses the Python interpreter path configured by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python). View licenses and top issue severities directly from your requirements.txt files. The scan your Pypi dependencies, make sure the following requirements are met:
@@ -183,6 +184,14 @@ Behind the scenes, the extension builds the Pypi dependencies tree by running `p
       .\env\Scripts\activate
       ```
 5. In the same terminal, install your python project and dependencies according to your project specifications.
+
+## .NET Projects
+Behind the scenes, the extension builds the NuGet dependencies tree using [NuGet deps tree](https://github.com/jfrog/nuget-deps-tree).
+
+Important:
+To have your .NET project dependencies scanned by JFrog Xray, make sure the `nuget` CLI is installed on your local machine and that it is in your system PATH.
+In addition, the project must be restored using `nuget restore` prior to scanning.
+After this action, you should click on the Refresh ![Refresh](resources/readme/refresh.png) button, for the view to be refreshed and updated.
 
 ## Troubleshooting
 View the extension log:
