@@ -177,7 +177,7 @@ Behind the scenes, the extension builds the NuGet dependencies tree using [NuGet
 Important:
 To have your project dependencies scanned by JFrog Xray, make sure the `nuget` or `dotnet` CLI are installed on your local machine and that they are in your system PATH.
 In addition, the project dependencies must be restored using `nuget restore` or `dotnet restore`, respectfully.
-After this action, you should click on the Refresh button, for the view to be refreshed and updated.
+After this action, you should click on the Refresh ![Refresh](resources/readme/refresh.png) button, for the view to be refreshed and updated.
 
 ## Troubleshooting
 View the extension log:
