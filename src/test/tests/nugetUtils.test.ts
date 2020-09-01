@@ -3,13 +3,10 @@ import { before } from 'mocha';
 import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'xray-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
-import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
-import { GeneralInfo } from '../../main/types/generalInfo';
 import { NugetUtils } from '../../main/utils/nugetUtils';
 
 /**
@@ -48,46 +45,4 @@ describe('Nuget Utils Tests', () => {
             assert.isTrue(solutions.contains(expectedSolution), 'Should contain ' + expectedSolution.fsPath);
         }
     });
-
-    /**
-     * Test NugetUtils.createDependenciesTrees.
-     */
-    it('Create NuGet Dependencies Trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''));
-        let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
-        let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(componentsToScan, parent);
-
-        // Check that components to scan contains MyLogger:1.0.0
-        assert.equal(componentsToScan.size(), 1);
-        assert.deepEqual(componentsToScan.toArray()[0], new ComponentDetails('nuget://MyLogger:1.0.0'));
-
-        // Check labels
-        assert.deepEqual(res[0].label, 'api');
-        assert.deepEqual(res[1].label, 'core');
-
-        // Check parents
-        assert.deepEqual(res[0].parent, parent);
-        assert.deepEqual(res[1].parent, parent);
-
-        // Check children
-        assert.lengthOf(res[0].children, 1);
-        assert.lengthOf(res[1].children, 1);
-        assert.deepEqual(res[0].children[0].label, res[1].children[0].label);
-        let child: DependenciesTreeNode = res[0].children[0];
-        assert.deepEqual(child.componentId, 'MyLogger:1.0.0');
-        assert.deepEqual(child.label, 'MyLogger');
-        assert.deepEqual(child.description, '1.0.0');
-        assert.deepEqual(child.parent, res[0]);
-    });
-
-    async function runCreateNugetDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        let dependenciesTrees: DependenciesTreeNode[] = await NugetUtils.createDependenciesTrees(
-            workspaceFolders,
-            componentsToScan,
-            treesManager,
-            parent,
-            false
-        );
-        return dependenciesTrees.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
-    }
 });
