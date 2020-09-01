@@ -21,7 +21,7 @@ describe('Nuget Utils Tests', () => {
         workspaceState: { get(key: string) {} } as vscode.Memento
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
-    let solutionsDirs: string[] = ['assests', 'empty'];
+    let solutionsDirs: string[] = ['assets', 'empty'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'nuget'));
 
