@@ -58,7 +58,7 @@ describe('Nuget Utils Tests', () => {
         let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(componentsToScan, parent);
 
         // Check that components to scan contains MyLogger:1.0.0
-        assert.isTrue(componentsToScan.size() === 1);
+        assert.equal(componentsToScan.size(), 1);
         assert.deepEqual(componentsToScan.toArray()[0], new ComponentDetails('nuget://MyLogger:1.0.0'));
 
         // Check labels
