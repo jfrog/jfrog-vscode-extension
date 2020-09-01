@@ -18,7 +18,7 @@
 - [Maven Projects](#maven-projects)
 - [Npm Projects](#npm-projects)
 - [Pypi Projects](#pypi-projects)
-- [NuGet Projects](#nuget-projects)
+- [.NET Projects](#.net-projects)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 - [Building and Testing the Sources](#building-and-testing-the-sources)
@@ -171,12 +171,12 @@ Behind the scenes, the extension builds the Pypi dependencies tree by running `p
 1. Open a new terminal and activate your Virtualenv as instructed [here](https://virtualenv.pypa.io/en/latest/userguide/#activate-script).
 1. Install your python project and dependencies according to your project specifications.
 
-## NuGet Projects
+## .NET Projects
 Behind the scenes, the extension builds the NuGet dependencies tree using [NuGet deps tree](https://github.com/jfrog/nuget-deps-tree).
 
 Important:
-To have your project dependencies scanned by JFrog Xray, make sure the `nuget` or `dotnet` CLI are installed on your local machine and that they are in your system PATH.
-In addition, the project dependencies must be restored using `nuget restore` or `dotnet restore`, respectfully.
+To have your .NET project dependencies scanned by JFrog Xray, make sure the `nuget` CLI are installed on your local machine and that they are in your system PATH.
+In addition, the project must be restored using `nuget restore` prior to scanning.
 After this action, you should click on the Refresh ![Refresh](resources/readme/refresh.png) button, for the view to be refreshed and updated.
 
 ## Troubleshooting
