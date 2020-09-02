@@ -195,9 +195,8 @@ For .NET projects which use NuGet packages as depedencies, the extension display
 Behind the scenes, the extension builds the NuGet dependencies tree using the [NuGet deps tree](https://github.com/jfrog/nuget-deps-tree) npm package.
 
 Important:
-To have your NuGet project dependencies scanned by JFrog Xray, make sure the `nuget` CLI is installed on your local machine and that it is in your system PATH.
-In addition, the project must be restored using `nuget restore` prior to scanning.
-After this action, you should click on the Refresh ![Refresh](resources/readme/refresh.png) button, for the view to be refreshed and updated.
+- Does your project define its NuGet depedencies using a *packages.config* file? If so, then please make sure the `nuget` CLI is installed on your local machine and that it is in your system PATH. The extension uses the `nuget` CLI to find the location of the NuGet packages on the local file-system.
+- The project must be restored using `nuget restore` or `dotnet restore` prior to scanning. After this action, you should click on the Refresh ![Refresh](resources/readme/refresh.png) button, for the tree view to be refreshed and updated.
 
 ## Troubleshooting
 View the extension log:
