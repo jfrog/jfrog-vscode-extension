@@ -32,7 +32,7 @@ The earlier you remediate a vulnerability in the release cycle, the lower the co
 [JFrog Xray](https://jfrog.com/xray/) is instrumental in flagging components when vulnerabilities are discovered in production systems at runtime,
 or even sooner, during the development.
 
-The JFrog VS Code Extension adds JFrog Xray scanning of **Maven**, **npm**, **Go** and **Python** project dependencies to your VS Code IDE.
+The JFrog VS Code Extension adds JFrog Xray scanning of **Maven**, **npm**, **Go**, **Python** and **NuGet** project dependencies to your VS Code IDE.
 It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE.
 With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
@@ -186,10 +186,11 @@ Behind the scenes, the extension builds the Pypi dependencies tree by running `p
 5. In the same terminal, install your python project and dependencies according to your project specifications.
 
 ## .NET Projects
-Behind the scenes, the extension builds the NuGet dependencies tree using [NuGet deps tree](https://github.com/jfrog/nuget-deps-tree).
+For .NET projects which use NuGet packages as depedencies, the extension displays the NuGet depedencies tree, together with the information for each depedency.  
+Behind the scenes, the extension builds the NuGet dependencies tree using the [NuGet deps tree](https://github.com/jfrog/nuget-deps-tree) npm package.
 
 Important:
-To have your .NET project dependencies scanned by JFrog Xray, make sure the `nuget` CLI is installed on your local machine and that it is in your system PATH.
+To have your NuGet project dependencies scanned by JFrog Xray, make sure the `nuget` CLI is installed on your local machine and that it is in your system PATH.
 In addition, the project must be restored using `nuget restore` prior to scanning.
 After this action, you should click on the Refresh ![Refresh](resources/readme/refresh.png) button, for the view to be refreshed and updated.
 
