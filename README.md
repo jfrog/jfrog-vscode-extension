@@ -32,9 +32,14 @@ The earlier you remediate a vulnerability in the release cycle, the lower the co
 [JFrog Xray](https://jfrog.com/xray/) is instrumental in flagging components when vulnerabilities are discovered in production systems at runtime,
 or even sooner, during the development.
 
-The JFrog VS Code Extension adds JFrog Xray scanning of **Maven**, **npm**, **Go**, **Python** and **NuGet** project dependencies to your VS Code IDE.
+The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to your VS Code IDE.
 It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE.
-With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
+With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product. The following project types are supported.
+- [Go Projects](#go-projects)
+- [Maven Projects](#maven-projects)
+- [Npm Projects](#npm-projects)
+- [Pypi Projects](#pypi-projects)
+- [.NET Projects](#net-projects)
 
 ### Free Go Modules Security Scanning and Metadata from GoCenter
 The JFrog Extension also includes free security scanning and metadata of Go Modules from [JFrog GoCenter](https://search.gocenter.io/). Read more in the [Go Projects](#go-projects) section.
