@@ -2,6 +2,7 @@ import { IArtifact, IClientConfig } from 'xray-client-js';
 import { IComponentMetadata } from '../../../main/goCenterClient/model/ComponentMetadata';
 import { ConnectionManager } from '../../../main/connect/connectionManager';
 import { LogManager } from '../../../main/log/logManager';
+import * as os from 'os';
 
 export const TestArtifact: IArtifact[] = [
     {
@@ -146,4 +147,8 @@ export function createGoCenterConfig(): IClientConfig {
     } as IClientConfig;
     connectionManager.addUserAgentHeader(clientConfig);
     return clientConfig;
+}
+
+export function isWindows(): boolean {
+    return os.platform() === 'win32';
 }
