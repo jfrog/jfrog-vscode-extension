@@ -65,7 +65,7 @@
     "version": "1.0.0",
     "restore": {
       "projectName": "api",
-      "packagesPath": "src/test/resources/nuget/assets/packagesFolder/"
+      "packagesPath": "${PACKAGES_PATH}"
     },
     "frameworks": {
       "net45": {
