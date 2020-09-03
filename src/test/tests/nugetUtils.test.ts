@@ -12,6 +12,7 @@ import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesT
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { NugetUtils } from '../../main/utils/nugetUtils';
+import { isWindows } from './utils/utils.test';
 
 /**
  * Test functionality of @class NugetUtils.
@@ -95,7 +96,10 @@ describe('Nuget Utils Tests', () => {
 
     function replacePackagesPathInAssets() {
         const projects: string[] = ['api', 'core'];
-        const packagesPath: string = path.join(tmpDir.fsPath, "assets", "packagesFolder");
+        let packagesPath: string = path.join(tmpDir.fsPath, "assets", "packagesFolder");
+        if (isWindows()) {
+            packagesPath = packagesPath.replace(/\\/g, "\\\\");
+        }
         projects.forEach(async project => {
             const fileToReplace: string = path.join(tmpDir.fsPath, "assets", project, "obj", "project.assets.json");
             let content: string = fs.readFileSync(fileToReplace, {encoding: "utf8"});
