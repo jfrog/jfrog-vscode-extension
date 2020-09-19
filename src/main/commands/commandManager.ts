@@ -1,12 +1,14 @@
+import * as clipboardy from 'clipboardy';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
+import { ExclusionsManager } from '../exclusions/exclusionsManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { FilterManager } from '../filter/filterManager';
 import { FocusManager } from '../focus/focusManager';
 import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { ExclusionsManager } from '../exclusions/exclusionsManager';
+import { TreeDataHolder } from '../treeDataProviders/utils/treeDataHolder';
 
 /**
  * Register and execute all commands in the extension.
@@ -26,12 +28,13 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.excludeDependency', dependenciesTreeNode => this.doExcludeDependency(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.codeAction', dependenciesTreeNode => this.doCodeAction(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
+        this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
+        this.registerCommand(context, 'jfrog.xray.openLink', url => this.doOpenLink(url));
+        this.registerCommand(context, 'jfrog.xray.disconnect', () => this.doDisconnect());
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
         this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
-        this.registerCommand(context, 'jfrog.xray.disconnect', () => this.doDisconnect());
         this.registerCommand(context, 'jfrog.xray.filter', () => this.doFilter());
-        this.registerCommand(context, 'jfrog.xray.openLink', url => this.doOpenLink(url));
     }
 
     /**
@@ -73,6 +76,31 @@ export class CommandManager implements ExtensionComponent {
      */
     private doFocus(dependenciesTreeNode: DependenciesTreeNode) {
         this.onSelectNode(dependenciesTreeNode);
+    }
+
+    /**
+     * Copy the node content to clipboard.
+     * @param node The tree node. Can be instance of DependenciesTreeNode or TreeDataHolder.
+     */
+    private doCopyToClipboard(node: vscode.TreeItem) {
+        let text: string | undefined;
+        if (node instanceof TreeDataHolder) {
+            // 'Component Details' or leaf of 'Component Issue Details'
+            let treeDataHolder: TreeDataHolder = node;
+            if (treeDataHolder.value) {
+                text = node.value;
+            }
+        } else if (node.description) {
+            // 'Component Tree' with version
+            text = node.label + ':' + node.description;
+        } else if (node.label) {
+            // 'Component Tree' without version or 'Component Issue Details' root node
+            text = node.label;
+        }
+        if (text) {
+            clipboardy.writeSync(text);
+            vscode.window.showInformationMessage('Saved in clipboard');
+        }
     }
 
     /**

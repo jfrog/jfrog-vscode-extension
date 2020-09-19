@@ -109,6 +109,11 @@
                 "command": "jfrog.xray.excludeDependency",
                 "title": "Exclude dependency",
                 "icon": "$(exclude)"
+            },
+            {
+                "command": "jfrog.xray.copyToClipboard",
+                "title": "Copy to clipboard",
+                "icon": "$(files)"
             }
         ],
         "menus": {
@@ -144,6 +149,10 @@
                     "command": "jfrog.xray.excludeDependency",
                     "when": "viewItem == jfrog.xray.excludeDependency.enabled",
                     "group": "inline"
+                },
+                {
+                    "command": "jfrog.xray.copyToClipboard",
+                    "group": "inline"
                 }
             ]
         }
@@ -159,6 +168,7 @@
         "package": "vsce package"
     },
     "dependencies": {
+        "clipboardy": "^2.3.0",
         "fs-extra": "~9.0.0",
         "keytar": "~5.6.0",
         "nuget-deps-tree": "~0.1.0",
