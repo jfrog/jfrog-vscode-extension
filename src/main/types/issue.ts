@@ -10,8 +10,13 @@ export class Issue {
         private _description: string,
         private _issueType: string,
         private _fixedVersions: string[] = [],
+        private _cves?: string[],
         private _gocenter_security_url?: string
     ) {}
+
+    public get cves(): string[] | undefined {
+        return this._cves;
+    }
 
     public get description(): string {
         return this._description;
@@ -39,6 +44,10 @@ export class Issue {
 
     public get gocenter_security_url(): string | undefined {
         return this._gocenter_security_url;
+    }
+
+    public set cves(cves: string[] | undefined) {
+        this._cves = cves;
     }
 
     public set description(value: string) {
