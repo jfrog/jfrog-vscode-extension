@@ -30,25 +30,20 @@ export class NugetTreeNode extends DependenciesTreeNode {
         }
         for (let key in dependencies) {
             let dependency: any = dependencies[key];
-            let nameVersionTuple: string[] = this.getNameVersionTuple(dependency.dependency.id);
-            let name: string = nameVersionTuple[0];
-            let version: string = nameVersionTuple[1];
-            if (version) {
-                let childDependencies: any = dependency.directDependencies;
-                let generalInfo: GeneralInfo = new GeneralInfo(name, version, '', NugetUtils.PKG_TYPE);
+            let id: string = dependency.id;
+            let version: string = dependency.version;
+            let childDependencies: any = dependency.dependencies;
+            if (id && version && childDependencies) {
+                let generalInfo: GeneralInfo = new GeneralInfo(id, version, '', NugetUtils.PKG_TYPE);
                 let treeCollapsibleState: vscode.TreeItemCollapsibleState =
                     childDependencies.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode, '');
-                if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(dependency.dependency.id)) {
-                    this._componentsToScan.add(new ComponentDetails(NugetTreeNode.COMPONENT_PREFIX + dependency.dependency.id));
+                let combined: string = id + ':' + version;
+                if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(combined)) {
+                    this._componentsToScan.add(new ComponentDetails(NugetTreeNode.COMPONENT_PREFIX + combined));
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan);
             }
         }
-    }
-
-    private getNameVersionTuple(value: string): string[] {
-        let split: string[] = value.split(':');
-        return [split[0], split[1]];
     }
 }
