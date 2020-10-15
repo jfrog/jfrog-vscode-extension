@@ -109,7 +109,7 @@ export class PypiUtils {
                 vscode.window.showErrorMessage('Could not scan Pypi project dependencies, because python interpreter is not set.');
                 return [];
             }
-            if (!PypiUtils.isInVirtualEnv(pythonPath, workspaceFolder.uri.fsPath)) {
+            if (!PypiUtils.isInVirtualEnv(pythonPath, workspaceFolder.uri.fsPath, treesManager.logManager)) {
                 vscode.window.showErrorMessage(
                     'Please install and activate a virtual environment before running Xray scan. Then, install your Python project in that environment.'
                 );
@@ -151,12 +151,14 @@ export class PypiUtils {
      * @param pythonPath      - Path to python interpreter
      * @param workspaceFolder - Base workspace folder
      */
-    public static isInVirtualEnv(pythonPath: string, workspaceFolder: string): boolean {
+    public static isInVirtualEnv(pythonPath: string, workspaceFolder: string, logManager: LogManager): boolean {
         try {
             exec.execSync(pythonPath + ' ' + PypiUtils.CHECK_VENV_SCRIPT, { cwd: workspaceFolder } as exec.ExecSyncOptionsWithStringEncoding);
             return true;
-        } catch (error) {}
-        return false;
+        } catch (error) {
+            logManager.logError(error, false);
+            return false;
+        }
     }
 
     /**
