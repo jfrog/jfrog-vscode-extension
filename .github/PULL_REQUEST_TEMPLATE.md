@@ -1,3 +1,0 @@
-- [ ] All [tests](https://github.com/jfrog/jfrog-vscode-extension#building-and-testing-the-sources) passed. If this feature is not already covered by the tests, I added new tests.
-- [ ] I used `npm run format` for formatting the code before submitting the pull request.
------
