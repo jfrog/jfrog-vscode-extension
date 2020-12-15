@@ -3,11 +3,13 @@ import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { LicensesFilter } from './licensesFilter';
+import { ScopesFilter } from './scopeFilter';
 import { SeverityFilter as SeveritiesFilter } from './severitiesFilter';
 
 enum FilterTypes {
     SEVERITY = '$(alert)   Issues severity',
     LICENSE = '$(law)   Licenses',
+    SCOPE = '$(telescope)   Scope',
     CLEAR_ALL = '$(trashcan)   Reset filters'
 }
 
@@ -17,10 +19,12 @@ enum FilterTypes {
 export class FilterManager implements ExtensionComponent {
     private _severitiesFilter: SeveritiesFilter;
     private _licensesFilter: LicensesFilter;
+    private _scopeFilter: ScopesFilter;
 
     constructor(private _treesManager: TreesManager) {
         this._severitiesFilter = new SeveritiesFilter();
         this._licensesFilter = new LicensesFilter(_treesManager);
+        this._scopeFilter = new ScopesFilter(_treesManager);
     }
 
     public activate(context: vscode.ExtensionContext) {
@@ -28,7 +32,7 @@ export class FilterManager implements ExtensionComponent {
     }
 
     public async showFilterMenu() {
-        let choice: string | undefined = await vscode.window.showQuickPick(Object.values(FilterTypes), <vscode.QuickPickOptions>{
+        let choice: string | undefined = await vscode.window.showQuickPick(this.getFilters(), <vscode.QuickPickOptions>{
             placeHolder: 'Filter',
             canPickMany: false
         });
@@ -39,11 +43,27 @@ export class FilterManager implements ExtensionComponent {
             case FilterTypes.LICENSE:
                 this._licensesFilter.showFilterMenu(this);
                 break;
+            case FilterTypes.SCOPE:
+                this._scopeFilter.showFilterMenu(this);
+                break;
             case FilterTypes.CLEAR_ALL:
                 this._severitiesFilter.clearFilters();
                 this._licensesFilter.clearFilters();
+                this._scopeFilter.clearFilters();
                 this._treesManager.dependenciesTreeDataProvider.applyFilters(undefined);
         }
+    }
+
+    public getFilters(): string[] {
+        let results: string[] = [];
+        Object.values(FilterTypes).forEach(filterType => {
+            // Includes sub menu of scopes  in filters iff there is at least one scope in the project.
+            if (filterType === FilterTypes.SCOPE && this._scopeFilter.getValues().length === 0) {
+                return;
+            }
+            results.push(filterType);
+        });
+        return results;
     }
 
     public applyFilters() {
@@ -57,7 +77,10 @@ export class FilterManager implements ExtensionComponent {
     }
 
     private _applyFilters(unfilteredNode: DependenciesTreeNode, filteredNode: DependenciesTreeNode, picked: { nodeSelected: Boolean }): void {
-        picked.nodeSelected = this._severitiesFilter.isNodePicked(unfilteredNode) && this._licensesFilter.isNodePicked(unfilteredNode);
+        picked.nodeSelected =
+            this._severitiesFilter.isNodePicked(unfilteredNode) &&
+            this._licensesFilter.isNodePicked(unfilteredNode) &&
+            this._scopeFilter.isNodePicked(unfilteredNode);
         for (let unfilteredChild of unfilteredNode.children) {
             let filteredNodeChild: DependenciesTreeNode = unfilteredChild.shallowClone();
             let childSelected: any = { nodeSelected: false };

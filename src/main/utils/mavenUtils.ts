@@ -379,7 +379,7 @@ export class MavenUtils {
     /**
      * @param rawDependency Raw dependency text
      */
-    public static getProjectInfo(rawDependency: string): [string, string, string] {
+    public static getProjectInfo(rawDependency: string): [string, string, string, string] {
         return MavenUtils.getDependencyInfo(rawDependency.replace(/\s/g, '') + ':dummyScope');
     }
 
@@ -387,11 +387,11 @@ export class MavenUtils {
      * @param rawDependency - e.g. "|  |  +- javax.mail:mail:jar:1.4:compile"
      * @returns [groupId,ArtifactId,version]
      */
-    public static getDependencyInfo(rawDependency: string): [string, string, string] {
+    public static getDependencyInfo(rawDependency: string): [string, string, string, string] {
         let result: string[] = rawDependency.split(':');
         // Skip none alphanumeric characters
         let startIndex: number = result[0].search(/\w/);
-        return [result[0].slice(startIndex), result[1], result[result.length - 2]];
+        return [result[0].slice(startIndex), result[1], result[result.length - 2], result[result.length - 1].split(' ')[0]];
     }
 
     // 'mvn dependency:tree' duplicate the parent dependencies to its child.

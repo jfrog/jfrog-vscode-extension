@@ -11,8 +11,8 @@ export class Translators {
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
         let components: string[] = clientGeneral.component_id.split(':');
         return components.length === 2
-            ? new GeneralInfo(components[0], components[1], clientGeneral.path, clientGeneral.pkg_type)
-            : new GavGeneralInfo(components[0], components[1], components[2], clientGeneral.path, clientGeneral.pkg_type);
+            ? new GeneralInfo(components[0], components[1], [], clientGeneral.path, clientGeneral.pkg_type)
+            : new GavGeneralInfo(components[0], components[1], components[2], [], clientGeneral.path, clientGeneral.pkg_type);
     }
 
     public static toIssue(clientIssue: IIssue): Issue {

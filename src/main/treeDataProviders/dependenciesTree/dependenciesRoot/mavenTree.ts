@@ -17,7 +17,7 @@ export class MavenTreeNode extends DependenciesTreeNode {
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
-        super(new GeneralInfo('', '', _workspaceFolder, ''), vscode.TreeItemCollapsibleState.None, parent);
+        super(new GeneralInfo('', '', [], _workspaceFolder, ''), vscode.TreeItemCollapsibleState.None, parent);
         MavenUtils.pathToNode.set(_workspaceFolder, this);
     }
 
@@ -32,7 +32,7 @@ export class MavenTreeNode extends DependenciesTreeNode {
      */
     public async refreshDependencies(quickScan: boolean, prototypeTree: PomTree, parentDependencies?: string[]) {
         const [group, name, version] = prototypeTree.pomGav.split(':');
-        this.generalInfo = new GavGeneralInfo(group, name, version, this._workspaceFolder, MavenUtils.PKG_TYPE);
+        this.generalInfo = new GavGeneralInfo(group, name, version, [], this._workspaceFolder, MavenUtils.PKG_TYPE);
         this.label = group + ':' + name;
         let rawDependenciesList: string[] | undefined = await prototypeTree.getRawDependencies(this._treesManager);
         if (!!rawDependenciesList && rawDependenciesList.length > 0) {
@@ -64,8 +64,8 @@ export class MavenTreeNode extends DependenciesTreeNode {
     ) {
         for (; rawDependenciesPtr.index < rawDependenciesList.length; rawDependenciesPtr.index++) {
             let dependency: string = rawDependenciesList[rawDependenciesPtr.index];
-            const [group, name, version] = MavenUtils.getDependencyInfo(dependency);
-            const gavGeneralInfo: GavGeneralInfo = new GavGeneralInfo(group, name, version, '', MavenUtils.PKG_TYPE);
+            const [group, name, version, scope] = MavenUtils.getDependencyInfo(dependency);
+            const gavGeneralInfo: GavGeneralInfo = new GavGeneralInfo(group, name, version, [scope], '', MavenUtils.PKG_TYPE);
             let treeCollapsibleState: vscode.TreeItemCollapsibleState = this.isParent(rawDependenciesList, rawDependenciesPtr.index)
                 ? vscode.TreeItemCollapsibleState.Collapsed
                 : vscode.TreeItemCollapsibleState.None;

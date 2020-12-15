@@ -74,7 +74,7 @@ describe('Pypi Utils Tests', () => {
         // Test 'resources/python/requirements'
         let requirements: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'requirements', 'requirements.txt'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(requirements);
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('newrelic', '2.0.0.1', '', ''));
+        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('newrelic', '2.0.0.1', [], '', ''));
         let dependencyPos: vscode.Position[] = PypiUtils.getDependencyPos(textDocument, textDocument.getText().toLowerCase(), dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(2, 0));
 
@@ -96,7 +96,7 @@ describe('Pypi Utils Tests', () => {
             new Collections.Set(),
             treesManager,
             path.join(workspaceFolders[0].uri.fsPath, localPython),
-            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''))
+            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
         );
         dependenciesTreeNode.refreshDependencies(true);
         assert.deepEqual(dependenciesTreeNode.label, 'requirements');
@@ -109,7 +109,7 @@ describe('Pypi Utils Tests', () => {
             new Collections.Set(),
             treesManager,
             path.join(workspaceFolders[1].uri.fsPath, localPython),
-            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''))
+            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
         );
         dependenciesTreeNode.refreshDependencies(true);
         assert.deepEqual(dependenciesTreeNode.label, 'setup');
@@ -125,7 +125,7 @@ describe('Pypi Utils Tests', () => {
             new Collections.Set(),
             treesManager,
             path.join(workspaceFolders[2].uri.fsPath, localPython),
-            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''))
+            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
         );
         dependenciesTreeNode.refreshDependencies(true);
         assert.deepEqual(dependenciesTreeNode.label, 'setupAndRequirements');

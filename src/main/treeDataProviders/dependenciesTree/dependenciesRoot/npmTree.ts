@@ -6,7 +6,7 @@ import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { TreesManager } from '../../treesManager';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { ScanUtils } from '../../../utils/scanUtils';
-import { NpmUtils } from '../../../utils/npmUtils';
+import { NpmGlobalScopes, ScopedNpmProject, NpmUtils } from '../../../utils/npmUtils';
 
 export class NpmTreeNode extends DependenciesTreeNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
@@ -17,28 +17,42 @@ export class NpmTreeNode extends DependenciesTreeNode {
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
-        super(new GeneralInfo('', '', _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent);
+        super(new GeneralInfo('', '', [], _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent);
     }
 
     public async refreshDependencies(quickScan: boolean) {
-        let npmList: any;
-        try {
-            npmList = JSON.parse(ScanUtils.executeCmd('npm ls --json', this._workspaceFolder).toString());
-        } catch (error) {
-            this._treesManager.logManager.logError(error, !quickScan);
-            this._treesManager.logManager.logMessage(
-                'Possible cause: The project needs to be installed by npm. Install it by running "npm install" from "' + this._workspaceFolder + '".',
-                'INFO'
-            );
-            npmList = JSON.parse(error.stdout.toString());
-            npmList.name += ' [Not installed]';
-        }
-        this.generalInfo = new GeneralInfo(npmList.name, npmList.version, this._workspaceFolder, NpmUtils.PKG_TYPE);
-        this.label = npmList.name ? npmList.name : path.join(this._workspaceFolder, 'package.json');
-        this.populateDependenciesTree(this, npmList.dependencies, quickScan);
+        const productionScope: ScopedNpmProject = new ScopedNpmProject(NpmGlobalScopes.PRODUCTION);
+        const developmentScope: ScopedNpmProject = new ScopedNpmProject(NpmGlobalScopes.DEVELOPMENT);
+        let npmLsFailed: boolean = false;
+        [productionScope, developmentScope].forEach(scopedProject => {
+            try {
+                scopedProject.loadProjectDetails(this.runNpmLs(scopedProject.scope));
+            } catch (error) {
+                this._treesManager.logManager.logError(error, !quickScan);
+                this._treesManager.logManager.logMessage(
+                    'Possible cause: The project needs to be installed by npm. Install it by running "npm install" from "' +
+                        this._workspaceFolder +
+                        '",.',
+                    'INFO'
+                );
+                scopedProject.loadProjectDetails(JSON.parse(error.stdout.toString()));
+                npmLsFailed = true;
+            }
+        });
+        this.generalInfo = new GeneralInfo(
+            npmLsFailed ? (productionScope.projectName += ' [Not installed]') : productionScope.projectName,
+            productionScope.projectVersion,
+            [],
+            this._workspaceFolder,
+            NpmUtils.PKG_TYPE
+        );
+        this.label = productionScope.projectName ? productionScope.projectName : path.join(this._workspaceFolder, 'package.json');
+        [productionScope, developmentScope].forEach(scopedProject => {
+            this.populateDependenciesTree(this, scopedProject.dependencies, quickScan, scopedProject.scope);
+        });
     }
 
-    private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any, quickScan: boolean) {
+    private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any, quickScan: boolean, globalScope: string) {
         if (!dependencies) {
             return;
         }
@@ -47,7 +61,9 @@ export class NpmTreeNode extends DependenciesTreeNode {
             let version: string = dependency.version;
             if (version) {
                 let childDependencies: any = dependency.dependencies;
-                let generalInfo: GeneralInfo = new GeneralInfo(key, version, '', NpmUtils.PKG_TYPE);
+                const scope: string = NpmUtils.getDependencyScope(key);
+                const currentDependencyScope: string[] = scope !== '' ? [globalScope, scope] : [globalScope];
+                let generalInfo: GeneralInfo = new GeneralInfo(key, version, currentDependencyScope, '', NpmUtils.PKG_TYPE);
                 let treeCollapsibleState: vscode.TreeItemCollapsibleState = childDependencies
                     ? vscode.TreeItemCollapsibleState.Collapsed
                     : vscode.TreeItemCollapsibleState.None;
@@ -56,8 +72,12 @@ export class NpmTreeNode extends DependenciesTreeNode {
                 if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(componentId)) {
                     this._componentsToScan.add(new ComponentDetails(NpmTreeNode.COMPONENT_PREFIX + componentId));
                 }
-                this.populateDependenciesTree(child, childDependencies, quickScan);
+                this.populateDependenciesTree(child, childDependencies, quickScan, globalScope);
             }
         }
+    }
+
+    private runNpmLs(scope: NpmGlobalScopes): any {
+        return JSON.parse(ScanUtils.executeCmd('npm ls --json --only=' + scope, this._workspaceFolder).toString());
     }
 }
