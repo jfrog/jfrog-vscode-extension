@@ -216,7 +216,7 @@ export class MavenUtils {
             node.contextValue = '';
         } else if (!(node.parent instanceof MavenTreeNode) && node.parent?.label) {
             // Enable 'Exclude dependency' and 'Show in project descriptor' in right click menu on the dependency
-            node.contextValue = ContextKeys.EXCLUDE_DEPENDENCY_ENABLED;
+            node.contextValue += ContextKeys.EXCLUDE_DEPENDENCY_ENABLED;
         }
         // Prepare the closer pom.xml for the children.
         if (node instanceof MavenTreeNode) {

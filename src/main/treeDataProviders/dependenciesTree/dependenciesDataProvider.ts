@@ -16,6 +16,7 @@ import { GoDependenciesTreeNode } from './goDependenciesTreeNode';
 import { GoTreeNode } from './dependenciesRoot/goTree';
 import { ISeverityCount } from '../../goCenterClient/model/SeverityCount';
 import { Scope } from '../../types/scope';
+import { RootNode } from './dependenciesRoot/rootTree';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -200,33 +201,38 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     private async repopulateTree(quickScan: boolean, credentialsSet: boolean) {
         await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
             this.clearTree();
-            let dependenciesTree: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
+            let workspaceRoot: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
             await DependenciesTreesFactory.createDependenciesTrees(
                 this._workspaceFolders,
                 this._componentsToScan,
                 this._goCenterComponentsToScan,
                 this._treesManager,
-                dependenciesTree,
+                workspaceRoot,
                 quickScan
             );
             if (credentialsSet) {
                 // Xray + GoCenter users
                 vscode.commands.executeCommand('setContext', 'isGoCenterMode', false);
                 await this.scanAndCacheComponents(progress, checkCanceled);
-                for (let dependenciesTreeNode of dependenciesTree.children) {
+                for (let dependenciesTreeNode of workspaceRoot.children) {
                     this.addXrayInfoToTree(dependenciesTreeNode);
                     if (dependenciesTreeNode instanceof GoTreeNode) {
                         this.addGoCenterInfoToTree(dependenciesTreeNode, credentialsSet);
                     }
                     dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
                 }
-            } else if (this.isGoCenterMode(dependenciesTree)) {
+                workspaceRoot.children.forEach(node => {
+                    if (node instanceof RootNode) {
+                        node.setUpgradableDependencies();
+                    }
+                });
+            } else if (this.isGoCenterMode(workspaceRoot)) {
                 // GoCenter users
                 vscode.commands.executeCommand('setContext', 'isGoCenterMode', true);
                 const totalComponents: number = this._goCenterComponentsToScan.size();
                 progress.report({ message: `${totalComponents} components` });
                 await this.scanAndCache(progress, checkCanceled, totalComponents, Source.GoCenter, this._goCenterComponentsToScan.toArray());
-                for (let dependenciesTreeNode of dependenciesTree.children) {
+                for (let dependenciesTreeNode of workspaceRoot.children) {
                     this.addGoCenterInfoToTree(dependenciesTreeNode, credentialsSet);
                     dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
                 }

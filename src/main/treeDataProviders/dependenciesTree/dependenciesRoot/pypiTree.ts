@@ -6,32 +6,33 @@ import { TreesManager } from '../../treesManager';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { PypiUtils } from '../../../utils/pypiUtils';
+import { RootNode } from './rootTree';
 
 /**
  * Pypi packages can be installed in two different ways:
  * 1. 'pip install [Path to setup.py]' - With this method, the top level in the tree would be the project name.
  * 2. 'pip install -r [Path to requirements.txt]' - With this method, the top level in the tree would be the dependencies of the project.
  */
-export class PypiTreeNode extends DependenciesTreeNode {
+export class PypiTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'pypi://';
 
     constructor(
-        private _projectDir: string,
+        workspaceFolder: string,
         private _componentsToScan: Collections.Set<ComponentDetails>,
         private _treesManager: TreesManager,
         private _pythonPath: string,
         parent?: DependenciesTreeNode
     ) {
-        super(new GeneralInfo('', '', ['None'], _projectDir, ''), vscode.TreeItemCollapsibleState.Expanded, parent);
+        super(workspaceFolder, parent);
     }
 
     public async refreshDependencies(quickScan: boolean) {
         let pypiList: any;
         try {
             pypiList = JSON.parse(
-                ScanUtils.executeCmd(this._pythonPath + ' ' + PypiUtils.PIP_DEP_TREE_SCRIPT + ' --json-tree', this._projectDir).toString()
+                ScanUtils.executeCmd(this._pythonPath + ' ' + PypiUtils.PIP_DEP_TREE_SCRIPT + ' --json-tree', this.workspaceFolder).toString()
             );
-            this.generalInfo = new GeneralInfo(this._projectDir.replace(/^.*[\\\/]/, ''), '', ['None'], this._projectDir, PypiUtils.PKG_TYPE);
+            this.generalInfo = new GeneralInfo(this.workspaceFolder.replace(/^.*[\\\/]/, ''), '', ['None'], this.workspaceFolder, PypiUtils.PKG_TYPE);
         } catch (error) {
             this._treesManager.logManager.logError(error, !quickScan);
         }

@@ -1,28 +1,24 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { GeneralInfo } from '../../../types/generalInfo';
 import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { GavGeneralInfo } from '../../../types/gavGeneralinfo';
 import { PomTree } from '../../../utils/pomTree';
 import { MavenUtils } from '../../../utils/mavenUtils';
+import { RootNode } from './rootTree';
 
-export class MavenTreeNode extends DependenciesTreeNode {
+export class MavenTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'gav://';
 
     constructor(
-        private _workspaceFolder: string,
+        workspaceFolder: string,
         private _componentsToScan: Collections.Set<ComponentDetails>,
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
-        super(new GeneralInfo('', '', [], _workspaceFolder, ''), vscode.TreeItemCollapsibleState.None, parent);
-        MavenUtils.pathToNode.set(_workspaceFolder, this);
-    }
-
-    get workspaceFolder() {
-        return this._workspaceFolder;
+        super(workspaceFolder, parent);
+        MavenUtils.pathToNode.set(workspaceFolder, this);
     }
 
     /**
@@ -32,7 +28,7 @@ export class MavenTreeNode extends DependenciesTreeNode {
      */
     public async refreshDependencies(quickScan: boolean, prototypeTree: PomTree, parentDependencies?: string[]) {
         const [group, name, version] = prototypeTree.pomGav.split(':');
-        this.generalInfo = new GavGeneralInfo(group, name, version, [], this._workspaceFolder, MavenUtils.PKG_TYPE);
+        this.generalInfo = new GavGeneralInfo(group, name, version, [], this.workspaceFolder, MavenUtils.PKG_TYPE);
         this.label = group + ':' + name;
         let rawDependenciesList: string[] | undefined = await prototypeTree.getRawDependencies(this._treesManager);
         if (!!rawDependenciesList && rawDependenciesList.length > 0) {
@@ -92,7 +88,7 @@ export class MavenTreeNode extends DependenciesTreeNode {
 
     /** @override */
     public shallowClone(): MavenTreeNode {
-        const clone: MavenTreeNode = new MavenTreeNode(this._workspaceFolder, this._componentsToScan, this._treesManager, undefined);
+        const clone: MavenTreeNode = new MavenTreeNode(this.workspaceFolder, this._componentsToScan, this._treesManager, undefined);
         clone.generalInfo = this.generalInfo;
         clone.licenses = this.licenses;
         clone.issues = this.issues;
@@ -137,5 +133,17 @@ export class MavenTreeNode extends DependenciesTreeNode {
 
     private isUpperInTree(rawDependenciesList: string[], toCompare: number, against: number) {
         return this.getDependenciesLevel(rawDependenciesList[against]) > this.getDependenciesLevel(rawDependenciesList[toCompare]);
+    }
+
+    /** @override */
+    public setUpgradableDependencies() {
+        this.children.forEach(child => {
+            // In case of a multi module pom.
+            if (child instanceof RootNode) {
+                child.children.forEach(c => this.upgradableDependencies(c));
+            } else {
+                this.upgradableDependencies(child);
+            }
+        });
     }
 }

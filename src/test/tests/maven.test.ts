@@ -16,6 +16,8 @@ import { MavenUtils } from '../../main/utils/mavenUtils';
 import { PomTree } from '../../main/utils/pomTree';
 import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { MavenExclusion } from '../../main/exclusions/mavenExclusion';
+import { MavenUpdateDependency } from '../../main/DependencyUpdate/mavenDependencyUpdate';
+import { getNodeByArtifactId } from './utils/utils.test';
 
 /**
  * Test functionality of Maven.
@@ -27,6 +29,7 @@ describe('Maven Tests', () => {
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let mavenExclusion: MavenExclusion = new MavenExclusion(treesManager);
+    let mavenDependencyUpdate: MavenUpdateDependency = new MavenUpdateDependency(treesManager);
     let projectDirs: string[] = ['dependency', 'empty', 'multiPomDependency'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
@@ -315,6 +318,42 @@ describe('Maven Tests', () => {
         assert.deepEqual(res[0].children[1].children[5].generalInfo.scopes, ['test']);
         assert.isTrue(res[0].children[1].children[5] instanceof DependenciesTreeNode);
         assert.deepEqual(res[0].children[1].children[5].parent, res[0].children[1]);
+    });
+
+    it('Update fixed version', async () => {
+        // Create dependencies tree.
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0',[], '', ''));
+        let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+        let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
+
+        // Get specific dependency node.
+        let node: DependenciesTreeNode | null = getNodeByArtifactId(res[0], 'commons-email');
+        assert.isNotNull(node);
+        let newNodeVersion: string = MavenUtils.getGavArray(node!)[2];
+        assert.equal(newNodeVersion, '1.1');
+
+        // Create a new version different from the node.
+        mavenDependencyUpdate.updateDependencyVersion(node!, '1.5');
+
+        // Recalculate the dependency tree.
+        res = await runCreateMavenDependenciesTrees(componentsToScan, parent);
+
+        // Verify the node's version was modified.
+        node = getNodeByArtifactId(res[0], 'commons-email');
+        assert.isNotNull(node);
+        newNodeVersion = MavenUtils.getGavArray(node!)[2];
+        assert.equal(newNodeVersion, '1.5');
+
+        // Revert back the changes.
+        mavenDependencyUpdate.updateDependencyVersion(node!, '1.1');
+
+        // Recalculate the dependency tree.
+        res = await runCreateMavenDependenciesTrees(componentsToScan, parent);
+
+        node = getNodeByArtifactId(res[0], 'commons-email');
+        assert.isNotNull(node);
+        newNodeVersion = MavenUtils.getGavArray(node!)[2];
+        assert.equal(newNodeVersion, '1.1');
     });
 
     /**

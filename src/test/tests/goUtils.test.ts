@@ -20,6 +20,8 @@ import { GoTreeNode } from '../../main/treeDataProviders/dependenciesTree/depend
 import { IComponentMetadata } from '../../main/goCenterClient/model/ComponentMetadata';
 import { Severity } from '../../main/types/severity';
 import { TestMemento } from './utils/testMemento.test';
+import { GoUpdateDependency } from '../../main/DependencyUpdate/goDependencyUpdate';
+import { getNodeByArtifactId } from './utils/utils.test';
 
 /**
  * Test functionality of @class GoUtils.
@@ -31,6 +33,7 @@ describe('Go Utils Tests', () => {
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'empty'];
+    let goDependencyUpdate: GoUpdateDependency = new GoUpdateDependency(treesManager);
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'go'));
 
@@ -93,6 +96,41 @@ describe('Go Utils Tests', () => {
         textDocument = await vscode.workspace.openTextDocument(goMod);
         dependencyPos = GoUtils.getDependencyPos(textDocument, dependenciesTreeNode);
         assert.isEmpty(dependencyPos);
+    });
+
+    it('Update fixed version', async () => {
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0',[], '', ''));
+        let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+        let goCenterComponentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+        await runCreateGoDependenciesTrees(componentsToScan, goCenterComponentsToScan, parent, false);
+
+        // Get specific dependency node.
+        let node: DependenciesTreeNode | null = getNodeByArtifactId(parent, 'github.com/jfrog/gofrog');
+        assert.isNotNull(node);
+        assert.equal(node?.generalInfo.version, '1.0.5');
+
+        // Create a new version different from the node.
+        goDependencyUpdate.updateDependencyVersion(node!, '1.0.6');
+
+        // Recalculate the dependency tree.
+        parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0',[], '', ''));
+        await runCreateGoDependenciesTrees(componentsToScan, goCenterComponentsToScan, parent, false);
+
+        // Verify the node's version was modified.
+        node = getNodeByArtifactId(parent, 'github.com/jfrog/gofrog');
+        assert.isNotNull(node);
+        assert.equal(node?.generalInfo.version, '1.0.6');
+
+        // Revert back the changes.
+        goDependencyUpdate.updateDependencyVersion(node!, '1.0.5');
+
+        // Recalculate the dependency tree.
+        parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0',[], '', ''));
+        await runCreateGoDependenciesTrees(componentsToScan, goCenterComponentsToScan, parent, false);
+
+        node = getNodeByArtifactId(parent, 'github.com/jfrog/gofrog');
+        assert.isNotNull(node);
+        assert.equal(node?.generalInfo.version, '1.0.5');
     });
 
     /**
