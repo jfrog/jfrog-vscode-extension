@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
+import { GeneralInfo } from '../types/generalInfo';
 import { LicensesFilter } from './licensesFilter';
 import { ScopesFilter } from './scopeFilter';
 import { SeverityFilter as SeveritiesFilter } from './severitiesFilter';
@@ -57,7 +58,7 @@ export class FilterManager implements ExtensionComponent {
     public getFilters(): string[] {
         let results: string[] = [];
         Object.values(FilterTypes).forEach(filterType => {
-            // Includes sub menu of scopes  in filters iff there is at least one scope in the project.
+            // Includes sub-menu of scopes in filters if there is at least one scope in the project.
             if (filterType === FilterTypes.SCOPE && this._scopeFilter.getValues().length === 0) {
                 return;
             }

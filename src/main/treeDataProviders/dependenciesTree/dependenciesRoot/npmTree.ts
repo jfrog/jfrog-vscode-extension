@@ -38,6 +38,7 @@ export class NpmTreeNode extends DependenciesTreeNode {
                 scopedProject.loadProjectDetails(JSON.parse(error.stdout.toString()));
                 npmLsFailed = true;
             }
+            this.populateDependenciesTree(this, scopedProject.dependencies, quickScan, scopedProject.scope);
         });
         this.generalInfo = new GeneralInfo(
             npmLsFailed ? (productionScope.projectName += ' [Not installed]') : productionScope.projectName,
@@ -47,9 +48,6 @@ export class NpmTreeNode extends DependenciesTreeNode {
             NpmUtils.PKG_TYPE
         );
         this.label = productionScope.projectName ? productionScope.projectName : path.join(this._workspaceFolder, 'package.json');
-        [productionScope, developmentScope].forEach(scopedProject => {
-            this.populateDependenciesTree(this, scopedProject.dependencies, quickScan, scopedProject.scope);
-        });
     }
 
     private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any, quickScan: boolean, globalScope: string) {
