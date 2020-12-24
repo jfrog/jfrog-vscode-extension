@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { GeneralInfo } from '../types/generalInfo';
 import { LicensesFilter } from './licensesFilter';
 import { ScopesFilter } from './scopeFilter';
 import { SeverityFilter as SeveritiesFilter } from './severitiesFilter';
