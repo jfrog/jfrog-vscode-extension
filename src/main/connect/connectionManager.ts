@@ -277,8 +277,8 @@ export class ConnectionManager implements ExtensionComponent {
         }
         // Setting the value to undefined will remove the key https://github.com/microsoft/vscode/issues/11528
         await Promise.all([
-            await this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined),
-            await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined)
+            this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined),
+            this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined)
         ]);
         return true;
     }

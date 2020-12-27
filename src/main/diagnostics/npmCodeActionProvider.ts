@@ -1,6 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
+import { FocusType } from '../focus/abstractFocus';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { NpmUtils } from '../utils/npmUtils';
@@ -30,7 +31,7 @@ export class NpmCodeActionProvider extends AbstractCodeActionProvider implements
             return;
         }
         npmDependenciesTree.children.forEach(child => {
-            let dependencyPos: vscode.Position[] = NpmUtils.getDependencyPos(document, child);
+            let dependencyPos: vscode.Position[] = NpmUtils.getDependencyPos(document, child, FocusType.Dependency);
             if (dependencyPos.length === 0) {
                 return;
             }

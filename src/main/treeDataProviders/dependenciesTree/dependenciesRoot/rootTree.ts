@@ -4,7 +4,7 @@ import { GeneralInfo } from '../../../types/generalInfo';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 export class RootNode extends DependenciesTreeNode {
     constructor(private _workspaceFolder: string, parent?: DependenciesTreeNode, contextValue?: string) {
-        super(new GeneralInfo('', '',[], _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent, contextValue);
+        super(new GeneralInfo('', '', [], _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent, contextValue);
     }
 
     get workspaceFolder() {

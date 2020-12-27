@@ -10,6 +10,7 @@ import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { ContextKeys } from '../constants/contextKeys';
+import { FocusType } from '../focus/abstractFocus';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
@@ -39,7 +40,11 @@ export class MavenUtils {
      * @param document             - pom.xml file
      * @param dependenciesTreeNode - dependencies tree node
      */
-    public static getDependencyPos(document: vscode.TextDocument, dependenciesTreeNode: DependenciesTreeNode | undefined): vscode.Position[] {
+    public static getDependencyPos(
+        document: vscode.TextDocument,
+        dependenciesTreeNode: DependenciesTreeNode | undefined,
+        focusType: FocusType
+    ): vscode.Position[] {
         if (!dependenciesTreeNode) {
             return [];
         }
@@ -52,11 +57,7 @@ export class MavenUtils {
             let arr: string[] = dependencyTag.split(/\r?\n/).filter(line => line.trim() !== '');
             for (let i: number = 0; i < arr.length; i++) {
                 let depInfo: string = arr[i].trim().toLowerCase();
-                if (
-                    depInfo === '<groupid>' + groupId + '</groupid>' ||
-                    depInfo === '<artifactid>' + artifactId + '</artifactid>' ||
-                    depInfo === '<version>' + version + '</version>'
-                ) {
+                if (this.isDependencyMatch(groupId, artifactId, version, depInfo, focusType)) {
                     res.push(new vscode.Position(startIndex.line + i, arr[i].indexOf('<')));
                     res.push(new vscode.Position(startIndex.line + i, arr[i].length));
                 }
@@ -64,9 +65,22 @@ export class MavenUtils {
             return res;
         }
         if (!(dependenciesTreeNode instanceof MavenTreeNode)) {
-            return MavenUtils.getDependencyPos(document, dependenciesTreeNode.parent);
+            return MavenUtils.getDependencyPos(document, dependenciesTreeNode.parent, focusType);
         }
         return [];
+    }
+
+    public static isDependencyMatch(groupId: any, artifactId: any, version: any, depInfo: string, focusType: FocusType): boolean {
+        switch (focusType) {
+            case FocusType.Dependency:
+                return (
+                    depInfo === '<groupid>' + groupId + '</groupid>' ||
+                    depInfo === '<artifactid>' + artifactId + '</artifactid>' ||
+                    depInfo === '<version>' + version + '</version>'
+                );
+            case FocusType.DependencyVersion:
+                return depInfo === '<version>' + version + '</version>';
+        }
     }
 
     /**

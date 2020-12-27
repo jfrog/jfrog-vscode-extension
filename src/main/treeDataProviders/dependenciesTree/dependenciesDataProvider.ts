@@ -112,8 +112,8 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
         progress.report({ message: `${totalComponents} components` });
         await Promise.all([
-            await this.scanAndCache(progress, checkCanceled, totalComponents, Source.Xray, this._componentsToScan.toArray()),
-            await this.scanAndCache(progress, checkCanceled, totalComponents, Source.GoCenter, this._goCenterComponentsToScan.toArray())
+            this.scanAndCache(progress, checkCanceled, totalComponents, Source.Xray, this._componentsToScan.toArray()),
+            this.scanAndCache(progress, checkCanceled, totalComponents, Source.GoCenter, this._goCenterComponentsToScan.toArray())
         ]);
     }
 

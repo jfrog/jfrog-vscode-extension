@@ -2,10 +2,10 @@ import * as vscode from 'vscode';
 import * as Collections from 'typescript-collections';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractUpdateDependency } from './abstractDependencyUpdate';
 import { MavenUpdateDependency } from './mavenDependencyUpdate';
 import { NpmUpdateDependency } from './npmUpdateDependency';
+import { GoUpdateDependency } from './goDependencyUpdate';
 
 /**
  * Update the dependency version in the project descriptor (i.e pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
@@ -13,8 +13,8 @@ import { NpmUpdateDependency } from './npmUpdateDependency';
 export class UpdateDependencyManager implements ExtensionComponent {
     private updateDependency: AbstractUpdateDependency[] = [];
 
-    constructor(treesManager: TreesManager) {
-        this.updateDependency.push(new MavenUpdateDependency(treesManager), new NpmUpdateDependency(treesManager));
+    constructor() {
+        this.updateDependency.push(new MavenUpdateDependency(), new NpmUpdateDependency(), new GoUpdateDependency());
     }
 
     public activate(context: vscode.ExtensionContext) {
@@ -22,10 +22,10 @@ export class UpdateDependencyManager implements ExtensionComponent {
     }
 
     public async updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
-        const chosedFixedVersion: string = await this.getFixedVersion(dependenciesTreeNode);
+        const fixedVersion: string = await this.getFixedVersion(dependenciesTreeNode);
         this.updateDependency
             .filter(node => node.isMatched(dependenciesTreeNode))
-            .forEach(node => node.updateDependencyVersion(dependenciesTreeNode, chosedFixedVersion));
+            .forEach(node => node.updateDependencyVersion(dependenciesTreeNode, fixedVersion));
     }
     /**
      * Returns the version to be updated for dependenciesTreeNode. If more than one version exists,

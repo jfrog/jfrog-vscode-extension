@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
+import { FocusType } from '../focus/abstractFocus';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { GoUtils } from '../utils/goUtils';
@@ -26,7 +27,7 @@ export class GoCodeActionProvider extends AbstractCodeActionProvider implements 
             return;
         }
         goDependenciesTree.children.forEach(child => {
-            let dependencyPos: vscode.Position[] = GoUtils.getDependencyPos(document, child);
+            let dependencyPos: vscode.Position[] = GoUtils.getDependencyPos(document, child, FocusType.Dependency);
             if (dependencyPos.length === 0) {
                 return;
             }

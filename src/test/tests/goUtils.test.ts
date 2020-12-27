@@ -22,6 +22,7 @@ import { Severity } from '../../main/types/severity';
 import { TestMemento } from './utils/testMemento.test';
 import { GoUpdateDependency } from '../../main/DependencyUpdate/goDependencyUpdate';
 import { getNodeByArtifactId } from './utils/utils.test';
+import { FocusType } from '../../main/focus/abstractFocus';
 
 /**
  * Test functionality of @class GoUtils.
@@ -33,7 +34,7 @@ describe('Go Utils Tests', () => {
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'empty'];
-    let goDependencyUpdate: GoUpdateDependency = new GoUpdateDependency(treesManager);
+    let goDependencyUpdate: GoUpdateDependency = new GoUpdateDependency();
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'go'));
 
@@ -87,19 +88,19 @@ describe('Go Utils Tests', () => {
         let goMod: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'go.mod'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(goMod);
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('github.com/jfrog/gofrog', '1.0.5', [], '', ''));
-        let dependencyPos: vscode.Position[] = GoUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        let dependencyPos: vscode.Position[] = GoUtils.getDependencyPos(textDocument, dependenciesTreeNode, FocusType.Dependency);
         assert.deepEqual(dependencyPos[0], new vscode.Position(6, 1));
         assert.deepEqual(dependencyPos[1], new vscode.Position(6, 31));
 
         // Test 'resources/go/empty/go.mod'
         goMod = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'go.mod'));
         textDocument = await vscode.workspace.openTextDocument(goMod);
-        dependencyPos = GoUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = GoUtils.getDependencyPos(textDocument, dependenciesTreeNode, FocusType.Dependency);
         assert.isEmpty(dependencyPos);
     });
 
     it('Update fixed version', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0',[], '', ''));
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
         let goCenterComponentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
         await runCreateGoDependenciesTrees(componentsToScan, goCenterComponentsToScan, parent, false);
@@ -113,7 +114,7 @@ describe('Go Utils Tests', () => {
         goDependencyUpdate.updateDependencyVersion(node!, '1.0.6');
 
         // Recalculate the dependency tree.
-        parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0',[], '', ''));
+        parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         await runCreateGoDependenciesTrees(componentsToScan, goCenterComponentsToScan, parent, false);
 
         // Verify the node's version was modified.
@@ -125,7 +126,7 @@ describe('Go Utils Tests', () => {
         goDependencyUpdate.updateDependencyVersion(node!, '1.0.5');
 
         // Recalculate the dependency tree.
-        parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0',[], '', ''));
+        parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         await runCreateGoDependenciesTrees(componentsToScan, goCenterComponentsToScan, parent, false);
 
         node = getNodeByArtifactId(parent, 'github.com/jfrog/gofrog');

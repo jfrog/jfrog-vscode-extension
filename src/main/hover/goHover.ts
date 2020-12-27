@@ -7,6 +7,7 @@ import { GoUtils } from '../utils/goUtils';
 import { GoDependenciesTreeNode } from '../treeDataProviders/dependenciesTree/goDependenciesTreeNode';
 import { Severity, SeverityUtils } from '../types/severity';
 import { ISeverityCount } from '../goCenterClient/model/SeverityCount';
+import { FocusType } from '../focus/abstractFocus';
 
 export class GoHover extends AbstractHoverProvider {
     constructor(treesManager: TreesManager) {
@@ -23,7 +24,7 @@ export class GoHover extends AbstractHoverProvider {
             return;
         }
         for (const child of dependenciesTree.children) {
-            let pos: vscode.Position[] = GoUtils.getDependencyPos(document, child);
+            let pos: vscode.Position[] = GoUtils.getDependencyPos(document, child, FocusType.Dependency);
             let range: vscode.Range = new vscode.Range(pos[0], pos[1]);
             if (range.contains(cursorPosition)) {
                 return child;

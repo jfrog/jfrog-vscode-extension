@@ -8,6 +8,7 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ExclusionsManager } from '../exclusions/exclusionsManager';
 import { UpdateDependencyManager } from '../DependencyUpdate/updateDependencyManager';
+import { FocusType } from '../focus/abstractFocus';
 
 /**
  * Register and execute all commands in the extension.
@@ -41,8 +42,8 @@ export class CommandManager implements ExtensionComponent {
      * Show the dependency in the project descriptor (i.e package.json) file after right click on the components tree and a left click on "Show in project descriptor".
      * @param dependenciesTreeNode - The dependency to show.
      */
-    private doShowInProjectDesc(dependenciesTreeNode: DependenciesTreeNode) {
-        this._focusManager.focusOnDependency(dependenciesTreeNode);
+    private async doShowInProjectDesc(dependenciesTreeNode: DependenciesTreeNode) {
+        await this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.Dependency);
         this.onSelectNode(dependenciesTreeNode);
     }
 
@@ -50,8 +51,25 @@ export class CommandManager implements ExtensionComponent {
         this._exclusionManager.excludeDependency(dependenciesTreeNode);
     }
 
-    private doUpdateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
-        this._updateDependencyManager.updateDependencyVersion(dependenciesTreeNode);
+    private async doUpdateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
+        await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: 'Updating ' + dependenciesTreeNode.generalInfo.artifactId,
+                cancellable: true
+            },
+            async (): Promise<void> => {
+                try {
+                    await this._updateDependencyManager.updateDependencyVersion(dependenciesTreeNode);
+                } catch (error) {
+                    vscode.window.showErrorMessage('Could not update dependency version.', <vscode.MessageOptions>{ modal: false });
+                    this._treesManager.logManager.logMessage(error.stdout.toString(), 'ERR', true);
+                    return;
+                }
+                await this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.DependencyVersion);
+                this._treesManager.dependenciesTreeDataProvider.removeNode(dependenciesTreeNode);
+            }
+        );
     }
 
     /**
