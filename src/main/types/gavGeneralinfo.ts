@@ -1,11 +1,11 @@
 import { GeneralInfo } from './generalInfo';
 
 export class GavGeneralInfo extends GeneralInfo {
-    constructor(private _groupId: string, _artifactId: string, _version: string, _path: string, _pkgType: string) {
-        super(_artifactId, _version, _path, _pkgType);
+    constructor(private _groupId: string, _artifactId: string, _version: string, _scope: string[], _path: string, _pkgType: string) {
+        super(_artifactId, _version, _scope, _path, _pkgType);
     }
 
-    public get groupId() {
+    public get groupId(): string {
         return this._groupId;
     }
 

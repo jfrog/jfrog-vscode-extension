@@ -98,8 +98,9 @@ describe('Dependencies Tree Tests', () => {
     function processTree(): Collections.Set<Issue> {
         return root.processTreeIssues();
     }
+
     function createNode(label: string): DependenciesTreeNode {
-        return new DependenciesTreeNode(new GeneralInfo(label, '1.0.0', '', ''));
+        return new DependenciesTreeNode(new GeneralInfo(label, '1.0.0', [], '', ''));
     }
 
     function createDummyIssue(severity: Severity) {

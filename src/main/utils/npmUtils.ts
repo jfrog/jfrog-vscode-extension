@@ -105,4 +105,57 @@ export class NpmUtils {
         }
         return true;
     }
+
+    public static getDependencyScope(dep: string): string {
+        if (dep !== '' && dep[0] === '@') {
+            return dep.substring(1, dep.indexOf('/'));
+        }
+        return '';
+    }
+}
+
+export class ScopedNpmProject {
+    private _projectName: string = '';
+    private _projectVersion: string = '';
+    private _dependencies: any;
+    private _scope: NpmGlobalScopes;
+
+    constructor(scope: NpmGlobalScopes) {
+        this._scope = scope;
+    }
+
+    public get projectName(): string {
+        return this._projectName;
+    }
+
+    public set projectName(projectName: string) {
+        this._projectName = projectName;
+    }
+
+    public get projectVersion(): string {
+        return this._projectVersion;
+    }
+
+    public set projectVersion(projectVersion: string) {
+        this._projectVersion = projectVersion;
+    }
+
+    public get dependencies() {
+        return this._dependencies;
+    }
+
+    public loadProjectDetails(lsOutput: any) {
+        this._projectName = lsOutput.name;
+        this._projectVersion = lsOutput.version;
+        this._dependencies = lsOutput.dependencies;
+    }
+
+    public get scope(): NpmGlobalScopes {
+        return this._scope;
+    }
+}
+
+export enum NpmGlobalScopes {
+    PRODUCTION = 'production',
+    DEVELOPMENT = 'development'
 }

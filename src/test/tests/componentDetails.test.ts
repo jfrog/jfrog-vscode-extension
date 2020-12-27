@@ -14,7 +14,7 @@ describe('Component Details Tests', () => {
     let componentDetails: ComponentDetailsDataProvider = new ComponentDetailsDataProvider();
     let dependenciesTreeNode: DependenciesTreeNode;
     before(() => {
-        let generalInfo: GeneralInfo = new GeneralInfo('artifactId', '1.2.3', __dirname, 'testPkg');
+        let generalInfo: GeneralInfo = new GeneralInfo('artifactId', '1.2.3', [], __dirname, 'testPkg');
         dependenciesTreeNode = new DependenciesTreeNode(generalInfo);
         componentDetails.selectNode(dependenciesTreeNode);
     });

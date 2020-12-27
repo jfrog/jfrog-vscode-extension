@@ -15,6 +15,7 @@ import { IComponentMetadata } from '../../goCenterClient/model/ComponentMetadata
 import { GoDependenciesTreeNode } from './goDependenciesTreeNode';
 import { GoTreeNode } from './dependenciesRoot/goTree';
 import { ISeverityCount } from '../../goCenterClient/model/SeverityCount';
+import { Scope } from '../../types/scope';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -22,6 +23,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     private _onDidChangeTreeData: vscode.EventEmitter<DependenciesTreeNode | undefined> = new vscode.EventEmitter<DependenciesTreeNode | undefined>();
     readonly onDidChangeTreeData: vscode.Event<DependenciesTreeNode | undefined> = this._onDidChangeTreeData.event;
     private _filterLicenses: Collections.Set<License> = new Collections.Set(license => license.fullName);
+    private _filterScopes: Collections.Set<Scope> = new Collections.Set(scope => scope.label);
     private _componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
     private _goCenterComponentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
@@ -154,13 +156,14 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             let artifact: IArtifact | undefined = this._treesManager.scanCacheManager.getArtifact(generalInfo.getComponentId());
             if (artifact) {
                 let pkgType: string = child.generalInfo.pkgType;
-                child.generalInfo = Translators.toGeneralInfo(artifact.general);
+                child.generalInfo.update(Translators.toGeneralInfo(artifact.general));
                 if (!child.generalInfo.pkgType) {
                     child.generalInfo.pkgType = pkgType;
                 }
                 artifact.issues.map(Translators.toIssue).forEach(issue => child.issues.add(issue));
                 artifact.licenses.map(Translators.toLicense).forEach(license => child.licenses.add(license));
                 this.filterLicenses.union(child.licenses);
+                generalInfo.scopes.map(scope => this.filterScopes.add(new Scope(scope)));
             }
             this.addXrayInfoToTree(child);
         });
@@ -234,12 +237,16 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
 
     private clearTree() {
         this._filteredDependenciesTree = undefined;
-        let generalInfo: GeneralInfo = new GeneralInfo('', '', '', '');
+        let generalInfo: GeneralInfo = new GeneralInfo('', '', [], '', '');
         this._dependenciesTree = new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.Expanded);
     }
 
     public get filterLicenses(): Collections.Set<License> {
         return this._filterLicenses;
+    }
+
+    public get filterScopes(): Collections.Set<Scope> {
+        return this._filterScopes;
     }
 
     private addMissingXrayComponents(partialComponents: ComponentDetails[], artifacts: IArtifact[]) {

@@ -83,7 +83,7 @@ describe('Go Utils Tests', () => {
         // Test 'resources/go/dependency/go.mod'
         let goMod: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'go.mod'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(goMod);
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('github.com/jfrog/gofrog', '1.0.5', '', ''));
+        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('github.com/jfrog/gofrog', '1.0.5', [], '', ''));
         let dependencyPos: vscode.Position[] = GoUtils.getDependencyPos(textDocument, dependenciesTreeNode);
         assert.deepEqual(dependencyPos[0], new vscode.Position(6, 1));
         assert.deepEqual(dependencyPos[1], new vscode.Position(6, 31));
@@ -99,7 +99,7 @@ describe('Go Utils Tests', () => {
      * Test GoUtils.createGoDependenciesTrees.
      */
     it('Create go Dependencies Trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''));
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
         let goCenterComponentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
         let res: GoTreeNode[] = await runCreateGoDependenciesTrees(componentsToScan, goCenterComponentsToScan, parent, false);

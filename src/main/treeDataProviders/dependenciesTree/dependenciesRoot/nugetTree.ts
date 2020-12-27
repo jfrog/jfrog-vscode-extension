@@ -15,11 +15,11 @@ export class NugetTreeNode extends DependenciesTreeNode {
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
-        super(new GeneralInfo('', '', _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent, '');
+        super(new GeneralInfo('', '', ['None'], _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent, '');
     }
 
     public async refreshDependencies(quickScan: boolean, project: any) {
-        this.generalInfo = new GeneralInfo(project.name, '', this._workspaceFolder, NugetUtils.PKG_TYPE);
+        this.generalInfo = new GeneralInfo(project.name, '', ['None'], this._workspaceFolder, NugetUtils.PKG_TYPE);
         this.label = project.name;
         this.populateDependenciesTree(this, project.dependencies, quickScan);
     }
@@ -35,7 +35,7 @@ export class NugetTreeNode extends DependenciesTreeNode {
             let version: string = nameVersionTuple[1];
             if (version) {
                 let childDependencies: any = dependency.directDependencies;
-                let generalInfo: GeneralInfo = new GeneralInfo(name, version, '', NugetUtils.PKG_TYPE);
+                let generalInfo: GeneralInfo = new GeneralInfo(name, version, ['None'], '', NugetUtils.PKG_TYPE);
                 let treeCollapsibleState: vscode.TreeItemCollapsibleState =
                     childDependencies.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode, '');

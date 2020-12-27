@@ -21,7 +21,7 @@ export class GoTreeNode extends DependenciesTreeNode {
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
-        super(new GeneralInfo('', '', _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent);
+        super(new GeneralInfo('', '', ['None'], _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent);
     }
 
     public async refreshDependencies(quickScan: boolean) {
@@ -36,10 +36,10 @@ export class GoTreeNode extends DependenciesTreeNode {
         } catch (error) {
             this._treesManager.logManager.logError(error, !quickScan);
             this.label = this._workspaceFolder + ' [Not installed]';
-            this.generalInfo = new GeneralInfo(this.label, '', this._workspaceFolder, GoUtils.PKG_TYPE);
+            this.generalInfo = new GeneralInfo(this.label, '', [], this._workspaceFolder, GoUtils.PKG_TYPE);
             return;
         }
-        this.generalInfo = new GeneralInfo(rootPackageName, '', this._workspaceFolder, GoUtils.PKG_TYPE);
+        this.generalInfo = new GeneralInfo(rootPackageName, '', ['None'], this._workspaceFolder, GoUtils.PKG_TYPE);
         this.label = rootPackageName;
         if (goList.length === 0) {
             return;
@@ -55,7 +55,7 @@ export class GoTreeNode extends DependenciesTreeNode {
         let directDependenciesGeneralInfos: GeneralInfo[] = [];
         for (; i < goList.length && !goList[i].includes('@'); i += 2) {
             let nameVersionTuple: string[] = this.getNameVersionTuple(goList[i + 1]);
-            directDependenciesGeneralInfos.push(new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], '', GoUtils.PKG_TYPE));
+            directDependenciesGeneralInfos.push(new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], ['None'], '', GoUtils.PKG_TYPE));
         }
 
         // Build dependencies map
@@ -80,7 +80,7 @@ export class GoTreeNode extends DependenciesTreeNode {
             this._dependenciesMap.get(dependenciesTreeNode.generalInfo.artifactId + '@v' + dependenciesTreeNode.generalInfo.version) || [];
         childDependencies.forEach(childDependency => {
             let nameVersionTuple: string[] = this.getNameVersionTuple(childDependency);
-            let generalInfo: GeneralInfo = new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], '', GoUtils.PKG_TYPE);
+            let generalInfo: GeneralInfo = new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], ['None'], '', GoUtils.PKG_TYPE);
             let grandchild: GoDependenciesTreeNode = new GoDependenciesTreeNode(
                 generalInfo,
                 this.getTreeCollapsibleState(generalInfo),
