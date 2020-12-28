@@ -52,11 +52,11 @@ describe('Nuget Utils Tests', () => {
         }
     });
 
-        /**
+    /**
      * Test NugetUtils.createDependenciesTrees.
      */
     it('Create NuGet Dependencies Trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''));
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
         let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(componentsToScan, parent);
 
@@ -96,15 +96,15 @@ describe('Nuget Utils Tests', () => {
 
     function replacePackagesPathInAssets() {
         const projects: string[] = ['api', 'core'];
-        let packagesPath: string = path.join(tmpDir.fsPath, "assets", "packagesFolder");
+        let packagesPath: string = path.join(tmpDir.fsPath, 'assets', 'packagesFolder');
         if (isWindows()) {
-            packagesPath = packagesPath.replace(/\\/g, "\\\\");
+            packagesPath = packagesPath.replace(/\\/g, '\\\\');
         }
         projects.forEach(async project => {
-            const fileToReplace: string = path.join(tmpDir.fsPath, "assets", project, "obj", "project.assets.json");
-            let content: string = fs.readFileSync(fileToReplace, {encoding: "utf8"});
+            const fileToReplace: string = path.join(tmpDir.fsPath, 'assets', project, 'obj', 'project.assets.json');
+            let content: string = fs.readFileSync(fileToReplace, { encoding: 'utf8' });
             content = content.replace(/\${PACKAGES_PATH}/g, packagesPath);
-            fs.writeFileSync(fileToReplace, content, {encoding: "utf8"});
+            fs.writeFileSync(fileToReplace, content, { encoding: 'utf8' });
         });
     }
 });

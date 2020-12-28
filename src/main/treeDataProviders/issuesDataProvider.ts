@@ -68,7 +68,7 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
         ];
         let fixedVersions: string[] | undefined = element.fixedVersions;
         if (fixedVersions && fixedVersions.length > 0) {
-            children.push(new TreeDataHolder('Fixed Versions', fixedVersions.toString()));
+            children.push(new TreeDataHolder('Fixed Versions', fixedVersions.join(', ')));
         }
         return Promise.resolve(children);
     }

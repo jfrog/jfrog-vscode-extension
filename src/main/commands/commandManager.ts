@@ -1,14 +1,17 @@
 import * as clipboardy from 'clipboardy';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
+import { DependencyUpdateManager } from '../DependencyUpdate/DependencyUpdateManager';
 import { ExclusionsManager } from '../exclusions/exclusionsManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { FilterManager } from '../filter/filterManager';
+import { FocusType } from '../focus/abstractFocus';
 import { FocusManager } from '../focus/focusManager';
 import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { TreeDataHolder } from '../treeDataProviders/utils/treeDataHolder';
+import { ScanUtils } from '../utils/scanUtils';
 
 /**
  * Register and execute all commands in the extension.
@@ -20,12 +23,14 @@ export class CommandManager implements ExtensionComponent {
         private _treesManager: TreesManager,
         private _filterManager: FilterManager,
         private _focusManager: FocusManager,
-        private _exclusionManager: ExclusionsManager
+        private _exclusionManager: ExclusionsManager,
+        private _DependencyUpdateManager: DependencyUpdateManager
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
         this.registerCommand(context, 'jfrog.xray.showInProjectDesc', dependenciesTreeNode => this.doShowInProjectDesc(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.excludeDependency', dependenciesTreeNode => this.doExcludeDependency(dependenciesTreeNode));
+        this.registerCommand(context, 'jfrog.xray.updateDependency', dependenciesTreeNode => this.doUpdateDependencyVersion(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.codeAction', dependenciesTreeNode => this.doCodeAction(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
@@ -42,12 +47,26 @@ export class CommandManager implements ExtensionComponent {
      * @param dependenciesTreeNode - The dependency to show.
      */
     private doShowInProjectDesc(dependenciesTreeNode: DependenciesTreeNode) {
-        this._focusManager.focusOnDependency(dependenciesTreeNode);
+        this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.Dependency);
         this.onSelectNode(dependenciesTreeNode);
     }
 
     private doExcludeDependency(dependenciesTreeNode: DependenciesTreeNode) {
         this._exclusionManager.excludeDependency(dependenciesTreeNode);
+    }
+
+    private async doUpdateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
+        await ScanUtils.scanWithProgress(async (): Promise<void> => {
+            try {
+                await this._DependencyUpdateManager.updateDependencyVersion(dependenciesTreeNode);
+                this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.DependencyVersion);
+                this._treesManager.dependenciesTreeDataProvider.removeNode(dependenciesTreeNode);
+            } catch (error) {
+                vscode.window.showErrorMessage('Could not update dependency version.', <vscode.MessageOptions>{ modal: false });
+                this._treesManager.logManager.logMessage(error.stdout.toString(), 'ERR', true);
+                return;
+            }
+        }, 'Updating ' + dependenciesTreeNode.generalInfo.getComponentId());
     }
 
     /**

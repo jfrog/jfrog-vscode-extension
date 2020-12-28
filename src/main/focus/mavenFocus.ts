@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { AbstractFocus } from './abstractFocus';
+import { AbstractFocus, FocusType } from './abstractFocus';
 import { MavenUtils } from '../utils/mavenUtils';
 
 export class MavenFocus extends AbstractFocus {
@@ -9,7 +9,7 @@ export class MavenFocus extends AbstractFocus {
     }
 
     /** @override */
-    public async focusOnDependency(dependenciesTreeNode: DependenciesTreeNode) {
+    public async focusOnDependency(dependenciesTreeNode: DependenciesTreeNode, focusType: FocusType) {
         const textDocument: vscode.TextDocument | undefined = await MavenUtils.openPomXml(dependenciesTreeNode);
         if (!textDocument) {
             return;
@@ -18,7 +18,7 @@ export class MavenFocus extends AbstractFocus {
         if (dependenciesTreeNode.isDependenciesTreeRoot()) {
             return;
         }
-        let [startPos, endPosition] = MavenUtils.getDependencyPos(textEditor.document, dependenciesTreeNode);
+        let [startPos, endPosition] = MavenUtils.getDependencyPos(textEditor.document, dependenciesTreeNode, focusType);
         if (!startPos || !endPosition) {
             return;
         }
