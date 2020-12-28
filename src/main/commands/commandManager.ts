@@ -1,4 +1,3 @@
-import * as clipboardy from 'clipboardy';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
 import { DependencyUpdateManager } from '../DependencyUpdate/DependencyUpdateManager';
@@ -108,6 +107,9 @@ export class CommandManager implements ExtensionComponent {
             let treeDataHolder: TreeDataHolder = node;
             if (treeDataHolder.value) {
                 text = node.value;
+            } else if (treeDataHolder.key) {
+                // License
+                text = node.key;
             }
         } else if (node.description) {
             // 'Component Tree' with version
@@ -117,8 +119,7 @@ export class CommandManager implements ExtensionComponent {
             text = node.label;
         }
         if (text) {
-            clipboardy.writeSync(text);
-            vscode.window.showInformationMessage('Saved in clipboard');
+            vscode.env.clipboard.writeText(text);
         }
     }
 
