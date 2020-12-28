@@ -114,6 +114,10 @@
                 "command": "jfrog.xray.updateDependency",
                 "title": "Update dependency to fixed version",
                 "icon": "$(arrow-up)"
+            },
+            {
+                "command": "jfrog.xray.copyToClipboard",
+                "title": "Copy"
             }
         ],
         "menus": {
@@ -154,6 +158,9 @@
                     "command": "jfrog.xray.updateDependency",
                     "when": "viewItem =~ /jfrog.xray.updateDependency.enabled/",
                     "group": "inline"
+                },
+                {
+                    "command": "jfrog.xray.copyToClipboard"
                 }
             ]
         }
