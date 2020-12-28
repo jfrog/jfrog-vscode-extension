@@ -16,7 +16,7 @@ import { MavenUtils } from '../../main/utils/mavenUtils';
 import { PomTree } from '../../main/utils/pomTree';
 import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { MavenExclusion } from '../../main/exclusions/mavenExclusion';
-import { MavenUpdateDependency } from '../../main/DependencyUpdate/mavenDependencyUpdate';
+import { MavenUpdateDependency } from '../../main/dependencyUpdate/mavenDependencyUpdate';
 import { getNodeByArtifactId } from './utils/utils.test';
 import { FocusType } from '../../main/focus/abstractFocus';
 

@@ -20,7 +20,7 @@ import { GoTreeNode } from '../../main/treeDataProviders/dependenciesTree/depend
 import { IComponentMetadata } from '../../main/goCenterClient/model/ComponentMetadata';
 import { Severity } from '../../main/types/severity';
 import { TestMemento } from './utils/testMemento.test';
-import { GoUpdateDependency } from '../../main/DependencyUpdate/goDependencyUpdate';
+import { GoUpdateDependency } from '../../main/dependencyUpdate/goDependencyUpdate';
 import { getNodeByArtifactId } from './utils/utils.test';
 import { FocusType } from '../../main/focus/abstractFocus';
 

@@ -10,7 +10,7 @@ export class NpmUpdateDependency extends AbstractUpdateDependency {
     }
 
     /** @override */
-    public isMatched(dependenciesTreeNode: DependenciesTreeNode):boolean {
+    public isMatched(dependenciesTreeNode: DependenciesTreeNode): boolean {
         return super.isMatched(dependenciesTreeNode) && dependenciesTreeNode.parent instanceof NpmTreeNode;
     }
 

@@ -9,11 +9,11 @@ export class GoUpdateDependency extends AbstractUpdateDependency {
         super(GoUtils.PKG_TYPE);
     }
 
-     /** @override */
-    public isMatched(dependenciesTreeNode: DependenciesTreeNode):boolean {
+    /** @override */
+    public isMatched(dependenciesTreeNode: DependenciesTreeNode): boolean {
         return super.isMatched(dependenciesTreeNode) && dependenciesTreeNode.parent instanceof GoTreeNode;
     }
-    
+
     /** @override */
     public updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode, fixedVersion: string): void {
         const workspace: string = (<GoTreeNode>dependenciesTreeNode.parent).workspaceFolder;
