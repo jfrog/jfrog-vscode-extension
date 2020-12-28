@@ -42,7 +42,7 @@ export class NpmUtils {
     ): vscode.Position[] {
         let res: vscode.Position[] = [];
         let packageJsonContent: string = document.getText();
-        let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match('"' + dependenciesTreeNode.generalInfo.artifactId + '"s*:s*.*"');
+        let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match('("' + dependenciesTreeNode.generalInfo.artifactId + '"\\s*:\\s*).*"');
         if (!dependencyMatch) {
             return res;
         }
@@ -51,7 +51,7 @@ export class NpmUtils {
                 res.push(document.positionAt(<number>dependencyMatch.index));
                 break;
             case FocusType.DependencyVersion:
-                res.push(document.positionAt(<number>dependencyMatch.index + dependenciesTreeNode.generalInfo.artifactId.length + 3));
+                res.push(document.positionAt(<number>dependencyMatch.index +dependencyMatch[1].length));
                 break;
         }
         res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));
