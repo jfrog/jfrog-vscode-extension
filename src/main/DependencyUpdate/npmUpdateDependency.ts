@@ -10,10 +10,12 @@ export class NpmUpdateDependency extends AbstractUpdateDependency {
     }
 
     /** @override */
+    public isMatched(dependenciesTreeNode: DependenciesTreeNode):boolean {
+        return super.isMatched(dependenciesTreeNode) && dependenciesTreeNode.parent instanceof NpmTreeNode;
+    }
+
+    /** @override */
     public updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode, fixedVersion: string): void {
-        if (!(dependenciesTreeNode.parent instanceof NpmTreeNode)) {
-            return;
-        }
         const workspace: string = (<NpmTreeNode>dependenciesTreeNode.parent).workspaceFolder;
         ScanUtils.executeCmd('npm install ' + dependenciesTreeNode.generalInfo.artifactId + '@' + fixedVersion, workspace);
         dependenciesTreeNode.generalInfo.version = fixedVersion;

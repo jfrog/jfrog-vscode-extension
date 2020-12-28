@@ -11,7 +11,7 @@ import { ScanCacheManager } from './main/scanCache/scanCacheManager';
 import { TreesManager } from './main/treeDataProviders/treesManager';
 import { WatcherManager } from './main/watchers/watcherManager';
 import { LogManager } from './main/log/logManager';
-import { UpdateDependencyManager } from './main/DependencyUpdate/updateDependencyManager';
+import { DependencyUpdateManager } from './main/DependencyUpdate/DependencyUpdateManager';
 
 /**
  * This method is called when the extension is activated.
@@ -27,7 +27,7 @@ export async function activate(context: vscode.ExtensionContext) {
     let filterManager: FilterManager = new FilterManager(treesManager).activate(context);
     let focusManager: FocusManager = new FocusManager().activate(context);
     let exclusionManager: ExclusionsManager = new ExclusionsManager(treesManager).activate(context);
-    let dependencyUpdateManager: UpdateDependencyManager = new UpdateDependencyManager().activate(context);
+    let dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager().activate(context);
 
     new DiagnosticsManager(treesManager).activate(context);
     new WatcherManager(treesManager).activate(context);

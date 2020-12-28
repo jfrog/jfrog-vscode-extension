@@ -1,7 +1,7 @@
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 
 /**
- * @see UpdateDependencyManager
+ * @see DependencyUpdateManager
  */
 export abstract class AbstractUpdateDependency {
     constructor(private _pkgType: string) {}

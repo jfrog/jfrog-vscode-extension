@@ -42,7 +42,7 @@ export class GoUtils {
     ): vscode.Position[] {
         let res: vscode.Position[] = [];
         let goModContent: string = document.getText();
-        let dependencyMatch: RegExpMatchArray | null = goModContent.match(dependenciesTreeNode.generalInfo.artifactId + 's* vs*.*');
+        let dependencyMatch: RegExpMatchArray | null = goModContent.match('(' + dependenciesTreeNode.generalInfo.artifactId + 's* )vs*.*');
         if (!dependencyMatch) {
             return res;
         }
@@ -51,7 +51,7 @@ export class GoUtils {
                 res.push(document.positionAt(<number>dependencyMatch.index));
                 break;
             case FocusType.DependencyVersion:
-                res.push(document.positionAt(<number>dependencyMatch.index + dependenciesTreeNode.generalInfo.artifactId.length));
+                res.push(document.positionAt(<number>dependencyMatch.index + dependencyMatch[1].length));
                 break;
         }
         res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));

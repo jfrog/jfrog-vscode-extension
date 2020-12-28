@@ -9,11 +9,13 @@ export class GoUpdateDependency extends AbstractUpdateDependency {
         super(GoUtils.PKG_TYPE);
     }
 
+     /** @override */
+    public isMatched(dependenciesTreeNode: DependenciesTreeNode):boolean {
+        return super.isMatched(dependenciesTreeNode) && dependenciesTreeNode.parent instanceof GoTreeNode;
+    }
+    
     /** @override */
     public updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode, fixedVersion: string): void {
-        if (!(dependenciesTreeNode.parent instanceof GoTreeNode)) {
-            return;
-        }
         const workspace: string = (<GoTreeNode>dependenciesTreeNode.parent).workspaceFolder;
         ScanUtils.executeCmd('go get ' + dependenciesTreeNode.generalInfo.artifactId + '@v' + fixedVersion, workspace);
         dependenciesTreeNode.generalInfo.version = fixedVersion;

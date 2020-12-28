@@ -10,11 +10,12 @@ export class MavenUpdateDependency extends AbstractUpdateDependency {
     }
 
     /** @override */
-    public updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode, fixedVersion: string): void {
-        if (!(dependenciesTreeNode.parent instanceof MavenTreeNode) || fixedVersion === '') {
-            return;
-        }
+    public isMatched(dependenciesTreeNode: DependenciesTreeNode):boolean {
+        return super.isMatched(dependenciesTreeNode) && dependenciesTreeNode.parent instanceof MavenTreeNode;
+    }
 
+    /** @override */
+    public updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode, fixedVersion: string): void {
         const workspace: string = (<MavenTreeNode>dependenciesTreeNode.parent).workspaceFolder;
         const [groupId, artifactId] = MavenUtils.getGavArray(dependenciesTreeNode);
         ScanUtils.executeCmd(

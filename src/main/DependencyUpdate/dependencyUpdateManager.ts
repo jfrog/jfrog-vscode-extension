@@ -10,7 +10,7 @@ import { GoUpdateDependency } from './goDependencyUpdate';
 /**
  * Update the dependency version in the project descriptor (i.e pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
  */
-export class UpdateDependencyManager implements ExtensionComponent {
+export class DependencyUpdateManager implements ExtensionComponent {
     private updateDependency: AbstractUpdateDependency[] = [];
 
     constructor() {
@@ -24,8 +24,8 @@ export class UpdateDependencyManager implements ExtensionComponent {
     public async updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
         const fixedVersion: string = await this.getFixedVersion(dependenciesTreeNode);
         this.updateDependency
-            .filter(node => node.isMatched(dependenciesTreeNode))
-            .forEach(node => node.updateDependencyVersion(dependenciesTreeNode, fixedVersion));
+        .filter(node => node.isMatched(dependenciesTreeNode))
+        .forEach(node => node.updateDependencyVersion(dependenciesTreeNode, fixedVersion));
     }
     /**
      * Returns the version to be updated for dependenciesTreeNode. If more than one version exists,
@@ -38,19 +38,19 @@ export class UpdateDependencyManager implements ExtensionComponent {
                 issue.fixedVersions.forEach(fixedVersion => fixedVersions.add(fixedVersion));
             }
         });
-        let uniqueFixedVersions: string[] = fixedVersions.toArray();
+        let fixedVersionsArr: string[] = fixedVersions.toArray();
         switch (fixedVersions.size()) {
             case 0:
                 return '';
             case 1:
-                return uniqueFixedVersions[0];
+                return fixedVersionsArr[0];
             default:
                 let chosenFixedVersion: string =
-                    (await vscode.window.showQuickPick(uniqueFixedVersions, {
+                    (await vscode.window.showQuickPick(fixedVersionsArr, {
                         canPickMany: false,
                         placeHolder: `Choose a fixed version for '` + dependenciesTreeNode.componentId + `'`
                     })) || '';
-                return uniqueFixedVersions.indexOf(chosenFixedVersion) === -1 ? '' : chosenFixedVersion;
+                return fixedVersions.contains(chosenFixedVersion) ? chosenFixedVersion : '';
         }
     }
 }

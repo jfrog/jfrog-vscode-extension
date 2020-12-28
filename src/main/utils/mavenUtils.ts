@@ -227,7 +227,7 @@ export class MavenUtils {
         let nodeCanReachPom: boolean = this.isPomReachable(node, dependenciesMatch, parentCanReachPom);
         if (!nodeCanReachPom) {
             // Disable right click menu on the dependency
-            node.contextValue = '';
+            node.contextValue?.replace(ContextKeys.SHOW_IN_PROJECT_DESC_ENABLED, '');
         } else if (!(node.parent instanceof MavenTreeNode) && node.parent?.label) {
             // Enable 'Exclude dependency' and 'Show in project descriptor' in right click menu on the dependency
             node.contextValue += ContextKeys.EXCLUDE_DEPENDENCY_ENABLED;

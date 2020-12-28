@@ -7,7 +7,7 @@ export class RootNode extends DependenciesTreeNode {
         super(new GeneralInfo('', '', [], _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent, contextValue);
     }
 
-    get workspaceFolder() {
+    public get workspaceFolder() {
         return this._workspaceFolder;
     }
 

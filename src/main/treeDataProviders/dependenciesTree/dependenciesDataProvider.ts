@@ -238,7 +238,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 }
             }
             this._onDidChangeTreeData.fire();
-        });
+        }, 'Scanning project dependencies ');
     }
 
     private clearTree() {

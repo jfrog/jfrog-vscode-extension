@@ -21,11 +21,9 @@ export class FocusManager implements ExtensionComponent {
         return this;
     }
 
-    public async focusOnDependency(dependenciesTreeNode: DependenciesTreeNode, focusType: FocusType) {
-        await Promise.all(
-            this._focuses
-                .filter(focus => focus.isMatched(dependenciesTreeNode))
-                .map(async focus => focus.focusOnDependency(dependenciesTreeNode, focusType))
-        );
+    public focusOnDependency(dependenciesTreeNode: DependenciesTreeNode, focusType: FocusType) {
+        this._focuses
+            .filter(focus => focus.isMatched(dependenciesTreeNode))
+            .forEach(focus => focus.focusOnDependency(dependenciesTreeNode, focusType));
     }
 }
