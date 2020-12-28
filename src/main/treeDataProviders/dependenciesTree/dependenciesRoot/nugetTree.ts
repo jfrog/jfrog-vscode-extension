@@ -5,21 +5,22 @@ import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { TreesManager } from '../../treesManager';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { NugetUtils } from '../../../utils/nugetUtils';
+import { RootNode } from './rootTree';
 
-export class NugetTreeNode extends DependenciesTreeNode {
+export class NugetTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'nuget://';
 
     constructor(
-        private _workspaceFolder: string,
+        workspaceFolder: string,
         private _componentsToScan: Collections.Set<ComponentDetails>,
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
-        super(new GeneralInfo('', '', ['None'], _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent, '');
+        super(workspaceFolder, parent, '');
     }
 
     public async refreshDependencies(quickScan: boolean, project: any) {
-        this.generalInfo = new GeneralInfo(project.name, '', ['None'], this._workspaceFolder, NugetUtils.PKG_TYPE);
+        this.generalInfo = new GeneralInfo(project.name, '', ['None'], this.workspaceFolder, NugetUtils.PKG_TYPE);
         this.label = project.name;
         this.populateDependenciesTree(this, project.dependencies, quickScan);
     }

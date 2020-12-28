@@ -8,6 +8,7 @@ import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRo
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
 import { LogManager } from '../log/logManager';
+import { FocusType } from '../focus/abstractFocus';
 
 export class GoUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/go.mod' };
@@ -34,14 +35,25 @@ export class GoUtils {
      * @param document             - go.mod file
      * @param dependenciesTreeNode - dependencies tree node
      */
-    public static getDependencyPos(document: vscode.TextDocument, dependenciesTreeNode: DependenciesTreeNode): vscode.Position[] {
+    public static getDependencyPos(
+        document: vscode.TextDocument,
+        dependenciesTreeNode: DependenciesTreeNode,
+        focusType: FocusType
+    ): vscode.Position[] {
         let res: vscode.Position[] = [];
         let goModContent: string = document.getText();
-        let dependencyMatch: RegExpMatchArray | null = goModContent.match(dependenciesTreeNode.generalInfo.artifactId + 's* vs*.*');
+        let dependencyMatch: RegExpMatchArray | null = goModContent.match('(' + dependenciesTreeNode.generalInfo.artifactId + 's* )vs*.*');
         if (!dependencyMatch) {
             return res;
         }
-        res.push(document.positionAt(<number>dependencyMatch.index));
+        switch (focusType) {
+            case FocusType.Dependency:
+                res.push(document.positionAt(<number>dependencyMatch.index));
+                break;
+            case FocusType.DependencyVersion:
+                res.push(document.positionAt(<number>dependencyMatch.index + dependencyMatch[1].length));
+                break;
+        }
         res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));
         return res;
     }

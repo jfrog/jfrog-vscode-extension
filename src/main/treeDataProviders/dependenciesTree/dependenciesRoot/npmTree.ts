@@ -7,17 +7,18 @@ import { TreesManager } from '../../treesManager';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { NpmGlobalScopes, ScopedNpmProject, NpmUtils } from '../../../utils/npmUtils';
+import { RootNode } from './rootTree';
 
-export class NpmTreeNode extends DependenciesTreeNode {
+export class NpmTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
 
     constructor(
-        private _workspaceFolder: string,
+        workspaceFolder: string,
         private _componentsToScan: Collections.Set<ComponentDetails>,
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
-        super(new GeneralInfo('', '', [], _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent);
+        super(workspaceFolder, parent);
     }
 
     public async refreshDependencies(quickScan: boolean) {
@@ -31,7 +32,7 @@ export class NpmTreeNode extends DependenciesTreeNode {
                 this._treesManager.logManager.logError(error, !quickScan);
                 this._treesManager.logManager.logMessage(
                     'Possible cause: The project needs to be installed by npm. Install it by running "npm install" from "' +
-                        this._workspaceFolder +
+                        this.workspaceFolder +
                         '",.',
                     'INFO'
                 );
@@ -44,10 +45,10 @@ export class NpmTreeNode extends DependenciesTreeNode {
             npmLsFailed ? (productionScope.projectName += ' [Not installed]') : productionScope.projectName,
             productionScope.projectVersion,
             [],
-            this._workspaceFolder,
+            this.workspaceFolder,
             NpmUtils.PKG_TYPE
         );
-        this.label = productionScope.projectName ? productionScope.projectName : path.join(this._workspaceFolder, 'package.json');
+        this.label = productionScope.projectName ? productionScope.projectName : path.join(this.workspaceFolder, 'package.json');
     }
 
     private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any, quickScan: boolean, globalScope: string) {
@@ -76,6 +77,6 @@ export class NpmTreeNode extends DependenciesTreeNode {
     }
 
     private runNpmLs(scope: NpmGlobalScopes): any {
-        return JSON.parse(ScanUtils.executeCmd('npm ls --json --only=' + scope, this._workspaceFolder).toString());
+        return JSON.parse(ScanUtils.executeCmd('npm ls --json --only=' + scope, this.workspaceFolder).toString());
     }
 }

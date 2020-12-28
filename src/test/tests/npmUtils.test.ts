@@ -6,12 +6,16 @@ import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
+import { NpmUpdateDependency } from '../../main/DependencyUpdate/npmUpdateDependency';
+import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { NpmTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { NpmUtils } from '../../main/utils/npmUtils';
+import { getNodeByArtifactId } from './utils/utils.test';
 
 /**
  * Test functionality of @class NpmUtils.
@@ -23,6 +27,7 @@ describe('Npm Utils Tests', () => {
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'dependencyPackageLock', 'empty'];
+    let npmDependencyUpdate: NpmUpdateDependency = new NpmUpdateDependency();
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'npm'));
 
@@ -81,36 +86,36 @@ describe('Npm Utils Tests', () => {
         let packageJson: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'package.json'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(packageJson);
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@types/node', '14.14.10', [], '', ''));
-        let dependencyPos: vscode.Position[] = NpmUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        let dependencyPos: vscode.Position[] = NpmUtils.getDependencyPos(textDocument, dependenciesTreeNode, FocusType.Dependency);
         assert.deepEqual(dependencyPos[0], new vscode.Position(13, 4));
         assert.deepEqual(dependencyPos[1], new vscode.Position(13, 29));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@ungap/promise-all-settled', '1.1.2', [], '', ''));
-        dependencyPos = NpmUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = NpmUtils.getDependencyPos(textDocument, dependenciesTreeNode, FocusType.Dependency);
         assert.deepEqual(dependencyPos[0], new vscode.Position(9, 4));
         assert.deepEqual(dependencyPos[1], new vscode.Position(9, 41));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('has-flag', '3.0.0', [], '', ''));
-        dependencyPos = NpmUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = NpmUtils.getDependencyPos(textDocument, dependenciesTreeNode, FocusType.Dependency);
         assert.deepEqual(dependencyPos[0], new vscode.Position(8, 4));
         assert.deepEqual(dependencyPos[1], new vscode.Position(8, 23));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('progress', '2.0.3', [], '', ''));
-        dependencyPos = NpmUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = NpmUtils.getDependencyPos(textDocument, dependenciesTreeNode, FocusType.Dependency);
         assert.deepEqual(dependencyPos[0], new vscode.Position(12, 4));
         assert.deepEqual(dependencyPos[1], new vscode.Position(12, 23));
 
         // Test 'resources/npm/dependencyPackageLock/package.json'
         packageJson = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependencyPackageLock', 'package.json'));
         textDocument = await vscode.workspace.openTextDocument(packageJson);
-        dependencyPos = NpmUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = NpmUtils.getDependencyPos(textDocument, dependenciesTreeNode, FocusType.Dependency);
         assert.deepEqual(dependencyPos[0], new vscode.Position(8, 4));
         assert.deepEqual(dependencyPos[1], new vscode.Position(8, 23));
 
         // Test 'resources/npm/empty/package.json'
         packageJson = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'package.json'));
         textDocument = await vscode.workspace.openTextDocument(packageJson);
-        dependencyPos = NpmUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        dependencyPos = NpmUtils.getDependencyPos(textDocument, dependenciesTreeNode, FocusType.Dependency);
         assert.isEmpty(dependencyPos);
     });
 
@@ -131,6 +136,48 @@ describe('Npm Utils Tests', () => {
         assert.deepEqual(res[0].description, '0.0.1');
         assert.deepEqual(res[1].description, '0.0.1');
         assert.deepEqual(res[2].description, '0.0.1');
+    });
+
+    it('Update fixed version', async () => {
+        installAllProjects();
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
+        let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+        let res: DependenciesTreeNode[] = await runCreateNpmDependenciesTrees(componentsToScan, parent);
+        let dependencyProject: DependenciesTreeNode | undefined = res.find(
+            node => node instanceof NpmTreeNode && node.workspaceFolder.endsWith('dependency')
+        );
+        assert.isNotNull(dependencyProject);
+
+        // Get specific dependency node.
+        let node: DependenciesTreeNode | null = getNodeByArtifactId(dependencyProject!, 'progress');
+        assert.isNotNull(node);
+        assert.equal(node?.generalInfo.version, '2.0.3');
+
+        // Create a new version different from the node.
+        npmDependencyUpdate.updateDependencyVersion(node!, '2.0.2');
+
+        // Recalculate the dependency tree.
+        res = await runCreateNpmDependenciesTrees(componentsToScan, parent);
+        dependencyProject = res.find(node => node instanceof NpmTreeNode && node.workspaceFolder.endsWith('dependency'));
+        assert.isNotNull(dependencyProject);
+
+        // Verify the node's version was modified.
+        node = getNodeByArtifactId(dependencyProject!, 'progress');
+        assert.isNotNull(node);
+        assert.equal(node?.generalInfo.version, '2.0.2');
+
+        // Revert back the changes.
+        npmDependencyUpdate.updateDependencyVersion(node!, '2.0.3');
+
+        // Recalculate the dependency tree.
+        res = await runCreateNpmDependenciesTrees(componentsToScan, parent);
+
+        dependencyProject = res.find(node => node instanceof NpmTreeNode && node.workspaceFolder.endsWith('dependency'));
+        assert.isNotNull(dependencyProject);
+        // Verify the node's version was modified.
+        node = getNodeByArtifactId(dependencyProject!, 'progress');
+        assert.isNotNull(node);
+        assert.equal(node?.generalInfo.version, '2.0.3');
     });
 
     /**

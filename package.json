@@ -109,6 +109,11 @@
                 "command": "jfrog.xray.excludeDependency",
                 "title": "Exclude dependency",
                 "icon": "$(exclude)"
+            },
+            {
+                "command": "jfrog.xray.updateDependency",
+                "title": "Update dependency to fixed version",
+                "icon": "$(arrow-up)"
             }
         ],
         "menus": {
@@ -137,12 +142,17 @@
             "view/item/context": [
                 {
                     "command": "jfrog.xray.showInProjectDesc",
-                    "when": "viewItem == jfrog.xray.showInProjectDesc.enabled || viewItem == jfrog.xray.excludeDependency.enabled",
+                    "when": "viewItem =~ /jfrog.xray.showInProjectDesc.enabled/",
                     "group": "inline"
                 },
                 {
                     "command": "jfrog.xray.excludeDependency",
-                    "when": "viewItem == jfrog.xray.excludeDependency.enabled",
+                    "when": "viewItem =~ /jfrog.xray.excludeDependency.enabled/",
+                    "group": "inline"
+                },
+                {
+                    "command": "jfrog.xray.updateDependency",
+                    "when": "viewItem =~ /jfrog.xray.updateDependency.enabled/",
                     "group": "inline"
                 }
             ]
