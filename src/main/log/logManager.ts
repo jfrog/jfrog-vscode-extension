@@ -27,10 +27,13 @@ export class LogManager implements ExtensionComponent {
      * @param message - The message to log
      * @param level - The log level
      */
-    public logMessage(message: string, level: LogLevel): void {
+    public logMessage(message: string, level: LogLevel, focusOutput: boolean = false): void {
         if (!!message) {
             const title: string = new Date().toLocaleTimeString();
             this._outputChannel.appendLine(`[${level} - ${title}] ${message}`);
+            if (focusOutput) {
+                this.showOutput();
+            }
         }
     }
 

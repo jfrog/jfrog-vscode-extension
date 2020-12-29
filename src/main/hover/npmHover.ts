@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { FocusType } from '../focus/abstractFocus';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { NpmUtils } from '../utils/npmUtils';
@@ -20,7 +21,7 @@ export class NpmHover extends AbstractHoverProvider {
             return;
         }
         for (const child of dependenciesTree.children) {
-            let pos: vscode.Position[] = NpmUtils.getDependencyPos(document, child);
+            let pos: vscode.Position[] = NpmUtils.getDependencyPos(document, child, FocusType.Dependency);
             let range: vscode.Range = new vscode.Range(pos[0], pos[1]);
             if (range.contains(cursorPosition)) {
                 return child;

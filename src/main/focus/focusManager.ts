@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { AbstractFocus } from './abstractFocus';
+import { AbstractFocus, FocusType } from './abstractFocus';
 import { GoFocus } from './goFocus';
 import { NpmFocus } from './npmFocus';
 import { PypiFocus } from './pypiFocus';
@@ -21,7 +21,9 @@ export class FocusManager implements ExtensionComponent {
         return this;
     }
 
-    public focusOnDependency(dependenciesTreeNode: DependenciesTreeNode) {
-        this._focuses.filter(focus => focus.isMatched(dependenciesTreeNode)).forEach(focus => focus.focusOnDependency(dependenciesTreeNode));
+    public focusOnDependency(dependenciesTreeNode: DependenciesTreeNode, focusType: FocusType) {
+        this._focuses
+            .filter(focus => focus.isMatched(dependenciesTreeNode))
+            .forEach(focus => focus.focusOnDependency(dependenciesTreeNode, focusType));
     }
 }

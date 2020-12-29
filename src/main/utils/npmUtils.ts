@@ -8,6 +8,7 @@ import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesR
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
 import { LogManager } from '../log/logManager';
+import { FocusType } from '../focus/abstractFocus';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
@@ -34,14 +35,25 @@ export class NpmUtils {
      * @param document             - package.json file
      * @param dependenciesTreeNode - dependencies tree node
      */
-    public static getDependencyPos(document: vscode.TextDocument, dependenciesTreeNode: DependenciesTreeNode): vscode.Position[] {
+    public static getDependencyPos(
+        document: vscode.TextDocument,
+        dependenciesTreeNode: DependenciesTreeNode,
+        focusType: FocusType
+    ): vscode.Position[] {
         let res: vscode.Position[] = [];
         let packageJsonContent: string = document.getText();
-        let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match('"' + dependenciesTreeNode.generalInfo.artifactId + '"s*:s*.*"');
+        let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match('("' + dependenciesTreeNode.generalInfo.artifactId + '"\\s*:\\s*).*"');
         if (!dependencyMatch) {
             return res;
         }
-        res.push(document.positionAt(<number>dependencyMatch.index));
+        switch (focusType) {
+            case FocusType.Dependency:
+                res.push(document.positionAt(<number>dependencyMatch.index));
+                break;
+            case FocusType.DependencyVersion:
+                res.push(document.positionAt(<number>dependencyMatch.index +dependencyMatch[1].length));
+                break;
+        }
         res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));
         return res;
     }
@@ -105,4 +117,57 @@ export class NpmUtils {
         }
         return true;
     }
+
+    public static getDependencyScope(dep: string): string {
+        if (dep !== '' && dep[0] === '@') {
+            return dep.substring(1, dep.indexOf('/'));
+        }
+        return '';
+    }
+}
+
+export class ScopedNpmProject {
+    private _projectName: string = '';
+    private _projectVersion: string = '';
+    private _dependencies: any;
+    private _scope: NpmGlobalScopes;
+
+    constructor(scope: NpmGlobalScopes) {
+        this._scope = scope;
+    }
+
+    public get projectName(): string {
+        return this._projectName;
+    }
+
+    public set projectName(projectName: string) {
+        this._projectName = projectName;
+    }
+
+    public get projectVersion(): string {
+        return this._projectVersion;
+    }
+
+    public set projectVersion(projectVersion: string) {
+        this._projectVersion = projectVersion;
+    }
+
+    public get dependencies() {
+        return this._dependencies;
+    }
+
+    public loadProjectDetails(lsOutput: any) {
+        this._projectName = lsOutput.name;
+        this._projectVersion = lsOutput.version;
+        this._dependencies = lsOutput.dependencies;
+    }
+
+    public get scope(): NpmGlobalScopes {
+        return this._scope;
+    }
+}
+
+export enum NpmGlobalScopes {
+    PRODUCTION = 'production',
+    DEVELOPMENT = 'development'
 }

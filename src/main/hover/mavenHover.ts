@@ -4,6 +4,7 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractHoverProvider } from './abstractHoverProvider';
 import { MavenUtils } from '../utils/mavenUtils';
+import { FocusType } from '../focus/abstractFocus';
 
 export class MavenHover extends AbstractHoverProvider {
     constructor(treesManager: TreesManager) {
@@ -20,7 +21,7 @@ export class MavenHover extends AbstractHoverProvider {
             return;
         }
         for (const child of dependenciesTree.children) {
-            let positionList: vscode.Position[] = MavenUtils.getDependencyPos(document, child);
+            let positionList: vscode.Position[] = MavenUtils.getDependencyPos(document, child, FocusType.Dependency);
             for (let i: number = 0; i < positionList.length; i += 2) {
                 let range: vscode.Range = new vscode.Range(positionList[i], positionList[i + 1]);
                 if (range.contains(cursorPosition)) {

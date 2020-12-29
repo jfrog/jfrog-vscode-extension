@@ -56,7 +56,7 @@ describe('Nuget Utils Tests', () => {
      * Test NugetUtils.createDependenciesTrees.
      */
     it('Create NuGet Dependencies Trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', '', ''));
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
         let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(componentsToScan, parent);
 

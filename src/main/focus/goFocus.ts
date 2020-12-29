@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { GoUtils } from '../utils/goUtils';
-import { AbstractFocus } from './abstractFocus';
+import { AbstractFocus, FocusType } from './abstractFocus';
 
 export class GoFocus extends AbstractFocus {
     constructor() {
@@ -10,7 +10,7 @@ export class GoFocus extends AbstractFocus {
     }
 
     /** @override */
-    public async focusOnDependency(dependenciesTreeNode: DependenciesTreeNode) {
+    public async focusOnDependency(dependenciesTreeNode: DependenciesTreeNode, focusType: FocusType) {
         while (dependenciesTreeNode.parent && dependenciesTreeNode.parent.parent && dependenciesTreeNode.parent.parent.parent) {
             dependenciesTreeNode = dependenciesTreeNode.parent;
         }
@@ -21,7 +21,7 @@ export class GoFocus extends AbstractFocus {
         if (dependenciesTreeNode.isDependenciesTreeRoot()) {
             return;
         }
-        let pos: vscode.Position[] = GoUtils.getDependencyPos(textEditor.document, dependenciesTreeNode);
+        let pos: vscode.Position[] = GoUtils.getDependencyPos(textEditor.document, dependenciesTreeNode, focusType);
         if (!pos) {
             return;
         }
