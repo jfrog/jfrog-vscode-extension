@@ -4,6 +4,7 @@ releaseScripts/node_modules
 .vscode-test/
 .DS_Store
 *.vsix
+.idea
 resources/maven-gav-reader/.settings
 resources/maven-gav-reader/.project
 resources/maven-gav-reader/.factorypath
