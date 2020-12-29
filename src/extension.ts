@@ -11,7 +11,7 @@ import { ScanCacheManager } from './main/scanCache/scanCacheManager';
 import { TreesManager } from './main/treeDataProviders/treesManager';
 import { WatcherManager } from './main/watchers/watcherManager';
 import { LogManager } from './main/log/logManager';
-import { DependencyUpdateManager } from './main/DependencyUpdate/DependencyUpdateManager';
+import { DependencyUpdateManager } from './main/dependencyUpdate/dependencyUpdateManager';
 
 /**
  * This method is called when the extension is activated.

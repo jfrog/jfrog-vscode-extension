@@ -2,19 +2,19 @@ import * as vscode from 'vscode';
 import * as Collections from 'typescript-collections';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { AbstractUpdateDependency } from './abstractDependencyUpdate';
-import { MavenUpdateDependency } from './mavenDependencyUpdate';
-import { NpmUpdateDependency } from './npmUpdateDependency';
-import { GoUpdateDependency } from './goDependencyUpdate';
+import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
+import { MavenDependencyUpdate } from './mavenDependencyUpdate';
+import { NpmDependencyUpdate } from './npmDependencyUpdate';
+import { GoDependencyUpdate } from './goDependencyUpdate';
 
 /**
  * Update the dependency version in the project descriptor (i.e pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
  */
 export class DependencyUpdateManager implements ExtensionComponent {
-    private updateDependency: AbstractUpdateDependency[] = [];
+    private updateDependency: AbstractDependencyUpdate[] = [];
 
     constructor() {
-        this.updateDependency.push(new MavenUpdateDependency(), new NpmUpdateDependency(), new GoUpdateDependency());
+        this.updateDependency.push(new MavenDependencyUpdate(), new NpmDependencyUpdate(), new GoDependencyUpdate());
     }
 
     public activate(context: vscode.ExtensionContext) {

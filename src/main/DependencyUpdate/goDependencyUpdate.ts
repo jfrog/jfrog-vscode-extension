@@ -2,9 +2,9 @@ import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRo
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { GoUtils } from '../utils/goUtils';
 import { ScanUtils } from '../utils/scanUtils';
-import { AbstractUpdateDependency } from './abstractDependencyUpdate';
+import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 
-export class GoUpdateDependency extends AbstractUpdateDependency {
+export class GoDependencyUpdate extends AbstractDependencyUpdate {
     constructor() {
         super(GoUtils.PKG_TYPE);
     }

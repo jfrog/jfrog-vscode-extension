@@ -1,10 +1,10 @@
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { MavenUtils } from '../utils/mavenUtils';
-import { AbstractUpdateDependency } from './abstractDependencyUpdate';
+import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { ScanUtils } from '../utils/scanUtils';
 
-export class MavenUpdateDependency extends AbstractUpdateDependency {
+export class MavenDependencyUpdate extends AbstractDependencyUpdate {
     constructor() {
         super(MavenUtils.PKG_TYPE);
     }

@@ -16,7 +16,7 @@ import { MavenUtils } from '../../main/utils/mavenUtils';
 import { PomTree } from '../../main/utils/pomTree';
 import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { MavenExclusion } from '../../main/exclusions/mavenExclusion';
-import { MavenUpdateDependency } from '../../main/dependencyUpdate/mavenDependencyUpdate';
+import { MavenDependencyUpdate } from '../../main/dependencyUpdate/mavenDependencyUpdate';
 import { getNodeByArtifactId } from './utils/utils.test';
 import { FocusType } from '../../main/focus/abstractFocus';
 
@@ -30,7 +30,7 @@ describe('Maven Tests', () => {
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let mavenExclusion: MavenExclusion = new MavenExclusion(treesManager);
-    let mavenDependencyUpdate: MavenUpdateDependency = new MavenUpdateDependency();
+    let mavenDependencyUpdate: MavenDependencyUpdate = new MavenDependencyUpdate();
     let projectDirs: string[] = ['dependency', 'empty', 'multiPomDependency'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));

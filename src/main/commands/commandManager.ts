@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
-import { DependencyUpdateManager } from '../DependencyUpdate/DependencyUpdateManager';
+import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
 import { ExclusionsManager } from '../exclusions/exclusionsManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { FilterManager } from '../filter/filterManager';
