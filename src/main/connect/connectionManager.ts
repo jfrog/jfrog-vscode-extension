@@ -155,9 +155,10 @@ export class ConnectionManager implements ExtensionComponent {
         if (prompt) {
             url =
                 (await vscode.window.showInputBox({
-                    prompt: 'Enter Xray url',
-                    value: this._url ? this._url : 'https://',
+                    prompt: 'Enter Xray URL',
+                    value: this._url,
                     ignoreFocusOut: true,
+                    placeHolder: 'Example: https://myjfrog.acme.org/xray',
                     validateInput: ConnectionUtils.validateUrl
                 })) || '';
         }
