@@ -42,7 +42,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Show the dependency in the project descriptor (i.e package.json) file after right click on the components tree and a left click on "Show in project descriptor".
+     * Show the dependency in the project descriptor (e.g. package.json) file after right click on the components tree and a left click on "Show in project descriptor".
      * @param dependenciesTreeNode - The dependency to show.
      */
     private doShowInProjectDesc(dependenciesTreeNode: DependenciesTreeNode) {
@@ -51,7 +51,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Exclude dependency in the project descriptor (i.e package.json).
+     * Exclude dependency in the project descriptor (e.g. package.json).
      * @param dependenciesTreeNode - The dependency to exclude
      */
     private doExcludeDependency(dependenciesTreeNode: DependenciesTreeNode) {
@@ -59,7 +59,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Update a dependency in the project descriptor (i.e package.json) to a new version.
+     * Update a dependency in the project descriptor (e.g. package.json) to a new version.
      * @param dependenciesTreeNode - The dependency to update
      */
     private async doUpdateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
@@ -69,7 +69,8 @@ export class CommandManager implements ExtensionComponent {
                 this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.DependencyVersion);
                 this._treesManager.dependenciesTreeDataProvider.removeNode(dependenciesTreeNode);
             } catch (error) {
-                this._treesManager.logManager.logError(error, true);
+                vscode.window.showErrorMessage('Could not update dependency version.', <vscode.MessageOptions>{ modal: false });
+                this._treesManager.logManager.logMessage(error.stdout.toString(), 'ERR', true);
             }
         }, 'Updating ' + dependenciesTreeNode.generalInfo.getComponentId());
     }
