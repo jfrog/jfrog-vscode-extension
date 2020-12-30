@@ -34,17 +34,25 @@ or even sooner, during the development.
 
 The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to your VS Code IDE.
 It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE.
-With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product. The following project types are supported.
-- [Go Projects](#go-projects)
-- [Maven Projects](#maven-projects)
-- [Npm Projects](#npm-projects)
-- [Pypi Projects](#pypi-projects)
-- [.NET Projects](#net-projects)
+With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product. The following project types and features are supported:
+| Features                                            | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
+| --------------------------------------------------- | :----------------: | :----------------------: | :------------------: | :--------------------: | :-------------------: |
+| Issues and licenses scanning                        |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
+| Filter dependencies by severity, license, and scope |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
+| Trigger scans on startup                            |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
+| Jump from dependency tree to project descriptor     |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
+| Jump from project descriptor to dependency tree     |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
+| Show vulnerabilities in the project descriptor      |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
+| Upgrade dependency to a fixed version               |         ✅         |            ✅            |          ✅          |           ❌           |          ❌           |
+| Trigger scans on changes in project descriptor      |         ✅         |            ❌            |          ✅          |           ❌           |          ❌           |
+| Free partial scanning                               |         ✅         |            ❌            |          ❌          |           ❌           |          ❌           |
+| Exclude transitive dependency                       |         ❌         |            ✅            |          ❌          |           ❌           |          ❌           |
+
 
 ### Free Go Modules Security Scanning and Metadata from GoCenter
 The JFrog Extension also includes free security scanning and metadata of Go Modules from [JFrog GoCenter](https://search.gocenter.io/). Read more in the [Go Projects](#go-projects) section.
 
-## Viewing Project Dependencies Information
+## Viewing and Updating Project Dependencies
 View the dependencies used by the project in a tree, where the direct dependencies are at the top.
 ![Open_Extension](resources/readme/gifs/open.gif)
 
@@ -61,6 +69,9 @@ Search for a dependency in the tree:
 
 View the issues associated with direct and transitive (indirect) dependencies.
 ![Search_In_Tree](resources/readme/gifs/maven_issues.gif)
+
+Update a vulnerable dependency to a fixed version:
+![Set_Fixed_Version](resources/readme/gifs/set_fixed_version.gif)
 
 To filter the dependencies viewed, click on the Filter ![Filter](resources/readme/filter.png) button.
 ![Filter](resources/readme/gifs/filter.gif)
