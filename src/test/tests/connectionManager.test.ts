@@ -5,6 +5,7 @@ import { IClientConfig, IProxyConfig } from 'xray-client-js';
 import * as vscode from 'vscode';
 import { createGoCenterConfig } from './utils/utils.test';
 import { LogManager } from '../../main/log/logManager';
+import { ConnectionUtils } from '../../main/connect/connectionUtils';
 
 describe('Connection Manager Tests', () => {
     let connectionManager: ConnectionManager = new ConnectionManager(new LogManager());
@@ -25,7 +26,7 @@ describe('Connection Manager Tests', () => {
         } as IClientConfig;
 
         await vscode.workspace.getConfiguration().update('http.proxyAuthorization', 'testProxyAuthorization');
-        connectionManager.addProxyAuthHeader(clientConfig);
+        ConnectionUtils.addProxyAuthHeader(clientConfig);
         let proxyAuthorization: string | undefined = clientConfig.headers!['Proxy-Authorization'];
         assert.isDefined(proxyAuthorization);
         assert.deepEqual(proxyAuthorization, 'testProxyAuthorization');
