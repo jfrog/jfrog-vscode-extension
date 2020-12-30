@@ -8,7 +8,7 @@ import { NpmDependencyUpdate } from './npmDependencyUpdate';
 import { GoDependencyUpdate } from './goDependencyUpdate';
 
 /**
- * Update the dependency version in the project descriptor (i.e pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
+ * Update the dependency version in the project descriptor (e.g. pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
  */
 export class DependencyUpdateManager implements ExtensionComponent {
     private _dependencyUpdaters: AbstractDependencyUpdate[] = [];
