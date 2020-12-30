@@ -50,6 +50,7 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
                 let issueNode: IssueNode = new IssueNode(
                     issue.severity,
                     issue.summary,
+                    issue.cves,
                     issue.issueType,
                     issue.component,
                     issue.fixedVersions,
@@ -66,6 +67,10 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
             new TreeDataHolder('Severity', SeverityUtils.getString(element.severity)),
             new TreeDataHolder('Component', element.component)
         ];
+        let cves: string[] | undefined = element.cves;
+        if (cves && cves.length > 0) {
+            children.push(new TreeDataHolder('CVEs', cves.toString()));
+        }
         let fixedVersions: string[] | undefined = element.fixedVersions;
         if (fixedVersions && fixedVersions.length > 0) {
             children.push(new TreeDataHolder('Fixed Versions', fixedVersions.join(', ')));
@@ -83,6 +88,7 @@ export class IssueNode extends vscode.TreeItem {
     constructor(
         readonly severity: Severity,
         readonly summary: string,
+        readonly cves?: string[],
         readonly issueType?: string,
         readonly component?: string,
         readonly fixedVersions?: string[],
