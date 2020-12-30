@@ -2,19 +2,19 @@ import * as vscode from 'vscode';
 import * as Collections from 'typescript-collections';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { AbstractUpdateDependency } from './abstractDependencyUpdate';
-import { MavenUpdateDependency } from './mavenDependencyUpdate';
-import { NpmUpdateDependency } from './npmUpdateDependency';
-import { GoUpdateDependency } from './goDependencyUpdate';
+import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
+import { MavenDependencyUpdate } from './mavenDependencyUpdate';
+import { NpmDependencyUpdate } from './npmDependencyUpdate';
+import { GoDependencyUpdate } from './goDependencyUpdate';
 
 /**
- * Update the dependency version in the project descriptor (i.e pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
+ * Update the dependency version in the project descriptor (e.g. pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
  */
 export class DependencyUpdateManager implements ExtensionComponent {
-    private updateDependency: AbstractUpdateDependency[] = [];
+    private _dependencyUpdaters: AbstractDependencyUpdate[] = [];
 
     constructor() {
-        this.updateDependency.push(new MavenUpdateDependency(), new NpmUpdateDependency(), new GoUpdateDependency());
+        this._dependencyUpdaters.push(new MavenDependencyUpdate(), new NpmDependencyUpdate(), new GoDependencyUpdate());
     }
 
     public activate(context: vscode.ExtensionContext) {
@@ -23,9 +23,9 @@ export class DependencyUpdateManager implements ExtensionComponent {
 
     public async updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
         const fixedVersion: string = await this.getFixedVersion(dependenciesTreeNode);
-        this.updateDependency
-        .filter(node => node.isMatched(dependenciesTreeNode))
-        .forEach(node => node.updateDependencyVersion(dependenciesTreeNode, fixedVersion));
+        this._dependencyUpdaters
+            .filter(node => node.isMatched(dependenciesTreeNode))
+            .forEach(node => node.updateDependencyVersion(dependenciesTreeNode, fixedVersion));
     }
     /**
      * Returns the version to be updated for dependenciesTreeNode. If more than one version exists,

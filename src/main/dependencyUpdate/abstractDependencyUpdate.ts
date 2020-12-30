@@ -3,7 +3,7 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 /**
  * @see DependencyUpdateManager
  */
-export abstract class AbstractUpdateDependency {
+export abstract class AbstractDependencyUpdate {
     constructor(private _pkgType: string) {}
 
     public isMatched(dependenciesTreeNode: DependenciesTreeNode): boolean {

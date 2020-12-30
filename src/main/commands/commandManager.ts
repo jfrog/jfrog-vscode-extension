@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
-import { DependencyUpdateManager } from '../DependencyUpdate/DependencyUpdateManager';
+import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
 import { ExclusionsManager } from '../exclusions/exclusionsManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { FilterManager } from '../filter/filterManager';
@@ -42,7 +42,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Show the dependency in the project descriptor (i.e package.json) file after right click on the components tree and a left click on "Show in project descriptor".
+     * Show the dependency in the project descriptor (e.g. package.json) file after right click on the components tree and a left click on "Show in project descriptor".
      * @param dependenciesTreeNode - The dependency to show.
      */
     private doShowInProjectDesc(dependenciesTreeNode: DependenciesTreeNode) {
@@ -50,10 +50,18 @@ export class CommandManager implements ExtensionComponent {
         this.onSelectNode(dependenciesTreeNode);
     }
 
+    /**
+     * Exclude dependency in the project descriptor (e.g. package.json).
+     * @param dependenciesTreeNode - The dependency to exclude
+     */
     private doExcludeDependency(dependenciesTreeNode: DependenciesTreeNode) {
         this._exclusionManager.excludeDependency(dependenciesTreeNode);
     }
 
+    /**
+     * Update a dependency in the project descriptor (e.g. package.json) to a new version.
+     * @param dependenciesTreeNode - The dependency to update
+     */
     private async doUpdateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
         await ScanUtils.scanWithProgress(async (): Promise<void> => {
             try {
@@ -63,7 +71,6 @@ export class CommandManager implements ExtensionComponent {
             } catch (error) {
                 vscode.window.showErrorMessage('Could not update dependency version.', <vscode.MessageOptions>{ modal: false });
                 this._treesManager.logManager.logMessage(error.stdout.toString(), 'ERR', true);
-                return;
             }
         }, 'Updating ' + dependenciesTreeNode.generalInfo.getComponentId());
     }

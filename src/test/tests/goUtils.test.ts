@@ -20,7 +20,7 @@ import { GoTreeNode } from '../../main/treeDataProviders/dependenciesTree/depend
 import { IComponentMetadata } from '../../main/goCenterClient/model/ComponentMetadata';
 import { Severity } from '../../main/types/severity';
 import { TestMemento } from './utils/testMemento.test';
-import { GoUpdateDependency } from '../../main/DependencyUpdate/goDependencyUpdate';
+import { GoDependencyUpdate } from '../../main/dependencyUpdate/goDependencyUpdate';
 import { getNodeByArtifactId } from './utils/utils.test';
 import { FocusType } from '../../main/focus/abstractFocus';
 
@@ -34,7 +34,7 @@ describe('Go Utils Tests', () => {
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'empty'];
-    let goDependencyUpdate: GoUpdateDependency = new GoUpdateDependency();
+    let goDependencyUpdate: GoDependencyUpdate = new GoDependencyUpdate();
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'go'));
 
