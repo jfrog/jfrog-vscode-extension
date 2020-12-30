@@ -45,20 +45,14 @@ describe('Translators Tests', () => {
         let clientCves: ICve[] = [];
         let issues: Issue = Translators.toIssue({ cves: clientCves } as IIssue);
         assert.isDefined(issues.cves);
-        if (!issues.cves) {
-            return;
-        }
-        assert.lengthOf(issues.cves, 0);
+        assert.lengthOf(issues.cves || [], 0);
     });
 
     it('CVEs - Empty CVEs', async () => {
         let clientCves: ICve[] = [{ cve: '', cvss_v2: '4.3/CVSS:2.0/AV:N/AC:M/Au:N/C:N/I:P/A:N' }];
         let issues: Issue = Translators.toIssue({ cves: clientCves } as IIssue);
         assert.isDefined(issues.cves);
-        if (!issues.cves) {
-            return;
-        }
-        assert.lengthOf(issues.cves, 0);
+        assert.lengthOf(issues.cves || [], 0);
     });
 
     it('CVEs - One CVE', async () => {
