@@ -14,7 +14,7 @@ describe('Issues Data Provider Tests', () => {
     let dependenciesTreeNode: DependenciesTreeNode;
 
     before(() => {
-        let generalInfo: GeneralInfo = new GeneralInfo('odin', '1.2.3', __dirname, 'asgard');
+        let generalInfo: GeneralInfo = new GeneralInfo('odin', '1.2.3', [], __dirname, 'asgard');
         dependenciesTreeNode = new DependenciesTreeNode(generalInfo);
     });
 
@@ -47,7 +47,7 @@ describe('Issues Data Provider Tests', () => {
 
     it('Second node', async () => {
         // Create a second DependenciesTreNode
-        let secondNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('thor', '1.2.4', __dirname, 'midgard'));
+        let secondNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('thor', '1.2.4', [], __dirname, 'midgard'));
         dependenciesTreeNode.addChild(secondNode);
 
         // Add a new issue to the second node

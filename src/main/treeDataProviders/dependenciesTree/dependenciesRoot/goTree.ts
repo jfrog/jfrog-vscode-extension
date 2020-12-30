@@ -8,38 +8,39 @@ import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { GoDependenciesTreeNode } from '../goDependenciesTreeNode';
+import { RootNode } from './rootTree';
 
-export class GoTreeNode extends DependenciesTreeNode {
+export class GoTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
 
     private _dependenciesMap: Map<string, string[]> = new Map();
 
     constructor(
-        private _workspaceFolder: string,
+        workspaceFolder: string,
         private _componentsToScan: Collections.Set<ComponentDetails>,
         private _goCenterComponentsToScan: Collections.Set<ComponentDetails>,
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
-        super(new GeneralInfo('', '', _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent);
+        super(workspaceFolder, parent);
     }
 
     public async refreshDependencies(quickScan: boolean) {
         let goList: string[] = [];
         let rootPackageName: string = '';
         try {
-            goList = ScanUtils.executeCmd('go mod graph', this._workspaceFolder)
+            goList = ScanUtils.executeCmd('go mod graph', this.workspaceFolder)
                 .toString()
                 .split(/\s+/);
             goList.pop(); // Remove the last new line
             rootPackageName = this.getModuleName();
         } catch (error) {
             this._treesManager.logManager.logError(error, !quickScan);
-            this.label = this._workspaceFolder + ' [Not installed]';
-            this.generalInfo = new GeneralInfo(this.label, '', this._workspaceFolder, GoUtils.PKG_TYPE);
+            this.label = this.workspaceFolder + ' [Not installed]';
+            this.generalInfo = new GeneralInfo(this.label, '', [], this.workspaceFolder, GoUtils.PKG_TYPE);
             return;
         }
-        this.generalInfo = new GeneralInfo(rootPackageName, '', this._workspaceFolder, GoUtils.PKG_TYPE);
+        this.generalInfo = new GeneralInfo(rootPackageName, '', ['None'], this.workspaceFolder, GoUtils.PKG_TYPE);
         this.label = rootPackageName;
         if (goList.length === 0) {
             return;
@@ -55,7 +56,7 @@ export class GoTreeNode extends DependenciesTreeNode {
         let directDependenciesGeneralInfos: GeneralInfo[] = [];
         for (; i < goList.length && !goList[i].includes('@'); i += 2) {
             let nameVersionTuple: string[] = this.getNameVersionTuple(goList[i + 1]);
-            directDependenciesGeneralInfos.push(new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], '', GoUtils.PKG_TYPE));
+            directDependenciesGeneralInfos.push(new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], ['None'], '', GoUtils.PKG_TYPE));
         }
 
         // Build dependencies map
@@ -80,7 +81,7 @@ export class GoTreeNode extends DependenciesTreeNode {
             this._dependenciesMap.get(dependenciesTreeNode.generalInfo.artifactId + '@v' + dependenciesTreeNode.generalInfo.version) || [];
         childDependencies.forEach(childDependency => {
             let nameVersionTuple: string[] = this.getNameVersionTuple(childDependency);
-            let generalInfo: GeneralInfo = new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], '', GoUtils.PKG_TYPE);
+            let generalInfo: GeneralInfo = new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], ['None'], '', GoUtils.PKG_TYPE);
             let grandchild: GoDependenciesTreeNode = new GoDependenciesTreeNode(
                 generalInfo,
                 this.getTreeCollapsibleState(generalInfo),
@@ -104,7 +105,7 @@ export class GoTreeNode extends DependenciesTreeNode {
 
     private getModuleName(): string {
         return exec
-            .execSync('go list -m', { cwd: this._workspaceFolder })
+            .execSync('go list -m', { cwd: this.workspaceFolder })
             .toString()
             .trim();
     }

@@ -8,12 +8,13 @@ export class ScanUtils {
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
 
     public static async scanWithProgress(
-        scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => Promise<void>
+        scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => Promise<void>,
+        title: string
     ) {
         await vscode.window.withProgress(
             <vscode.ProgressOptions>{
                 location: vscode.ProgressLocation.Notification,
-                title: 'Scanning project dependencies ',
+                title: title,
                 cancellable: true
             },
             async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {

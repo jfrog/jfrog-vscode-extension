@@ -1,9 +1,9 @@
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 
 /**
- * @see FocusManager
+ * @see DependencyUpdateManager
  */
-export abstract class AbstractFocus {
+export abstract class AbstractDependencyUpdate {
     constructor(private _pkgType: string) {}
 
     public isMatched(dependenciesTreeNode: DependenciesTreeNode): boolean {
@@ -11,13 +11,8 @@ export abstract class AbstractFocus {
     }
 
     /**
-     * Show the dependency in the project descriptor (i.e package.json) file after right click on the components tree and a left click on "Show in project descriptor".
+     * Update the dependency version in the project descriptor (i.e pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
      * @param dependenciesTreeNode - The dependencies tree node that the user right-clicked on
      */
-    public abstract focusOnDependency(dependenciesTreeNode: DependenciesTreeNode, focusType: FocusType): void;
-}
-
-export enum FocusType {
-    Dependency = 0,
-    DependencyVersion = 1
+    public abstract updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode, fixedVersion: string): void;
 }

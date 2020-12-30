@@ -2,7 +2,7 @@
     "name": "jfrog-vscode-extension",
     "displayName": "JFrog",
     "description": "JFrog Xray scanning of Go, npm, Pypi, Maven and NuGet project dependencies, along with free Go Module vulnerability information and metadata from GoCenter.",
-    "version": "1.5.1",
+    "version": "1.5.2",
     "license": "Apache-2.0",
     "icon": "resources/extensionIcon.png",
     "repository": {
@@ -109,6 +109,15 @@
                 "command": "jfrog.xray.excludeDependency",
                 "title": "Exclude dependency",
                 "icon": "$(exclude)"
+            },
+            {
+                "command": "jfrog.xray.updateDependency",
+                "title": "Update dependency to fixed version",
+                "icon": "$(arrow-up)"
+            },
+            {
+                "command": "jfrog.xray.copyToClipboard",
+                "title": "Copy"
             }
         ],
         "menus": {
@@ -137,13 +146,21 @@
             "view/item/context": [
                 {
                     "command": "jfrog.xray.showInProjectDesc",
-                    "when": "viewItem == jfrog.xray.showInProjectDesc.enabled || viewItem == jfrog.xray.excludeDependency.enabled",
+                    "when": "viewItem =~ /jfrog.xray.showInProjectDesc.enabled/",
                     "group": "inline"
                 },
                 {
                     "command": "jfrog.xray.excludeDependency",
-                    "when": "viewItem == jfrog.xray.excludeDependency.enabled",
+                    "when": "viewItem =~ /jfrog.xray.excludeDependency.enabled/",
                     "group": "inline"
+                },
+                {
+                    "command": "jfrog.xray.updateDependency",
+                    "when": "viewItem =~ /jfrog.xray.updateDependency.enabled/",
+                    "group": "inline"
+                },
+                {
+                    "command": "jfrog.xray.copyToClipboard"
                 }
             ]
         }
@@ -161,7 +178,7 @@
     "dependencies": {
         "fs-extra": "~9.0.0",
         "keytar": "~5.6.0",
-        "nuget-deps-tree": "~0.1.0",
+        "nuget-deps-tree": "~0.2.0",
         "semver": "~7.3.2",
         "typescript-collections": "~1.3.3",
         "xmlbuilder2": "~2.1.2",

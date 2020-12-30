@@ -6,6 +6,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { MavenUtils } from '../utils/mavenUtils';
+import { FocusType } from '../focus/abstractFocus';
 
 export class MavenCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
     constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager) {
@@ -34,7 +35,7 @@ export class MavenCodeActionProvider extends AbstractCodeActionProvider implemen
             if (child instanceof MavenTreeNode) {
                 return;
             }
-            let dependencyPos: vscode.Position[] = MavenUtils.getDependencyPos(document, child);
+            let dependencyPos: vscode.Position[] = MavenUtils.getDependencyPos(document, child, FocusType.Dependency);
             if (dependencyPos.length === 0) {
                 return;
             }

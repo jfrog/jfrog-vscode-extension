@@ -12,7 +12,14 @@ export class Issue {
         private _fixedVersions: string[] = [],
         private _cves?: string[],
         private _gocenter_security_url?: string
-    ) {}
+    ) {
+        this._fixedVersions = this._fixedVersions.map(version => {
+            if (version.charAt(0) === '[' && version.charAt(version.length - 1) === ']') {
+                return version.substring(1, version.length - 1);
+            }
+            return version;
+        });
+    }
 
     public get cves(): string[] | undefined {
         return this._cves;

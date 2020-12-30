@@ -53,6 +53,9 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
             children.push(new TreeDataHolder('Stars', String(this._selectedNode.componentMetadata.stars) + ' ★'));
         }
         children.push(new TreeDataHolder('Type', this._selectedNode.generalInfo.pkgType));
+        if (this._selectedNode.generalInfo.scopes.length > 0) {
+            children.push(new TreeDataHolder('Scopes', this._selectedNode.generalInfo.scopes.join(',')));
+        }
         children.push(new TreeDataHolder('Issues count', String(this._selectedNode.issues.size())));
         let path: string = this._selectedNode.generalInfo.path;
         if (path) {
