@@ -65,7 +65,9 @@ export class CommandManager implements ExtensionComponent {
     private async doUpdateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
         await ScanUtils.scanWithProgress(async (): Promise<void> => {
             try {
-                await this._DependencyUpdateManager.updateDependencyVersion(dependenciesTreeNode);
+                if (!(await this._DependencyUpdateManager.updateDependencyVersion(dependenciesTreeNode))) {
+                    return;
+                }
                 this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.DependencyVersion);
                 this._treesManager.dependenciesTreeDataProvider.removeNode(dependenciesTreeNode);
             } catch (error) {
