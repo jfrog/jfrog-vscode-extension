@@ -21,11 +21,15 @@ export class DependencyUpdateManager implements ExtensionComponent {
         return this;
     }
 
-    public async updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
+    public async updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode): Promise<boolean> {
         const fixedVersion: string = await this.getFixedVersion(dependenciesTreeNode);
+        if (!fixedVersion) {
+            return false;
+        }
         this._dependencyUpdaters
             .filter(node => node.isMatched(dependenciesTreeNode))
             .forEach(node => node.updateDependencyVersion(dependenciesTreeNode, fixedVersion));
+        return true;
     }
     /**
      * Returns the version to be updated for dependenciesTreeNode. If more than one version exists,
