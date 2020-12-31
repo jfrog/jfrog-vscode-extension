@@ -6,6 +6,7 @@
 
 - [About this Extension](#about-this-extension)
   - [General](#general)
+  - [Supported Features](#supported-features)
   - [Free Go Modules Security Scanning and Metadata from GoCenter](#free-go-modules-security-scanning-and-metadata-from-gocenter)
 - [Viewing Project Dependencies Information](#viewing-project-dependencies-information)
 - [General Configuration](#general-configuration)
@@ -34,20 +35,21 @@ or even sooner, during the development.
 
 The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to your VS Code IDE.
 It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE.
-With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product. The following project types and features are supported:
+With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
+
+### Supported Features
 | Features                                            | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
 | --------------------------------------------------- | :----------------: | :----------------------: | :------------------: | :--------------------: | :-------------------: |
 | Issues and licenses scanning                        |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
 | Filter dependencies by severity, license, and scope |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
-| Trigger scans on startup                            |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
+| Trigger scan on startup                             |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
 | Jump from dependency tree to project descriptor     |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
 | Jump from project descriptor to dependency tree     |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
-| Show vulnerabilities in the project descriptor      |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
-| Upgrade dependency to a fixed version               |         ✅         |            ✅            |          ✅          |           ❌           |          ❌           |
-| Trigger scans on changes in project descriptor      |         ✅         |            ❌            |          ✅          |           ❌           |          ❌           |
-| Free partial scanning                               |         ✅         |            ❌            |          ❌          |           ❌           |          ❌           |
-| Exclude transitive dependency                       |         ❌         |            ✅            |          ❌          |           ❌           |          ❌           |
-
+| Show vulnerabilities inside the project descriptor  |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
+| Upgrade vulnerable dependencies to fixed versions   |         ✅         |            ✅            |          ✅          |           ❌           |          ❌           |
+| Automatically trigger a scan upon code changes      |         ✅         |            ❌            |          ✅          |           ❌           |          ❌           |
+| Free project scanning                               |         ✅         |            ❌            |          ❌          |           ❌           |          ❌           |
+| Exclude dependencies from project descriptor        |         ❌         |            ✅            |          ❌          |           ❌           |          ❌           |
 
 ### Free Go Modules Security Scanning and Metadata from GoCenter
 The JFrog Extension also includes free security scanning and metadata of Go Modules from [JFrog GoCenter](https://search.gocenter.io/). Read more in the [Go Projects](#go-projects) section.
