@@ -38,18 +38,18 @@ It allows developers to view panels displaying vulnerability information about t
 With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
 ### Supported Features
-| Features                                            | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
-| --------------------------------------------------- | :----------------: | :----------------------: | :------------------: | :--------------------: | :-------------------: |
-| Issues and licenses scanning                        |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
-| Filter dependencies by severity, license, and scope |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
-| Trigger scan on startup                             |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
-| Jump from dependency tree to project descriptor     |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
-| Jump from project descriptor to dependency tree     |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
-| Show vulnerabilities inside the project descriptor  |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
-| Upgrade vulnerable dependencies to fixed versions   |         ✅         |            ✅            |          ✅          |           ❌           |          ❌           |
-| Automatically trigger a scan upon code changes      |         ✅         |            ❌            |          ✅          |           ❌           |          ❌           |
-| Free project scanning                               |         ✅         |            ❌            |          ❌          |           ❌           |          ❌           |
-| Exclude dependencies from project descriptor        |         ❌         |            ✅            |          ❌          |           ❌           |          ❌           |
+| Features                                                | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
+| ------------------------------------------------------- | :----------------: | :----------------------: | :------------------: | :--------------------: | :-------------------: |
+| Issues and licenses scanning                            |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
+| Filter dependencies by severity, license, and scope     |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
+| Trigger scan on startup                                 |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
+| Jump from dependency tree to project descriptor         |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
+| Jump from project descriptor to dependency tree         |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
+| Show vulnerabilities inside the project descriptor      |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
+| Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ❌           |          ❌           |
+| Automatically trigger a scan upon code changes          |         ✅         |            ❌            |          ✅          |           ❌           |          ❌           |
+| Free project scanning                                   |         ✅         |            ❌            |          ❌          |           ❌           |          ❌           |
+| Exclude transitive dependencies from project descriptor |         ❌         |            ✅            |          ❌          |           ❌           |          ❌           |
 
 ### Free Go Modules Security Scanning and Metadata from GoCenter
 The JFrog Extension also includes free security scanning and metadata of Go Modules from [JFrog GoCenter](https://search.gocenter.io/). Read more in the [Go Projects](#go-projects) section.
