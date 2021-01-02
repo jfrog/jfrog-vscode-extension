@@ -1,13 +1,13 @@
+import { NugetDepsTree } from 'nuget-deps-tree';
 import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { NugetTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/nugetTree';
-import { TreesManager } from '../treeDataProviders/treesManager';
-import { ScanUtils } from './scanUtils';
 import { LogManager } from '../log/logManager';
-import { NugetDepsTree } from 'nuget-deps-tree';
+import { NugetTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/nugetTree';
+import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { TreesManager } from '../treeDataProviders/treesManager';
+import { Configuration } from './configuration';
 
 export class NugetUtils {
     public static readonly PKG_TYPE: string = 'nuget';
@@ -23,7 +23,7 @@ export class NugetUtils {
             logManager.logMessage('Locating *.sln files in workspace "' + workspace.name + '".', 'INFO');
             let wsSolutions: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/*.sln' },
-                ScanUtils.getScanExcludePattern(workspace)
+                Configuration.getScanExcludePattern(workspace)
             );
             wsSolutions.forEach(solution => solutions.add(solution));
         }
