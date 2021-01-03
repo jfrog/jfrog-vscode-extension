@@ -37,6 +37,8 @@ The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to 
 It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE.
 With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
+New to JFrog Xray? [Start for free](https://jfrog.com/xray/start-free).
+
 ### Supported Features
 | Features                                                | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
 | ------------------------------------------------------- | :----------------: | :----------------------: | :------------------: | :--------------------: | :-------------------: |
@@ -48,11 +50,11 @@ With this information, a developer can make an informed decision on whether to u
 | Show vulnerabilities inside the project descriptor      |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
 | Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ❌           |          ❌           |
 | Automatically trigger a scan upon code changes          |         ✅         |            ❌            |          ✅          |           ❌           |          ❌           |
-| Free project scanning                                   |         ✅         |            ❌            |          ❌          |           ❌           |          ❌           |
+| Unlimited free project scanning                         |         ✅         |            ❌            |          ❌          |           ❌           |          ❌           |
 | Exclude transitive dependencies from project descriptor |         ❌         |            ✅            |          ❌          |           ❌           |          ❌           |
 
 ### Free Go Modules Security Scanning and Metadata from GoCenter
-The JFrog Extension also includes free security scanning and metadata of Go Modules from [JFrog GoCenter](https://search.gocenter.io/). Read more in the [Go Projects](#go-projects) section.
+The JFrog Extension also includes unlimited free security scanning and metadata of Go Modules from [JFrog GoCenter](https://search.gocenter.io/). Read more in the [Go Projects](#go-projects) section.
 
 ## Viewing and Updating Project Dependencies
 View the dependencies used by the project in a tree, where the direct dependencies are at the top.
