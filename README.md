@@ -14,6 +14,7 @@
   - [Proxy Configuration](#proxy-configuration)
     - [Proxy Authorization](#proxy-authorization)
   - [Exclude Paths from Scan](#exclude-paths-from-scan)
+  - [Scan after dependencies change](#scan-after-dependencies-change)
   - [Extension Settings](#extension-settings)
 - [Go Projects](#go-projects)
 - [Maven Projects](#maven-projects)
@@ -123,6 +124,10 @@ settings.json:
    "http.proxyAuthorization": "Basic Zm9vOmJhcg=="
 }
 ```
+
+### Scan after dependencies change
+The JFrog VS-Code extension can trigger an Xray scan after a change in go.sum and package-lock.json.
+This feature is disabled by default. You can enable it in the [Extension Settings](#extension-settings).
 
 ### Exclude Paths from Scan
 By default, paths containing the words `test`, `venv` and `node_modules` are excluded from Xray scan.
