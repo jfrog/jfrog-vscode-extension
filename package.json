@@ -73,7 +73,7 @@
                 },
                 "jfrog.xray.watchers": {
                     "type": "boolean",
-                    "default": "true",
+                    "default": "false",
                     "scope": "application",
                     "markdownDescription": "Automatically trigger a scan upon code changes in go.sum or package-lock.json. Change will take effect after reload."
                 }
