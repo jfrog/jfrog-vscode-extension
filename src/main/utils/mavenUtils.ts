@@ -3,14 +3,15 @@ import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { LogManager } from '../log/logManager';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { TreesManager } from '../treeDataProviders/treesManager';
-import { PomTree } from './pomTree';
-import { ScanUtils } from './scanUtils';
-import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { ContextKeys } from '../constants/contextKeys';
 import { FocusType } from '../focus/abstractFocus';
+import { LogManager } from '../log/logManager';
+import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
+import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { TreesManager } from '../treeDataProviders/treesManager';
+import { Configuration } from './configuration';
+import { PomTree } from './pomTree';
+import { ScanUtils } from './scanUtils';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
@@ -121,7 +122,7 @@ export class MavenUtils {
             logManager.logMessage('Locating pom.xml files in workspace "' + workspace.name + '".', 'INFO');
             let wsPomXmls: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/pom.xml' },
-                ScanUtils.getScanExcludePattern(workspace)
+                Configuration.getScanExcludePattern(workspace)
             );
             wsPomXmls.forEach(pomXml => pomXmls.add(pomXml));
         }

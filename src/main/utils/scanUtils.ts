@@ -33,16 +33,6 @@ export class ScanUtils {
         return path.join(os.homedir(), '.jfrog-vscode-extension');
     }
 
-    /**
-     * Get scan exclude pattern. This pattern is used to exclude specific file descriptors (go.mod, package.json, etc.) from being scanned by Xray.
-     * Descriptor files which are under a directory which matches the pattern will not be scanned.
-     * @param workspaceFolder - The workspace folder
-     */
-    public static getScanExcludePattern(workspaceFolder?: vscode.WorkspaceFolder): string | undefined {
-        let resource: vscode.Uri | null = workspaceFolder ? workspaceFolder.uri : null;
-        return vscode.workspace.getConfiguration('jfrog', resource).get('xray.exclusions');
-    }
-
     static readFileIfExists(filePath: string): string | undefined {
         if (fse.pathExistsSync(filePath)) {
             return fse.readFileSync(filePath).toString();

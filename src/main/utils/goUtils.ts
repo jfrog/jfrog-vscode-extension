@@ -6,9 +6,9 @@ import { ComponentDetails } from 'xray-client-js';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { ScanUtils } from './scanUtils';
 import { LogManager } from '../log/logManager';
 import { FocusType } from '../focus/abstractFocus';
+import { Configuration } from './configuration';
 
 export class GoUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/go.mod' };
@@ -69,7 +69,7 @@ export class GoUtils {
             logManager.logMessage('Locating go.mod files in workspace "' + workspace.name + '".', 'INFO');
             let wsGoMods: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/go.mod' },
-                ScanUtils.getScanExcludePattern(workspace)
+                Configuration.getScanExcludePattern(workspace)
             );
             wsGoMods.forEach(goMod => goMods.add(goMod));
         }

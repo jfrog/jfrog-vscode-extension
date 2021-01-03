@@ -4,10 +4,10 @@ import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
 import { LogManager } from '../log/logManager';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
+import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { ScanUtils } from './scanUtils';
+import { Configuration } from './configuration';
 
 export class PypiUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/*requirements*.txt' };
@@ -63,7 +63,7 @@ export class PypiUtils {
 
         let wsPythonFiles: vscode.Uri[] = await vscode.workspace.findFiles(
             { base: workspaceFolder.uri.fsPath, pattern: '**/*{setup.py,requirements*.txt}' },
-            ScanUtils.getScanExcludePattern(workspaceFolder)
+            Configuration.getScanExcludePattern(workspaceFolder)
         );
         if (logManager && wsPythonFiles.length > 0) {
             logManager.logMessage('Detected python files in workspace ' + workspaceFolder.name + ': [' + wsPythonFiles.toString() + ']', 'DEBUG');
@@ -166,6 +166,6 @@ export class PypiUtils {
      * @param fsPath - The base path to search
      */
     public static async getRequirementsFiles(fsPath: string): Promise<vscode.Uri[]> {
-        return await vscode.workspace.findFiles({ base: fsPath, pattern: '**/*requirements*.txt' }, ScanUtils.getScanExcludePattern());
+        return await vscode.workspace.findFiles({ base: fsPath, pattern: '**/*requirements*.txt' }, Configuration.getScanExcludePattern());
     }
 }
