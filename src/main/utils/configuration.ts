@@ -12,7 +12,7 @@ export class Configuration {
     }
 
     /**
-     * Return true if should watch for changes in go.sum and package-lock.json files.
+     * Return true if should watch for changes in go.sum or package-lock.json files.
      */
     public static isWatchEnabled(): boolean | undefined {
         return vscode.workspace.getConfiguration('jfrog').get('xray.watchers');

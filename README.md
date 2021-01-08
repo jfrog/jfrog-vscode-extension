@@ -126,7 +126,7 @@ settings.json:
 ```
 
 ### Scan after dependencies change
-The JFrog VS-Code extension can trigger an Xray scan after a change in go.sum and package-lock.json.
+The JFrog VS-Code extension can trigger an Xray scan after a change in go.sum or package-lock.json.
 This feature is disabled by default. You can enable it in the [Extension Settings](#extension-settings).
 
 ### Exclude Paths from Scan
