@@ -33,7 +33,7 @@
             },
             {
                 "view": "jfrog.xray",
-                "contents": "To start using the JFrog extension, please [configure](command:jfrog.xray.connect) your JFrog Xray details.\nNew to JFrog Xray? [Start for free](https://jfrog.com/xray/start-free).",
+                "contents": "To start using the JFrog extension, please [configure](command:jfrog.xray.connect) your JFrog Xray details.\nDon't have JFrog Xray? [Start for free](https://jfrog.com/xray/start-free).",
                 "when": "!isGoCenterMode && !areCredentialsSet"
             }
         ],

@@ -8,7 +8,7 @@
   - [General](#general)
   - [Supported Features](#supported-features)
   - [Free Go Modules Security Scanning and Metadata from GoCenter](#free-go-modules-security-scanning-and-metadata-from-gocenter)
-- [Viewing Project Dependencies Information](#viewing-project-dependencies-information)
+- [Viewing and Updating Project Dependencies](#viewing-and-updating-project-dependencies)
 - [General Configuration](#general-configuration)
   - [Configuring JFrog Xray](#configuring-jfrog-xray)
   - [Proxy Configuration](#proxy-configuration)
@@ -37,7 +37,7 @@ The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to 
 It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE.
 With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
-New to JFrog Xray? [Start for free](https://jfrog.com/xray/start-free).
+Don't have JFrog Xray? [Start for free](https://jfrog.com/xray/start-free).
 
 ### Supported Features
 | Features                                                | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
