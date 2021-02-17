@@ -2,15 +2,15 @@ import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesR
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { NpmUtils } from '../utils/npmUtils';
 import { ScanUtils } from '../utils/scanUtils';
-import { AbstractUpdateDependency } from './abstractDependencyUpdate';
+import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 
-export class NpmUpdateDependency extends AbstractUpdateDependency {
+export class NpmDependencyUpdate extends AbstractDependencyUpdate {
     constructor() {
         super(NpmUtils.PKG_TYPE);
     }
 
     /** @override */
-    public isMatched(dependenciesTreeNode: DependenciesTreeNode):boolean {
+    public isMatched(dependenciesTreeNode: DependenciesTreeNode): boolean {
         return super.isMatched(dependenciesTreeNode) && dependenciesTreeNode.parent instanceof NpmTreeNode;
     }
 

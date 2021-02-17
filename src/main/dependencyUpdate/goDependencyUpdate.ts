@@ -2,18 +2,18 @@ import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRo
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { GoUtils } from '../utils/goUtils';
 import { ScanUtils } from '../utils/scanUtils';
-import { AbstractUpdateDependency } from './abstractDependencyUpdate';
+import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 
-export class GoUpdateDependency extends AbstractUpdateDependency {
+export class GoDependencyUpdate extends AbstractDependencyUpdate {
     constructor() {
         super(GoUtils.PKG_TYPE);
     }
 
-     /** @override */
-    public isMatched(dependenciesTreeNode: DependenciesTreeNode):boolean {
+    /** @override */
+    public isMatched(dependenciesTreeNode: DependenciesTreeNode): boolean {
         return super.isMatched(dependenciesTreeNode) && dependenciesTreeNode.parent instanceof GoTreeNode;
     }
-    
+
     /** @override */
     public updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode, fixedVersion: string): void {
         const workspace: string = (<GoTreeNode>dependenciesTreeNode.parent).workspaceFolder;

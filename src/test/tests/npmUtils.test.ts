@@ -6,7 +6,7 @@ import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
-import { NpmUpdateDependency } from '../../main/DependencyUpdate/npmUpdateDependency';
+import { NpmDependencyUpdate } from '../../main/dependencyUpdate/npmDependencyUpdate';
 import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
@@ -27,7 +27,7 @@ describe('Npm Utils Tests', () => {
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'dependencyPackageLock', 'empty'];
-    let npmDependencyUpdate: NpmUpdateDependency = new NpmUpdateDependency();
+    let npmDependencyUpdate: NpmDependencyUpdate = new NpmDependencyUpdate();
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'npm'));
 

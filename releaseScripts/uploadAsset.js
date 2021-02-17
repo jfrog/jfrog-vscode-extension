@@ -3,7 +3,7 @@ const core = require('@actions/core');
 const fs = require('fs');
 
 const tag = process.env.GITHUB_REF.split('/')[2];
-const octokit = new github.GitHub(process.env.GITHUB_TOKEN);
+const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
 octokit.repos
     .listReleases({
         owner: 'jfrog',

@@ -176,6 +176,7 @@ export class ConnectionManager implements ExtensionComponent {
                     prompt: 'Enter JFrog platform URL',
                     value: this._url ? this._url : 'https://',
                     ignoreFocusOut: true,
+                    placeHolder: 'Example: https://myjfrog.acme.org/xray',
                     validateInput: ConnectionUtils.validateUrl
                 })) || '';
             return !!this._url;

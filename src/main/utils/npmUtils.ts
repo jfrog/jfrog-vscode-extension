@@ -3,12 +3,12 @@ import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
-import { TreesManager } from '../treeDataProviders/treesManager';
-import { ScanUtils } from './scanUtils';
-import { LogManager } from '../log/logManager';
 import { FocusType } from '../focus/abstractFocus';
+import { LogManager } from '../log/logManager';
+import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
+import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { TreesManager } from '../treeDataProviders/treesManager';
+import { Configuration } from './configuration';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
@@ -42,7 +42,9 @@ export class NpmUtils {
     ): vscode.Position[] {
         let res: vscode.Position[] = [];
         let packageJsonContent: string = document.getText();
-        let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match('("' + dependenciesTreeNode.generalInfo.artifactId + '"\\s*:\\s*).*"');
+        let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match(
+            '("' + dependenciesTreeNode.generalInfo.artifactId + '"\\s*:\\s*).*"'
+        );
         if (!dependencyMatch) {
             return res;
         }
@@ -51,7 +53,7 @@ export class NpmUtils {
                 res.push(document.positionAt(<number>dependencyMatch.index));
                 break;
             case FocusType.DependencyVersion:
-                res.push(document.positionAt(<number>dependencyMatch.index +dependencyMatch[1].length));
+                res.push(document.positionAt(<number>dependencyMatch.index + dependencyMatch[1].length));
                 break;
         }
         res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));
@@ -69,7 +71,7 @@ export class NpmUtils {
             logManager.logMessage('Locating package json files in workspace "' + workspace.name + '".', 'INFO');
             let wsPackageJsons: vscode.Uri[] = await vscode.workspace.findFiles(
                 { base: workspace.uri.fsPath, pattern: '**/package.json' },
-                ScanUtils.getScanExcludePattern(workspace)
+                Configuration.getScanExcludePattern(workspace)
             );
             wsPackageJsons.forEach(packageJson => packageJsons.add(packageJson));
         }
