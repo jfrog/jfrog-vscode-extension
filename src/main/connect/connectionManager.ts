@@ -50,14 +50,6 @@ export class ConnectionManager implements ExtensionComponent {
         return await vscode.window.withProgress(
             <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with Xray server...' },
             async (): Promise<boolean> => {
-                if (await ConnectionUtils.isPlatformUrl(this._url, this._username, this._password)) {
-                    this._xrayUrl = this._url.endsWith('/') ? this._url + 'xray' : this._url + '/xray';
-                    this._logManager.logMessage('Using JFrog platform URL: ' + this._url, 'DEBUG');
-                } else {
-                    this._xrayUrl = this._url;
-                    this._url = '';
-                }
-                this._logManager.logMessage('Using Xray URL: ' + this._xrayUrl, 'DEBUG');
                 if (await ConnectionUtils.checkConnection(this._xrayUrl, this._username, this._password)) {
                     await this.storeConnection();
                     this.updateConnectionIcon();
@@ -102,6 +94,11 @@ export class ConnectionManager implements ExtensionComponent {
         return !!((this._url || this._xrayUrl) && this._username && this._password);
     }
 
+    /**
+     * Populate credentials from environment variable or from the global storage.
+     * @param prompt - True if should prompt
+     * @returns true if the credentials populates
+     */
     public async populateCredentials(prompt: boolean): Promise<boolean> {
         let storeCredentials: boolean = false;
         this.readCredentialsFromEnv();
@@ -120,10 +117,50 @@ export class ConnectionManager implements ExtensionComponent {
             this.deleteCredentialFromMemory();
             return false;
         }
+        await this.resolveUrls();
         if (storeCredentials) {
             await this.storeConnection();
         }
         return true;
+    }
+
+    public get url() {
+        return this._url;
+    }
+
+    public get xrayUrl() {
+        return this._xrayUrl;
+    }
+
+    public get username() {
+        return this._username;
+    }
+
+    public get password() {
+        return this._password;
+    }
+
+    /**
+     * Resolve Xray and JFrog platform URLs from the input url.
+     * If URL is <platform-url>, the derived Xray URL is <platform-url/xray>.
+     * If URL is <platform-url>/xray the derived Xray platform URL is <platform-url>.
+     * If URL leads to an Xray URL not under JFrog platform (like in Artifactory 6), leave the derive platform URL empty.
+     */
+    private async resolveUrls() {
+        if (await ConnectionUtils.isPlatformUrl(this._url, this._username, this._password)) {
+            // _url is a platform URL
+            this._xrayUrl = this._url.endsWith('/') ? this._url + 'xray' : this._url + '/xray';
+        } else {
+            // _url is an Xray URL
+            this._xrayUrl = this._url;
+            if (this._url.endsWith('/xray') || this._url.endsWith('/xray/')) {
+                this._url = this._url.substr(0, this._url.lastIndexOf('/xray'));
+            } else {
+                this._url = '';
+            }
+        }
+        this._logManager.logMessage('Resolved JFrog platform URL: ' + this._url, 'DEBUG');
+        this._logManager.logMessage('Resolved Xray URL: ' + this._xrayUrl, 'DEBUG');
     }
 
     private readCredentialsFromEnv() {
@@ -234,13 +271,12 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async deleteCredentialFromFileSystem(): Promise<boolean> {
-        // Delete password must be executed first. in order to find the password in he key chain, we must create its hash key using the url & username.
+        // Delete password must be executed first. in order to find the password in the key chain, we must create its hash key using the url & username.
         let ok: boolean = await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, this._username));
         if (!ok) {
             this._logManager.logMessage('Failed to delete the password from the system password manager', 'WARN');
             return false;
         }
-        // Setting the value to undefined will remove the key https://github.com/microsoft/vscode/issues/11528
         await Promise.all([
             this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.PLATFORM_URL_KEY, undefined),
