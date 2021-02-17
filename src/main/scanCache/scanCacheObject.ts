@@ -1,5 +1,4 @@
 import { IArtifact } from 'xray-client-js';
-import { IComponentMetadata } from '../goCenterClient/model/ComponentMetadata';
 
 export class ScanCacheObject {
     private static readonly MILLISECONDS_IN_WEEK: number = 604800000;
@@ -8,7 +7,7 @@ export class ScanCacheObject {
 
     public _lastUpdated: number;
 
-    private constructor(public _artifact: IArtifact, public _componentMetadata: IComponentMetadata) {
+    private constructor(public _artifact: IArtifact) {
         this._lastUpdated = ScanCacheObject.NOW;
     }
 
@@ -17,10 +16,6 @@ export class ScanCacheObject {
     }
 
     static createXrayCache(artifact: IArtifact) {
-        return new this(artifact, {} as IComponentMetadata);
-    }
-
-    static createGoCenterCache(componentMetadata: IComponentMetadata) {
-        return new this({} as IArtifact, componentMetadata);
+        return new ScanCacheObject(artifact);
     }
 }

@@ -1,7 +1,7 @@
 {
     "name": "jfrog-vscode-extension",
     "displayName": "JFrog",
-    "description": "JFrog Xray scanning of Go, npm, Pypi, Maven and NuGet project dependencies, along with free Go Module vulnerability information and metadata from GoCenter.",
+    "description": "JFrog Xray scanning of Go, npm, Pypi, Maven and NuGet project dependencies.",
     "version": "1.6.0",
     "license": "Apache-2.0",
     "icon": "resources/extensionIcon.png",
@@ -27,14 +27,9 @@
     "contributes": {
         "viewsWelcome": [
             {
-                "view": "jfrog.xray.component",
-                "contents": "The JFrog extension pulls security information and metadata from [JFrog GoCenter](https://search.gocenter.io).\n[Connecting VS Code to JFrog Xray](https://github.com/jfrog/jfrog-vscode-extension#configuring-jfrog-xray) provides security intelligence directly from [JFrog Xray](https://jfrog.com/xray), including a list of security issues and module versions with the fixes.\nAll the module metadata provided by GoCenter is still available when [connecting](command:jfrog.xray.connect) to JFrog Xray.",
-                "when": "isGoCenterMode"
-            },
-            {
                 "view": "jfrog.xray",
                 "contents": "To start using the JFrog extension, please [configure](command:jfrog.xray.connect) your JFrog Xray details.\nDon't have JFrog Xray? [Start for free](https://jfrog.com/xray/start-free).",
-                "when": "!isGoCenterMode && !areCredentialsSet"
+                "when": "!areCredentialsSet"
             }
         ],
         "viewsContainers": {

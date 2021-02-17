@@ -4,19 +4,15 @@ import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'xray-cl
 import { GeneralInfo } from '../../types/generalInfo';
 import { Issue } from '../../types/issue';
 import { License } from '../../types/license';
+import { Scope } from '../../types/scope';
 import { Severity, SeverityUtils } from '../../types/severity';
+import { MavenUtils } from '../../utils/mavenUtils';
 import { ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
 import { TreesManager } from '../treesManager';
+import { RootNode } from './dependenciesRoot/rootTree';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
-import { MavenUtils } from '../../utils/mavenUtils';
-import { IComponentMetadata } from '../../goCenterClient/model/ComponentMetadata';
-import { GoDependenciesTreeNode } from './goDependenciesTreeNode';
-import { GoTreeNode } from './dependenciesRoot/goTree';
-import { ISeverityCount } from '../../goCenterClient/model/SeverityCount';
-import { Scope } from '../../types/scope';
-import { RootNode } from './dependenciesRoot/rootTree';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
@@ -26,7 +22,6 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     private _filterLicenses: Collections.Set<License> = new Collections.Set(license => license.fullName);
     private _filterScopes: Collections.Set<Scope> = new Collections.Set(scope => scope.label);
     private _componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
-    private _goCenterComponentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
     protected _dependenciesTree!: DependenciesTreeNode;
     private _scanInProgress: boolean = false;
@@ -106,22 +101,18 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     }
 
     private async scanAndCacheComponents(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
-        const totalComponents: number = this._componentsToScan.size() + this._goCenterComponentsToScan.size();
+        const totalComponents: number = this._componentsToScan.size();
         if (totalComponents === 0) {
             return;
         }
         progress.report({ message: `${totalComponents} components` });
-        await Promise.all([
-            this.scanAndCache(progress, checkCanceled, totalComponents, Source.Xray, this._componentsToScan.toArray()),
-            this.scanAndCache(progress, checkCanceled, totalComponents, Source.GoCenter, this._goCenterComponentsToScan.toArray())
-        ]);
+        await this.scanAndCache(progress, checkCanceled, totalComponents, this._componentsToScan.toArray());
     }
 
     private async scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void,
         totalComponents: number,
-        source: Source,
         componentDetails: ComponentDetails[]
     ) {
         try {
@@ -129,16 +120,9 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             let step: number = (100 / totalComponents) * 100;
             for (let currentIndex: number = 0; currentIndex < componentDetails.length; currentIndex += 100) {
                 let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
-                if (source === Source.Xray) {
-                    let artifacts: IArtifact[] = await this._treesManager.connectionManager.getComponents(partialComponents);
-                    this.addMissingXrayComponents(partialComponents, artifacts);
-                    await this._treesManager.scanCacheManager.addArtifactComponents(artifacts);
-                }
-                if (source === Source.GoCenter) {
-                    let modules: IComponentMetadata[] = await this._treesManager.connectionManager.getGoCenterModules(partialComponents);
-                    this.addMissingGoCenterComponents(partialComponents, modules);
-                    await this._treesManager.scanCacheManager.addMetadataComponents(modules);
-                }
+                let artifacts: IArtifact[] = await this._treesManager.connectionManager.getComponents(partialComponents);
+                this.addMissingXrayComponents(partialComponents, artifacts);
+                await this._treesManager.scanCacheManager.addArtifactComponents(artifacts);
                 progress.report({ message: `${totalComponents} components`, increment: step });
                 checkCanceled();
             }
@@ -170,34 +154,6 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         });
     }
 
-    public addGoCenterInfoToTree(root: DependenciesTreeNode, credentialsSet: boolean) {
-        root.children.forEach(child => {
-            if (child instanceof GoDependenciesTreeNode) {
-                let componentMetadata: IComponentMetadata | undefined = this._treesManager.scanCacheManager.getMetadata(
-                    child.getGoCenterComponentId()
-                );
-                if (componentMetadata) {
-                    // Use xray issue instead of GoCenter
-                    if (!credentialsSet) {
-                        if (componentMetadata.vulnerabilities.severity) {
-                            Translators.severityCountToIssues(
-                                componentMetadata.vulnerabilities.severity,
-                                componentMetadata.vulnerabilities.gocenter_security_url
-                            ).forEach(issue => child.issues.add(issue));
-                        }
-                        if (componentMetadata.licenses) {
-                            componentMetadata.licenses.map(Translators.stringToLicense).forEach(license => child.licenses.add(license));
-                            this.filterLicenses.union(child.licenses);
-                        }
-                    }
-                    // Load GoCenter info(e.g. readme url) to each go node
-                    child.componentMetadata = componentMetadata;
-                }
-                this.addGoCenterInfoToTree(child, credentialsSet);
-            }
-        });
-    }
-
     private async repopulateTree(quickScan: boolean, credentialsSet: boolean) {
         await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
             this.clearTree();
@@ -205,20 +161,14 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             await DependenciesTreesFactory.createDependenciesTrees(
                 this._workspaceFolders,
                 this._componentsToScan,
-                this._goCenterComponentsToScan,
                 this._treesManager,
                 workspaceRoot,
                 quickScan
             );
             if (credentialsSet) {
-                // Xray + GoCenter users
-                vscode.commands.executeCommand('setContext', 'isGoCenterMode', false);
                 await this.scanAndCacheComponents(progress, checkCanceled);
                 for (let dependenciesTreeNode of workspaceRoot.children) {
                     this.addXrayInfoToTree(dependenciesTreeNode);
-                    if (dependenciesTreeNode instanceof GoTreeNode) {
-                        this.addGoCenterInfoToTree(dependenciesTreeNode, credentialsSet);
-                    }
                     dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
                 }
                 workspaceRoot.children.forEach(node => {
@@ -226,16 +176,6 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                         node.setUpgradableDependencies();
                     }
                 });
-            } else if (this.isGoCenterMode(workspaceRoot)) {
-                // GoCenter users
-                vscode.commands.executeCommand('setContext', 'isGoCenterMode', true);
-                const totalComponents: number = this._goCenterComponentsToScan.size();
-                progress.report({ message: `${totalComponents} components` });
-                await this.scanAndCache(progress, checkCanceled, totalComponents, Source.GoCenter, this._goCenterComponentsToScan.toArray());
-                for (let dependenciesTreeNode of workspaceRoot.children) {
-                    this.addGoCenterInfoToTree(dependenciesTreeNode, credentialsSet);
-                    dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
-                }
             }
             this._onDidChangeTreeData.fire();
         }, 'Scanning project dependencies ');
@@ -277,27 +217,6 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         });
     }
 
-    private addMissingGoCenterComponents(partialComponents: ComponentDetails[], components: IComponentMetadata[]) {
-        if (partialComponents.length !== components.length) {
-            partialComponents.forEach(component => {
-                let found: IComponentMetadata | undefined = components.find(element => element.component_id === component.component_id);
-                if (!found) {
-                    found = {
-                        component_id: component.component_id,
-                        error: 'Error'
-                    } as IComponentMetadata;
-                    components.push(found);
-                }
-                if (found.error) {
-                    found.description = 'Component not found in Go Center';
-                    found.latest_version = 'Unknown';
-                    found.licenses = ['Unknown'];
-                    found.vulnerabilities.severity = { Unknown: 1 } as ISeverityCount;
-                }
-            });
-        }
-    }
-
     public getDependenciesTreeNode(pkgType: string, path?: string): DependenciesTreeNode | undefined {
         if (!(this.dependenciesTree instanceof DependenciesTreeNode)) {
             return undefined;
@@ -317,13 +236,4 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
         return undefined;
     }
-
-    private isGoCenterMode(node: DependenciesTreeNode) {
-        return node.children.filter(child => child instanceof GoTreeNode).length > 0;
-    }
-}
-
-enum Source {
-    Xray = 0,
-    GoCenter
 }

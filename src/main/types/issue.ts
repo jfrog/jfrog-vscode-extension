@@ -10,8 +10,7 @@ export class Issue {
         private _description: string,
         private _issueType: string,
         private _fixedVersions: string[] = [],
-        private _cves?: string[],
-        private _gocenter_security_url?: string
+        private _cves?: string[]
     ) {
         this._fixedVersions = this._fixedVersions.map(version => {
             if (version.charAt(0) === '[' && version.charAt(version.length - 1) === ']') {
@@ -49,10 +48,6 @@ export class Issue {
         return this._fixedVersions;
     }
 
-    public get gocenter_security_url(): string | undefined {
-        return this._gocenter_security_url;
-    }
-
     public set cves(cves: string[] | undefined) {
         this._cves = cves;
     }
@@ -79,9 +74,5 @@ export class Issue {
 
     public set fixedVersions(value: string[]) {
         this._fixedVersions = value;
-    }
-
-    public set gocenter_security_url(value: string | undefined) {
-        this._gocenter_security_url = value;
     }
 }

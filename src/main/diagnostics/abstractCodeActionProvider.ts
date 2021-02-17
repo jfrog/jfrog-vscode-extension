@@ -4,14 +4,12 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { Severity, SeverityUtils } from '../types/severity';
 import { DiagnosticsUtils } from './diagnosticsUtils';
-import { GoDependenciesTreeNode } from '../treeDataProviders/dependenciesTree/goDependenciesTreeNode';
 
 /**
  * @see DiagnosticsManager
  */
 export abstract class AbstractCodeActionProvider implements vscode.CodeActionProvider, ExtensionComponent {
     static readonly XRAY_DIAGNOSTIC_SOURCE: string = 'JFrog Xray';
-    static readonly GOCENTER_DIAGNOSTIC_SOURCE: string = 'JFrog GoCenter';
 
     constructor(
         protected _documentSelector: vscode.DocumentSelector,
@@ -60,16 +58,10 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
         }
         for (let child of dependenciesTree.children) {
             if (child.componentId === diagnostic[0].code) {
-                if (child instanceof GoDependenciesTreeNode) {
-                    return [this.createCommand(child), ...this.createGoCenterCommand(child)];
-                }
                 return [this.createCommand(child)];
             }
             for (let grandchild of child.children) {
                 if (grandchild.componentId === diagnostic[0].code) {
-                    if (grandchild instanceof GoDependenciesTreeNode) {
-                        return [this.createCommand(grandchild), ...this.createGoCenterCommand(grandchild)];
-                    }
                     return [this.createCommand(grandchild)];
                 }
             }
@@ -83,32 +75,6 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
             title: 'Show in dependencies tree',
             arguments: [node]
         } as vscode.Command;
-    }
-
-    private createGoCenterCommand(node: GoDependenciesTreeNode): vscode.Command[] {
-        const linksCommand: vscode.Command[] = [];
-        if (node.componentMetadata?.vulnerabilities?.gocenter_security_url) {
-            linksCommand.push({
-                command: 'jfrog.xray.openLink',
-                title: 'View CVE in GoCenter',
-                arguments: [node.componentMetadata.vulnerabilities.gocenter_security_url]
-            } as vscode.Command);
-        }
-        if (node.componentMetadata?.gocenter_metrics_url) {
-            linksCommand.push({
-                command: 'jfrog.xray.openLink',
-                title: 'View Metrics in GoCenter',
-                arguments: [node.componentMetadata.gocenter_metrics_url]
-            } as vscode.Command);
-        }
-        if (node.componentMetadata?.gocenter_readme_url) {
-            linksCommand.push({
-                command: 'jfrog.xray.openLink',
-                title: 'View ReadMe in GoCenter',
-                arguments: [node.componentMetadata.gocenter_readme_url]
-            } as vscode.Command);
-        }
-        return linksCommand;
     }
 
     /**
@@ -149,6 +115,6 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
     }
 
     private isJFrogSource(source: string | undefined) {
-        return source === AbstractCodeActionProvider.XRAY_DIAGNOSTIC_SOURCE || source === AbstractCodeActionProvider.GOCENTER_DIAGNOSTIC_SOURCE;
+        return source === AbstractCodeActionProvider.XRAY_DIAGNOSTIC_SOURCE;
     }
 }

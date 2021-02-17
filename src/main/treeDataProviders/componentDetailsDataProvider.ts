@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import { License } from '../types/license';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from './utils/treeDataHolder';
-import { GoDependenciesTreeNode } from './dependenciesTree/goDependenciesTreeNode';
 
 /**
  * The component details tree.
@@ -47,11 +46,6 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
             new TreeDataHolder('Artifact', this._selectedNode.generalInfo.artifactId),
             new TreeDataHolder('Version', this._selectedNode.generalInfo.version)
         ];
-        if (this._selectedNode instanceof GoDependenciesTreeNode && this._selectedNode.componentMetadata) {
-            children.push(new TreeDataHolder('Latest Version', this._selectedNode.componentMetadata.latest_version));
-            children.push(new TreeDataHolder('Description', this._selectedNode.componentMetadata.description));
-            children.push(new TreeDataHolder('Stars', String(this._selectedNode.componentMetadata.stars) + ' ★'));
-        }
         children.push(new TreeDataHolder('Type', this._selectedNode.generalInfo.pkgType));
         if (this._selectedNode.generalInfo.scopes.length > 0) {
             children.push(new TreeDataHolder('Scopes', this._selectedNode.generalInfo.scopes.join(',')));

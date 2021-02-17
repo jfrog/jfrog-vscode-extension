@@ -4,11 +4,8 @@ import { URL } from 'url';
 import * as vscode from 'vscode';
 import { ComponentDetails, IArtifact, IClientConfig, IProxyConfig, ISummaryRequestModel, ISummaryResponse, XrayClient } from 'xray-client-js';
 import { ExtensionComponent } from '../extensionComponent';
-import { GoCenterClient } from '../goCenterClient/GoCenterClient';
-import { IComponentMetadata } from '../goCenterClient/model/ComponentMetadata';
-import { IModuleResponse } from '../goCenterClient/model/ModuleResponse';
-import { ConnectionUtils } from './connectionUtils';
 import { LogManager } from '../log/logManager';
+import { ConnectionUtils } from './connectionUtils';
 
 /**
  * Manage the Xray credentials and perform connection with Xray server.
@@ -83,13 +80,6 @@ export class ConnectionManager implements ExtensionComponent {
         return Promise.resolve(summaryResponse.artifacts);
     }
 
-    public async getGoCenterModules(componentDetails: ComponentDetails[]): Promise<IComponentMetadata[]> {
-        let goCenterClient: GoCenterClient = this.createGoCenterClient();
-        let summaryRequest: ISummaryRequestModel = { component_details: componentDetails };
-        let moduleResponse: IModuleResponse = await goCenterClient.getMetadataForModules(summaryRequest);
-        return Promise.resolve(moduleResponse.components_metadata);
-    }
-
     public areCredentialsSet(): boolean {
         return !!(this._url && this._username && this._password);
     }
@@ -138,16 +128,6 @@ export class ConnectionManager implements ExtensionComponent {
         this.addUserAgentHeader(clientConfig);
         this.addProxyAuthHeader(clientConfig);
         return new XrayClient(clientConfig);
-    }
-
-    private createGoCenterClient(): GoCenterClient {
-        let clientConfig: IClientConfig = {
-            headers: {},
-            proxy: this.getProxyConfig()
-        } as IClientConfig;
-        this.addUserAgentHeader(clientConfig);
-        this.addProxyAuthHeader(clientConfig);
-        return new GoCenterClient(clientConfig);
     }
 
     private async retrieveUrl(prompt: boolean): Promise<string> {

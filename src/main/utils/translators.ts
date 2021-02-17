@@ -1,6 +1,5 @@
 import * as Collections from 'typescript-collections';
 import { ICve, IGeneral, IIssue, ILicense, IVulnerableComponent, Severity as ClientSeverity } from 'xray-client-js';
-import { ISeverityCount } from '../goCenterClient/model/SeverityCount';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
 import { GeneralInfo } from '../types/generalInfo';
 import { Issue } from '../types/issue';
@@ -24,28 +23,6 @@ export class Translators {
             Translators.toFixedVersions(clientIssue.components),
             Translators.toCves(clientIssue.cves)
         );
-    }
-
-    public static severityCountToIssues(clientIssue: ISeverityCount, gocenter_security_url: string): Issue[] {
-        let issues: Issue[] = [];
-        if (clientIssue) {
-            for (let [issueLevel, issueCount] of Object.entries(clientIssue)) {
-                for (let i: number = 0; i < issueCount; i++) {
-                    issues.push(
-                        new Issue(
-                            `${issueLevel} level Issue (${i + 1}/${issueCount})`,
-                            Translators.toSeverity(issueLevel),
-                            '',
-                            '',
-                            [],
-                            [],
-                            gocenter_security_url
-                        )
-                    );
-                }
-            }
-        }
-        return issues;
     }
 
     public static toSeverity(clientSeverity: ClientSeverity | string): Severity {
