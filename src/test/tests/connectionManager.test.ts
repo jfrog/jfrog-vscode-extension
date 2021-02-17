@@ -72,7 +72,7 @@ describe('Connection Manager Tests', () => {
                 expectedXrayUrl: 'https://httpbin.org/status/404/different-xray-url/'
             }
         ].forEach(async testCase => {
-            it(testCase.inputUrl, async () => {
+            it('Input URL: ' + testCase.inputUrl, async () => {
                 // Check credentials not set
                 process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[ConnectionManager.URL_ENV] =
                     '';
