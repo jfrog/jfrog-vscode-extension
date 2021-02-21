@@ -1,8 +1,7 @@
-import { IArtifact, IClientConfig } from 'xray-client-js';
-import { IComponentMetadata } from '../../../main/goCenterClient/model/ComponentMetadata';
-import { ConnectionManager } from '../../../main/connect/connectionManager';
-import { LogManager } from '../../../main/log/logManager';
 import * as os from 'os';
+import { IArtifact, IClientConfig } from 'xray-client-js';
+import { ConnectionUtils } from '../../../main/connect/connectionUtils';
+import { IComponentMetadata } from '../../../main/goCenterClient/model/ComponentMetadata';
 import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 
 export const TestArtifact: IArtifact[] = [
@@ -142,11 +141,10 @@ export const TestMetadata: IComponentMetadata[] = [
 ];
 
 export function createGoCenterConfig(): IClientConfig {
-    let connectionManager: ConnectionManager = new ConnectionManager(new LogManager());
     let clientConfig: IClientConfig = {
         headers: {}
     } as IClientConfig;
-    connectionManager.addUserAgentHeader(clientConfig);
+    ConnectionUtils.addUserAgentHeader(clientConfig);
     return clientConfig;
 }
 

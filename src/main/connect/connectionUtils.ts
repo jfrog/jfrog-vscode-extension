@@ -2,10 +2,12 @@ import * as http2 from 'http2';
 import * as semver from 'semver';
 import { URL } from 'url';
 import * as vscode from 'vscode';
-import { ComponentDetails, ISummaryRequestModel, IVersion, XrayClient } from 'xray-client-js';
+import { ComponentDetails, IClientConfig, IProxyConfig, ISummaryRequestModel, IVersion, XrayClient } from 'xray-client-js';
+import { GoCenterClient } from '../goCenterClient/GoCenterClient';
 
 export class ConnectionUtils {
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED: any = semver.coerce('1.7.2.3');
+    private static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
 
     /**
      * Validate url string. Used when providing Xray server url.
@@ -40,11 +42,30 @@ export class ConnectionUtils {
     }
 
     /**
+     * Check if the input URL is Xray URL or JFrog platform URL.
+     * @param url - The JFrog platform / Xray URL
+     * @param username - Platform username
+     * @param password - Platform password
+     */
+    public static async isPlatformUrl(url: string, username: string, password: string): Promise<boolean> {
+        // If URL ends with '/xray', the URL is an Xray URL
+        if (url.endsWith('/xray') || url.endsWith('/xray/')) {
+            return false;
+        }
+
+        // Ping to '<url>/xray'
+        url += url.endsWith('/') ? 'xray' : '/xray';
+        let xrayClient: XrayClient = this.createXrayClient(url, username, password);
+        return await xrayClient.system().ping();
+    }
+
+    /**
      * Check permissions and version.
      * @param xrayClient - The xray client.
      * @returns true iff success.
      */
-    public static async checkConnection(xrayClient: XrayClient): Promise<boolean> {
+    public static async checkConnection(url: string, username: string, password: string): Promise<boolean> {
+        let xrayClient: XrayClient = ConnectionUtils.createXrayClient(url, username, password);
         try {
             await ConnectionUtils.testComponentPermission(xrayClient);
             let xrayVersion: string = await ConnectionUtils.testXrayVersion(xrayClient);
@@ -95,5 +116,59 @@ export class ConnectionUtils {
             return Promise.reject(error.message + '. ' + message);
         }
         return Promise.resolve();
+    }
+
+    public static createGoCenterClient(): GoCenterClient {
+        let clientConfig: IClientConfig = {
+            headers: {},
+            proxy: ConnectionUtils.getProxyConfig()
+        } as IClientConfig;
+        this.addUserAgentHeader(clientConfig);
+        this.addProxyAuthHeader(clientConfig);
+        return new GoCenterClient(clientConfig);
+    }
+
+    public static createXrayClient(url: string, username: string, password: string): XrayClient {
+        let clientConfig: IClientConfig = {
+            serverUrl: url,
+            username: username,
+            password: password,
+            headers: {},
+            proxy: ConnectionUtils.getProxyConfig()
+        } as IClientConfig;
+        ConnectionUtils.addUserAgentHeader(clientConfig);
+        ConnectionUtils.addProxyAuthHeader(clientConfig);
+        return new XrayClient(clientConfig);
+    }
+
+    public static addUserAgentHeader(clientConfig: IClientConfig) {
+        clientConfig.headers!['User-Agent'] = ConnectionUtils.USER_AGENT;
+    }
+
+    public static addProxyAuthHeader(clientConfig: IClientConfig) {
+        if (clientConfig.proxy) {
+            let proxyAuthHeader: string | undefined = vscode.workspace.getConfiguration().get('http.proxyAuthorization');
+            if (proxyAuthHeader) {
+                clientConfig.headers!['Proxy-Authorization'] = proxyAuthHeader;
+            }
+        }
+    }
+
+    public static getProxyConfig(): IProxyConfig | boolean {
+        let proxySupport: string | undefined = vscode.workspace.getConfiguration().get('http.proxySupport', 'override');
+        if (proxySupport === 'off') {
+            return false;
+        }
+        let proxyConfig: IProxyConfig = {} as IProxyConfig;
+        let httpProxy: string | undefined = vscode.workspace.getConfiguration().get('http.proxy');
+        if (httpProxy) {
+            let proxyUri: URL = new URL(httpProxy);
+            proxyConfig.protocol = proxyUri.protocol;
+            proxyConfig.host = proxyUri.host;
+            if (proxyUri.port) {
+                proxyConfig.port = +proxyUri.port;
+            }
+        }
+        return proxyConfig;
     }
 }
