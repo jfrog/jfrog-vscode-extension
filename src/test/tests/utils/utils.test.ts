@@ -1,7 +1,5 @@
 import * as os from 'os';
-import { IArtifact, IClientConfig } from 'xray-client-js';
-import { ConnectionUtils } from '../../../main/connect/connectionUtils';
-import { IComponentMetadata } from '../../../main/goCenterClient/model/ComponentMetadata';
+import { IArtifact } from 'xray-client-js';
 import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 
 export const TestArtifact: IArtifact[] = [
@@ -103,50 +101,6 @@ export const TestArtifact: IArtifact[] = [
         ]
     } as IArtifact
 ];
-
-export const TestMetadata: IComponentMetadata[] = [
-    {
-        component_id: 'github.com/jfrog/gofrog:v1.0.5',
-        description: 'A collection of go utilities',
-        latest_version: 'v1.0.6',
-        licenses: ['Apache-2.0'],
-        contributors: 11,
-        stars: 11,
-        gocenter_readme_url: 'https://search.gocenter.io/github.com/jfrog/gofrog?v1.0.5&tab=readme',
-        gocenter_metrics_url: 'https://search.gocenter.io/github.com/jfrog/gofrog?v1.0.5&tab=metrics',
-        vulnerabilities: {
-            severity: {},
-            gocenter_security_url: ''
-        },
-        error: ''
-    } as IComponentMetadata,
-    {
-        component_id: 'github.com/opencontainers/runc:v1.0.0-rc2',
-        description: 'CLI tool for spawning and running containers according to the OCI specification',
-        latest_version: 'v1.0.1-0.20190307181833-2b18fe1d885e',
-        licenses: ['Apache-2.0'],
-        contributors: 262,
-        stars: 6798,
-        gocenter_readme_url: 'https://search.gocenter.io/github.com/opencontainers/runc?v1.0.0-rc2&tab=readme',
-        gocenter_metrics_url: 'https://search.gocenter.io/github.com/opencontainers/runc?v1.0.0-rc2&tab=metrics',
-        vulnerabilities: {
-            severity: {
-                High: 1,
-                Medium: 1
-            },
-            gocenter_security_url: 'https://search.gocenter.io/github.com/opencontainers/runc?v1.0.0-rc2&tab=security'
-        },
-        error: ''
-    } as IComponentMetadata
-];
-
-export function createGoCenterConfig(): IClientConfig {
-    let clientConfig: IClientConfig = {
-        headers: {}
-    } as IClientConfig;
-    ConnectionUtils.addUserAgentHeader(clientConfig);
-    return clientConfig;
-}
 
 export function isWindows(): boolean {
     return os.platform() === 'win32';

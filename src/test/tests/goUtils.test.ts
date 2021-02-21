@@ -5,24 +5,21 @@ import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ComponentDetails, IIssue, ILicense } from 'xray-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
+import { GoDependencyUpdate } from '../../main/dependencyUpdate/goDependencyUpdate';
+import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { GoTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
-import { GoUtils } from '../../main/utils/goUtils';
-import * as utils from './utils/utils.test';
-import { Translators } from '../../main/utils/translators';
 import { Issue } from '../../main/types/issue';
 import { License } from '../../main/types/license';
-import { GoDependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/goDependenciesTreeNode';
-import { GoTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
-import { IComponentMetadata } from '../../main/goCenterClient/model/ComponentMetadata';
-import { Severity } from '../../main/types/severity';
+import { GoUtils } from '../../main/utils/goUtils';
+import { Translators } from '../../main/utils/translators';
 import { TestMemento } from './utils/testMemento.test';
-import { GoDependencyUpdate } from '../../main/dependencyUpdate/goDependencyUpdate';
+import * as utils from './utils/utils.test';
 import { getNodeByArtifactId } from './utils/utils.test';
-import { FocusType } from '../../main/focus/abstractFocus';
 
 /**
  * Test functionality of @class GoUtils.
@@ -87,10 +84,11 @@ describe('Go Utils Tests', () => {
         // Test 'resources/go/dependency/go.mod'
         let goMod: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'go.mod'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(goMod);
+
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('github.com/jfrog/gofrog', '1.0.5', [], '', ''));
         let dependencyPos: vscode.Position[] = GoUtils.getDependencyPos(textDocument, dependenciesTreeNode, FocusType.Dependency);
-        assert.deepEqual(dependencyPos[0], new vscode.Position(6, 1));
-        assert.deepEqual(dependencyPos[1], new vscode.Position(6, 31));
+        assert.deepEqual(dependencyPos[0], new vscode.Position(5, 1));
+        assert.deepEqual(dependencyPos[1], new vscode.Position(5, 31));
 
         // Test 'resources/go/empty/go.mod'
         goMod = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'go.mod'));
@@ -102,8 +100,7 @@ describe('Go Utils Tests', () => {
     it('Update fixed version', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
-        let goCenterComponentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
-        await runCreateGoDependenciesTrees(componentsToScan, goCenterComponentsToScan, parent, false);
+        await runCreateGoDependenciesTrees(componentsToScan, parent);
 
         // Get specific dependency node.
         let node: DependenciesTreeNode | null = getNodeByArtifactId(parent, 'github.com/jfrog/gofrog');
@@ -115,7 +112,7 @@ describe('Go Utils Tests', () => {
 
         // Recalculate the dependency tree.
         parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        await runCreateGoDependenciesTrees(componentsToScan, goCenterComponentsToScan, parent, false);
+        await runCreateGoDependenciesTrees(componentsToScan, parent);
 
         // Verify the node's version was modified.
         node = getNodeByArtifactId(parent, 'github.com/jfrog/gofrog');
@@ -127,7 +124,7 @@ describe('Go Utils Tests', () => {
 
         // Recalculate the dependency tree.
         parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        await runCreateGoDependenciesTrees(componentsToScan, goCenterComponentsToScan, parent, false);
+        await runCreateGoDependenciesTrees(componentsToScan, parent);
 
         node = getNodeByArtifactId(parent, 'github.com/jfrog/gofrog');
         assert.isNotNull(node);
@@ -140,17 +137,12 @@ describe('Go Utils Tests', () => {
     it('Create go Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
-        let goCenterComponentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
-        let res: GoTreeNode[] = await runCreateGoDependenciesTrees(componentsToScan, goCenterComponentsToScan, parent, false);
+        let res: GoTreeNode[] = await runCreateGoDependenciesTrees(componentsToScan, parent);
         // Check that components to scan contains github.com/machinebox/progress:0.1.0.
         assert.equal(componentsToScan.size(), 3);
         assert.deepEqual(componentsToScan.toArray()[0], new ComponentDetails('go://github.com/jfrog/gofrog:1.0.5'));
         assert.deepEqual(componentsToScan.toArray()[1], new ComponentDetails('go://github.com/pkg/errors:0.8.0'));
         assert.deepEqual(componentsToScan.toArray()[2], new ComponentDetails('go://github.com/opencontainers/runc:1.0.0-rc2'));
-        assert.equal(goCenterComponentsToScan.size(), 3);
-        assert.deepEqual(goCenterComponentsToScan.toArray()[0], new ComponentDetails('github.com/jfrog/gofrog:v1.0.5'));
-        assert.deepEqual(goCenterComponentsToScan.toArray()[1], new ComponentDetails('github.com/pkg/errors:v0.8.0'));
-        assert.deepEqual(goCenterComponentsToScan.toArray()[2], new ComponentDetails('github.com/opencontainers/runc:v1.0.0-rc2'));
 
         // Check labels.
         assert.deepEqual(res[0].label, 'github.com/shield/black-widow');
@@ -162,7 +154,7 @@ describe('Go Utils Tests', () => {
 
         // Check children.
         assert.lengthOf(res[0].children, 2);
-        let child: GoDependenciesTreeNode = <GoDependenciesTreeNode>res[0].children[0];
+        let child: DependenciesTreeNode = res[0].children[0];
         assert.deepEqual(child.componentId, 'github.com/jfrog/gofrog:1.0.5');
         assert.deepEqual(child.label, 'github.com/jfrog/gofrog');
         assert.deepEqual(child.description, '1.0.5');
@@ -178,7 +170,7 @@ describe('Go Utils Tests', () => {
         assert.deepEqual(actualLicense.components, expectedLicense[0].components);
 
         // Second child.
-        child = <GoDependenciesTreeNode>res[0].children[1];
+        child = res[0].children[1];
         actualLicense = child.licenses.toArray()[0];
         expectedLicense = utils.TestArtifact[1].licenses;
         assert.deepEqual(actualLicense.name, expectedLicense[0].name);
@@ -186,50 +178,20 @@ describe('Go Utils Tests', () => {
         assert.deepEqual(actualLicense.fullName, expectedLicense[0].full_name);
         assert.deepEqual(actualLicense.components, expectedLicense[0].components);
 
-        // Check transformation types from xray IIssue or GoCenter ComponentMetadata to Issue.
+        // Check transformation types from xray IIssue to Issue.
         let actualIssues: Issue[] = child.issues.toArray();
         let expectedIssues: IIssue[] = utils.TestArtifact[1].issues;
         // Issue created by Xray data.
         for (let i: number = 0; i < 2; i++) {
             assert.deepEqual(actualIssues[i], Translators.toIssue(expectedIssues[i]));
         }
-        // Issue created by GoCenter.
-        assert.deepEqual(actualIssues[2].severity, Severity.Medium);
-        assert.deepEqual(actualIssues[3].severity, Severity.High);
-
-        // GoCenter  general data.
-        // First child.
-        child = <GoDependenciesTreeNode>res[0].children[0];
-        let actualGoCenterDetails: IComponentMetadata = (<GoDependenciesTreeNode>child).componentMetadata;
-        let expectedGoCenterDetails: IComponentMetadata[] = utils.TestMetadata;
-        assert.deepEqual(actualGoCenterDetails, expectedGoCenterDetails[0]);
-
-        // Second child.
-        child = <GoDependenciesTreeNode>res[0].children[1];
-        actualGoCenterDetails = (<GoDependenciesTreeNode>child).componentMetadata;
-        expectedGoCenterDetails = utils.TestMetadata;
-        assert.deepEqual(actualGoCenterDetails, expectedGoCenterDetails[1]);
     });
 
-    async function runCreateGoDependenciesTrees(
-        componentsToScan: Collections.Set<ComponentDetails>,
-        goCenterComponentsToScan: Collections.Set<ComponentDetails>,
-        parent: DependenciesTreeNode,
-        credentialsSet: boolean
-    ) {
-        let dependenciesTrees: GoTreeNode[] = await GoUtils.createDependenciesTrees(
-            workspaceFolders,
-            componentsToScan,
-            goCenterComponentsToScan,
-            treesManager,
-            parent,
-            false
-        );
+    async function runCreateGoDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
+        let dependenciesTrees: GoTreeNode[] = await GoUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, false);
         await dummyScanCacheManager.addArtifactComponents(utils.TestArtifact);
-        await dummyScanCacheManager.addMetadataComponents(utils.TestMetadata);
         dependenciesTrees.forEach(child => {
             treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);
-            treesManager.dependenciesTreeDataProvider.addGoCenterInfoToTree(child, credentialsSet);
         });
         return dependenciesTrees.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }

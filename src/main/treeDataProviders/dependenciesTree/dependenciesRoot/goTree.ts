@@ -4,10 +4,9 @@ import * as vscode from 'vscode';
 import { ComponentDetails } from 'xray-client-js';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { GoUtils } from '../../../utils/goUtils';
+import { ScanUtils } from '../../../utils/scanUtils';
 import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
-import { ScanUtils } from '../../../utils/scanUtils';
-import { GoDependenciesTreeNode } from '../goDependenciesTreeNode';
 import { RootNode } from './rootTree';
 
 export class GoTreeNode extends RootNode {
@@ -18,7 +17,6 @@ export class GoTreeNode extends RootNode {
     constructor(
         workspaceFolder: string,
         private _componentsToScan: Collections.Set<ComponentDetails>,
-        private _goCenterComponentsToScan: Collections.Set<ComponentDetails>,
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
@@ -68,7 +66,7 @@ export class GoTreeNode extends RootNode {
 
         // Add direct dependencies to tree
         directDependenciesGeneralInfos.forEach(generalInfo => {
-            this.addChild(new GoDependenciesTreeNode(generalInfo, this.getTreeCollapsibleState(generalInfo)));
+            this.addChild(new DependenciesTreeNode(generalInfo, this.getTreeCollapsibleState(generalInfo)));
         });
     }
 
@@ -82,7 +80,7 @@ export class GoTreeNode extends RootNode {
         childDependencies.forEach(childDependency => {
             let nameVersionTuple: string[] = this.getNameVersionTuple(childDependency);
             let generalInfo: GeneralInfo = new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], ['None'], '', GoUtils.PKG_TYPE);
-            let grandchild: GoDependenciesTreeNode = new GoDependenciesTreeNode(
+            let grandchild: DependenciesTreeNode = new DependenciesTreeNode(
                 generalInfo,
                 this.getTreeCollapsibleState(generalInfo),
                 dependenciesTreeNode
@@ -112,14 +110,8 @@ export class GoTreeNode extends RootNode {
 
     private addComponentToScan(dependenciesTreeNode: DependenciesTreeNode, quickScan: boolean) {
         let componentId: string = dependenciesTreeNode.generalInfo.artifactId + ':' + dependenciesTreeNode.generalInfo.version;
-        let goCenterComponentId: string = dependenciesTreeNode.generalInfo.artifactId + ':v' + dependenciesTreeNode.generalInfo.version;
-        if (
-            !quickScan ||
-            !this._treesManager.scanCacheManager.validateOrDelete(componentId) ||
-            !this._treesManager.scanCacheManager.validateOrDelete(goCenterComponentId)
-        ) {
+        if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(componentId)) {
             this._componentsToScan.add(new ComponentDetails(GoTreeNode.COMPONENT_PREFIX + componentId));
-            this._goCenterComponentsToScan.add(new ComponentDetails(goCenterComponentId));
         }
     }
 

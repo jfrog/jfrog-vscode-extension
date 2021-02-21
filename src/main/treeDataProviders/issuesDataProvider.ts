@@ -53,8 +53,7 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
                     issue.cves,
                     issue.issueType,
                     issue.component,
-                    issue.fixedVersions,
-                    issue.gocenter_security_url
+                    issue.fixedVersions
                 );
                 children.push(issueNode);
             });
@@ -91,8 +90,7 @@ export class IssueNode extends vscode.TreeItem {
         readonly cves?: string[],
         readonly issueType?: string,
         readonly component?: string,
-        readonly fixedVersions?: string[],
-        readonly gocenter_security_url?: string
+        readonly fixedVersions?: string[]
     ) {
         super(summary, vscode.TreeItemCollapsibleState.Collapsed);
         this.iconPath = SeverityUtils.getIcon(severity ? severity : Severity.Normal);

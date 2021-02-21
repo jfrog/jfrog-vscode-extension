@@ -3,7 +3,6 @@ import { assert } from 'chai';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { IClientConfig, IProxyConfig } from 'xray-client-js';
 import * as vscode from 'vscode';
-import { createGoCenterConfig } from './utils/utils.test';
 import { LogManager } from '../../main/log/logManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
 
@@ -20,7 +19,11 @@ describe('Connection Manager Tests', () => {
     });
 
     it('User agent header', () => {
-        let clientConfig: IClientConfig = createGoCenterConfig();
+        let clientConfig: IClientConfig = {
+            headers: {}
+        } as IClientConfig;
+
+        ConnectionUtils.addUserAgentHeader(clientConfig);
         let userAgent: string | undefined = clientConfig.headers!['User-Agent'];
         assert.isDefined(userAgent);
         assert.match(userAgent, new RegExp(/^jfrog-vscode-extension\/\d.\d.\d$/));

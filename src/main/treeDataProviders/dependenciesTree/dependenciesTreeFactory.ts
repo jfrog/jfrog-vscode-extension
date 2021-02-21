@@ -13,13 +13,12 @@ export class DependenciesTreesFactory {
     public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
         componentsToScan: Collections.Set<ComponentDetails>,
-        goCenterComponentsToScan: Collections.Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ) {
-        await GoUtils.createDependenciesTrees(workspaceFolders, componentsToScan, goCenterComponentsToScan, treesManager, parent, quickScan);
         if (treesManager.connectionManager.areCredentialsSet()) {
+            await GoUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
             await NpmUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
             await PypiUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
             await MavenUtils.createMavenDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);

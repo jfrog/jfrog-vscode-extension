@@ -87,7 +87,6 @@ export class GoUtils {
     public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
         componentsToScan: Collections.Set<ComponentDetails>,
-        goCenterComponentsToScan: Collections.Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
@@ -105,13 +104,7 @@ export class GoUtils {
         let goTreeNodes: GoTreeNode[] = [];
         for (let goMod of goMods.toArray()) {
             treesManager.logManager.logMessage('Analyzing go.mod files', 'INFO');
-            let dependenciesTreeNode: GoTreeNode = new GoTreeNode(
-                path.dirname(goMod.fsPath),
-                componentsToScan,
-                goCenterComponentsToScan,
-                treesManager,
-                parent
-            );
+            let dependenciesTreeNode: GoTreeNode = new GoTreeNode(path.dirname(goMod.fsPath), componentsToScan, treesManager, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
             goTreeNodes.push(dependenciesTreeNode);
         }

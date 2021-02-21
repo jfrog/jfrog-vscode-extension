@@ -3,7 +3,6 @@ import * as semver from 'semver';
 import { URL } from 'url';
 import * as vscode from 'vscode';
 import { ComponentDetails, IClientConfig, IProxyConfig, ISummaryRequestModel, IVersion, XrayClient } from 'xray-client-js';
-import { GoCenterClient } from '../goCenterClient/GoCenterClient';
 
 export class ConnectionUtils {
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED: any = semver.coerce('1.7.2.3');
@@ -116,16 +115,6 @@ export class ConnectionUtils {
             return Promise.reject(error.message + '. ' + message);
         }
         return Promise.resolve();
-    }
-
-    public static createGoCenterClient(): GoCenterClient {
-        let clientConfig: IClientConfig = {
-            headers: {},
-            proxy: ConnectionUtils.getProxyConfig()
-        } as IClientConfig;
-        this.addUserAgentHeader(clientConfig);
-        this.addProxyAuthHeader(clientConfig);
-        return new GoCenterClient(clientConfig);
     }
 
     public static createXrayClient(url: string, username: string, password: string): XrayClient {

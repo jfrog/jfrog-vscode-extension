@@ -7,7 +7,7 @@
 - [About this Extension](#about-this-extension)
   - [General](#general)
   - [Supported Features](#supported-features)
-  - [Free Go Modules Security Scanning and Metadata from GoCenter](#free-go-modules-security-scanning-and-metadata-from-gocenter)
+  - [Free Go Modules Security Scanning and Metadata from GoCenter](#free-go-modules-security-scanning-and-metadata-from-gocenter-deprecated)
 - [Viewing and Updating Project Dependencies](#viewing-and-updating-project-dependencies)
 - [General Configuration](#general-configuration)
   - [Configuring JFrog Xray](#configuring-jfrog-xray)
@@ -50,11 +50,10 @@ Don't have JFrog Xray? [Start for free](https://jfrog.com/xray/start-free).
 | Show vulnerabilities inside the project descriptor      |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
 | Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ❌           |          ❌           |
 | Automatically trigger a scan upon code changes          |         ✅         |            ❌            |          ✅          |           ❌           |          ❌           |
-| Unlimited free project scanning                         |         ✅         |            ❌            |          ❌          |           ❌           |          ❌           |
 | Exclude transitive dependencies from project descriptor |         ❌         |            ✅            |          ❌          |           ❌           |          ❌           |
 
-### Free Go Modules Security Scanning and Metadata from GoCenter
-The JFrog Extension also includes unlimited free security scanning and metadata of Go Modules from [JFrog GoCenter](https://search.gocenter.io/). Read more in the [Go Projects](#go-projects) section.
+### Free Go Modules Security Scanning and Metadata from GoCenter (deprecated)
+As of February 28, 2021, GoCenter has been sunset. This integration has been removed. Learn more: https://jfrog.com/blog/into-the-sunset-bintray-jcenter-gocenter-and-chartcenter/
 
 ## Viewing and Updating Project Dependencies
 View the dependencies used by the project in a tree, where the direct dependencies are at the top.
@@ -137,19 +136,8 @@ To open the extension settings, use the following VS Code menu command:
 - On macOS - Code > Preferences > Settings > Extensions > JFrog
 
 ## Go Projects
-### Free Security Scanning and Metadata from GoCenter
-Go Modules in GoCenter are scanned by Xray. You can read more about it in [this](https://jfrog.com/blog/gocenter-reveals-go-module-vulnerabilities-with-xray/) blog. The JFrog VS Code Extension pulls this security information from GoCenter and displays it inside the IDE. It also displays, for each module, the description summary, license and the number of stars.
-![GoCenter_Issue](resources/readme/gifs/gocenter_issues.gif)
 
-For each module there's a direct link to the GoCenter UI, with more information, like the actual CVEs, as well as other projects which use this module.
-![GoCenter_Nav](resources/readme/gifs/gocenter_nav.gif)
-
-### Enhanced Capabilities with JFrog Xray
-By [connecting VS Code to JFrog Xray](#configuring-jfrog-xray) the security information is pulled directly from JFrog Xray. This means that more security information becomes available to the developers inside VS Code. This includes the list of security issues, including the module versions with the fixes.
-All the module metadata provided by GoCenter is still available when connecting to JFrog Xray.
-
-### Behind the Scenes
-The JFrog VS Code Extension scans all of the project depedencies, both direct and indirect (transitive), even if they are not declared in the project's go.mod. It builds the Go dependencies tree by running `go mod graph`. Therefore, please make sure to have Go CLI in your system PATH.
+Behind the scenes, the JFrog VS Code Extension scans all of the project dependencies, both direct and indirect (transitive), even if they are not declared in the project's go.mod. It builds the Go dependencies tree by running `go mod graph`. Therefore, please make sure to have Go CLI in your system PATH.
 
 ## Maven Projects
 

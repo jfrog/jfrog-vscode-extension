@@ -3,9 +3,6 @@ import * as keytar from 'keytar';
 import * as vscode from 'vscode';
 import { ComponentDetails, IArtifact, ISummaryRequestModel, ISummaryResponse, XrayClient } from 'xray-client-js';
 import { ExtensionComponent } from '../extensionComponent';
-import { GoCenterClient } from '../goCenterClient/GoCenterClient';
-import { IComponentMetadata } from '../goCenterClient/model/ComponentMetadata';
-import { IModuleResponse } from '../goCenterClient/model/ModuleResponse';
 import { LogManager } from '../log/logManager';
 import { ConnectionUtils } from './connectionUtils';
 
@@ -81,13 +78,6 @@ export class ConnectionManager implements ExtensionComponent {
         let summaryRequest: ISummaryRequestModel = { component_details: componentDetails };
         let summaryResponse: ISummaryResponse = await xrayClient.summary().component(summaryRequest);
         return Promise.resolve(summaryResponse.artifacts);
-    }
-
-    public async getGoCenterModules(componentDetails: ComponentDetails[]): Promise<IComponentMetadata[]> {
-        let goCenterClient: GoCenterClient = ConnectionUtils.createGoCenterClient();
-        let summaryRequest: ISummaryRequestModel = { component_details: componentDetails };
-        let moduleResponse: IModuleResponse = await goCenterClient.getMetadataForModules(summaryRequest);
-        return Promise.resolve(moduleResponse.components_metadata);
     }
 
     public areCredentialsSet(): boolean {
