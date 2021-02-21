@@ -173,7 +173,7 @@ export class ConnectionManager implements ExtensionComponent {
         if (prompt) {
             this._url =
                 (await vscode.window.showInputBox({
-                    prompt: 'Enter JFrog platform URL',
+                    prompt: 'Enter JFrog Platform URL',
                     value: this._url,
                     ignoreFocusOut: true,
                     placeHolder: 'Example: https://acme.jfrog.io',
