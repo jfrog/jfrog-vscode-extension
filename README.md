@@ -38,6 +38,8 @@ The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to 
 It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE.
 With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
+The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
+
 Don't have JFrog Xray? [Start for free](https://jfrog.com/xray/start-free).
 
 ### Supported Features
