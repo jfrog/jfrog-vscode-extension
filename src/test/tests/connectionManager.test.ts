@@ -35,7 +35,7 @@ describe('Connection Manager Tests', () => {
             proxy: {} as IProxyConfig
         } as IClientConfig;
 
-        await vscode.workspace.getConfiguration().update('http.proxyAuthorization', 'testProxyAuthorization');
+        await vscode.workspace.getConfiguration().update('http.proxyAuthorization', 'testProxyAuthorization', true);
         ConnectionUtils.addProxyAuthHeader(clientConfig);
         let proxyAuthorization: string | undefined = clientConfig.headers!['Proxy-Authorization'];
         assert.isDefined(proxyAuthorization);
