@@ -8,7 +8,8 @@ export enum Severity {
     Information,
     Low,
     Medium,
-    High
+    High,
+    Critical
 }
 
 export enum SeverityStrings {
@@ -18,7 +19,8 @@ export enum SeverityStrings {
     Information = 'Information',
     Low = 'Low',
     Medium = 'Medium',
-    High = 'High'
+    High = 'High',
+    Critical = 'Critical'
 }
 
 export class SeverityUtils {
@@ -38,6 +40,8 @@ export class SeverityUtils {
                 return SeverityStrings.Medium;
             case Severity.High:
                 return SeverityStrings.High;
+            case Severity.Critical:
+                return SeverityStrings.Critical;
         }
     }
 
@@ -55,6 +59,8 @@ export class SeverityUtils {
                 return hover ? IconsPaths.MEDIUM_HOVER_SEVERITY : IconsPaths.MEDIUM_SEVERITY;
             case Severity.High:
                 return hover ? IconsPaths.HIGH_HOVER_SEVERITY : IconsPaths.HIGH_SEVERITY;
+            case Severity.Critical:
+                return hover ? IconsPaths.CRITICAL_HOVER_SEVERITY : IconsPaths.CRITICAL_SEVERITY;
             default:
                 return IconsPaths.NORMAL_SEVERITY;
         }
@@ -76,6 +82,8 @@ export class SeverityUtils {
                 return Severity.Medium;
             case 'High':
                 return Severity.High;
+            case 'Critical':
+                return Severity.Critical;
             default:
                 throw new Error(`Unknown severity type in 'getSeverity' function`);
         }
