@@ -7,6 +7,7 @@
 - [About this Extension](#about-this-extension)
   - [General](#general)
   - [Supported Features](#supported-features)
+  - [Component Tree Icons](#component-tree-icons)
   - [Free Go Modules Security Scanning and Metadata from GoCenter](#free-go-modules-security-scanning-and-metadata-from-gocenter-deprecated)
 - [Viewing and Updating Project Dependencies](#viewing-and-updating-project-dependencies)
 - [General Configuration](#general-configuration)
@@ -52,6 +53,17 @@ Don't have JFrog Xray? [Start for free](https://jfrog.com/xray/start-free).
 | Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ❌           |          ❌           |
 | Automatically trigger a scan upon code changes          |         ✅         |            ❌            |          ✅          |           ❌           |          ❌           |
 | Exclude transitive dependencies from project descriptor |         ❌         |            ✅            |          ❌          |           ❌           |          ❌           |
+
+### Component Tree Icons
+|                 Icon                | Severity |                                Description                                |
+|:-----------------------------------:|:--------:|:-------------------------------------------------------------------------|
+|   ![Normal](resources/normal.png)   |  Normal  | Scanned - No Issues                                                       |
+|      ![Low](resources/low.png)      |    Low   | Top issue with low severity                                               |
+|   ![Medium](resources/medium.png)   |  Medium  | Top issue with medium severity                                            |
+|     ![High](resources/high.png)     |   High   | Top issue with high severity                                              |
+| ![Critical](resources/critical.png) | Critical | Top issue with critical severity                                          |
+|  ![Unknown](resources/unknown.png)  |  Unknown | No CVEs attached to the vulnerability or component not identified in Xray |
+
 
 ### Free Go Modules Security Scanning and Metadata from GoCenter (deprecated)
 As of February 28, 2021, GoCenter has been sunset. This integration has been removed. Learn more: https://jfrog.com/blog/into-the-sunset-bintray-jcenter-gocenter-and-chartcenter/
