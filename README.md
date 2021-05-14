@@ -55,15 +55,15 @@ Don't have JFrog Xray? [Start for free](https://jfrog.com/xray/start-free).
 | Exclude transitive dependencies from project descriptor |         ❌         |            ✅            |          ❌          |           ❌           |          ❌           |
 
 ### Component Tree Icons
-|                 Icon                | Severity |                                Description                                |
-|:-----------------------------------:|:--------:|:-------------------------------------------------------------------------|
-|   ![Normal](resources/normal.png)   |  Normal  | Scanned - No Issues                                                       |
-|      ![Low](resources/low.png)      |    Low   | Top issue with low severity                                               |
-|   ![Medium](resources/medium.png)   |  Medium  | Top issue with medium severity                                            |
-|     ![High](resources/high.png)     |   High   | Top issue with high severity                                              |
-| ![Critical](resources/critical.png) | Critical | Top issue with critical severity                                          |
-|  ![Unknown](resources/unknown.png)  |  Unknown | No CVEs attached to the vulnerability or component not identified in Xray |
-
+The icon demonstrates the top severity issue of a selected component and its transitive dependencies. The following table describes the severities from lowest to highest:
+|                 Icon                | Severity |                                       Description                                      |
+|:-----------------------------------:|:--------:|:--------------------------------------------------------------------------------------|
+|   ![Normal](resources/normal.png)   |  Normal  | Scanned - No Issues                                                                    |
+|      ![Low](resources/low.png)      |    Low   | Top issue with low severity                                                            |
+|   ![Medium](resources/medium.png)   |  Medium  | Top issue with medium severity                                                         |
+|     ![High](resources/high.png)     |   High   | Top issue with high severity                                                           |
+| ![Critical](resources/critical.png) | Critical | Top issue with critical severity                                                       |
+|  ![Unknown](resources/unknown.png)  |  Unknown | No CVEs attached to the vulnerability or the selected component not identified in Xray |
 
 ### Free Go Modules Security Scanning and Metadata from GoCenter (deprecated)
 As of February 28, 2021, GoCenter has been sunset. This integration has been removed. Learn more: https://jfrog.com/blog/into-the-sunset-bintray-jcenter-gocenter-and-chartcenter/
