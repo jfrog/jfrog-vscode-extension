@@ -1,4 +1,4 @@
-import { IArtifact } from 'xray-client-js';
+import { IArtifact } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { ScanCacheObject } from './scanCacheObject';

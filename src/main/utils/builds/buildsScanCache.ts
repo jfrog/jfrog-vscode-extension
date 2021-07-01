@@ -2,7 +2,7 @@ import {LogManager} from "../../log/logManager";
 import path from "path";
 import * as fs from 'fs';
 import AdmZip from "adm-zip";
-import {IDetailsResponse} from "../../../../../xray-client-js";
+import {IDetailsResponse} from "../../../../../jfrog-client-js";
 
 export enum Type {
     BUILD_INFO, BUILD_SCAN_RESULTS

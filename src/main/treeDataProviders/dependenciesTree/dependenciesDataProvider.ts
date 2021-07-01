@@ -1,6 +1,6 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'xray-client-js';
+import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'jfrog-client-js';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Issue } from '../../types/issue';
 import { License } from '../../types/license';

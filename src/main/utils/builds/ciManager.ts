@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import {TreesManager} from '../../treeDataProviders/treesManager';
 import {Configuration} from '../configuration';
-import {IAqlSearchResult, IDetailsResponse, ISearchEntry, JfrogClient} from '../../../../../xray-client-js';
+import {IAqlSearchResult, IDetailsResponse, ISearchEntry, JfrogClient} from '../../../../../jfrog-client-js';
 import PQueue from 'p-queue';
 import {BuildGeneralInfo} from "../../types/buildGeneralinfo";
 import {BuildsUtils} from "./buildsUtils";

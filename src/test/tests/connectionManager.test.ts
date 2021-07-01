@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 
 import { ConnectionManager } from '../../main/connect/connectionManager';
-import { IClientConfig, IProxyConfig } from 'xray-client-js';
+import { IClientConfig, IProxyConfig } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { LogManager } from '../../main/log/logManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';

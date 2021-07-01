@@ -8,7 +8,7 @@ import {
     IDetailsResponse,
     ISummaryRequestModel,
     ISummaryResponse, JfrogClient
-} from 'xray-client-js';
+} from 'jfrog-client-js';
 import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
 import { ConnectionUtils } from './connectionUtils';

@@ -1,5 +1,5 @@
 import * as os from 'os';
-import { IArtifact } from 'xray-client-js';
+import { IArtifact } from 'jfrog-client-js';
 import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 
 export const TestArtifact: IArtifact[] = [

@@ -7,7 +7,7 @@ import {
     IProxyConfig,
     ISummaryRequestModel,
     IXrayVersion, JfrogClient, IJfrogClientConfig
-} from 'xray-client-js';
+} from 'jfrog-client-js';
 import {SemVer} from "semver";
 
 export class ConnectionUtils {

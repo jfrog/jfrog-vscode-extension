@@ -2,7 +2,7 @@ import * as exec from 'child_process';
 import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'xray-client-js';
+import { ComponentDetails } from 'jfrog-client-js';
 import { LogManager } from '../log/logManager';
 import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';

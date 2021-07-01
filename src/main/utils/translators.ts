@@ -1,5 +1,5 @@
 import * as Collections from 'typescript-collections';
-import { ICve, IGeneral, IIssue, ILicense, IVulnerableComponent, Severity as ClientSeverity } from 'xray-client-js';
+import { ICve, IGeneral, IIssue, ILicense, IVulnerableComponent, Severity as ClientSeverity } from 'jfrog-client-js';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
 import { GeneralInfo } from '../types/generalInfo';
 import { Issue } from '../types/issue';
