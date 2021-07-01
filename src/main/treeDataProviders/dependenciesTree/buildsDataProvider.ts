@@ -9,8 +9,10 @@ import {ScanUtils} from '../../utils/scanUtils';
 import {TreesManager} from '../treesManager';
 import {DependenciesTreeNode} from './dependenciesTreeNode';
 import {CiManager} from "../../utils/builds/ciManager";
-import {BuildGeneralInfo} from "../../types/buildGeneralinfo";
+import {BuildGeneralInfo, Status} from "../../types/buildGeneralinfo";
 import {Configuration} from "../../utils/configuration";
+import {BuildsNode} from "./dependenciesRoot/buildsTree";
+import {BuildsUtils} from "../../utils/builds/buildsUtils";
 
 export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private _filterLicenses: Collections.Set<License> = new Collections.Set(license => license.fullName);
@@ -69,8 +71,13 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
             title: '',
             arguments: [element]
         };
-        let topIssue: Issue = element.topIssue;
-        element.iconPath = SeverityUtils.getIcon(topIssue ? topIssue.severity : Severity.Normal);
+        if (element instanceof BuildsNode) {
+            let status: Status = (<BuildGeneralInfo> element.generalInfo).status;
+            element.iconPath = BuildsUtils.getIcon(status);
+        } else {
+            let topIssue: Issue = element.topIssue;
+            element.iconPath = SeverityUtils.getIcon(topIssue ? topIssue.severity : Severity.Normal);
+        }
         return element;
     }
 

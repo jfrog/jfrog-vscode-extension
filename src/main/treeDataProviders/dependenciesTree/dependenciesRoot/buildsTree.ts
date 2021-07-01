@@ -7,8 +7,8 @@ import {Severity} from "../../../types/severity";
 import {BuildsUtils} from "../../../utils/builds/buildsUtils";
 
 export class BuildsNode extends DependenciesTreeNode {
-    constructor(bgi: BuildGeneralInfo, parent?: DependenciesTreeNode, contextValue?: string) {
-        super(bgi, vscode.TreeItemCollapsibleState.None, parent, contextValue);
+    constructor(bgi: BuildGeneralInfo, parent?: DependenciesTreeNode) {
+        super(bgi, vscode.TreeItemCollapsibleState.None, parent, '');
     }
 
     public populateBuildDependencyTree(response: IDetailsResponse): void {

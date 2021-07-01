@@ -4,6 +4,7 @@ import {BuildGeneralInfo, Status} from "../../types/buildGeneralinfo";
 import {GeneralInfo} from "../../types/generalInfo";
 import {DependenciesTreeNode} from "../../treeDataProviders/dependenciesTree/dependenciesTreeNode";
 import * as vscode from "vscode";
+import {IconsPaths} from "../iconsPaths";
 
 export class BuildsUtils {
     public static readonly BUILD_STATUS_PROP: string = "buildInfo.env.JFROG_BUILD_STATUS";
@@ -52,5 +53,16 @@ export class BuildsUtils {
 
     public static isArrayExistsAndNotEmpty(obj: any, fieldName: string): boolean {
         return obj.hasOwnProperty(fieldName) && Array.isArray(obj[fieldName]) && obj[fieldName].length;
+    }
+
+    public static getIcon(status: Status) {
+        switch (status) {
+            case Status.Success:
+                return IconsPaths.BUILD_SUCCESS;
+            case Status.Failed:
+                return IconsPaths.BUILD_FAILED;
+            default:
+                return IconsPaths.BUILD_UNKNOWN;
+        }
     }
 }
