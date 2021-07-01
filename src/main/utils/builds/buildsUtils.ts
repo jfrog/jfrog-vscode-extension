@@ -20,17 +20,17 @@ export class BuildsUtils {
         }
         const status: string = build?.properties?.[BuildsUtils.BUILD_STATUS_PROP] || '';
         const started: Date | null = build.started ? new Date(build.started) : null ;
-        return new BuildGeneralInfo(build.name, build.number, build.url, [], '', started, BuildsUtils.getStatusFromString(status), vcsList[0]); // todo check order
+        return new BuildGeneralInfo(build.name, BuildsUtils.getStatusFromString(status), started,  vcsList[0], build.number, build.url, [], '');
     }
 
     public static getStatusFromString(status: string): Status {
         switch (status) {
             case "PASS":
-                return Status.PASSED;
+                return Status.Success;
             case "FAIL":
-                return Status.FAILED;
+                return Status.Failed;
             default:
-                return Status.UNKNOWN;
+                return Status.Unknown;
         }
     }
 
@@ -48,5 +48,9 @@ export class BuildsUtils {
 
     public static getVersionFromCompId(componentId:string): string {
         return componentId.substring(componentId.lastIndexOf(":")+1);
+    }
+
+    public static isArrayExistsAndNotEmpty(obj: any, fieldName: string): boolean {
+        return obj.hasOwnProperty(fieldName) && Array.isArray(obj[fieldName]) && obj[fieldName].length;
     }
 }

@@ -44,7 +44,7 @@ export class CiManager {
         const buildTree: BuildsNode = new BuildsNode(bgi);
         parent.addChild(buildTree);
         const modulesTree: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo("modules", '', [], '',''), vscode.TreeItemCollapsibleState.Expanded, parent);
-        if (!!build.modules) {
+        if (BuildsUtils.isArrayExistsAndNotEmpty(build, 'modules')) {
             this.populateModulesDependencyTree(build, modulesTree);
         }
 
@@ -52,6 +52,8 @@ export class CiManager {
         let detailsResponse: IDetailsResponse = this.buildsCache.loadScanResults(buildName, buildNumber); // todo
         buildTree.populateBuildDependencyTree(detailsResponse);
     }
+
+
 
     public populateModulesDependencyTree(build: any, node: DependenciesTreeNode) {
         for (const module of build.modules) {
@@ -63,14 +65,14 @@ export class CiManager {
             // Populate artifacts
             const artifactsNode: DependenciesTreeNode = BuildsUtils.createArtifactsNode();
             moduleNode.addChild(artifactsNode);
-            if (!!module.artifacts) {
+            if (BuildsUtils.isArrayExistsAndNotEmpty(module, 'artifacts')) {
                 this.populateArtifacts(artifactsNode, module);
             }
 
             // Populate dependencies
             const dependenciesNode: DependenciesTreeNode = BuildsUtils.createDependenciesNode();
             moduleNode.addChild(dependenciesNode);
-            if (!!module.artifacts) {
+            if (BuildsUtils.isArrayExistsAndNotEmpty(module, 'dependencies')) {
                 this.populateDependencies(dependenciesNode, module);
             }
 
@@ -90,13 +92,14 @@ export class CiManager {
         let directDependencies: Set<Dependency> = new Set<Dependency>();
         let parentToChildren: Map<string, Dependency[]> = new Map<string, Dependency[]>();
 
-        let dependencies: any = module.dependencies;
-        if (!dependencies) {
+        if (!BuildsUtils.isArrayExistsAndNotEmpty(module, 'dependencies')) {
             return;
         }
-        for (const dependency of dependencies) {
+
+        for (const dependency of module.dependencies) {
             let requestedBy: string[][] = dependency.requestedBy;
-            if (!requestedBy || !requestedBy[0]) {
+            if (!(BuildsUtils.isArrayExistsAndNotEmpty(module, 'dependencies') && !!requestedBy[0].length)) {
+                // If no requested by, add dependency and exit.
                 directDependencies.add(dependency);
                 continue;
             }
@@ -146,7 +149,10 @@ export class CiManager {
             const searchResult: IAqlSearchResult = await this._treesManager.connectionManager.searchArtifactsByAql(
                 CiManager.createAqlForBuildArtifacts(buildsPattern)
             );
-            if (!searchResult.results) {
+            if (!searchResult) {
+                throw new Error('Failed searching for builds in Artifactory');
+            }
+            if (!searchResult.results.length) {
                 return;
             }
             progress.report({ message: `${searchResult.results.length} builds` });
@@ -211,7 +217,7 @@ export class CiManager {
         const detailsResponse: IDetailsResponse = await this._treesManager.connectionManager.downloadBuildDetails(buildGeneralInfo.artifactId, buildGeneralInfo.version);
         if (!detailsResponse.is_scan_completed || !!detailsResponse.error_details || !detailsResponse.components) {
             if (!!detailsResponse.error_details) {
-                this._treesManager.logManager.logMessage('Could not get build details: ' + detailsResponse.error_details.error_message, 'ERR', true);
+                this._treesManager.logManager.logMessage('Could not get build details from xray: ' + detailsResponse.error_details.error_message, 'ERR', true);
             }
             return;
         }

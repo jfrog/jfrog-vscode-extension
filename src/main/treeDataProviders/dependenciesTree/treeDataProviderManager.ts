@@ -64,11 +64,4 @@ export class TreeDataProviderManager implements vscode.TreeDataProvider<Dependen
             this._treesManager.buildsTreesProvider.removeNode(node, () => this.onChangeFire());
         }
     }
-
-    public loadFirstBuild(): void {
-        if (this._treesManager.isCiState()) {
-            this._treesManager.buildsTreesProvider.loadFirstBuild(() => this.onChangeFire());
-        }
-    }
-
 }
