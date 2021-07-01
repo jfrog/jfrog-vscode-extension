@@ -2,21 +2,21 @@ import { Vcs } from './vcs';
 import {GeneralInfo} from "./generalInfo";
 
 export enum Status {
-    PASSED,
-    FAILED,
-    UNKNOWN
+    Success,
+    Failed,
+    Unknown
 }
 
 export class BuildGeneralInfo extends GeneralInfo {
     constructor(
         _artifactId: string,
+        private _status: Status,
+        private _started?: Date | null,
+        private _vcs?: Vcs,
         _version?: string,
         _path?: string,
         _scopes?: string[],
         _pkgType?: string,
-        private _started?: Date | null,
-        private _status?: Status,
-        private _vcs?: Vcs,
     ) {
         super(_artifactId, _version || '', _scopes || [], _path || '', _pkgType || '');
     }
@@ -30,7 +30,7 @@ export class BuildGeneralInfo extends GeneralInfo {
     }
 
     get status(): Status {
-        return this._status || Status.UNKNOWN;
+        return this._status;
     }
 
     set status(value: Status) {

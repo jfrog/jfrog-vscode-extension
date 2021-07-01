@@ -75,8 +75,12 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
             new TreeDataHolder('Status', status),
             new TreeDataHolder('Date', bgi.started),
             new TreeDataHolder('Branch', bgi.vcs.branch),
-            new TreeDataHolder('Commit Message', bgi.vcs.message)
+            new TreeDataHolder('Commit Message', bgi.vcs.message),
         ];
+        let link: string = bgi.path;
+        if (link) {
+            children.push(new TreeDataHolder('Build Log', link, link));
+        }
         return Promise.resolve(children);
     }
 

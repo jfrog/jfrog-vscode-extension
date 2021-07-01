@@ -19,6 +19,14 @@ export class IconsPaths {
     static readonly MEDIUM_HOVER_SEVERITY: string = IconsPaths.getIconPath('mediumHover');
     static readonly HIGH_HOVER_SEVERITY: string = IconsPaths.getIconPath('highHover');
     static readonly CRITICAL_HOVER_SEVERITY: string = IconsPaths.getIconPath('criticalHover');
+    static BUILD_SUCCESS: any;
+    static BUILD_FAILED: any;
+    static BUILD_UNKNOWN: any;
+
+    // Icons builds status
+    static readonly BUILD_SUCCESS: string = IconsPaths.getIconPath('normal');
+    static readonly BUILD_FAILED: string = IconsPaths.getIconPath('critical');
+    static readonly BUILD_UNKNOWN: string = IconsPaths.getIconPath('unknown');
 
     private static getIconPath(iconName: string) {
         return path.join(IconsPaths.RESOURCES_PATH, iconName + '.png');
