@@ -80,14 +80,14 @@ describe('Connection Manager Tests', () => {
                 process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[ConnectionManager.URL_ENV] =
                     '';
                 await connectionManager.populateCredentials(false);
-                assert.isFalse(connectionManager.areCredentialsSet());
+                assert.isFalse(connectionManager.areXrayCredentialsSet());
 
                 process.env[ConnectionManager.URL_ENV] = testCase.inputUrl;
                 process.env[ConnectionManager.USERNAME_ENV] = 'admin';
                 process.env[ConnectionManager.PASSWORD_ENV] = 'password';
 
                 await connectionManager.populateCredentials(false);
-                assert.isTrue(connectionManager.areCredentialsSet());
+                assert.isTrue(connectionManager.areXrayCredentialsSet());
                 assert.equal(connectionManager.url, testCase.expectedPlatformUrl);
                 assert.equal(connectionManager.xrayUrl, testCase.expectedXrayUrl);
                 assert.equal(connectionManager.username, 'admin');

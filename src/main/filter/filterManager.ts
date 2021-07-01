@@ -50,7 +50,7 @@ export class FilterManager implements ExtensionComponent {
                 this._severitiesFilter.clearFilters();
                 this._licensesFilter.clearFilters();
                 this._scopeFilter.clearFilters();
-                this._treesManager.dependenciesTreeDataProvider.applyFilters(undefined);
+                this._treesManager.treeDataProviderManager.applyFilters(undefined);
         }
     }
 
@@ -73,7 +73,7 @@ export class FilterManager implements ExtensionComponent {
         }
         let filteredRoot: DependenciesTreeNode = unfilteredRoot.shallowClone();
         this._applyFilters(unfilteredRoot, filteredRoot, { nodeSelected: true });
-        this._treesManager.dependenciesTreeDataProvider.applyFilters(filteredRoot);
+        this._treesManager.treeDataProviderManager.applyFilters(filteredRoot);
     }
 
     private _applyFilters(unfilteredNode: DependenciesTreeNode, filteredNode: DependenciesTreeNode, picked: { nodeSelected: Boolean }): void {

@@ -3,6 +3,8 @@ import * as vscode from 'vscode';
 import { License } from '../types/license';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from './utils/treeDataHolder';
+import {BuildsNode} from "./dependenciesTree/dependenciesRoot/buildsTree";
+import {BuildGeneralInfo, Status} from "../types/buildGeneralinfo";
 
 /**
  * The component details tree.
@@ -41,6 +43,10 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
         if (element instanceof LicensesNode) {
             return Promise.resolve(element.getChildren());
         }
+        // Build node - Show build details.
+        if (this._selectedNode instanceof BuildsNode) {
+            return Promise.resolve(this.getBuildChildren());
+        }
         // Component details node
         let children: (TreeDataHolder | LicensesNode)[] = [
             new TreeDataHolder('Artifact', this._selectedNode.generalInfo.artifactId),
@@ -56,6 +62,20 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
             children.push(new TreeDataHolder('Path', path));
         }
         children.push(new LicensesNode(this._selectedNode.licenses));
+        return Promise.resolve(children);
+    }
+
+    getBuildChildren(element?: any): Thenable<any[]> {
+        if (!this._selectedNode) {
+            return Promise.resolve([]);
+        }
+        const bgi: BuildGeneralInfo = <BuildGeneralInfo> this._selectedNode.generalInfo;
+        let children: (TreeDataHolder)[] = [
+            new TreeDataHolder('Status', Status[bgi.status]),
+            new TreeDataHolder('Date', bgi.started),
+            new TreeDataHolder('Branch', bgi.vcs.branch),
+            new TreeDataHolder('Commit Message', bgi.vcs.message)
+        ];
         return Promise.resolve(children);
     }
 

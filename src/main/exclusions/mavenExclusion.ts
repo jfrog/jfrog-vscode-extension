@@ -45,7 +45,7 @@ export class MavenExclusion extends AbstractExclusion {
         let startPos: vscode.Position = textDocument.positionAt(dependencyOffset);
         let endPos: vscode.Position = textDocument.positionAt(dependencyOffset + dependencyStr.length);
         await this.saveExclusion(textDocument, startPos, endPos, dependencyObj);
-        this._treesManager.dependenciesTreeDataProvider.removeNode(dependenciesTreeNode);
+        this._treesManager.treeDataProviderManager.removeNode(dependenciesTreeNode);
         this.highlightExclusionsTag(textDocument, startPos);
     }
 

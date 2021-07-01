@@ -2,7 +2,13 @@ import * as http2 from 'http2';
 import * as semver from 'semver';
 import { URL } from 'url';
 import * as vscode from 'vscode';
-import { ComponentDetails, IClientConfig, IProxyConfig, ISummaryRequestModel, IVersion, XrayClient } from 'xray-client-js';
+import {
+    ComponentDetails,
+    IProxyConfig,
+    ISummaryRequestModel,
+    IXrayVersion, JfrogClient, IJfrogClientConfig
+} from 'xray-client-js';
+import {SemVer} from "semver";
 
 export class ConnectionUtils {
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED: any = semver.coerce('1.7.2.3');
@@ -41,11 +47,28 @@ export class ConnectionUtils {
     }
 
     /**
-     * Check if the input URL is Xray URL or JFrog platform URL.
-     * @param url - The JFrog platform / Xray URL
-     * @param username - Platform username
-     * @param password - Platform password
+     * Validate Xray Connection.
+     * @param url - Xray URL
+     * @param username - Username
+     * @param password - Password
      */
+    public static async validateXrayConnection(xrayUrl: string, username: string, password: string): Promise<boolean> {
+        let jfrogClient: JfrogClient = this.createJfrogClient('', '', xrayUrl, username, password);
+        return await jfrogClient.xray().system().ping();
+    }
+
+    /**
+     * Validate Artifactory Connection.
+     * @param url - Artifactory URL
+     * @param username - Username
+     * @param password - Password
+     */
+    public static async validateArtifactoryConnection(rtUrl: string, username: string, password: string): Promise<boolean> {
+        let jfrogClient: JfrogClient = this.createJfrogClient('', rtUrl, '', username, password);
+        return await jfrogClient.artifactory().system().ping();
+    }
+
+    // todo remove
     public static async isPlatformUrl(url: string, username: string, password: string): Promise<boolean> {
         // If URL ends with '/xray', the URL is an Xray URL
         if (url.endsWith('/xray') || url.endsWith('/xray/')) {
@@ -54,8 +77,8 @@ export class ConnectionUtils {
 
         // Ping to '<url>/xray'
         url += url.endsWith('/') ? 'xray' : '/xray';
-        let xrayClient: XrayClient = this.createXrayClient(url, username, password);
-        return await xrayClient.system().ping();
+        let jfrogClient: JfrogClient = this.createJfrogClient('', '', url, username, password);
+        return await jfrogClient.xray().system().ping();
     }
 
     /**
@@ -63,11 +86,11 @@ export class ConnectionUtils {
      * @param xrayClient - The xray client.
      * @returns true iff success.
      */
-    public static async checkConnection(url: string, username: string, password: string): Promise<boolean> {
-        let xrayClient: XrayClient = ConnectionUtils.createXrayClient(url, username, password);
+    public static async checkConnection(xrayUrl: string, username: string, password: string): Promise<boolean> {
+        let jfrogClient: JfrogClient = this.createJfrogClient('', '', xrayUrl, username, password);
         try {
-            await ConnectionUtils.testComponentPermission(xrayClient);
-            let xrayVersion: string = await ConnectionUtils.testXrayVersion(xrayClient);
+            await ConnectionUtils.testComponentPermission(jfrogClient);
+            let xrayVersion: string = await ConnectionUtils.testXrayVersion(jfrogClient);
             vscode.window.showInformationMessage(xrayVersion);
         } catch (error) {
             vscode.window.showErrorMessage(error.toString(), <vscode.MessageOptions>{ modal: true });
@@ -76,29 +99,39 @@ export class ConnectionUtils {
         return Promise.resolve(true);
     }
 
-    public static async testXrayVersion(xrayClient: XrayClient): Promise<string> {
-        let xrayVersion: IVersion = await xrayClient.system().version();
-        if (xrayVersion.xray_version !== 'Unknown') {
-            let xraySemver: semver.SemVer = new semver.SemVer(xrayVersion.xray_version);
-            if (xraySemver.compare(ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED) < 0) {
-                return Promise.reject(
-                    'Unsupported Xray version: ' +
-                        xrayVersion.xray_version +
-                        ', version ' +
-                        ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED +
-                        ' or above is required.'
-                );
-            }
+    public static async testXrayVersion(jfrogClient: JfrogClient): Promise<string> {
+        let xrayVersion: string = await this.getXrayVersion(jfrogClient);
+        if (!await this.isXrayVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED)) {
+            return Promise.reject(
+                'Unsupported Xray version: ' +
+                xrayVersion +
+                ', version ' +
+                ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED +
+                ' or above is required.'
+            );
         }
-        return Promise.resolve('Successfully connected to Xray version: ' + xrayVersion.xray_version);
+        return Promise.resolve('Successfully connected to Xray version: ' + xrayVersion);
     }
 
-    public static async testComponentPermission(xrayClient: XrayClient): Promise<any> {
+    public static async isXrayVersionCompatible(curXrayVersion: string, minXrayVersion: SemVer): Promise<boolean> {
+        if (curXrayVersion !== 'Unknown') {
+            let xraySemver: semver.SemVer = new semver.SemVer(curXrayVersion);
+            return xraySemver.compare(minXrayVersion) >= 0;
+        }
+        return true;
+    }
+
+    public static async getXrayVersion(jfrogClient: JfrogClient): Promise<string> {
+        let xrayVersion: IXrayVersion = await jfrogClient.xray().system().version();
+        return xrayVersion.xray_version;
+    }
+
+    public static async testComponentPermission(jfrogClient: JfrogClient): Promise<any> {
         let summaryRequest: ISummaryRequestModel = {
             component_details: [new ComponentDetails('testComponent')]
         } as ISummaryRequestModel;
         try {
-            await xrayClient.summary().component(summaryRequest);
+            await jfrogClient.xray().summary().component(summaryRequest);
         } catch (error) {
             if (!error.response) {
                 return Promise.reject('Could not connect to Xray: ' + error);
@@ -116,7 +149,7 @@ export class ConnectionUtils {
         }
         return Promise.resolve();
     }
-
+/*
     public static createXrayClient(url: string, username: string, password: string): XrayClient {
         let clientConfig: IClientConfig = {
             serverUrl: url,
@@ -130,11 +163,45 @@ export class ConnectionUtils {
         return new XrayClient(clientConfig);
     }
 
-    public static addUserAgentHeader(clientConfig: IClientConfig) {
+ */
+/*
+    // todo
+    public static createArtifactoryClient(url: string, username: string, password: string): ArtifactoryClient {
+        let clientConfig: IClientConfig = {
+            serverUrl: 'https://robindev.jfrog.io/artifactory/', // todo url,
+            username: username,
+            password: password,
+            headers: {},
+            proxy: ConnectionUtils.getProxyConfig()
+        } as IClientConfig;
+        ConnectionUtils.addUserAgentHeader(clientConfig);
+        ConnectionUtils.addProxyAuthHeader(clientConfig);
+        const client: JfrogClient = new JfrogClient({});
+        return new ArtifactoryClient(clientConfig);
+    }
+
+ */
+
+    public static createJfrogClient(platformUrl: string, artifactoryUrl: string, xrayUrl: string, username: string, password: string): JfrogClient {
+        let clientConfig: IJfrogClientConfig = {
+            platformUrl: 'https://robindev.jfrog.io/', // todo url,
+            artifactoryUrl: '',
+            xrayUrl: '',
+            username: username,
+            password: password,
+            headers: {},
+            proxy: ConnectionUtils.getProxyConfig()
+        } as IJfrogClientConfig;
+        ConnectionUtils.addUserAgentHeader(clientConfig);
+        ConnectionUtils.addProxyAuthHeader(clientConfig);
+        return new JfrogClient(clientConfig);
+    }
+
+    public static addUserAgentHeader(clientConfig: IJfrogClientConfig) {
         clientConfig.headers!['User-Agent'] = ConnectionUtils.USER_AGENT;
     }
 
-    public static addProxyAuthHeader(clientConfig: IClientConfig) {
+    public static addProxyAuthHeader(clientConfig: IJfrogClientConfig) {
         if (clientConfig.proxy) {
             let proxyAuthHeader: string | undefined = vscode.workspace.getConfiguration().get('http.proxyAuthorization');
             if (proxyAuthHeader) {

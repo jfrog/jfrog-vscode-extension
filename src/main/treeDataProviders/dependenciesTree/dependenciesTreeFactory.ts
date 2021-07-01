@@ -17,7 +17,7 @@ export class DependenciesTreesFactory {
         parent: DependenciesTreeNode,
         quickScan: boolean
     ) {
-        if (treesManager.connectionManager.areCredentialsSet()) {
+        if (treesManager.connectionManager.areXrayCredentialsSet()) {
             await GoUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
             await NpmUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
             await PypiUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);

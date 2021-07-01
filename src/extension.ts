@@ -12,6 +12,7 @@ import { TreesManager } from './main/treeDataProviders/treesManager';
 import { WatcherManager } from './main/watchers/watcherManager';
 import { LogManager } from './main/log/logManager';
 import { DependencyUpdateManager } from './main/dependencyUpdate/dependencyUpdateManager';
+import {BuildsManager} from "./main/builds/buildsManager";
 
 /**
  * This method is called when the extension is activated.
@@ -28,12 +29,20 @@ export async function activate(context: vscode.ExtensionContext) {
     let focusManager: FocusManager = new FocusManager().activate(context);
     let exclusionManager: ExclusionsManager = new ExclusionsManager(treesManager).activate(context);
     let dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager().activate(context);
+    let buildsManager: BuildsManager = new BuildsManager(treesManager).activate(context);
 
     new DiagnosticsManager(treesManager).activate(context);
     new WatcherManager(treesManager).activate(context);
     new HoverManager(treesManager).activate(context);
     new CodeLensManager().activate(context);
-    new CommandManager(logManager, connectionManager, treesManager, filterManager, focusManager, exclusionManager, dependencyUpdateManager).activate(
-        context
-    );
+    new CommandManager(
+        logManager,
+        connectionManager,
+        treesManager,
+        filterManager,
+        focusManager,
+        exclusionManager,
+        dependencyUpdateManager,
+        buildsManager
+    ).activate(context);
 }
