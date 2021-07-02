@@ -15,7 +15,7 @@
     },
     "publisher": "JFrog",
     "engines": {
-        "vscode": "^1.37.0"
+        "vscode": "^1.56.2"
     },
     "categories": [
         "Other"
@@ -71,6 +71,12 @@
                     "default": "false",
                     "scope": "application",
                     "markdownDescription": "Automatically trigger a scan upon code changes in go.sum or package-lock.json. Change will take effect after reload."
+                },
+                "jfrog.xray.ciIntegration.BuildNamePattern": {
+                    "type": "string",
+                    "default": "",
+                    "scope": "resource",
+                    "markdownDescription": "A wildcards pattern, to match the name of builds published to Artifactory. Only builds which match the pattern are visible under the CI tab."
                 }
             }
         },
@@ -119,29 +125,65 @@
             {
                 "command": "jfrog.xray.copyToClipboard",
                 "title": "Copy"
+            },
+            {
+                "command": "jfrog.xray.builds",
+                "title": "Builds",
+                "icon": {
+                    "light": "resources/light/build.png",
+                    "dark": "resources/dark/build.png"
+                }
+            },
+            {
+                "command": "jfrog.xray.local",
+                "title": "Local",
+                "icon": "$(home)"
+            },
+            {
+                "command": "jfrog.xray.ci",
+                "title": "CI",
+                "icon": {
+                    "light": "resources/light/ci.png",
+                    "dark": "resources/dark/ci.png"
+                }
             }
         ],
         "menus": {
             "view/title": [
                 {
-                    "command": "jfrog.xray.refresh",
-                    "when": "view == jfrog.xray",
-                    "group": "navigation"
+                    "command": "jfrog.xray.builds",
+                    "when": "view == jfrog.xray && isCi",
+                    "group": "navigation@0"
+                },
+                {
+                    "command": "jfrog.xray.local",
+                    "when": "view == jfrog.xray && isCi",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "jfrog.xray.ci",
+                    "when": "view == jfrog.xray && isLocal",
+                    "group": "navigation@1"
                 },
                 {
                     "command": "jfrog.xray.connect",
                     "when": "view == jfrog.xray && !areCredentialsSet",
-                    "group": "navigation"
+                    "group": "navigation@2"
                 },
                 {
                     "command": "jfrog.xray.disconnect",
                     "when": "view == jfrog.xray && areCredentialsSet",
-                    "group": "navigation"
+                    "group": "navigation@2"
                 },
                 {
                     "command": "jfrog.xray.filter",
                     "when": "view == jfrog.xray",
-                    "group": "navigation"
+                    "group": "navigation@3"
+                },
+                {
+                    "command": "jfrog.xray.refresh",
+                    "when": "view == jfrog.xray",
+                    "group": "navigation@4"
                 }
             ],
             "view/item/context": [
@@ -164,17 +206,7 @@
                     "command": "jfrog.xray.copyToClipboard"
                 }
             ]
-        },
-        "jsonValidation": [
-            {
-                "fileMatch": [
-                    "**/filespecs/*.json",
-                    "*filespec*.json",
-                    "*.filespec"
-                ],
-                "url": "https://github.com/jfrog/jfrog-cli/raw/master/schema/filespec-schema.json"
-            }
-        ]
+        }
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
@@ -187,15 +219,18 @@
         "package": "vsce package"
     },
     "dependencies": {
+        "adm-zip": "^0.5.5",
         "fs-extra": "~9.0.0",
+        "jfrog-client-js": "file:/Users/robin/proj/jfrog-client-js/",
         "keytar": "~7.3.0",
         "nuget-deps-tree": "~0.2.0",
+        "p-queue": "^6.6.2",
         "semver": "~7.3.2",
         "typescript-collections": "~1.3.3",
-        "xmlbuilder2": "~2.1.2",
-        "xray-client-js": "~1.1.0"
+        "xmlbuilder2": "~2.1.2"
     },
     "devDependencies": {
+        "@types/adm-zip": "^0.4.34",
         "@types/chai": "^4.2.14",
         "@types/faker": "^4.1.11",
         "@types/fs-extra": "^8.1.0",

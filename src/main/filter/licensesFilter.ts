@@ -10,7 +10,7 @@ export class LicensesFilter extends AbstractFilter {
 
     /** @override */
     protected getValues(): vscode.QuickPickItem[] {
-        return this._treesManager.dependenciesTreeDataProvider.filterLicenses.toArray().map(license => {
+        return this._treesManager.treeDataProviderManager.filterLicenses.toArray().map(license => {
             return <vscode.QuickPickItem>{
                 label: license.name,
                 description: license.fullName,

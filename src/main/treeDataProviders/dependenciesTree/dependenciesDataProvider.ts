@@ -1,6 +1,6 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'xray-client-js';
+import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'jfrog-client-js';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Issue } from '../../types/issue';
 import { License } from '../../types/license';
@@ -17,8 +17,6 @@ import { DependenciesTreeNode } from './dependenciesTreeNode';
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
 
-    private _onDidChangeTreeData: vscode.EventEmitter<DependenciesTreeNode | undefined> = new vscode.EventEmitter<DependenciesTreeNode | undefined>();
-    readonly onDidChangeTreeData: vscode.Event<DependenciesTreeNode | undefined> = this._onDidChangeTreeData.event;
     private _filterLicenses: Collections.Set<License> = new Collections.Set(license => license.fullName);
     private _filterScopes: Collections.Set<Scope> = new Collections.Set(scope => scope.label);
     private _componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
@@ -32,7 +30,15 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         return this._dependenciesTree;
     }
 
-    public async refresh(quickScan: boolean) {
+    public async stateChange(onChangeFire: () => void) {
+        if (!this.dependenciesTree) {
+            this.refresh(false, onChangeFire);
+            return;
+        }
+        onChangeFire();
+    }
+
+    public async refresh(quickScan: boolean, onChangeFire: () => void) {
         if (this._scanInProgress) {
             if (!quickScan) {
                 vscode.window.showInformationMessage('Previous scan still running...');
@@ -41,9 +47,9 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
         try {
             this._scanInProgress = true;
-            const credentialsSet: boolean = this._treesManager.connectionManager.areCredentialsSet();
+            const credentialsSet: boolean = this._treesManager.connectionManager.areXrayCredentialsSet();
             this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow') + ' scan', 'INFO');
-            await this.repopulateTree(quickScan, credentialsSet);
+            await this.repopulateTree(quickScan, credentialsSet, onChangeFire);
             vscode.commands.executeCommand('jfrog.xray.focus');
             this._treesManager.logManager.setSuccess();
         } catch (error) {
@@ -86,18 +92,18 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         return Promise.resolve(element.parent);
     }
 
-    public applyFilters(filteredDependenciesTree: DependenciesTreeNode | undefined) {
+    public applyFilters(filteredDependenciesTree: DependenciesTreeNode | undefined, onChangeFire: () => void) {
         this._filteredDependenciesTree = filteredDependenciesTree;
-        this._onDidChangeTreeData.fire();
+        onChangeFire();
     }
 
-    public removeNode(node: DependenciesTreeNode) {
+    public removeNode(node: DependenciesTreeNode, onChangeFire: () => void) {
         let nodeIndex: number | undefined = node.parent?.children.indexOf(node);
         if (nodeIndex === undefined || nodeIndex < 0) {
             return;
         }
         node.parent?.children.splice(nodeIndex, 1);
-        this.refresh(true);
+        this.refresh(true, onChangeFire);
     }
 
     private async scanAndCacheComponents(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
@@ -154,7 +160,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         });
     }
 
-    private async repopulateTree(quickScan: boolean, credentialsSet: boolean) {
+    private async repopulateTree(quickScan: boolean, credentialsSet: boolean, onChangeFire: () => void) {
         await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
             this.clearTree();
             let workspaceRoot: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
@@ -177,7 +183,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     }
                 });
             }
-            this._onDidChangeTreeData.fire();
+            onChangeFire();
         }, 'Scanning project dependencies ');
     }
 

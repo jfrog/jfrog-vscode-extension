@@ -3,7 +3,7 @@ import { before } from 'mocha';
 import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails, IIssue, ILicense } from 'xray-client-js';
+import { ComponentDetails, IIssue, ILicense } from 'jfrog-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { GoDependencyUpdate } from '../../main/dependencyUpdate/goDependencyUpdate';
 import { FocusType } from '../../main/focus/abstractFocus';

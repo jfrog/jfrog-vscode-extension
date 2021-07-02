@@ -39,8 +39,6 @@ The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to 
 It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE.
 With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
-The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
-
 Don't have JFrog Xray? [Start for free](https://jfrog.com/xray/start-free).
 
 ### Supported Features
@@ -78,8 +76,8 @@ The JFrog extension automatically triggers a scan of the project's dependencies 
 To invoke a scan manually, click on the Refresh ![Refresh](resources/readme/refresh.png) button or click on *Start Xray Scan* from within the editor.
 ![Refresh](resources/readme/gifs/refresh.gif)
 
-View the security information for a depedency by hovering over it in the editor.
-You can also navigate from the depedency declaration directly into the tree view. This allows you to see transitive (indirect) depedencies.
+View the security information for a dependency by hovering over it in the editor.
+You can also navigate from the dependency declaration directly into the tree view. This allows you to see transitive (indirect) dependencies.
 ![Refresh](resources/readme/gifs/maven_pom_tree.gif)
 
 Search for a dependency in the tree:
@@ -94,7 +92,7 @@ Update a vulnerable dependency to a fixed version:
 To filter the dependencies viewed, click on the Filter ![Filter](resources/readme/filter.png) button.
 ![Filter](resources/readme/gifs/filter.gif)
 
-Navigate from the tree view to a depedency's declaration in the editor.
+Navigate from the tree view to a dependency's declaration in the editor.
 ![Filter](resources/readme/gifs/maven_tree_pom.gif)
 
 ## General Configuration
@@ -156,7 +154,7 @@ To open the extension settings, use the following VS Code menu command:
 
 ## Go Projects
 
-Behind the scenes, the JFrog VS Code Extension scans all of the project dependencies, both direct and indirect (transitive), even if they are not declared in the project's go.mod. It builds the Go dependencies tree by running `go mod graph`. Therefore, please make sure to have Go CLI in your system PATH.
+Behind the scenes, the JFrog VS Code Extension scans all the project dependencies, both direct and indirect (transitive), even if they are not declared in the project's go.mod. It builds the Go dependencies tree by running `go mod graph`. Therefore, please make sure to have Go CLI in your system PATH.
 
 ## Maven Projects
 
@@ -213,11 +211,11 @@ Behind the scenes, the extension builds the Pypi dependencies tree by running `p
 5. In the same terminal, install your python project and dependencies according to your project specifications.
 
 ## .NET Projects
-For .NET projects which use NuGet packages as depedencies, the extension displays the NuGet depedencies tree, together with the information for each depedency.  
+For .NET projects which use NuGet packages as dependencies, the extension displays the NuGet dependencies tree, together with the information for each dependency.  
 Behind the scenes, the extension builds the NuGet dependencies tree using the [NuGet deps tree](https://github.com/jfrog/nuget-deps-tree) npm package.
 
 Important:
-- Does your project define its NuGet depedencies using a *packages.config* file? If so, then please make sure the `nuget` CLI is installed on your local machine and that it is in your system PATH. The extension uses the `nuget` CLI to find the location of the NuGet packages on the local file-system.
+- Does your project define its NuGet dependencies using a *packages.config* file? If so, then please make sure the `nuget` CLI is installed on your local machine and that it is in your system PATH. The extension uses the `nuget` CLI to find the location of the NuGet packages on the local file-system.
 - The project must be restored using `nuget restore` or `dotnet restore` prior to scanning. After this action, you should click on the Refresh ![Refresh](resources/readme/refresh.png) button, for the tree view to be refreshed and updated.
 
 ## Troubleshooting

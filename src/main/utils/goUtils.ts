@@ -2,7 +2,7 @@ import { execSync } from 'child_process';
 import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'xray-client-js';
+import { ComponentDetails } from 'jfrog-client-js';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { TreesManager } from '../treeDataProviders/treesManager';

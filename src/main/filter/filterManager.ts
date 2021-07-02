@@ -5,6 +5,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { LicensesFilter } from './licensesFilter';
 import { ScopesFilter } from './scopeFilter';
 import { SeverityFilter as SeveritiesFilter } from './severitiesFilter';
+import { BuildsNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/buildsTree';
 
 enum FilterTypes {
     SEVERITY = '$(alert)   Issues severity',
@@ -50,7 +51,7 @@ export class FilterManager implements ExtensionComponent {
                 this._severitiesFilter.clearFilters();
                 this._licensesFilter.clearFilters();
                 this._scopeFilter.clearFilters();
-                this._treesManager.dependenciesTreeDataProvider.applyFilters(undefined);
+                this._treesManager.treeDataProviderManager.applyFilters(undefined);
         }
     }
 
@@ -67,20 +68,22 @@ export class FilterManager implements ExtensionComponent {
     }
 
     public applyFilters() {
-        let unfilteredRoot: DependenciesTreeNode = this._treesManager.dependenciesTreeDataProvider.dependenciesTree;
+        let unfilteredRoot: DependenciesTreeNode = this._treesManager.treeDataProviderManager.getDisplayedDependenciesTree();
         if (!(unfilteredRoot instanceof DependenciesTreeNode)) {
             return;
         }
         let filteredRoot: DependenciesTreeNode = unfilteredRoot.shallowClone();
         this._applyFilters(unfilteredRoot, filteredRoot, { nodeSelected: true });
-        this._treesManager.dependenciesTreeDataProvider.applyFilters(filteredRoot);
+        this._treesManager.treeDataProviderManager.applyFilters(filteredRoot);
     }
 
     private _applyFilters(unfilteredNode: DependenciesTreeNode, filteredNode: DependenciesTreeNode, picked: { nodeSelected: Boolean }): void {
+        // Keep this node if it compiles with all filters or if it is a build node.
         picked.nodeSelected =
-            this._severitiesFilter.isNodePicked(unfilteredNode) &&
-            this._licensesFilter.isNodePicked(unfilteredNode) &&
-            this._scopeFilter.isNodePicked(unfilteredNode);
+            (this._severitiesFilter.isNodePicked(unfilteredNode) &&
+                this._licensesFilter.isNodePicked(unfilteredNode) &&
+                this._scopeFilter.isNodePicked(unfilteredNode)) ||
+            unfilteredNode instanceof BuildsNode;
         for (let unfilteredChild of unfilteredNode.children) {
             let filteredNodeChild: DependenciesTreeNode = unfilteredChild.shallowClone();
             let childSelected: any = { nodeSelected: false };

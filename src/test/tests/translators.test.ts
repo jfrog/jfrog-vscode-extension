@@ -1,5 +1,5 @@
 import { assert, expect } from 'chai';
-import { ICve, IIssue, IVulnerableComponent } from 'xray-client-js';
+import { ICve, IIssue, IVulnerableComponent } from 'jfrog-client-js';
 import { Issue } from '../../main/types/issue';
 import { Translators } from '../../main/utils/translators';
 

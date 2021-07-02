@@ -1,6 +1,6 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'xray-client-js';
+import { ComponentDetails } from 'jfrog-client-js';
 import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { GavGeneralInfo } from '../../../types/gavGeneralinfo';

@@ -17,4 +17,8 @@ export class Configuration {
     public static isWatchEnabled(): boolean | undefined {
         return vscode.workspace.getConfiguration('jfrog').get('xray.watchers');
     }
+
+    public static getBuildsPattern(): string {
+        return vscode.workspace.getConfiguration('jfrog').get('xray.ciIntegration.BuildNamePattern') || '';
+    }
 }
