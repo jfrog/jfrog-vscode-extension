@@ -65,16 +65,21 @@ export class CommandManager implements ExtensionComponent {
 
     private areCiPreconditionsMet() {
         if (!this._treesManager.connectionManager.areAllCredentialsSet()) {
-            vscode.window.showErrorMessage(
-                'CI integration disabled - Artifactory server is not configured. ' +
-                    'To use this section of the JFrog extension, please configure your JFrog platform details.'
-            );
+            vscode.window
+                .showErrorMessage(
+                    'CI integration disabled - Artifactory server is not configured. ' +
+                        'To use this section of the JFrog extension, please configure your JFrog platform details.',
+                    ...['Configure JFrog Details']
+                )
+                .then(async () => {
+                    await this.doConnect();
+                });
             return false;
         }
         if (!Configuration.getBuildsPattern()) {
-            vscode.window.showErrorMessage(
-                'CI integration disabled - build name pattern is not set. ' + 'Configure it under the JFrog CI Integration page in the configuration.'
-            );
+            vscode.window.showErrorMessage('CI integration disabled - build name pattern is not set.', ...['Set Build Name Pattern']).then(() => {
+                vscode.commands.executeCommand('workbench.action.openSettings', 'jfrog.xray.ciIntegration.BuildNamePattern');
+            });
             return false;
         }
         return true;
