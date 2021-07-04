@@ -128,7 +128,7 @@
             },
             {
                 "command": "jfrog.xray.builds",
-                "title": "Builds",
+                "title": "Select builds",
                 "icon": {
                     "light": "resources/light/build.png",
                     "dark": "resources/dark/build.png"
@@ -136,12 +136,12 @@
             },
             {
                 "command": "jfrog.xray.local",
-                "title": "Local",
+                "title": "Switch to local mode",
                 "icon": "$(home)"
             },
             {
                 "command": "jfrog.xray.ci",
-                "title": "CI",
+                "title": "Switch to CI mode",
                 "icon": {
                     "light": "resources/light/ci.png",
                     "dark": "resources/dark/ci.png"
