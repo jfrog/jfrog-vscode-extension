@@ -128,7 +128,7 @@
             },
             {
                 "command": "jfrog.xray.builds",
-                "title": "Select builds",
+                "title": "Select build to display",
                 "icon": {
                     "light": "resources/light/build.png",
                     "dark": "resources/dark/build.png"
