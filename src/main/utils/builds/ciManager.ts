@@ -111,6 +111,7 @@ export class CiManager {
         let parentToChildren: Map<string, Dependency[]> = new Map<string, Dependency[]>();
 
         if (!BuildsUtils.isArrayExistsAndNotEmpty(module, 'dependencies')) {
+            dependenciesNode.collapsibleState = vscode.TreeItemCollapsibleState.None;
             return;
         }
 
@@ -345,7 +346,6 @@ export class CiManager {
                     buildsNum
                 )
             );
-            console.log(build);
         } catch (error) {
             if (error.message === CiManager.CI_CANCELLATION_ERROR.message) {
                 // If it's not a cancellation error, throw it up
@@ -354,7 +354,7 @@ export class CiManager {
             vscode.window.showErrorMessage('Could not download build info.', <vscode.MessageOptions>{ modal: false });
             this._treesManager.logManager.logMessage(error.stdout.toString(), 'ERR', true);
         } finally {
-            progress.report({ message: `${buildsNum} builds`, increment: (1 / buildsNum) * 2 * 100 });
+            progress.report({ message: `${buildsNum} builds`, increment: 100 / (buildsNum * 2) });
         }
     }
 
@@ -365,26 +365,29 @@ export class CiManager {
             buildsCache.save(JSON.stringify(build), build.name, build.number, Type.BUILD_INFO);
             return build;
         } catch (error) {
-            this._treesManager.logManager.logMessage("Couldn't retrieve build information", 'ERR', true);
+            this._treesManager.logManager.logMessage(
+                `Could not get build details from Artifactory for build: '${searchEntry.path}/${searchEntry.name}': ${error}`,
+                'ERR',
+                true
+            );
         }
     }
 
     private async downloadBuildDetails(buildGeneralInfo: BuildGeneralInfo, buildsCache: BuildsScanCache): Promise<void> {
-        const detailsResponse: IDetailsResponse = await this._treesManager.connectionManager.downloadBuildDetails(
-            buildGeneralInfo.artifactId,
-            buildGeneralInfo.version
-        );
+        let buildName: string = buildGeneralInfo.artifactId;
+        let buildNumber: string = buildGeneralInfo.version;
+        const detailsResponse: IDetailsResponse = await this._treesManager.connectionManager.downloadBuildDetails(buildName, buildNumber);
         if (!detailsResponse.is_scan_completed || !!detailsResponse.error_details || !detailsResponse.components) {
             if (!!detailsResponse.error_details) {
                 this._treesManager.logManager.logMessage(
-                    'Could not get build details from xray: ' + detailsResponse.error_details.error_message,
+                    `Could not get build details from Xray for build: '${buildName}/${buildNumber}': ${detailsResponse.error_details.error_message}`,
                     'ERR',
                     true
                 );
             }
             return;
         }
-        buildsCache.save(JSON.stringify(detailsResponse), buildGeneralInfo.artifactId, buildGeneralInfo.version, Type.BUILD_SCAN_RESULTS);
+        buildsCache.save(JSON.stringify(detailsResponse), buildName, buildNumber, Type.BUILD_SCAN_RESULTS);
     }
 
     private addResults(bgi: BuildGeneralInfo): void {
@@ -417,7 +420,7 @@ export class CiManager {
             this._treesManager.logManager.logMessage('Could not get build details from xray: ' + error.stdout.toString(), 'ERR', true);
         } finally {
             this.addResults(buildGeneralInfo);
-            progress.report({ message: `${buildsNum} builds`, increment: (1 / buildsNum) * 2 * 100 });
+            progress.report({ message: `${buildsNum} builds`, increment: 100 / (buildsNum * 2) });
         }
     }
 

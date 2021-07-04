@@ -17,7 +17,7 @@ export class ConnectionUtils {
      */
     public static validateUrl(value: string): string {
         if (!value) {
-            return 'URL cannot be empty.';
+            return '';
         }
         let protocol: string | undefined;
         let host: string | undefined;
@@ -29,6 +29,13 @@ export class ConnectionUtils {
             // ignore
         }
         return protocol && host ? '' : 'Please enter a valid URL';
+    }
+
+    public static validateXrayUrl(value: string) {
+        if (!value) {
+            return 'URL cannot be empty.';
+        }
+        return this.validateUrl(value);
     }
 
     /**

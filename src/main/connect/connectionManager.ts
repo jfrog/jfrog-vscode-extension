@@ -206,10 +206,8 @@ export class ConnectionManager implements ExtensionComponent {
         }
         if (await this.promptPlatformUrl()) {
             this._rtUrl = await this.promptServiceUrl('Artifactory', this.getRtUrlFromPlatform(this._url));
-            if (!!this._rtUrl) {
-                this._xrayUrl = await this.promptServiceUrl('Xray', this.getXrayUrlFromPlatform(this._url));
-                return !!this._xrayUrl;
-            }
+            this._xrayUrl = await this.promptServiceUrl('Xray', this.getXrayUrlFromPlatform(this._url));
+            return !!this._xrayUrl;
         }
         return false;
     }
@@ -220,7 +218,7 @@ export class ConnectionManager implements ExtensionComponent {
                 prompt: 'Enter JFrog Platform URL',
                 value: this._url,
                 ignoreFocusOut: true,
-                placeHolder: 'Example: https://acme.jfrog.io',
+                placeHolder: 'Example: https://acme.jfrog.io (Leave empty to configure Xray and Artifactory separately)',
                 validateInput: ConnectionUtils.validateUrl
             })) || '';
         return !!this._url;

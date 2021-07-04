@@ -15,7 +15,7 @@
     },
     "publisher": "JFrog",
     "engines": {
-        "vscode": "^1.56.2"
+        "vscode": "^1.37.0"
     },
     "categories": [
         "Other"
@@ -206,7 +206,17 @@
                     "command": "jfrog.xray.copyToClipboard"
                 }
             ]
-        }
+        },
+        "jsonValidation": [
+            {
+                "fileMatch": [
+                    "**/filespecs/*.json",
+                    "*filespec*.json",
+                    "*.filespec"
+                ],
+                "url": "https://github.com/jfrog/jfrog-cli/raw/master/schema/filespec-schema.json"
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
@@ -221,7 +231,7 @@
     "dependencies": {
         "adm-zip": "^0.5.5",
         "fs-extra": "~9.0.0",
-        "jfrog-client-js": "file:/Users/robin/proj/jfrog-client-js/",
+        "jfrog-client-js": "~2.0.2",
         "keytar": "~7.3.0",
         "nuget-deps-tree": "~0.2.0",
         "p-queue": "^6.6.2",
