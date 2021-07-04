@@ -155,15 +155,15 @@ export class ConnectionManager implements ExtensionComponent {
     private async resolveUrls() {
         if (await ConnectionUtils.isPlatformUrl(this._url, this._username, this._password)) {
             // _url is a platform URL
-            this._xrayUrl = this.getXrayUrlFromPlatform(this._url);
-            this._rtUrl = this.getRtUrlFromPlatform(this._url);
-        } else {
+            this._xrayUrl = this.getXrayUrlFromPlatform();
+            this._rtUrl = this.getRtUrlFromPlatform();
+        } else if (this._url) {
             // _url is an Xray URL
             this._xrayUrl = this._url;
             if (this._url.endsWith('/xray') || this._url.endsWith('/xray/')) {
                 // Assuming platform URL was extracted. Checking against Artifactory.
                 this._url = this._url.substr(0, this._url.lastIndexOf('/xray'));
-                this._rtUrl = this.getRtUrlFromPlatform(this._url);
+                this._rtUrl = this.getRtUrlFromPlatform();
                 if (!(await ConnectionUtils.validateArtifactoryConnection(this._rtUrl, this._username, this._password))) {
                     this._url = '';
                     this._rtUrl = '';
@@ -183,12 +183,12 @@ export class ConnectionManager implements ExtensionComponent {
         return platformUrl + service;
     }
 
-    private getRtUrlFromPlatform(platformUrl: string): string {
-        return this.getServiceUrlFromPlatform(platformUrl, 'artifactory');
+    private getRtUrlFromPlatform(): string {
+        return this.getServiceUrlFromPlatform(this._url, 'artifactory');
     }
 
-    private getXrayUrlFromPlatform(platformUrl: string): string {
-        return this.getServiceUrlFromPlatform(platformUrl, 'xray');
+    private getXrayUrlFromPlatform(): string {
+        return this.getServiceUrlFromPlatform(this._url, 'xray');
     }
 
     private readCredentialsFromEnv() {
@@ -204,12 +204,10 @@ export class ConnectionManager implements ExtensionComponent {
             this._rtUrl = (await this._context.globalState.get(ConnectionManager.RT_URL_KEY)) || '';
             return !!this._url || !!this._xrayUrl;
         }
-        if (await this.promptPlatformUrl()) {
-            this._rtUrl = await this.promptServiceUrl('Artifactory', this.getRtUrlFromPlatform(this._url));
-            this._xrayUrl = await this.promptServiceUrl('Xray', this.getXrayUrlFromPlatform(this._url));
-            return !!this._xrayUrl;
-        }
-        return false;
+        await this.promptPlatformUrl();
+        await this.promptArtifactoryUrl();
+        await this.promptXrayUrl();
+        return !!this._xrayUrl;
     }
 
     private async promptPlatformUrl(): Promise<boolean> {
@@ -224,15 +222,27 @@ export class ConnectionManager implements ExtensionComponent {
         return !!this._url;
     }
 
-    private async promptServiceUrl(type: string, suggestedUrl: string): Promise<string> {
-        return (
+    private async promptArtifactoryUrl(): Promise<boolean> {
+        this._rtUrl =
             (await vscode.window.showInputBox({
-                prompt: 'Enter JFrog ' + type + ' URL',
-                value: suggestedUrl,
+                prompt: 'Enter JFrog Artifactory URL',
+                value: this._url ? this.getRtUrlFromPlatform() : '',
                 ignoreFocusOut: true,
+                placeHolder: "Example: https://acme.jfrog.io/artifactory (Leave empty if you'e like to use only local Xray scans)",
                 validateInput: ConnectionUtils.validateUrl
-            })) || ''
-        );
+            })) || '';
+        return !!this._rtUrl;
+    }
+
+    private async promptXrayUrl(): Promise<boolean> {
+        this._xrayUrl =
+            (await vscode.window.showInputBox({
+                prompt: 'Enter JFrog Xray URL',
+                value: this._url ? this.getXrayUrlFromPlatform() : '',
+                ignoreFocusOut: true,
+                validateInput: ConnectionUtils.validateXrayUrl
+            })) || '';
+        return !!this._xrayUrl;
     }
 
     private async storePlatformUrl() {

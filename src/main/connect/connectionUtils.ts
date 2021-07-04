@@ -35,7 +35,7 @@ export class ConnectionUtils {
         if (!value) {
             return 'URL cannot be empty.';
         }
-        return this.validateUrl(value);
+        return ConnectionUtils.validateUrl(value);
     }
 
     /**
@@ -64,7 +64,7 @@ export class ConnectionUtils {
 
     public static async isPlatformUrl(url: string, username: string, password: string): Promise<boolean> {
         // If URL ends with '/xray', the URL is an Xray URL
-        if (url.endsWith('/xray') || url.endsWith('/xray/')) {
+        if (!url || url.endsWith('/xray') || url.endsWith('/xray/')) {
             return false;
         }
 
