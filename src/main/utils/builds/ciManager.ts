@@ -117,7 +117,7 @@ export class CiManager {
         let parentToChildren: Map<string, Dependency[]> = new Map<string, Dependency[]>();
         for (const dependency of module.dependencies) {
             let requestedBy: string[][] = dependency.requestedBy;
-            if (!(BuildsUtils.isArrayExistsAndNotEmpty(module, 'dependencies') && !!requestedBy[0].length)) {
+            if (!(BuildsUtils.isArrayExistsAndNotEmpty(module, 'dependencies') && requestedBy && !!requestedBy[0].length)) {
                 // If no requested by, add dependency and exit.
                 directDependencies.add(dependency);
                 continue;
@@ -144,7 +144,7 @@ export class CiManager {
         let dependencyGeneralInfo: GeneralInfo = new GeneralInfo(
             dependency.id,
             '',
-            dependency.scopes,
+            dependency.scopes || ['None'],
             '',
             dependency.type,
             dependency.sha1,
@@ -262,7 +262,7 @@ export class CiManager {
     }
 
     private addUnknownLicenseToMissingNode(node: DependenciesTreeNode) {
-        node.licenses.add(Translators.toLicense(<ILicense>{ name: License.UNKNOWN_LICENSE, full_name: License.UNKNOWN_LICENSE_FULL_NAME }));
+        node.licenses.add(new License([], [], License.UNKNOWN_LICENSE, License.UNKNOWN_LICENSE_FULL_NAME));
     }
 
     public populateTreeWithUnknownIssues(modulesTree: DependenciesTreeNode) {

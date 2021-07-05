@@ -21,7 +21,7 @@ export class BuildsUtils {
         }
         const status: string = build?.properties?.[BuildsUtils.BUILD_STATUS_PROP] || '';
         const started: Date | null = build.started ? new Date(build.started) : null;
-        return new BuildGeneralInfo(build.name, BuildsUtils.getStatusFromString(status), started, vcsList[0], build.number, build.url, [], '');
+        return new BuildGeneralInfo(build.name, BuildsUtils.getStatusFromString(status), started, vcsList[0], build.number, build.url, ['None'], '');
     }
 
     public static getStatusFromString(status: string): Status {
@@ -37,7 +37,7 @@ export class BuildsUtils {
 
     public static createArtifactsNode(): DependenciesTreeNode {
         return new DependenciesTreeNode(
-            new GeneralInfo(BuildsUtils.ARTIFACTS_NODE, '', [], '', 'Module artifacts'),
+            new GeneralInfo(BuildsUtils.ARTIFACTS_NODE, '', ['None'], '', 'Module artifacts'),
             vscode.TreeItemCollapsibleState.Collapsed,
             undefined,
             ''
@@ -46,7 +46,7 @@ export class BuildsUtils {
 
     public static createDependenciesNode(): DependenciesTreeNode {
         return new DependenciesTreeNode(
-            new GeneralInfo(BuildsUtils.DEPENDENCIES_NODE, '', [], '', 'Module dependencies'),
+            new GeneralInfo(BuildsUtils.DEPENDENCIES_NODE, '', ['None'], '', 'Module dependencies'),
             vscode.TreeItemCollapsibleState.Collapsed,
             undefined,
             ''
