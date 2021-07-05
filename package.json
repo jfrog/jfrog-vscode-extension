@@ -98,7 +98,8 @@
             {
                 "command": "jfrog.xray.disconnect",
                 "title": "Disconnect",
-                "icon": "resources/disconnect.png"
+                "icon": "resources/disconnect.png",
+                "enablement": "!scanInProgress"
             },
             {
                 "command": "jfrog.xray.filter",
