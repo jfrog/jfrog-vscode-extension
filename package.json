@@ -72,7 +72,7 @@
                     "scope": "application",
                     "markdownDescription": "Automatically trigger a scan upon code changes in go.sum or package-lock.json. Change will take effect after reload."
                 },
-                "jfrog.xray.ciIntegration.BuildNamePattern": {
+                "jfrog.xray.ciIntegration.buildNamePattern": {
                     "type": "string",
                     "default": "",
                     "scope": "resource",
