@@ -47,6 +47,7 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
         }
         try {
             this._ciInProgress = true;
+            ScanUtils.setScanInProgress(true);
             const credentialsSet: boolean = this._treesManager.connectionManager.areAllCredentialsSet();
             this._treesManager.logManager.logMessage('Starting to load builds details...', 'INFO');
             await this.repopulateTree(quickScan, credentialsSet, onChangeFire);
@@ -62,6 +63,7 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
             vscode.window.showInformationMessage(error.message);
         } finally {
             this._ciInProgress = false;
+            ScanUtils.setScanInProgress(false);
         }
     }
 

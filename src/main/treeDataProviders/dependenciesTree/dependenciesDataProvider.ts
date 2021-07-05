@@ -47,6 +47,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
         try {
             this._scanInProgress = true;
+            ScanUtils.setScanInProgress(true);
             const credentialsSet: boolean = this._treesManager.connectionManager.areXrayCredentialsSet();
             this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow') + ' scan', 'INFO');
             await this.repopulateTree(quickScan, credentialsSet, onChangeFire);
@@ -61,6 +62,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             vscode.window.showInformationMessage(error.message);
         } finally {
             this._scanInProgress = false;
+            ScanUtils.setScanInProgress(false);
         }
     }
 

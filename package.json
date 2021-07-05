@@ -87,7 +87,8 @@
                 "icon": {
                     "light": "resources/light/refresh.png",
                     "dark": "resources/dark/refresh.png"
-                }
+                },
+                "enablement": "areCredentialsSet && !scanInProgress"
             },
             {
                 "command": "jfrog.xray.connect",
@@ -105,7 +106,8 @@
                 "icon": {
                     "light": "resources/light/filter.png",
                     "dark": "resources/dark/filter.png"
-                }
+                },
+                "enablement": "areCredentialsSet && !scanInProgress"
             },
             {
                 "command": "jfrog.xray.showInProjectDesc",
@@ -137,7 +139,8 @@
             {
                 "command": "jfrog.xray.local",
                 "title": "Switch to local mode",
-                "icon": "$(home)"
+                "icon": "$(home)",
+                "enablement": "!scanInProgress"
             },
             {
                 "command": "jfrog.xray.ci",
@@ -145,7 +148,8 @@
                 "icon": {
                     "light": "resources/light/ci.png",
                     "dark": "resources/dark/ci.png"
-                }
+                },
+                "enablement": "!scanInProgress"
             }
         ],
         "menus": {
