@@ -71,14 +71,18 @@ export class CommandManager implements ExtensionComponent {
                         'To use this section of the JFrog extension, please configure your JFrog platform details.',
                     ...['Configure JFrog Details']
                 )
-                .then(async () => {
-                    await this.doConnect();
+                .then(async action => {
+                    if (action) {
+                        await this.doConnect();
+                    }
                 });
             return false;
         }
         if (!Configuration.getBuildsPattern()) {
-            vscode.window.showErrorMessage('CI integration disabled - build name pattern is not set.', ...['Set Build Name Pattern']).then(() => {
-                vscode.commands.executeCommand('workbench.action.openSettings', 'jfrog.xray.ciIntegration.BuildNamePattern');
+            vscode.window.showErrorMessage('CI integration disabled - build name pattern is not set.', ...['Set Build Name Pattern']).then(action => {
+                if (action) {
+                    vscode.commands.executeCommand('workbench.action.openSettings', 'jfrog.xray.ciIntegration.BuildNamePattern');
+                }
             });
             return false;
         }
