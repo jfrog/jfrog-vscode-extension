@@ -1,11 +1,11 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
+import { ContextKeys } from '../../constants/contextKeys';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Issue } from '../../types/issue';
 import { License } from '../../types/license';
 import { Severity } from '../../types/severity';
 import { IconsPaths } from '../../utils/iconsPaths';
-import { ContextKeys } from '../../constants/contextKeys';
 
 export class DependenciesTreeNode extends vscode.TreeItem {
     private _children: DependenciesTreeNode[] = [];
@@ -101,10 +101,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
 
     public shallowClone(): DependenciesTreeNode {
         let clone: DependenciesTreeNode = new DependenciesTreeNode(this.generalInfo, this.collapsibleState);
-        clone.label = this.label;
-        clone.licenses = this.licenses;
-        clone.issues = this.issues;
-        clone.topIssue = this.topIssue;
+        this.fillShallowClone(clone);
         return clone;
     }
 
@@ -114,6 +111,13 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         this.setTopIssue();
         this.sortChildren();
         return this.issues;
+    }
+
+    protected fillShallowClone(clone: DependenciesTreeNode) {
+        clone.label = this.label;
+        clone.licenses = this.licenses;
+        clone.issues = this.issues;
+        clone.topIssue = this.topIssue;
     }
 
     private setIssuesComponent() {
