@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { LogManager } from '../../log/logManager';
-import { DependenciesTreeNode } from '../../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { BuildGeneralInfo, Status } from '../../types/buildGeneralinfo';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Vcs } from '../../types/vcs';
@@ -34,7 +33,7 @@ export class BuildsUtils {
         }
     }
 
-    public static createArtifactsNode(): DependenciesTreeNode {
+    public static createArtifactsNode(): CiTitleNode {
         return new CiTitleNode(
             new GeneralInfo(CiTitleNode.ARTIFACTS_NODE, '', ['None'], '', 'Module Artifacts'),
             vscode.TreeItemCollapsibleState.Collapsed,
@@ -42,7 +41,7 @@ export class BuildsUtils {
         );
     }
 
-    public static createDependenciesNode(): DependenciesTreeNode {
+    public static createDependenciesNode(): CiTitleNode {
         return new CiTitleNode(
             new GeneralInfo(CiTitleNode.DEPENDENCIES_NODE, '', ['None'], '', 'Module Dependencies'),
             vscode.TreeItemCollapsibleState.Collapsed,

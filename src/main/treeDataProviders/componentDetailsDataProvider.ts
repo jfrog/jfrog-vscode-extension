@@ -50,7 +50,8 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
         }
         // Component details node
         let children: (TreeDataHolder | LicensesNode)[] = [new TreeDataHolder('Artifact', this._selectedNode.generalInfo.artifactId)];
-        if (!(this._selectedNode instanceof CiTitleNode)) {
+        // If this is a title node, show version only if not empty.
+        if (!(this._selectedNode instanceof CiTitleNode && !!this._selectedNode.generalInfo.version)) {
             children.push(new TreeDataHolder('Version', this._selectedNode.generalInfo.version));
         }
 
@@ -74,7 +75,7 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
         return scopes.length === 1 && scopes[0] === 'None';
     }
 
-    getBuildChildren(element?: any): Thenable<any[]> {
+    getBuildChildren(): Thenable<any[]> {
         if (!this._selectedNode) {
             return Promise.resolve([]);
         }

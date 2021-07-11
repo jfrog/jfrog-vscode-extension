@@ -48,7 +48,7 @@ export class CiManager {
         let bgi: BuildGeneralInfo = BuildsUtils.createBuildGeneralInfo(build, this._treesManager.logManager);
         const buildTree: BuildsNode = new BuildsNode(bgi);
         parent.addChild(buildTree);
-        const modulesTree: DependenciesTreeNode = new CiTitleNode(
+        const modulesTree: CiTitleNode = new CiTitleNode(
             new GeneralInfo(CiTitleNode.MODULES_NODE, '', ['None'], '', 'Build Modules'),
             vscode.TreeItemCollapsibleState.Expanded,
             parent
@@ -63,17 +63,12 @@ export class CiManager {
         modulesTree.issues = modulesTree.processTreeIssues();
     }
 
-    public populateModulesDependencyTree(build: any, node: DependenciesTreeNode) {
+    public populateModulesDependencyTree(build: any, modulesRoot: DependenciesTreeNode) {
         for (const module of build.modules) {
             const artifactId: string = BuildsUtils.getArtifactIdFromCompId(module.id);
             const version: string = BuildsUtils.getVersionFromCompId(module.id);
             const moduleGeneralInfo: GeneralInfo = new GeneralInfo(artifactId, version, ['None'], '', module.type);
-            const moduleNode: DependenciesTreeNode = new DependenciesTreeNode(
-                moduleGeneralInfo,
-                vscode.TreeItemCollapsibleState.Collapsed,
-                undefined,
-                ''
-            );
+            const moduleNode: CiTitleNode = new CiTitleNode(moduleGeneralInfo, vscode.TreeItemCollapsibleState.Collapsed, undefined);
 
             // Populate artifacts
             if (BuildsUtils.isArrayExistsAndNotEmpty(module, CiTitleNode.ARTIFACTS_NODE)) {
@@ -88,13 +83,24 @@ export class CiManager {
                 moduleNode.addChild(dependenciesNode);
                 this.populateDependencies(dependenciesNode, module);
             }
-            node.addChild(moduleNode);
+
+            if (moduleNode.children.length > 0) {
+                modulesRoot.addChild(moduleNode);
+            }
         }
     }
 
     public populateArtifacts(artifactsNode: DependenciesTreeNode, module: any): void {
         for (const artifact of module.artifacts) {
-            const artifactGeneralInfo: GeneralInfo = new GeneralInfo(artifact.name, '', ['None'], '', artifact.type, artifact.sha1, artifact.sha256);
+            const artifactGeneralInfo: GeneralInfo = new GeneralInfo(
+                BuildsUtils.getArtifactIdFromCompId(artifact.name),
+                BuildsUtils.getVersionFromCompId(artifact.name),
+                ['None'],
+                '',
+                artifact.type,
+                artifact.sha1,
+                artifact.sha256
+            );
             const artifactNode: DependenciesTreeNode = new DependenciesTreeNode(
                 artifactGeneralInfo,
                 vscode.TreeItemCollapsibleState.None,
@@ -110,7 +116,7 @@ export class CiManager {
         let parentToChildren: Map<string, Dependency[]> = new Map<string, Dependency[]>();
         for (const dependency of module.dependencies) {
             let requestedBy: string[][] = dependency.requestedBy;
-            if (!(BuildsUtils.isArrayExistsAndNotEmpty(module, 'dependencies') && requestedBy && !!requestedBy[0].length)) {
+            if (!(BuildsUtils.isArrayExistsAndNotEmpty(module, CiTitleNode.DEPENDENCIES_NODE) && requestedBy && !!requestedBy[0].length)) {
                 // If no requested by, add dependency and exit.
                 directDependencies.add(dependency);
                 continue;
@@ -135,8 +141,8 @@ export class CiManager {
 
     private populateTransitiveDependencies(dependency: Dependency, parentToChildren: Map<string, Dependency[]>): DependenciesTreeNode {
         let dependencyGeneralInfo: GeneralInfo = new GeneralInfo(
-            dependency.id,
-            '',
+            BuildsUtils.getArtifactIdFromCompId(dependency.id),
+            BuildsUtils.getVersionFromCompId(dependency.id),
             dependency.scopes || ['None'],
             '',
             dependency.type,
@@ -255,7 +261,7 @@ export class CiManager {
     }
 
     private addUnknownLicenseToMissingNode(node: DependenciesTreeNode) {
-        node.licenses.add(new License([], [], License.UNKNOWN_LICENSE, License.UNKNOWN_LICENSE_FULL_NAME));
+        node.licenses.add(new License([], [], License.UNKNOWN_LICENSE_FULL_NAME, License.UNKNOWN_LICENSE));
     }
 
     public populateTreeWithUnknownIssues(modulesTree: DependenciesTreeNode) {
