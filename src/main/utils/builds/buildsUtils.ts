@@ -54,10 +54,18 @@ export class BuildsUtils {
     }
 
     public static getArtifactIdFromCompId(componentId: string): string {
-        return componentId.substring(0, componentId.lastIndexOf(':'));
+        const sep :number = componentId.lastIndexOf(':');
+        if (sep < 0) {
+            return componentId;
+        }
+        return componentId.substring(0, sep);
     }
 
     public static getVersionFromCompId(componentId: string): string {
+        const sep :number = componentId.lastIndexOf(':');
+        if (sep < 0) {
+            return '';
+        }
         return componentId.substring(componentId.lastIndexOf(':') + 1);
     }
 

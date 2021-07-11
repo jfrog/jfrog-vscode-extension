@@ -53,6 +53,7 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
             await this.repopulateTree(quickScan, credentialsSet, onChangeFire);
             vscode.commands.executeCommand('jfrog.xray.focus');
             this._treesManager.logManager.setSuccess();
+            this._treesManager.logManager.logMessage('Done loading builds details.', 'INFO');
         } catch (error) {
             if (error.message !== CiManager.CI_CANCELLATION_ERROR) {
                 // Unexpected error

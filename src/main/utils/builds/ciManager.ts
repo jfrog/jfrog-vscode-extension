@@ -76,25 +76,23 @@ export class CiManager {
             );
 
             // Populate artifacts
-            const artifactsNode: DependenciesTreeNode = BuildsUtils.createArtifactsNode();
-            moduleNode.addChild(artifactsNode);
-            this.populateArtifacts(artifactsNode, module);
+            if (BuildsUtils.isArrayExistsAndNotEmpty(module, BuildsUtils.ARTIFACTS_NODE)) {
+                const artifactsNode: DependenciesTreeNode = BuildsUtils.createArtifactsNode();
+                moduleNode.addChild(artifactsNode);
+                this.populateArtifacts(artifactsNode, module);
+            }
 
             // Populate dependencies
-            const dependenciesNode: DependenciesTreeNode = BuildsUtils.createDependenciesNode();
-            moduleNode.addChild(dependenciesNode);
-            this.populateDependencies(dependenciesNode, module);
-
+            if (BuildsUtils.isArrayExistsAndNotEmpty(module, BuildsUtils.DEPENDENCIES_NODE)) {
+                const dependenciesNode: DependenciesTreeNode = BuildsUtils.createDependenciesNode();
+                moduleNode.addChild(dependenciesNode);
+                this.populateDependencies(dependenciesNode, module);
+            }
             node.addChild(moduleNode);
         }
     }
 
     public populateArtifacts(artifactsNode: DependenciesTreeNode, module: any): void {
-        if (!BuildsUtils.isArrayExistsAndNotEmpty(module, 'artifacts')) {
-            artifactsNode.collapsibleState = vscode.TreeItemCollapsibleState.None;
-            return;
-        }
-
         for (const artifact of module.artifacts) {
             const artifactGeneralInfo: GeneralInfo = new GeneralInfo(artifact.name, '', ['None'], '', artifact.type, artifact.sha1, artifact.sha256);
             const artifactNode: DependenciesTreeNode = new DependenciesTreeNode(
@@ -108,11 +106,6 @@ export class CiManager {
     }
 
     public populateDependencies(dependenciesNode: DependenciesTreeNode, module: any): void {
-        if (!BuildsUtils.isArrayExistsAndNotEmpty(module, 'dependencies')) {
-            dependenciesNode.collapsibleState = vscode.TreeItemCollapsibleState.None;
-            return;
-        }
-
         let directDependencies: Set<Dependency> = new Set<Dependency>();
         let parentToChildren: Map<string, Dependency[]> = new Map<string, Dependency[]>();
         for (const dependency of module.dependencies) {
