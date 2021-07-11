@@ -5,7 +5,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { LicensesFilter } from './licensesFilter';
 import { ScopesFilter } from './scopeFilter';
 import { SeverityFilter as SeveritiesFilter } from './severitiesFilter';
-import { BuildsNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/buildsTree';
+import { BuildsNode } from '../treeDataProviders/dependenciesTree/ciNodes/buildsTree';
 
 enum FilterTypes {
     SEVERITY = '$(alert)   Issues severity',

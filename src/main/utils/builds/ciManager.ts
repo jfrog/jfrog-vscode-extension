@@ -4,7 +4,7 @@ import { SemVer } from 'semver';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ConnectionUtils } from '../../connect/connectionUtils';
-import { BuildsNode } from '../../treeDataProviders/dependenciesTree/dependenciesRoot/buildsTree';
+import { BuildsNode } from '../../treeDataProviders/dependenciesTree/ciNodes/buildsTree';
 import { DependenciesTreeNode } from '../../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../treeDataProviders/treesManager';
 import { BuildGeneralInfo } from '../../types/buildGeneralinfo';
@@ -16,6 +16,7 @@ import { Translators } from '../translators';
 import { BuildsScanCache, Type } from './buildsScanCache';
 import { BuildsUtils } from './buildsUtils';
 import { License } from '../../types/license';
+import { CiTitleNode } from '../../treeDataProviders/dependenciesTree/ciNodes/ciTitleNode';
 
 /**
  * Manage the filters of the components tree.
@@ -47,13 +48,12 @@ export class CiManager {
         let bgi: BuildGeneralInfo = BuildsUtils.createBuildGeneralInfo(build, this._treesManager.logManager);
         const buildTree: BuildsNode = new BuildsNode(bgi);
         parent.addChild(buildTree);
-        const modulesTree: DependenciesTreeNode = new DependenciesTreeNode(
-            new GeneralInfo('modules', '', ['None'], '', ''),
+        const modulesTree: DependenciesTreeNode = new CiTitleNode(
+            new GeneralInfo(CiTitleNode.MODULES_NODE, '', ['None'], '', 'Build Modules'),
             vscode.TreeItemCollapsibleState.Expanded,
-            parent,
-            ''
+            parent
         );
-        if (BuildsUtils.isArrayExistsAndNotEmpty(build, 'modules')) {
+        if (BuildsUtils.isArrayExistsAndNotEmpty(build, CiTitleNode.MODULES_NODE)) {
             this.populateModulesDependencyTree(build, modulesTree);
         }
 
@@ -76,14 +76,14 @@ export class CiManager {
             );
 
             // Populate artifacts
-            if (BuildsUtils.isArrayExistsAndNotEmpty(module, BuildsUtils.ARTIFACTS_NODE)) {
+            if (BuildsUtils.isArrayExistsAndNotEmpty(module, CiTitleNode.ARTIFACTS_NODE)) {
                 const artifactsNode: DependenciesTreeNode = BuildsUtils.createArtifactsNode();
                 moduleNode.addChild(artifactsNode);
                 this.populateArtifacts(artifactsNode, module);
             }
 
             // Populate dependencies
-            if (BuildsUtils.isArrayExistsAndNotEmpty(module, BuildsUtils.DEPENDENCIES_NODE)) {
+            if (BuildsUtils.isArrayExistsAndNotEmpty(module, CiTitleNode.DEPENDENCIES_NODE)) {
                 const dependenciesNode: DependenciesTreeNode = BuildsUtils.createDependenciesNode();
                 moduleNode.addChild(dependenciesNode);
                 this.populateDependencies(dependenciesNode, module);
@@ -200,7 +200,7 @@ export class CiManager {
         // Populate the build modules
         for (const module of modulesTree.children) {
             for (const artifactsOrDep of module.children) {
-                const isArtifactNode: boolean = artifactsOrDep.generalInfo.artifactId === BuildsUtils.ARTIFACTS_NODE;
+                const isArtifactNode: boolean = artifactsOrDep.generalInfo.artifactId === CiTitleNode.ARTIFACTS_NODE;
                 for (const child of artifactsOrDep.children) {
                     this.populateComponents(child, sha1ToComponent, sha1ToSha256, componentIssuesAndLicenses, isArtifactNode);
                 }

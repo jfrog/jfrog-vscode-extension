@@ -8,7 +8,7 @@ import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { CiManager } from '../../utils/builds/ciManager';
 import { BuildGeneralInfo, Status } from '../../types/buildGeneralinfo';
 import { Configuration } from '../../utils/configuration';
-import { BuildsNode } from './dependenciesRoot/buildsTree';
+import { BuildsNode } from './ciNodes/buildsTree';
 import { BuildsUtils } from '../../utils/builds/buildsUtils';
 import * as Collections from 'typescript-collections';
 import { License } from '../../types/license';

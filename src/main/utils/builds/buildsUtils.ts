@@ -5,13 +5,12 @@ import { BuildGeneralInfo, Status } from '../../types/buildGeneralinfo';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Vcs } from '../../types/vcs';
 import { IconsPaths } from '../iconsPaths';
+import { CiTitleNode } from '../../treeDataProviders/dependenciesTree/ciNodes/ciTitleNode';
 
 export class BuildsUtils {
     public static readonly BUILD_STATUS_PROP: string = 'buildInfo.env.JFROG_BUILD_STATUS';
 
     public static readonly BUILD_RET_ERR_FMT: string = "Couldn't retrieve build information for build '%s/%s'.";
-    public static readonly DEPENDENCIES_NODE: string = 'dependencies';
-    public static readonly ARTIFACTS_NODE: string = 'artifacts';
 
     public static createBuildGeneralInfo(build: any, logger: LogManager): BuildGeneralInfo {
         let vcsList: Vcs[] = build.vcs;
@@ -36,25 +35,23 @@ export class BuildsUtils {
     }
 
     public static createArtifactsNode(): DependenciesTreeNode {
-        return new DependenciesTreeNode(
-            new GeneralInfo(BuildsUtils.ARTIFACTS_NODE, '', ['None'], '', 'Module artifacts'),
+        return new CiTitleNode(
+            new GeneralInfo(CiTitleNode.ARTIFACTS_NODE, '', ['None'], '', 'Module Artifacts'),
             vscode.TreeItemCollapsibleState.Collapsed,
-            undefined,
-            ''
+            undefined
         );
     }
 
     public static createDependenciesNode(): DependenciesTreeNode {
-        return new DependenciesTreeNode(
-            new GeneralInfo(BuildsUtils.DEPENDENCIES_NODE, '', ['None'], '', 'Module dependencies'),
+        return new CiTitleNode(
+            new GeneralInfo(CiTitleNode.DEPENDENCIES_NODE, '', ['None'], '', 'Module Dependencies'),
             vscode.TreeItemCollapsibleState.Collapsed,
-            undefined,
-            ''
+            undefined
         );
     }
 
     public static getArtifactIdFromCompId(componentId: string): string {
-        const sep :number = componentId.lastIndexOf(':');
+        const sep: number = componentId.lastIndexOf(':');
         if (sep < 0) {
             return componentId;
         }
@@ -62,7 +59,7 @@ export class BuildsUtils {
     }
 
     public static getVersionFromCompId(componentId: string): string {
-        const sep :number = componentId.lastIndexOf(':');
+        const sep: number = componentId.lastIndexOf(':');
         if (sep < 0) {
             return '';
         }

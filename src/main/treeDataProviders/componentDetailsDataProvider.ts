@@ -3,8 +3,9 @@ import * as vscode from 'vscode';
 import { License } from '../types/license';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from './utils/treeDataHolder';
-import { BuildsNode } from './dependenciesTree/dependenciesRoot/buildsTree';
+import { BuildsNode } from './dependenciesTree/ciNodes/buildsTree';
 import { BuildGeneralInfo, Status } from '../types/buildGeneralinfo';
+import { CiTitleNode } from './dependenciesTree/ciNodes/ciTitleNode';
 
 /**
  * The component details tree.
@@ -48,10 +49,11 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
             return Promise.resolve(this.getBuildChildren());
         }
         // Component details node
-        let children: (TreeDataHolder | LicensesNode)[] = [
-            new TreeDataHolder('Artifact', this._selectedNode.generalInfo.artifactId),
-            new TreeDataHolder('Version', this._selectedNode.generalInfo.version)
-        ];
+        let children: (TreeDataHolder | LicensesNode)[] = [new TreeDataHolder('Artifact', this._selectedNode.generalInfo.artifactId)];
+        if (!(this._selectedNode instanceof CiTitleNode)) {
+            children.push(new TreeDataHolder('Version', this._selectedNode.generalInfo.version));
+        }
+
         children.push(new TreeDataHolder('Type', this._selectedNode.generalInfo.pkgType));
         const scopes: string[] = this._selectedNode.generalInfo.scopes;
         if (scopes.length > 0 && !this.isNoneScope(scopes)) {
@@ -62,7 +64,9 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
         if (path) {
             children.push(new TreeDataHolder('Path', path));
         }
-        children.push(new LicensesNode(this._selectedNode.licenses));
+        if (!(this._selectedNode instanceof CiTitleNode)) {
+            children.push(new LicensesNode(this._selectedNode.licenses));
+        }
         return Promise.resolve(children);
     }
 
