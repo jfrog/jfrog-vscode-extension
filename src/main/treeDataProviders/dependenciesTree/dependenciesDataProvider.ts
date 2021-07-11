@@ -139,7 +139,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 // If it's not a cancellation error, throw it up
                 throw error;
             }
-            vscode.window.showErrorMessage(error.toString());
+            vscode.window.showErrorMessage(error.message);
         }
     }
 

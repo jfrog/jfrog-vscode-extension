@@ -278,7 +278,7 @@ export class CiManager {
             await this.buildCiTree(pattern, progress, checkCanceled);
         } catch (error) {
             vscode.window.showErrorMessage('Could not build CI tree.', <vscode.MessageOptions>{ modal: false });
-            this._treesManager.logManager.logMessage(error.stdout.toString(), 'ERR', true);
+            this._treesManager.logManager.logMessage(error.message, 'ERR', true);
         }
     }
 
@@ -312,7 +312,7 @@ export class CiManager {
                 // If it's not a cancellation error, throw it up
                 throw error;
             }
-            vscode.window.showErrorMessage(error.toString());
+            vscode.window.showErrorMessage(error.message);
         }
     }
 
@@ -351,7 +351,7 @@ export class CiManager {
                 throw error;
             }
             vscode.window.showErrorMessage('Could not download build info.', <vscode.MessageOptions>{ modal: false });
-            this._treesManager.logManager.logMessage(error.stdout.toString(), 'ERR', true);
+            this._treesManager.logManager.logMessage(error.message, 'ERR', true);
         } finally {
             progress.report({ message: `${buildsNum} builds`, increment: 100 / (buildsNum * 2) });
         }
@@ -416,7 +416,7 @@ export class CiManager {
                 // If it's not a cancellation error, throw it up
                 throw error;
             }
-            this._treesManager.logManager.logMessage('Could not get build details from xray: ' + error.stdout.toString(), 'ERR', true);
+            this._treesManager.logManager.logMessage('Could not get build details from xray: ' + error.message, 'ERR', true);
         } finally {
             this.addResults(buildGeneralInfo);
             progress.report({ message: `${buildsNum} builds`, increment: 100 / (buildsNum * 2) });

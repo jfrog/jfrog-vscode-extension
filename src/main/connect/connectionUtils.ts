@@ -90,7 +90,7 @@ export class ConnectionUtils {
             let xrayVersion: string = await ConnectionUtils.testXrayVersion(jfrogClient);
             vscode.window.showInformationMessage(xrayVersion);
         } catch (error) {
-            vscode.window.showErrorMessage(error.toString(), <vscode.MessageOptions>{ modal: true });
+            vscode.window.showErrorMessage(error.message, <vscode.MessageOptions>{ modal: true });
             return Promise.resolve(false);
         }
         return Promise.resolve(true);

@@ -125,7 +125,7 @@ export class CommandManager implements ExtensionComponent {
                 this._treesManager.treeDataProviderManager.removeNode(dependenciesTreeNode);
             } catch (error) {
                 vscode.window.showErrorMessage('Could not update dependency version.', <vscode.MessageOptions>{ modal: false });
-                this._treesManager.logManager.logMessage(error.stdout.toString(), 'ERR', true);
+                this._treesManager.logManager.logMessage(error.message, 'ERR', true);
             }
         }, 'Updating ' + dependenciesTreeNode.generalInfo.getComponentId());
     }
