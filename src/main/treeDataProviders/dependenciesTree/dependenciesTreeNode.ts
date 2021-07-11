@@ -118,6 +118,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         clone.licenses = this.licenses;
         clone.issues = this.issues;
         clone.topIssue = this.topIssue;
+        clone.contextValue = this.contextValue;
     }
 
     private setIssuesComponent() {
