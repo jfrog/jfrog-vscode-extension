@@ -19,6 +19,6 @@ export class Configuration {
     }
 
     public static getBuildsPattern(): string {
-        return vscode.workspace.getConfiguration('jfrog').get('xray.ciIntegration.BuildNamePattern') || '';
+        return vscode.workspace.getConfiguration('jfrog').get('xray.ciIntegration.buildNamePattern') || '';
     }
 }
