@@ -100,7 +100,12 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
     public loadBuild(buildGeneralInfo: BuildGeneralInfo, onChangeFire: () => void) {
         try {
             this.clearDisplayedTree();
-            new CiManager(this._treesManager).loadBuildTree(buildGeneralInfo.artifactId, buildGeneralInfo.version, this._dependenciesTree);
+            new CiManager(this._treesManager).loadBuildTree(
+                buildGeneralInfo.startedTimestamp,
+                buildGeneralInfo.artifactId,
+                buildGeneralInfo.version,
+                this._dependenciesTree
+            );
             this.fillFilters(this._dependenciesTree);
             onChangeFire();
         } catch (error) {

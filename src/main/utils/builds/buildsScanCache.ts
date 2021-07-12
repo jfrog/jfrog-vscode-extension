@@ -28,8 +28,16 @@ export class BuildsScanCache {
         return Buffer.from(str).toString('base64');
     }
 
+    /**
+     * Clean up old builds.
+     * Sorting by the timestamp prefix, deleting from the beginning (oldest).
+     * @private
+     */
     private cleanUpOldBuilds(): void {
-        const currentBuildScanCaches: string[] = fs.readdirSync(this.buildsDir).sort();
+        const currentBuildScanCaches: string[] = fs
+            .readdirSync(this.buildsDir)
+            .sort()
+            .reverse();
         for (let i: number = BuildsScanCache.MAX_FILES; i < currentBuildScanCaches.length; i++) {
             const pathToDelete: string = path.resolve(this.buildsDir, currentBuildScanCaches[i]);
             this._logger.logMessage('Deleting ' + pathToDelete, 'DEBUG');
@@ -37,14 +45,14 @@ export class BuildsScanCache {
         }
     }
 
-    public save(content: string, buildName: string, buildNumber: string, type: Type): void {
+    public save(content: string, timestamp: string, buildName: string, buildNumber: string, type: Type): void {
         let zip: AdmZip = new AdmZip();
         zip.addFile(type.toString(), Buffer.alloc(content.length, content));
-        zip.writeZip(this.getZipPath(buildName, buildNumber, type));
+        zip.writeZip(this.getZipPath(timestamp, buildName, buildNumber, type));
     }
 
-    public load(buildName: string, buildNumber: string, type: Type): any {
-        const buildPath: string = this.getZipPath(buildName, buildNumber, type);
+    public load(timestamp: string, buildName: string, buildNumber: string, type: Type): any {
+        const buildPath: string = this.getZipPath(timestamp, buildName, buildNumber, type);
         if (!fs.existsSync(buildPath)) {
             return '';
         }
@@ -58,24 +66,32 @@ export class BuildsScanCache {
         throw new Error('Could not find expected content in archive in cache');
     }
 
-    public loadBuildInfo(buildName: string, buildNumber: string): any {
-        let build: any = this.load(buildName, buildNumber, Type.BUILD_INFO);
+    public loadBuildInfo(timestamp: string, buildName: string, buildNumber: string): any {
+        let build: any = this.load(timestamp, buildName, buildNumber, Type.BUILD_INFO);
         if (!build) {
             return null;
         }
         return JSON.parse(build);
     }
 
-    public loadScanResults(buildName: string, buildNumber: string): IDetailsResponse | null {
-        let response: any = this.load(buildName, buildNumber, Type.BUILD_SCAN_RESULTS);
+    public loadScanResults(timestamp: string, buildName: string, buildNumber: string): IDetailsResponse | null {
+        let response: any = this.load(timestamp, buildName, buildNumber, Type.BUILD_SCAN_RESULTS);
         if (!response) {
             return null;
         }
         return Object.assign({} as IDetailsResponse, JSON.parse(response));
     }
 
-    public getZipPath(buildName: string, buildNumber: string, type: Type): string {
+    /**
+     * Returns the expected file path to the zip in cache.
+     * Zip name for example: '012345_0<base64 build name>.zip'
+     * @param timestamp
+     * @param buildName
+     * @param buildNumber
+     * @param type - build info or build scan results
+     */
+    public getZipPath(timestamp: string, buildName: string, buildNumber: string, type: Type): string {
         const buildIdentifier: string = buildName + '_' + buildNumber;
-        return path.resolve(this.buildsDir, type.toString() + this.getNameInBase64(buildIdentifier) + '.zip');
+        return path.resolve(this.buildsDir, timestamp + '_' + type.toString() + this.getNameInBase64(buildIdentifier) + '.zip');
     }
 }

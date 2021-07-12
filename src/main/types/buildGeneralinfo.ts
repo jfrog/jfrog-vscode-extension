@@ -21,8 +21,12 @@ export class BuildGeneralInfo extends GeneralInfo {
         super(_artifactId, _version || '', _scopes || [], _path || '', _pkgType || '');
     }
 
-    get started(): string {
+    get startedReadable(): string {
         return this._started?.toLocaleString() || '';
+    }
+
+    get startedTimestamp(): string {
+        return this._started?.getTime().toString() || '';
     }
 
     set started(value: string) {

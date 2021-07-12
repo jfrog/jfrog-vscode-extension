@@ -37,8 +37,8 @@ export class CiManager {
         }
     }
 
-    public loadBuildTree(buildName: string, buildNumber: string, parent: DependenciesTreeNode) {
-        const build: any = this.buildsCache.loadBuildInfo(buildName, buildNumber);
+    public loadBuildTree(timestamp: string, buildName: string, buildNumber: string, parent: DependenciesTreeNode) {
+        const build: any = this.buildsCache.loadBuildInfo(timestamp, buildName, buildNumber);
         if (!build) {
             throw new Error(`Couldn't find build info object in cache for '${buildName}/${buildNumber}'.`);
         }
@@ -56,7 +56,7 @@ export class CiManager {
         }
 
         // If the build was scanned by Xray, load Xray 'details/build' response from cache.
-        let detailsResponse: IDetailsResponse | null = this.buildsCache.loadScanResults(buildName, buildNumber);
+        let detailsResponse: IDetailsResponse | null = this.buildsCache.loadScanResults(timestamp, buildName, buildNumber);
         this.populateBuildDependencyTree(detailsResponse, modulesTree);
         modulesTree.issues = modulesTree.processTreeIssues();
     }
@@ -340,9 +340,14 @@ export class CiManager {
         try {
             checkCanceled();
             const buildName: string = decodeURIComponent(searchEntry.path);
-            const buildNumber: string = searchEntry.name.split('-', 1)[0];
+            const split: string[] = searchEntry.name.split('-');
+            if (split.length !== 2) {
+                throw new Error('unexpected build artifact name');
+            }
+            const buildNumber: string = split[0];
+            const timestamp: string = split[1];
 
-            let build: any = buildsCache.loadBuildInfo(buildName, buildNumber);
+            let build: any = buildsCache.loadBuildInfo(timestamp, buildName, buildNumber);
             if (!build) {
                 build = await this.downloadBuildInfo(searchEntry, buildsCache);
             }
@@ -376,7 +381,8 @@ export class CiManager {
         const artifactPath: string = CiManager.BUILD_INFO_REPO + searchEntry.path + '/' + searchEntry.name;
         try {
             const build: any = await this._treesManager.connectionManager.downloadArtifact(artifactPath);
-            buildsCache.save(JSON.stringify(build), build.name, build.number, Type.BUILD_INFO);
+            const timestamp: string = Date.parse(build.started).toString();
+            buildsCache.save(JSON.stringify(build), timestamp, build.name, build.number, Type.BUILD_INFO);
             return build;
         } catch (error) {
             this._treesManager.logManager.logMessage(
@@ -388,6 +394,7 @@ export class CiManager {
     }
 
     private async downloadBuildDetails(buildGeneralInfo: BuildGeneralInfo, buildsCache: BuildsScanCache): Promise<void> {
+        let timestamp: string = buildGeneralInfo.startedTimestamp;
         let buildName: string = buildGeneralInfo.artifactId;
         let buildNumber: string = buildGeneralInfo.version;
         const detailsResponse: IDetailsResponse = await this._treesManager.connectionManager.downloadBuildDetails(buildName, buildNumber);
@@ -401,7 +408,7 @@ export class CiManager {
             }
             return;
         }
-        buildsCache.save(JSON.stringify(detailsResponse), buildName, buildNumber, Type.BUILD_SCAN_RESULTS);
+        buildsCache.save(JSON.stringify(detailsResponse), timestamp, buildName, buildNumber, Type.BUILD_SCAN_RESULTS);
     }
 
     private addResults(bgi: BuildGeneralInfo): void {
@@ -423,8 +430,9 @@ export class CiManager {
             }
             const buildName: string = buildGeneralInfo.artifactId;
             const buildNumber: string = buildGeneralInfo.version;
+            const timestamp: string = buildGeneralInfo.startedTimestamp;
             checkCanceled();
-            if (!buildsCache.loadScanResults(buildName, buildNumber)) {
+            if (!buildsCache.loadScanResults(timestamp, buildName, buildNumber)) {
                 await this.downloadBuildDetails(buildGeneralInfo, buildsCache);
             }
         } catch (error) {
