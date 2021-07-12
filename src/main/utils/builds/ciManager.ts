@@ -301,12 +301,23 @@ export class CiManager {
 
             const producerQueue: PQueue = new PQueue({ concurrency: 1 });
             const consumerQueue: PQueue = new PQueue({ concurrency: 1 });
+            let xraySupported: boolean = await this.isXraySupportedForCI();
             for (const entry of searchResult.results) {
                 checkCanceled();
-                await producerQueue.add(() =>
-                    this.getBuildInfoAndProduce(entry, consumerQueue, this.buildsCache, progress, checkCanceled, searchResult.results.length)
+                producerQueue.add(() =>
+                    this.getBuildInfoAndProduce(
+                        entry,
+                        consumerQueue,
+                        this.buildsCache,
+                        progress,
+                        checkCanceled,
+                        searchResult.results.length,
+                        xraySupported
+                    )
                 );
             }
+            await producerQueue.onEmpty();
+            await consumerQueue.onEmpty();
         } catch (error) {
             if (error.message === CiManager.CI_CANCELLATION_ERROR.message) {
                 // If it's not a cancellation error, throw it up
@@ -322,7 +333,8 @@ export class CiManager {
         buildsCache: BuildsScanCache,
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void,
-        buildsNum: number
+        buildsNum: number,
+        xraySupported: boolean
     ): Promise<void> {
         try {
             checkCanceled();
@@ -333,10 +345,10 @@ export class CiManager {
             if (!build) {
                 build = await this.downloadBuildInfo(searchEntry, buildsCache);
             }
-            if (!build) {
+            if (!build || !xraySupported) {
                 return;
             }
-            await consumerQueue.add(() =>
+            consumerQueue.add(() =>
                 this.handleXrayBuildDetails(
                     BuildsUtils.createBuildGeneralInfo(build, this._treesManager.logManager),
                     buildsCache,
@@ -402,9 +414,6 @@ export class CiManager {
         buildsNum: number
     ): Promise<void> {
         try {
-            if (!(await this.isXraySupportedForCI())) {
-                return;
-            }
             const buildName: string = buildGeneralInfo.artifactId;
             const buildNumber: string = buildGeneralInfo.version;
             checkCanceled();
