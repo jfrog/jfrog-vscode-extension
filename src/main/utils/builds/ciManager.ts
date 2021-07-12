@@ -439,7 +439,7 @@ export class CiManager {
     private static createAqlForBuildArtifacts(buildsPattern: string): string {
         let encodedBuildPattern: string = encodeURIComponent(buildsPattern);
         // The following is a workaround, since Artifactory does not yet support '%' in AQL
-        encodedBuildPattern = encodedBuildPattern.replace('%', '?');
+        encodedBuildPattern = encodedBuildPattern.replace(/%/g, '?');
         return (
             `items.find({` +
             `\"repo\":\"artifactory-build-info\",` +
