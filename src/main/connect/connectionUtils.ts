@@ -1,12 +1,14 @@
 import * as http2 from 'http2';
+import { ComponentDetails, IJfrogClientConfig, IProxyConfig, ISummaryRequestModel, IXrayVersion, JfrogClient } from 'jfrog-client-js';
 import * as semver from 'semver';
+import { SemVer } from 'semver';
 import { URL } from 'url';
 import * as vscode from 'vscode';
-import { ComponentDetails, IProxyConfig, ISummaryRequestModel, IXrayVersion, JfrogClient, IJfrogClientConfig } from 'jfrog-client-js';
-import { SemVer } from 'semver';
+import { LogManager } from '../log/logManager';
 
 export class ConnectionUtils {
-    private static readonly MINIMAL_XRAY_VERSION_SUPPORTED: any = semver.coerce('1.7.2.3');
+    private static readonly MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI: any = semver.coerce('3.21.2');
+    private static readonly MINIMAL_XRAY_VERSION_SUPPORTED: any = semver.coerce('2.5.0');
     private static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
 
     /**
@@ -104,6 +106,22 @@ export class ConnectionUtils {
             );
         }
         return Promise.resolve('Successfully connected to Xray version: ' + xrayVersion);
+    }
+
+    public static async testXrayVersionForCi(jfrogClient: JfrogClient, logger: LogManager): Promise<boolean> {
+        let xrayVersion: string = await this.getXrayVersion(jfrogClient);
+        if (!(await this.isXrayVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI))) {
+            logger.logMessage(
+                'Unsupported Xray version for builds scan: ' +
+                    xrayVersion +
+                    ', version ' +
+                    ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI +
+                    ' or above is required. Scanning builds without Xray results...',
+                'WARN'
+            );
+            return false;
+        }
+        return true;
     }
 
     public static async isXrayVersionCompatible(curXrayVersion: string, minXrayVersion: SemVer): Promise<boolean> {

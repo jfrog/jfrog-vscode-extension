@@ -1,22 +1,21 @@
-import { IAqlSearchResult, IArtifact, IDetailsResponse, IGeneral, IIssue, ILicense, ISearchEntry, JfrogClient } from 'jfrog-client-js';
+import { IAqlSearchResult, IArtifact, IDetailsResponse, IGeneral, IIssue, ILicense, ISearchEntry } from 'jfrog-client-js';
 import PQueue from 'p-queue';
-import { SemVer } from 'semver';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ConnectionUtils } from '../../connect/connectionUtils';
 import { BuildsNode } from '../../treeDataProviders/dependenciesTree/ciNodes/buildsTree';
+import { CiTitleNode } from '../../treeDataProviders/dependenciesTree/ciNodes/ciTitleNode';
 import { DependenciesTreeNode } from '../../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../treeDataProviders/treesManager';
 import { BuildGeneralInfo } from '../../types/buildGeneralinfo';
 import { Dependency } from '../../types/dependency';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Issue } from '../../types/issue';
+import { License } from '../../types/license';
 import { Configuration } from '../configuration';
 import { Translators } from '../translators';
 import { BuildsScanCache, Type } from './buildsScanCache';
 import { BuildsUtils } from './buildsUtils';
-import { License } from '../../types/license';
-import { CiTitleNode } from '../../treeDataProviders/dependenciesTree/ciNodes/ciTitleNode';
 
 /**
  * Manage the filters of the components tree.
@@ -24,7 +23,6 @@ import { CiTitleNode } from '../../treeDataProviders/dependenciesTree/ciNodes/ci
 export class CiManager {
     private static readonly BUILD_INFO_REPO: string = '/artifactory-build-info/';
     private static readonly DISPLAY_BUILDS_NUM: string = '100';
-    public static readonly MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI: string = '3.21.2';
     public static readonly CI_CANCELLATION_ERROR: Error = new Error('Loading builds scan cancelled');
 
     private readonly buildsCache: BuildsScanCache;
@@ -301,7 +299,10 @@ export class CiManager {
 
             const producerQueue: PQueue = new PQueue({ concurrency: 1 });
             const consumerQueue: PQueue = new PQueue({ concurrency: 1 });
-            let xraySupported: boolean = await this.isXraySupportedForCI();
+            let xraySupported: boolean = await ConnectionUtils.testXrayVersionForCi(
+                this._treesManager.connectionManager.createJfrogClient(),
+                this._treesManager.logManager
+            );
             for (const entry of searchResult.results) {
                 checkCanceled();
                 producerQueue.add(() =>
@@ -345,7 +346,8 @@ export class CiManager {
             if (!build) {
                 build = await this.downloadBuildInfo(searchEntry, buildsCache);
             }
-            if (!build || !xraySupported) {
+            if (!build) {
+                progress.report({ message: `${buildsNum} builds`, increment: 100 / (buildsNum * 2) });
                 return;
             }
             consumerQueue.add(() =>
@@ -354,7 +356,8 @@ export class CiManager {
                     buildsCache,
                     progress,
                     checkCanceled,
-                    buildsNum
+                    buildsNum,
+                    xraySupported
                 )
             );
         } catch (error) {
@@ -411,9 +414,13 @@ export class CiManager {
         buildsCache: BuildsScanCache,
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void,
-        buildsNum: number
+        buildsNum: number,
+        xraySupported: boolean
     ): Promise<void> {
         try {
+            if (!xraySupported) {
+                return;
+            }
             const buildName: string = buildGeneralInfo.artifactId;
             const buildNumber: string = buildGeneralInfo.version;
             checkCanceled();
@@ -442,12 +449,6 @@ export class CiManager {
         .include(\"name\",\"repo\",\"path\",\"created\")
         .sort({\"$desc\":[\"created\"]})
         .limit(${CiManager.DISPLAY_BUILDS_NUM})`;
-    }
-
-    private async isXraySupportedForCI(): Promise<boolean> {
-        const jfrogClient: JfrogClient = this._treesManager.connectionManager.createJfrogClient();
-        let xrayVersion: string = await ConnectionUtils.getXrayVersion(jfrogClient);
-        return await ConnectionUtils.isXrayVersionCompatible(xrayVersion, new SemVer(CiManager.MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI));
     }
 }
 
