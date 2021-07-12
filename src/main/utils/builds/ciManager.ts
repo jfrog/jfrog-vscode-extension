@@ -347,24 +347,14 @@ export class CiManager {
             const buildNumber: string = split[0];
             const timestamp: string = split[1];
 
-            let build: any = buildsCache.loadBuildInfo(timestamp, buildName, buildNumber);
-            if (!build) {
-                build = await this.downloadBuildInfo(searchEntry, buildsCache);
-            }
+            let build: any = buildsCache.loadBuildInfo(timestamp, buildName, buildNumber) || (await this.downloadBuildInfo(searchEntry, buildsCache));
+            let buildGeneralInfo: BuildGeneralInfo = BuildsUtils.createBuildGeneralInfo(build, this._treesManager.logManager);
             if (!build) {
                 progress.report({ message: `${buildsNum} builds`, increment: 100 / (buildsNum * 2) });
                 return;
             }
-            consumerQueue.add(() =>
-                this.handleXrayBuildDetails(
-                    BuildsUtils.createBuildGeneralInfo(build, this._treesManager.logManager),
-                    buildsCache,
-                    progress,
-                    checkCanceled,
-                    buildsNum,
-                    xraySupported
-                )
-            );
+            this.addResults(buildGeneralInfo);
+            consumerQueue.add(() => this.handleXrayBuildDetails(buildGeneralInfo, buildsCache, progress, checkCanceled, buildsNum, xraySupported));
         } catch (error) {
             if (error.message === CiManager.CI_CANCELLATION_ERROR.message) {
                 // If it's not a cancellation error, throw it up
@@ -442,7 +432,6 @@ export class CiManager {
             }
             this._treesManager.logManager.logMessage('Could not get build details from xray: ' + error.message, 'ERR', true);
         } finally {
-            this.addResults(buildGeneralInfo);
             progress.report({ message: `${buildsNum} builds`, increment: 100 / (buildsNum * 2) });
         }
     }
