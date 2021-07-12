@@ -261,7 +261,7 @@ Read the [Setting up CI Integration](https://www.jfrog.com/confluence/display/JF
 ### Displaying Build Information
 Set your CI build name in the Build name pattern field at the [Extension Settings](#extension-settings). This is the name of the build published to Artifactory by your CI pipeline. You have the option of setting * to view all the builds published to Artifactory.
 
-After your builds were fetched from Artifactory, press on the Builds ![Builds](resources/light/build.png) button choose what build to display.
+After your builds were fetched from Artifactory, press on the Builds ![Builds](resources/light/build.png) button to choose what build to display.
 
 ![CI](resources/readme/gifs/ci.gif)
 
