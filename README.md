@@ -26,7 +26,7 @@
   - [.NET Projects](#net-projects)
 - [The CI View](#the-ci-view)
   - [How Does It Work](#how-does-it-work)
-    - [Setting Up Your CI Pipeline](#setting-up-your-ci-pipeline)
+  - [Setting Up Your CI Pipeline](#setting-up-your-ci-pipeline)
   - [Setting Up the CI View](#setting-up-the-ci-view)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
@@ -42,7 +42,8 @@ The earlier you remediate a vulnerability in the release cycle, the lower the co
 or even sooner, during the development.
 
 The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to your VS Code IDE.
-It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE. The information can be both about the current project developed, and about builds on the CI system.
+
+It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE. The information can be both about the current project developed, and about builds on the CI system. The extension also allows developers to track the status of the code while it is being built, tested and scanned on the CI server.
 
 The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
@@ -257,7 +258,7 @@ The CI information displayed in VS Code is pulled by the JFrog Extension directl
 
 Read more about build-info in the [Build Integration](https://www.jfrog.com/confluence/display/JFROG/Build+Integration) documentation page. If the CI pipeline is also configured to scan the build-info by JFrog Xray, the JFrog VS Code Extension will pull the results of the scan from JFrog Xray and display them in the CI view as well.
 
-#### Setting Up Your CI Pipeline
+### Setting Up Your CI Pipeline
 Before VS Code can display information from your CI in the CI View, your CI pipeline needs to be configured to expose this data. 
 Read [this guide](https://www.jfrog.com/confluence/display/JFROG/JFrog+IntelliJ+IDEA+Plugin#JFrogIntelliJIDEAPlugin-SettingupCIintegration) which describes how to configure your CI pipeline.
 
