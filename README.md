@@ -260,7 +260,7 @@ Read more about build-info in the [Build Integration](https://www.jfrog.com/conf
 
 ### Setting Up Your CI Pipeline
 Before VS Code can display information from your CI in the CI View, your CI pipeline needs to be configured to expose this data. 
-Read [this guide](https://www.jfrog.com/confluence/display/JFROG/JFrog+IntelliJ+IDEA+Plugin#JFrogIntelliJIDEAPlugin-SettingupCIintegration) which describes how to configure your CI pipeline.
+Read [this guide](https://www.jfrog.com/confluence/display/JFROG/Setting+Up+CI+Integration) which describes how to configure your CI pipeline.
 
 ### Setting Up the CI View
 Set your CI build name in the Build name pattern field at the [Extension Settings](#extension-settings). This is the name of the build published to Artifactory by your CI pipeline. You have the option of setting * to view all the builds published to Artifactory.
