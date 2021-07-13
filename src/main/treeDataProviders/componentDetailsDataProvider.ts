@@ -51,7 +51,7 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
         // Component details node
         let children: (TreeDataHolder | LicensesNode)[] = [new TreeDataHolder('Artifact', this._selectedNode.generalInfo.artifactId)];
         // If this is a title node, show version only if not empty.
-        if (!(this._selectedNode instanceof CiTitleNode && !!this._selectedNode.generalInfo.version)) {
+        if (!(this._selectedNode instanceof CiTitleNode && !this._selectedNode.generalInfo.version)) {
             children.push(new TreeDataHolder('Version', this._selectedNode.generalInfo.version));
         }
 
