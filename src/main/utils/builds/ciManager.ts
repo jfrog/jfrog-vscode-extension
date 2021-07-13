@@ -437,13 +437,19 @@ export class CiManager {
     }
 
     private static createAqlForBuildArtifacts(buildsPattern: string): string {
-        let encodedBuildPattern: string = encodeURIComponent(buildsPattern);
+        // Since build artifacts are stored with their names encoded but spaces remain untouched,
+        // we are replacing spaces with a placeholder before encoding and then replacing back.
+        const spaceReplacementPlaceholder: string = 'JFROG_VSCODE_EXTENSION_SPACE_PLACEHOLDER';
+        buildsPattern = buildsPattern.replace(/ /g, spaceReplacementPlaceholder);
+        buildsPattern = encodeURIComponent(buildsPattern);
+        buildsPattern = buildsPattern.replace(new RegExp(spaceReplacementPlaceholder, 'g'), ' ');
+
         // The following is a workaround, since Artifactory does not yet support '%' in AQL
-        encodedBuildPattern = encodedBuildPattern.replace(/%/g, '?');
+        buildsPattern = buildsPattern.replace(/%/g, '?');
         return (
             `items.find({` +
             `\"repo\":\"artifactory-build-info\",` +
-            `\"path\":{\"$match\":\"${encodedBuildPattern}\"}})` +
+            `\"path\":{\"$match\":\"${buildsPattern}\"}})` +
             `.include(\"name\",\"repo\",\"path\",\"created\")` +
             `.sort({\"$desc\":[\"created\"]})` +
             `.limit(${CiManager.DISPLAY_BUILDS_NUM})`
