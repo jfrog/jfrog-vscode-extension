@@ -36,7 +36,7 @@ export class NpmTreeNode extends RootNode {
                         '",.',
                     'INFO'
                 );
-                scopedProject.loadProjectDetails(JSON.parse(error.message));
+                scopedProject.loadProjectDetails(JSON.parse(error.stdout.toString()));
                 npmLsFailed = true;
             }
             this.populateDependenciesTree(this, scopedProject.dependencies, quickScan, scopedProject.scope);
