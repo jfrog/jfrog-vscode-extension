@@ -41,9 +41,7 @@ The earlier you remediate a vulnerability in the release cycle, the lower the co
 [JFrog Xray](https://jfrog.com/xray/) is instrumental in flagging components when vulnerabilities are discovered in production systems at runtime,
 or even sooner, during the development.
 
-The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to your VS Code IDE.
-
-It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE. The information can be both about the current project developed, and about builds on the CI system. The extension also allows developers to track the status of the code while it is being built, tested and scanned on the CI server.
+The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to your VS Code IDE. It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE. The extension also allows developers to track the status of the code while it is being built, tested and scanned on the CI server.
 
 The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
