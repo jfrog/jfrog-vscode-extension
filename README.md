@@ -26,7 +26,8 @@
   - [.NET Projects](#net-projects)
 - [The CI View](#the-ci-view)
   - [How Does It Work](#how-does-it-work)
-  - [Displaying Build Information](#displaying-build-information)
+    - [Setting Up Your CI Pipeline](#setting-up-your-ci-pipeline)
+  - [Setting Up the CI View](#setting-up-the-ci-view)
 - [Troubleshooting](#troubleshooting)
 - [License](#license)
 - [Building and Testing the Sources](#building-and-testing-the-sources)
@@ -256,9 +257,11 @@ The CI information displayed in VS Code is pulled by the JFrog Extension directl
 
 Read more about build-info in the [Build Integration](https://www.jfrog.com/confluence/display/JFROG/Build+Integration) documentation page. If the CI pipeline is also configured to scan the build-info by JFrog Xray, the JFrog VS Code Extension will pull the results of the scan from JFrog Xray and display them in the CI view as well.
 
-Read the [Setting up CI Integration](https://www.jfrog.com/confluence/display/JFROG/JFrog+IntelliJ+IDEA+Plugin#JFrogIntelliJIDEAPlugin-SettingupCIintegration) for more information.
+#### Setting Up Your CI Pipeline
+Before VS Code can display information from your CI in the CI View, your CI pipeline needs to be configured to expose this data. 
+Read [this guide](https://www.jfrog.com/confluence/display/JFROG/JFrog+IntelliJ+IDEA+Plugin#JFrogIntelliJIDEAPlugin-SettingupCIintegration) which describes how to configure your CI pipeline.
 
-### Displaying Build Information
+### Setting Up the CI View
 Set your CI build name in the Build name pattern field at the [Extension Settings](#extension-settings). This is the name of the build published to Artifactory by your CI pipeline. You have the option of setting * to view all the builds published to Artifactory.
 
 After your builds were fetched from Artifactory, press on the Builds ![Builds](resources/light/build.png) button to choose what build to display.
