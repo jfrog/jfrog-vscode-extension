@@ -3,6 +3,9 @@ import * as vscode from 'vscode';
 import { License } from '../types/license';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from './utils/treeDataHolder';
+import { BuildsNode } from './dependenciesTree/ciNodes/buildsTree';
+import { BuildGeneralInfo, Status } from '../types/buildGeneralinfo';
+import { CiTitleNode } from './dependenciesTree/ciNodes/ciTitleNode';
 
 /**
  * The component details tree.
@@ -41,13 +44,20 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
         if (element instanceof LicensesNode) {
             return Promise.resolve(element.getChildren());
         }
+        // Build node - Show build details.
+        if (this._selectedNode instanceof BuildsNode) {
+            return Promise.resolve(this.getBuildChildren());
+        }
         // Component details node
-        let children: (TreeDataHolder | LicensesNode)[] = [
-            new TreeDataHolder('Artifact', this._selectedNode.generalInfo.artifactId),
-            new TreeDataHolder('Version', this._selectedNode.generalInfo.version)
-        ];
+        let children: (TreeDataHolder | LicensesNode)[] = [new TreeDataHolder('Artifact', this._selectedNode.generalInfo.artifactId)];
+        // If this is a title node, show version only if not empty.
+        if (!(this._selectedNode instanceof CiTitleNode && !this._selectedNode.generalInfo.version)) {
+            children.push(new TreeDataHolder('Version', this._selectedNode.generalInfo.version));
+        }
+
         children.push(new TreeDataHolder('Type', this._selectedNode.generalInfo.pkgType));
-        if (this._selectedNode.generalInfo.scopes.length > 0) {
+        const scopes: string[] = this._selectedNode.generalInfo.scopes;
+        if (scopes.length > 0 && !this.isNoneScope(scopes)) {
             children.push(new TreeDataHolder('Scopes', this._selectedNode.generalInfo.scopes.join(',')));
         }
         children.push(new TreeDataHolder('Issues count', String(this._selectedNode.issues.size())));
@@ -55,7 +65,32 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
         if (path) {
             children.push(new TreeDataHolder('Path', path));
         }
-        children.push(new LicensesNode(this._selectedNode.licenses));
+        if (!(this._selectedNode instanceof CiTitleNode)) {
+            children.push(new LicensesNode(this._selectedNode.licenses));
+        }
+        return Promise.resolve(children);
+    }
+
+    private isNoneScope(scopes: string[]): boolean {
+        return scopes.length === 1 && scopes[0] === 'None';
+    }
+
+    getBuildChildren(): Thenable<any[]> {
+        if (!this._selectedNode) {
+            return Promise.resolve([]);
+        }
+        const bgi: BuildGeneralInfo = <BuildGeneralInfo>this._selectedNode.generalInfo;
+        const status: string = Status[bgi.status];
+        let children: TreeDataHolder[] = [
+            new TreeDataHolder('Status', status),
+            new TreeDataHolder('Date', bgi.startedReadable),
+            new TreeDataHolder('Branch', bgi.vcs.branch),
+            new TreeDataHolder('Commit Message', bgi.vcs.message)
+        ];
+        let link: string = bgi.path;
+        if (link) {
+            children.push(new TreeDataHolder('Build Log', link, link));
+        }
         return Promise.resolve(children);
     }
 

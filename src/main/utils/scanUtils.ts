@@ -49,4 +49,8 @@ export class ScanUtils {
     public static executeCmd(command: string, cwd?: string): any {
         return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
     }
+
+    public static setScanInProgress(state: boolean) {
+        vscode.commands.executeCommand('setContext', 'scanInProgress', state);
+    }
 }

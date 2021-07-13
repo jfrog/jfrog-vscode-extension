@@ -1,5 +1,5 @@
 import * as os from 'os';
-import { IArtifact } from 'xray-client-js';
+import { IArtifact } from 'jfrog-client-js';
 import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 
 export const TestArtifact: IArtifact[] = [
@@ -8,7 +8,9 @@ export const TestArtifact: IArtifact[] = [
             name: 'github.com/jfrog/gofrog',
             pkg_type: 'go',
             component_id: 'github.com/jfrog/gofrog:1.0.5',
+            sha1: '',
             sha256: '',
+            parent_sha256: [],
             path: ''
         },
         issues: [],

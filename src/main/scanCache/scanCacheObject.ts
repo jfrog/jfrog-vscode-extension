@@ -1,4 +1,4 @@
-import { IArtifact } from 'xray-client-js';
+import { IArtifact } from 'jfrog-client-js';
 
 export class ScanCacheObject {
     private static readonly MILLISECONDS_IN_WEEK: number = 604800000;

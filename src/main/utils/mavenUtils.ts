@@ -2,7 +2,7 @@ import * as exec from 'child_process';
 import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'xray-client-js';
+import { ComponentDetails } from 'jfrog-client-js';
 import { ContextKeys } from '../constants/contextKeys';
 import { FocusType } from '../focus/abstractFocus';
 import { LogManager } from '../log/logManager';

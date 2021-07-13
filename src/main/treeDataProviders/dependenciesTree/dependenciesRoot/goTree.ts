@@ -1,7 +1,7 @@
 import * as exec from 'child_process';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'xray-client-js';
+import { ComponentDetails } from 'jfrog-client-js';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { GoUtils } from '../../../utils/goUtils';
 import { ScanUtils } from '../../../utils/scanUtils';

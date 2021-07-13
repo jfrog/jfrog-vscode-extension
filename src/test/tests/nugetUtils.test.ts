@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'xray-client-js';
+import { ComponentDetails } from 'jfrog-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';

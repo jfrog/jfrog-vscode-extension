@@ -8,9 +8,11 @@ import { FocusType } from '../focus/abstractFocus';
 import { FocusManager } from '../focus/focusManager';
 import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { TreesManager } from '../treeDataProviders/treesManager';
+import { State, TreesManager } from '../treeDataProviders/treesManager';
 import { TreeDataHolder } from '../treeDataProviders/utils/treeDataHolder';
 import { ScanUtils } from '../utils/scanUtils';
+import { BuildsManager } from '../builds/buildsManager';
+import { Configuration } from '../utils/configuration';
 
 /**
  * Register and execute all commands in the extension.
@@ -23,7 +25,8 @@ export class CommandManager implements ExtensionComponent {
         private _filterManager: FilterManager,
         private _focusManager: FocusManager,
         private _exclusionManager: ExclusionsManager,
-        private _DependencyUpdateManager: DependencyUpdateManager
+        private _DependencyUpdateManager: DependencyUpdateManager,
+        private _buildsManager: BuildsManager
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
@@ -39,6 +42,56 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
         this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
         this.registerCommand(context, 'jfrog.xray.filter', () => this.doFilter());
+        this.registerCommand(context, 'jfrog.xray.local', () => this.doLocal());
+        this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
+        this.registerCommand(context, 'jfrog.xray.builds', () => this.doBuildSelected());
+        this.updateLocalCiIcons();
+    }
+
+    public doLocal() {
+        this._treesManager.state = State.Local;
+        this.updateLocalCiIcons();
+        this._treesManager.treeDataProviderManager.stateChange();
+    }
+
+    public doCi() {
+        if (!this.areCiPreconditionsMet()) {
+            return;
+        }
+        this._treesManager.state = State.CI;
+        this.updateLocalCiIcons();
+        this._treesManager.treeDataProviderManager.stateChange();
+    }
+
+    private areCiPreconditionsMet() {
+        if (!this._treesManager.connectionManager.areAllCredentialsSet()) {
+            vscode.window
+                .showErrorMessage(
+                    'CI integration disabled - Artifactory server is not configured. ' +
+                        'To use this section of the JFrog extension, please configure your JFrog platform details.',
+                    ...['Configure JFrog Details']
+                )
+                .then(async action => {
+                    if (action) {
+                        await this.doConnect();
+                    }
+                });
+            return false;
+        }
+        if (!Configuration.getBuildsPattern()) {
+            vscode.window.showErrorMessage('CI integration disabled - build name pattern is not set.', ...['Set Build Name Pattern']).then(action => {
+                if (action) {
+                    vscode.commands.executeCommand('workbench.action.openSettings', 'jfrog.xray.ciIntegration.buildNamePattern');
+                }
+            });
+            return false;
+        }
+        return true;
+    }
+
+    private updateLocalCiIcons() {
+        vscode.commands.executeCommand('setContext', 'isLocal', this._treesManager.isLocalState());
+        vscode.commands.executeCommand('setContext', 'isCi', this._treesManager.isCiState());
     }
 
     /**
@@ -69,10 +122,10 @@ export class CommandManager implements ExtensionComponent {
                     return;
                 }
                 this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.DependencyVersion);
-                this._treesManager.dependenciesTreeDataProvider.removeNode(dependenciesTreeNode);
+                this._treesManager.treeDataProviderManager.removeNode(dependenciesTreeNode);
             } catch (error) {
                 vscode.window.showErrorMessage('Could not update dependency version.', <vscode.MessageOptions>{ modal: false });
-                this._treesManager.logManager.logMessage(error.stdout.toString(), 'ERR', true);
+                this._treesManager.logManager.logMessage(error.message, 'ERR', true);
             }
         }, 'Updating ' + dependenciesTreeNode.generalInfo.getComponentId());
     }
@@ -144,7 +197,7 @@ export class CommandManager implements ExtensionComponent {
      * @param quickScan - True to allow reading from scan cache.
      */
     private doRefresh(quickScan: boolean = false) {
-        this._treesManager.dependenciesTreeDataProvider.refresh(quickScan);
+        this._treesManager.treeDataProviderManager.refresh(quickScan);
     }
 
     /**
@@ -171,6 +224,13 @@ export class CommandManager implements ExtensionComponent {
      */
     private doFilter() {
         this._filterManager.showFilterMenu();
+    }
+
+    /**
+     * Show the builds menu.
+     */
+    private doBuildSelected() {
+        this._buildsManager.showBuildsMenu();
     }
 
     /**

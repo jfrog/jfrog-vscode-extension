@@ -9,7 +9,7 @@ export abstract class AbstractWatcher implements ExtensionComponent {
     constructor(protected _treesManager: TreesManager, private _globPattern: vscode.GlobPattern) {}
 
     onDidChange(): void {
-        this._treesManager.dependenciesTreeDataProvider.refresh(true);
+        this._treesManager.treeDataProviderManager.refresh(true);
     }
 
     public activate(context: vscode.ExtensionContext) {

@@ -1,5 +1,13 @@
 export class GeneralInfo {
-    constructor(private _artifactId: string, private _version: string, private _scopes: string[], private _path: string, private _pkgType: string) {}
+    constructor(
+        private _artifactId: string,
+        private _version: string,
+        private _scopes: string[],
+        private _path: string,
+        private _pkgType: string,
+        private _sha1?: string,
+        private _sha256?: string
+    ) {}
 
     public get artifactId(): string {
         return this._artifactId;
@@ -19,6 +27,14 @@ export class GeneralInfo {
 
     public get pkgType(): string {
         return this._pkgType;
+    }
+
+    public get sha1(): string | undefined {
+        return this._sha1;
+    }
+
+    public get sha256(): string | undefined {
+        return this._sha256;
     }
 
     public set artifactId(artifactId: string) {
@@ -41,6 +57,14 @@ export class GeneralInfo {
         this._pkgType = pkgType;
     }
 
+    public set sha1(sha1: string | undefined) {
+        this._sha1 = sha1;
+    }
+
+    public set sha256(sha1: string | undefined) {
+        this._sha1 = sha1;
+    }
+
     public getComponentId(): string {
         return this._artifactId + ':' + this._version;
     }
@@ -60,6 +84,9 @@ export class GeneralInfo {
         }
         if (newGeneralInfo.version !== '') {
             this.version = newGeneralInfo.version;
+        }
+        if (newGeneralInfo.sha1 !== '') {
+            this.sha1 = newGeneralInfo.sha1;
         }
     }
 }

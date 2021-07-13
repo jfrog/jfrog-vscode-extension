@@ -4,7 +4,7 @@ import { before } from 'mocha';
 import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'xray-client-js';
+import { ComponentDetails } from 'jfrog-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { NpmDependencyUpdate } from '../../main/dependencyUpdate/npmDependencyUpdate';
 import { FocusType } from '../../main/focus/abstractFocus';

@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 
 import { ConnectionManager } from '../../main/connect/connectionManager';
-import { IClientConfig, IProxyConfig } from 'xray-client-js';
+import { IJfrogClientConfig, IProxyConfig } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { LogManager } from '../../main/log/logManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
@@ -19,9 +19,9 @@ describe('Connection Manager Tests', () => {
     });
 
     it('User agent header', () => {
-        let clientConfig: IClientConfig = {
+        let clientConfig: IJfrogClientConfig = {
             headers: {}
-        } as IClientConfig;
+        } as IJfrogClientConfig;
 
         ConnectionUtils.addUserAgentHeader(clientConfig);
         let userAgent: string | undefined = clientConfig.headers!['User-Agent'];
@@ -30,10 +30,10 @@ describe('Connection Manager Tests', () => {
     });
 
     it('Proxy authorization header', async () => {
-        let clientConfig: IClientConfig = {
+        let clientConfig: IJfrogClientConfig = {
             headers: {},
             proxy: {} as IProxyConfig
-        } as IClientConfig;
+        } as IJfrogClientConfig;
 
         await vscode.workspace.getConfiguration().update('http.proxyAuthorization', 'testProxyAuthorization', true);
         ConnectionUtils.addProxyAuthHeader(clientConfig);
@@ -80,14 +80,14 @@ describe('Connection Manager Tests', () => {
                 process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[ConnectionManager.URL_ENV] =
                     '';
                 await connectionManager.populateCredentials(false);
-                assert.isFalse(connectionManager.areCredentialsSet());
+                assert.isFalse(connectionManager.areXrayCredentialsSet());
 
                 process.env[ConnectionManager.URL_ENV] = testCase.inputUrl;
                 process.env[ConnectionManager.USERNAME_ENV] = 'admin';
                 process.env[ConnectionManager.PASSWORD_ENV] = 'password';
 
                 await connectionManager.populateCredentials(false);
-                assert.isTrue(connectionManager.areCredentialsSet());
+                assert.isTrue(connectionManager.areXrayCredentialsSet());
                 assert.equal(connectionManager.url, testCase.expectedPlatformUrl);
                 assert.equal(connectionManager.xrayUrl, testCase.expectedXrayUrl);
                 assert.equal(connectionManager.username, 'admin');
