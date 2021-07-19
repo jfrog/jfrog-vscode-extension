@@ -49,14 +49,7 @@ Don't have JFrog Platform? [Start for free](https://jfrog.com/start-free/).
 
 ### Component Tree Icons
 The icon demonstrates the top severity issue of a selected component and its transitive dependencies. The following table describes the severities from lowest to highest:
-|                 Icon                | Severity |                                       Description                                      |
-|:-----------------------------------:|:--------:|:---------------------------------------------------------------------------------------|
-|   ![Normal](resources/normal.png)   |  Normal  | Scanned - No Issues                                                                    |
-|  ![Unknown](resources/unknown.png)  |  Unknown | No CVEs attached to the vulnerability or the selected component not identified in Xray |
-|      ![Low](resources/low.png)      |    Low   | Top issue with low severity                                                            |
-|   ![Medium](resources/medium.png)   |  Medium  | Top issue with medium severity                                                         |
-|     ![High](resources/high.png)     |   High   | Top issue with high severity                                                           |
-| ![Critical](resources/critical.png) | Critical | Top issue with critical severity                                                       |
+![Severity-Icon-Table](resources/readme/severity-icon-table.png)
 
 ## General Configuration
 ### Configuring JFrog Platform
