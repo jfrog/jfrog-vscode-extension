@@ -1,8 +1,7 @@
 import { Severity } from './severity';
 
 export class Issue {
-    public static readonly MISSING_COMPONENT: Issue = new Issue('Component is missing in Xray', Severity.Unknown, '', 'Unknown');
-    private _component: string = '';
+    public static readonly MISSING_COMPONENT: Issue = new Issue('Component is missing in Xray', 2, '', 'Unknown');
 
     constructor(
         private _summary: string,
@@ -12,11 +11,11 @@ export class Issue {
         private _fixedVersions: string[] = [],
         private _cves?: string[]
     ) {
-        this._fixedVersions = this._fixedVersions.map(version => {
-            if (version.charAt(0) === '[' && version.charAt(version.length - 1) === ']') {
-                return version.substring(1, version.length - 1);
+        this._fixedVersions = this._fixedVersions.map(fixedVersion => {
+            if (fixedVersion.startsWith('[') && fixedVersion.endsWith(']')) {
+                return fixedVersion.substring(1, fixedVersion.length - 1);
             }
-            return version;
+            return fixedVersion;
         });
     }
 
@@ -38,10 +37,6 @@ export class Issue {
 
     public get summary(): string {
         return this._summary;
-    }
-
-    public get component(): string {
-        return this._component || '';
     }
 
     public get fixedVersions(): string[] {
@@ -66,10 +61,6 @@ export class Issue {
 
     public set summary(value: string) {
         this._summary = value;
-    }
-
-    public set component(value: string) {
-        this._component = value;
     }
 
     public set fixedVersions(value: string[]) {

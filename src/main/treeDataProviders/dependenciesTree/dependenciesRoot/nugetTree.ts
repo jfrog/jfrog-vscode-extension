@@ -40,7 +40,7 @@ export class NugetTreeNode extends RootNode {
                     childDependencies.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode, '');
                 let combined: string = id + ':' + version;
-                if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(combined)) {
+                if (!quickScan || !this._treesManager.scanCacheManager.isValid(combined)) {
                     this._componentsToScan.add(new ComponentDetails(NugetTreeNode.COMPONENT_PREFIX + combined));
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan);

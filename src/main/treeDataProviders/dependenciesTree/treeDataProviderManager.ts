@@ -1,9 +1,8 @@
-import * as vscode from 'vscode';
-import { DependenciesTreeNode } from './dependenciesTreeNode';
-import { TreesManager } from '../treesManager';
 import * as Collections from 'typescript-collections';
-import { License } from '../../types/license';
+import * as vscode from 'vscode';
 import { Scope } from '../../types/scope';
+import { TreesManager } from '../treesManager';
+import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class TreeDataProviderManager implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private _onDidChangeTreeData: vscode.EventEmitter<DependenciesTreeNode | undefined> = new vscode.EventEmitter<DependenciesTreeNode | undefined>();
@@ -76,7 +75,7 @@ export class TreeDataProviderManager implements vscode.TreeDataProvider<Dependen
         }
     }
 
-    public get filterLicenses(): Collections.Set<License> {
+    public get filterLicenses(): Collections.Set<string> {
         if (this._treesManager.isLocalState()) {
             return this._treesManager.dependenciesTreeDataProvider.filterLicenses;
         } else {

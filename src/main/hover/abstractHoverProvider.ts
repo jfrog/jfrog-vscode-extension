@@ -1,11 +1,11 @@
-import * as vscode from 'vscode';
 import * as Collections from 'typescript-collections';
+import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { License } from '../types/license';
 import { Issue } from '../types/issue';
 import { Severity, SeverityUtils } from '../types/severity';
+import { IIssueKey } from '../types/issueKey';
 
 /**
  * @see HoverManager
@@ -38,17 +38,17 @@ export abstract class AbstractHoverProvider implements vscode.HoverProvider, Ext
         return new vscode.Hover(new vscode.MarkdownString(this.getDetailsFromXray(node)));
     }
 
-    protected licensesToMarkdown(licenses: Collections.Set<License>) {
+    protected licensesToMarkdown(licenses: Collections.Set<string>) {
         let markDownSyntax: string[] = [];
-        licenses.forEach(license => {
-            markDownSyntax.push(license.name);
+        licenses.forEach(licenseName => {
+            markDownSyntax.push(licenseName);
         });
         return markDownSyntax;
     }
 
     protected getDetailsFromXray(node: DependenciesTreeNode): string {
         let xrayText: string = '### Details from Xray:\n\n';
-        if (node.topIssue.severity !== Severity.Normal) {
+        if (node.topSeverity !== Severity.Normal) {
             xrayText += '**Vulnerabilities**: ' + this.getIssueSummary(node.issues);
         }
         return xrayText + '\n\n' + this.createLicensesText(this.licensesToMarkdown(node.licenses));
@@ -58,14 +58,17 @@ export abstract class AbstractHoverProvider implements vscode.HoverProvider, Ext
         return `${licenses ? `**Licenses**: ${licenses}\n\n` : '\n\n'}`;
     }
 
-    protected getIssueSummary(issues: Collections.Set<Issue>): string {
+    protected getIssueSummary(issues: Collections.Set<IIssueKey>): string {
         if (!issues) {
             return '';
         }
         let summary: string = '';
         let totalNumOfSeverities: Array<number> = new Array<number>(Object.keys(Severity).length / 2);
-        issues.forEach(issue => {
-            totalNumOfSeverities[issue.severity] = totalNumOfSeverities[issue.severity] ? totalNumOfSeverities[issue.severity] + 1 : 1;
+        issues.forEach(issueId => {
+            let issue: Issue | undefined = this._treesManager.scanCacheManager.getIssue(issueId.issue_id);
+            if (issue) {
+                totalNumOfSeverities[issue.severity] = totalNumOfSeverities[issue.severity] ? totalNumOfSeverities[issue.severity] + 1 : 1;
+            }
         });
         // Print severities from high to low.
         for (let i: number = totalNumOfSeverities.length - 1; i >= 0; i--) {

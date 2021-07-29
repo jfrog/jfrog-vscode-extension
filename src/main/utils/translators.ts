@@ -1,5 +1,5 @@
-import * as Collections from 'typescript-collections';
 import { ICve, IGeneral, IIssue, ILicense, IVulnerableComponent, Severity as ClientSeverity } from 'jfrog-client-js';
+import * as Collections from 'typescript-collections';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
 import { GeneralInfo } from '../types/generalInfo';
 import { Issue } from '../types/issue';
@@ -47,11 +47,11 @@ export class Translators {
     }
 
     public static toLicense(clientLicense: ILicense): License {
-        return new License(clientLicense.more_info_url, clientLicense.components, clientLicense.full_name, clientLicense.name);
+        return new License(clientLicense.more_info_url, clientLicense.full_name, clientLicense.name);
     }
 
     public static stringToLicense(clientLicense: string): License {
-        return new License([], [], '', clientLicense);
+        return new License([], '', clientLicense);
     }
 
     private static toCves(clientCves: ICve[]): string[] {

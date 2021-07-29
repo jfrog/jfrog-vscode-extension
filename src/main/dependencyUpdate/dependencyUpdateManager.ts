@@ -6,6 +6,8 @@ import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 import { MavenDependencyUpdate } from './mavenDependencyUpdate';
 import { NpmDependencyUpdate } from './npmDependencyUpdate';
 import { GoDependencyUpdate } from './goDependencyUpdate';
+import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { Issue } from '../types/issue';
 
 /**
  * Update the dependency version in the project descriptor (e.g. pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
@@ -13,7 +15,7 @@ import { GoDependencyUpdate } from './goDependencyUpdate';
 export class DependencyUpdateManager implements ExtensionComponent {
     private _dependencyUpdaters: AbstractDependencyUpdate[] = [];
 
-    constructor() {
+    constructor(private _scanCacheManager: ScanCacheManager) {
         this._dependencyUpdaters.push(new MavenDependencyUpdate(), new NpmDependencyUpdate(), new GoDependencyUpdate());
     }
 
@@ -37,8 +39,12 @@ export class DependencyUpdateManager implements ExtensionComponent {
      */
     public async getFixedVersion(dependenciesTreeNode: DependenciesTreeNode) {
         let fixedVersions: Collections.Set<string> = new Collections.Set<string>();
-        dependenciesTreeNode.issues.forEach(issue => {
-            if (issue.component === dependenciesTreeNode.componentId) {
+        dependenciesTreeNode.issues.forEach(xrayIssueId => {
+            if (xrayIssueId.component === dependenciesTreeNode.componentId) {
+                let issue: Issue | undefined = this._scanCacheManager.getIssue(xrayIssueId.issue_id);
+                if (!issue) {
+                    return;
+                }
                 issue.fixedVersions.forEach(fixedVersion => fixedVersions.add(fixedVersion));
             }
         });

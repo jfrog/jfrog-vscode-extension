@@ -1,10 +1,11 @@
 import { assert } from 'chai';
 import * as exec from 'child_process';
+import { ComponentDetails } from 'jfrog-client-js';
 import { before } from 'mocha';
 import * as path from 'path';
+import * as tmp from 'tmp';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'jfrog-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { NpmDependencyUpdate } from '../../main/dependencyUpdate/npmDependencyUpdate';
 import { FocusType } from '../../main/focus/abstractFocus';
@@ -15,6 +16,7 @@ import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesT
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { NpmUtils } from '../../main/utils/npmUtils';
+import { TestMemento } from './utils/testMemento.test';
 import { getNodeByArtifactId } from './utils/utils.test';
 
 /**
@@ -23,7 +25,8 @@ import { getNodeByArtifactId } from './utils/utils.test';
 describe('Npm Utils Tests', () => {
     let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
-        workspaceState: { get(key: string) {} } as vscode.Memento
+        workspaceState: new TestMemento() as vscode.Memento,
+        storagePath: tmp.dirSync().name
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'dependencyPackageLock', 'empty'];

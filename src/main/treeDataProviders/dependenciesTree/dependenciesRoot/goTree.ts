@@ -110,7 +110,7 @@ export class GoTreeNode extends RootNode {
 
     private addComponentToScan(dependenciesTreeNode: DependenciesTreeNode, quickScan: boolean) {
         let componentId: string = dependenciesTreeNode.generalInfo.artifactId + ':' + dependenciesTreeNode.generalInfo.version;
-        if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(componentId)) {
+        if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
             this._componentsToScan.add(new ComponentDetails(GoTreeNode.COMPONENT_PREFIX + componentId));
         }
     }

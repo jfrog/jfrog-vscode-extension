@@ -88,10 +88,8 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
         for (let i: number = 0; i < dependencyPos.length; i += 2) {
             let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
                 new vscode.Range(dependencyPos[i], dependencyPos[i + 1]),
-                node.topIssue.severity === Severity.Normal
-                    ? 'No issues found.'
-                    : 'Top issue severity: ' + SeverityUtils.getString(node.topIssue.severity),
-                DiagnosticsUtils.getDiagnosticSeverity(node.topIssue.severity)
+                node.topSeverity === Severity.Normal ? 'No issues found.' : 'Top issue severity: ' + SeverityUtils.getString(node.topSeverity),
+                DiagnosticsUtils.getDiagnosticSeverity(node.topSeverity)
             );
             diagnostic.source = this.getSource();
             diagnostic.code = node.componentId;

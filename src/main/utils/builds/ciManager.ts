@@ -1,8 +1,9 @@
-import { IAqlSearchResult, IArtifact, IDetailsResponse, IGeneral, IIssue, ILicense, ISearchEntry } from 'jfrog-client-js';
+import { IAqlSearchResult, IArtifact, IDetailsResponse, IGeneral, ISearchEntry } from 'jfrog-client-js';
 import PQueue from 'p-queue';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ConnectionUtils } from '../../connect/connectionUtils';
+import { ScanCacheManager } from '../../scanCache/scanCacheManager';
 import { BuildsNode } from '../../treeDataProviders/dependenciesTree/ciNodes/buildsTree';
 import { CiTitleNode } from '../../treeDataProviders/dependenciesTree/ciNodes/ciTitleNode';
 import { DependenciesTreeNode } from '../../treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -11,10 +12,12 @@ import { BuildGeneralInfo } from '../../types/buildGeneralinfo';
 import { Dependency } from '../../types/dependency';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Issue } from '../../types/issue';
+import { IIssueKey } from '../../types/issueKey';
 import { License } from '../../types/license';
+import { Severity } from '../../types/severity';
 import { Configuration } from '../configuration';
 import { Translators } from '../translators';
-import { BuildsScanCache, Type } from './buildsScanCache';
+import { BuildsScanCache, Type } from '../../scanCache/buildsScanCache';
 import { BuildsUtils } from './buildsUtils';
 
 /**
@@ -175,6 +178,8 @@ export class CiManager {
         let sha1ToSha256: Map<string, string> = new Map();
         // Component to Xray Artifact mapping
         let sha1ToComponent: Map<string, IArtifact> = new Map();
+        // Get the scan cache manager to store issues and licenses
+        let scanCacheManager: ScanCacheManager = this._treesManager.scanCacheManager;
 
         // Populate the above mappings. We will use the information to populate the dependency tree efficiently.
         let components: IArtifact[] = response.components;
@@ -190,12 +195,14 @@ export class CiManager {
                 }
                 if (component.issues.length > 0) {
                     for (const issue of component.issues) {
-                        issuesAndLicenses._issues.add(issue);
+                        issuesAndLicenses._issues.add(new IssueIdWithSeverity(issue.issue_id, Translators.toSeverity(issue.severity)));
+                        scanCacheManager.storeIssue(issue);
                     }
                 }
                 if (component.licenses.length > 0) {
                     for (const license of component.licenses) {
-                        issuesAndLicenses._licenses.add(license);
+                        issuesAndLicenses._licenses.add(license.name);
+                        scanCacheManager.storeLicense(license);
                     }
                 }
             }
@@ -234,13 +241,19 @@ export class CiManager {
             return;
         }
         if (artifact.issues.length > 0) {
+            let topSeverity: Severity = Severity.Normal;
             for (const issue of artifact.issues) {
-                node.issues.add(Translators.toIssue(issue));
+                node.issues.add({ issue_id: issue.issue_id } as IIssueKey);
+                let issueSeverity: Severity = Translators.toSeverity(issue.severity);
+                if (topSeverity < issueSeverity) {
+                    topSeverity = issueSeverity;
+                }
             }
+            node.topSeverity = topSeverity;
         }
         if (artifact.licenses.length > 0) {
             for (const license of artifact.licenses) {
-                node.licenses.add(Translators.toLicense(license));
+                node.licenses.add(license.name);
             }
         }
         if (!isArtifact) {
@@ -249,24 +262,30 @@ export class CiManager {
         let sha256: string = sha1ToSha256.get(sha1)!;
         let issuesAndLicenses: IssuesAndLicensesPair | undefined = componentIssuesAndLicenses.get(sha256);
         if (issuesAndLicenses) {
+            let topSeverity: Severity = Severity.Normal;
             issuesAndLicenses._issues.forEach(issue => {
-                node.issues.add(Translators.toIssue(issue));
+                node.issues.add({ issue_id: issue._issueId } as IIssueKey);
+                let issueSeverity: Severity = issue._severity;
+                if (topSeverity < issueSeverity) {
+                    topSeverity = issueSeverity;
+                }
             });
+            node.topSeverity = topSeverity;
             issuesAndLicenses._licenses.forEach(license => {
-                node.licenses.add(Translators.toLicense(license));
+                node.licenses.add(license);
             });
         }
     }
 
     private addUnknownLicenseToMissingNode(node: DependenciesTreeNode) {
-        node.licenses.add(new License([], [], License.UNKNOWN_LICENSE_FULL_NAME, License.UNKNOWN_LICENSE));
+        node.licenses.add(License.UNKNOWN_LICENSE);
     }
 
     public populateTreeWithUnknownIssues(modulesTree: DependenciesTreeNode) {
         for (const node of modulesTree.children) {
             this.populateTreeWithUnknownIssues(node);
         }
-        modulesTree.issues.add(Issue.MISSING_COMPONENT);
+        modulesTree.issues.add({ issue_id: Issue.MISSING_COMPONENT.summary } as IIssueKey);
         this.addUnknownLicenseToMissingNode(modulesTree);
     }
 
@@ -458,6 +477,10 @@ export class CiManager {
 }
 
 class IssuesAndLicensesPair {
-    public _issues: Collections.Set<IIssue> = new Collections.Set<IIssue>();
-    public _licenses: Collections.Set<ILicense> = new Collections.Set<ILicense>();
+    public _issues: Collections.Set<IssueIdWithSeverity> = new Collections.Set<IssueIdWithSeverity>();
+    public _licenses: Collections.Set<string> = new Collections.Set<string>();
+}
+
+class IssueIdWithSeverity {
+    constructor(public _issueId: string, public _severity: Severity) {}
 }

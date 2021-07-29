@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractFilter } from './abstractFilter';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { License } from '../types/license';
 
 export class LicensesFilter extends AbstractFilter {
     constructor(private _treesManager: TreesManager) {
@@ -10,7 +11,11 @@ export class LicensesFilter extends AbstractFilter {
 
     /** @override */
     protected getValues(): vscode.QuickPickItem[] {
-        return this._treesManager.treeDataProviderManager.filterLicenses.toArray().map(license => {
+        return this._treesManager.treeDataProviderManager.filterLicenses.toArray().map(licenseName => {
+            let license: License | undefined = this._treesManager.scanCacheManager.getLicense(licenseName);
+            if (!license) {
+                return <vscode.QuickPickItem>{};
+            }
             return <vscode.QuickPickItem>{
                 label: license.name,
                 description: license.fullName,
@@ -26,7 +31,7 @@ export class LicensesFilter extends AbstractFilter {
         }
         return dependenciesTreeNode.licenses
             .toArray()
-            .map(license => license.name)
+            .map(license => license)
             .some(licenseName => this.isPicked(licenseName));
     }
 }
