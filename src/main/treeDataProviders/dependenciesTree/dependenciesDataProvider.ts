@@ -1,6 +1,6 @@
+import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'jfrog-client-js';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'jfrog-client-js';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Issue } from '../../types/issue';
 import { License } from '../../types/license';
@@ -45,25 +45,27 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             }
             return;
         }
-        try {
-            this._scanInProgress = true;
-            ScanUtils.setScanInProgress(true);
-            const credentialsSet: boolean = this._treesManager.connectionManager.areXrayCredentialsSet();
-            this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow') + ' scan', 'INFO');
-            await this.repopulateTree(quickScan, credentialsSet, onChangeFire);
-            vscode.commands.executeCommand('jfrog.xray.focus');
-            this._treesManager.logManager.setSuccess();
-        } catch (error) {
-            if (error.message !== DependenciesTreeDataProvider.CANCELLATION_ERROR.message) {
-                // Unexpected error
-                throw error;
-            }
-            this.clearTree();
-            vscode.window.showInformationMessage(error.message);
-        } finally {
-            this._scanInProgress = false;
-            ScanUtils.setScanInProgress(false);
-        }
+        this._scanInProgress = true;
+        ScanUtils.setScanInProgress(true);
+        const credentialsSet: boolean = this._treesManager.connectionManager.areXrayCredentialsSet();
+        this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow') + ' scan', 'INFO');
+        this.repopulateTree(quickScan, credentialsSet, onChangeFire)
+            .then(() => {
+                vscode.commands.executeCommand('jfrog.xray.focus');
+                this._treesManager.logManager.setSuccess();
+            })
+            .catch(error => {
+                if (error.message !== DependenciesTreeDataProvider.CANCELLATION_ERROR.message) {
+                    // Unexpected error
+                    throw error;
+                }
+                this.clearTree();
+                vscode.window.showInformationMessage(error.message);
+            })
+            .finally(() => {
+                this._scanInProgress = false;
+                ScanUtils.setScanInProgress(false);
+            });
     }
 
     public getTreeItem(element: DependenciesTreeNode): vscode.TreeItem {
