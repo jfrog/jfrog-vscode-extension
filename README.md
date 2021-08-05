@@ -49,6 +49,7 @@ Don't have JFrog Platform? [Start for free](https://jfrog.com/start-free/).
 
 ### Component Tree Icons
 The icon demonstrates the top severity issue of a selected component and its transitive dependencies. The following table describes the severities from lowest to highest:
+
 |                 Icon                | Severity |                                       Description                                      |
 |:-----------------------------------:|:--------:|:---------------------------------------------------------------------------------------|
 |   ![Normal](resources/normal.png)   |  Normal  | Scanned - No Issues                                                                    |
