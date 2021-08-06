@@ -236,7 +236,7 @@
     "dependencies": {
         "adm-zip": "~0.5.5",
         "fs-extra": "~10.0.0",
-        "jfrog-client-js": "./jfrog-client-js-2.0.2.tgz",
+        "jfrog-client-js": "^2.0.2",
         "keytar": "~7.7.0",
         "nuget-deps-tree": "^0.2.1",
         "p-queue": "^6.6.2",
