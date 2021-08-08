@@ -1,11 +1,12 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
+import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { BuildGeneralInfo, Status } from '../types/buildGeneralinfo';
 import { License } from '../types/license';
+import { BuildsNode } from './dependenciesTree/ciNodes/buildsTree';
+import { CiTitleNode } from './dependenciesTree/ciNodes/ciTitleNode';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from './utils/treeDataHolder';
-import { BuildsNode } from './dependenciesTree/ciNodes/buildsTree';
-import { BuildGeneralInfo, Status } from '../types/buildGeneralinfo';
-import { CiTitleNode } from './dependenciesTree/ciNodes/ciTitleNode';
 
 /**
  * The component details tree.
@@ -14,6 +15,8 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
     private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
     readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
     private _selectedNode: DependenciesTreeNode | undefined;
+
+    constructor(private _scanCacheManager: ScanCacheManager) {}
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
@@ -66,7 +69,7 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
             children.push(new TreeDataHolder('Path', path));
         }
         if (!(this._selectedNode instanceof CiTitleNode)) {
-            children.push(new LicensesNode(this._selectedNode.licenses));
+            children.push(new LicensesNode(this._scanCacheManager, this._selectedNode.licenses));
         }
         return Promise.resolve(children);
     }
@@ -101,13 +104,18 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
 }
 
 export class LicensesNode extends vscode.TreeItem {
-    constructor(private _licenses: Collections.Set<License>) {
+    constructor(private _scanCacheManager: ScanCacheManager, private _licenses: Collections.Set<string>) {
         super('Licenses', vscode.TreeItemCollapsibleState.Expanded);
     }
 
     public getChildren(): any[] {
         let children: any[] = [];
-        this._licenses.forEach(license => {
+
+        this._licenses.forEach(licenseName => {
+            let license: License | undefined = this._scanCacheManager.getLicense(licenseName);
+            if (!license) {
+                return;
+            }
             let moreInfoUrl: string | undefined = license.moreInfoUrl ? license.moreInfoUrl[0] : undefined;
             children.push(new TreeDataHolder(license.createLicenseString(), moreInfoUrl, moreInfoUrl));
         });

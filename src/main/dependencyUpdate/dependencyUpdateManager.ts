@@ -1,7 +1,9 @@
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
+import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { Issue } from '../types/issue';
 import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 import { GoDependencyUpdate } from './goDependencyUpdate';
 import { MavenDependencyUpdate } from './mavenDependencyUpdate';
@@ -13,7 +15,7 @@ import { NpmDependencyUpdate } from './npmDependencyUpdate';
 export class DependencyUpdateManager implements ExtensionComponent {
     private _dependencyUpdaters: AbstractDependencyUpdate[] = [];
 
-    constructor() {
+    constructor(private _scanCacheManager: ScanCacheManager) {
         this._dependencyUpdaters.push(new MavenDependencyUpdate(), new NpmDependencyUpdate(), new GoDependencyUpdate());
     }
 
@@ -37,8 +39,12 @@ export class DependencyUpdateManager implements ExtensionComponent {
      */
     public async getFixedVersion(dependenciesTreeNode: DependenciesTreeNode) {
         let fixedVersions: Set<string> = new Set<string>();
-        dependenciesTreeNode.issues.forEach(issue => {
-            if (issue.component === dependenciesTreeNode.componentId) {
+        dependenciesTreeNode.issues.forEach(xrayIssueId => {
+            if (xrayIssueId.component === dependenciesTreeNode.componentId) {
+                let issue: Issue | undefined = this._scanCacheManager.getIssue(xrayIssueId.issue_id);
+                if (!issue) {
+                    return;
+                }
                 issue.fixedVersions.forEach(fixedVersion => fixedVersions.add(fixedVersion));
             }
         });

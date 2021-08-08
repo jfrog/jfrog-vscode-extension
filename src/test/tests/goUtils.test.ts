@@ -1,13 +1,15 @@
 import { assert } from 'chai';
+import { ComponentDetails, IIssue, ILicense } from 'jfrog-client-js';
 import { before } from 'mocha';
 import * as path from 'path';
+import * as tmp from 'tmp';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails, IIssue, ILicense } from 'jfrog-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { GoDependencyUpdate } from '../../main/dependencyUpdate/goDependencyUpdate';
 import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
+import { IIssueKey } from '../../main/types/issueKey';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { GoTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -27,7 +29,8 @@ import { getNodeByArtifactId } from './utils/utils.test';
 describe('Go Utils Tests', () => {
     let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
-        workspaceState: new TestMemento() as vscode.Memento
+        workspaceState: new TestMemento() as vscode.Memento,
+        storagePath: tmp.dirSync().name
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'empty'];
@@ -162,34 +165,40 @@ describe('Go Utils Tests', () => {
 
         // Xray general data.
         // First child.
-        let actualLicense: License = child.licenses.toArray()[0];
+        let actualLicenseName: string = child.licenses.toArray()[0];
+        let actualLicense: License | undefined = dummyScanCacheManager.getLicense(actualLicenseName)!;
+        assert.isDefined(actualLicense);
+
         let expectedLicense: ILicense[] = utils.TestArtifact[0].licenses;
         assert.deepEqual(actualLicense.name, expectedLicense[0].name);
         assert.deepEqual(actualLicense.moreInfoUrl, expectedLicense[0].more_info_url);
         assert.deepEqual(actualLicense.fullName, expectedLicense[0].full_name);
-        assert.deepEqual(actualLicense.components, expectedLicense[0].components);
 
         // Second child.
         child = res[0].children[1];
-        actualLicense = child.licenses.toArray()[0];
+        actualLicenseName = child.licenses.toArray()[0];
+        actualLicense = dummyScanCacheManager.getLicense(actualLicenseName)!;
+        assert.isDefined(actualLicense);
+
         expectedLicense = utils.TestArtifact[1].licenses;
         assert.deepEqual(actualLicense.name, expectedLicense[0].name);
         assert.deepEqual(actualLicense.moreInfoUrl, expectedLicense[0].more_info_url);
         assert.deepEqual(actualLicense.fullName, expectedLicense[0].full_name);
-        assert.deepEqual(actualLicense.components, expectedLicense[0].components);
 
         // Check transformation types from xray IIssue to Issue.
-        let actualIssues: Issue[] = child.issues.toArray();
+        let actualIssues: IIssueKey[] = child.issues.toArray();
         let expectedIssues: IIssue[] = utils.TestArtifact[1].issues;
         // Issue created by Xray data.
         for (let i: number = 0; i < 2; i++) {
-            assert.deepEqual(actualIssues[i], Translators.toIssue(expectedIssues[i]));
+            let actualIssue: Issue | undefined = dummyScanCacheManager.getIssue(actualIssues[i].issue_id)!;
+            assert.isDefined(actualIssue);
+            assert.deepEqual(actualIssue, Translators.toIssue(expectedIssues[i]));
         }
     });
 
     async function runCreateGoDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
         let dependenciesTrees: GoTreeNode[] = await GoUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, false);
-        await dummyScanCacheManager.addArtifactComponents(utils.TestArtifact);
+        await dummyScanCacheManager.storeArtifactComponents(utils.TestArtifact);
         dependenciesTrees.forEach(child => {
             treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);
         });

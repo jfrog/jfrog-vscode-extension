@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
+import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { SeverityStrings, SeverityUtils } from '../types/severity';
 import { AbstractFilter } from './abstractFilter';
 
 export class SeverityFilter extends AbstractFilter {
-    constructor() {
+    constructor(private _scanCacheManager: ScanCacheManager) {
         super();
     }
 
@@ -26,7 +27,9 @@ export class SeverityFilter extends AbstractFilter {
         }
         return dependenciesTreeNode.issues
             .toArray()
-            .map(issue => issue.severity)
+            .map(issueKey => this._scanCacheManager.getIssue(issueKey.issue_id))
+            .filter(issue => issue)
+            .map(issue => issue!.severity)
             .map(severity => SeverityUtils.getString(severity))
             .some(severityName => this.isPicked(severityName));
     }

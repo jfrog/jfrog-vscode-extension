@@ -2,7 +2,7 @@ export class License {
     public static readonly UNKNOWN_LICENSE_FULL_NAME: string = 'Unknown license';
     public static readonly UNKNOWN_LICENSE: string = 'Unknown';
 
-    constructor(private _moreInfoUrl: string[], private _components: string[], private _fullName: string, private _name: string) {}
+    constructor(private _moreInfoUrl: string[], private _fullName: string, private _name: string) {}
 
     public createLicenseString(): string {
         if (!this.fullName && this.isFullNameEmpty()) {
@@ -19,10 +19,6 @@ export class License {
         return this._moreInfoUrl;
     }
 
-    public get components(): string[] {
-        return this._components;
-    }
-
     public get fullName(): string {
         return this._fullName;
     }
@@ -33,10 +29,6 @@ export class License {
 
     public set moreInfoUrl(value: string[]) {
         this._moreInfoUrl = value;
-    }
-
-    public set components(value: string[]) {
-        this._components = value;
     }
 
     public set fullName(value: string) {

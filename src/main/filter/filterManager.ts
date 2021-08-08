@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
+import { BuildsNode } from '../treeDataProviders/dependenciesTree/ciNodes/buildsTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { LicensesFilter } from './licensesFilter';
 import { ScopesFilter } from './scopeFilter';
 import { SeverityFilter as SeveritiesFilter } from './severitiesFilter';
-import { BuildsNode } from '../treeDataProviders/dependenciesTree/ciNodes/buildsTree';
 
 enum FilterTypes {
     SEVERITY = '$(alert)   Issues severity',
@@ -23,7 +23,7 @@ export class FilterManager implements ExtensionComponent {
     private _scopeFilter: ScopesFilter;
 
     constructor(private _treesManager: TreesManager) {
-        this._severitiesFilter = new SeveritiesFilter();
+        this._severitiesFilter = new SeveritiesFilter(_treesManager.scanCacheManager);
         this._licensesFilter = new LicensesFilter(_treesManager);
         this._scopeFilter = new ScopesFilter(_treesManager);
     }

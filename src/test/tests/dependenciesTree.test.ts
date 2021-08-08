@@ -2,16 +2,21 @@ import { assert } from 'chai';
 import * as faker from 'faker';
 import { before } from 'mocha';
 import * as Collections from 'typescript-collections';
+import { IIssueKey } from '../../main/types/issueKey';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { GeneralInfo } from '../../main/types/generalInfo';
-import { Issue } from '../../main/types/issue';
 import { Severity } from '../../main/types/severity';
 
 /**
  * Test functionality of @class DependenciesTreeNode.
  */
 describe('Dependencies Tree Tests', () => {
-    let issueSerialNumber: number = 0;
+    let issueOne: IIssueKey = createDummyIssue();
+    let issueTwo: IIssueKey = createDummyIssue();
+    let lowIssueOne: IIssueKey = createDummyIssue();
+    let lowIssueTwo: IIssueKey = createDummyIssue();
+    let mediumIssue: IIssueKey = createDummyIssue();
+
     let root: DependenciesTreeNode = createNode('root');
     let one: DependenciesTreeNode = createNode('one');
     let two: DependenciesTreeNode = createNode('two');
@@ -28,74 +33,81 @@ describe('Dependencies Tree Tests', () => {
     });
 
     it('No issues', () => {
-        let rootIssues: Collections.Set<Issue> = processTree();
+        let rootIssues: Collections.Set<IIssueKey> = processTree();
         assert.isTrue(rootIssues.isEmpty());
-        assert.deepEqual(root.topIssue.severity, Severity.Normal);
+        assert.deepEqual(root.topSeverity, Severity.Normal);
     });
 
     it('One node', () => {
         // Populate 'one' with one empty issue.
-        one.issues.add(createDummyIssue(Severity.Normal));
+        one.issues.add(issueOne);
 
         // Assert the tree has 1 issue.
-        let rootIssues: Collections.Set<Issue> = processTree();
+        let rootIssues: Collections.Set<IIssueKey> = processTree();
         assert.deepEqual(rootIssues.size(), 1);
-        assert.deepEqual(rootIssues.toArray()[0].severity, Severity.Normal);
+        assert.containsAllKeys(rootIssues, one.issues);
     });
 
     it('Two nodes', () => {
         // Populate node two with one empty issue.
-        two.issues.add(createDummyIssue(Severity.Normal));
+        two.issues.add(issueTwo);
 
         // Assert the tree has 2 issues
-        let rootIssues: Collections.Set<Issue> = processTree();
+        let rootIssues: Collections.Set<IIssueKey> = processTree();
         assert.deepEqual(rootIssues.size(), 2);
-        assert.deepEqual(rootIssues.toArray()[0].severity, Severity.Normal);
-        assert.deepEqual(rootIssues.toArray()[1].severity, Severity.Normal);
+        assert.containsAllKeys(rootIssues, one.issues);
+        assert.containsAllKeys(rootIssues, two.issues);
     });
 
     it('Four nodes', () => {
         // Populate node three with one Low issue
-        three.issues.add(createDummyIssue(Severity.Low));
+        three.issues.add(lowIssueOne);
+        three.topSeverity = Severity.Low;
         processTree();
 
         // Assert the tree has 3 issues
-        assert.deepEqual(three.topIssue.severity, Severity.Low);
-        assert.deepEqual(three.topIssue.component, 'three:1.0.0');
+        let rootIssues: Collections.Set<IIssueKey> = processTree();
+        assert.containsAllKeys(rootIssues, one.issues);
+        assert.containsAllKeys(rootIssues, two.issues);
+        assert.containsAllKeys(rootIssues, three.issues);
 
         // Populate node four with Low and Medium issues
-        let mediumIssue: Issue = createDummyIssue(Severity.Medium);
         four.issues.add(mediumIssue);
-        four.issues.add(createDummyIssue(Severity.Low));
+        four.issues.add(lowIssueTwo);
+        four.topSeverity = Severity.Medium;
 
         // Assert the tree has 5 issues
-        let rootIssues: Collections.Set<Issue> = processTree();
+        rootIssues = processTree();
         assert.deepEqual(rootIssues.size(), 5);
-        assert.deepEqual(root.topIssue, mediumIssue);
+        assert.deepEqual(root.topSeverity, Severity.Medium);
+        assert.containsAllKeys(rootIssues, one.issues);
+        assert.containsAllKeys(rootIssues, two.issues);
+        assert.containsAllKeys(rootIssues, three.issues);
+        assert.containsAllKeys(rootIssues, four.issues);
     });
 
     it('Five nodes', () => {
         // Populate node five with 6 issues
-        five.issues.add(createDummyIssue(Severity.Normal));
-        five.issues.add(createDummyIssue(Severity.Low));
-        five.issues.add(createDummyIssue(Severity.Low));
-        five.issues.add(createDummyIssue(Severity.Unknown));
-        five.issues.add(createDummyIssue(Severity.Low));
-        five.issues.add(createDummyIssue(Severity.High));
+        five.issues.add(createDummyIssue());
+        five.issues.add(createDummyIssue());
+        five.issues.add(createDummyIssue());
+        five.issues.add(createDummyIssue());
+        five.issues.add(createDummyIssue());
+        five.issues.add(createDummyIssue());
+        five.topSeverity = Severity.High;
 
         // Assert that all issues are in the tree
-        let rootIssues: Collections.Set<Issue> = processTree();
+        let rootIssues: Collections.Set<IIssueKey> = processTree();
         assert.deepEqual(rootIssues.size(), 11);
-        assert.deepEqual(root.topIssue.severity, Severity.High);
-        assert.deepEqual(root.topIssue.component, 'five:1.0.0');
-        assert.deepEqual(one.topIssue.component, '');
-        assert.deepEqual(two.topIssue.component, 'five:1.0.0');
-        assert.deepEqual(three.topIssue.component, 'three:1.0.0');
-        assert.deepEqual(four.topIssue.component, 'five:1.0.0');
-        assert.deepEqual(five.topIssue.component, 'five:1.0.0');
+        assert.deepEqual(root.topSeverity, Severity.High);
+        assert.containsAllKeys(rootIssues, one.issues);
+        assert.containsAllKeys(rootIssues, two.issues);
+        assert.containsAllKeys(rootIssues, three.issues);
+        assert.containsAllKeys(rootIssues, four.issues);
+        assert.containsAllKeys(rootIssues, five.issues);
     });
 
-    function processTree(): Collections.Set<Issue> {
+    function processTree(): Collections.Set<IIssueKey> {
         return root.processTreeIssues();
     }
 
@@ -103,7 +115,7 @@ describe('Dependencies Tree Tests', () => {
         return new DependenciesTreeNode(new GeneralInfo(label, '1.0.0', [], '', ''));
     }
 
-    function createDummyIssue(severity: Severity) {
-        return new Issue(faker.random.words(1) + issueSerialNumber++, severity, faker.random.words(), faker.random.word(), [faker.random.word()]);
+    function createDummyIssue(): IIssueKey {
+        return { issue_id: faker.datatype.uuid() } as IIssueKey;
     }
 });

@@ -1,11 +1,11 @@
+import { ComponentDetails } from 'jfrog-client-js';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'jfrog-client-js';
+import { GavGeneralInfo } from '../../../types/gavGeneralinfo';
+import { MavenUtils } from '../../../utils/mavenUtils';
+import { PomTree } from '../../../utils/pomTree';
 import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
-import { GavGeneralInfo } from '../../../types/gavGeneralinfo';
-import { PomTree } from '../../../utils/pomTree';
-import { MavenUtils } from '../../../utils/mavenUtils';
 import { RootNode } from './rootTree';
 
 export class MavenTreeNode extends RootNode {
@@ -68,7 +68,7 @@ export class MavenTreeNode extends RootNode {
             let child: DependenciesTreeNode = new DependenciesTreeNode(gavGeneralInfo, treeCollapsibleState, parent);
             child.label = group + ':' + name;
             let componentId: string = gavGeneralInfo.getComponentId();
-            if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(componentId)) {
+            if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
                 this._componentsToScan.add(new ComponentDetails(MavenTreeNode.COMPONENT_PREFIX + componentId));
             }
             if (rawDependenciesPtr.index + 1 < rawDependenciesList.length) {
@@ -92,7 +92,7 @@ export class MavenTreeNode extends RootNode {
         clone.generalInfo = this.generalInfo;
         clone.licenses = this.licenses;
         clone.issues = this.issues;
-        clone.topIssue = this.topIssue;
+        clone.topSeverity = this.topSeverity;
         clone.label = this.label;
         clone.collapsibleState = this.collapsibleState;
         return clone;
@@ -140,9 +140,9 @@ export class MavenTreeNode extends RootNode {
         this.children.forEach(child => {
             // In case of a multi module pom.
             if (child instanceof RootNode) {
-                child.children.forEach(c => this.upgradableDependencies(c));
+                child.children.forEach(c => this.upgradableDependencies(this._treesManager.scanCacheManager, c));
             } else {
-                this.upgradableDependencies(child);
+                this.upgradableDependencies(this._treesManager.scanCacheManager, child);
             }
         });
     }

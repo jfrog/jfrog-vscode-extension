@@ -1,9 +1,9 @@
-import AdmZip from 'adm-zip';
+import AdmZip, { IZipEntry } from 'adm-zip';
 import * as fs from 'fs';
 import { IDetailsResponse } from 'jfrog-client-js';
 import * as os from 'os';
-import path from 'path';
-import { LogManager } from '../../log/logManager';
+import * as path from 'path';
+import { LogManager } from '../log/logManager';
 
 export enum Type {
     BUILD_INFO,
@@ -58,13 +58,11 @@ export class BuildsScanCache {
             return '';
         }
         let zip: AdmZip = new AdmZip(buildPath);
-        let zipEntries: AdmZip.IZipEntry[] = zip.getEntries();
-        for (let i: number = 0; i < zipEntries.length; i++) {
-            if (zipEntries[i].entryName === type.toString()) {
-                return zipEntries[i].getData().toString('utf8');
-            }
+        let entry: IZipEntry | null = zip.getEntry(type.toString());
+        if (!entry) {
+            throw new Error('Could not find expected content in archive in cache');
         }
-        throw new Error('Could not find expected content in archive in cache');
+        return entry.getData().toString('utf8');
     }
 
     public loadBuildInfo(timestamp: string, buildName: string, buildNumber: string): any {

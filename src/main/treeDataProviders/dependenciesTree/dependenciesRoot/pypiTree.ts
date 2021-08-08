@@ -56,7 +56,7 @@ export class PypiTreeNode extends RootNode {
                         : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
                 let componentId: string = dependency.key + ':' + version;
-                if (!quickScan || !this._treesManager.scanCacheManager.validateOrDelete(componentId)) {
+                if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
                     this._componentsToScan.add(new ComponentDetails(PypiTreeNode.COMPONENT_PREFIX + componentId));
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan);

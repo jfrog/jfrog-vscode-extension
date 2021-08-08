@@ -1,25 +1,23 @@
+import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
+import { BuildGeneralInfo, Status } from '../../types/buildGeneralinfo';
 import { GeneralInfo } from '../../types/generalInfo';
-import { Issue } from '../../types/issue';
+import { Scope } from '../../types/scope';
 import { Severity, SeverityUtils } from '../../types/severity';
+import { BuildsUtils } from '../../utils/builds/buildsUtils';
+import { CiManager } from '../../utils/builds/ciManager';
+import { Configuration } from '../../utils/configuration';
 import { ScanUtils } from '../../utils/scanUtils';
 import { TreesManager } from '../treesManager';
-import { DependenciesTreeNode } from './dependenciesTreeNode';
-import { CiManager } from '../../utils/builds/ciManager';
-import { BuildGeneralInfo, Status } from '../../types/buildGeneralinfo';
-import { Configuration } from '../../utils/configuration';
 import { BuildsNode } from './ciNodes/buildsTree';
-import { BuildsUtils } from '../../utils/builds/buildsUtils';
-import Set from 'typescript-collections/dist/lib/Set';
-import { License } from '../../types/license';
-import { Scope } from '../../types/scope';
+import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
     protected _dependenciesTree!: DependenciesTreeNode;
     protected _allBuildsTree!: DependenciesTreeNode;
     private _ciInProgress: boolean = false;
-    private _filterLicenses: Set<License> = new Set(license => license.fullName);
+    private _filterLicenses: Set<string> = new Set();
     private _filterScopes: Set<Scope> = new Set(scope => scope.label);
 
     constructor(protected _treesManager: TreesManager) {}
@@ -78,8 +76,8 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
             let status: Status = (<BuildGeneralInfo>element.generalInfo).status;
             element.iconPath = BuildsUtils.getIcon(status);
         } else {
-            let topIssue: Issue = element.topIssue;
-            element.iconPath = SeverityUtils.getIcon(topIssue ? topIssue.severity : Severity.Normal);
+            let topSeverity: Severity = element.topSeverity;
+            element.iconPath = SeverityUtils.getIcon(topSeverity ? topSeverity : Severity.Normal);
         }
         return element;
     }
@@ -185,7 +183,7 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
         this._dependenciesTree = new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.Expanded);
     }
 
-    public get filterLicenses(): Set<License> {
+    public get filterLicenses(): Set<string> {
         return this._filterLicenses;
     }
 

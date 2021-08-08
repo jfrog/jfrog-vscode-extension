@@ -28,7 +28,7 @@ export async function activate(context: vscode.ExtensionContext) {
     let filterManager: FilterManager = new FilterManager(treesManager).activate(context);
     let focusManager: FocusManager = new FocusManager().activate(context);
     let exclusionManager: ExclusionsManager = new ExclusionsManager(treesManager).activate(context);
-    let dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager().activate(context);
+    let dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager(scanCacheManager).activate(context);
     let buildsManager: BuildsManager = new BuildsManager(treesManager).activate(context);
 
     new DiagnosticsManager(treesManager).activate(context);
