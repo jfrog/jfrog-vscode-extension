@@ -1,4 +1,4 @@
-import * as Collections from 'typescript-collections';
+import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ContextKeys } from '../../constants/contextKeys';
 import { GeneralInfo } from '../../types/generalInfo';
@@ -9,8 +9,8 @@ import { IconsPaths } from '../../utils/iconsPaths';
 
 export class DependenciesTreeNode extends vscode.TreeItem {
     private _children: DependenciesTreeNode[] = [];
-    private _licenses: Collections.Set<License> = new Collections.Set(license => license.fullName);
-    private _issues: Collections.Set<Issue> = new Collections.Set(issue => issue.summary);
+    private _licenses: Set<License> = new Set(license => license.fullName);
+    private _issues: Set<Issue> = new Set(issue => issue.summary);
     private _topIssue: Issue;
 
     constructor(
@@ -48,19 +48,19 @@ export class DependenciesTreeNode extends vscode.TreeItem {
      * Getter licenses
      * @return {Collections.Set<License>}
      */
-    public get licenses(): Collections.Set<License> {
+    public get licenses(): Set<License> {
         return this._licenses;
     }
 
-    public get issues(): Collections.Set<Issue> {
+    public get issues(): Set<Issue> {
         return this._issues;
     }
 
-    public set licenses(value: Collections.Set<License>) {
+    public set licenses(value: Set<License>) {
         this._licenses = value;
     }
 
-    public set issues(value: Collections.Set<Issue>) {
+    public set issues(value: Set<Issue>) {
         this._issues = value;
     }
 
@@ -105,7 +105,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         return clone;
     }
 
-    public processTreeIssues(): Collections.Set<Issue> {
+    public processTreeIssues(): Set<Issue> {
         this.setIssuesComponent();
         this.children.forEach(child => this.issues.union(child.processTreeIssues()));
         this.setTopIssue();

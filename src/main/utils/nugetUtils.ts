@@ -1,6 +1,6 @@
 import { NugetDepsTree } from 'nuget-deps-tree';
 import * as path from 'path';
-import * as Collections from 'typescript-collections';
+import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'jfrog-client-js';
 import { LogManager } from '../log/logManager';
@@ -17,8 +17,8 @@ export class NugetUtils {
      * @param workspaceFolders - Base workspace folders to search
      * @param logManager       - Log manager
      */
-    public static async locateSolutions(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Collections.Set<vscode.Uri>> {
-        let solutions: Collections.Set<vscode.Uri> = new Collections.Set();
+    public static async locateSolutions(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Set<vscode.Uri>> {
+        let solutions: Set<vscode.Uri> = new Set();
         for (let workspace of workspaceFolders) {
             logManager.logMessage('Locating *.sln files in workspace "' + workspace.name + '".', 'INFO');
             let wsSolutions: vscode.Uri[] = await vscode.workspace.findFiles(
@@ -39,12 +39,12 @@ export class NugetUtils {
      */
     public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
-        componentsToScan: Collections.Set<ComponentDetails>,
+        componentsToScan: Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<NugetTreeNode[]> {
-        let solutions: Collections.Set<vscode.Uri> = await NugetUtils.locateSolutions(workspaceFolders, treesManager.logManager);
+        let solutions: Set<vscode.Uri> = await NugetUtils.locateSolutions(workspaceFolders, treesManager.logManager);
         if (solutions.isEmpty()) {
             treesManager.logManager.logMessage('No *.sln files found in workspaces.', 'DEBUG');
             return [];

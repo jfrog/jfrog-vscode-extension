@@ -23,7 +23,7 @@
     "activationEvents": [
         "onStartupFinished"
     ],
-    "main": "./out/extension.js",
+    "main": "./dist/extension",
     "contributes": {
         "viewsWelcome": [
             {
@@ -224,7 +224,9 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "npm run compile",
+        "vscode:prepublish": "webpack --mode production",
+        "webpack": "webpack --mode development",
+        "webpack-dev": "webpack --mode development --watch",
         "format": "prettier --write \"src/**/*.ts\" \"package.json\" \"tsconfig.json\" \"tslint.json\"",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
@@ -239,6 +241,7 @@
         "jfrog-client-js": "^2.0.2",
         "keytar": "~7.7.0",
         "nuget-deps-tree": "^0.2.1",
+        "original-fs": "^1.1.0",
         "p-queue": "^6.6.2",
         "semver": "~7.3.5",
         "typescript-collections": "~1.3.3",
@@ -258,13 +261,17 @@
         "faker": "^5.5.3",
         "glob": "^7.1.7",
         "mocha": "^9.0.3",
+        "node-loader": "^2.0.0",
         "prettier": "^1.19.1",
         "tmp": "^0.2.1",
+        "ts-loader": "^9.2.5",
         "tslint": "^6.1.3",
         "tslint-config-prettier": "^1.18.0",
         "typescript": "^4.3.5",
         "vsce": "^1.96.1",
-        "vscode-test": "^1.6.1"
+        "vscode-test": "^1.6.1",
+        "webpack": "^5.49.0",
+        "webpack-cli": "^4.7.2"
     },
     "keywords": [
         "go",

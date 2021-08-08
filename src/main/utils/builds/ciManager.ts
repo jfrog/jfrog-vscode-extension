@@ -1,6 +1,6 @@
 import { IAqlSearchResult, IArtifact, IDetailsResponse, IGeneral, IIssue, ILicense, ISearchEntry } from 'jfrog-client-js';
 import PQueue from 'p-queue';
-import * as Collections from 'typescript-collections';
+import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ConnectionUtils } from '../../connect/connectionUtils';
 import { BuildsNode } from '../../treeDataProviders/dependenciesTree/ciNodes/buildsTree';
@@ -132,7 +132,7 @@ export class CiManager {
             }
         }
 
-        for (const directDependency of directDependencies) {
+        for (const directDependency of directDependencies.toArray()) {
             dependenciesNode.addChild(this.populateTransitiveDependencies(directDependency, parentToChildren));
         }
     }
@@ -458,6 +458,6 @@ export class CiManager {
 }
 
 class IssuesAndLicensesPair {
-    public _issues: Collections.Set<IIssue> = new Collections.Set<IIssue>();
-    public _licenses: Collections.Set<ILicense> = new Collections.Set<ILicense>();
+    public _issues: Set<IIssue> = new Set<IIssue>();
+    public _licenses: Set<ILicense> = new Set<ILicense>();
 }

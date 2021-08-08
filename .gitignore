@@ -1,4 +1,5 @@
 out
+dist
 node_modules
 releaseScripts/node_modules
 .vscode-test/

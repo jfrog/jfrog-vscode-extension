@@ -1,4 +1,4 @@
-import * as Collections from 'typescript-collections';
+import Set from 'typescript-collections/dist/lib/Set';
 import { ICve, IGeneral, IIssue, ILicense, IVulnerableComponent, Severity as ClientSeverity } from 'jfrog-client-js';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
 import { GeneralInfo } from '../types/generalInfo';
@@ -66,7 +66,7 @@ export class Translators {
         if (!vulnerableComponents) {
             return [];
         }
-        let fixed_versions: Collections.Set<string> = new Collections.Set();
+        let fixed_versions: Set<string> = new Set();
         vulnerableComponents
             .map(vulnerableComponent => vulnerableComponent.fixed_versions)
             .reduce((acc, val) => acc.concat(val), []) // Flatten the array and filter falsy values

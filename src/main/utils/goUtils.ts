@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 import * as path from 'path';
-import * as Collections from 'typescript-collections';
+import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'jfrog-client-js';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -63,8 +63,8 @@ export class GoUtils {
      * @param workspaceFolders - Base workspace folders to search
      * @param logManager       - Log manager
      */
-    public static async locateGoMods(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Collections.Set<vscode.Uri>> {
-        let goMods: Collections.Set<vscode.Uri> = new Collections.Set();
+    public static async locateGoMods(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Set<vscode.Uri>> {
+        let goMods: Set<vscode.Uri> = new Set();
         for (let workspace of workspaceFolders) {
             logManager.logMessage('Locating go.mod files in workspace "' + workspace.name + '".', 'INFO');
             let wsGoMods: vscode.Uri[] = await vscode.workspace.findFiles(
@@ -86,12 +86,12 @@ export class GoUtils {
      */
     public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
-        componentsToScan: Collections.Set<ComponentDetails>,
+        componentsToScan: Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<GoTreeNode[]> {
-        let goMods: Collections.Set<vscode.Uri> = await GoUtils.locateGoMods(workspaceFolders, treesManager.logManager);
+        let goMods: Set<vscode.Uri> = await GoUtils.locateGoMods(workspaceFolders, treesManager.logManager);
         if (goMods.isEmpty()) {
             treesManager.logManager.logMessage('No go.mod files found in workspaces.', 'DEBUG');
             return [];

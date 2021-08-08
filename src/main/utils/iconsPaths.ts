@@ -1,8 +1,7 @@
 import * as path from 'path';
+import { ScanUtils } from './scanUtils';
 
 export class IconsPaths {
-    static readonly RESOURCES_PATH: string = path.join(__filename, '..', '..', '..', '..', 'resources');
-
     // Icons severities
     static readonly NORMAL_SEVERITY: string = IconsPaths.getIconPath('normal');
     static readonly PENDING_SEVERITY: string = IconsPaths.getIconPath('unknown');
@@ -26,6 +25,6 @@ export class IconsPaths {
     static readonly BUILD_UNKNOWN: string = IconsPaths.getIconPath('unknown');
 
     private static getIconPath(iconName: string) {
-        return path.join(IconsPaths.RESOURCES_PATH, iconName + '.png');
+        return path.join(ScanUtils.RESOURCES_DIR, iconName + '.png');
     }
 }

@@ -1,8 +1,8 @@
 import * as exec from 'child_process';
-import * as path from 'path';
-import * as Collections from 'typescript-collections';
-import * as vscode from 'vscode';
 import { ComponentDetails } from 'jfrog-client-js';
+import * as path from 'path';
+import Set from 'typescript-collections/dist/lib/Set';
+import * as vscode from 'vscode';
 import { ContextKeys } from '../constants/contextKeys';
 import { FocusType } from '../focus/abstractFocus';
 import { LogManager } from '../log/logManager';
@@ -15,7 +15,7 @@ import { ScanUtils } from './scanUtils';
 
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
-    public static readonly MAVEN_GAV_READER: string = path.join(__dirname, '..', '..', '..', 'resources', 'maven-gav-reader.jar');
+    public static readonly MAVEN_GAV_READER: string = path.join(ScanUtils.RESOURCES_DIR, 'maven-gav-reader.jar');
     public static readonly PKG_TYPE: string = 'maven';
     private static mavenGavReaderInstalled: boolean;
     static pathToNode: Map<string, MavenTreeNode> = new Map<string, MavenTreeNode>();
@@ -117,7 +117,7 @@ export class MavenUtils {
      * @param logManager       - Log manager
      */
     public static async locatePomXmls(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<vscode.Uri[]> {
-        let pomXmls: Collections.Set<vscode.Uri> = new Collections.Set();
+        let pomXmls: Set<vscode.Uri> = new Set();
         for (let workspace of workspaceFolders) {
             logManager.logMessage('Locating pom.xml files in workspace "' + workspace.name + '".', 'INFO');
             let wsPomXmls: vscode.Uri[] = await vscode.workspace.findFiles(
@@ -173,7 +173,7 @@ export class MavenUtils {
      */
     public static async createMavenDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
-        componentsToScan: Collections.Set<ComponentDetails>,
+        componentsToScan: Set<ComponentDetails>,
         treesManager: TreesManager,
         root: DependenciesTreeNode,
         quickScan: boolean

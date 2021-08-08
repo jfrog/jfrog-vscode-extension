@@ -1,11 +1,11 @@
+import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
-import * as Collections from 'typescript-collections';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
+import { GoDependencyUpdate } from './goDependencyUpdate';
 import { MavenDependencyUpdate } from './mavenDependencyUpdate';
 import { NpmDependencyUpdate } from './npmDependencyUpdate';
-import { GoDependencyUpdate } from './goDependencyUpdate';
 
 /**
  * Update the dependency version in the project descriptor (e.g. pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
@@ -36,7 +36,7 @@ export class DependencyUpdateManager implements ExtensionComponent {
      * a quick  pick will appear to the user and a list of versions will be shown, the chosen version will be returned.
      */
     public async getFixedVersion(dependenciesTreeNode: DependenciesTreeNode) {
-        let fixedVersions: Collections.Set<string> = new Collections.Set<string>();
+        let fixedVersions: Set<string> = new Set<string>();
         dependenciesTreeNode.issues.forEach(issue => {
             if (issue.component === dependenciesTreeNode.componentId) {
                 issue.fixedVersions.forEach(fixedVersion => fixedVersions.add(fixedVersion));
