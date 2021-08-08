@@ -23,7 +23,7 @@ export class RootNode extends DependenciesTreeNode {
         if (!node.contextValue) {
             return;
         }
-        // Node include issues (not including for transitive children) with a fixed version.
+        // Look for issues with fixed versions in direct dependencies.
         const isRootUpgradable: boolean = node.issues
             .toArray()
             .map(issueKey => scanCacheManager.getIssue(issueKey.issue_id))

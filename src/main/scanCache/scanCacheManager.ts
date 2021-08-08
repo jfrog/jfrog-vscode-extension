@@ -10,7 +10,16 @@ import { Translators } from '../utils/translators';
 import { ScanCacheObject } from './scanCacheObject';
 
 /**
- * Provide the scan results cache in a key-value style map.
+ * Provide the cache mechanism. The scan cache consists of 3 components -
+ * 1. Scan cache - contains general information about components and the IDs of the issues and licenses. This cache stored in the RAM.
+ * 2. Issues cache - consists of files. Each file contains information about an Xray issue.
+ * 3. Licenses cache - consists of files. Each file contains information about an Xray license.
+ * 
+ * Usage:
+ * For each artifact received from the Xray scan:
+ * 1. Add a scan cache object, including issue IDs and licenses names.
+ * 2. Store all issues in the issues cache. Each issue in a file.
+ * 3. Store all licenses in the licenses cache. Each license in a file.
  */
 export class ScanCacheManager implements ExtensionComponent {
     public static readonly LICENSE_PREFIX: string = 'LICENCE_';

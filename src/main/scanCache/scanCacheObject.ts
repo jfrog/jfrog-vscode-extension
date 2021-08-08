@@ -4,6 +4,10 @@ import { INodeInfo } from '../types/nodeInfo';
 import { Severity } from '../types/severity';
 import { Translators } from '../utils/translators';
 
+/**
+ * Single scan cache object stored in RAM. Contains node info and timestamp.
+ * Objects older then 1 week are candidates for deletion.
+ */
 export class ScanCacheObject {
     private static readonly MILLISECONDS_IN_WEEK: number = 604800000;
     private static readonly NOW: number = Date.now();
