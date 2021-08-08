@@ -1,24 +1,26 @@
 import { assert } from 'chai';
 import * as exec from 'child_process';
+import { ComponentDetails } from 'jfrog-client-js';
 import { before } from 'mocha';
 import * as path from 'path';
+import * as tmp from 'tmp';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'jfrog-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
+import { MavenDependencyUpdate } from '../../main/dependencyUpdate/mavenDependencyUpdate';
+import { MavenExclusion } from '../../main/exclusions/mavenExclusion';
+import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GavGeneralInfo } from '../../main/types/gavGeneralinfo';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenUtils } from '../../main/utils/mavenUtils';
 import { PomTree } from '../../main/utils/pomTree';
-import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
-import { MavenExclusion } from '../../main/exclusions/mavenExclusion';
-import { MavenDependencyUpdate } from '../../main/dependencyUpdate/mavenDependencyUpdate';
+import { TestMemento } from './utils/testMemento.test';
 import { getNodeByArtifactId } from './utils/utils.test';
-import { FocusType } from '../../main/focus/abstractFocus';
 
 /**
  * Test functionality of Maven.
@@ -26,7 +28,8 @@ import { FocusType } from '../../main/focus/abstractFocus';
 describe('Maven Tests', () => {
     let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
-        workspaceState: { get(key: string) {} } as vscode.Memento
+        workspaceState: new TestMemento() as vscode.Memento,
+        storagePath: tmp.dirSync().name
     } as vscode.ExtensionContext);
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let mavenExclusion: MavenExclusion = new MavenExclusion(treesManager);

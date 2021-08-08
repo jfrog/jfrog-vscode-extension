@@ -1,14 +1,14 @@
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
 import { ExtensionComponent } from '../extensionComponent';
+import { LogManager } from '../log/logManager';
 import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { ComponentDetailsDataProvider } from './componentDetailsDataProvider';
+import { BuildsDataProvider } from './dependenciesTree/buildsDataProvider';
 import { DependenciesTreeDataProvider } from './dependenciesTree/dependenciesDataProvider';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
-import { IssuesDataProvider } from './issuesDataProvider';
-import { LogManager } from '../log/logManager';
 import { TreeDataProviderManager } from './dependenciesTree/treeDataProviderManager';
-import { BuildsDataProvider } from './dependenciesTree/buildsDataProvider';
+import { IssuesDataProvider } from './issuesDataProvider';
 
 /**
  * Manages all 3 trees in the extension: Components, component details and component issues details.
@@ -31,13 +31,13 @@ export class TreesManager implements ExtensionComponent {
         this._dependenciesTreeDataProvider = new DependenciesTreeDataProvider(workspaceFolders, this);
         this._buildsTreesProvider = new BuildsDataProvider(this);
         this._treeDataProviderManager = new TreeDataProviderManager(this);
-        this._componentDetailsDataProvider = new ComponentDetailsDataProvider();
-        this._issuesDataProvider = new IssuesDataProvider();
+        this._componentDetailsDataProvider = new ComponentDetailsDataProvider(_scanCacheManager);
+        this._issuesDataProvider = new IssuesDataProvider(_scanCacheManager);
         this._state = State.Local;
     }
 
     public async activate(context: vscode.ExtensionContext): Promise<TreesManager> {
-        await this._treeDataProviderManager.refresh(true);
+        this._treeDataProviderManager.refresh(true);
         this._dependenciesTreeView = vscode.window.createTreeView('jfrog.xray', {
             treeDataProvider: this._treeDataProviderManager,
             showCollapseAll: true

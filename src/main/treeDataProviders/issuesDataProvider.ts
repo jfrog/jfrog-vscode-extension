@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
+import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { Issue } from '../types/issue';
 import { Severity, SeverityUtils } from '../types/severity';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from './utils/treeDataHolder';
-import { Issue } from '../types/issue';
 
 /**
  * The component issues details tree.
@@ -11,6 +12,8 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
     private _onDidChangeTreeData: vscode.EventEmitter<IssueNode | undefined> = new vscode.EventEmitter<IssueNode | undefined>();
     readonly onDidChangeTreeData: vscode.Event<IssueNode | undefined> = this._onDidChangeTreeData.event;
     private _selectedNode: DependenciesTreeNode | undefined;
+
+    constructor(protected _scanCacheManager: ScanCacheManager) {}
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
@@ -43,8 +46,12 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
         // Show only collapsed issue details if no issue selected
         if (!element) {
             let children: IssueNode[] = [];
-            this._selectedNode.issues.forEach(issue => {
-                if (issue.summary === Issue.MISSING_COMPONENT.summary) {
+            this._selectedNode.issues.forEach(xrayIssueId => {
+                if (xrayIssueId.issue_id === Issue.MISSING_COMPONENT.summary) {
+                    return;
+                }
+                let issue: Issue | undefined = this._scanCacheManager.getIssue(xrayIssueId.issue_id);
+                if (!issue) {
                     return;
                 }
                 let issueNode: IssueNode = new IssueNode(
@@ -52,7 +59,7 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<IssueNode> {
                     issue.summary,
                     issue.cves,
                     issue.issueType,
-                    issue.component,
+                    xrayIssueId.component,
                     issue.fixedVersions
                 );
                 children.push(issueNode);

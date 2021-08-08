@@ -2,16 +2,15 @@ import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ContextKeys } from '../../constants/contextKeys';
 import { GeneralInfo } from '../../types/generalInfo';
-import { Issue } from '../../types/issue';
-import { License } from '../../types/license';
 import { Severity } from '../../types/severity';
+import { IIssueKey } from '../../types/issueKey';
 import { IconsPaths } from '../../utils/iconsPaths';
 
 export class DependenciesTreeNode extends vscode.TreeItem {
     private _children: DependenciesTreeNode[] = [];
-    private _licenses: Collections.Set<License> = new Collections.Set(license => license.fullName);
-    private _issues: Collections.Set<Issue> = new Collections.Set(issue => issue.summary);
-    private _topIssue: Issue;
+    private _licenses: Collections.Set<string> = new Collections.Set();
+    private _issues: Collections.Set<IIssueKey> = new Collections.Set(issue => issue.issue_id);
+    private _topSeverity: Severity;
 
     constructor(
         protected _generalInfo: GeneralInfo,
@@ -20,7 +19,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         contextValue?: string
     ) {
         super(_generalInfo.artifactId, collapsibleState);
-        this._topIssue = new Issue('', Severity.Normal, '', '');
+        this._topSeverity = Severity.Normal;
         this.iconPath = IconsPaths.NORMAL_SEVERITY;
         this.description = this.generalInfo.version;
         this.tooltip = this.componentId;
@@ -48,19 +47,19 @@ export class DependenciesTreeNode extends vscode.TreeItem {
      * Getter licenses
      * @return {Collections.Set<License>}
      */
-    public get licenses(): Collections.Set<License> {
+    public get licenses(): Collections.Set<string> {
         return this._licenses;
     }
 
-    public get issues(): Collections.Set<Issue> {
+    public get issues(): Collections.Set<IIssueKey> {
         return this._issues;
     }
 
-    public set licenses(value: Collections.Set<License>) {
+    public set licenses(value: Collections.Set<string>) {
         this._licenses = value;
     }
 
-    public set issues(value: Collections.Set<Issue>) {
+    public set issues(value: Collections.Set<IIssueKey>) {
         this._issues = value;
     }
 
@@ -72,12 +71,12 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         this._children = value;
     }
 
-    public get topIssue(): Issue {
-        return this._topIssue;
+    public get topSeverity(): Severity {
+        return this._topSeverity;
     }
 
-    public set topIssue(value: Issue) {
-        this._topIssue = value;
+    public set topSeverity(severity: Severity) {
+        this._topSeverity = severity;
     }
 
     public set generalInfo(generalInfo: GeneralInfo) {
@@ -105,10 +104,12 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         return clone;
     }
 
-    public processTreeIssues(): Collections.Set<Issue> {
+    public processTreeIssues(): Collections.Set<IIssueKey> {
         this.setIssuesComponent();
-        this.children.forEach(child => this.issues.union(child.processTreeIssues()));
-        this.setTopIssue();
+        this.children.forEach(child => {
+            this.issues.union(child.processTreeIssues());
+            this.setTopSeverity(child);
+        });
         this.sortChildren();
         return this.issues;
     }
@@ -117,7 +118,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         clone.label = this.label;
         clone.licenses = this.licenses;
         clone.issues = this.issues;
-        clone.topIssue = this.topIssue;
+        clone.topSeverity = this.topSeverity;
         clone.contextValue = this.contextValue;
     }
 
@@ -127,12 +128,10 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         });
     }
 
-    private setTopIssue() {
-        this.issues.forEach(issue => {
-            if (this._topIssue.severity < issue.severity) {
-                this._topIssue = issue;
-            }
-        });
+    private setTopSeverity(child: DependenciesTreeNode) {
+        if (child.topSeverity > this.topSeverity) {
+            this._topSeverity = child.topSeverity;
+        }
     }
 
     private sortChildren() {
@@ -144,6 +143,6 @@ export class DependenciesTreeNode extends vscode.TreeItem {
             .sort((lhs, rhs) => rhs.children.length - lhs.children.length)
 
             // 1st priority - Sort by top severity
-            .sort((lhs, rhs) => rhs.topIssue.severity - lhs.topIssue.severity);
+            .sort((lhs, rhs) => rhs.topSeverity - lhs.topSeverity);
     }
 }

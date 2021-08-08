@@ -39,6 +39,7 @@ export const TestArtifact: IArtifact[] = [
         },
         issues: [
             {
+                issue_id: 'XRAY-1',
                 summary:
                     'runc through 1.0-rc6, as used in Docker before 18.09.2 and other products, allows attackers to overwrite the host runc binary (and consequently obtain host root access) by leveraging the ability to execute a command as root within one of these types of containers: (1) a new container with an attacker-controlled image, or (2) an existing container, to which the attacker previously had write access, that can be attached with docker exec. This occurs because of file-descriptor mishandling, related to /proc/self/exe.',
                 description:
@@ -58,6 +59,7 @@ export const TestArtifact: IArtifact[] = [
                 ]
             },
             {
+                issue_id: 'XRAY-2',
                 summary: 'runc libcontainer/rootfs_linux.go msMoveRoot() Function Mount Namespace Handling Unauthorized Local Memory Access',
                 description:
                     'runc contains a flaw in the msMoveRoot() function in libcontainer/rootfs_linux.go that is triggered as mount namespaces for syfs and proc filesystems are not properly handled. This may allow local attacker to bypass container restrictions and read or modify kernel memory via the /proc or /sys directories.',
@@ -72,6 +74,7 @@ export const TestArtifact: IArtifact[] = [
                 ]
             },
             {
+                issue_id: 'XRAY-3',
                 summary:
                     "RunC allowed additional container processes via 'runc exec' to be ptraced by the pid 1 of the container.  This allows the main processes of the container, if running as root, to gain access to file-descriptors of these new processes during the initialization and can lead to container escapes or modification of runC state before the process is fully placed inside the container.",
                 description:

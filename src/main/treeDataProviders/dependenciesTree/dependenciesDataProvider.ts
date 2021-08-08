@@ -4,11 +4,11 @@ import * as vscode from 'vscode';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Issue } from '../../types/issue';
 import { License } from '../../types/license';
+import { INodeInfo } from '../../types/nodeInfo';
 import { Scope } from '../../types/scope';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { MavenUtils } from '../../utils/mavenUtils';
 import { ScanUtils } from '../../utils/scanUtils';
-import { Translators } from '../../utils/translators';
 import { TreesManager } from '../treesManager';
 import { RootNode } from './dependenciesRoot/rootTree';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
@@ -17,7 +17,7 @@ import { DependenciesTreeNode } from './dependenciesTreeNode';
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
 
-    private _filterLicenses: Collections.Set<License> = new Collections.Set(license => license.fullName);
+    private _filterLicenses: Collections.Set<string> = new Collections.Set();
     private _filterScopes: Collections.Set<Scope> = new Collections.Set(scope => scope.label);
     private _componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
@@ -47,9 +47,8 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
         this._scanInProgress = true;
         ScanUtils.setScanInProgress(true);
-        const credentialsSet: boolean = this._treesManager.connectionManager.areXrayCredentialsSet();
         this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow') + ' scan', 'INFO');
-        this.repopulateTree(quickScan, credentialsSet, onChangeFire)
+        this.repopulateTree(quickScan, onChangeFire)
             .then(() => {
                 vscode.commands.executeCommand('jfrog.xray.focus');
                 this._treesManager.logManager.setSuccess();
@@ -74,8 +73,8 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             title: '',
             arguments: [element]
         };
-        let topIssue: Issue = element.topIssue;
-        element.iconPath = SeverityUtils.getIcon(topIssue ? topIssue.severity : Severity.Normal);
+        let topSeverity: Severity = element.topSeverity;
+        element.iconPath = SeverityUtils.getIcon(topSeverity ? topSeverity : Severity.Normal);
         return element;
     }
 
@@ -132,7 +131,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
                 let artifacts: IArtifact[] = await this._treesManager.connectionManager.getComponents(partialComponents);
                 this.addMissingXrayComponents(partialComponents, artifacts);
-                await this._treesManager.scanCacheManager.addArtifactComponents(artifacts);
+                await this._treesManager.scanCacheManager.storeArtifactComponents(artifacts);
                 progress.report({ message: `${totalComponents} components`, increment: step });
                 checkCanceled();
             }
@@ -148,15 +147,14 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     public addXrayInfoToTree(root: DependenciesTreeNode) {
         root.children.forEach(child => {
             let generalInfo: GeneralInfo = child.generalInfo;
-            let artifact: IArtifact | undefined = this._treesManager.scanCacheManager.getArtifact(generalInfo.getComponentId());
-            if (artifact) {
-                let pkgType: string = child.generalInfo.pkgType;
-                child.generalInfo.update(Translators.toGeneralInfo(artifact.general));
-                if (!child.generalInfo.pkgType) {
-                    child.generalInfo.pkgType = pkgType;
+            let scanCacheObject: INodeInfo | undefined = this._treesManager.scanCacheManager.getNodeInfo(generalInfo.getComponentId());
+            if (scanCacheObject) {
+                if (scanCacheObject.pkg_type) {
+                    child.generalInfo.pkgType = scanCacheObject.pkg_type;
                 }
-                artifact.issues.map(Translators.toIssue).forEach(issue => child.issues.add(issue));
-                artifact.licenses.map(Translators.toLicense).forEach(license => child.licenses.add(license));
+                child.topSeverity = scanCacheObject.top_severity;
+                scanCacheObject.issues.forEach(issue => child.issues.add(issue));
+                scanCacheObject.licenses.forEach(license => child.licenses.add(license));
                 this.filterLicenses.union(child.licenses);
                 generalInfo.scopes.map(scope => this.filterScopes.add(new Scope(scope)));
             }
@@ -164,7 +162,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         });
     }
 
-    private async repopulateTree(quickScan: boolean, credentialsSet: boolean, onChangeFire: () => void) {
+    private async repopulateTree(quickScan: boolean, onChangeFire: () => void) {
         await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
             this.clearTree();
             let workspaceRoot: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
@@ -175,17 +173,13 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 workspaceRoot,
                 quickScan
             );
-            if (credentialsSet) {
-                await this.scanAndCacheComponents(progress, checkCanceled);
-                for (let dependenciesTreeNode of workspaceRoot.children) {
-                    this.addXrayInfoToTree(dependenciesTreeNode);
-                    dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
+            await this.scanAndCacheComponents(progress, checkCanceled);
+            for (let node of workspaceRoot.children) {
+                this.addXrayInfoToTree(node);
+                if (node instanceof RootNode) {
+                    node.setUpgradableDependencies(this._treesManager.scanCacheManager);
                 }
-                workspaceRoot.children.forEach(node => {
-                    if (node instanceof RootNode) {
-                        node.setUpgradableDependencies();
-                    }
-                });
+                node.issues = node.processTreeIssues();
             }
             onChangeFire();
         }, 'Scanning project dependencies ');
@@ -197,7 +191,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         this._dependenciesTree = new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.Expanded);
     }
 
-    public get filterLicenses(): Collections.Set<License> {
+    public get filterLicenses(): Collections.Set<string> {
         return this._filterLicenses;
     }
 
