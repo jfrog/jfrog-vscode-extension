@@ -19,7 +19,6 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
 
     private _filterLicenses: Collections.Set<string> = new Collections.Set();
     private _filterScopes: Collections.Set<Scope> = new Collections.Set(scope => scope.label);
-    private _componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
     protected _dependenciesTree!: DependenciesTreeNode;
     private _scanInProgress: boolean = false;
@@ -109,13 +108,17 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         this.refresh(true, onChangeFire);
     }
 
-    private async scanAndCacheComponents(progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) {
-        const totalComponents: number = this._componentsToScan.size();
+    private async scanAndCacheComponents(
+        progress: vscode.Progress<{ message?: string; increment?: number }>,
+        componentsToScan: Collections.Set<ComponentDetails>,
+        checkCanceled: () => void
+    ) {
+        const totalComponents: number = componentsToScan.size();
         if (totalComponents === 0) {
             return;
         }
         progress.report({ message: `${totalComponents} components` });
-        await this.scanAndCache(progress, checkCanceled, totalComponents, this._componentsToScan.toArray());
+        await this.scanAndCache(progress, checkCanceled, totalComponents, componentsToScan.toArray());
     }
 
     private async scanAndCache(
@@ -166,14 +169,15 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
             this.clearTree();
             let workspaceRoot: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
+            let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
             await DependenciesTreesFactory.createDependenciesTrees(
                 this._workspaceFolders,
-                this._componentsToScan,
+                componentsToScan,
                 this._treesManager,
                 workspaceRoot,
                 quickScan
             );
-            await this.scanAndCacheComponents(progress, checkCanceled);
+            await this.scanAndCacheComponents(progress, componentsToScan, checkCanceled);
             for (let node of workspaceRoot.children) {
                 this.addXrayInfoToTree(node);
                 if (node instanceof RootNode) {
