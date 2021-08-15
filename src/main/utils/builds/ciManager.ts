@@ -1,8 +1,9 @@
 import { IAqlSearchResult, IArtifact, IDetailsResponse, IGeneral, ISearchEntry } from 'jfrog-client-js';
 import PQueue from 'p-queue';
-import * as Collections from 'typescript-collections';
+import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ConnectionUtils } from '../../connect/connectionUtils';
+import { BuildsScanCache, Type } from '../../scanCache/buildsScanCache';
 import { ScanCacheManager } from '../../scanCache/scanCacheManager';
 import { BuildsNode } from '../../treeDataProviders/dependenciesTree/ciNodes/buildsTree';
 import { CiTitleNode } from '../../treeDataProviders/dependenciesTree/ciNodes/ciTitleNode';
@@ -17,7 +18,6 @@ import { License } from '../../types/license';
 import { Severity } from '../../types/severity';
 import { Configuration } from '../configuration';
 import { Translators } from '../translators';
-import { BuildsScanCache, Type } from '../../scanCache/buildsScanCache';
 import { BuildsUtils } from './buildsUtils';
 
 /**
@@ -135,7 +135,7 @@ export class CiManager {
             }
         }
 
-        for (const directDependency of directDependencies) {
+        for (const directDependency of directDependencies.toArray()) {
             dependenciesNode.addChild(this.populateTransitiveDependencies(directDependency, parentToChildren));
         }
     }
@@ -477,8 +477,8 @@ export class CiManager {
 }
 
 class IssuesAndLicensesPair {
-    public _issues: Collections.Set<IssueIdWithSeverity> = new Collections.Set<IssueIdWithSeverity>();
-    public _licenses: Collections.Set<string> = new Collections.Set<string>();
+    public _issues: Set<IssueIdWithSeverity> = new Set<IssueIdWithSeverity>();
+    public _licenses: Set<string> = new Set<string>();
 }
 
 class IssueIdWithSeverity {

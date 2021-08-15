@@ -1,6 +1,7 @@
 import AdmZip, { IZipEntry } from 'adm-zip';
 import * as fs from 'fs';
 import { IDetailsResponse } from 'jfrog-client-js';
+import * as os from 'os';
 import * as path from 'path';
 import { LogManager } from '../log/logManager';
 
@@ -12,7 +13,7 @@ export enum Type {
 export class BuildsScanCache {
     // Each build should have 1 build info file and 1 Xray scan results file
     public static readonly MAX_FILES: number = 100 * 2;
-    private static readonly CACHE_BASE_PATH: string = path.resolve(require('os').homedir(), '.jfrog-vscode-extension', 'ci-cache');
+    private static readonly CACHE_BASE_PATH: string = path.resolve(os.homedir(), '.jfrog-vscode-extension', 'ci-cache');
 
     private readonly buildsDir: string;
 

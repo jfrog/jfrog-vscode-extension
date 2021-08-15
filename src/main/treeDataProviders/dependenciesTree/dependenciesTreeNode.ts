@@ -1,15 +1,15 @@
-import * as Collections from 'typescript-collections';
+import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ContextKeys } from '../../constants/contextKeys';
 import { GeneralInfo } from '../../types/generalInfo';
-import { Severity } from '../../types/severity';
 import { IIssueKey } from '../../types/issueKey';
+import { Severity } from '../../types/severity';
 import { IconsPaths } from '../../utils/iconsPaths';
 
 export class DependenciesTreeNode extends vscode.TreeItem {
     private _children: DependenciesTreeNode[] = [];
-    private _licenses: Collections.Set<string> = new Collections.Set();
-    private _issues: Collections.Set<IIssueKey> = new Collections.Set(issue => issue.issue_id);
+    private _licenses: Set<string> = new Set();
+    private _issues: Set<IIssueKey> = new Set(issue => issue.issue_id);
     private _topSeverity: Severity;
 
     constructor(
@@ -45,21 +45,21 @@ export class DependenciesTreeNode extends vscode.TreeItem {
 
     /**
      * Getter licenses
-     * @return {Collections.Set<License>}
+     * @return {Set<License>}
      */
-    public get licenses(): Collections.Set<string> {
+    public get licenses(): Set<string> {
         return this._licenses;
     }
 
-    public get issues(): Collections.Set<IIssueKey> {
+    public get issues(): Set<IIssueKey> {
         return this._issues;
     }
 
-    public set licenses(value: Collections.Set<string>) {
+    public set licenses(value: Set<string>) {
         this._licenses = value;
     }
 
-    public set issues(value: Collections.Set<IIssueKey>) {
+    public set issues(value: Set<IIssueKey>) {
         this._issues = value;
     }
 
@@ -104,7 +104,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         return clone;
     }
 
-    public processTreeIssues(): Collections.Set<IIssueKey> {
+    public processTreeIssues(): Set<IIssueKey> {
         this.setIssuesComponent();
         this.children.forEach(child => {
             this.issues.union(child.processTreeIssues());

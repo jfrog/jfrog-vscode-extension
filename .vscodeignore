@@ -2,6 +2,7 @@
 .vscode-test/**
 out/test/**
 src/**
+node_modules/**
 .gitignore
 **/tsconfig.json
 **/tslint.json
@@ -10,3 +11,4 @@ src/**
 resources/readme/**
 resources/maven-gav-reader
 releaseScripts/**
+webpack.config.js
