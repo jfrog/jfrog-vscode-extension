@@ -1,4 +1,4 @@
-import * as Collections from 'typescript-collections';
+import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { BuildGeneralInfo, Status } from '../../types/buildGeneralinfo';
 import { GeneralInfo } from '../../types/generalInfo';
@@ -17,8 +17,8 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
     protected _dependenciesTree!: DependenciesTreeNode;
     protected _allBuildsTree!: DependenciesTreeNode;
     private _ciInProgress: boolean = false;
-    private _filterLicenses: Collections.Set<string> = new Collections.Set();
-    private _filterScopes: Collections.Set<Scope> = new Collections.Set(scope => scope.label);
+    private _filterLicenses: Set<string> = new Set();
+    private _filterScopes: Set<Scope> = new Set(scope => scope.label);
 
     constructor(protected _treesManager: TreesManager) {}
 
@@ -183,11 +183,11 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
         this._dependenciesTree = new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.Expanded);
     }
 
-    public get filterLicenses(): Collections.Set<string> {
+    public get filterLicenses(): Set<string> {
         return this._filterLicenses;
     }
 
-    public get filterScopes(): Collections.Set<Scope> {
+    public get filterScopes(): Set<Scope> {
         return this._filterScopes;
     }
 }

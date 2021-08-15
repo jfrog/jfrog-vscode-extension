@@ -14,7 +14,7 @@ import { ScanCacheObject } from './scanCacheObject';
  * 1. Scan cache - contains general information about components and the IDs of the issues and licenses. This cache stored in the RAM.
  * 2. Issues cache - consists of files. Each file contains information about an Xray issue.
  * 3. Licenses cache - consists of files. Each file contains information about an Xray license.
- * 
+ *
  * Usage:
  * For each artifact received from the Xray scan:
  * 1. Add a scan cache object, including issue IDs and licenses names.

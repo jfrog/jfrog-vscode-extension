@@ -1,17 +1,18 @@
 import * as exec from 'child_process';
+import { ComponentDetails } from 'jfrog-client-js';
 import * as path from 'path';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'jfrog-client-js';
 import { LogManager } from '../log/logManager';
 import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { Configuration } from './configuration';
+import { ScanUtils } from './scanUtils';
 
 export class PypiUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/*requirements*.txt' };
-    public static readonly PYTHON_SCRIPTS: string = path.join(__dirname, '..', '..', '..', 'resources', 'python');
+    public static readonly PYTHON_SCRIPTS: string = path.join(ScanUtils.RESOURCES_DIR, 'python');
     public static readonly PIP_DEP_TREE_SCRIPT: string = path.join(PypiUtils.PYTHON_SCRIPTS, 'pipDepTree.py');
     public static readonly CHECK_VENV_SCRIPT: string = path.join(PypiUtils.PYTHON_SCRIPTS, 'checkVenv.py');
     public static readonly PKG_TYPE: string = 'pypi';

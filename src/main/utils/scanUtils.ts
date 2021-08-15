@@ -1,10 +1,11 @@
+import * as exec from 'child_process';
+import * as fse from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import * as fse from 'fs-extra';
-import * as exec from 'child_process';
 
 export class ScanUtils {
+    public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
 
     public static async scanWithProgress(
@@ -52,5 +53,15 @@ export class ScanUtils {
 
     public static setScanInProgress(state: boolean) {
         vscode.commands.executeCommand('setContext', 'scanInProgress', state);
+    }
+
+    private static getResourcesDir(): string {
+        let parent: string = path.dirname(__dirname);
+        if (parent.endsWith('main')) {
+            // In tests, the following path resolved: jfrog-vscode-extension/out/main
+            return path.join(parent, '..', '..', 'resources');
+        }
+        // In production, the following path resolved: jfrog-vscode-extension/dist
+        return path.join(parent, 'resources');
     }
 }

@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 import * as path from 'path';
-import * as Collections from 'typescript-collections';
+import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ComponentDetails } from 'jfrog-client-js';
 import { FocusType } from '../focus/abstractFocus';
@@ -65,8 +65,8 @@ export class NpmUtils {
      * @param workspaceFolders - Base workspace folders to search
      * @param logManager       - Log manager
      */
-    public static async locatePackageJsons(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Collections.Set<vscode.Uri>> {
-        let packageJsons: Collections.Set<vscode.Uri> = new Collections.Set();
+    public static async locatePackageJsons(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Set<vscode.Uri>> {
+        let packageJsons: Set<vscode.Uri> = new Set();
         for (let workspace of workspaceFolders) {
             logManager.logMessage('Locating package json files in workspace "' + workspace.name + '".', 'INFO');
             let wsPackageJsons: vscode.Uri[] = await vscode.workspace.findFiles(
@@ -87,12 +87,12 @@ export class NpmUtils {
      */
     public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
-        componentsToScan: Collections.Set<ComponentDetails>,
+        componentsToScan: Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<NpmTreeNode[]> {
-        let packageJsons: Collections.Set<vscode.Uri> = await NpmUtils.locatePackageJsons(workspaceFolders, treesManager.logManager);
+        let packageJsons: Set<vscode.Uri> = await NpmUtils.locatePackageJsons(workspaceFolders, treesManager.logManager);
         if (packageJsons.isEmpty()) {
             treesManager.logManager.logMessage('No package.json files found in workspaces.', 'DEBUG');
             return [];

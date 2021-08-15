@@ -1,5 +1,5 @@
 import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'jfrog-client-js';
-import * as Collections from 'typescript-collections';
+import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Issue } from '../../types/issue';
@@ -17,9 +17,9 @@ import { DependenciesTreeNode } from './dependenciesTreeNode';
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
 
-    private _filterLicenses: Collections.Set<string> = new Collections.Set();
-    private _filterScopes: Collections.Set<Scope> = new Collections.Set(scope => scope.label);
-    private _componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+    private _filterLicenses: Set<string> = new Set();
+    private _filterScopes: Set<Scope> = new Set(scope => scope.label);
+    private _componentsToScan: Set<ComponentDetails> = new Set();
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
     protected _dependenciesTree!: DependenciesTreeNode;
     private _scanInProgress: boolean = false;
@@ -191,11 +191,11 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         this._dependenciesTree = new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.Expanded);
     }
 
-    public get filterLicenses(): Collections.Set<string> {
+    public get filterLicenses(): Set<string> {
         return this._filterLicenses;
     }
 
-    public get filterScopes(): Collections.Set<Scope> {
+    public get filterScopes(): Set<Scope> {
         return this._filterScopes;
     }
 
@@ -203,7 +203,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         if (artifacts.length === partialComponents.length) {
             return;
         }
-        let missingComponents: Collections.Set<string> = new Collections.Set<string>();
+        let missingComponents: Set<string> = new Set<string>();
         // Add all partial components to the missing components set
         partialComponents
             .map(component => component.component_id)
