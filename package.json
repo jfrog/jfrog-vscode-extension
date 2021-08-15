@@ -240,7 +240,7 @@
         "fs-extra": "~10.0.0",
         "jfrog-client-js": "^2.1.0",
         "keytar": "~7.7.0",
-        "nuget-deps-tree": "^0.2.1",
+        "nuget-deps-tree": "^0.2.2",
         "original-fs": "^1.1.0",
         "p-queue": "^6.6.2",
         "semver": "~7.3.5",

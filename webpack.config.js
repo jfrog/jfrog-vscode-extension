@@ -16,8 +16,7 @@ const config = {
     },
     devtool: 'source-map',
     externals: {
-        vscode: 'commonjs vscode',
-        'nuget-deps-tree': 'nuget-deps-tree'
+        vscode: 'commonjs vscode'
     },
     resolve: {
         extensions: ['.ts', '.js']
