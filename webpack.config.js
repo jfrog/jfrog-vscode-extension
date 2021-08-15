@@ -16,7 +16,8 @@ const config = {
     },
     devtool: 'source-map',
     externals: {
-        vscode: 'commonjs vscode'
+        vscode: 'commonjs vscode',
+        keytar: 'keytar'
     },
     resolve: {
         extensions: ['.ts', '.js']
@@ -28,10 +29,6 @@ const config = {
                 test: /\.ts$/,
                 exclude: /node_modules/,
                 loader: 'ts-loader'
-            },
-            {
-                test: /\.node$/,
-                loader: 'node-loader'
             }
         ]
     },
