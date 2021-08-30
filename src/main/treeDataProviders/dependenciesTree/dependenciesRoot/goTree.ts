@@ -20,15 +20,13 @@ export class GoTreeNode extends RootNode {
     }
 
     public async refreshDependencies(quickScan: boolean) {
-        let goModGraph: string[] = [];
+        let goModGraph: PackageDependencyPair[] = [];
         let goList: string[] = [];
         let rootPackageName: string = '';
         try {
+            rootPackageName = this.getRootPackageName();
             goModGraph = this.runGoModGraph();
             goList = this.runGoList();
-
-            // The project name should be the first line in the go list result
-            rootPackageName = goList[0];
         } catch (error) {
             this._treesManager.logManager.logError(error, !quickScan);
             this.label = this.workspaceFolder + ' [Not installed]';
@@ -45,40 +43,55 @@ export class GoTreeNode extends RootNode {
     }
 
     /**
-     * Run "go mod graph" in order to create the dependency tree later on.
-     * @returns a list of dependencies in the following order:
-     * For a given index i, if i is even (i%2==0) results[i] is the package that depends on results[i+1]: results[i] -> results[i+1].
-     * The first lines of the even indices contain no versions. Those are the direct dependencies.
+     * run "go list -m" to get the name of the root module.
+     * @returns the root package name
      */
-    private runGoModGraph(): string[] {
-        let results: string[] = ScanUtils.executeCmd('go mod graph', this.workspaceFolder)
+    private getRootPackageName(): string {
+        return ScanUtils.executeCmd('go list -m', this.workspaceFolder)
+            .toString()
+            .trim();
+    }
+
+    /**
+     * Run "go mod graph" in order to create the dependency tree later on.
+     * @returns a list of package to dependency pairs
+     */
+    private runGoModGraph(): PackageDependencyPair[] {
+        let goModGraphOutput: string[] = ScanUtils.executeCmd('go mod graph', this.workspaceFolder)
             .toString()
             .split(/\s+/);
-        results.pop(); // Remove the last new line
+        goModGraphOutput.pop(); // Remove the last new line
+
+        // For a given index i, if i is even (i%2==0) goModGraphOutput[i] is the package that depends on goModGraphOutput[i+1]: goModGraphOutput[i] -> goModGraphOutput[i+1].
+        // The first lines of the even indices contain no versions. Those are the direct dependencies.
+        let results: PackageDependencyPair[] = [];
+        for (let i: number = 0; i < goModGraphOutput.length; i += 2) {
+            results.push(new PackageDependencyPair(goModGraphOutput[i], goModGraphOutput[i + 1]));
+        }
         return results;
     }
 
     /**
-     * Run "go list -m all" to retrieve a list of dependencies which are actually in use in the project.
-     * @returns "go list -m all" results.
+     * Run "go list" to retrieve a list of dependencies which are actually in use in the project.
+     * @returns "go list" results.
      */
     private runGoList(): string[] {
-        return ScanUtils.executeCmd('go list -m all', this.workspaceFolder)
+        return ScanUtils.executeCmd(`go list -f '{{with .Module}}{{.Path}} {{.Version}}{{end}}' all`, this.workspaceFolder)
             .toString()
             .split(/\n/);
     }
 
-    private buildDependenciesMapAndDirectDeps(goModGraph: string[], goList: string[]): Map<string, string[]> {
+    private buildDependenciesMapAndDirectDeps(goModGraph: PackageDependencyPair[], goList: string[]): Map<string, string[]> {
         let goModGraphIndex: number = 0;
 
         // Populate direct dependencies
         let directDependenciesGeneralInfos: GeneralInfo[] = [];
-        for (; goModGraphIndex < goModGraph.length && !goModGraph[goModGraphIndex].includes('@'); goModGraphIndex += 2) {
-            let nameVersionTuple: string[] = this.getNameVersionTuple(goModGraph[goModGraphIndex + 1]);
+        for (; goModGraphIndex < goModGraph.length && !goModGraph[goModGraphIndex].package.includes('@'); goModGraphIndex++) {
+            let nameVersionTuple: string[] = this.getNameVersionTuple(goModGraph[goModGraphIndex].dependency);
             directDependenciesGeneralInfos.push(new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], ['None'], '', GoUtils.PKG_TYPE));
         }
 
-        // Create a set of packages that actually in use in the project
+        // Create a set of packages that are actually in use in the project
         let goListPackages: Set<string> = new Set<string>();
         goList.forEach((dependency: string) => {
             goListPackages.add(dependency.replace(' ', '@'));
@@ -86,14 +99,15 @@ export class GoTreeNode extends RootNode {
 
         // Build dependencies map
         let dependenciesMap: Map<string, string[]> = new Map();
-        for (; goModGraphIndex < goModGraph.length; goModGraphIndex += 2) {
-            let dependency: string[] = dependenciesMap.get(goModGraph[goModGraphIndex]) || [];
-            if (!goListPackages.has(goModGraph[goModGraphIndex + 1])) {
-                // Dependency in "go mod graph" does not actually in use in the project
+        for (; goModGraphIndex < goModGraph.length; goModGraphIndex++) {
+            let dependency: string[] = dependenciesMap.get(goModGraph[goModGraphIndex].package) || [];
+            if (!goListPackages.has(goModGraph[goModGraphIndex].dependency)) {
+                // If the dependency is included in "go mod graph", but isn't included in "go mod -m all", it means that it's not in use by the project.
+                // It can therefore be ignored.
                 continue;
             }
-            dependency.push(goModGraph[goModGraphIndex + 1]);
-            dependenciesMap.set(goModGraph[goModGraphIndex], dependency);
+            dependency.push(goModGraph[goModGraphIndex].dependency);
+            dependenciesMap.set(goModGraph[goModGraphIndex].package, dependency);
         }
 
         // Add direct dependencies to tree
@@ -150,5 +164,17 @@ export class GoTreeNode extends RootNode {
         return dependenciesMap.has(generalInfo.artifactId + '@v' + generalInfo.version)
             ? vscode.TreeItemCollapsibleState.Collapsed
             : vscode.TreeItemCollapsibleState.None;
+    }
+}
+
+class PackageDependencyPair {
+    constructor(private _package: string, private _dependency: string) {}
+
+    public get package() {
+        return this._package;
+    }
+
+    public get dependency() {
+        return this._dependency;
     }
 }
