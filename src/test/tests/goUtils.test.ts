@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { ComponentDetails, IIssue, ILicense } from 'jfrog-client-js';
+import { ComponentDetails, IArtifact, IGeneral, ILicense } from 'jfrog-client-js';
 import { before } from 'mocha';
 import * as path from 'path';
 import * as tmp from 'tmp';
@@ -9,18 +9,14 @@ import { ConnectionManager } from '../../main/connect/connectionManager';
 import { GoDependencyUpdate } from '../../main/dependencyUpdate/goDependencyUpdate';
 import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
-import { IIssueKey } from '../../main/types/issueKey';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { GoTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
-import { Issue } from '../../main/types/issue';
 import { License } from '../../main/types/license';
 import { GoUtils } from '../../main/utils/goUtils';
-import { Translators } from '../../main/utils/translators';
 import { TestMemento } from './utils/testMemento.test';
-import * as utils from './utils/utils.test';
 import { getNodeByArtifactId } from './utils/utils.test';
 
 /**
@@ -88,10 +84,12 @@ describe('Go Utils Tests', () => {
         let goMod: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'go.mod'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(goMod);
 
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('github.com/jfrog/gofrog', '1.0.5', [], '', ''));
+        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
+            new GeneralInfo('github.com/jfrog/jfrog-cli-core', '1.9.1', [], '', '')
+        );
         let dependencyPos: vscode.Position[] = GoUtils.getDependencyPos(textDocument, dependenciesTreeNode, FocusType.Dependency);
         assert.deepEqual(dependencyPos[0], new vscode.Position(5, 1));
-        assert.deepEqual(dependencyPos[1], new vscode.Position(5, 31));
+        assert.deepEqual(dependencyPos[1], new vscode.Position(5, 39));
 
         // Test 'resources/go/empty/go.mod'
         goMod = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'go.mod'));
@@ -106,32 +104,32 @@ describe('Go Utils Tests', () => {
         await runCreateGoDependenciesTrees(componentsToScan, parent);
 
         // Get specific dependency node.
-        let node: DependenciesTreeNode | null = getNodeByArtifactId(parent, 'github.com/jfrog/gofrog');
+        let node: DependenciesTreeNode | null = getNodeByArtifactId(parent, 'github.com/jfrog/jfrog-cli-core');
         assert.isNotNull(node);
-        assert.equal(node?.generalInfo.version, '1.0.5');
+        assert.equal(node?.generalInfo.version, '1.9.0');
 
         // Create a new version different from the node.
-        goDependencyUpdate.updateDependencyVersion(node!, '1.0.6');
+        goDependencyUpdate.updateDependencyVersion(node!, '1.9.1');
 
         // Recalculate the dependency tree.
         parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         await runCreateGoDependenciesTrees(componentsToScan, parent);
 
         // Verify the node's version was modified.
-        node = getNodeByArtifactId(parent, 'github.com/jfrog/gofrog');
+        node = getNodeByArtifactId(parent, 'github.com/jfrog/jfrog-cli-core');
         assert.isNotNull(node);
-        assert.equal(node?.generalInfo.version, '1.0.6');
+        assert.equal(node?.generalInfo.version, '1.9.1');
 
         // Revert back the changes.
-        goDependencyUpdate.updateDependencyVersion(node!, '1.0.5');
+        goDependencyUpdate.updateDependencyVersion(node!, '1.9.0');
 
         // Recalculate the dependency tree.
         parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         await runCreateGoDependenciesTrees(componentsToScan, parent);
 
-        node = getNodeByArtifactId(parent, 'github.com/jfrog/gofrog');
+        node = getNodeByArtifactId(parent, 'github.com/jfrog/jfrog-cli-core');
         assert.isNotNull(node);
-        assert.equal(node?.generalInfo.version, '1.0.5');
+        assert.equal(node?.generalInfo.version, '1.9.0');
     });
 
     /**
@@ -141,11 +139,15 @@ describe('Go Utils Tests', () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
         let res: GoTreeNode[] = await runCreateGoDependenciesTrees(componentsToScan, parent);
-        // Check that components to scan contains github.com/machinebox/progress:0.1.0.
-        assert.equal(componentsToScan.size(), 3);
-        assert.deepEqual(componentsToScan.toArray()[0], new ComponentDetails('go://github.com/jfrog/gofrog:1.0.5'));
-        assert.deepEqual(componentsToScan.toArray()[1], new ComponentDetails('go://github.com/pkg/errors:0.8.0'));
-        assert.deepEqual(componentsToScan.toArray()[2], new ComponentDetails('go://github.com/opencontainers/runc:1.0.0-rc2'));
+
+        assert.isAbove(componentsToScan.size(), 0);
+        let gofrog: ComponentDetails | undefined;
+        for (let component of componentsToScan.toArray()) {
+            if (component.component_id === 'go://github.com/jfrog/gofrog:1.0.6') {
+                gofrog = component;
+            }
+        }
+        assert.isDefined(gofrog);
 
         // Check labels.
         assert.deepEqual(res[0].label, 'github.com/shield/black-widow');
@@ -158,50 +160,53 @@ describe('Go Utils Tests', () => {
         // Check children.
         assert.lengthOf(res[0].children, 2);
         let child: DependenciesTreeNode = res[0].children[0];
-        assert.deepEqual(child.componentId, 'github.com/jfrog/gofrog:1.0.5');
-        assert.deepEqual(child.label, 'github.com/jfrog/gofrog');
-        assert.deepEqual(child.description, '1.0.5');
+        assert.deepEqual(child.componentId, 'github.com/jfrog/jfrog-cli-core:1.9.0');
+        assert.deepEqual(child.label, 'github.com/jfrog/jfrog-cli-core');
+        assert.deepEqual(child.description, '1.9.0');
         assert.deepEqual(child.parent, res[0]);
 
         // Xray general data.
-        // First child.
         let actualLicenseName: string = child.licenses.toArray()[0];
         let actualLicense: License | undefined = dummyScanCacheManager.getLicense(actualLicenseName)!;
         assert.isDefined(actualLicense);
 
-        let expectedLicense: ILicense[] = utils.TestArtifact[0].licenses;
+        let expectedLicense: ILicense[] = xrayScanResults[0].licenses;
         assert.deepEqual(actualLicense.name, expectedLicense[0].name);
         assert.deepEqual(actualLicense.moreInfoUrl, expectedLicense[0].more_info_url);
         assert.deepEqual(actualLicense.fullName, expectedLicense[0].full_name);
-
-        // Second child.
-        child = res[0].children[1];
-        actualLicenseName = child.licenses.toArray()[0];
-        actualLicense = dummyScanCacheManager.getLicense(actualLicenseName)!;
-        assert.isDefined(actualLicense);
-
-        expectedLicense = utils.TestArtifact[1].licenses;
-        assert.deepEqual(actualLicense.name, expectedLicense[0].name);
-        assert.deepEqual(actualLicense.moreInfoUrl, expectedLicense[0].more_info_url);
-        assert.deepEqual(actualLicense.fullName, expectedLicense[0].full_name);
-
-        // Check transformation types from xray IIssue to Issue.
-        let actualIssues: IIssueKey[] = child.issues.toArray();
-        let expectedIssues: IIssue[] = utils.TestArtifact[1].issues;
-        // Issue created by Xray data.
-        for (let i: number = 0; i < 2; i++) {
-            let actualIssue: Issue | undefined = dummyScanCacheManager.getIssue(actualIssues[i].issue_id)!;
-            assert.isDefined(actualIssue);
-            assert.deepEqual(actualIssue, Translators.toIssue(expectedIssues[i]));
-        }
     });
 
     async function runCreateGoDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
         let dependenciesTrees: GoTreeNode[] = await GoUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, false);
-        await dummyScanCacheManager.storeArtifactComponents(utils.TestArtifact);
+        await dummyScanCacheManager.storeArtifactComponents(xrayScanResults);
         dependenciesTrees.forEach(child => {
             treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);
         });
         return dependenciesTrees.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 });
+
+const xrayScanResults: IArtifact[] = [
+    {
+        general: { component_id: 'github.com/jfrog/jfrog-cli-core:1.9.0' } as IGeneral,
+        issues: [],
+        licenses: [
+            {
+                name: 'Apache-2.0',
+                full_name: 'The Apache Software License, Version 2.0',
+                more_info_url: [
+                    'http://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt',
+                    'https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt',
+                    'http://licenses.nuget.org/Apache-2.0',
+                    'https://licenses.nuget.org/Apache-2.0',
+                    'http://www.apache.org/licenses/LICENSE-2.0',
+                    'https://spdx.org/licenses/Apache-2.0.html',
+                    'https://spdx.org/licenses/Apache-2.0',
+                    'http://www.opensource.org/licenses/apache2.0.php',
+                    'http://www.opensource.org/licenses/Apache-2.0'
+                ],
+                components: ['go://github.com/jfrog/jfrog-cli-core:1.9.1']
+            } as ILicense
+        ]
+    }
+];
