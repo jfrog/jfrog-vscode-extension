@@ -76,7 +76,7 @@ export class GoTreeNode extends RootNode {
      * @returns "go list" results.
      */
     private runGoList(): string[] {
-        return ScanUtils.executeCmd(`go list -f '{{with .Module}}{{.Path}} {{.Version}}{{end}}' all`, this.workspaceFolder)
+        return ScanUtils.executeCmd(`go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all`, this.workspaceFolder)
             .toString()
             .split(/\n/);
     }
