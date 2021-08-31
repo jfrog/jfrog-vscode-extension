@@ -3,6 +3,6 @@ module github.com/shield/black-widow
 go 1.13
 
 require (
-	github.com/jfrog/gofrog v1.0.5
-	github.com/opencontainers/runc v1.0.0-rc2
+	github.com/jfrog/jfrog-cli-core v1.9.0
+	github.com/jfrog/jfrog-client-go v0.26.1 // indirect
 )
