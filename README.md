@@ -6,7 +6,7 @@
 
 - [About this Extension](#about-this-extension)
   - [General](#general)
-  - [Need a FREE JFrog Instance?](#need-a-free-jfrog-instance?)
+  - [Need a FREE JFrog Instance?](#need-a-free-jfrog-instance\?)
   - [Component Tree Icons](#component-tree-icons)
 - [General Configuration](#general-configuration)
   - [Configuring JFrog Platform](#configuring-jfrog-platform)
