@@ -6,7 +6,7 @@
 
 - [About this Extension](#about-this-extension)
   - [General](#general)
-  - [Need a FREE JFrog Instance?](#need-a-free-jfrog-instance\?)
+  - [Need a FREE JFrog Instance?](#need-a-free-jfrog-instance)
   - [Component Tree Icons](#component-tree-icons)
 - [General Configuration](#general-configuration)
   - [Configuring JFrog Platform](#configuring-jfrog-platform)
@@ -45,6 +45,7 @@ The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to 
 
 The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
+<a name="need-a-free-jfrog-instance"></a>
 ### Need a FREE JFrog instance?
 Don't have a running JFrog instance? No problem! [Get a FREE instance in the cloud](https://jfrog.com/start-free/).
 
