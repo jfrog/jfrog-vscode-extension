@@ -6,6 +6,7 @@
 
 - [About this Extension](#about-this-extension)
   - [General](#general)
+  - [Need a FREE JFrog Instance?](#need-a-free-jfrog-instance?)
   - [Component Tree Icons](#component-tree-icons)
 - [General Configuration](#general-configuration)
   - [Configuring JFrog Platform](#configuring-jfrog-platform)
@@ -15,7 +16,6 @@
 - [Using the Extension - General](#using-the-extension---general)
 - [The Local View](#the-local-view)
   - [Supported Features](#supported-features)
-  - [Free Go Modules Security Scanning and Metadata from GoCenter](#free-go-modules-security-scanning-and-metadata-from-gocenter-deprecated)
   - [Viewing and Updating Project Dependencies](#viewing-and-updating-project-dependencies)
   - [Scan after dependencies change](#scan-after-dependencies-change)
   - [Exclude Paths from Scan](#exclude-paths-from-scan)
@@ -45,7 +45,8 @@ The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to 
 
 The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
-Don't have JFrog Platform? [Start for free](https://jfrog.com/start-free/).
+### Need a FREE JFrog instance?
+Don't have a running JFrog instance? No problem! [Get a FREE instance in the cloud](https://jfrog.com/start-free/).
 
 ### Component Tree Icons
 The icon demonstrates the top severity issue of a selected component and its transitive dependencies. The following table describes the severities from lowest to highest:
@@ -134,9 +135,6 @@ With this information, a developer can make an informed decision on whether to u
 | Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ❌           |          ❌           |
 | Automatically trigger a scan upon code changes          |         ✅         |            ❌            |          ✅          |           ❌           |          ❌           |
 | Exclude transitive dependencies from project descriptor |         ❌         |            ✅            |          ❌          |           ❌           |          ❌           |
-
-### Free Go Modules Security Scanning and Metadata from GoCenter (deprecated)
-As of February 28, 2021, GoCenter has been sunset. This integration has been removed. Learn more: https://jfrog.com/blog/into-the-sunset-bintray-jcenter-gocenter-and-chartcenter/
 
 ### Viewing and Updating Project Dependencies
 View the dependencies used by the project in a tree, where the direct dependencies are at the top.
