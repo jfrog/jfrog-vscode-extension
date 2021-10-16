@@ -16,7 +16,7 @@ export class LogManager implements ExtensionComponent {
         this._statusBar.command = 'jfrog.xray.showOutput';
     }
 
-    activate(context: vscode.ExtensionContext): LogManager {
+    activate(): LogManager {
         this._outputChannel = vscode.window.createOutputChannel('JFrog');
         this._statusBar.show();
         return this;

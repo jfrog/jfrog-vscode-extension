@@ -20,7 +20,7 @@ import { isWindows } from './utils/utils.test';
  * Test functionality of @class NugetUtils.
  */
 describe('Nuget Utils Tests', () => {
-    let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
+    let logManager: LogManager = new LogManager().activate();
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
         workspaceState: new TestMemento() as vscode.Memento,
         storagePath: tmp.dirSync().name

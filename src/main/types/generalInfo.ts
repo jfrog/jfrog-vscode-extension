@@ -13,52 +13,51 @@ export class GeneralInfo {
         return this._artifactId;
     }
 
-    public get version(): string {
-        return this._version;
-    }
-
-    public get scopes(): string[] {
-        return this._scopes;
-    }
-
-    public get path(): string {
-        return this._path;
-    }
-
-    public get pkgType(): string {
-        return this._pkgType;
-    }
-
-    public get sha1(): string | undefined {
-        return this._sha1;
-    }
-
-    public get sha256(): string | undefined {
-        return this._sha256;
-    }
-
     public set artifactId(artifactId: string) {
         this._artifactId = artifactId;
+    }
+
+    public get version(): string {
+        return this._version;
     }
 
     public set version(version: string) {
         this._version = version;
     }
 
+    public get scopes(): string[] {
+        return this._scopes;
+    }
+
     public set scopes(scopes: string[]) {
         this._scopes = scopes;
+    }
+
+    public get path(): string {
+        return this._path;
     }
 
     public set path(path: string) {
         this._path = path;
     }
 
+    public get pkgType(): string {
+        return this._pkgType;
+    }
     public set pkgType(pkgType: string) {
         this._pkgType = pkgType;
     }
 
+    public get sha1(): string | undefined {
+        return this._sha1;
+    }
+
     public set sha1(sha1: string | undefined) {
         this._sha1 = sha1;
+    }
+
+    public get sha256(): string | undefined {
+        return this._sha256;
     }
 
     public set sha256(sha1: string | undefined) {

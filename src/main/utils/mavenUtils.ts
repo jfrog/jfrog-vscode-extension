@@ -159,7 +159,7 @@ export class MavenUtils {
                 'Could not get parse pom.xml GAV.\n' + 'Try Install it by running "mvn clean install" from ' + pathToPomXml + '.',
                 'ERR'
             );
-            logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
+            logManager.logMessage((<any>error).stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
         }
         return ['', ''];
     }
@@ -171,7 +171,7 @@ export class MavenUtils {
      * @param root             - The base tree node
      * @param quickScan        - True to allow using the scan cache
      */
-    public static async createMavenDependenciesTrees(
+    public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
         componentsToScan: Set<ComponentDetails>,
         treesManager: TreesManager,
@@ -210,7 +210,7 @@ export class MavenUtils {
                         '.',
                     'ERR'
                 );
-                treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
+                treesManager.logManager.logMessage((<any>error).stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }
         }
         mavenTreeNodes.forEach(node => this.updateContextValue(node));

@@ -32,9 +32,9 @@ export class PypiTreeNode extends RootNode {
             pypiList = JSON.parse(
                 ScanUtils.executeCmd(this._pythonPath + ' ' + PypiUtils.PIP_DEP_TREE_SCRIPT + ' --json-tree', this.workspaceFolder).toString()
             );
-            this.generalInfo = new GeneralInfo(this.workspaceFolder.replace(/^.*[\\\/]/, ''), '', ['None'], this.workspaceFolder, PypiUtils.PKG_TYPE);
+            this.generalInfo = new GeneralInfo(this.workspaceFolder.replace(/^.*[\\/]/, ''), '', ['None'], this.workspaceFolder, PypiUtils.PKG_TYPE);
         } catch (error) {
-            this._treesManager.logManager.logError(error, !quickScan);
+            this._treesManager.logManager.logError(<any>error, !quickScan);
         }
         this.label = this.generalInfo.artifactId;
         this.populateDependenciesTree(this, pypiList, quickScan);

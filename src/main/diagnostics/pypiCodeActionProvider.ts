@@ -11,7 +11,7 @@ export class PypiCodeActionProvider extends AbstractCodeActionProvider implement
     }
 
     /** @override */
-    protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
+    protected getDependenciesTree(): DependenciesTreeNode | undefined {
         return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(PypiUtils.PKG_TYPE);
     }
 

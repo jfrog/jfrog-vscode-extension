@@ -77,7 +77,7 @@ export class NugetUtils {
         try {
             nugetList = NugetDepsTree.generate(slnFilePath);
         } catch (error) {
-            logManager.logError(error, !quickScan);
+            logManager.logError((<any>error), !quickScan);
             logManager.logMessage(
                 'Failed building tree for solution "' + slnFilePath + '", due to the above error. Skipping to next solution... ',
                 'INFO'

@@ -23,44 +23,44 @@ export class Issue {
         return this._cves;
     }
 
-    public get description(): string {
-        return this._description;
-    }
-
-    public get issueType(): string {
-        return this._issueType;
-    }
-
-    public get severity(): Severity {
-        return this._severity;
-    }
-
-    public get summary(): string {
-        return this._summary;
-    }
-
-    public get fixedVersions(): string[] {
-        return this._fixedVersions;
-    }
-
     public set cves(cves: string[] | undefined) {
         this._cves = cves;
+    }
+
+    public get description(): string {
+        return this._description;
     }
 
     public set description(value: string) {
         this._description = value;
     }
 
+    public get issueType(): string {
+        return this._issueType;
+    }
+
     public set issueType(value: string) {
         this._issueType = value;
+    }
+
+    public get severity(): Severity {
+        return this._severity;
     }
 
     public set severity(value: Severity) {
         this._severity = value;
     }
 
+    public get summary(): string {
+        return this._summary;
+    }
+
     public set summary(value: string) {
         this._summary = value;
+    }
+
+    public get fixedVersions(): string[] {
+        return this._fixedVersions;
     }
 
     public set fixedVersions(value: string[]) {

@@ -15,36 +15,36 @@ export class PomTree {
         return this._pomGav;
     }
 
-    public get pomPath(): string {
-        return this._pomPath;
-    }
-
-    public get children(): PomTree[] {
-        return this._children;
-    }
-
-    public get parent(): PomTree | undefined {
-        return this._parent;
-    }
-
-    public get parentGav(): string {
-        return this._parentGav;
-    }
-
     public set pomGav(v: string) {
         this._pomGav = v;
+    }
+
+    public get pomPath(): string {
+        return this._pomPath;
     }
 
     public set pomPath(v: string) {
         this._pomPath = v;
     }
 
+    public get children(): PomTree[] {
+        return this._children;
+    }
+
     public set children(v: PomTree[]) {
         this._children = v;
     }
 
+    public get parent(): PomTree | undefined {
+        return this._parent;
+    }
+
     public set parent(v: PomTree | undefined) {
         this._parent = v;
+    }
+
+    public get parentGav(): string {
+        return this._parentGav;
     }
 
     public set parentGav(v: string) {

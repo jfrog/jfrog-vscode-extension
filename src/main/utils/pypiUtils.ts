@@ -157,7 +157,7 @@ export class PypiUtils {
             exec.execSync(pythonPath + ' ' + PypiUtils.CHECK_VENV_SCRIPT, { cwd: workspaceFolder } as exec.ExecSyncOptionsWithStringEncoding);
             return true;
         } catch (error) {
-            logManager.logError(error, false);
+            logManager.logError((<any>error), false);
             return false;
         }
     }
