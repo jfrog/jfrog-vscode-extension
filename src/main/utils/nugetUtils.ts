@@ -43,27 +43,25 @@ export class NugetUtils {
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
-    ): Promise<NugetTreeNode[]> {
+    ): Promise<void> {
         let solutions: Set<vscode.Uri> = await NugetUtils.locateSolutions(workspaceFolders, treesManager.logManager);
         if (solutions.isEmpty()) {
             treesManager.logManager.logMessage('No *.sln files found in workspaces.', 'DEBUG');
-            return [];
+            return;
         }
 
         treesManager.logManager.logMessage('Solution files to scan: [' + solutions.toString() + ']', 'DEBUG');
-        let nugetTreeNodes: NugetTreeNode[] = [];
         for (let solution of solutions.toArray()) {
             let tree: any = await NugetUtils.getProjects(solution.fsPath, treesManager.logManager, quickScan);
             if (!tree) {
                 continue;
             }
+            let solutionDir: string = path.dirname(solution.fsPath);
             for (let project of tree.projects) {
-                let dependenciesTreeNode: NugetTreeNode = new NugetTreeNode(path.dirname(solution.fsPath), componentsToScan, treesManager, parent);
+                let dependenciesTreeNode: NugetTreeNode = new NugetTreeNode(solutionDir, componentsToScan, treesManager, parent);
                 dependenciesTreeNode.refreshDependencies(quickScan, project);
-                nugetTreeNodes.push(dependenciesTreeNode);
             }
         }
-        return nugetTreeNodes;
     }
 
     /**

@@ -390,14 +390,8 @@ describe('Maven Tests', () => {
     });
 
     async function runCreateMavenDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        let dependenciesTrees: DependenciesTreeNode[] = await MavenUtils.createMavenDependenciesTrees(
-            workspaceFolders,
-            componentsToScan,
-            treesManager,
-            parent,
-            false
-        );
-        return dependenciesTrees.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
+        await MavenUtils.createMavenDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, false);
+        return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 
     function expectedBuildPrototypePomTree(): PomTree[][] {

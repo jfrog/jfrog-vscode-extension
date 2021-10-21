@@ -237,14 +237,8 @@ describe('Npm Utils Tests', () => {
     });
 
     async function runCreateNpmDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        let dependenciesTrees: DependenciesTreeNode[] = await NpmUtils.createDependenciesTrees(
-            workspaceFolders,
-            componentsToScan,
-            treesManager,
-            parent,
-            false
-        );
-        return dependenciesTrees.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
+        await NpmUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, false);
+        return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 
     function installAllProjects() {

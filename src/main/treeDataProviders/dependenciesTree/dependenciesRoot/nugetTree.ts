@@ -19,7 +19,7 @@ export class NugetTreeNode extends RootNode {
         super(workspaceFolder, parent, '');
     }
 
-    public async refreshDependencies(quickScan: boolean, project: any) {
+    public refreshDependencies(quickScan: boolean, project: any) {
         this.generalInfo = new GeneralInfo(project.name, '', ['None'], this.workspaceFolder, NugetUtils.PKG_TYPE);
         this.label = project.name;
         this.populateDependenciesTree(this, project.dependencies, quickScan);
