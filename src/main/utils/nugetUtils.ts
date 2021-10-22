@@ -1,34 +1,15 @@
+import { ComponentDetails } from 'jfrog-client-js';
 import { NugetDepsTree } from 'nuget-deps-tree';
 import * as path from 'path';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'jfrog-client-js';
 import { LogManager } from '../log/logManager';
 import { NugetTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/nugetTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { Configuration } from './configuration';
 
 export class NugetUtils {
     public static readonly PKG_TYPE: string = 'nuget';
-
-    /**
-     * Find .sln files in workspaces.
-     * @param workspaceFolders - Base workspace folders to search
-     * @param logManager       - Log manager
-     */
-    public static async locateSolutions(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Set<vscode.Uri>> {
-        let solutions: Set<vscode.Uri> = new Set();
-        for (let workspace of workspaceFolders) {
-            logManager.logMessage('Locating *.sln files in workspace "' + workspace.name + '".', 'INFO');
-            let wsSolutions: vscode.Uri[] = await vscode.workspace.findFiles(
-                { base: workspace.uri.fsPath, pattern: '**/*.sln' },
-                Configuration.getScanExcludePattern(workspace)
-            );
-            wsSolutions.forEach(solution => solutions.add(solution));
-        }
-        return Promise.resolve(solutions);
-    }
 
     /**
      * @param workspaceFolders - Base workspace folders
@@ -38,21 +19,20 @@ export class NugetUtils {
      * @param quickScan        - True to allow using the scan cache
      */
     public static async createDependenciesTrees(
-        workspaceFolders: vscode.WorkspaceFolder[],
+        solutions: vscode.Uri[] | undefined,
         componentsToScan: Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<NugetTreeNode[]> {
-        let solutions: Set<vscode.Uri> = await NugetUtils.locateSolutions(workspaceFolders, treesManager.logManager);
-        if (solutions.isEmpty()) {
+        if (!solutions) {
             treesManager.logManager.logMessage('No *.sln files found in workspaces.', 'DEBUG');
             return [];
         }
 
         treesManager.logManager.logMessage('Solution files to scan: [' + solutions.toString() + ']', 'DEBUG');
         let nugetTreeNodes: NugetTreeNode[] = [];
-        for (let solution of solutions.toArray()) {
+        for (let solution of solutions) {
             let tree: any = await NugetUtils.getProjects(solution.fsPath, treesManager.logManager, quickScan);
             if (!tree) {
                 continue;

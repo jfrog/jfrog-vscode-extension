@@ -16,6 +16,7 @@ import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesT
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { NpmUtils } from '../../main/utils/npmUtils';
+import { PackageDescriptorType, ScanUtils } from '../../main/utils/scanUtils';
 import { TestMemento } from './utils/testMemento.test';
 import { getNodeByArtifactId } from './utils/utils.test';
 
@@ -48,13 +49,21 @@ describe('Npm Utils Tests', () => {
      * Test NpmUtils.locatePackageJsons.
      */
     it('Locate package jsons', async () => {
-        let packageJsons: Collections.Set<vscode.Uri> = await NpmUtils.locatePackageJsons(workspaceFolders, treesManager.logManager);
-        assert.strictEqual(packageJsons.size(), projectDirs.length);
+        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            workspaceFolders,
+            treesManager.logManager
+        );
+        let packageJsons: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.NPM);
+        assert.isDefined(packageJsons);
+        assert.strictEqual(packageJsons?.length, projectDirs.length);
 
         // Assert that results contains all projects
         for (let expectedProjectDir of projectDirs) {
-            let expectedPackageJson: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, expectedProjectDir, 'package.json'));
-            assert.isTrue(packageJsons.contains(expectedPackageJson), 'Should contain ' + expectedPackageJson.fsPath);
+            let expectedPackageJson: string = path.join(tmpDir.fsPath, expectedProjectDir, 'package.json');
+            assert.isDefined(
+                packageJsons?.find(packageJsons => packageJsons.fsPath === expectedPackageJson),
+                'Should contain ' + expectedPackageJson
+            );
         }
     });
 
@@ -237,8 +246,14 @@ describe('Npm Utils Tests', () => {
     });
 
     async function runCreateNpmDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        let dependenciesTrees: DependenciesTreeNode[] = await NpmUtils.createDependenciesTrees(
+        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
             workspaceFolders,
+            treesManager.logManager
+        );
+        let packageJsons: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.NPM);
+        assert.isDefined(packageJsons);
+        let dependenciesTrees: DependenciesTreeNode[] = await NpmUtils.createDependenciesTrees(
+            packageJsons,
             componentsToScan,
             treesManager,
             parent,

@@ -1,14 +1,12 @@
 import { execSync } from 'child_process';
+import { ComponentDetails } from 'jfrog-client-js';
 import * as path from 'path';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'jfrog-client-js';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
-import { TreesManager } from '../treeDataProviders/treesManager';
-import { LogManager } from '../log/logManager';
 import { FocusType } from '../focus/abstractFocus';
-import { Configuration } from './configuration';
+import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
+import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { TreesManager } from '../treeDataProviders/treesManager';
 
 export class GoUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/go.mod' };
@@ -59,24 +57,6 @@ export class GoUtils {
     }
 
     /**
-     * Find go.mod files in workspaces.
-     * @param workspaceFolders - Base workspace folders to search
-     * @param logManager       - Log manager
-     */
-    public static async locateGoMods(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Set<vscode.Uri>> {
-        let goMods: Set<vscode.Uri> = new Set();
-        for (let workspace of workspaceFolders) {
-            logManager.logMessage('Locating go.mod files in workspace "' + workspace.name + '".', 'INFO');
-            let wsGoMods: vscode.Uri[] = await vscode.workspace.findFiles(
-                { base: workspace.uri.fsPath, pattern: '**/go.mod' },
-                Configuration.getScanExcludePattern(workspace)
-            );
-            wsGoMods.forEach(goMod => goMods.add(goMod));
-        }
-        return Promise.resolve(goMods);
-    }
-
-    /**
      * @param workspaceFolders - Base workspace folders
      * @param progress         - Progress bar
      * @param componentsToScan - Set of go components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
@@ -85,14 +65,13 @@ export class GoUtils {
      * @param quickScan        - True to allow using the scan cache
      */
     public static async createDependenciesTrees(
-        workspaceFolders: vscode.WorkspaceFolder[],
+        goMods: vscode.Uri[] | undefined,
         componentsToScan: Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<GoTreeNode[]> {
-        let goMods: Set<vscode.Uri> = await GoUtils.locateGoMods(workspaceFolders, treesManager.logManager);
-        if (goMods.isEmpty()) {
+        if (!goMods) {
             treesManager.logManager.logMessage('No go.mod files found in workspaces.', 'DEBUG');
             return [];
         }
@@ -102,7 +81,7 @@ export class GoUtils {
             return [];
         }
         let goTreeNodes: GoTreeNode[] = [];
-        for (let goMod of goMods.toArray()) {
+        for (let goMod of goMods) {
             treesManager.logManager.logMessage('Analyzing go.mod files', 'INFO');
             let dependenciesTreeNode: GoTreeNode = new GoTreeNode(path.dirname(goMod.fsPath), componentsToScan, treesManager, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);

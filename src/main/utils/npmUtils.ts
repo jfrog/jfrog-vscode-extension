@@ -1,14 +1,12 @@
 import { execSync } from 'child_process';
+import { ComponentDetails } from 'jfrog-client-js';
 import * as path from 'path';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'jfrog-client-js';
 import { FocusType } from '../focus/abstractFocus';
-import { LogManager } from '../log/logManager';
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { Configuration } from './configuration';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
@@ -61,24 +59,6 @@ export class NpmUtils {
     }
 
     /**
-     * Find package.json files in workspaces.
-     * @param workspaceFolders - Base workspace folders to search
-     * @param logManager       - Log manager
-     */
-    public static async locatePackageJsons(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<Set<vscode.Uri>> {
-        let packageJsons: Set<vscode.Uri> = new Set();
-        for (let workspace of workspaceFolders) {
-            logManager.logMessage('Locating package json files in workspace "' + workspace.name + '".', 'INFO');
-            let wsPackageJsons: vscode.Uri[] = await vscode.workspace.findFiles(
-                { base: workspace.uri.fsPath, pattern: '**/package.json' },
-                Configuration.getScanExcludePattern(workspace)
-            );
-            wsPackageJsons.forEach(packageJson => packageJsons.add(packageJson));
-        }
-        return Promise.resolve(packageJsons);
-    }
-
-    /**
      * @param workspaceFolders - Base workspace folders
      * @param componentsToScan - Set of npm components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
      * @param scanCacheManager - Scan cache manager
@@ -86,14 +66,13 @@ export class NpmUtils {
      * @param quickScan        - True to allow using the scan cache
      */
     public static async createDependenciesTrees(
-        workspaceFolders: vscode.WorkspaceFolder[],
+        packageJsons: vscode.Uri[] | undefined,
         componentsToScan: Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<NpmTreeNode[]> {
-        let packageJsons: Set<vscode.Uri> = await NpmUtils.locatePackageJsons(workspaceFolders, treesManager.logManager);
-        if (packageJsons.isEmpty()) {
+        if (!packageJsons) {
             treesManager.logManager.logMessage('No package.json files found in workspaces.', 'DEBUG');
             return [];
         }
@@ -103,7 +82,7 @@ export class NpmUtils {
         }
         treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
         let npmTreeNodes: NpmTreeNode[] = [];
-        for (let packageJson of packageJsons.toArray()) {
+        for (let packageJson of packageJsons) {
             let dependenciesTreeNode: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), componentsToScan, treesManager, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
             npmTreeNodes.push(dependenciesTreeNode);

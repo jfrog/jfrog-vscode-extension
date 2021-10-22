@@ -19,6 +19,7 @@ import { GavGeneralInfo } from '../../main/types/gavGeneralinfo';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenUtils } from '../../main/utils/mavenUtils';
 import { PomTree } from '../../main/utils/pomTree';
+import { PackageDescriptorType, ScanUtils } from '../../main/utils/scanUtils';
 import { TestMemento } from './utils/testMemento.test';
 import { getNodeByArtifactId } from './utils/utils.test';
 
@@ -55,13 +56,21 @@ describe('Maven Tests', () => {
      * Test locatePomXml.
      */
     it('Locate pom.xml', async () => {
-        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, treesManager.logManager);
-        assert.strictEqual(pomXmls.length, 6);
+        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            workspaceFolders,
+            treesManager.logManager
+        );
+        let pomXmls: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.MAVEN);
+        assert.isDefined(pomXmls);
+        assert.strictEqual(pomXmls!.length, 6);
 
         // Assert that results contains all projects
         for (let expectedProjectDir of projectDirs) {
             let expectedPomXml: string = path.join(tmpDir.fsPath, expectedProjectDir, 'pom.xml');
-            assert.isTrue(!!pomXmls.find(el => el.fsPath === expectedPomXml), 'Should contain ' + expectedPomXml);
+            assert.isDefined(
+                pomXmls?.find(pomXmls => pomXmls.fsPath === expectedPomXml),
+                'Should contain ' + expectedPomXml
+            );
         }
     });
 
@@ -95,8 +104,8 @@ describe('Maven Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
-        let pomXmlsArray: vscode.Uri[] = await MavenUtils.locatePomXmls(localWorkspaceFolders, treesManager.logManager);
-        let got: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager.logManager);
+        let pomXmlsArray: vscode.Uri[] | undefined = await locatePomXmls(localWorkspaceFolders);
+        let got: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmlsArray!, treesManager.logManager);
         let want: PomTree[][] = expectedBuildPrototypePomTree();
         assert.deepEqual(got, want[0]);
 
@@ -108,8 +117,8 @@ describe('Maven Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
-        pomXmlsArray = await MavenUtils.locatePomXmls(localWorkspaceFolders, treesManager.logManager);
-        got = MavenUtils.buildPrototypePomTree(pomXmlsArray, treesManager.logManager);
+        pomXmlsArray = await locatePomXmls(localWorkspaceFolders);
+        got = MavenUtils.buildPrototypePomTree(pomXmlsArray!, treesManager.logManager);
         assert.deepEqual(got, want[1]);
     });
 
@@ -390,14 +399,26 @@ describe('Maven Tests', () => {
     });
 
     async function runCreateMavenDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        let dependenciesTrees: DependenciesTreeNode[] = await MavenUtils.createMavenDependenciesTrees(
-            workspaceFolders,
+        let pomXmlsArray: vscode.Uri[] | undefined = await locatePomXmls(workspaceFolders);
+        let dependenciesTrees: DependenciesTreeNode[] = await MavenUtils.createDependenciesTrees(
+            pomXmlsArray,
             componentsToScan,
             treesManager,
             parent,
             false
         );
         return dependenciesTrees.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
+    }
+
+    async function locatePomXmls(workspaceFolders: vscode.WorkspaceFolder[]): Promise<vscode.Uri[] | undefined> {
+        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            workspaceFolders,
+            treesManager.logManager
+        );
+        let pomXmlsArray: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.MAVEN);
+        assert.isDefined(pomXmlsArray);
+        pomXmlsArray = pomXmlsArray?.sort((a: vscode.Uri, b: vscode.Uri) => a.fsPath.localeCompare(b.fsPath));
+        return pomXmlsArray;
     }
 
     function expectedBuildPrototypePomTree(): PomTree[][] {
