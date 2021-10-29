@@ -1,5 +1,9 @@
 import * as os from 'os';
+import * as tmp from 'tmp';
+import * as vscode from 'vscode';
+import { ScanCacheManager } from '../../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { TestMemento } from './testMemento.test';
 
 export function isWindows(): boolean {
     return os.platform() === 'win32';
@@ -19,4 +23,11 @@ export function getNodeByArtifactId(root: DependenciesTreeNode, artifactId: stri
         }
     }
     return null;
+}
+
+export function createScanCacheManager(): ScanCacheManager {
+    return new ScanCacheManager().activate({
+        workspaceState: new TestMemento() as vscode.Memento,
+        storagePath: tmp.dirSync().name
+    } as vscode.ExtensionContext);
 }

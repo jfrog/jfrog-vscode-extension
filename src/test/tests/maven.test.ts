@@ -3,7 +3,6 @@ import * as exec from 'child_process';
 import { ComponentDetails } from 'jfrog-client-js';
 import { before } from 'mocha';
 import * as path from 'path';
-import * as tmp from 'tmp';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
@@ -19,18 +18,14 @@ import { GavGeneralInfo } from '../../main/types/gavGeneralinfo';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenUtils } from '../../main/utils/mavenUtils';
 import { PomTree } from '../../main/utils/pomTree';
-import { TestMemento } from './utils/testMemento.test';
-import { getNodeByArtifactId } from './utils/utils.test';
+import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 
 /**
  * Test functionality of Maven.
  */
 describe('Maven Tests', () => {
     let logManager: LogManager = new LogManager().activate();
-    let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
-        workspaceState: new TestMemento() as vscode.Memento,
-        storagePath: tmp.dirSync().name
-    } as vscode.ExtensionContext);
+    let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let mavenExclusion: MavenExclusion = new MavenExclusion(treesManager);
     let mavenDependencyUpdate: MavenDependencyUpdate = new MavenDependencyUpdate();

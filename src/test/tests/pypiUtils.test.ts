@@ -13,17 +13,14 @@ import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesT
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { PypiUtils } from '../../main/utils/pypiUtils';
-import { TestMemento } from './utils/testMemento.test';
+import { createScanCacheManager } from './utils/utils.test';
 
 /**
  * Test functionality of @class PypiUtils.
  */
 describe('Pypi Utils Tests', () => {
     let logManager: LogManager = new LogManager().activate();
-    let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
-        workspaceState: new TestMemento() as vscode.Memento,
-        storagePath: tmp.dirSync().name
-    } as vscode.ExtensionContext);
+    let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements'];
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
