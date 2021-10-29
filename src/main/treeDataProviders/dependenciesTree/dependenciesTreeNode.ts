@@ -39,8 +39,18 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         return this._generalInfo;
     }
 
+    public set generalInfo(generalInfo: GeneralInfo) {
+        this._generalInfo = generalInfo;
+        this.description = this.generalInfo.version;
+        this.tooltip = this.componentId;
+    }
+
     public get parent(): DependenciesTreeNode | undefined {
         return this._parent;
+    }
+
+    public set parent(parent: DependenciesTreeNode | undefined) {
+        this._parent = parent;
     }
 
     /**
@@ -51,12 +61,12 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         return this._licenses;
     }
 
-    public get issues(): Set<IIssueKey> {
-        return this._issues;
-    }
-
     public set licenses(value: Set<string>) {
         this._licenses = value;
+    }
+
+    public get issues(): Set<IIssueKey> {
+        return this._issues;
     }
 
     public set issues(value: Set<IIssueKey>) {
@@ -77,16 +87,6 @@ export class DependenciesTreeNode extends vscode.TreeItem {
 
     public set topSeverity(severity: Severity) {
         this._topSeverity = severity;
-    }
-
-    public set generalInfo(generalInfo: GeneralInfo) {
-        this._generalInfo = generalInfo;
-        this.description = this.generalInfo.version;
-        this.tooltip = this.componentId;
-    }
-
-    public set parent(parent: DependenciesTreeNode | undefined) {
-        this._parent = parent;
     }
 
     public isDependenciesTreeRoot(): boolean {

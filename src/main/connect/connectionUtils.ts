@@ -9,6 +9,7 @@ import { LogManager } from '../log/logManager';
 export class ConnectionUtils {
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI: any = semver.coerce('3.21.2');
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED: any = semver.coerce('2.5.0');
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     private static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
 
     /**
@@ -92,7 +93,7 @@ export class ConnectionUtils {
             let xrayVersion: string = await ConnectionUtils.testXrayVersion(jfrogClient);
             vscode.window.showInformationMessage(xrayVersion);
         } catch (error) {
-            vscode.window.showErrorMessage(error.message || error, <vscode.MessageOptions>{ modal: true });
+            vscode.window.showErrorMessage((<any>error).message || error, <vscode.MessageOptions>{ modal: true });
             return Promise.resolve(false);
         }
         return Promise.resolve(true);
@@ -150,11 +151,11 @@ export class ConnectionUtils {
                 .summary()
                 .component(summaryRequest);
         } catch (error) {
-            if (!error.response) {
+            if (!(<any>error).response) {
                 return Promise.reject('Could not connect to Xray: ' + error);
             }
             let message: string = '';
-            switch (error.response.status) {
+            switch ((<any>error).response.status) {
                 case http2.constants.HTTP_STATUS_UNAUTHORIZED:
                     message = 'Please check your credentials.';
                     break;
@@ -162,7 +163,7 @@ export class ConnectionUtils {
                     message = "Please make sure that the user has 'View Components' permission in Xray.";
                     break;
             }
-            return Promise.reject(error.message + '. ' + message);
+            return Promise.reject((<any>error).message + '. ' + message);
         }
         return Promise.resolve();
     }
@@ -183,14 +184,16 @@ export class ConnectionUtils {
     }
 
     public static addUserAgentHeader(clientConfig: IJfrogClientConfig) {
-        clientConfig.headers!['User-Agent'] = ConnectionUtils.USER_AGENT;
+        if (clientConfig.headers) {
+            clientConfig.headers['User-Agent'] = ConnectionUtils.USER_AGENT;
+        }
     }
 
     public static addProxyAuthHeader(clientConfig: IJfrogClientConfig) {
         if (clientConfig.proxy) {
             let proxyAuthHeader: string | undefined = vscode.workspace.getConfiguration().get('http.proxyAuthorization');
-            if (proxyAuthHeader) {
-                clientConfig.headers!['Proxy-Authorization'] = proxyAuthHeader;
+            if (proxyAuthHeader && clientConfig.headers) {
+                clientConfig.headers['Proxy-Authorization'] = proxyAuthHeader;
             }
         }
     }

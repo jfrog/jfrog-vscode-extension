@@ -26,7 +26,7 @@ import { getNodeByArtifactId } from './utils/utils.test';
  * Test functionality of Maven.
  */
 describe('Maven Tests', () => {
-    let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
+    let logManager: LogManager = new LogManager().activate();
     let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
         workspaceState: new TestMemento() as vscode.Memento,
         storagePath: tmp.dirSync().name
@@ -390,7 +390,7 @@ describe('Maven Tests', () => {
     });
 
     async function runCreateMavenDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        let dependenciesTrees: DependenciesTreeNode[] = await MavenUtils.createMavenDependenciesTrees(
+        let dependenciesTrees: DependenciesTreeNode[] = await MavenUtils.createDependenciesTrees(
             workspaceFolders,
             componentsToScan,
             treesManager,

@@ -7,7 +7,7 @@ import { Severity, SeverityUtils } from '../../types/severity';
 import { BuildsUtils } from '../../utils/builds/buildsUtils';
 import { CiManager } from '../../utils/builds/ciManager';
 import { Configuration } from '../../utils/configuration';
-import { ScanUtils } from '../../utils/scanUtils';
+import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { TreesManager } from '../treesManager';
 import { BuildsNode } from './ciNodes/buildsTree';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
@@ -53,13 +53,13 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
             this._treesManager.logManager.setSuccess();
             this._treesManager.logManager.logMessage('Done loading builds details.', 'INFO');
         } catch (error) {
-            if (error.message !== CiManager.CI_CANCELLATION_ERROR) {
+            if (!(error instanceof ScanCancellationError)) {
                 // Unexpected error
                 throw error;
             }
             this.clearAllTrees();
             onChangeFire();
-            vscode.window.showInformationMessage(error.message);
+            vscode.window.showInformationMessage((<any>error).message);
         } finally {
             this._ciInProgress = false;
             ScanUtils.setScanInProgress(false);

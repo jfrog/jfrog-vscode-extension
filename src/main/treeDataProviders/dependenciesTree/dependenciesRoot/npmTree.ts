@@ -29,14 +29,14 @@ export class NpmTreeNode extends RootNode {
             try {
                 scopedProject.loadProjectDetails(this.runNpmLs(scopedProject.scope));
             } catch (error) {
-                this._treesManager.logManager.logError(error, !quickScan);
+                this._treesManager.logManager.logError((<any>error), !quickScan);
                 this._treesManager.logManager.logMessage(
                     'Possible cause: The project needs to be installed by npm. Install it by running "npm install" from "' +
                         this.workspaceFolder +
                         '",.',
                     'INFO'
                 );
-                scopedProject.loadProjectDetails(JSON.parse(error.stdout.toString()));
+                scopedProject.loadProjectDetails(JSON.parse((<any>error).stdout.toString()));
                 npmLsFailed = true;
             }
             this.populateDependenciesTree(this, scopedProject.dependencies, quickScan, scopedProject.scope);

@@ -26,7 +26,7 @@ export class ScanUtils {
 
     private static checkCanceled(token: vscode.CancellationToken) {
         if (token.isCancellationRequested) {
-            throw new Error('Xray Scan cancelled');
+            throw new ScanCancellationError();
         }
     }
 
@@ -42,7 +42,7 @@ export class ScanUtils {
     }
 
     static async removeFolder(folderPath: string): Promise<void> {
-        if (fse.pathExists(folderPath)) {
+        if (fse.pathExistsSync(folderPath)) {
             await fse.remove(folderPath);
         }
     }
@@ -64,4 +64,8 @@ export class ScanUtils {
         // In production, the following path resolved: jfrog-vscode-extension/dist
         return path.join(parent, 'resources');
     }
+}
+
+export class ScanCancellationError extends Error {
+    message: string = 'Xray scan cancelled';
 }

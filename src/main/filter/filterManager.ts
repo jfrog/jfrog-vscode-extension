@@ -28,7 +28,7 @@ export class FilterManager implements ExtensionComponent {
         this._scopeFilter = new ScopesFilter(_treesManager);
     }
 
-    public activate(context: vscode.ExtensionContext) {
+    public activate() {
         return this;
     }
 
@@ -77,7 +77,7 @@ export class FilterManager implements ExtensionComponent {
         this._treesManager.treeDataProviderManager.applyFilters(filteredRoot);
     }
 
-    private _applyFilters(unfilteredNode: DependenciesTreeNode, filteredNode: DependenciesTreeNode, picked: { nodeSelected: Boolean }): void {
+    private _applyFilters(unfilteredNode: DependenciesTreeNode, filteredNode: DependenciesTreeNode, picked: { nodeSelected: boolean }): void {
         // Keep this node if it compiles with all filters or if it is a build node.
         picked.nodeSelected =
             (this._severitiesFilter.isNodePicked(unfilteredNode) &&
