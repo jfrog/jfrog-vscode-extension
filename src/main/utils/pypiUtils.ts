@@ -128,7 +128,7 @@ export class PypiUtils {
     /**
      * Return reference to the VS-Code Python extension if installed.
      * Activate it to allow tracking on environmental changes -
-     *   If virtual env is not installed, we want that the Python extension will detect new virtualenv environments and suggest activation.
+     * If virtual env is not installed, we want that the Python extension will detect new virtualenv environments and suggest activation.
      */
     public static async getAndActivatePythonExtension(): Promise<vscode.Extension<any> | undefined> {
         let pythonExtension: vscode.Extension<any> | undefined = vscode.extensions.getExtension('ms-python.python');
