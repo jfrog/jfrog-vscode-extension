@@ -2,7 +2,6 @@ import { assert } from 'chai';
 import { ComponentDetails, IArtifact, IGeneral, ILicense } from 'jfrog-client-js';
 import { before } from 'mocha';
 import * as path from 'path';
-import * as tmp from 'tmp';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
@@ -10,25 +9,20 @@ import { GoDependencyUpdate } from '../../main/dependencyUpdate/goDependencyUpda
 import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
-import { GoTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { License } from '../../main/types/license';
 import { GoUtils } from '../../main/utils/goUtils';
 import { PackageDescriptorType, ScanUtils } from '../../main/utils/scanUtils';
-import { TestMemento } from './utils/testMemento.test';
-import { getNodeByArtifactId } from './utils/utils.test';
+import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 
 /**
  * Test functionality of @class GoUtils.
  */
 describe('Go Utils Tests', () => {
-    let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
-    let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
-        workspaceState: new TestMemento() as vscode.Memento,
-        storagePath: tmp.dirSync().name
-    } as vscode.ExtensionContext);
+    let logManager: LogManager = new LogManager().activate();
+    let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'empty'];
     let goDependencyUpdate: GoDependencyUpdate = new GoDependencyUpdate();
@@ -147,7 +141,7 @@ describe('Go Utils Tests', () => {
     it('Create go Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
-        let res: GoTreeNode[] = await runCreateGoDependenciesTrees(componentsToScan, parent);
+        await runCreateGoDependenciesTrees(componentsToScan, parent);
 
         assert.isAbove(componentsToScan.size(), 0);
         let gofrog: ComponentDetails | undefined;
@@ -159,20 +153,20 @@ describe('Go Utils Tests', () => {
         assert.isDefined(gofrog);
 
         // Check labels.
-        assert.deepEqual(res[0].label, 'github.com/shield/black-widow');
-        assert.deepEqual(res[1].label, 'github.com/shield/falcon');
+        assert.deepEqual(parent.children[0].label, 'github.com/shield/black-widow');
+        assert.deepEqual(parent.children[1].label, 'github.com/shield/falcon');
 
         // Check parents.
-        assert.deepEqual(res[0].parent, parent);
-        assert.deepEqual(res[1].parent, parent);
+        assert.deepEqual(parent.children[0].parent, parent);
+        assert.deepEqual(parent.children[1].parent, parent);
 
         // Check children.
-        assert.lengthOf(res[0].children, 2);
-        let child: DependenciesTreeNode = res[0].children[0];
+        assert.lengthOf(parent.children[0].children, 2);
+        let child: DependenciesTreeNode = parent.children[0].children[0];
         assert.deepEqual(child.componentId, 'github.com/jfrog/jfrog-cli-core:1.9.0');
         assert.deepEqual(child.label, 'github.com/jfrog/jfrog-cli-core');
         assert.deepEqual(child.description, '1.9.0');
-        assert.deepEqual(child.parent, res[0]);
+        assert.deepEqual(child.parent, parent.children[0]);
 
         // Xray general data.
         let actualLicenseName: string = child.licenses.toArray()[0];
@@ -191,12 +185,12 @@ describe('Go Utils Tests', () => {
             treesManager.logManager
         );
         let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.GO);
-        let dependenciesTrees: GoTreeNode[] = await GoUtils.createDependenciesTrees(goMods, componentsToScan, treesManager, parent, false);
+        await GoUtils.createDependenciesTrees(goMods, componentsToScan, treesManager, parent, false);
         await dummyScanCacheManager.storeArtifactComponents(xrayScanResults);
-        dependenciesTrees.forEach(child => {
+        parent.children.forEach(child => {
             treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);
         });
-        return dependenciesTrees.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
+        return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 });
 

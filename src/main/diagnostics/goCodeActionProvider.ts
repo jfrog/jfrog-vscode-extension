@@ -12,7 +12,7 @@ export class GoCodeActionProvider extends AbstractCodeActionProvider implements 
     }
 
     /** @override */
-    protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
+    protected getDependenciesTree(): DependenciesTreeNode | undefined {
         return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(GoUtils.PKG_TYPE);
     }
 
@@ -22,7 +22,7 @@ export class GoCodeActionProvider extends AbstractCodeActionProvider implements 
             return;
         }
         let diagnostics: vscode.Diagnostic[] = [];
-        let goDependenciesTree: DependenciesTreeNode | undefined = this.getDependenciesTree(document);
+        let goDependenciesTree: DependenciesTreeNode | undefined = this.getDependenciesTree();
         if (!goDependenciesTree) {
             return;
         }

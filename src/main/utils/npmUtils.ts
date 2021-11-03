@@ -71,23 +71,20 @@ export class NpmUtils {
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
-    ): Promise<NpmTreeNode[]> {
+    ): Promise<void> {
         if (!packageJsons) {
             treesManager.logManager.logMessage('No package.json files found in workspaces.', 'DEBUG');
-            return [];
+            return;
         }
         if (!NpmUtils.verifyNpmInstalled()) {
             vscode.window.showErrorMessage('Could not scan npm project dependencies, because npm CLI is not in the PATH.');
-            return [];
+            return;
         }
         treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
-        let npmTreeNodes: NpmTreeNode[] = [];
         for (let packageJson of packageJsons) {
             let dependenciesTreeNode: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), componentsToScan, treesManager, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
-            npmTreeNodes.push(dependenciesTreeNode);
         }
-        return npmTreeNodes;
     }
 
     public static verifyNpmInstalled(): boolean {

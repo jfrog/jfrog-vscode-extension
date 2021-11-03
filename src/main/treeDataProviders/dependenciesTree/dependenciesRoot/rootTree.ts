@@ -28,6 +28,7 @@ export class RootNode extends DependenciesTreeNode {
             .toArray()
             .map(issueKey => scanCacheManager.getIssue(issueKey.issue_id))
             .filter(issue => issue)
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             .some(issue => issue!.fixedVersions.length > 0);
         if (isRootUpgradable) {
             node.contextValue += ContextKeys.UPDATE_DEPENDENCY_ENABLED;

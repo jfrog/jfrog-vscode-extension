@@ -70,24 +70,21 @@ export class GoUtils {
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
-    ): Promise<GoTreeNode[]> {
+    ): Promise<void> {
         if (!goMods) {
             treesManager.logManager.logMessage('No go.mod files found in workspaces.', 'DEBUG');
-            return [];
+            return;
         }
         treesManager.logManager.logMessage('go.mod files to scan: [' + goMods.toString() + ']', 'DEBUG');
         if (!GoUtils.verifyGoInstalled()) {
             vscode.window.showErrorMessage('Could not scan go project dependencies, because go CLI is not in the PATH.');
-            return [];
+            return;
         }
-        let goTreeNodes: GoTreeNode[] = [];
         for (let goMod of goMods) {
             treesManager.logManager.logMessage('Analyzing go.mod files', 'INFO');
             let dependenciesTreeNode: GoTreeNode = new GoTreeNode(path.dirname(goMod.fsPath), componentsToScan, treesManager, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
-            goTreeNodes.push(dependenciesTreeNode);
         }
-        return goTreeNodes;
     }
 
     public static verifyGoInstalled(): boolean {

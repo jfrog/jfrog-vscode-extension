@@ -138,7 +138,7 @@ export class MavenUtils {
                 'Could not get parse pom.xml GAV.\n' + 'Try Install it by running "mvn clean install" from ' + pathToPomXml + '.',
                 'ERR'
             );
-            logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
+            logManager.logMessage((<any>error).stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
         }
         return ['', ''];
     }
@@ -156,18 +156,17 @@ export class MavenUtils {
         treesManager: TreesManager,
         root: DependenciesTreeNode,
         quickScan: boolean
-    ): Promise<MavenTreeNode[]> {
+    ): Promise<void> {
         if (!pomXmls) {
             treesManager.logManager.logMessage('No pom.xml files found in workspaces.', 'DEBUG');
-            return [];
+            return;
         }
         treesManager.logManager.logMessage('pom.xml files to scan: [' + pomXmls.toString() + ']', 'DEBUG');
         if (!MavenUtils.verifyMavenInstalled()) {
             vscode.window.showErrorMessage('Could not scan Maven project dependencies, because "mvn" is not in the PATH.');
-            return [];
+            return;
         }
         treesManager.logManager.logMessage('Generating Maven Dependency Tree', 'INFO');
-        let mavenTreeNodes: MavenTreeNode[] = [];
         let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, treesManager.logManager);
         for (let ProjectTree of prototypeTree) {
             try {
@@ -178,7 +177,7 @@ export class MavenUtils {
                 if (dependenciesTreeNode.children.length === 0) {
                     root.children.splice(root.children.indexOf(dependenciesTreeNode), 1);
                 } else {
-                    mavenTreeNodes.push(dependenciesTreeNode);
+                    this.updateContextValue(dependenciesTreeNode);
                 }
             } catch (error) {
                 treesManager.logManager.logMessage(
@@ -188,11 +187,9 @@ export class MavenUtils {
                         '.',
                     'ERR'
                 );
-                treesManager.logManager.logMessage(error.stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
+                treesManager.logManager.logMessage((<any>error).stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }
         }
-        mavenTreeNodes.forEach(node => this.updateContextValue(node));
-        return mavenTreeNodes;
     }
 
     /**

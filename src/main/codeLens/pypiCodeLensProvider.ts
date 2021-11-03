@@ -8,7 +8,7 @@ export class PypiCodeLensProvider extends AbstractCodeLensProvider {
     }
 
     /** @override */
-    protected getDependenciesPos(document: vscode.TextDocument): vscode.Position[] {
+    protected getDependenciesPos(): vscode.Position[] {
         // In the requirements files the requirements starts from line 0.
         // Therefore, unlike package.json where we search for 'dependencies:', here its enough to open requirements.txt at line 0.
         return [new vscode.Position(0, 0), new vscode.Position(0, 0)];

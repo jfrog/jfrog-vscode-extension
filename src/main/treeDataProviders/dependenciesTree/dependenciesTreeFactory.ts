@@ -18,42 +18,31 @@ export class DependenciesTreesFactory {
         parent: DependenciesTreeNode,
         quickScan: boolean
     ) {
-        if (treesManager.connectionManager.areXrayCredentialsSet()) {
-            let projectDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
-                workspaceFolders,
-                treesManager.logManager
-            );
-            await GoUtils.createDependenciesTrees(
-                projectDescriptors.get(PackageDescriptorType.GO),
-                componentsToScan,
-                treesManager,
-                parent,
-                quickScan
-            );
-            await NpmUtils.createDependenciesTrees(
-                projectDescriptors.get(PackageDescriptorType.NPM),
-                componentsToScan,
-                treesManager,
-                parent,
-                quickScan
-            );
-            if (!!projectDescriptors.get(PackageDescriptorType.PYTHON)) {
-                await PypiUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
-            }
-            await MavenUtils.createDependenciesTrees(
-                projectDescriptors.get(PackageDescriptorType.MAVEN),
-                componentsToScan,
-                treesManager,
-                parent,
-                quickScan
-            );
-            await NugetUtils.createDependenciesTrees(
-                projectDescriptors.get(PackageDescriptorType.NUGET),
-                componentsToScan,
-                treesManager,
-                parent,
-                quickScan
-            );
+        if (!treesManager.connectionManager.areXrayCredentialsSet()) {
+            return;
         }
+        let projectDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            workspaceFolders,
+            treesManager.logManager
+        );
+        await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageDescriptorType.GO), componentsToScan, treesManager, parent, quickScan);
+        await NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageDescriptorType.NPM), componentsToScan, treesManager, parent, quickScan);
+        if (!!projectDescriptors.get(PackageDescriptorType.PYTHON)) {
+            await PypiUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
+        }
+        await MavenUtils.createDependenciesTrees(
+            projectDescriptors.get(PackageDescriptorType.MAVEN),
+            componentsToScan,
+            treesManager,
+            parent,
+            quickScan
+        );
+        await NugetUtils.createDependenciesTrees(
+            projectDescriptors.get(PackageDescriptorType.NUGET),
+            componentsToScan,
+            treesManager,
+            parent,
+            quickScan
+        );
     }
 }

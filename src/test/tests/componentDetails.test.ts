@@ -1,7 +1,6 @@
 import { assert } from 'chai';
 import * as faker from 'faker';
 import { ILicense } from 'jfrog-client-js';
-import * as tmp from 'tmp';
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { ComponentDetailsDataProvider, LicensesNode } from '../../main/treeDataProviders/componentDetailsDataProvider';
@@ -9,14 +8,13 @@ import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesT
 import { TreeDataHolder } from '../../main/treeDataProviders/utils/treeDataHolder';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { License } from '../../main/types/license';
+import { createScanCacheManager } from './utils/utils.test';
 
 /**
  * Test functionality of @class ComponentDetailsDataProvider.
  */
 describe('Component Details Tests', () => {
-    let scanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
-        storagePath: tmp.dirSync().name
-    } as vscode.ExtensionContext);
+    let scanCacheManager: ScanCacheManager = createScanCacheManager();
     let componentDetails: ComponentDetailsDataProvider = new ComponentDetailsDataProvider(scanCacheManager);
     let dependenciesTreeNode: DependenciesTreeNode;
     before(() => {

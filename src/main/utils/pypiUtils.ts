@@ -85,66 +85,68 @@ export class PypiUtils {
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
-    ): Promise<PypiTreeNode[]> {
-        let pythonExtensionActivated: boolean = false;
-        let pypiTreeNodes: PypiTreeNode[] = [];
+    ): Promise<void> {
+        let pythonExtension: vscode.Extension<any> | undefined;
         for (let workspaceFolder of workspaceFolders) {
             let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, treesManager.logManager);
             if (!pythonFilesExist) {
                 treesManager.logManager.logMessage('No setup.py and requirements files found in workspace ' + workspaceFolder.name + '.', 'DEBUG');
                 continue;
             }
-            if (!pythonExtensionActivated) {
-                if (!(await PypiUtils.verifyAndActivatePythonExtension())) {
+            if (!pythonExtension) {
+                pythonExtension = await PypiUtils.getAndActivatePythonExtension();
+                if (!pythonExtension) {
                     vscode.window.showErrorMessage(
                         'Could not scan Pypi project dependencies, because python extension is not installed. ' +
                             'Please install Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python'
                     );
-                    return [];
+                    return;
                 }
-                pythonExtensionActivated = true;
             }
 
-            let pythonPath: string | undefined = PypiUtils.getPythonPath(workspaceFolder);
+            let pythonPath: string | undefined = PypiUtils.getPythonPath(pythonExtension, workspaceFolder);
             if (!pythonPath) {
                 vscode.window.showErrorMessage('Could not scan Pypi project dependencies, because python interpreter is not set.');
-                return [];
+                return;
             }
             if (!PypiUtils.isInVirtualEnv(pythonPath, workspaceFolder.uri.fsPath, treesManager.logManager)) {
                 vscode.window.showErrorMessage(
                     'Please install and activate a virtual environment before running Xray scan. Then, install your Python project in that environment.'
                 );
-                return [];
+                return;
             }
 
             treesManager.logManager.logMessage('Analyzing setup.py and requirements files of ' + workspaceFolder.name, 'INFO');
             let dependenciesTreeNode: PypiTreeNode = new PypiTreeNode(workspaceFolder.uri.fsPath, componentsToScan, treesManager, pythonPath, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
-            pypiTreeNodes.push(dependenciesTreeNode);
         }
-        return pypiTreeNodes;
     }
 
     /**
-     * Return true iff VS-Code Python extension is installed.
+     * Return reference to the VS-Code Python extension if installed.
      * Activate it to allow tracking on environmental changes -
-     *   If virtual env is not installed, we want that the Python extension will detect new virtualenv environments and suggest activation.
+     * If virtual env is not installed, we want that the Python extension will detect new virtualenv environments and suggest activation.
      */
-    public static async verifyAndActivatePythonExtension(): Promise<boolean> {
+    public static async getAndActivatePythonExtension(): Promise<vscode.Extension<any> | undefined> {
         let pythonExtension: vscode.Extension<any> | undefined = vscode.extensions.getExtension('ms-python.python');
         if (!pythonExtension) {
-            return false;
+            return;
         }
-        await pythonExtension.activate();
-        return true;
+        if (!pythonExtension.isActive) {
+            await pythonExtension.activate();
+        }
+        return pythonExtension;
     }
 
     /**
      * Return python path as configured in Python extension.
+     * @param pythonExtension - The python extension
      * @param workspaceFolder - Base workspace folder
      */
-    private static getPythonPath(workspaceFolder: vscode.WorkspaceFolder): string | undefined {
-        return vscode.workspace.getConfiguration('python', workspaceFolder.uri).get('pythonPath');
+    private static getPythonPath(pythonExtension: vscode.Extension<any>, workspaceFolder: vscode.WorkspaceFolder): string | undefined {
+        let executionDetails: any = pythonExtension?.exports.settings.getExecutionDetails(workspaceFolder.uri);
+        let execCommand: string[] | undefined = executionDetails?.execCommand;
+        return execCommand ? execCommand[0] : undefined;
     }
 
     /**
@@ -157,7 +159,7 @@ export class PypiUtils {
             exec.execSync(pythonPath + ' ' + PypiUtils.CHECK_VENV_SCRIPT, { cwd: workspaceFolder } as exec.ExecSyncOptionsWithStringEncoding);
             return true;
         } catch (error) {
-            logManager.logError(error, false);
+            logManager.logError(<any>error, false);
             return false;
         }
     }

@@ -13,8 +13,13 @@ describe('Connection Manager Tests', () => {
         // Don't override existing connection details
         process.env[ConnectionManager.STORE_CONNECTION_ENV] = 'FALSE';
 
-        connectionManager = await new ConnectionManager(new LogManager().activate({} as vscode.ExtensionContext)).activate({
-            globalState: { get(key: string) {} } as vscode.Memento
+        connectionManager = await new ConnectionManager(new LogManager().activate()).activate({
+            globalState: {
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                get(key: string) {
+                    return;
+                }
+            } as vscode.Memento
         } as vscode.ExtensionContext);
     });
 

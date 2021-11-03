@@ -24,26 +24,24 @@ export class NugetUtils {
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
-    ): Promise<NugetTreeNode[]> {
+    ): Promise<void> {
         if (!solutions) {
             treesManager.logManager.logMessage('No *.sln files found in workspaces.', 'DEBUG');
-            return [];
+            return;
         }
 
         treesManager.logManager.logMessage('Solution files to scan: [' + solutions.toString() + ']', 'DEBUG');
-        let nugetTreeNodes: NugetTreeNode[] = [];
         for (let solution of solutions) {
             let tree: any = await NugetUtils.getProjects(solution.fsPath, treesManager.logManager, quickScan);
             if (!tree) {
                 continue;
             }
+            let solutionDir: string = path.dirname(solution.fsPath);
             for (let project of tree.projects) {
-                let dependenciesTreeNode: NugetTreeNode = new NugetTreeNode(path.dirname(solution.fsPath), componentsToScan, treesManager, parent);
+                let dependenciesTreeNode: NugetTreeNode = new NugetTreeNode(solutionDir, componentsToScan, treesManager, parent);
                 dependenciesTreeNode.refreshDependencies(quickScan, project);
-                nugetTreeNodes.push(dependenciesTreeNode);
             }
         }
-        return nugetTreeNodes;
     }
 
     /**
@@ -57,7 +55,7 @@ export class NugetUtils {
         try {
             nugetList = NugetDepsTree.generate(slnFilePath);
         } catch (error) {
-            logManager.logError(error, !quickScan);
+            logManager.logError(<any>error, !quickScan);
             logManager.logMessage(
                 'Failed building tree for solution "' + slnFilePath + '", due to the above error. Skipping to next solution... ',
                 'INFO'

@@ -118,11 +118,22 @@ export class ScanCacheManager implements ExtensionComponent {
         }
     }
 
+    /**
+     * Return Xray issue ID path in file system.
+     * @param issueId - the Xray issue ID e.g. XRAY-12345
+     * @returns path to the issue in the file system.
+     */
     private getIssuePath(issueId: string): string {
         return path.join(this._issuesCache, issueId);
     }
 
+    /**
+     * Return license path in file system.
+     * The license name may include special characters, for example: "MIT/X11". In these cases, we may want to replace them by "_".
+     * @param licenseName - the license name e.g. MIT or Apache-2.0
+     * @returns path to the license in file system.
+     */
     private getLicensePath(licenseName: string): string {
-        return path.join(this._licensesCache, licenseName);
+        return path.join(this._licensesCache, licenseName.replace(/[^a-zA-Z0-9]/g, '_'));
     }
 }

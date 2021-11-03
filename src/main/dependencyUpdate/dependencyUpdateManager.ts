@@ -19,7 +19,7 @@ export class DependencyUpdateManager implements ExtensionComponent {
         this._dependencyUpdaters.push(new MavenDependencyUpdate(), new NpmDependencyUpdate(), new GoDependencyUpdate());
     }
 
-    public activate(context: vscode.ExtensionContext) {
+    public activate() {
         return this;
     }
 
@@ -54,13 +54,14 @@ export class DependencyUpdateManager implements ExtensionComponent {
                 return '';
             case 1:
                 return fixedVersionsArr[0];
-            default:
+            default: {
                 let chosenFixedVersion: string =
                     (await vscode.window.showQuickPick(fixedVersionsArr, {
                         canPickMany: false,
                         placeHolder: `Choose a fixed version for '` + dependenciesTreeNode.componentId + `'`
                     })) || '';
                 return fixedVersions.contains(chosenFixedVersion) ? chosenFixedVersion : '';
+            }
         }
     }
 }
