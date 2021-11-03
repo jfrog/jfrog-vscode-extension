@@ -85,9 +85,8 @@ export class PypiUtils {
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
-    ): Promise<PypiTreeNode[]> {
+    ): Promise<void> {
         let pythonExtension: vscode.Extension<any> | undefined;
-        let pypiTreeNodes: PypiTreeNode[] = [];
         for (let workspaceFolder of workspaceFolders) {
             let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, treesManager.logManager);
             if (!pythonFilesExist) {
@@ -101,28 +100,26 @@ export class PypiUtils {
                         'Could not scan Pypi project dependencies, because python extension is not installed. ' +
                             'Please install Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python'
                     );
-                    return [];
+                    return;
                 }
             }
 
             let pythonPath: string | undefined = PypiUtils.getPythonPath(pythonExtension, workspaceFolder);
             if (!pythonPath) {
                 vscode.window.showErrorMessage('Could not scan Pypi project dependencies, because python interpreter is not set.');
-                return [];
+                return;
             }
             if (!PypiUtils.isInVirtualEnv(pythonPath, workspaceFolder.uri.fsPath, treesManager.logManager)) {
                 vscode.window.showErrorMessage(
                     'Please install and activate a virtual environment before running Xray scan. Then, install your Python project in that environment.'
                 );
-                return [];
+                return;
             }
 
             treesManager.logManager.logMessage('Analyzing setup.py and requirements files of ' + workspaceFolder.name, 'INFO');
             let dependenciesTreeNode: PypiTreeNode = new PypiTreeNode(workspaceFolder.uri.fsPath, componentsToScan, treesManager, pythonPath, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
-            pypiTreeNodes.push(dependenciesTreeNode);
         }
-        return pypiTreeNodes;
     }
 
     /**

@@ -82,14 +82,8 @@ describe('Nuget Utils Tests', () => {
     });
 
     async function runCreateNugetDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        let dependenciesTrees: DependenciesTreeNode[] = await NugetUtils.createDependenciesTrees(
-            workspaceFolders,
-            componentsToScan,
-            treesManager,
-            parent,
-            false
-        );
-        return dependenciesTrees.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
+        await NugetUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, false);
+        return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 
     function replacePackagesPathInAssets() {
