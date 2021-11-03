@@ -19,20 +19,20 @@ export class License {
         return this._moreInfoUrl;
     }
 
-    public get fullName(): string {
-        return this._fullName;
-    }
-
-    public get name(): string {
-        return this._name;
-    }
-
     public set moreInfoUrl(value: string[]) {
         this._moreInfoUrl = value;
     }
 
+    public get fullName(): string {
+        return this._fullName;
+    }
+
     public set fullName(value: string) {
         this._fullName = value;
+    }
+
+    public get name(): string {
+        return this._name;
     }
 
     public set name(value: string) {

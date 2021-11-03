@@ -17,6 +17,7 @@ import { IIssueKey } from '../../types/issueKey';
 import { License } from '../../types/license';
 import { Severity } from '../../types/severity';
 import { Configuration } from '../configuration';
+import { ScanCancellationError } from '../scanUtils';
 import { Translators } from '../translators';
 import { BuildsUtils } from './buildsUtils';
 
@@ -26,7 +27,6 @@ import { BuildsUtils } from './buildsUtils';
 export class CiManager {
     private static readonly BUILD_INFO_REPO: string = '/artifactory-build-info/';
     private static readonly DISPLAY_BUILDS_NUM: string = '100';
-    public static readonly CI_CANCELLATION_ERROR: Error = new Error('Loading builds scan cancelled');
 
     private readonly buildsCache: BuildsScanCache;
     private root: DependenciesTreeNode;
@@ -259,7 +259,10 @@ export class CiManager {
         if (!isArtifact) {
             return;
         }
-        let sha256: string = sha1ToSha256.get(sha1)!;
+        let sha256: string | undefined = sha1ToSha256.get(sha1);
+        if (!sha256) {
+            return;
+        }
         let issuesAndLicenses: IssuesAndLicensesPair | undefined = componentIssuesAndLicenses.get(sha256);
         if (issuesAndLicenses) {
             let topSeverity: Severity = Severity.Normal;
@@ -295,7 +298,7 @@ export class CiManager {
             await this.buildCiTree(pattern, progress, checkCanceled);
         } catch (error) {
             vscode.window.showErrorMessage('Could not build CI tree.', <vscode.MessageOptions>{ modal: false });
-            this._treesManager.logManager.logMessage(error.message, 'ERR', true);
+            this._treesManager.logManager.logMessage((<any>error).message, 'ERR', true);
         }
     }
 
@@ -339,11 +342,11 @@ export class CiManager {
             await producerQueue.onEmpty();
             await consumerQueue.onEmpty();
         } catch (error) {
-            if (error.message === CiManager.CI_CANCELLATION_ERROR.message) {
+            if (error instanceof ScanCancellationError) {
                 // If it's not a cancellation error, throw it up
                 throw error;
             }
-            vscode.window.showErrorMessage(error.message);
+            vscode.window.showErrorMessage((<any>error).message);
         }
     }
 
@@ -375,12 +378,12 @@ export class CiManager {
             this.addResults(buildGeneralInfo);
             consumerQueue.add(() => this.handleXrayBuildDetails(buildGeneralInfo, buildsCache, progress, checkCanceled, buildsNum, xraySupported));
         } catch (error) {
-            if (error.message === CiManager.CI_CANCELLATION_ERROR.message) {
+            if (error instanceof ScanCancellationError) {
                 // If it's not a cancellation error, throw it up
                 throw error;
             }
             vscode.window.showErrorMessage('Could not download build info.', <vscode.MessageOptions>{ modal: false });
-            this._treesManager.logManager.logMessage(error.message, 'ERR', true);
+            this._treesManager.logManager.logMessage((<any>error).message, 'ERR', true);
         } finally {
             progress.report({ message: `${buildsNum} builds`, increment: 100 / (buildsNum * 2) });
         }
@@ -445,11 +448,11 @@ export class CiManager {
                 await this.downloadBuildDetails(buildGeneralInfo, buildsCache);
             }
         } catch (error) {
-            if (error.message === CiManager.CI_CANCELLATION_ERROR.message) {
+            if (error instanceof ScanCancellationError) {
                 // If it's not a cancellation error, throw it up
                 throw error;
             }
-            this._treesManager.logManager.logMessage('Could not get build details from xray: ' + error.message, 'ERR', true);
+            this._treesManager.logManager.logMessage('Could not get build details from xray: ' + (<any>error).message, 'ERR', true);
         } finally {
             progress.report({ message: `${buildsNum} builds`, increment: 100 / (buildsNum * 2) });
         }
@@ -467,10 +470,10 @@ export class CiManager {
         buildsPattern = buildsPattern.replace(/%/g, '?');
         return (
             `items.find({` +
-            `\"repo\":\"artifactory-build-info\",` +
-            `\"path\":{\"$match\":\"${buildsPattern}\"}})` +
-            `.include(\"name\",\"repo\",\"path\",\"created\")` +
-            `.sort({\"$desc\":[\"created\"]})` +
+            `"repo":"artifactory-build-info",` +
+            `"path":{"$match":"${buildsPattern}"}})` +
+            `.include("name","repo","path","created")` +
+            `.sort({"$desc":["created"]})` +
             `.limit(${CiManager.DISPLAY_BUILDS_NUM})`
         );
     }

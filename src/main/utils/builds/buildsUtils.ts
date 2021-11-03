@@ -66,7 +66,7 @@ export class BuildsUtils {
     }
 
     public static isArrayExistsAndNotEmpty(obj: any, fieldName: string): boolean {
-        return obj.hasOwnProperty(fieldName) && Array.isArray(obj[fieldName]) && obj[fieldName].length;
+        return Object.prototype.hasOwnProperty.call(obj, fieldName) && Array.isArray(obj[fieldName]) && obj[fieldName].length;
     }
 
     public static getIcon(status: Status) {

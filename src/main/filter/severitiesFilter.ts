@@ -25,12 +25,15 @@ export class SeverityFilter extends AbstractFilter {
         if (!this._choice || (this.isPicked(SeverityStrings.Normal) && dependenciesTreeNode.issues.isEmpty())) {
             return true;
         }
-        return dependenciesTreeNode.issues
-            .toArray()
-            .map(issueKey => this._scanCacheManager.getIssue(issueKey.issue_id))
-            .filter(issue => issue)
-            .map(issue => issue!.severity)
-            .map(severity => SeverityUtils.getString(severity))
-            .some(severityName => this.isPicked(severityName));
+        return (
+            dependenciesTreeNode.issues
+                .toArray()
+                .map(issueKey => this._scanCacheManager.getIssue(issueKey.issue_id))
+                .filter(issue => issue)
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                .map(issue => issue!.severity)
+                .map(severity => SeverityUtils.getString(severity))
+                .some(severityName => this.isPicked(severityName))
+        );
     }
 }

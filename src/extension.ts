@@ -21,15 +21,15 @@ import { BuildsManager } from './main/builds/buildsManager';
 export async function activate(context: vscode.ExtensionContext) {
     let workspaceFolders: vscode.WorkspaceFolder[] = vscode.workspace.workspaceFolders || [];
 
-    let logManager: LogManager = new LogManager().activate(context);
+    let logManager: LogManager = new LogManager().activate();
     let connectionManager: ConnectionManager = await new ConnectionManager(logManager).activate(context);
     let scanCacheManager: ScanCacheManager = new ScanCacheManager().activate(context);
     let treesManager: TreesManager = await new TreesManager(workspaceFolders, connectionManager, scanCacheManager, logManager).activate(context);
-    let filterManager: FilterManager = new FilterManager(treesManager).activate(context);
-    let focusManager: FocusManager = new FocusManager().activate(context);
-    let exclusionManager: ExclusionsManager = new ExclusionsManager(treesManager).activate(context);
-    let dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager(scanCacheManager).activate(context);
-    let buildsManager: BuildsManager = new BuildsManager(treesManager).activate(context);
+    let filterManager: FilterManager = new FilterManager(treesManager).activate();
+    let focusManager: FocusManager = new FocusManager().activate();
+    let exclusionManager: ExclusionsManager = new ExclusionsManager(treesManager).activate();
+    let dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager(scanCacheManager).activate();
+    let buildsManager: BuildsManager = new BuildsManager(treesManager).activate();
 
     new DiagnosticsManager(treesManager).activate(context);
     new WatcherManager(treesManager).activate(context);

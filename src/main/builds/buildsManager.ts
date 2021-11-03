@@ -11,7 +11,7 @@ import { GeneralInfo } from '../types/generalInfo';
 export class BuildsManager implements ExtensionComponent {
     constructor(private _treesManager: TreesManager) {}
 
-    public activate(context: vscode.ExtensionContext) {
+    public activate() {
         return this;
     }
 

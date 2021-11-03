@@ -8,15 +8,13 @@ import { INodeInfo } from '../../types/nodeInfo';
 import { Scope } from '../../types/scope';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { MavenUtils } from '../../utils/mavenUtils';
-import { ScanUtils } from '../../utils/scanUtils';
+import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { TreesManager } from '../treesManager';
 import { RootNode } from './dependenciesRoot/rootTree';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
-    private static readonly CANCELLATION_ERROR: Error = new Error('Xray Scan cancelled');
-
     private _filterLicenses: Set<string> = new Set();
     private _filterScopes: Set<Scope> = new Set(scope => scope.label);
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
@@ -53,7 +51,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 this._treesManager.logManager.setSuccess();
             })
             .catch(error => {
-                if (error.message !== DependenciesTreeDataProvider.CANCELLATION_ERROR.message) {
+                if (!(error instanceof ScanCancellationError)) {
                     // Unexpected error
                     throw error;
                 }
@@ -139,11 +137,11 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 checkCanceled();
             }
         } catch (error) {
-            if (error.message === DependenciesTreeDataProvider.CANCELLATION_ERROR.message) {
+            if (error instanceof ScanCancellationError) {
                 // If it's not a cancellation error, throw it up
                 throw error;
             }
-            vscode.window.showErrorMessage(error.message);
+            vscode.window.showErrorMessage((<any>error).message);
         }
     }
 

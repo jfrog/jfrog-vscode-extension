@@ -2,7 +2,6 @@ import { assert } from 'chai';
 import { ComponentDetails, IArtifact, IGeneral, ILicense } from 'jfrog-client-js';
 import { before } from 'mocha';
 import * as path from 'path';
-import * as tmp from 'tmp';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
@@ -15,18 +14,14 @@ import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { License } from '../../main/types/license';
 import { GoUtils } from '../../main/utils/goUtils';
-import { TestMemento } from './utils/testMemento.test';
-import { getNodeByArtifactId } from './utils/utils.test';
+import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 
 /**
  * Test functionality of @class GoUtils.
  */
 describe('Go Utils Tests', () => {
-    let logManager: LogManager = new LogManager().activate({} as vscode.ExtensionContext);
-    let dummyScanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
-        workspaceState: new TestMemento() as vscode.Memento,
-        storagePath: tmp.dirSync().name
-    } as vscode.ExtensionContext);
+    let logManager: LogManager = new LogManager().activate();
+    let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
     let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
     let projectDirs: string[] = ['dependency', 'empty'];
     let goDependencyUpdate: GoDependencyUpdate = new GoDependencyUpdate();
