@@ -12,6 +12,7 @@ import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesT
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { NugetUtils } from '../../main/utils/nugetUtils';
+import { PackageDescriptorType, ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, isWindows } from './utils/utils.test';
 
 /**
@@ -40,13 +41,21 @@ describe('Nuget Utils Tests', () => {
      * Test NugetUtils.locateSolutions.
      */
     it('Locate solutions', async () => {
-        let solutions: Collections.Set<vscode.Uri> = await NugetUtils.locateSolutions(workspaceFolders, treesManager.logManager);
-        assert.strictEqual(solutions.size(), solutionsDirs.length);
+        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            workspaceFolders,
+            treesManager.logManager
+        );
+        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.NUGET);
+        assert.isDefined(solutions);
+        assert.strictEqual(solutions?.length, solutionsDirs.length);
 
         // Assert that results contains all solutions.
         for (let expectedSolutionDir of solutionsDirs) {
-            let expectedSolution: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, expectedSolutionDir, expectedSolutionDir + '.sln'));
-            assert.isTrue(solutions.contains(expectedSolution), 'Should contain ' + expectedSolution.fsPath);
+            let expectedSolution: string = path.join(tmpDir.fsPath, expectedSolutionDir, expectedSolutionDir + '.sln');
+            assert.isDefined(
+                solutions?.find(solutions => solutions.fsPath === expectedSolution),
+                'Should contain ' + expectedSolution
+            );
         }
     });
 
@@ -82,7 +91,13 @@ describe('Nuget Utils Tests', () => {
     });
 
     async function runCreateNugetDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        await NugetUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, false);
+        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            workspaceFolders,
+            treesManager.logManager
+        );
+        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.NUGET);
+        assert.isDefined(solutions);
+        await NugetUtils.createDependenciesTrees(solutions, componentsToScan, treesManager, parent, false);
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 

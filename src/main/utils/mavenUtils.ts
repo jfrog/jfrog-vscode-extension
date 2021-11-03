@@ -9,7 +9,6 @@ import { LogManager } from '../log/logManager';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { Configuration } from './configuration';
 import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
 
@@ -112,26 +111,6 @@ export class MavenUtils {
     }
 
     /**
-     * Find pom.xml files in workspaces.
-     * @param workspaceFolders - Base workspace folders to search
-     * @param logManager       - Log manager
-     */
-    public static async locatePomXmls(workspaceFolders: vscode.WorkspaceFolder[], logManager: LogManager): Promise<vscode.Uri[]> {
-        let pomXmls: Set<vscode.Uri> = new Set();
-        for (let workspace of workspaceFolders) {
-            logManager.logMessage('Locating pom.xml files in workspace "' + workspace.name + '".', 'INFO');
-            let wsPomXmls: vscode.Uri[] = await vscode.workspace.findFiles(
-                { base: workspace.uri.fsPath, pattern: '**/pom.xml' },
-                Configuration.getScanExcludePattern(workspace)
-            );
-            wsPomXmls.forEach(pomXml => pomXmls.add(pomXml));
-        }
-        let result: vscode.Uri[] = pomXmls.toArray();
-        // We need to sort so on each time and on each OS we will get the same order
-        return Promise.resolve(result.length > 1 ? result.sort((a: vscode.Uri, b: vscode.Uri) => a.fsPath.localeCompare(b.fsPath)) : result);
-    }
-
-    /**
      * @return [POM-GAV, Parent-GAV]. If not found, return empty strings.
      */
     public static getPomDetails(pathToPomXml: string, logManager: LogManager, pomIdCache: Map<string, [string, string]>): [string, string] {
@@ -165,21 +144,20 @@ export class MavenUtils {
     }
 
     /**
-     * @param workspaceFolders - Base workspace folders
+     * @param pomXmls          - Paths to pom.xml files
      * @param componentsToScan - Set of maven components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
-     * @param scanCacheManager - Scan cache manager
+     * @param treesManager     - The trees manager
      * @param root             - The base tree node
      * @param quickScan        - True to allow using the scan cache
      */
     public static async createDependenciesTrees(
-        workspaceFolders: vscode.WorkspaceFolder[],
+        pomXmls: vscode.Uri[] | undefined,
         componentsToScan: Set<ComponentDetails>,
         treesManager: TreesManager,
         root: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<void> {
-        let pomXmls: vscode.Uri[] = await MavenUtils.locatePomXmls(workspaceFolders, treesManager.logManager);
-        if (pomXmls.length === 0) {
+        if (!pomXmls) {
             treesManager.logManager.logMessage('No pom.xml files found in workspaces.', 'DEBUG');
             return;
         }

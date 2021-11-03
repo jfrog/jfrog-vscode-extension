@@ -14,6 +14,7 @@ import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { License } from '../../main/types/license';
 import { GoUtils } from '../../main/utils/goUtils';
+import { PackageDescriptorType, ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 
 /**
@@ -42,13 +43,21 @@ describe('Go Utils Tests', () => {
      * Test GoUtils.locateGoMods.
      */
     it('Locate go mods', async () => {
-        let goMods: Collections.Set<vscode.Uri> = await GoUtils.locateGoMods(workspaceFolders, treesManager.logManager);
-        assert.strictEqual(goMods.size(), projectDirs.length);
+        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            workspaceFolders,
+            treesManager.logManager
+        );
+        let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.GO);
+        assert.isDefined(goMods);
+        assert.strictEqual(goMods?.length, projectDirs.length);
 
         // Assert that results contains all projects
         for (let expectedProjectDir of projectDirs) {
-            let expectedGoMod: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, expectedProjectDir, 'go.mod'));
-            assert.isTrue(goMods.contains(expectedGoMod), 'Should contain ' + expectedGoMod.fsPath);
+            let expectedGoMod: string = path.join(tmpDir.fsPath, expectedProjectDir, 'go.mod');
+            assert.isDefined(
+                goMods?.find(goMod => goMod.fsPath === expectedGoMod),
+                'Should contain ' + expectedGoMod
+            );
         }
     });
 
@@ -171,7 +180,12 @@ describe('Go Utils Tests', () => {
     });
 
     async function runCreateGoDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        await GoUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, false);
+        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            workspaceFolders,
+            treesManager.logManager
+        );
+        let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.GO);
+        await GoUtils.createDependenciesTrees(goMods, componentsToScan, treesManager, parent, false);
         await dummyScanCacheManager.storeArtifactComponents(xrayScanResults);
         parent.children.forEach(child => {
             treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);

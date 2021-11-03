@@ -73,19 +73,25 @@ export class PypiUtils {
     }
 
     /**
+     * @param pythonFiles      - Paths to setup.py and requirements*.txt files
      * @param workspaceFolders - Base workspace folders
      * @param componentsToScan - Set of setup.py components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
-     * @param scanCacheManager - Scan cache manager
+     * @param treesManager     - Scan trees manager
      * @param parent           - The base tree node
      * @param quickScan        - True to allow using the scan cache
      */
     public static async createDependenciesTrees(
+        pythonFiles: vscode.Uri[] | undefined,
         workspaceFolders: vscode.WorkspaceFolder[],
         componentsToScan: Collections.Set<ComponentDetails>,
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<void> {
+        if (!pythonFiles) {
+            treesManager.logManager.logMessage('No setup.py and requirements files found in workspaces.', 'DEBUG');
+            return;
+        }
         let pythonExtension: vscode.Extension<any> | undefined;
         for (let workspaceFolder of workspaceFolders) {
             let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, treesManager.logManager);

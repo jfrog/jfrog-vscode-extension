@@ -3,6 +3,8 @@ import * as fse from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import { LogManager } from '../log/logManager';
+import { Configuration } from './configuration';
 
 export class ScanUtils {
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
@@ -22,6 +24,35 @@ export class ScanUtils {
                 await scanCbk(progress, () => ScanUtils.checkCanceled(token));
             }
         );
+    }
+
+    /**
+     * Find go.mod, pom.xml, package.json, *.sln, setup.py, and requirements*.txt files in workspaces.
+     * @param workspaceFolders - Base workspace folders to search
+     * @param logManager       - Log manager
+     */
+    public static async locatePackageDescriptors(
+        workspaceFolders: vscode.WorkspaceFolder[],
+        logManager: LogManager
+    ): Promise<Map<PackageDescriptorType, vscode.Uri[]>> {
+        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = new Map();
+        for (let workspace of workspaceFolders) {
+            logManager.logMessage('Locating package descriptors in workspace "' + workspace.name + '".', 'INFO');
+            let wsPackageDescriptors: vscode.Uri[] = await vscode.workspace.findFiles(
+                { base: workspace.uri.fsPath, pattern: '**/{go.mod,pom.xml,package.json,*.sln,setup.py,requirements*.txt}' },
+                Configuration.getScanExcludePattern(workspace)
+            );
+            for (let wsPackageDescriptor of wsPackageDescriptors) {
+                let type: PackageDescriptorType = ScanUtils.extractDescriptorTypeFromPath(wsPackageDescriptor.fsPath);
+                let uri: vscode.Uri[] | undefined = packageDescriptors.get(type);
+                if (!uri) {
+                    packageDescriptors.set(type, [wsPackageDescriptor]);
+                } else {
+                    uri.push(wsPackageDescriptor);
+                }
+            }
+        }
+        return packageDescriptors;
     }
 
     private static checkCanceled(token: vscode.CancellationToken) {
@@ -64,6 +95,35 @@ export class ScanUtils {
         // In production, the following path resolved: jfrog-vscode-extension/dist
         return path.join(parent, 'resources');
     }
+
+    /**
+     * Extract PackageDescriptorType from the input path.
+     * @param fsPath - path to package descriptor such as pom.xml, go.mod, etc.
+     * @returns PackageDescriptorType
+     */
+    private static extractDescriptorTypeFromPath(fsPath: string): PackageDescriptorType {
+        if (fsPath.endsWith('go.mod')) {
+            return PackageDescriptorType.GO;
+        }
+        if (fsPath.endsWith('pom.xml')) {
+            return PackageDescriptorType.MAVEN;
+        }
+        if (fsPath.endsWith('package.json')) {
+            return PackageDescriptorType.NPM;
+        }
+        if (fsPath.endsWith('.sln')) {
+            return PackageDescriptorType.NUGET;
+        }
+        return PackageDescriptorType.PYTHON;
+    }
+}
+
+export enum PackageDescriptorType {
+    GO,
+    MAVEN,
+    NPM,
+    NUGET,
+    PYTHON
 }
 
 export class ScanCancellationError extends Error {
