@@ -86,7 +86,7 @@ export class PypiUtils {
         parent: DependenciesTreeNode,
         quickScan: boolean
     ): Promise<PypiTreeNode[]> {
-        let pythonExtensionActivated: boolean = false;
+        let pythonExtension: vscode.Extension<any> | undefined;
         let pypiTreeNodes: PypiTreeNode[] = [];
         for (let workspaceFolder of workspaceFolders) {
             let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, treesManager.logManager);
@@ -94,18 +94,18 @@ export class PypiUtils {
                 treesManager.logManager.logMessage('No setup.py and requirements files found in workspace ' + workspaceFolder.name + '.', 'DEBUG');
                 continue;
             }
-            if (!pythonExtensionActivated) {
-                if (!(await PypiUtils.verifyAndActivatePythonExtension())) {
+            if (!pythonExtension) {
+                pythonExtension = await PypiUtils.getAndActivatePythonExtension();
+                if (!pythonExtension) {
                     vscode.window.showErrorMessage(
                         'Could not scan Pypi project dependencies, because python extension is not installed. ' +
                             'Please install Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python'
                     );
                     return [];
                 }
-                pythonExtensionActivated = true;
             }
 
-            let pythonPath: string | undefined = PypiUtils.getPythonPath(workspaceFolder);
+            let pythonPath: string | undefined = PypiUtils.getPythonPath(pythonExtension, workspaceFolder);
             if (!pythonPath) {
                 vscode.window.showErrorMessage('Could not scan Pypi project dependencies, because python interpreter is not set.');
                 return [];
@@ -126,25 +126,30 @@ export class PypiUtils {
     }
 
     /**
-     * Return true iff VS-Code Python extension is installed.
+     * Return reference to the VS-Code Python extension if installed.
      * Activate it to allow tracking on environmental changes -
-     *   If virtual env is not installed, we want that the Python extension will detect new virtualenv environments and suggest activation.
+     * If virtual env is not installed, we want that the Python extension will detect new virtualenv environments and suggest activation.
      */
-    public static async verifyAndActivatePythonExtension(): Promise<boolean> {
+    public static async getAndActivatePythonExtension(): Promise<vscode.Extension<any> | undefined> {
         let pythonExtension: vscode.Extension<any> | undefined = vscode.extensions.getExtension('ms-python.python');
         if (!pythonExtension) {
-            return false;
+            return;
         }
-        await pythonExtension.activate();
-        return true;
+        if (!pythonExtension.isActive) {
+            await pythonExtension.activate();
+        }
+        return pythonExtension;
     }
 
     /**
      * Return python path as configured in Python extension.
+     * @param pythonExtension - The python extension
      * @param workspaceFolder - Base workspace folder
      */
-    private static getPythonPath(workspaceFolder: vscode.WorkspaceFolder): string | undefined {
-        return vscode.workspace.getConfiguration('python', workspaceFolder.uri).get('pythonPath');
+    private static getPythonPath(pythonExtension: vscode.Extension<any>, workspaceFolder: vscode.WorkspaceFolder): string | undefined {
+        let executionDetails: any = pythonExtension?.exports.settings.getExecutionDetails(workspaceFolder.uri);
+        let execCommand: string[] | undefined = executionDetails?.execCommand;
+        return execCommand ? execCommand[0] : undefined;
     }
 
     /**
