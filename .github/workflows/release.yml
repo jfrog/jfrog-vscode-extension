@@ -11,9 +11,10 @@ jobs:
             - name: Config Github
               run: git config --global user.name ${{ github.actor }}
             - name: Setup NodeJS
-              uses: actions/setup-node@v1
+              uses: actions/setup-node@v2
               with:
-                  node-version: '10.x'
+                  node-version: '14'
+                  check-latest: true
             - name: Install vsce
               run: npm i -g vsce
             - name: Install
