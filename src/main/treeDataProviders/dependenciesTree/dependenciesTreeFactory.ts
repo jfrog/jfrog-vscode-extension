@@ -27,9 +27,14 @@ export class DependenciesTreesFactory {
         );
         await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageDescriptorType.GO), componentsToScan, treesManager, parent, quickScan);
         await NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageDescriptorType.NPM), componentsToScan, treesManager, parent, quickScan);
-        if (!!projectDescriptors.get(PackageDescriptorType.PYTHON)) {
-            await PypiUtils.createDependenciesTrees(workspaceFolders, componentsToScan, treesManager, parent, quickScan);
-        }
+        await PypiUtils.createDependenciesTrees(
+            projectDescriptors.get(PackageDescriptorType.PYTHON),
+            workspaceFolders,
+            componentsToScan,
+            treesManager,
+            parent,
+            quickScan
+        );
         await MavenUtils.createDependenciesTrees(
             projectDescriptors.get(PackageDescriptorType.MAVEN),
             componentsToScan,

@@ -144,9 +144,9 @@ export class MavenUtils {
     }
 
     /**
-     * @param workspaceFolders - Base workspace folders
+     * @param pomXmls          - Paths to pom.xml files
      * @param componentsToScan - Set of maven components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
-     * @param scanCacheManager - Scan cache manager
+     * @param treesManager     - The trees manager
      * @param root             - The base tree node
      * @param quickScan        - True to allow using the scan cache
      */

@@ -59,9 +59,9 @@ export class NpmUtils {
     }
 
     /**
-     * @param workspaceFolders - Base workspace folders
+     * @param packageJsons     - Paths to package.json files
      * @param componentsToScan - Set of npm components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
-     * @param scanCacheManager - Scan cache manager
+     * @param treesManager     - The trees manager
      * @param parent           - The base tree node
      * @param quickScan        - True to allow using the scan cache
      */

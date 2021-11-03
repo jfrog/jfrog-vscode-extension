@@ -12,9 +12,9 @@ export class NugetUtils {
     public static readonly PKG_TYPE: string = 'nuget';
 
     /**
-     * @param workspaceFolders - Base workspace folders
+     * @param solutions        - Paths to *.sln files
      * @param componentsToScan - Set of nuget components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
-     * @param scanCacheManager - Scan cache manager
+     * @param treesManager     - Scan trees manager
      * @param parent           - The base tree node
      * @param quickScan        - True to allow using the scan cache
      */

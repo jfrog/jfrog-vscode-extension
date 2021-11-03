@@ -57,10 +57,9 @@ export class GoUtils {
     }
 
     /**
-     * @param workspaceFolders - Base workspace folders
-     * @param progress         - Progress bar
+     * @param goMods           - Paths to go.mod files
      * @param componentsToScan - Set of go components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
-     * @param scanCacheManager - Scan cache manager
+     * @param treesManager     - Scan trees manager
      * @param parent           - The base tree node
      * @param quickScan        - True to allow using the scan cache
      */
