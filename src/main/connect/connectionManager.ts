@@ -13,6 +13,8 @@ import {
 import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
 import { ConnectionUtils } from './connectionUtils';
+import { execSync } from 'child_process';
+import * as semver from 'semver';
 
 /**
  * Manage the Xray credentials and perform connection with Xray server.
@@ -33,6 +35,9 @@ export class ConnectionManager implements ExtensionComponent {
     public static readonly USERNAME_ENV: string = 'JFROG_IDE_USERNAME';
     public static readonly PASSWORD_ENV: string = 'JFROG_IDE_PASSWORD';
     public static readonly URL_ENV: string = 'JFROG_IDE_URL';
+
+    // Minimal version supporting exporting default server configuration.
+    private static readonly MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT: any = semver.coerce('2.5.1'); // todo
 
     private _context!: vscode.ExtensionContext;
     private _username: string = '';
@@ -110,10 +115,7 @@ export class ConnectionManager implements ExtensionComponent {
         this.readCredentialsFromEnv();
         let credentialsSet: boolean = this.areXrayCredentialsSet();
         if (!credentialsSet) {
-            // Read credentials from file system
-            if ((await this.setUrls(prompt)) && (await this.setUsername(prompt)) && (await this.setPassword(prompt))) {
-                credentialsSet = true;
-            }
+            credentialsSet = await this.setCredentialsOrPrompt(prompt);
         } else if (process.env[ConnectionManager.STORE_CONNECTION_ENV]?.toUpperCase() === 'TRUE') {
             // Store credentials in file system if JFROG_IDE_STORE_CONNECTION environment variable is true
             storeCredentials = true;
@@ -128,6 +130,89 @@ export class ConnectionManager implements ExtensionComponent {
             await this.storeConnection();
         }
         return true;
+    }
+
+    public async setCredentialsOrPrompt(prompt: boolean): Promise<boolean> {
+        // Read credentials from file system
+        if ((await this.setUrlsFromFilesystem()) && (await this.setUsernameFromFilesystem()) && (await this.setPasswordFromFilesystem())) {
+            return true;
+        }
+
+        if (await this.getCredentialsFromJfrogCli()) {
+            return true;
+        }
+
+        if (prompt) {
+            if ((await this.promptUrls()) && (await this.promptUsername()) && (await this.promptPassword())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public async getCredentialsFromJfrogCli(): Promise<boolean> {
+        if (!(await this.verifyJfrogCliInstalledAndVersion())) {
+            return false;
+        }
+        return await this.getJfrogCliDefaultServerConfiguration();
+    }
+
+    public async verifyJfrogCliInstalledAndVersion(): Promise<boolean> {
+        try {
+            let version: string = await this.getJfrogCliVersion();
+            if (!version) {
+                return false;
+            }
+
+            let cliSemver: semver.SemVer = new semver.SemVer(version);
+            if (cliSemver.compare(ConnectionManager.MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT) < 0) {
+                // TODO handle comparison, check log
+                this._logManager.logMessage(
+                    'JFrog CLI version is too low to support credentials extraction (needed: ' +
+                        ConnectionManager.MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT +
+                        ', actual: ' +
+                        version +
+                        ')',
+                    'DEBUG'
+                );
+                return false;
+            }
+        } catch (error) {
+            return false;
+        }
+        return true;
+    }
+
+    public async getJfrogCliVersion(): Promise<string> {
+        const versionPrefix: string = 'jfrog version '; // todo change to jf
+        let output: string = execSync('jfrog -v').toString();
+        if (!output.startsWith(versionPrefix)) {
+            this._logManager.logMessage('Unexpected output to JFrog CLI version command: ' + output, 'DEBUG');
+            return '';
+        }
+        return output.replace(versionPrefix, '').trim();
+    }
+
+    public async getJfrogCliDefaultServerConfiguration(): Promise<boolean> {
+        try {
+            let output: string = execSync('jfrog c export').toString();
+            let confStr: string = Buffer.from(output, 'base64').toString('ascii');
+            let conf: any = JSON.parse(confStr);
+
+            this._url = conf['url'] || '';
+            this._xrayUrl = conf['xrayUrl'] || '';
+            this._rtUrl = conf['artifactoryUrl'] || '';
+            this._username = conf['user'] || '';
+            this._password = conf['password'] || '';
+
+            if (this.areAllCredentialsSet()) {
+                this._logManager.logMessage('Successfuly obtained credentials from JFrog CLI', 'DEBUG');
+                return true;
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
     }
 
     public get url() {
@@ -197,13 +282,14 @@ export class ConnectionManager implements ExtensionComponent {
         this._password = process.env[ConnectionManager.PASSWORD_ENV] || '';
     }
 
-    private async setUrls(prompt: boolean): Promise<boolean> {
-        if (!prompt) {
-            this._url = (await this._context.globalState.get(ConnectionManager.PLATFORM_URL_KEY)) || '';
-            this._xrayUrl = (await this._context.globalState.get(ConnectionManager.XRAY_URL_KEY)) || '';
-            this._rtUrl = (await this._context.globalState.get(ConnectionManager.RT_URL_KEY)) || '';
-            return !!this._url || !!this._xrayUrl;
-        }
+    private async setUrlsFromFilesystem(): Promise<boolean> {
+        this._url = (await this._context.globalState.get(ConnectionManager.PLATFORM_URL_KEY)) || '';
+        this._xrayUrl = (await this._context.globalState.get(ConnectionManager.XRAY_URL_KEY)) || '';
+        this._rtUrl = (await this._context.globalState.get(ConnectionManager.RT_URL_KEY)) || '';
+        return !!this._url || !!this._xrayUrl;
+    }
+
+    private async promptUrls(): Promise<boolean> {
         await this.promptPlatformUrl();
         await this.promptArtifactoryUrl();
         await this.promptXrayUrl();
@@ -257,18 +343,19 @@ export class ConnectionManager implements ExtensionComponent {
         await this._context.globalState.update(ConnectionManager.RT_URL_KEY, this._rtUrl);
     }
 
-    private async setUsername(prompt: boolean): Promise<boolean> {
-        if (prompt) {
-            this._username =
-                (await vscode.window.showInputBox({
-                    prompt: 'Enter username',
-                    value: this._username,
-                    ignoreFocusOut: true,
-                    validateInput: ConnectionUtils.validateFieldNotEmpty
-                })) || '';
-        } else {
-            this._username = (await this._context.globalState.get(ConnectionManager.XRAY_USERNAME_KEY)) || '';
-        }
+    private async setUsernameFromFilesystem(): Promise<boolean> {
+        this._username = (await this._context.globalState.get(ConnectionManager.XRAY_USERNAME_KEY)) || '';
+        return !!this._username;
+    }
+
+    private async promptUsername(): Promise<boolean> {
+        this._username =
+            (await vscode.window.showInputBox({
+                prompt: 'Enter username',
+                value: this._username,
+                ignoreFocusOut: true,
+                validateInput: ConnectionUtils.validateFieldNotEmpty
+            })) || '';
         return !!this._username;
     }
 
@@ -276,21 +363,22 @@ export class ConnectionManager implements ExtensionComponent {
         await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, this._username);
     }
 
-    private async setPassword(prompt: boolean): Promise<boolean> {
-        if (prompt) {
-            this._password =
-                (await vscode.window.showInputBox({
-                    prompt: 'Enter password',
-                    password: true,
-                    ignoreFocusOut: true,
-                    validateInput: ConnectionUtils.validateFieldNotEmpty
-                })) || '';
-        } else {
-            this._password =
-                (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username))) ||
-                (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, this._username))) ||
-                '';
-        }
+    private async setPasswordFromFilesystem(): Promise<boolean> {
+        this._password =
+            (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username))) ||
+            (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, this._username))) ||
+            '';
+        return !!this._password;
+    }
+
+    private async promptPassword(): Promise<boolean> {
+        this._password =
+            (await vscode.window.showInputBox({
+                prompt: 'Enter password',
+                password: true,
+                ignoreFocusOut: true,
+                validateInput: ConnectionUtils.validateFieldNotEmpty
+            })) || '';
         return !!this._password;
     }
 
