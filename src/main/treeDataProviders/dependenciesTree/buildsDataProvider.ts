@@ -46,7 +46,7 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
         try {
             this._ciInProgress = true;
             ScanUtils.setScanInProgress(true);
-            const credentialsSet: boolean = this._treesManager.connectionManager.areAllCredentialsSet();
+            const credentialsSet: boolean = this._treesManager.connectionManager.areCompleteCredentialsSet();
             this._treesManager.logManager.logMessage('Starting to load builds details...', 'INFO');
             await this.repopulateTree(quickScan, credentialsSet, onChangeFire);
             vscode.commands.executeCommand('jfrog.xray.focus');

@@ -64,7 +64,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     private areCiPreconditionsMet() {
-        if (!this._treesManager.connectionManager.areAllCredentialsSet()) {
+        if (!this._treesManager.connectionManager.areCompleteCredentialsSet()) {
             vscode.window
                 .showErrorMessage(
                     'CI integration disabled - Artifactory server is not configured. ' +

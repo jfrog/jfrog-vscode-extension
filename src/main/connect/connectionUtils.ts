@@ -57,22 +57,22 @@ export class ConnectionUtils {
      * @param username - Username
      * @param password - Password
      */
-    public static async validateArtifactoryConnection(rtUrl: string, username: string, password: string): Promise<boolean> {
-        let jfrogClient: JfrogClient = this.createJfrogClient('', rtUrl, '', username, password);
+    public static async validateArtifactoryConnection(rtUrl: string, username: string, password: string, accessToken: string): Promise<boolean> {
+        let jfrogClient: JfrogClient = this.createJfrogClient('', rtUrl, '', username, password, accessToken);
         return await jfrogClient
             .artifactory()
             .system()
             .ping();
     }
 
-    public static async isPlatformUrl(url: string, username: string, password: string): Promise<boolean> {
+    public static async isPlatformUrl(url: string, username: string, password: string, accessToken: string): Promise<boolean> {
         // If URL ends with '/xray', the URL is an Xray URL
         if (!url || url.endsWith('/xray') || url.endsWith('/xray/')) {
             return false;
         }
 
         // Ping to '<url>/xray'
-        let jfrogClient: JfrogClient = this.createJfrogClient(url, '', '', username, password);
+        let jfrogClient: JfrogClient = this.createJfrogClient(url, '', '', username, password, accessToken);
         return await jfrogClient
             .xray()
             .system()
@@ -86,8 +86,13 @@ export class ConnectionUtils {
      * @param username
      * @param password
      */
-    public static async checkXrayConnectionAndPermissions(xrayUrl: string, username: string, password: string): Promise<boolean> {
-        let jfrogClient: JfrogClient = this.createJfrogClient('', '', xrayUrl, username, password);
+    public static async checkXrayConnectionAndPermissions(
+        xrayUrl: string,
+        username: string,
+        password: string,
+        accessToken: string
+    ): Promise<boolean> {
+        let jfrogClient: JfrogClient = this.createJfrogClient('', '', xrayUrl, username, password, accessToken);
         try {
             await ConnectionUtils.testComponentPermission(jfrogClient);
             let xrayVersion: string = await ConnectionUtils.testXrayVersion(jfrogClient);
@@ -168,13 +173,21 @@ export class ConnectionUtils {
         return Promise.resolve();
     }
 
-    public static createJfrogClient(platformUrl: string, artifactoryUrl: string, xrayUrl: string, username: string, password: string): JfrogClient {
+    public static createJfrogClient(
+        platformUrl: string,
+        artifactoryUrl: string,
+        xrayUrl: string,
+        username: string,
+        password: string,
+        accessToken: string
+    ): JfrogClient {
         let clientConfig: IJfrogClientConfig = {
             platformUrl: platformUrl,
             artifactoryUrl: artifactoryUrl,
             xrayUrl: xrayUrl,
             username: username,
             password: password,
+            accessToken: accessToken,
             headers: {},
             proxy: ConnectionUtils.getProxyConfig()
         } as IJfrogClientConfig;

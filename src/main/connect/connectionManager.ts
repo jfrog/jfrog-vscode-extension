@@ -26,22 +26,26 @@ export class ConnectionManager implements ExtensionComponent {
     private static readonly XRAY_URL_KEY: string = 'jfrog.xray.url';
     private static readonly RT_URL_KEY: string = 'jfrog.rt.url';
 
-    // Service ID in the OS key store to store and retrieve the password
+    // Service ID in the OS key store to store and retrieve the password / access token
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
+    // Key used for uniqueness when storing access token in filesystem.
+    private static readonly ACCESS_TOKEN_FS_KEY: string = "vscode_jfrog_token";
 
     // Store connection details in file system after reading connection details from env
     public static readonly STORE_CONNECTION_ENV: string = 'JFROG_IDE_STORE_CONNECTION';
-    // URL, username and password environment variables keys
+    // URL and credentials environment variables keys
     public static readonly USERNAME_ENV: string = 'JFROG_IDE_USERNAME';
     public static readonly PASSWORD_ENV: string = 'JFROG_IDE_PASSWORD';
+    public static readonly ACCESS_TOKEN_ENV: string = 'JFROG_IDE_ACCESS_TOKEN';
     public static readonly URL_ENV: string = 'JFROG_IDE_URL';
 
     // Minimal version supporting exporting default server configuration.
-    private static readonly MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT: any = semver.coerce('2.5.1'); // todo
+    private static readonly MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT: any = semver.coerce('2.6.1');
 
     private _context!: vscode.ExtensionContext;
     private _username: string = '';
     private _password: string = '';
+    private _accessToken: string = '';
     private _xrayUrl: string = '';
     private _rtUrl: string = '';
     private _url: string = '';
@@ -62,7 +66,7 @@ export class ConnectionManager implements ExtensionComponent {
         return await vscode.window.withProgress(
             <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with Xray server...' },
             async (): Promise<boolean> => {
-                if (await ConnectionUtils.checkXrayConnectionAndPermissions(this._xrayUrl, this._username, this._password)) {
+                if (await ConnectionUtils.checkXrayConnectionAndPermissions(this._xrayUrl, this._username, this._password, this._accessToken)) {
                     await this.storeConnection();
                     this.updateConnectionIcon();
                     return true;
@@ -98,11 +102,11 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     public areXrayCredentialsSet(): boolean {
-        return !!((this._url || this._xrayUrl) && this._username && this._password);
+        return !!((this._url || this._xrayUrl) && ((this._username && this._password) || this._accessToken));
     }
 
-    public areAllCredentialsSet(): boolean {
-        return !!(this._url && this._xrayUrl && this._rtUrl && this._username && this._password);
+    public areCompleteCredentialsSet(): boolean {
+        return !!(this._url && this._xrayUrl && this._rtUrl && ((this._username && this._password) || this._accessToken));
     }
 
     /**
@@ -134,7 +138,7 @@ export class ConnectionManager implements ExtensionComponent {
 
     public async setCredentialsOrPrompt(prompt: boolean): Promise<boolean> {
         // Read credentials from file system
-        if ((await this.setUrlsFromFilesystem()) && (await this.setUsernameFromFilesystem()) && (await this.setPasswordFromFilesystem())) {
+        if ((await this.setUrlsFromFilesystem()) && ((await this.setUsernameFromFilesystem() && await this.setPasswordFromFilesystem()) || await this.setAccessTokenFromFilesystem())) {
             return true;
         }
 
@@ -143,21 +147,29 @@ export class ConnectionManager implements ExtensionComponent {
         }
 
         if (prompt) {
-            if ((await this.promptUrls()) && (await this.promptUsername()) && (await this.promptPassword())) {
-                return true;
-            }
+            return await this.promptAll();
         }
         return false;
     }
 
-    public async getCredentialsFromJfrogCli(): Promise<boolean> {
+    private async promptAll(): Promise<boolean> {
+        if (!await this.promptUrls()) {
+            return false;
+        }
+        if (await this.promptAccessToken()) {
+            return true;
+        }
+        return await this.promptUsername() && await this.promptPassword();
+    }
+
+    private async getCredentialsFromJfrogCli(): Promise<boolean> {
         if (!(await this.verifyJfrogCliInstalledAndVersion())) {
             return false;
         }
         return await this.getJfrogCliDefaultServerConfiguration();
     }
 
-    public async verifyJfrogCliInstalledAndVersion(): Promise<boolean> {
+    private async verifyJfrogCliInstalledAndVersion(): Promise<boolean> {
         try {
             let version: string = await this.getJfrogCliVersion();
             if (!version) {
@@ -166,7 +178,6 @@ export class ConnectionManager implements ExtensionComponent {
 
             let cliSemver: semver.SemVer = new semver.SemVer(version);
             if (cliSemver.compare(ConnectionManager.MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT) < 0) {
-                // TODO handle comparison, check log
                 this._logManager.logMessage(
                     'JFrog CLI version is too low to support credentials extraction (needed: ' +
                         ConnectionManager.MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT +
@@ -184,8 +195,8 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     public async getJfrogCliVersion(): Promise<string> {
-        const versionPrefix: string = 'jfrog version '; // todo change to jf
-        let output: string = execSync('jfrog -v').toString();
+        const versionPrefix: string = 'jfrog version ';
+        let output: string = execSync('jf -v').toString();
         if (!output.startsWith(versionPrefix)) {
             this._logManager.logMessage('Unexpected output to JFrog CLI version command: ' + output, 'DEBUG');
             return '';
@@ -195,17 +206,25 @@ export class ConnectionManager implements ExtensionComponent {
 
     public async getJfrogCliDefaultServerConfiguration(): Promise<boolean> {
         try {
-            let output: string = execSync('jfrog c export').toString();
+            let output: string = execSync('jf c export').toString();
             let confStr: string = Buffer.from(output, 'base64').toString('ascii');
             let conf: any = JSON.parse(confStr);
 
             this._url = conf['url'] || '';
             this._xrayUrl = conf['xrayUrl'] || '';
             this._rtUrl = conf['artifactoryUrl'] || '';
-            this._username = conf['user'] || '';
-            this._password = conf['password'] || '';
 
-            if (this.areAllCredentialsSet()) {
+            // Get access token if exists without refresh token. Get username & password otherwise.
+            let accessToken: string = conf['accessToken'] || '';
+            let refreshToken: string = conf['refreshToken'] || '';
+            if (accessToken !== '' && refreshToken === '') {
+                this._accessToken = accessToken;
+            } else {
+                this._username = conf['user'] || '';
+                this._password = conf['password'] || '';
+            }
+
+            if (this.areCompleteCredentialsSet()) {
                 this._logManager.logMessage('Successfuly obtained credentials from JFrog CLI', 'DEBUG');
                 return true;
             }
@@ -231,6 +250,10 @@ export class ConnectionManager implements ExtensionComponent {
         return this._password;
     }
 
+    public get accessToken() {
+        return this._accessToken;
+    }
+
     /**
      * Resolve Xray and JFrog platform URLs from the input url.
      * If URL is <platform-url>, the derived Xray URL is <platform-url/xray>, and the Artifactory URL is <platform-url/artifactory>.
@@ -238,7 +261,7 @@ export class ConnectionManager implements ExtensionComponent {
      * If URL leads to an Xray URL not under JFrog platform (like in Artifactory 6), leave the derive platform URL empty.
      */
     private async resolveUrls() {
-        if (await ConnectionUtils.isPlatformUrl(this._url, this._username, this._password)) {
+        if (await ConnectionUtils.isPlatformUrl(this._url, this._username, this._password, this._accessToken)) {
             // _url is a platform URL
             this._xrayUrl = this.getXrayUrlFromPlatform();
             this._rtUrl = this.getRtUrlFromPlatform();
@@ -249,7 +272,7 @@ export class ConnectionManager implements ExtensionComponent {
                 // Assuming platform URL was extracted. Checking against Artifactory.
                 this._url = this._url.substr(0, this._url.lastIndexOf('/xray'));
                 this._rtUrl = this.getRtUrlFromPlatform();
-                if (!(await ConnectionUtils.validateArtifactoryConnection(this._rtUrl, this._username, this._password))) {
+                if (!(await ConnectionUtils.validateArtifactoryConnection(this._rtUrl, this._username, this._password, this._accessToken))) {
                     this._url = '';
                     this._rtUrl = '';
                 }
@@ -280,6 +303,7 @@ export class ConnectionManager implements ExtensionComponent {
         this._url = process.env[ConnectionManager.URL_ENV] || '';
         this._username = process.env[ConnectionManager.USERNAME_ENV] || '';
         this._password = process.env[ConnectionManager.PASSWORD_ENV] || '';
+        this._accessToken = process.env[ConnectionManager.ACCESS_TOKEN_ENV] || '';
     }
 
     private async setUrlsFromFilesystem(): Promise<boolean> {
@@ -364,11 +388,30 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async setPasswordFromFilesystem(): Promise<boolean> {
-        this._password =
-            (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, this._username))) ||
-            (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, this._username))) ||
-            '';
+        this._password = await this.getSecretFromFilesystem(this._username); 
         return !!this._password;
+    }
+
+    private async setAccessTokenFromFilesystem(): Promise<boolean> {
+        this._accessToken = await this.getSecretFromFilesystem(ConnectionManager.ACCESS_TOKEN_FS_KEY) ;
+        return !!this._accessToken;
+    }
+
+    // Password and access token are saved in keychain with an account that is a hash of url and another string.
+    // For password - username, access token - a constant.
+    private async getSecretFromFilesystem(keyPair: string): Promise<string> {
+        return await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, keyPair)) ||
+            await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, keyPair)) ||
+            '';
+    }
+
+    private async deleteSecretFromFilesystem(keyPair: string, secretName: string): Promise<boolean> {
+        let ok: boolean = await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, keyPair));
+        if (!ok) {
+            this._logManager.logMessage('Failed to delete the ' + secretName + ' from the system secrets manager', 'WARN');
+            return false;
+        }
+        return true;
     }
 
     private async promptPassword(): Promise<boolean> {
@@ -384,6 +427,20 @@ export class ConnectionManager implements ExtensionComponent {
 
     private async storePassword() {
         await keytar.setPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, this._username), this._password);
+    }
+
+    private async promptAccessToken(): Promise<boolean> {
+        this._accessToken =
+            (await vscode.window.showInputBox({
+                prompt: 'Enter JFrog access token (Leave blank for username and password)',
+                password: true,
+                ignoreFocusOut: true
+            })) || '';
+        return !!this._accessToken;
+    }
+
+    private async storeAccessToken() {
+        await keytar.setPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, ConnectionManager.ACCESS_TOKEN_FS_KEY), this._accessToken);
     }
 
     /**
@@ -405,7 +462,7 @@ export class ConnectionManager implements ExtensionComponent {
 
     /**
      * Store URLs and username in VS-Code global state.
-     * Store Xray password in Keychain.
+     * Store Xray password and access token in Keychain.
      */
     private async storeConnection(): Promise<void> {
         await this.storeXrayUrl();
@@ -413,9 +470,11 @@ export class ConnectionManager implements ExtensionComponent {
         await this.storePlatformUrl();
         await this.storeUsername();
         await this.storePassword();
+        await this.storeAccessToken();
     }
 
     private deleteCredentialsFromMemory() {
+        this._accessToken = '';
         this._password = '';
         this._username = '';
         this._url = '';
@@ -424,10 +483,10 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async deleteCredentialFromFileSystem(): Promise<boolean> {
-        // Delete password must be executed first. in order to find the password in the key chain, we must create its hash key using the url & username.
-        let ok: boolean = await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, this._username));
-        if (!ok) {
-            this._logManager.logMessage('Failed to delete the password from the system password manager', 'WARN');
+        // Delete password / access token must be executed first.
+        let passOk: boolean = await this.deleteSecretFromFilesystem(this._username, "password");
+        let tokenOk: boolean = await this.deleteSecretFromFilesystem(ConnectionManager.ACCESS_TOKEN_FS_KEY, "access token");
+        if (!passOk || !tokenOk) {
             return false;
         }
         await Promise.all([
@@ -460,6 +519,6 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     public createJfrogClient(): JfrogClient {
-        return ConnectionUtils.createJfrogClient(this._url, this._rtUrl, this._xrayUrl, this._username, this._password);
+        return ConnectionUtils.createJfrogClient(this._url, this._rtUrl, this._xrayUrl, this._username, this._password, this._accessToken);
     }
 }
