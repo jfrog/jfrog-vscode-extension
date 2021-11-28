@@ -29,7 +29,7 @@ export class ConnectionManager implements ExtensionComponent {
     // Service ID in the OS key store to store and retrieve the password / access token
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
     // Key used for uniqueness when storing access token in filesystem.
-    private static readonly ACCESS_TOKEN_FS_KEY: string = "vscode_jfrog_token";
+    private static readonly ACCESS_TOKEN_FS_KEY: string = 'vscode_jfrog_token';
 
     // Store connection details in file system after reading connection details from env
     public static readonly STORE_CONNECTION_ENV: string = 'JFROG_IDE_STORE_CONNECTION';
@@ -137,8 +137,11 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     public async setCredentialsOrPrompt(prompt: boolean): Promise<boolean> {
-        // Read credentials from file system
-        if ((await this.setUrlsFromFilesystem()) && ((await this.setUsernameFromFilesystem() && await this.setPasswordFromFilesystem()) || await this.setAccessTokenFromFilesystem())) {
+        // Read credentials from file system. Expecting URLs, username & password or access token.
+        if (
+            (await this.setUrlsFromFilesystem()) &&
+            (((await this.setUsernameFromFilesystem()) && (await this.setPasswordFromFilesystem())) || (await this.setAccessTokenFromFilesystem()))
+        ) {
             return true;
         }
 
@@ -153,13 +156,13 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async promptAll(): Promise<boolean> {
-        if (!await this.promptUrls()) {
+        if (!(await this.promptUrls())) {
             return false;
         }
         if (await this.promptAccessToken()) {
             return true;
         }
-        return await this.promptUsername() && await this.promptPassword();
+        return (await this.promptUsername()) && (await this.promptPassword());
     }
 
     private async getCredentialsFromJfrogCli(): Promise<boolean> {
@@ -388,21 +391,23 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async setPasswordFromFilesystem(): Promise<boolean> {
-        this._password = await this.getSecretFromFilesystem(this._username); 
+        this._password = await this.getSecretFromFilesystem(this._username);
         return !!this._password;
     }
 
     private async setAccessTokenFromFilesystem(): Promise<boolean> {
-        this._accessToken = await this.getSecretFromFilesystem(ConnectionManager.ACCESS_TOKEN_FS_KEY) ;
+        this._accessToken = await this.getSecretFromFilesystem(ConnectionManager.ACCESS_TOKEN_FS_KEY);
         return !!this._accessToken;
     }
 
     // Password and access token are saved in keychain with an account that is a hash of url and another string.
     // For password - username, access token - a constant.
     private async getSecretFromFilesystem(keyPair: string): Promise<string> {
-        return await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, keyPair)) ||
-            await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, keyPair)) ||
-            '';
+        return (
+            (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, keyPair))) ||
+            (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, keyPair))) ||
+            ''
+        );
     }
 
     private async deleteSecretFromFilesystem(keyPair: string, secretName: string): Promise<boolean> {
@@ -426,6 +431,9 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async storePassword() {
+        if (!this._password) {
+            return;
+        }
         await keytar.setPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, this._username), this._password);
     }
 
@@ -440,7 +448,14 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     private async storeAccessToken() {
-        await keytar.setPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, ConnectionManager.ACCESS_TOKEN_FS_KEY), this._accessToken);
+        if (!this._accessToken) {
+            return;
+        }
+        await keytar.setPassword(
+            ConnectionManager.SERVICE_ID,
+            this.createAccountId(this._xrayUrl, ConnectionManager.ACCESS_TOKEN_FS_KEY),
+            this._accessToken
+        );
     }
 
     /**
@@ -484,8 +499,8 @@ export class ConnectionManager implements ExtensionComponent {
 
     private async deleteCredentialFromFileSystem(): Promise<boolean> {
         // Delete password / access token must be executed first.
-        let passOk: boolean = await this.deleteSecretFromFilesystem(this._username, "password");
-        let tokenOk: boolean = await this.deleteSecretFromFilesystem(ConnectionManager.ACCESS_TOKEN_FS_KEY, "access token");
+        let passOk: boolean = await this.deleteSecretFromFilesystem(this._username, 'password');
+        let tokenOk: boolean = await this.deleteSecretFromFilesystem(ConnectionManager.ACCESS_TOKEN_FS_KEY, 'access token');
         if (!passOk || !tokenOk) {
             return false;
         }
