@@ -145,7 +145,7 @@ export class ConnectionManager implements ExtensionComponent {
             return true;
         }
 
-        if (await this.getCredentialsFromJfrogCli()) {
+        if (await this.readCredentialsFromJfrogCli()) {
             return true;
         }
 
@@ -165,7 +165,7 @@ export class ConnectionManager implements ExtensionComponent {
         return (await this.promptUsername()) && (await this.promptPassword());
     }
 
-    private async getCredentialsFromJfrogCli(): Promise<boolean> {
+    private async readCredentialsFromJfrogCli(): Promise<boolean> {
         if (!(await this.verifyJfrogCliInstalledAndVersion())) {
             return false;
         }
@@ -243,6 +243,10 @@ export class ConnectionManager implements ExtensionComponent {
 
     public get xrayUrl() {
         return this._xrayUrl;
+    }
+
+    public get rtUrl() {
+        return this._rtUrl;
     }
 
     public get username() {

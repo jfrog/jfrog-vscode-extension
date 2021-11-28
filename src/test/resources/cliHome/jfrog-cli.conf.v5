@@ -1,0 +1,48 @@
+{
+  "servers": [
+    {
+      "url": "https://myplatform.jfrog.io/",
+      "artifactoryUrl": "https://myplatform.jfrog.io/artifactory/",
+      "distributionUrl": "https://myplatform.jfrog.io/distribution/",
+      "xrayUrl": "https://myplatform.jfrog.io/xray/",
+      "missionControlUrl": "https://myplatform.jfrog.io/mc/",
+      "pipelinesUrl": "https://myplatform.jfrog.io/pipelines/",
+      "user": "username",
+      "password": "pass",
+      "serverId": "basic-auth-only"
+    },
+    {
+      "url": "https://myplatform.jfrog.io/",
+      "artifactoryUrl": "https://myplatform.jfrog.io/artifactory/",
+      "distributionUrl": "https://myplatform.jfrog.io/distribution/",
+      "xrayUrl": "https://myplatform.jfrog.io/xray/",
+      "missionControlUrl": "https://myplatform.jfrog.io/mc/",
+      "pipelinesUrl": "https://myplatform.jfrog.io/pipelines/",
+      "accessToken": "token",
+      "serverId": "access-token-only"
+    },
+    {
+      "url": "https://myplatform.jfrog.io/",
+      "artifactoryUrl": "https://myplatform.jfrog.io/artifactory/",
+      "distributionUrl": "https://myplatform.jfrog.io/distribution/",
+      "xrayUrl": "https://myplatform.jfrog.io/xray/",
+      "missionControlUrl": "https://myplatform.jfrog.io/mc/",
+      "pipelinesUrl": "https://myplatform.jfrog.io/pipelines/",
+      "user": "username",
+      "password": "pass",
+      "accessToken": "token",
+      "refreshToken": "refresh",
+      "serverId": "with-refresh-token"
+    },
+    {
+      "url": "https://myplatform.jfrog.io/",
+      "artifactoryUrl": "https://myplatform.jfrog.io/artifactory/",
+      "distributionUrl": "https://myplatform.jfrog.io/distribution/",
+      "xrayUrl": "https://myplatform.jfrog.io/xray/",
+      "missionControlUrl": "https://myplatform.jfrog.io/mc/",
+      "pipelinesUrl": "https://myplatform.jfrog.io/pipelines/",
+      "serverId": "empty-creds"
+    }
+  ],
+  "version": "5"
+}

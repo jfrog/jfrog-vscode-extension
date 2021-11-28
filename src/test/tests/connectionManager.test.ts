@@ -5,6 +5,7 @@ import { IJfrogClientConfig, IProxyConfig } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { LogManager } from '../../main/log/logManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
+import { execSync } from 'child_process';
 
 describe('Connection Manager Tests', () => {
     let connectionManager: ConnectionManager;
@@ -52,44 +53,52 @@ describe('Connection Manager Tests', () => {
             {
                 inputUrl: 'https://httpbin.org/anything',
                 expectedPlatformUrl: 'https://httpbin.org/anything',
-                expectedXrayUrl: 'https://httpbin.org/anything/xray'
+                expectedXrayUrl: 'https://httpbin.org/anything/xray',
+                expectedRtUrl: 'https://httpbin.org/anything/artifactory'
             },
             {
                 inputUrl: 'https://httpbin.org/anything/',
                 expectedPlatformUrl: 'https://httpbin.org/anything/',
-                expectedXrayUrl: 'https://httpbin.org/anything/xray'
+                expectedXrayUrl: 'https://httpbin.org/anything/xray',
+                expectedRtUrl: 'https://httpbin.org/anything/artifactory'
             },
             {
                 inputUrl: 'https://httpbin.org/anything/xray',
                 expectedPlatformUrl: 'https://httpbin.org/anything',
-                expectedXrayUrl: 'https://httpbin.org/anything/xray'
+                expectedXrayUrl: 'https://httpbin.org/anything/xray',
+                expectedRtUrl: 'https://httpbin.org/anything/artifactory'
             },
             {
                 inputUrl: 'https://httpbin.org/anything/xray/',
                 expectedPlatformUrl: 'https://httpbin.org/anything',
-                expectedXrayUrl: 'https://httpbin.org/anything/xray/'
+                expectedXrayUrl: 'https://httpbin.org/anything/xray/',
+                expectedRtUrl: 'https://httpbin.org/anything/artifactory'
             },
             {
                 inputUrl: 'https://httpbin.org/status/404/different-xray-url',
                 expectedPlatformUrl: '',
-                expectedXrayUrl: 'https://httpbin.org/status/404/different-xray-url'
+                expectedXrayUrl: 'https://httpbin.org/status/404/different-xray-url',
+                expectedRtUrl: ''
             },
             {
                 inputUrl: 'https://httpbin.org/status/404/different-xray-url/',
                 expectedPlatformUrl: '',
-                expectedXrayUrl: 'https://httpbin.org/status/404/different-xray-url/'
+                expectedXrayUrl: 'https://httpbin.org/status/404/different-xray-url/',
+                expectedRtUrl: ''
             }
         ].forEach(async testCase => {
             it('Input URL: ' + testCase.inputUrl, async () => {
                 // Check credentials not set
-                process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[ConnectionManager.URL_ENV] =
-                    '';
+                process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
+                    ConnectionManager.ACCESS_TOKEN_ENV
+                ] = process.env[ConnectionManager.URL_ENV] = '';
                 await connectionManager.populateCredentials(false);
                 assert.isFalse(connectionManager.areXrayCredentialsSet());
 
                 process.env[ConnectionManager.URL_ENV] = testCase.inputUrl;
                 process.env[ConnectionManager.USERNAME_ENV] = 'admin';
                 process.env[ConnectionManager.PASSWORD_ENV] = 'password';
+                process.env[ConnectionManager.ACCESS_TOKEN_ENV] = 'token';
 
                 await connectionManager.populateCredentials(false);
                 assert.isTrue(connectionManager.areXrayCredentialsSet());
@@ -97,6 +106,68 @@ describe('Connection Manager Tests', () => {
                 assert.equal(connectionManager.xrayUrl, testCase.expectedXrayUrl);
                 assert.equal(connectionManager.username, 'admin');
                 assert.equal(connectionManager.password, 'password');
+                assert.equal(connectionManager.accessToken, 'token');
+            });
+        });
+    });
+
+    describe('Populate credentials from env', () => {
+        [
+            {
+                serverId: 'basic-auth-only',
+                expectedPlatformUrl: 'https://myplatform.jfrog.io/',
+                expectedRtUrl: 'https://myplatform.jfrog.io/artifactory/',
+                expectedXrayUrl: 'https://myplatform.jfrog.io/xray/',
+                expectedUsername: 'username',
+                expectedPassword: 'pass',
+                expectedAccessToken: ''
+            },
+            {
+                serverId: 'access-token-only',
+                expectedPlatformUrl: 'https://myplatform.jfrog.io/',
+                expectedRtUrl: 'https://myplatform.jfrog.io/artifactory/',
+                expectedXrayUrl: 'https://myplatform.jfrog.io/xray/',
+                expectedUsername: '',
+                expectedPassword: '',
+                expectedAccessToken: 'token'
+            },
+            {
+                serverId: 'with-refresh-token',
+                expectedPlatformUrl: 'https://myplatform.jfrog.io/',
+                expectedRtUrl: 'https://myplatform.jfrog.io/artifactory/',
+                expectedXrayUrl: 'https://myplatform.jfrog.io/xray/',
+                expectedUsername: 'username',
+                expectedPassword: 'pass',
+                expectedAccessToken: ''
+            },
+            {
+                serverId: 'empty-creds',
+                expectedPlatformUrl: 'https://myplatform.jfrog.io/',
+                expectedRtUrl: 'https://myplatform.jfrog.io/artifactory/',
+                expectedXrayUrl: 'https://myplatform.jfrog.io/xray/',
+                expectedUsername: '',
+                expectedPassword: '',
+                expectedAccessToken: ''
+            }
+        ].forEach(async testCase => {
+            it('Credentials type: ' + testCase.serverId, async () => {
+                // Make sure credentials are not set from env.
+                process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
+                    ConnectionManager.ACCESS_TOKEN_ENV
+                ] = process.env[ConnectionManager.URL_ENV] = '';
+                await connectionManager.populateCredentials(false);
+                assert.isFalse(connectionManager.areXrayCredentialsSet());
+
+                assert.doesNotThrow(() => execSync('jf c use ' + testCase.serverId));
+
+                await connectionManager.populateCredentials(false);
+                assert.isTrue(connectionManager.areCompleteCredentialsSet());
+                assert.equal(connectionManager.url, testCase.expectedPlatformUrl);
+                assert.equal(connectionManager.rtUrl, testCase.expectedRtUrl);
+                assert.equal(connectionManager.xrayUrl, testCase.expectedXrayUrl);
+                assert.equal(connectionManager.username, testCase.expectedUsername);
+                assert.equal(connectionManager.password, testCase.expectedPassword);
+                assert.equal(connectionManager.accessToken, testCase.expectedAccessToken);
             });
         });
     });
