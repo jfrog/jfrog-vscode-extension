@@ -410,6 +410,20 @@ export class ConnectionManager implements ExtensionComponent {
         );
     }
 
+    private async deletePasswordFromFilesystem(): Promise<boolean> {
+        if (!this._password) {
+            return true;
+        }
+        return await this.deleteSecretFromFilesystem(this._username, 'password');
+    }
+
+    private async deleteAccessTokenFromFilesystem(): Promise<boolean> {
+        if (!this._accessToken) {
+            return true;
+        }
+        return await this.deleteSecretFromFilesystem(ConnectionManager.ACCESS_TOKEN_FS_KEY, 'access token');
+    }
+
     private async deleteSecretFromFilesystem(keyPair: string, secretName: string): Promise<boolean> {
         let ok: boolean = await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, keyPair));
         if (!ok) {
@@ -499,8 +513,8 @@ export class ConnectionManager implements ExtensionComponent {
 
     private async deleteCredentialFromFileSystem(): Promise<boolean> {
         // Delete password / access token must be executed first.
-        let passOk: boolean = await this.deleteSecretFromFilesystem(this._username, 'password');
-        let tokenOk: boolean = await this.deleteSecretFromFilesystem(ConnectionManager.ACCESS_TOKEN_FS_KEY, 'access token');
+        let passOk: boolean = await this.deletePasswordFromFilesystem();
+        let tokenOk: boolean = await this.deleteAccessTokenFromFilesystem();
         if (!passOk || !tokenOk) {
             return false;
         }
