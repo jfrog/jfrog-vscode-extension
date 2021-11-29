@@ -136,7 +136,7 @@ export class ConnectionManager implements ExtensionComponent {
         return true;
     }
 
-    public async setCredentialsOrPrompt(prompt: boolean): Promise<boolean> {
+    private async setCredentialsOrPrompt(prompt: boolean): Promise<boolean> {
         // Read credentials from file system. Expecting URLs, username & password or access token.
         if (
             (await this.setUrlsFromFilesystem()) &&
