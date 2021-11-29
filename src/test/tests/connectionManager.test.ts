@@ -3,6 +3,7 @@ import { assert } from 'chai';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { IJfrogClientConfig, IProxyConfig } from 'jfrog-client-js';
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { LogManager } from '../../main/log/logManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
 import { execSync } from 'child_process';
@@ -158,6 +159,10 @@ describe('Connection Manager Tests', () => {
                 await connectionManager.populateCredentials(false);
                 assert.isFalse(connectionManager.areXrayCredentialsSet());
 
+                // Store previous CLI home, and set new one to test data.
+                const previousHome: string = process.env['JFROG_CLI_HOME_DIR'] || '';
+                process.env['JFROG_CLI_HOME_DIR'] = path.resolve('../resources/cliHome/');
+
                 assert.doesNotThrow(() => execSync('jf c use ' + testCase.serverId));
 
                 await connectionManager.populateCredentials(false);
@@ -168,6 +173,9 @@ describe('Connection Manager Tests', () => {
                 assert.equal(connectionManager.username, testCase.expectedUsername);
                 assert.equal(connectionManager.password, testCase.expectedPassword);
                 assert.equal(connectionManager.accessToken, testCase.expectedAccessToken);
+
+                // Restore old CLI home dir.
+                process.env['JFROG_CLI_HOME_DIR'] = previousHome;
             });
         });
     });
