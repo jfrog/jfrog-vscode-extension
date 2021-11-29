@@ -55,38 +55,32 @@ describe('Connection Manager Tests', () => {
             {
                 inputUrl: 'https://httpbin.org/anything',
                 expectedPlatformUrl: 'https://httpbin.org/anything',
-                expectedXrayUrl: 'https://httpbin.org/anything/xray',
-                expectedRtUrl: 'https://httpbin.org/anything/artifactory'
+                expectedXrayUrl: 'https://httpbin.org/anything/xray'
             },
             {
                 inputUrl: 'https://httpbin.org/anything/',
                 expectedPlatformUrl: 'https://httpbin.org/anything/',
-                expectedXrayUrl: 'https://httpbin.org/anything/xray',
-                expectedRtUrl: 'https://httpbin.org/anything/artifactory'
+                expectedXrayUrl: 'https://httpbin.org/anything/xray'
             },
             {
                 inputUrl: 'https://httpbin.org/anything/xray',
                 expectedPlatformUrl: 'https://httpbin.org/anything',
-                expectedXrayUrl: 'https://httpbin.org/anything/xray',
-                expectedRtUrl: 'https://httpbin.org/anything/artifactory'
+                expectedXrayUrl: 'https://httpbin.org/anything/xray'
             },
             {
                 inputUrl: 'https://httpbin.org/anything/xray/',
                 expectedPlatformUrl: 'https://httpbin.org/anything',
-                expectedXrayUrl: 'https://httpbin.org/anything/xray/',
-                expectedRtUrl: 'https://httpbin.org/anything/artifactory'
+                expectedXrayUrl: 'https://httpbin.org/anything/xray/'
             },
             {
                 inputUrl: 'https://httpbin.org/status/404/different-xray-url',
                 expectedPlatformUrl: '',
-                expectedXrayUrl: 'https://httpbin.org/status/404/different-xray-url',
-                expectedRtUrl: ''
+                expectedXrayUrl: 'https://httpbin.org/status/404/different-xray-url'
             },
             {
                 inputUrl: 'https://httpbin.org/status/404/different-xray-url/',
                 expectedPlatformUrl: '',
-                expectedXrayUrl: 'https://httpbin.org/status/404/different-xray-url/',
-                expectedRtUrl: ''
+                expectedXrayUrl: 'https://httpbin.org/status/404/different-xray-url/'
             }
         ].forEach(async testCase => {
             it('Input URL: ' + testCase.inputUrl, async () => {
@@ -130,7 +124,8 @@ describe('Connection Manager Tests', () => {
                 expectedXrayUrl: 'https://myplatform.jfrog.io/xray/',
                 expectedUsername: 'username',
                 expectedPassword: 'pass',
-                expectedAccessToken: ''
+                expectedAccessToken: '',
+                expectedResult: true
             },
             {
                 serverId: 'access-token-only',
@@ -139,7 +134,8 @@ describe('Connection Manager Tests', () => {
                 expectedXrayUrl: 'https://myplatform.jfrog.io/xray/',
                 expectedUsername: '',
                 expectedPassword: '',
-                expectedAccessToken: 'token'
+                expectedAccessToken: 'token',
+                expectedResult: true
             },
             {
                 serverId: 'with-refresh-token',
@@ -148,7 +144,8 @@ describe('Connection Manager Tests', () => {
                 expectedXrayUrl: 'https://myplatform.jfrog.io/xray/',
                 expectedUsername: 'username',
                 expectedPassword: 'pass',
-                expectedAccessToken: ''
+                expectedAccessToken: '',
+                expectedResult: true
             },
             {
                 serverId: 'empty-creds',
@@ -157,7 +154,8 @@ describe('Connection Manager Tests', () => {
                 expectedXrayUrl: 'https://myplatform.jfrog.io/xray/',
                 expectedUsername: '',
                 expectedPassword: '',
-                expectedAccessToken: ''
+                expectedAccessToken: '',
+                expectedResult: false
             }
         ].forEach(async testCase => {
             it('Credentials type: ' + testCase.serverId, async () => {
@@ -172,17 +170,15 @@ describe('Connection Manager Tests', () => {
 
                 // Assert credentials are empty.
                 await connectionManager.populateCredentials(false);
-                assert.isFalse(connectionManager.areXrayCredentialsSet());
+                assert.isFalse(connectionManager.areCompleteCredentialsSet());
 
                 // Set new home to test data.
-                //setCliHomeDir(path.resolve('../resources/cliHome'));
                 setCliHomeDir(path.join(__dirname, '..', 'resources', 'cliHome'));
 
                 // Use the corresponding server-id to the test case.
                 assert.doesNotThrow(() => execSync('jf c use ' + testCase.serverId.trim()));
 
-                await connectionManager.populateCredentials(false);
-                assert.isTrue(connectionManager.areCompleteCredentialsSet());
+                assert.equal(await connectionManager.readCredentialsFromJfrogCli(), testCase.expectedResult);
                 assert.equal(connectionManager.url, testCase.expectedPlatformUrl);
                 assert.equal(connectionManager.rtUrl, testCase.expectedRtUrl);
                 assert.equal(connectionManager.xrayUrl, testCase.expectedXrayUrl);

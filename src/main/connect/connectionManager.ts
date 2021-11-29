@@ -165,7 +165,7 @@ export class ConnectionManager implements ExtensionComponent {
         return (await this.promptUsername()) && (await this.promptPassword());
     }
 
-    private async readCredentialsFromJfrogCli(): Promise<boolean> {
+    public async readCredentialsFromJfrogCli(): Promise<boolean> {
         if (!(await this.verifyJfrogCliInstalledAndVersion())) {
             return false;
         }
@@ -197,7 +197,7 @@ export class ConnectionManager implements ExtensionComponent {
         return true;
     }
 
-    public async getJfrogCliVersion(): Promise<string> {
+    private async getJfrogCliVersion(): Promise<string> {
         const versionPrefix: string = 'jfrog version ';
         let output: string = execSync('jf -v').toString();
         if (!output.startsWith(versionPrefix)) {
@@ -207,7 +207,7 @@ export class ConnectionManager implements ExtensionComponent {
         return output.replace(versionPrefix, '').trim();
     }
 
-    public async getJfrogCliDefaultServerConfiguration(): Promise<boolean> {
+    private async getJfrogCliDefaultServerConfiguration(): Promise<boolean> {
         try {
             let output: string = execSync('jf c export').toString();
             let confStr: string = Buffer.from(output, 'base64').toString('ascii');
