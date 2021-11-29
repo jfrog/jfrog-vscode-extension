@@ -10,7 +10,7 @@ export class ConnectionUtils {
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI: any = semver.coerce('3.21.2');
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED: any = semver.coerce('2.5.0');
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    private static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
+    static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
 
     /**
      * Validate url string. Used when providing Xray server url.
