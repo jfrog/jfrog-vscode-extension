@@ -7,6 +7,7 @@ import * as path from 'path';
 import { LogManager } from '../../main/log/logManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
 import { execSync } from 'child_process';
+import { getCliHomeDir, setCliHomeDir } from './utils/utils.test';
 
 describe('Connection Manager Tests', () => {
     let connectionManager: ConnectionManager;
@@ -89,10 +90,15 @@ describe('Connection Manager Tests', () => {
             }
         ].forEach(async testCase => {
             it('Input URL: ' + testCase.inputUrl, async () => {
-                // Check credentials not set
                 process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
                     ConnectionManager.ACCESS_TOKEN_ENV
                 ] = process.env[ConnectionManager.URL_ENV] = '';
+
+                // Store previous CLI home, and set to a non existing path so no credentials will be read from the CLI.
+                const previousHome: string = getCliHomeDir();
+                setCliHomeDir(path.resolve('/path/to/no/where'));
+
+                // Check credentials not set.
                 await connectionManager.populateCredentials(false);
                 assert.isFalse(connectionManager.areXrayCredentialsSet());
 
@@ -108,11 +114,14 @@ describe('Connection Manager Tests', () => {
                 assert.equal(connectionManager.username, 'admin');
                 assert.equal(connectionManager.password, 'password');
                 assert.equal(connectionManager.accessToken, 'token');
+
+                // Restore old CLI home dir.
+                setCliHomeDir(previousHome);
             });
         });
     });
 
-    describe('Populate credentials from env', () => {
+    describe('Read credentials from JFrog CLI', () => {
         [
             {
                 serverId: 'basic-auth-only',
@@ -156,14 +165,21 @@ describe('Connection Manager Tests', () => {
                 process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
                     ConnectionManager.ACCESS_TOKEN_ENV
                 ] = process.env[ConnectionManager.URL_ENV] = '';
+
+                // Store previous CLI home, and set new one to test data.
+                const previousHome: string = getCliHomeDir();
+                setCliHomeDir('/path/to/no/where');
+
+                // Assert credentials are empty.
                 await connectionManager.populateCredentials(false);
                 assert.isFalse(connectionManager.areXrayCredentialsSet());
 
-                // Store previous CLI home, and set new one to test data.
-                const previousHome: string = process.env['JFROG_CLI_HOME_DIR'] || '';
-                process.env['JFROG_CLI_HOME_DIR'] = path.resolve('../resources/cliHome/');
+                // Set new home to test data.
+                //setCliHomeDir(path.resolve('../resources/cliHome'));
+                setCliHomeDir(path.join(__dirname, '..', 'resources', 'cliHome'));
 
-                assert.doesNotThrow(() => execSync('jf c use ' + testCase.serverId));
+                // Use the corresponding server-id to the test case.
+                assert.doesNotThrow(() => execSync('jf c use ' + testCase.serverId.trim()));
 
                 await connectionManager.populateCredentials(false);
                 assert.isTrue(connectionManager.areCompleteCredentialsSet());
@@ -175,7 +191,7 @@ describe('Connection Manager Tests', () => {
                 assert.equal(connectionManager.accessToken, testCase.expectedAccessToken);
 
                 // Restore old CLI home dir.
-                process.env['JFROG_CLI_HOME_DIR'] = previousHome;
+                setCliHomeDir(previousHome);
             });
         });
     });
