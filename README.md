@@ -278,6 +278,7 @@ The extension is licensed under [Apache License 2.0](LICENSE).
 ## Building and Testing the Sources
 To build the extension sources, please follow these steps:
 
+1. Install JFrog CLI's `jf` executable - required for tests.
 1. Clone the code from Github.
 1. Build and create the VS-Code extension vsix file by running the following npm command.
 
