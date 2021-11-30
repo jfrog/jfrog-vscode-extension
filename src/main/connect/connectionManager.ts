@@ -584,16 +584,13 @@ export class ConnectionManager implements ExtensionComponent {
         // Delete password / access token must be executed first.
         let passOk: boolean = await this.deletePasswordFromKeyStore();
         let tokenOk: boolean = await this.deleteAccessTokenFromKeyStore();
-        if (!passOk || !tokenOk) {
-            return false;
-        }
         await Promise.all([
             this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.RT_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.PLATFORM_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined)
         ]);
-        return true;
+        return passOk && tokenOk;
     }
 
     public async searchArtifactsByAql(aql: string): Promise<IAqlSearchResult> {
