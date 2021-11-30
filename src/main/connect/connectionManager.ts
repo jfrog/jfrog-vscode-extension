@@ -26,9 +26,9 @@ export class ConnectionManager implements ExtensionComponent {
     private static readonly XRAY_URL_KEY: string = 'jfrog.xray.url';
     private static readonly RT_URL_KEY: string = 'jfrog.rt.url';
 
-    // Service ID in the OS key store to store and retrieve the password / access token
+    // Service ID in the OS KeyStore to store and retrieve the password / access token
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
-    // Key used for uniqueness when storing access token in filesystem.
+    // Key used for uniqueness when storing access token in KeyStore.
     private static readonly ACCESS_TOKEN_FS_KEY: string = 'vscode_jfrog_token';
 
     // Store connection details in file system after reading connection details from env
@@ -81,7 +81,7 @@ export class ConnectionManager implements ExtensionComponent {
         return await vscode.window.withProgress(
             <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Delete Xray connection details...' },
             async (): Promise<boolean> => {
-                await this.deleteCredentialFromFileSystem();
+                await this.deleteCredentialsFromFileSystem();
                 this.deleteCredentialsFromMemory();
                 this.updateConnectionIcon();
                 return true;
@@ -140,7 +140,7 @@ export class ConnectionManager implements ExtensionComponent {
         // Read credentials from file system. Expecting URLs, username & password or access token.
         if (
             (await this.setUrlsFromFilesystem()) &&
-            (((await this.setUsernameFromFilesystem()) && (await this.setPasswordFromFilesystem())) || (await this.setAccessTokenFromFilesystem()))
+            (((await this.setUsernameFromFilesystem()) && (await this.setPasswordFromKeyStore())) || (await this.setAccessTokenFromKeyStore()))
         ) {
             return true;
         }
@@ -192,19 +192,25 @@ export class ConnectionManager implements ExtensionComponent {
                 return false;
             }
         } catch (error) {
+            this._logManager.logMessage('Unexpected error when trying to read credentials from JFrog CLI: ' + error, 'DEBUG');
             return false;
         }
         return true;
     }
 
     private async getJfrogCliVersion(): Promise<string> {
-        const versionPrefix: string = 'jfrog version ';
-        let output: string = execSync('jf -v').toString();
-        if (!output.startsWith(versionPrefix)) {
-            this._logManager.logMessage('Unexpected output to JFrog CLI version command: ' + output, 'DEBUG');
+        try {
+            const versionPrefix: string = 'jfrog version ';
+            let output: string = execSync('jf -v').toString();
+            if (!output.startsWith(versionPrefix)) {
+                this._logManager.logMessage('Unexpected output to JFrog CLI version command: ' + output, 'DEBUG');
+                return '';
+            }
+            return output.replace(versionPrefix, '').trim();
+        } catch (error) {
+            this._logManager.logMessage('Could not find a JFrog CLI installation. Error: ' + error, 'DEBUG');
             return '';
         }
-        return output.replace(versionPrefix, '').trim();
     }
 
     private async getJfrogCliDefaultServerConfiguration(): Promise<boolean> {
@@ -233,6 +239,7 @@ export class ConnectionManager implements ExtensionComponent {
             }
             return false;
         } catch (error) {
+            this._logManager.logMessage('Error encountered while reading credentials from JFrog CLI: ' + error, 'DEBUG');
             return false;
         }
     }
@@ -394,19 +401,23 @@ export class ConnectionManager implements ExtensionComponent {
         await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, this._username);
     }
 
-    private async setPasswordFromFilesystem(): Promise<boolean> {
-        this._password = await this.getSecretFromFilesystem(this._username);
+    private async setPasswordFromKeyStore(): Promise<boolean> {
+        this._password = await this.getSecretFromKeyStore(this._username);
         return !!this._password;
     }
 
-    private async setAccessTokenFromFilesystem(): Promise<boolean> {
-        this._accessToken = await this.getSecretFromFilesystem(ConnectionManager.ACCESS_TOKEN_FS_KEY);
+    private async setAccessTokenFromKeyStore(): Promise<boolean> {
+        this._accessToken = await this.getSecretFromKeyStore(ConnectionManager.ACCESS_TOKEN_FS_KEY);
         return !!this._accessToken;
     }
 
-    // Password and access token are saved in keychain with an account that is a hash of url and another string.
-    // For password - username, access token - a constant.
-    private async getSecretFromFilesystem(keyPair: string): Promise<string> {
+    /**
+     * Password and access token are saved in KeyStore with an account that is a hash of url and another string.
+     * For password - username, access token - a constant.
+     * @param keyPair - The second string of the account as described above.
+     * @returns The secret if found.
+     */
+    private async getSecretFromKeyStore(keyPair: string): Promise<string> {
         return (
             (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, keyPair))) ||
             (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, keyPair))) ||
@@ -414,21 +425,21 @@ export class ConnectionManager implements ExtensionComponent {
         );
     }
 
-    private async deletePasswordFromFilesystem(): Promise<boolean> {
+    private async deletePasswordFromKeyStore(): Promise<boolean> {
         if (!this._password) {
             return true;
         }
-        return await this.deleteSecretFromFilesystem(this._username, 'password');
+        return await this.deleteSecretFromKeyStore(this._username, 'password');
     }
 
-    private async deleteAccessTokenFromFilesystem(): Promise<boolean> {
+    private async deleteAccessTokenFromKeyStore(): Promise<boolean> {
         if (!this._accessToken) {
             return true;
         }
-        return await this.deleteSecretFromFilesystem(ConnectionManager.ACCESS_TOKEN_FS_KEY, 'access token');
+        return await this.deleteSecretFromKeyStore(ConnectionManager.ACCESS_TOKEN_FS_KEY, 'access token');
     }
 
-    private async deleteSecretFromFilesystem(keyPair: string, secretName: string): Promise<boolean> {
+    private async deleteSecretFromKeyStore(keyPair: string, secretName: string): Promise<boolean> {
         let ok: boolean = await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, keyPair));
         if (!ok) {
             this._logManager.logMessage('Failed to delete the ' + secretName + ' from the system secrets manager', 'WARN');
@@ -515,10 +526,10 @@ export class ConnectionManager implements ExtensionComponent {
         this._rtUrl = '';
     }
 
-    private async deleteCredentialFromFileSystem(): Promise<boolean> {
+    private async deleteCredentialsFromFileSystem(): Promise<boolean> {
         // Delete password / access token must be executed first.
-        let passOk: boolean = await this.deletePasswordFromFilesystem();
-        let tokenOk: boolean = await this.deleteAccessTokenFromFilesystem();
+        let passOk: boolean = await this.deletePasswordFromKeyStore();
+        let tokenOk: boolean = await this.deleteAccessTokenFromKeyStore();
         if (!passOk || !tokenOk) {
             return false;
         }

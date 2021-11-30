@@ -84,36 +84,42 @@ describe('Connection Manager Tests', () => {
             }
         ].forEach(async testCase => {
             it('Input URL: ' + testCase.inputUrl, async () => {
+                // Clean up env before tests.
                 process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
                     ConnectionManager.ACCESS_TOKEN_ENV
                 ] = process.env[ConnectionManager.URL_ENV] = '';
 
                 // Store previous CLI home, and set to a non existing path so no credentials will be read from the CLI.
                 const previousHome: string = getCliHomeDir();
-                setCliHomeDir(path.resolve('/path/to/no/where'));
+                setCliHomeDir(path.resolve('/path/to/nowhere'));
 
                 // Check credentials not set.
                 await connectionManager.populateCredentials(false);
                 assert.isFalse(connectionManager.areXrayCredentialsSet());
 
-                process.env[ConnectionManager.URL_ENV] = testCase.inputUrl;
-                process.env[ConnectionManager.USERNAME_ENV] = 'admin';
-                process.env[ConnectionManager.PASSWORD_ENV] = 'password';
-                process.env[ConnectionManager.ACCESS_TOKEN_ENV] = 'token';
-
-                await connectionManager.populateCredentials(false);
-                assert.isTrue(connectionManager.areXrayCredentialsSet());
-                assert.equal(connectionManager.url, testCase.expectedPlatformUrl);
-                assert.equal(connectionManager.xrayUrl, testCase.expectedXrayUrl);
-                assert.equal(connectionManager.username, 'admin');
-                assert.equal(connectionManager.password, 'password');
-                assert.equal(connectionManager.accessToken, 'token');
+                await populateCredsAndAssert(testCase, 'admin', 'password', '');
+                await populateCredsAndAssert(testCase, '', '', 'token');
 
                 // Restore old CLI home dir.
                 setCliHomeDir(previousHome);
             });
         });
     });
+
+    async function populateCredsAndAssert(testCase: any, user: string, pass: string, token: string) {
+        process.env[ConnectionManager.URL_ENV] = testCase.inputUrl;
+        process.env[ConnectionManager.USERNAME_ENV] = user;
+        process.env[ConnectionManager.PASSWORD_ENV] = pass;
+        process.env[ConnectionManager.ACCESS_TOKEN_ENV] = token;
+
+        await connectionManager.populateCredentials(false);
+        assert.isTrue(connectionManager.areXrayCredentialsSet());
+        assert.equal(connectionManager.url, testCase.expectedPlatformUrl);
+        assert.equal(connectionManager.xrayUrl, testCase.expectedXrayUrl);
+        assert.equal(connectionManager.username, user);
+        assert.equal(connectionManager.password, pass);
+        assert.equal(connectionManager.accessToken, token);
+    }
 
     describe('Read credentials from JFrog CLI', () => {
         [
@@ -166,7 +172,7 @@ describe('Connection Manager Tests', () => {
 
                 // Store previous CLI home, and set new one to test data.
                 const previousHome: string = getCliHomeDir();
-                setCliHomeDir('/path/to/no/where');
+                setCliHomeDir('/path/to/nowhere');
 
                 // Assert credentials are empty.
                 await connectionManager.populateCredentials(false);

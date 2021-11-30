@@ -56,6 +56,7 @@ export class ConnectionUtils {
      * @param rtUrl - Artifactory URL
      * @param username - Username
      * @param password - Password
+     * @param accessToken - Access Token
      */
     public static async validateArtifactoryConnection(rtUrl: string, username: string, password: string, accessToken: string): Promise<boolean> {
         let jfrogClient: JfrogClient = this.createJfrogClient('', rtUrl, '', username, password, accessToken);
@@ -85,6 +86,7 @@ export class ConnectionUtils {
      * @param xrayUrl
      * @param username
      * @param password
+     * @param accessToken - Access Token
      */
     public static async checkXrayConnectionAndPermissions(
         xrayUrl: string,
