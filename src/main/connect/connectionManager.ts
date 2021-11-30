@@ -621,7 +621,7 @@ export class ConnectionManager implements ExtensionComponent {
 
     public async sendUsageReport(featureArray: IUsageFeature[]): Promise<void> {
         const usagePrefix: string = 'Usage Report: ';
-        if (!this.areAllCredentialsSet()) {
+        if (!this.areCompleteCredentialsSet()) {
             this._logManager.logMessage(usagePrefix + 'Artifactory is not configured. Skipping usage report sending...', 'DEBUG');
         }
         try {
