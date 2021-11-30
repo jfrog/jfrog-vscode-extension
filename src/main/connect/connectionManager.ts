@@ -62,6 +62,7 @@ export class ConnectionManager implements ExtensionComponent {
     public async connect(): Promise<boolean> {
         if (await this.populateCredentials(true)) {
             this.updateConnectionIcon();
+            return true;
         }
         return false;
     }
@@ -588,6 +589,7 @@ export class ConnectionManager implements ExtensionComponent {
         }
         await Promise.all([
             this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined),
+            this._context.globalState.update(ConnectionManager.RT_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.PLATFORM_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined)
         ]);
