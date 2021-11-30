@@ -223,14 +223,14 @@ export class ConnectionManager implements ExtensionComponent {
             this._xrayUrl = conf['xrayUrl'] || '';
             this._rtUrl = conf['artifactoryUrl'] || '';
 
-            // Get access token if exists without refresh token. Get username & password otherwise.
-            let accessToken: string = conf['accessToken'] || '';
-            let refreshToken: string = conf['refreshToken'] || '';
-            if (accessToken !== '' && refreshToken === '') {
-                this._accessToken = accessToken;
+            // Get basic auth if exists. Access token other wise.
+            const username: string = conf['user'] || '';
+            const password: string = conf['password'] || '';
+            if (username !== '' && password !== '') {
+                this._username = username;
+                this._password = password;
             } else {
-                this._username = conf['user'] || '';
-                this._password = conf['password'] || '';
+                this._accessToken = conf['accessToken'] || '';
             }
 
             if (this.areCompleteCredentialsSet()) {
