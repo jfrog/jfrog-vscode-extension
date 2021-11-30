@@ -200,7 +200,7 @@ export class ConnectionManager implements ExtensionComponent {
             }
             return output.replace(versionPrefix, '').trim();
         } catch (error) {
-            this._logManager.logMessage('Could not find a JFrog CLI installation. Error: ' + error, 'DEBUG');
+            this._logManager.logMessage('Could not find a JFrog CLI installation: ' + error, 'DEBUG');
             return '';
         }
     }
@@ -305,30 +305,6 @@ export class ConnectionManager implements ExtensionComponent {
         return this.getServiceUrlFromPlatform(this._url, 'xray');
     }
 
-    private async tryCredentialsFromEnv(): Promise<boolean> {
-        this._logManager.logMessage('Trying to read credentials from env...', 'DEBUG');
-        this._url = process.env[ConnectionManager.URL_ENV] || '';
-        this._username = process.env[ConnectionManager.USERNAME_ENV] || '';
-        this._password = process.env[ConnectionManager.PASSWORD_ENV] || '';
-        this._accessToken = process.env[ConnectionManager.ACCESS_TOKEN_ENV] || '';
-
-        let credentialsSet: boolean = this.areXrayCredentialsSet();
-        if (!credentialsSet) {
-            this.deleteCredentialsFromMemory();
-            return false;
-        }
-        await this.resolveUrls();
-        if (!(await this.verifyNewCredentials(false))) {
-            this.deleteCredentialsFromMemory();
-            return false;
-        }
-        if (process.env[ConnectionManager.STORE_CONNECTION_ENV]?.toUpperCase() === 'TRUE') {
-            // Store credentials in file system if JFROG_IDE_STORE_CONNECTION environment variable is true
-            await this.storeConnection();
-        }
-        return true;
-    }
-
     private async tryCredentialsFromKeyStore(): Promise<boolean> {
         this._logManager.logMessage('Trying to read credentials from KeyStore...', 'DEBUG');
         const credentialsSet: boolean =
@@ -339,6 +315,22 @@ export class ConnectionManager implements ExtensionComponent {
             return false;
         }
         await this.resolveUrls();
+        return true;
+    }
+
+    private async tryCredentialsFromEnv(): Promise<boolean> {
+        if (!(await this.getCredentialsFromEnv())) {
+            this.deleteCredentialsFromMemory();
+            return false;
+        }
+        if (!(await this.verifyNewCredentials(false))) {
+            this.deleteCredentialsFromMemory();
+            return false;
+        }
+        if (process.env[ConnectionManager.STORE_CONNECTION_ENV]?.toUpperCase() === 'TRUE') {
+            // Store credentials in file system if JFROG_IDE_STORE_CONNECTION environment variable is true
+            await this.storeConnection();
+        }
         return true;
     }
 
@@ -372,6 +364,21 @@ export class ConnectionManager implements ExtensionComponent {
             return false;
         }
         await this.storeConnection();
+        return true;
+    }
+
+    public async getCredentialsFromEnv(): Promise<boolean> {
+        this._logManager.logMessage('Trying to read credentials from env...', 'DEBUG');
+        this._url = process.env[ConnectionManager.URL_ENV] || '';
+        this._username = process.env[ConnectionManager.USERNAME_ENV] || '';
+        this._password = process.env[ConnectionManager.PASSWORD_ENV] || '';
+        this._accessToken = process.env[ConnectionManager.ACCESS_TOKEN_ENV] || '';
+
+        let credentialsSet: boolean = this.areXrayCredentialsSet();
+        if (!credentialsSet) {
+            return false;
+        }
+        await this.resolveUrls();
         return true;
     }
 
