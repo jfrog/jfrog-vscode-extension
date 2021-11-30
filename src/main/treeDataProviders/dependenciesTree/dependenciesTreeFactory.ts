@@ -27,7 +27,7 @@ export class DependenciesTreesFactory {
             treesManager.logManager
         );
 
-        await this.sendUsageReport(projectDescriptors, treesManager.connectionManager);
+        this.sendUsageReport(projectDescriptors, treesManager.connectionManager);
         await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageDescriptorType.GO), componentsToScan, treesManager, parent, quickScan);
         await NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageDescriptorType.NPM), componentsToScan, treesManager, parent, quickScan);
         await PypiUtils.createDependenciesTrees(
