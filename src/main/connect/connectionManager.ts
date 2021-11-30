@@ -60,21 +60,10 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     public async connect(): Promise<boolean> {
-        if (!(await this.populateCredentials(true))) {
-            return Promise.resolve(false);
+        if (await this.populateCredentials(true)) {
+            this.updateConnectionIcon();
         }
-        return await vscode.window.withProgress(
-            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with Xray server...' },
-            async (): Promise<boolean> => {
-                if (await ConnectionUtils.checkXrayConnectionAndPermissions(this._xrayUrl, this._username, this._password, this._accessToken)) {
-                    await this.storeConnection();
-                    this.updateConnectionIcon();
-                    return true;
-                }
-                this.deleteCredentialsFromMemory();
-                return false;
-            }
-        );
+        return false;
     }
 
     public async disconnect(): Promise<boolean> {
@@ -106,53 +95,54 @@ export class ConnectionManager implements ExtensionComponent {
     }
 
     public areCompleteCredentialsSet(): boolean {
-        return !!(this._url && this._xrayUrl && this._rtUrl && ((this._username && this._password) || this._accessToken));
+        return !!(this._xrayUrl && this._rtUrl && ((this._username && this._password) || this._accessToken));
     }
 
     /**
-     * Populate credentials from environment variable or from the global storage.
+     * Credentials priorities:
+     * 1. Credentials from KeyStore and global storage.
+     * 2. Credentials from Environment variable.
+     * 3. Credentials from JFrog CLI.
+     * 4. Credentials from Promp (if interactive).
      * @param prompt - True if should prompt
      * @returns true if the credentials populates
      */
     public async populateCredentials(prompt: boolean): Promise<boolean> {
-        let storeCredentials: boolean = false;
-        this.readCredentialsFromEnv();
-        let credentialsSet: boolean = this.areXrayCredentialsSet();
-        if (!credentialsSet) {
-            credentialsSet = await this.setCredentialsOrPrompt(prompt);
-        } else if (process.env[ConnectionManager.STORE_CONNECTION_ENV]?.toUpperCase() === 'TRUE') {
-            // Store credentials in file system if JFROG_IDE_STORE_CONNECTION environment variable is true
-            storeCredentials = true;
-        }
-
-        if (!credentialsSet) {
-            this.deleteCredentialsFromMemory();
-            return false;
-        }
-        await this.resolveUrls();
-        if (storeCredentials) {
-            await this.storeConnection();
-        }
-        return true;
+        return (
+            (await this.tryCredentialsFromKeyStore()) ||
+            (await this.tryCredentialsFromEnv()) ||
+            (await this.tryCredentialsFromJfrogCli()) ||
+            (prompt && (await this.tryCredentialsFromPrmopt()))
+        );
     }
 
-    private async setCredentialsOrPrompt(prompt: boolean): Promise<boolean> {
-        // Read credentials from file system. Expecting URLs, username & password or access token.
+    private async verifyNewCredentials(prompt: boolean): Promise<boolean> {
+        if (!this.areXrayCredentialsSet()) {
+            return false;
+        }
         if (
-            (await this.setUrlsFromFilesystem()) &&
-            (((await this.setUsernameFromFilesystem()) && (await this.setPasswordFromKeyStore())) || (await this.setAccessTokenFromKeyStore()))
+            !(await ConnectionUtils.checkXrayConnectionAndPermissions(
+                this._xrayUrl,
+                this._username,
+                this._password,
+                this._accessToken,
+                prompt,
+                this._logManager
+            ))
         ) {
-            return true;
+            return false;
         }
-
-        if (await this.readCredentialsFromJfrogCli()) {
-            return true;
+        if (this.areCompleteCredentialsSet()) {
+            return ConnectionUtils.checkArtifactoryConnection(
+                this._rtUrl,
+                this._username,
+                this._password,
+                this._accessToken,
+                prompt,
+                this._logManager
+            );
         }
-
-        if (prompt) {
-            return await this.promptAll();
-        }
-        return false;
+        return true;
     }
 
     private async promptAll(): Promise<boolean> {
@@ -313,11 +303,74 @@ export class ConnectionManager implements ExtensionComponent {
         return this.getServiceUrlFromPlatform(this._url, 'xray');
     }
 
-    private readCredentialsFromEnv() {
+    private async tryCredentialsFromEnv(): Promise<boolean> {
+        this._logManager.logMessage('Trying to read credentials from env...', 'DEBUG');
         this._url = process.env[ConnectionManager.URL_ENV] || '';
         this._username = process.env[ConnectionManager.USERNAME_ENV] || '';
         this._password = process.env[ConnectionManager.PASSWORD_ENV] || '';
         this._accessToken = process.env[ConnectionManager.ACCESS_TOKEN_ENV] || '';
+
+        let credentialsSet: boolean = this.areXrayCredentialsSet();
+        if (!credentialsSet) {
+            this.deleteCredentialsFromMemory();
+            return false;
+        }
+        await this.resolveUrls();
+        if (!(await this.verifyNewCredentials(false))) {
+            this.deleteCredentialsFromMemory();
+            return false;
+        }
+        if (process.env[ConnectionManager.STORE_CONNECTION_ENV]?.toUpperCase() === 'TRUE') {
+            // Store credentials in file system if JFROG_IDE_STORE_CONNECTION environment variable is true
+            await this.storeConnection();
+        }
+        return true;
+    }
+
+    private async tryCredentialsFromKeyStore(): Promise<boolean> {
+        this._logManager.logMessage('Trying to read credentials from KeyStore...', 'DEBUG');
+        const credentialsSet: boolean =
+            (await this.setUrlsFromFilesystem()) &&
+            (((await this.setUsernameFromFilesystem()) && (await this.setPasswordFromKeyStore())) || (await this.setAccessTokenFromKeyStore()));
+        if (!credentialsSet) {
+            this.deleteCredentialsFromMemory();
+            return false;
+        }
+        await this.resolveUrls();
+        return true;
+    }
+
+    private async tryCredentialsFromJfrogCli(): Promise<boolean> {
+        this._logManager.logMessage('Trying to read credentials from JFrog CLI...', 'DEBUG');
+        if (!(await this.readCredentialsFromJfrogCli())) {
+            this.deleteCredentialsFromMemory();
+            return false;
+        }
+        if (!(await this.verifyNewCredentials(false))) {
+            this.deleteCredentialsFromMemory();
+            return false;
+        }
+        await this.storeConnection();
+        return true;
+    }
+
+    private async tryCredentialsFromPrmopt(): Promise<boolean> {
+        this._logManager.logMessage('Prompting for credentials...', 'DEBUG');
+        if (!(await this.promptAll())) {
+            return false;
+        }
+        const valid: boolean = await vscode.window.withProgress(
+            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with Xray server...' },
+            async (): Promise<boolean> => {
+                return await this.verifyNewCredentials(true);
+            }
+        );
+        if (!valid) {
+            this.deleteCredentialsFromMemory();
+            return false;
+        }
+        await this.storeConnection();
+        return true;
     }
 
     private async setUrlsFromFilesystem(): Promise<boolean> {
