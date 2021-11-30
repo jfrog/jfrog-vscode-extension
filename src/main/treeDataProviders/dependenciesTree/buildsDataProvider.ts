@@ -1,3 +1,4 @@
+import { IUsageFeature } from 'jfrog-client-js';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { BuildGeneralInfo, Status } from '../../types/buildGeneralinfo';
@@ -48,6 +49,7 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
             ScanUtils.setScanInProgress(true);
             const credentialsSet: boolean = this._treesManager.connectionManager.areCompleteCredentialsSet();
             this._treesManager.logManager.logMessage('Starting to load builds details...', 'INFO');
+            this.sendUsageReport();
             await this.repopulateTree(quickScan, credentialsSet, onChangeFire);
             vscode.commands.executeCommand('jfrog.xray.focus');
             this._treesManager.logManager.setSuccess();
@@ -64,6 +66,11 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
             this._ciInProgress = false;
             ScanUtils.setScanInProgress(false);
         }
+    }
+
+    private async sendUsageReport() {
+        let featureArray: IUsageFeature[] = [{ featureId: 'ci' }];
+        await this._treesManager.connectionManager.sendUsageReport(featureArray);
     }
 
     public getTreeItem(element: DependenciesTreeNode): vscode.TreeItem {

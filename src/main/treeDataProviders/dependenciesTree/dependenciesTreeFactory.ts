@@ -1,6 +1,7 @@
-import { ComponentDetails } from 'jfrog-client-js';
+import { ComponentDetails, IUsageFeature } from 'jfrog-client-js';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
+import { ConnectionManager } from '../../connect/connectionManager';
 import { GoUtils } from '../../utils/goUtils';
 import { MavenUtils } from '../../utils/mavenUtils';
 import { NpmUtils } from '../../utils/npmUtils';
@@ -25,6 +26,8 @@ export class DependenciesTreesFactory {
             workspaceFolders,
             treesManager.logManager
         );
+
+        this.sendUsageReport(projectDescriptors, treesManager.connectionManager);
         await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageDescriptorType.GO), componentsToScan, treesManager, parent, quickScan);
         await NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageDescriptorType.NPM), componentsToScan, treesManager, parent, quickScan);
         await PypiUtils.createDependenciesTrees(
@@ -49,5 +52,22 @@ export class DependenciesTreesFactory {
             parent,
             quickScan
         );
+    }
+
+    /**
+     * Sends usage report for all techs we found project descriptors of.
+     * @param projectDescriptors - map of all project descriptors by their tech.
+     * @param connectionManager - manager containing Artifactory details if configured.
+     */
+    private static async sendUsageReport(projectDescriptors: Map<PackageDescriptorType, vscode.Uri[]>, connectionManager: ConnectionManager) {
+        let featureArray: IUsageFeature[] = [];
+        for (const [techEnum, descriptors] of projectDescriptors.entries()) {
+            // Only add to usage if found descriptors for tech.
+            if (!!descriptors) {
+                const featureName: string = PackageDescriptorType[techEnum].toLowerCase() + '-deps';
+                featureArray.push({ featureId: featureName });
+            }
+        }
+        await connectionManager.sendUsageReport(featureArray);
     }
 }
