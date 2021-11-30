@@ -30,6 +30,8 @@ jobs:
               run: npm run lint
             - name: Pack Maven GAV Reader
               run: mvn clean package -f resources/maven-gav-reader/pom.xml -B
+            - name: Install JFrog CLI for connectionManager tests
+              run: curl -fL https://install-cli.jfrog.io | sh && jf -v
             - name: Tests on macOS, Windows
               run: npm t
               if: runner.os != 'Linux'

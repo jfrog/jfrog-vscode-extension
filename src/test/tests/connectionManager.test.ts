@@ -3,8 +3,11 @@ import { assert } from 'chai';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { IJfrogClientConfig, IProxyConfig } from 'jfrog-client-js';
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { LogManager } from '../../main/log/logManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
+import { execSync } from 'child_process';
+import { getCliHomeDir, setCliHomeDir } from './utils/utils.test';
 
 describe('Connection Manager Tests', () => {
     let connectionManager: ConnectionManager;
@@ -81,22 +84,116 @@ describe('Connection Manager Tests', () => {
             }
         ].forEach(async testCase => {
             it('Input URL: ' + testCase.inputUrl, async () => {
-                // Check credentials not set
-                process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[ConnectionManager.URL_ENV] =
-                    '';
+                // Clean up env before tests.
+                process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
+                    ConnectionManager.ACCESS_TOKEN_ENV
+                ] = process.env[ConnectionManager.URL_ENV] = '';
+
+                // Store previous CLI home, and set to a non existing path so no credentials will be read from the CLI.
+                const previousHome: string = getCliHomeDir();
+                setCliHomeDir(path.resolve('/path/to/nowhere'));
+
+                // Check credentials not set.
                 await connectionManager.populateCredentials(false);
                 assert.isFalse(connectionManager.areXrayCredentialsSet());
 
-                process.env[ConnectionManager.URL_ENV] = testCase.inputUrl;
-                process.env[ConnectionManager.USERNAME_ENV] = 'admin';
-                process.env[ConnectionManager.PASSWORD_ENV] = 'password';
+                await populateCredsAndAssert(testCase, 'admin', 'password', '');
+                await populateCredsAndAssert(testCase, '', '', 'token');
 
+                // Restore old CLI home dir.
+                setCliHomeDir(previousHome);
+            });
+        });
+    });
+
+    async function populateCredsAndAssert(testCase: any, user: string, pass: string, token: string) {
+        process.env[ConnectionManager.URL_ENV] = testCase.inputUrl;
+        process.env[ConnectionManager.USERNAME_ENV] = user;
+        process.env[ConnectionManager.PASSWORD_ENV] = pass;
+        process.env[ConnectionManager.ACCESS_TOKEN_ENV] = token;
+
+        await connectionManager.getCredentialsFromEnv();
+        assert.isTrue(connectionManager.areXrayCredentialsSet());
+        assert.equal(connectionManager.url, testCase.expectedPlatformUrl);
+        assert.equal(connectionManager.xrayUrl, testCase.expectedXrayUrl);
+        assert.equal(connectionManager.username, user);
+        assert.equal(connectionManager.password, pass);
+        assert.equal(connectionManager.accessToken, token);
+    }
+
+    describe('Read credentials from JFrog CLI', () => {
+        [
+            {
+                serverId: 'basic-auth-only',
+                expectedPlatformUrl: 'https://myplatform.jfrog.io/',
+                expectedRtUrl: 'https://myplatform.jfrog.io/artifactory/',
+                expectedXrayUrl: 'https://myplatform.jfrog.io/xray/',
+                expectedUsername: 'username',
+                expectedPassword: 'pass',
+                expectedAccessToken: '',
+                expectedResult: true
+            },
+            {
+                serverId: 'access-token-only',
+                expectedPlatformUrl: 'https://myplatform.jfrog.io/',
+                expectedRtUrl: 'https://myplatform.jfrog.io/artifactory/',
+                expectedXrayUrl: 'https://myplatform.jfrog.io/xray/',
+                expectedUsername: '',
+                expectedPassword: '',
+                expectedAccessToken: 'token',
+                expectedResult: true
+            },
+            {
+                serverId: 'with-refresh-token',
+                expectedPlatformUrl: 'https://myplatform.jfrog.io/',
+                expectedRtUrl: 'https://myplatform.jfrog.io/artifactory/',
+                expectedXrayUrl: 'https://myplatform.jfrog.io/xray/',
+                expectedUsername: 'username',
+                expectedPassword: 'pass',
+                expectedAccessToken: '',
+                expectedResult: true
+            },
+            {
+                serverId: 'empty-creds',
+                expectedPlatformUrl: 'https://myplatform.jfrog.io/',
+                expectedRtUrl: 'https://myplatform.jfrog.io/artifactory/',
+                expectedXrayUrl: 'https://myplatform.jfrog.io/xray/',
+                expectedUsername: '',
+                expectedPassword: '',
+                expectedAccessToken: '',
+                expectedResult: false
+            }
+        ].forEach(async testCase => {
+            it('Credentials type: ' + testCase.serverId, async () => {
+                // Make sure credentials are not set from env.
+                process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
+                    ConnectionManager.ACCESS_TOKEN_ENV
+                ] = process.env[ConnectionManager.URL_ENV] = '';
+
+                // Store previous CLI home, and set new one to test data.
+                const previousHome: string = getCliHomeDir();
+                setCliHomeDir('/path/to/nowhere');
+
+                // Assert credentials are empty.
                 await connectionManager.populateCredentials(false);
-                assert.isTrue(connectionManager.areXrayCredentialsSet());
+                assert.isFalse(connectionManager.areCompleteCredentialsSet());
+
+                // Set new home to test data.
+                setCliHomeDir(path.join(__dirname, '..', 'resources', 'cliHome'));
+
+                // Use the corresponding server-id to the test case.
+                assert.doesNotThrow(() => execSync('jf c use ' + testCase.serverId.trim()));
+
+                assert.equal(await connectionManager.readCredentialsFromJfrogCli(), testCase.expectedResult);
                 assert.equal(connectionManager.url, testCase.expectedPlatformUrl);
+                assert.equal(connectionManager.rtUrl, testCase.expectedRtUrl);
                 assert.equal(connectionManager.xrayUrl, testCase.expectedXrayUrl);
-                assert.equal(connectionManager.username, 'admin');
-                assert.equal(connectionManager.password, 'password');
+                assert.equal(connectionManager.username, testCase.expectedUsername);
+                assert.equal(connectionManager.password, testCase.expectedPassword);
+                assert.equal(connectionManager.accessToken, testCase.expectedAccessToken);
+
+                // Restore old CLI home dir.
+                setCliHomeDir(previousHome);
             });
         });
     });

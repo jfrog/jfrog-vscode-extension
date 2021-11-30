@@ -31,3 +31,11 @@ export function createScanCacheManager(): ScanCacheManager {
         storagePath: tmp.dirSync().name
     } as vscode.ExtensionContext);
 }
+
+export function getCliHomeDir(): string {
+    return process.env['JFROG_CLI_HOME_DIR'] || '';
+}
+
+export function setCliHomeDir(newHome: string): void {
+    process.env['JFROG_CLI_HOME_DIR'] = newHome;
+}

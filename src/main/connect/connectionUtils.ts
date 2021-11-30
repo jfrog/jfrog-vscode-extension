@@ -56,23 +56,24 @@ export class ConnectionUtils {
      * @param rtUrl - Artifactory URL
      * @param username - Username
      * @param password - Password
+     * @param accessToken - Access Token
      */
-    public static async validateArtifactoryConnection(rtUrl: string, username: string, password: string): Promise<boolean> {
-        let jfrogClient: JfrogClient = this.createJfrogClient('', rtUrl, '', username, password);
+    public static async validateArtifactoryConnection(rtUrl: string, username: string, password: string, accessToken: string): Promise<boolean> {
+        let jfrogClient: JfrogClient = this.createJfrogClient('', rtUrl, '', username, password, accessToken);
         return await jfrogClient
             .artifactory()
             .system()
             .ping();
     }
 
-    public static async isPlatformUrl(url: string, username: string, password: string): Promise<boolean> {
+    public static async isPlatformUrl(url: string, username: string, password: string, accessToken: string): Promise<boolean> {
         // If URL ends with '/xray', the URL is an Xray URL
         if (!url || url.endsWith('/xray') || url.endsWith('/xray/')) {
             return false;
         }
 
         // Ping to '<url>/xray'
-        let jfrogClient: JfrogClient = this.createJfrogClient(url, '', '', username, password);
+        let jfrogClient: JfrogClient = this.createJfrogClient(url, '', '', username, password, accessToken);
         return await jfrogClient
             .xray()
             .system()
@@ -85,18 +86,64 @@ export class ConnectionUtils {
      * @param xrayUrl
      * @param username
      * @param password
+     * @param accessToken - Access Token
      */
-    public static async checkXrayConnectionAndPermissions(xrayUrl: string, username: string, password: string): Promise<boolean> {
-        let jfrogClient: JfrogClient = this.createJfrogClient('', '', xrayUrl, username, password);
+    public static async checkXrayConnectionAndPermissions(
+        xrayUrl: string,
+        username: string,
+        password: string,
+        accessToken: string,
+        prompt: boolean,
+        logger: LogManager
+    ): Promise<boolean> {
+        let jfrogClient: JfrogClient = this.createJfrogClient('', '', xrayUrl, username, password, accessToken);
         try {
             await ConnectionUtils.testComponentPermission(jfrogClient);
             let xrayVersion: string = await ConnectionUtils.testXrayVersion(jfrogClient);
-            vscode.window.showInformationMessage(xrayVersion);
+            if (prompt) {
+                vscode.window.showInformationMessage(xrayVersion);
+            } else {
+                logger.logMessage(xrayVersion, 'DEBUG');
+            }
         } catch (error) {
-            vscode.window.showErrorMessage((<any>error).message || error, <vscode.MessageOptions>{ modal: true });
+            if (prompt) {
+                vscode.window.showErrorMessage((<any>error).message || error, <vscode.MessageOptions>{ modal: true });
+            } else {
+                logger.logMessage((<any>error).message, 'DEBUG');
+            }
             return Promise.resolve(false);
         }
         return Promise.resolve(true);
+    }
+
+    /**
+     * Check Artifactory connection.
+     * @returns true iff success.
+     * @param rtUrl
+     * @param username
+     * @param password
+     * @param accessToken - Access Token
+     */
+    public static async checkArtifactoryConnection(
+        rtUrl: string,
+        username: string,
+        password: string,
+        accessToken: string,
+        prompt: boolean,
+        logger: LogManager
+    ): Promise<boolean> {
+        const status: boolean = await ConnectionUtils.validateArtifactoryConnection(rtUrl, username, password, accessToken);
+        let statusStr: string = 'failed.';
+        if (status) {
+            statusStr = 'success.';
+        }
+        const msg: string = 'Artifactory connection ' + statusStr;
+        if (prompt) {
+            vscode.window.showInformationMessage(msg);
+        } else {
+            logger.logMessage(msg, 'DEBUG');
+        }
+        return Promise.resolve(status);
     }
 
     public static async testXrayVersion(jfrogClient: JfrogClient): Promise<string> {
@@ -168,13 +215,21 @@ export class ConnectionUtils {
         return Promise.resolve();
     }
 
-    public static createJfrogClient(platformUrl: string, artifactoryUrl: string, xrayUrl: string, username: string, password: string): JfrogClient {
+    public static createJfrogClient(
+        platformUrl: string,
+        artifactoryUrl: string,
+        xrayUrl: string,
+        username: string,
+        password: string,
+        accessToken: string
+    ): JfrogClient {
         let clientConfig: IJfrogClientConfig = {
             platformUrl: platformUrl,
             artifactoryUrl: artifactoryUrl,
             xrayUrl: xrayUrl,
             username: username,
             password: password,
+            accessToken: accessToken,
             headers: {},
             proxy: ConnectionUtils.getProxyConfig()
         } as IJfrogClientConfig;

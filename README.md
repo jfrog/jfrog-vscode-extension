@@ -68,13 +68,14 @@ Connect to JFrog Platform by clicking on the green Connect ![Connect](resources/
 
 You can leave the platformUrl empty to connect to custom Artifactory and Xray instances.
 
-The extension also supports connecting to the JFrog platform using environment variables:
+The extension also supports connecting to the JFrog platform using environment variables. You may provide basic auth credentials or access token as follows:
 
 Note: For security reasons, it is recommended to unset the environment variables after launching VS Code.
 
 - `JFROG_IDE_URL` - JFrog Platform URL
 - `JFROG_IDE_USERNAME` - JFrog Platform username
 - `JFROG_IDE_PASSWORD` - JFrog Platform password
+- `JFROG_IDE_ACCESS_TOKEN` - JFrog Platform access token
 - `JFROG_IDE_STORE_CONNECTION` - Set the value of this environment variable to **true**, if you'd like VS Code to store the connection details after reading them from the environment variables.
 
 ### Proxy Configuration
@@ -277,6 +278,7 @@ The extension is licensed under [Apache License 2.0](LICENSE).
 ## Building and Testing the Sources
 To build the extension sources, please follow these steps:
 
+1. Install JFrog CLI's `jf` executable - required for tests.
 1. Clone the code from Github.
 1. Build and create the VS-Code extension vsix file by running the following npm command.
 
