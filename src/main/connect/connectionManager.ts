@@ -8,6 +8,7 @@ import {
     IDetailsResponse,
     ISummaryRequestModel,
     ISummaryResponse,
+    IUsageFeature,
     JfrogClient
 } from 'jfrog-client-js';
 import { ExtensionComponent } from '../extensionComponent';
@@ -373,5 +374,22 @@ export class ConnectionManager implements ExtensionComponent {
 
     public createJfrogClient(): JfrogClient {
         return ConnectionUtils.createJfrogClient(this._url, this._rtUrl, this._xrayUrl, this._username, this._password);
+    }
+
+    public async sendUsageReport(featureArray: IUsageFeature[]): Promise<void> {
+        const usagePrefix: string = 'Usage Report: ';
+        if (!this.areAllCredentialsSet()) {
+            this._logManager.logMessage(usagePrefix + 'Artifactory is not configured. Skipping usage report sending...', 'DEBUG');
+        }
+        try {
+            await this.createJfrogClient()
+                .artifactory()
+                .system()
+                .reportUsage(ConnectionUtils.USER_AGENT, featureArray);
+        } catch (error) {
+            this._logManager.logMessage(usagePrefix + 'Failed sending usage report: ' + error, 'DEBUG');
+            return;
+        }
+        this._logManager.logMessage(usagePrefix + 'Usage report sent successfully.', 'DEBUG');
     }
 }
