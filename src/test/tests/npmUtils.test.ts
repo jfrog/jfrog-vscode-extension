@@ -218,25 +218,25 @@ describe('Npm Utils Tests', () => {
         assert.deepEqual(child?.label, res[2].children[0].label);
         assert.deepEqual(child?.componentId, 'progress:2.0.3');
         assert.deepEqual(child?.description, '2.0.3');
-        assert.deepEqual(child?.generalInfo.scopes, ['production']);
+        assert.deepEqual(child?.generalInfo.scopes, ['prod']);
         assert.deepEqual(child?.parent, res[1]);
 
         child = res[1].children.find(component => component.label === 'has-flag');
         assert.deepEqual(child?.componentId, 'has-flag:3.0.0');
         assert.deepEqual(child?.description, '3.0.0');
-        assert.deepEqual(child?.generalInfo.scopes, ['development']);
+        assert.deepEqual(child?.generalInfo.scopes, ['dev']);
         assert.deepEqual(child?.parent, res[1]);
 
         child = res[1].children.find(component => component.label === '@types/node');
         assert.deepEqual(child?.componentId, '@types/node:14.14.10');
         assert.deepEqual(child?.description, '14.14.10');
-        assert.deepEqual(child?.generalInfo.scopes, ['production', 'types']);
+        assert.deepEqual(child?.generalInfo.scopes, ['prod', 'types']);
         assert.deepEqual(child?.parent, res[1]);
 
         child = res[1].children.find(component => component.label === '@ungap/promise-all-settled');
         assert.deepEqual(child?.componentId, '@ungap/promise-all-settled:1.1.2');
         assert.deepEqual(child?.description, '1.1.2');
-        assert.deepEqual(child?.generalInfo.scopes, ['development', 'ungap']);
+        assert.deepEqual(child?.generalInfo.scopes, ['dev', 'ungap']);
         assert.deepEqual(child?.parent, res[1]);
     });
 
