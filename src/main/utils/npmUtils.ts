@@ -145,7 +145,8 @@ export class ScopedNpmProject {
     }
 }
 
+// For compatibility with npm 6,7,8, scope must be one of: 'dev' or 'prod'!
 export enum NpmGlobalScopes {
-    PRODUCTION = 'production',
-    DEVELOPMENT = 'development'
+    PRODUCTION = 'prod',
+    DEVELOPMENT = 'dev'
 }
