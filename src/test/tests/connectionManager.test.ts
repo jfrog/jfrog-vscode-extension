@@ -21,6 +21,10 @@ describe('Connection Manager Tests', () => {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 get(key: string) {
                     return;
+                },
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                update(key: string, value: any) {
+                    return;
                 }
             } as vscode.Memento
         } as vscode.ExtensionContext);

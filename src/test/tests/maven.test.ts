@@ -11,6 +11,7 @@ import { MavenExclusion } from '../../main/exclusions/mavenExclusion';
 import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
@@ -27,7 +28,13 @@ import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test'
 describe('Maven Tests', () => {
     let logManager: LogManager = new LogManager().activate();
     let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
-    let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
+    let treesManager: TreesManager = new TreesManager(
+        [],
+        new ConnectionManager(logManager),
+        dummyScanCacheManager,
+        {} as ScanLogicManager,
+        logManager
+    );
     let mavenExclusion: MavenExclusion = new MavenExclusion(treesManager);
     let mavenDependencyUpdate: MavenDependencyUpdate = new MavenDependencyUpdate();
     let projectDirs: string[] = ['dependency', 'empty', 'multiPomDependency'];

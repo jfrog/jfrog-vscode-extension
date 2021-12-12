@@ -1,0 +1,243 @@
+{
+    "artifacts": [
+        {
+            "general": {
+                "name": "org.apache.commons:commons-lang3",
+                "component_id": "org.apache.commons:commons-lang3:3.12.0",
+                "pkg_type": "maven"
+            },
+            "issues": [],
+            "licenses": [
+                {
+                    "name": "Apache-2.0",
+                    "full_name": "The Apache Software License, Version 2.0",
+                    "more_info_url": [
+                        "http://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+                        "https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+                        "http://licenses.nuget.org/Apache-2.0",
+                        "https://licenses.nuget.org/Apache-2.0",
+                        "http://www.apache.org/licenses/LICENSE-2.0",
+                        "https://spdx.org/licenses/Apache-2.0.html",
+                        "https://spdx.org/licenses/Apache-2.0",
+                        "http://www.opensource.org/licenses/apache2.0.php",
+                        "http://www.opensource.org/licenses/Apache-2.0"
+                    ],
+                    "components": [
+                        "gav://org.apache.commons:commons-lang3:3.12.0"
+                    ]
+                }
+            ]
+        },
+        {
+            "general": {
+                "name": "io.netty:netty-codec-http",
+                "component_id": "io.netty:netty-codec-http:4.1.31.Final",
+                "pkg_type": "maven"
+            },
+            "issues": [
+                {
+                    "issue_id": "XRAY-142007",
+                    "summary": "Netty is an open-source, asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients. In Netty (io.netty:netty-codec-http2) before version 4.1.60.Final there is a vulnerability that enables request smuggling. If a Content-Length header is present in the original HTTP/2 request, the field is not validated by `Http2MultiplexHandler` as it is propagated up. This is fine as long as the request is not proxied through as HTTP/1.1. If the request comes in as an HTTP/2 stream, gets converted into the HTTP/1.1 domain objects (`HttpRequest`, `HttpContent`, etc.) via `Http2StreamFrameToHttpObjectCodec `and then sent up to the child channel's pipeline and proxied through a remote peer as HTTP/1.1 this may result in request smuggling. In a proxy case, users may assume the content-length is validated somehow, which is not the case. If the request is forwarded to a backend channel that is a HTTP/1.1 connection, the Content-Length now has meaning and needs to be checked. An attacker can smuggle requests inside the body as it gets downgraded from HTTP/2 to HTTP/1.1. For an example attack refer to the linked GitHub Advisory. Users are only affected if all of this is true: `HTTP2MultiplexCodec` or `Http2FrameCodec` is used, `Http2StreamFrameToHttpObjectCodec` is used to convert to HTTP/1.1 objects, and these HTTP/1.1 objects are forwarded to another remote peer. This has been patched in 4.1.60.Final As a workaround, the user can do the validation by themselves by implementing a custom `ChannelInboundHandler` that is put in the `ChannelPipeline` behind `Http2StreamFrameToHttpObjectCodec`.",
+                    "description": "Netty is an open-source, asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients. In Netty (io.netty:netty-codec-http2) before version 4.1.60.Final there is a vulnerability that enables request smuggling. If a Content-Length header is present in the original HTTP/2 request, the field is not validated by `Http2MultiplexHandler` as it is propagated up. This is fine as long as the request is not proxied through as HTTP/1.1. If the request comes in as an HTTP/2 stream, gets converted into the HTTP/1.1 domain objects (`HttpRequest`, `HttpContent`, etc.) via `Http2StreamFrameToHttpObjectCodec `and then sent up to the child channel's pipeline and proxied through a remote peer as HTTP/1.1 this may result in request smuggling. In a proxy case, users may assume the content-length is validated somehow, which is not the case. If the request is forwarded to a backend channel that is a HTTP/1.1 connection, the Content-Length now has meaning and needs to be checked. An attacker can smuggle requests inside the body as it gets downgraded from HTTP/2 to HTTP/1.1. For an example attack refer to the linked GitHub Advisory. Users are only affected if all of this is true: `HTTP2MultiplexCodec` or `Http2FrameCodec` is used, `Http2StreamFrameToHttpObjectCodec` is used to convert to HTTP/1.1 objects, and these HTTP/1.1 objects are forwarded to another remote peer. This has been patched in 4.1.60.Final As a workaround, the user can do the validation by themselves by implementing a custom `ChannelInboundHandler` that is put in the `ChannelPipeline` behind `Http2StreamFrameToHttpObjectCodec`.",
+                    "issue_type": "security",
+                    "severity": "Medium",
+                    "provider": "JFrog",
+                    "cves": [
+                        {
+                            "cve": "CVE-2021-21295",
+                            "cvss_v2": "2.6/CVSS:2.0/AV:N/AC:H/Au:N/C:N/I:P/A:N"
+                        }
+                    ],
+                    "created": "2021-03-10T00:00:00.885Z",
+                    "components": [
+                        {
+                            "component_id": "io.netty:netty-codec-http",
+                            "fixed_versions": [
+                                "[4.1.60.Final]"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "issue_id": "XRAY-127557",
+                    "summary": "Netty AbstractDiskHttpData.delete() Function POST Request Handling File Deletion Memory Exhaustion Remote DoS",
+                    "description": "Netty contains a flaw in the AbstractDiskHttpData.delete() function in handler/codec/http/multipart/AbstractDiskHttpData.java that is triggered as temporary file entries are added to the 'DeleteOnExitHook' object but not properly removed when processing POST requests that are 16 kB. This may allow a remote attacker to exhaust available memory resources, potentially resulting in a denial of service.",
+                    "issue_type": "security",
+                    "severity": "High",
+                    "provider": "JFrog",
+                    "cves": [
+                        {
+                            "cvss_v2": "7.8/AV:N/AC:L/Au:N/C:N/I:N/A:C"
+                        }
+                    ],
+                    "created": "2020-10-27T00:00:00.867Z",
+                    "components": [
+                        {
+                            "component_id": "io.netty:netty-codec-http",
+                            "fixed_versions": [
+                                "[4.1.53.Final]"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "issue_id": "XRAY-94201",
+                    "summary": "HttpObjectDecoder.java in Netty before 4.1.44 allows an HTTP header that lacks a colon, which might be interpreted as a separate header with an incorrect syntax, or might be interpreted as an \"invalid fold.\"",
+                    "description": "HttpObjectDecoder.java in Netty before 4.1.44 allows an HTTP header that lacks a colon, which might be interpreted as a separate header with an incorrect syntax, or might be interpreted as an \"invalid fold.\"",
+                    "issue_type": "security",
+                    "severity": "Critical",
+                    "provider": "JFrog",
+                    "cves": [
+                        {
+                            "cve": "CVE-2019-20444",
+                            "cvss_v2": "6.4/CVSS:2.0/AV:N/AC:L/Au:N/C:P/I:P/A:N"
+                        }
+                    ],
+                    "created": "2020-01-31T00:00:00.825Z",
+                    "components": [
+                        {
+                            "component_id": "io.netty:netty-codec-http",
+                            "fixed_versions": [
+                                "[4.1.44.Final]"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "issue_id": "XRAY-191882",
+                    "summary": "Netty is an asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients. Netty prior to version 4.1.7.1.Final skips control chars when they are present at the beginning / end of the header name. It should instead fail fast as these are not allowed by the spec and could lead to HTTP request smuggling. Failing to do the validation might cause netty to \"sanitize\" header names before it forward these to another remote system when used as proxy. This remote system can't see the invalid usage anymore, and therefore does not do the validation itself. Users should upgrade to version 4.1.7.1.Final to receive a patch.",
+                    "description": "Netty is an asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients. Netty prior to version 4.1.7.1.Final skips control chars when they are present at the beginning / end of the header name. It should instead fail fast as these are not allowed by the spec and could lead to HTTP request smuggling. Failing to do the validation might cause netty to \"sanitize\" header names before it forward these to another remote system when used as proxy. This remote system can't see the invalid usage anymore, and therefore does not do the validation itself. Users should upgrade to version 4.1.7.1.Final to receive a patch.",
+                    "issue_type": "security",
+                    "severity": "Medium",
+                    "provider": "JFrog",
+                    "cves": [
+                        {
+                            "cve": "CVE-2021-43797"
+                        }
+                    ],
+                    "created": "2021-12-12T00:00:00.481Z",
+                    "components": [
+                        {
+                            "component_id": "io.netty:netty-codec-http",
+                            "fixed_versions": [
+                                "[4.1.71.Final]"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "issue_id": "XRAY-89129",
+                    "summary": "Netty before 4.1.42.Final mishandles whitespace before the colon in HTTP headers (such as a \"Transfer-Encoding : chunked\" line), which leads to HTTP request smuggling.",
+                    "description": "Netty before 4.1.42.Final mishandles whitespace before the colon in HTTP headers (such as a \"Transfer-Encoding : chunked\" line), which leads to HTTP request smuggling.",
+                    "issue_type": "security",
+                    "severity": "High",
+                    "provider": "JFrog",
+                    "cves": [
+                        {
+                            "cve": "CVE-2019-16869",
+                            "cvss_v2": "5.0/CVSS:2.0/AV:N/AC:L/Au:N/C:N/I:P/A:N"
+                        }
+                    ],
+                    "created": "2019-10-02T00:00:00.771Z",
+                    "components": [
+                        {
+                            "component_id": "io.netty:netty-codec-http",
+                            "fixed_versions": [
+                                "[4.1.44.Final]"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "issue_id": "XRAY-140251",
+                    "summary": "Netty is an open-source, asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients. In Netty before version 4.1.59.Final there is a vulnerability on Unix-like systems involving an insecure temp file. When netty's multipart decoders are used local information disclosure can occur via the local system temporary directory if temporary storing uploads on the disk is enabled. On unix-like systems, the temporary directory is shared between all user. As such, writing to this directory using APIs that do not explicitly set the file/directory permissions can lead to information disclosure. Of note, this does not impact modern MacOS Operating Systems. The method \"File.createTempFile\" on unix-like systems creates a random file, but, by default will create this file with the permissions \"-rw-r--r--\". Thus, if sensitive information is written to this file, other local users can read this information. This is the case in netty's \"AbstractDiskHttpData\" is vulnerable. This has been fixed in version 4.1.59.Final. As a workaround, one may specify your own \"java.io.tmpdir\" when you start the JVM or use \"DefaultHttpDataFactory.setBaseDir(...)\" to set the directory to something that is only readable by the current user.",
+                    "description": "Netty is an open-source, asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients. In Netty before version 4.1.59.Final there is a vulnerability on Unix-like systems involving an insecure temp file. When netty's multipart decoders are used local information disclosure can occur via the local system temporary directory if temporary storing uploads on the disk is enabled. On unix-like systems, the temporary directory is shared between all user. As such, writing to this directory using APIs that do not explicitly set the file/directory permissions can lead to information disclosure. Of note, this does not impact modern MacOS Operating Systems. The method \"File.createTempFile\" on unix-like systems creates a random file, but, by default will create this file with the permissions \"-rw-r--r--\". Thus, if sensitive information is written to this file, other local users can read this information. This is the case in netty's \"AbstractDiskHttpData\" is vulnerable. This has been fixed in version 4.1.59.Final. As a workaround, one may specify your own \"java.io.tmpdir\" when you start the JVM or use \"DefaultHttpDataFactory.setBaseDir(...)\" to set the directory to something that is only readable by the current user.",
+                    "issue_type": "security",
+                    "severity": "Medium",
+                    "provider": "JFrog",
+                    "cves": [
+                        {
+                            "cve": "CVE-2021-21290",
+                            "cvss_v2": "1.9/CVSS:2.0/AV:L/AC:M/Au:N/C:P/I:N/A:N"
+                        }
+                    ],
+                    "created": "2021-02-09T00:00:00.766Z",
+                    "components": [
+                        {
+                            "component_id": "io.netty:netty-codec-http",
+                            "fixed_versions": [
+                                "[4.1.59.Final]"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "issue_id": "XRAY-94098",
+                    "summary": "Netty 4.1.43.Final allows HTTP Request Smuggling because it mishandles Transfer-Encoding whitespace (such as a [space]Transfer-Encoding:chunked line) and a later Content-Length header. This issue exists because of an incomplete fix for CVE-2019-16869.",
+                    "description": "Netty 4.1.43.Final allows HTTP Request Smuggling because it mishandles Transfer-Encoding whitespace (such as a [space]Transfer-Encoding:chunked line) and a later Content-Length header. This issue exists because of an incomplete fix for CVE-2019-16869.",
+                    "issue_type": "security",
+                    "severity": "High",
+                    "provider": "JFrog",
+                    "cves": [
+                        {
+                            "cve": "CVE-2020-7238",
+                            "cvss_v2": "5.0/CVSS:2.0/AV:N/AC:L/Au:N/C:N/I:P/A:N"
+                        }
+                    ],
+                    "created": "2020-01-28T00:00:00.906Z",
+                    "components": [
+                        {
+                            "component_id": "io.netty:netty-codec-http",
+                            "fixed_versions": [
+                                "[4.1.44.Final]"
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "issue_id": "XRAY-94200",
+                    "summary": "HttpObjectDecoder.java in Netty before 4.1.44 allows a Content-Length header to be accompanied by a second Content-Length header, or by a Transfer-Encoding header.",
+                    "description": "HttpObjectDecoder.java in Netty before 4.1.44 allows a Content-Length header to be accompanied by a second Content-Length header, or by a Transfer-Encoding header.",
+                    "issue_type": "security",
+                    "severity": "Critical",
+                    "provider": "JFrog",
+                    "cves": [
+                        {
+                            "cve": "CVE-2019-20445",
+                            "cvss_v2": "6.4/CVSS:2.0/AV:N/AC:L/Au:N/C:P/I:P/A:N"
+                        }
+                    ],
+                    "created": "2020-01-31T00:00:00.711Z",
+                    "components": [
+                        {
+                            "component_id": "io.netty:netty-codec-http",
+                            "fixed_versions": [
+                                "[4.1.44.Final]"
+                            ]
+                        }
+                    ]
+                }
+            ],
+            "licenses": [
+                {
+                    "name": "Apache-2.0",
+                    "full_name": "The Apache Software License, Version 2.0",
+                    "more_info_url": [
+                        "http://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+                        "https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+                        "http://licenses.nuget.org/Apache-2.0",
+                        "https://licenses.nuget.org/Apache-2.0",
+                        "http://www.apache.org/licenses/LICENSE-2.0",
+                        "https://spdx.org/licenses/Apache-2.0.html",
+                        "https://spdx.org/licenses/Apache-2.0",
+                        "http://www.opensource.org/licenses/apache2.0.php",
+                        "http://www.opensource.org/licenses/Apache-2.0"
+                    ],
+                    "components": [
+                        "gav://io.netty:netty-codec-http:4.1.31.Final"
+                    ]
+                }
+            ]
+        }
+    ]
+}

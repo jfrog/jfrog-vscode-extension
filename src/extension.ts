@@ -13,6 +13,7 @@ import { WatcherManager } from './main/watchers/watcherManager';
 import { LogManager } from './main/log/logManager';
 import { DependencyUpdateManager } from './main/dependencyUpdate/dependencyUpdateManager';
 import { BuildsManager } from './main/builds/buildsManager';
+import { ScanLogicManager } from './main/scanLogic/scanLogicManager';
 
 /**
  * This method is called when the extension is activated.
@@ -24,7 +25,14 @@ export async function activate(context: vscode.ExtensionContext) {
     let logManager: LogManager = new LogManager().activate();
     let connectionManager: ConnectionManager = await new ConnectionManager(logManager).activate(context);
     let scanCacheManager: ScanCacheManager = new ScanCacheManager().activate(context);
-    let treesManager: TreesManager = await new TreesManager(workspaceFolders, connectionManager, scanCacheManager, logManager).activate(context);
+    let scanLogicManager: ScanLogicManager = new ScanLogicManager(connectionManager, scanCacheManager, logManager).activate();
+    let treesManager: TreesManager = await new TreesManager(
+        workspaceFolders,
+        connectionManager,
+        scanCacheManager,
+        scanLogicManager,
+        logManager
+    ).activate(context);
     let filterManager: FilterManager = new FilterManager(treesManager).activate();
     let focusManager: FocusManager = new FocusManager().activate();
     let exclusionManager: ExclusionsManager = new ExclusionsManager(treesManager).activate();

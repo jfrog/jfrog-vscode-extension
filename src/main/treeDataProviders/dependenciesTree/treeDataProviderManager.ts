@@ -1,5 +1,6 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
+import { ILicenseKey } from '../../types/licenseKey';
 import { Scope } from '../../types/scope';
 import { TreesManager } from '../treesManager';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
@@ -75,7 +76,7 @@ export class TreeDataProviderManager implements vscode.TreeDataProvider<Dependen
         }
     }
 
-    public get filterLicenses(): Collections.Set<string> {
+    public get filterLicenses(): Collections.Set<ILicenseKey> {
         if (this._treesManager.isLocalState()) {
             return this._treesManager.dependenciesTreeDataProvider.filterLicenses;
         } else {

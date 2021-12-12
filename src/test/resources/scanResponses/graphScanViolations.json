@@ -1,0 +1,758 @@
+{
+    "component_id": "test",
+    "package_type": "Generic",
+    "licenses": [
+        {
+            "license_key": "Apache-2.0",
+            "license_name": "The Apache Software License, Version 2.0",
+            "components": {
+                "gav://io.netty:netty-codec-http:4.1.31.Final": {
+                    "package_name": "io.netty:netty-codec-http",
+                    "package_version": "4.1.31.Final",
+                    "package_type": "maven",
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "gav://io.netty:netty-codec-http:4.1.31.Final"
+                            }
+                        ]
+                    ]
+                },
+                "gav://org.apache.commons:commons-lang3:3.12.0": {
+                    "package_name": "org.apache.commons:commons-lang3",
+                    "package_version": "3.12.0",
+                    "package_type": "maven",
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "gav://org.apache.commons:commons-lang3:3.12.0"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "references": [
+                "http://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+                "https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+                "http://licenses.nuget.org/Apache-2.0",
+                "https://licenses.nuget.org/Apache-2.0",
+                "http://www.apache.org/licenses/LICENSE-2.0",
+                "https://spdx.org/licenses/Apache-2.0.html",
+                "https://spdx.org/licenses/Apache-2.0",
+                "http://www.opensource.org/licenses/apache2.0.php",
+                "http://www.opensource.org/licenses/Apache-2.0"
+            ]
+        }
+    ],
+    "violations": [
+        {
+            "cves": [
+                {
+                    "cve": "CVE-2019-20445",
+                    "cvss_v2_score": "6.4",
+                    "cvss_v2_vector": "CVSS:2.0/AV:N/AC:L/Au:N/C:P/I:P/A:N",
+                    "cvss_v3_score": "9.1",
+                    "cvss_v3_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+                }
+            ],
+            "summary": "HttpObjectDecoder.java in Netty before 4.1.44 allows a Content-Length header to be accompanied by a second Content-Length header, or by a Transfer-Encoding header.",
+            "severity": "Critical",
+            "components": {
+                "gav://io.netty:netty-codec-http:4.1.31.Final": {
+                    "package_name": "io.netty:netty-codec-http",
+                    "package_version": "4.1.31.Final",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[4.1.44.Final]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "gav://io.netty:netty-codec-http:4.1.31.Final"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "XRAY-94200",
+            "references": [
+                "https://www.debian.org/security/2021/dsa-4885",
+                "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/TS6VX7OMXPDJIU5LRGUAHRK6MENAVJ46/",
+                "https://github.com/netty/netty/compare/netty-4.1.43.Final...netty-4.1.44.Final",
+                "https://github.com/netty/netty/issues/9861",
+                "https://lists.apache.org/thread.html/r310d2ce22304d5298ff87f10134f918c87919b452734f9841d95682d@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r819aaeb9944bdcfca438dcc51f05650dc728daf64dfd7d774fc2499b@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r9b20cdac704cf9a583400350e2d5b576fa8417c18ddb961201676c60@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb84c57670ec48ef23f4d07973b7fa69f629b8e7fcfb48874362feb6f@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rce71d33747010d32d31d90f5d737dae26291d96552f513a266c92fbb@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rfb55f245b08d8a6ec0fb4dc159022227cd22de34c4419c2fbb18802b@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r1b103833cb5bc8466e24ff0ecc5e75b45a705334ab6a444e64e840a0@%3Cissues.bookkeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r959474dcf7f88565ed89f6252ca5a274419006cb71348f14764b183d@%3Ccommits.cassandra.apache.org%3E",
+                "https://lists.apache.org/thread.html/r4d3f1d3e333d9c2b2f6e6ae8ed8750d4de03410ac294bcd12c7eefa3@%3Ccommits.cassandra.apache.org%3E",
+                "https://lists.debian.org/debian-lts-announce/2020/02/msg00017.html",
+                "https://lists.debian.org/debian-lts-announce/2020/02/msg00018.html",
+                "https://lists.debian.org/debian-lts-announce/2020/09/msg00003.html",
+                "https://lists.debian.org/debian-lts-announce/2020/09/msg00004.html",
+                "https://lists.apache.org/thread.html/re45ee9256d3233c31d78e59ee59c7dc841c7fbd83d0769285b41e948@%3Ccommits.druid.apache.org%3E",
+                "https://lists.apache.org/thread.html/rff210a24f3a924829790e69eaefa84820902b7b31f17c3bf2def9114@%3Ccommits.druid.apache.org%3E",
+                "https://lists.apache.org/thread.html/r70b1ff22ee80e8101805b9a473116dd33265709007d2deb6f8c80bf2@%3Ccommits.druid.apache.org%3E",
+                "https://lists.apache.org/thread.html/rf5b2dfb7401666a19915f8eaef3ba9f5c3386e2066fcd2ae66e16a2f@%3Cdev.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/raaac04b7567c554786132144bea3dcb72568edd410c1e6f0101742e7@%3Cissues.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/rd8f72411fb75b98d366400ae789966373b5c3eb3f511e717caf3e49e@%3Cissues.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/r4ff40646e9ccce13560458419accdfc227b8b6ca4ead3a8a91decc74@%3Cissues.flume.apache.org%3E",
+                "https://lists.apache.org/thread.html/r030beff88aeb6d7a2d6cd21342bd18686153ce6e26a4171d0e035663@%3Cissues.flume.apache.org%3E",
+                "https://lists.apache.org/thread.html/rbdb59c683d666130906a9c05a1d2b034c4cc08cda7ed41322bd54fe2@%3Cissues.flume.apache.org%3E",
+                "https://lists.apache.org/thread.html/r205937c85817a911b0c72655c2377e7a2c9322d6ef6ce1b118d34d8d@%3Cdev.geode.apache.org%3E",
+                "https://lists.apache.org/thread.html/ra1a71b576a45426af5ee65255be9596ff3181a342f4ba73b800db78f@%3Cdev.geode.apache.org%3E",
+                "https://lists.apache.org/thread.html/rd0e44e8ef71eeaaa3cf3d1b8b41eb25894372e2995ec908ce7624d26@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/r832724df393a7ef25ca4c7c2eb83ad2d6c21c74569acda5233f9f1ec@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/r7790b9d99696d9eddce8a8c96f13bb68460984294ea6fea3800143e4@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/rdb69125652311d0c41f6066ff44072a3642cf33a4b5e3c4f9c1ec9c2@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb5c065e7bd701b0744f9f28ad769943f91745102716c1eb516325f11@%3Cissues.spark.apache.org%3E",
+                "https://lists.apache.org/thread.html/r2f2989b7815d809ff3fda8ce330f553e5f133505afd04ffbc135f35f@%3Cissues.spark.apache.org%3E",
+                "https://lists.apache.org/thread.html/r46f93de62b1e199f3f9babb18128681677c53493546f532ed88c359d@%3Creviews.spark.apache.org%3E",
+                "https://lists.apache.org/thread.html/r81700644754e66ffea465c869cb477de25f8041e21598e8818fc2c45@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r96e08f929234e8ba1ef4a93a0fd2870f535a1f9ab628fabc46115986@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r804895eedd72c9ec67898286eb185e04df852b0dd5fe53cf5b6138f9@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r36fcf538b28f2029e8b4f6b9a772f3b107913a78f09b095c5b153a62@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/ra9fbfe7d4830ae675bf34c7c0f8c22fc8a4099f65706c1bc4f54c593@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/ra2ace4bcb5cf487f72cbcbfa0f8cc08e755ec2b93d7e69f276148b08@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r640eb9b3213058a963e18291f903fc1584e577f60035f941e32f760a@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r6945f3c346b7af89bbd3526a7c9b705b1e3569070ebcd0964bcedd7d@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r1fcccf8bdb3531c28bc9aa605a6a1bea7e68cef6fc12e01faafb2fb5@%3Cissues.zookeeper.apache.org%3E",
+                "https://access.redhat.com/errata/RHSA-2020:0497",
+                "https://access.redhat.com/errata/RHSA-2020:0567",
+                "https://access.redhat.com/errata/RHSA-2020:0601",
+                "https://access.redhat.com/errata/RHSA-2020:0605",
+                "https://access.redhat.com/errata/RHSA-2020:0606",
+                "https://access.redhat.com/errata/RHSA-2020:0804",
+                "https://access.redhat.com/errata/RHSA-2020:0805",
+                "https://access.redhat.com/errata/RHSA-2020:0806",
+                "https://access.redhat.com/errata/RHSA-2020:0811",
+                "https://usn.ubuntu.com/4532-1/"
+            ],
+            "type": "security",
+            "watch_name": "licenses-watch",
+            "fail_build": true,
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/e7696a4ea",
+            "ignore_url_id": "1"
+        },
+        {
+            "cves": [
+                {
+                    "cve": "CVE-2021-21295",
+                    "cvss_v2_score": "2.6",
+                    "cvss_v2_vector": "CVSS:2.0/AV:N/AC:H/Au:N/C:N/I:P/A:N",
+                    "cvss_v3_score": "5.9",
+                    "cvss_v3_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N"
+                }
+            ],
+            "summary": "Netty is an open-source, asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients. In Netty (io.netty:netty-codec-http2) before version 4.1.60.Final there is a vulnerability that enables request smuggling. If a Content-Length header is present in the original HTTP/2 request, the field is not validated by `Http2MultiplexHandler` as it is propagated up. This is fine as long as the request is not proxied through as HTTP/1.1. If the request comes in as an HTTP/2 stream, gets converted into the HTTP/1.1 domain objects (`HttpRequest`, `HttpContent`, etc.) via `Http2StreamFrameToHttpObjectCodec `and then sent up to the child channel's pipeline and proxied through a remote peer as HTTP/1.1 this may result in request smuggling. In a proxy case, users may assume the content-length is validated somehow, which is not the case. If the request is forwarded to a backend channel that is a HTTP/1.1 connection, the Content-Length now has meaning and needs to be checked. An attacker can smuggle requests inside the body as it gets downgraded from HTTP/2 to HTTP/1.1. For an example attack refer to the linked GitHub Advisory. Users are only affected if all of this is true: `HTTP2MultiplexCodec` or `Http2FrameCodec` is used, `Http2StreamFrameToHttpObjectCodec` is used to convert to HTTP/1.1 objects, and these HTTP/1.1 objects are forwarded to another remote peer. This has been patched in 4.1.60.Final As a workaround, the user can do the validation by themselves by implementing a custom `ChannelInboundHandler` that is put in the `ChannelPipeline` behind `Http2StreamFrameToHttpObjectCodec`.",
+            "severity": "Medium",
+            "components": {
+                "gav://io.netty:netty-codec-http:4.1.31.Final": {
+                    "package_name": "io.netty:netty-codec-http",
+                    "package_version": "4.1.31.Final",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[4.1.60.Final]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "gav://io.netty:netty-codec-http:4.1.31.Final"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "XRAY-142007",
+            "references": [
+                "https://github.com/netty/netty/security/advisories/GHSA-wm47-8v5p-wjpj",
+                "https://security.netapp.com/advisory/ntap-20210604-0003/",
+                "https://www.debian.org/security/2021/dsa-4885",
+                "https://github.com/Netflix/zuul/pull/980",
+                "https://github.com/netty/netty/commit/89c241e3b1795ff257af4ad6eadc616cb2fb3dc4",
+                "https://lists.apache.org/thread.html/r04a3e0d9f53421fb946c60cc54762b7151dc692eb4e39970a7579052@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/r16c4b55ac82be72f28adad4f8061477e5f978199d5725691dcc82c24@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/r2e93ce23e04c3f0a61e987d1111d0695cb668ac4ec4edbf237bd3e80@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/r490ca5611c150d193b320a2608209180713b7c68e501b67b0cffb925@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/r57245853c7245baab09eae08728c52b58fd77666538092389cc3e882@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/r6d32fc3cd547f7c9a288a57c7f525f5d00a00d5d163613e0d10a23ef@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/r8bcaf7821247b1836b10f6a1a3a3212b06272fd4cde4a859de1b78cf@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/r8db1d7b3b9acc9e8d2776395e280eb9615dd7790e1da8c57039963de@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/ra96c74c37ed7252f78392e1ad16442bd16ae72a4d6c8db50dd55c88b@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/racc191a1f70a4f13155e8002c61bddef2870b26441971c697436ad5d@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/rae198f44c3f7ac5264045e6ba976be1703cff38dcf1609916e50210d@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb523bb6c60196c5f58514b86a8585c2069a4852039b45de3818b29d2@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/rc73b8dd01b1be276d06bdf07883ecd93fe1a01f139a99ef30ba4308c@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/rcfc154eb2de23d2dc08a56100341161e1a40a8ea86c693735437e8f2@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/rd25c88aad0e76240dd09f0eb34bdab924933946429e068a167adcb73@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/rdb4db3f5a9c478ca52a7b164680b88877a5a9c174e7047676c006b2c@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/re4f70b62843e92163fab03b65e2aa8078693293a0c36f1cc260079ed@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/reafc834062486adfc7be5bb8f7b7793be0d33f483678a094c3f9d468@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/rf87b870a22aa5c77c27900967b518a71a7d954c2952860fce3794b60@%3Ccommits.servicecomb.apache.org%3E",
+                "https://lists.apache.org/thread.html/r790c2926efcd062067eb18fde2486527596d7275381cfaff2f7b3890@%3Cissues.bookkeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/ra64d56a8a331ffd7bdcd24a9aaaeeedeacd5d639f5a683389123f898@%3Cdev.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/r5baac01f9e06c40ff7aab209d5751b3b58802c63734e33324b70a06a@%3Cissues.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/rd8f72411fb75b98d366400ae789966373b5c3eb3f511e717caf3e49e@%3Cissues.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/re7c69756a102bebce8b8681882844a53e2f23975a189363e68ad0324@%3Cissues.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/r855b4b6814ac829ce2d48dd9d8138d07f33387e710de798ee92c011e@%3Cissues.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/r0b09f3e31e004fe583f677f7afa46bd30110904576c13c5ac818ac2c@%3Cissues.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/r602e98daacc98934f097f07f2eed6eb07c18bfc1949c8489dc7bfcf5@%3Cissues.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/rcf3752209a8b04996373bf57fdc808b3bfaa2be8702698a0323641f8@%3Ccommits.hbase.apache.org%3E",
+                "https://lists.apache.org/thread.html/r905b92099998291956eebf4f1c5d95f5a0cbcece2946cc46d32274fd@%3Cdev.hbase.apache.org%3E",
+                "https://lists.apache.org/thread.html/r6aee7e3566cb3e51eeed2fd8786704d91f80a7581e00a787ba9f37f6@%3Cissues.hbase.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb95d42ce220ed4a4683aa17833b5006d657bc4254bc5cb03cd5e6bfb@%3Cissues.hbase.apache.org%3E",
+                "https://lists.apache.org/thread.html/r86cd38a825ab2344f3e6cad570528852f29a4ffdf56ab67d75c36edf@%3Cissues.hbase.apache.org%3E",
+                "https://lists.apache.org/thread.html/r22b2f34447d71c9a0ad9079b7860323d5584fb9b40eb42668c21eaf1@%3Cissues.hbase.apache.org%3E",
+                "https://lists.apache.org/thread.html/r040a5e4d9cca2f98354b58a70b27099672276f66995c4e2e39545d0b@%3Cissues.hbase.apache.org%3E",
+                "https://lists.apache.org/thread.html/r393a339ab0b63ef9e6502253eeab26e7643b3e69738d5948b2b1d064@%3Cissues.hbase.apache.org%3E",
+                "https://lists.apache.org/thread.html/r268850f26639ebe249356ed6d8edb54ee8943be6f200f770784fb190@%3Cissues.hbase.apache.org%3E",
+                "https://lists.apache.org/thread.html/r27b7e5a588ec826b15f38c40be500c50073400019ce7b8adfd07fece@%3Cissues.hbase.apache.org%3E",
+                "https://lists.apache.org/thread.html/ra83096bcbfe6e1f4d54449f8a013117a0536404e9d307ab4a0d34f81@%3Cissues.hbase.apache.org%3E",
+                "https://lists.apache.org/thread.html/r3c4596b9b37f5ae91628ccf169d33cd5a0da4b16b6c39d5bad8e03f3@%3Cdev.jackrabbit.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb06c1e766aa45ee422e8261a8249b561784186483e8f742ea627bda4@%3Cdev.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r5fc5786cdd640b1b0a3c643237ce0011f0a08a296b11c0e2c669022c@%3Cdev.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r59bac5c09f7a4179b9e2460e8f41c278aaf3b9a21cc23678eb893e41@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r5e66e286afb5506cdfe9bbf68a323e8d09614f6d1ddc806ed0224700@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r3c293431c781696681abbfe1c573c2d9dcdae6fd3ff330ea22f0433f@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r9051e4f484a970b5566dc1870ecd9c1eb435214e2652cf3ea4d0c0cc@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r96ce18044880c33634c4b3fcecc57b8b90673c9364d63eba00385523@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/rc165e36ca7cb5417aec3f21bbc4ec00fb38ecebdd96a82cfab9bd56f@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r15f66ada9a5faf4bac69d9e7c4521cedfefa62df9509881603791969@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/rd4a6b7dec38ea6cd28b6f94bd4b312629a52b80be3786d5fb0e474bc@%3Cissues.kudu.apache.org%3E",
+                "https://lists.apache.org/thread.html/rca0978b634a0c3ebee4126ec29c7f570b165fae3f8f3658754c1cbd3@%3Cissues.kudu.apache.org%3E",
+                "https://lists.apache.org/thread.html/ra655e5cec74d1ddf62adacb71d398abd96f3ea2c588f6bbf048348eb@%3Cissues.kudu.apache.org%3E",
+                "https://lists.apache.org/thread.html/rf934292a4a1c189827f625d567838d2c1001e4739b158638d844105b@%3Cissues.kudu.apache.org%3E",
+                "https://lists.apache.org/thread.html/r4ea2f1a9d79d4fc1896e085f31fb60a21b1770d0a26a5250f849372d@%3Cissues.kudu.apache.org%3E",
+                "https://lists.apache.org/thread.html/r9924ef9357537722b28d04c98a189750b80694a19754e5057c34ca48@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb51d6202ff1a773f96eaa694b7da4ad3f44922c40b3d4e1a19c2f325@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/rcd163e421273e8dca1c71ea298dce3dd11b41d51c3a812e0394e6a5d@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/r7bb3cdc192e9a6f863d3ea05422f09fa1ae2b88d4663e63696ee7ef5@%3Cdev.ranger.apache.org%3E",
+                "https://lists.apache.org/thread.html/r02e467123d45006a1dda20a38349e9c74c3a4b53e2e07be0939ecb3f@%3Cdev.ranger.apache.org%3E",
+                "https://lists.apache.org/thread.html/r70cebada51bc6d49138272437d8a28fe971d0197334ef906b575044c@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r22adb45fe902aeafcd0a1c4db13984224a667676c323c66db3af38a1@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r6a122c25e352eb134d01e7f4fc4d345a491c5ee9453fef6fc754d15b@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r837bbcbf12e335e83ab448b1bd2c1ad7e86efdc14034b23811422e6a@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r1908a34b9cc7120e5c19968a116ddbcffea5e9deb76c2be4fa461904@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb592033a2462548d061a83ac9449c5ff66098751748fcd1e2d008233@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rc0087125cb15b4b78e44000f841cd37fefedfda942fd7ddf3ad1b528@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r1bca0b81193b74a451fc6d687ab58ef3a1f5ec40f6c61561d8dd9509@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r3ff9e735ca33612d900607dc139ebd38a64cadc6bce292e53eb86d7f@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/re6207ebe2ca4d44f2a6deee695ad6f27fd29d78980f1d46ed1574f91@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rcfc535afd413d9934d6ee509dce234dac41fa3747a7555befb17447e@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rdc096e13ac4501ea2e2b03a197682a313b85d3d3ec89d5ae5551b384@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r2936730ef0a06e724b96539bc7eacfcd3628987c16b1b99c790e7b87@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rbed09768f496244a2e138dbbe6d2847ddf796c9c8ef9e50f2e3e30d9@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rbadcbcb50195f00bbd196403865ced521ca70787999583c07be38d0e@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r5470456cf1409a99893ae9dd57439799f6dc1a60fda90e11570f66fe@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r5232e33a1f3b310a3e083423f736f3925ebdb150844d60ac582809f8@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r312ce5bd3c6bf08c138349b507b6f1c25fe9cf40b6f2b0014c9d12b1@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r6a29316d758db628a1df49ca219d64caf493999b52cc77847bfba675@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r67e6a636cbc1958383a1cd72b7fd0cd7493360b1dd0e6c12f5761798@%3Cnotifications.zookeeper.apache.org%3E"
+            ],
+            "type": "security",
+            "watch_name": "licenses-watch",
+            "fail_build": true,
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/dd7f18442",
+            "ignore_url_id": "2"
+        },
+        {
+            "cves": [
+                {
+                    "cve": "CVE-2019-16869",
+                    "cvss_v2_score": "5.0",
+                    "cvss_v2_vector": "CVSS:2.0/AV:N/AC:L/Au:N/C:N/I:P/A:N",
+                    "cvss_v3_score": "7.5",
+                    "cvss_v3_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+                }
+            ],
+            "summary": "Netty before 4.1.42.Final mishandles whitespace before the colon in HTTP headers (such as a \"Transfer-Encoding : chunked\" line), which leads to HTTP request smuggling.",
+            "severity": "High",
+            "components": {
+                "gav://io.netty:netty-codec-http:4.1.31.Final": {
+                    "package_name": "io.netty:netty-codec-http",
+                    "package_version": "4.1.31.Final",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[4.1.44.Final]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "gav://io.netty:netty-codec-http:4.1.31.Final"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "XRAY-89129",
+            "references": [
+                "https://seclists.org/bugtraq/2020/Jan/6",
+                "https://www.debian.org/security/2020/dsa-4597",
+                "https://github.com/netty/netty/compare/netty-4.1.41.Final...netty-4.1.42.Final",
+                "https://github.com/netty/netty/issues/9571",
+                "https://lists.apache.org/thread.html/r0aa8b28e76ec01c697b15e161e6797e88fc8d406ed762e253401106e@%3Ccommits.camel.apache.org%3E",
+                "https://lists.apache.org/thread.html/d14f721e0099b914daebe29bca199fde85d8354253be9d6d3d46507a@%3Ccommits.cassandra.apache.org%3E",
+                "https://lists.apache.org/thread.html/f6c5ebfb018787c764f000362d59e4b231c0a36b6253aa866de8c64e@%3Ccommits.cassandra.apache.org%3E",
+                "https://lists.apache.org/thread.html/r959474dcf7f88565ed89f6252ca5a274419006cb71348f14764b183d@%3Ccommits.cassandra.apache.org%3E",
+                "https://lists.apache.org/thread.html/r4d3f1d3e333d9c2b2f6e6ae8ed8750d4de03410ac294bcd12c7eefa3@%3Ccommits.cassandra.apache.org%3E",
+                "https://lists.apache.org/thread.html/rc8d554aad889d12b140d9fd7d2d6fc2e8716e9792f6f4e4b2cdc2d05@%3Ccommits.cassandra.apache.org%3E",
+                "https://lists.apache.org/thread.html/r131e572d003914843552fa45c4398b9903fb74144986e8b107c0a3a7@%3Ccommits.cassandra.apache.org%3E",
+                "https://lists.debian.org/debian-lts-announce/2019/09/msg00035.html",
+                "https://lists.debian.org/debian-lts-announce/2020/02/msg00018.html",
+                "https://lists.debian.org/debian-lts-announce/2020/09/msg00004.html",
+                "https://lists.apache.org/thread.html/b0656d359c7d40ec9f39c8cc61bca66802ef9a2a12ee199f5b0c1442@%3Cdev.drill.apache.org%3E",
+                "https://lists.apache.org/thread.html/519eb0fd45642dcecd9ff74cb3e71c20a4753f7d82e2f07864b5108f@%3Cdev.drill.apache.org%3E",
+                "https://lists.apache.org/thread.html/f9bc3e55f4e28d1dcd1a69aae6d53e609a758e34d2869b4d798e13cc@%3Cissues.drill.apache.org%3E",
+                "https://lists.apache.org/thread.html/9317fd092b257a0815434b116a8af8daea6e920b6673f4fd5583d5fe@%3Ccommits.druid.apache.org%3E",
+                "https://lists.apache.org/thread.html/re45ee9256d3233c31d78e59ee59c7dc841c7fbd83d0769285b41e948@%3Ccommits.druid.apache.org%3E",
+                "https://lists.apache.org/thread.html/rf5b2dfb7401666a19915f8eaef3ba9f5c3386e2066fcd2ae66e16a2f@%3Cdev.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/raaac04b7567c554786132144bea3dcb72568edd410c1e6f0101742e7@%3Cissues.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/rcb2c59428f34d4757702f9ae739a8795bda7bea97b857e708a9c62c6@%3Ccommon-commits.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/rdd5d243a5f8ed8b83c0104e321aa420e5e98792a95749e3c9a54c0b9@%3Ccommon-commits.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/r86befa74c5cd1482c711134104aec339bf7ae879f2c4437d7ec477d4@%3Ccommon-commits.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/re0b78a3d0a4ba2cf9f4e14e1d05040bde9051d5c78071177186336c9@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/rc7eb5634b71d284483e58665b22bf274a69bd184d9bd7ede52015d91@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/r90030b0117490caed526e57271bf4d7f9b012091ac5083c895d16543@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/re78eaef7d01ad65c370df30e45c686fffff00b37f7bfd78b26a08762@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/r0c3d49bfdbc62fd3915676433cc5899c5506d06da1c552ef1b7923a5@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb3361f6c6a5f834ad3db5e998c352760d393c0891b8d3bea90baa836@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/rf2bf8e2eb0a03227f5bc100b544113f8cafea01e887bb068e8d1fa41@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/r8402d67fdfe9cf169f859d52a7670b28a08eff31e54b522cc1432532@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/19fed892608db1efe5a5ce14372137669ff639df0205323959af7de3@%3Cdev.olingo.apache.org%3E",
+                "https://lists.apache.org/thread.html/af6e9c2d716868606523857a4cd7a5ee506e6d1710f5fb0d567ec030@%3Cdev.olingo.apache.org%3E",
+                "https://lists.apache.org/thread.html/d7d530599dc7813056c712213e367b68cdf56fb5c9b73f864870bc4c@%3Cdev.olingo.apache.org%3E",
+                "https://lists.apache.org/thread.html/b264fa5801e87698e9f43f2b5585fbc5ebdc26c6f4aad861b258fb69@%3Cdev.olingo.apache.org%3E",
+                "https://lists.apache.org/thread.html/6063699b87b501ecca8dd3b0e82251bfc85f29363a9b46ac5ace80cf@%3Cdev.olingo.apache.org%3E",
+                "https://lists.apache.org/thread.html/b3dda6399a0ea2b647624b899fd330fca81834e41b13e3e11e1002d8@%3Cdev.olingo.apache.org%3E",
+                "https://lists.apache.org/thread.html/35961d1ae00849974353a932b4fef12ebce074541552eceefa04f1fd@%3Cdev.olingo.apache.org%3E",
+                "https://lists.apache.org/thread.html/rd0e44e8ef71eeaaa3cf3d1b8b41eb25894372e2995ec908ce7624d26@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/r832724df393a7ef25ca4c7c2eb83ad2d6c21c74569acda5233f9f1ec@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/r7790b9d99696d9eddce8a8c96f13bb68460984294ea6fea3800143e4@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/rdb69125652311d0c41f6066ff44072a3642cf33a4b5e3c4f9c1ec9c2@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb25b42f666d2cac5e6e6b3f771faf60d1f1aa58073dcdd8db14edf8a@%3Cdev.rocketmq.apache.org%3E",
+                "https://lists.apache.org/thread.html/rcddf723a4b4117f8ed6042e9ac25e8c5110a617bab77694b61b14833@%3Cdev.rocketmq.apache.org%3E",
+                "https://lists.apache.org/thread.html/r831e0548fad736a98140d0b3b7dc575af0c50faea0b266434ba813cc@%3Cdev.rocketmq.apache.org%3E",
+                "https://lists.apache.org/thread.html/0acadfb96176768caac79b404110df62d14d30aa9d53b6dbdb1407ac@%3Cissues.spark.apache.org%3E",
+                "https://lists.apache.org/thread.html/860acce024d79837e963a51a42bab2cef8e8d017aad2b455ecd1dcf0@%3Cissues.spark.apache.org%3E",
+                "https://lists.apache.org/thread.html/ee6faea9e542c0b90afd70297a9daa203e20d41aa2ac7fca6703662f@%3Cissues.spark.apache.org%3E",
+                "https://lists.apache.org/thread.html/799eb85d67cbddc1851a3e63a07b55e95b2f44f1685225d38570ce89@%3Cissues.spark.apache.org%3E",
+                "https://lists.apache.org/thread.html/64b10f49c68333aaecf00348c5670fe182e49fd60d45c4a3ab241f8b@%3Cissues.spark.apache.org%3E",
+                "https://lists.apache.org/thread.html/681493a2f9b63f5b468f741d88d1aa51b2cfcf7a1c5b74ea8c4343fb@%3Cissues.spark.apache.org%3E",
+                "https://lists.apache.org/thread.html/b3ddeebbfaf8a288d7de8ab2611cf2609ab76b9809f0633248546b7c@%3Cissues.spark.apache.org%3E",
+                "https://lists.apache.org/thread.html/51923a9ba513b2e816e02a9d1fd8aa6f12e3e4e99bbd9dc884bccbbe@%3Cissues.spark.apache.org%3E",
+                "https://lists.apache.org/thread.html/e192fe8797c192679759ffa6b15e4d0806546945a41d8ebfbc6ee3ac@%3Ccommits.tinkerpop.apache.org%3E",
+                "https://lists.apache.org/thread.html/380f6d2730603a2cd6b0a8bea9bcb21a86c199147e77e448c5f7390b@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/cbf6e6a04cb37e9320ad20e437df63beeab1755fc0761918ed5c5a6e@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/cf5aa087632ead838f8ac3a42e9837684e7afe6e0fcb7704e0c73bc0@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/e39931d7cdd17241e69a0a09a89d99d7435bcc59afee8a9628d67769@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/2494a2ac7f66af6e4646a4937b17972a4ec7cd3c7333c66ffd6c639d@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/3e6d7aae1cca10257e3caf2d69b22f74c875f12a1314155af422569d@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/bdf7a5e597346a75d2d884ca48c767525e35137ad59d8f10b8fc943c@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/d3eb0dbea75ef5c400bd49dfa1901ad50be606cca3cb29e0d01b6a54@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/9128111213b7b734ffc85db08d8f789b00a85a7f241b708e55debbd0@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/76540c8b0ed761bfa6c81fa28c13057f13a5448aed079d656f6a3c79@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/6e1e34c0d5635a987d595df9e532edac212307243bb1b49eead6d55b@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/37ed432b8eb35d8bd757f53783ec3e334bd51f514534432bea7f1c3d@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/2e1cf538b502713c2c42ffa46d81f4688edb5676eb55bd9fc4b4fed7@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/b2cd51795f938632c6f60a4c59d9e587fbacd7f7d0e0a3684850a30f@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/a0f77c73af32cbe4ff0968bfcbbe80ae6361f3dccdd46f3177547266@%3Cissues.zookeeper.apache.org%3E",
+                "https://access.redhat.com/errata/RHSA-2019:3892",
+                "https://access.redhat.com/errata/RHSA-2019:3901",
+                "https://access.redhat.com/errata/RHSA-2020:0159",
+                "https://access.redhat.com/errata/RHSA-2020:0160",
+                "https://access.redhat.com/errata/RHSA-2020:0161",
+                "https://access.redhat.com/errata/RHSA-2020:0164",
+                "https://access.redhat.com/errata/RHSA-2020:0445",
+                "https://usn.ubuntu.com/4532-1/"
+            ],
+            "type": "security",
+            "watch_name": "licenses-watch",
+            "fail_build": true,
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/df91c7545",
+            "ignore_url_id": "3"
+        },
+        {
+            "cves": [
+                {
+                    "cve": "CVE-2019-20444",
+                    "cvss_v2_score": "6.4",
+                    "cvss_v2_vector": "CVSS:2.0/AV:N/AC:L/Au:N/C:P/I:P/A:N",
+                    "cvss_v3_score": "9.1",
+                    "cvss_v3_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+                }
+            ],
+            "summary": "HttpObjectDecoder.java in Netty before 4.1.44 allows an HTTP header that lacks a colon, which might be interpreted as a separate header with an incorrect syntax, or might be interpreted as an \"invalid fold.\"",
+            "severity": "Critical",
+            "components": {
+                "gav://io.netty:netty-codec-http:4.1.31.Final": {
+                    "package_name": "io.netty:netty-codec-http",
+                    "package_version": "4.1.31.Final",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[4.1.44.Final]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "gav://io.netty:netty-codec-http:4.1.31.Final"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "XRAY-94201",
+            "references": [
+                "https://www.debian.org/security/2021/dsa-4885",
+                "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/TS6VX7OMXPDJIU5LRGUAHRK6MENAVJ46/",
+                "https://github.com/netty/netty/compare/netty-4.1.43.Final...netty-4.1.44.Final",
+                "https://github.com/netty/netty/issues/9866",
+                "https://lists.apache.org/thread.html/r0f5e72d5f69b4720dfe64fcbc2da9afae949ed1e9cbffa84bb7d92d7@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r310d2ce22304d5298ff87f10134f918c87919b452734f9841d95682d@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r4c675b2d0cc2a5e506b11ee10d60a378859ee340aca052e4c7ef4749@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r819aaeb9944bdcfca438dcc51f05650dc728daf64dfd7d774fc2499b@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r91e0fa345c86c128b75a4a791b4b503b53173ff4c13049ac7129d319@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r9b20cdac704cf9a583400350e2d5b576fa8417c18ddb961201676c60@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb84c57670ec48ef23f4d07973b7fa69f629b8e7fcfb48874362feb6f@%3Ccommits.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rce71d33747010d32d31d90f5d737dae26291d96552f513a266c92fbb@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rfb55f245b08d8a6ec0fb4dc159022227cd22de34c4419c2fbb18802b@%3Cnotifications.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r1b103833cb5bc8466e24ff0ecc5e75b45a705334ab6a444e64e840a0@%3Cissues.bookkeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r0aa8b28e76ec01c697b15e161e6797e88fc8d406ed762e253401106e@%3Ccommits.camel.apache.org%3E",
+                "https://lists.apache.org/thread.html/r959474dcf7f88565ed89f6252ca5a274419006cb71348f14764b183d@%3Ccommits.cassandra.apache.org%3E",
+                "https://lists.apache.org/thread.html/r4d3f1d3e333d9c2b2f6e6ae8ed8750d4de03410ac294bcd12c7eefa3@%3Ccommits.cassandra.apache.org%3E",
+                "https://lists.debian.org/debian-lts-announce/2020/02/msg00017.html",
+                "https://lists.debian.org/debian-lts-announce/2020/02/msg00018.html",
+                "https://lists.debian.org/debian-lts-announce/2020/09/msg00003.html",
+                "https://lists.debian.org/debian-lts-announce/2020/09/msg00004.html",
+                "https://lists.apache.org/thread.html/re45ee9256d3233c31d78e59ee59c7dc841c7fbd83d0769285b41e948@%3Ccommits.druid.apache.org%3E",
+                "https://lists.apache.org/thread.html/rff210a24f3a924829790e69eaefa84820902b7b31f17c3bf2def9114@%3Ccommits.druid.apache.org%3E",
+                "https://lists.apache.org/thread.html/r70b1ff22ee80e8101805b9a473116dd33265709007d2deb6f8c80bf2@%3Ccommits.druid.apache.org%3E",
+                "https://lists.apache.org/thread.html/rf5b2dfb7401666a19915f8eaef3ba9f5c3386e2066fcd2ae66e16a2f@%3Cdev.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/raaac04b7567c554786132144bea3dcb72568edd410c1e6f0101742e7@%3Cissues.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/rd8f72411fb75b98d366400ae789966373b5c3eb3f511e717caf3e49e@%3Cissues.flink.apache.org%3E",
+                "https://lists.apache.org/thread.html/r205937c85817a911b0c72655c2377e7a2c9322d6ef6ce1b118d34d8d@%3Cdev.geode.apache.org%3E",
+                "https://lists.apache.org/thread.html/ra1a71b576a45426af5ee65255be9596ff3181a342f4ba73b800db78f@%3Cdev.geode.apache.org%3E",
+                "https://lists.apache.org/thread.html/rcb2c59428f34d4757702f9ae739a8795bda7bea97b857e708a9c62c6@%3Ccommon-commits.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/rdd5d243a5f8ed8b83c0104e321aa420e5e98792a95749e3c9a54c0b9@%3Ccommon-commits.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/r86befa74c5cd1482c711134104aec339bf7ae879f2c4437d7ec477d4@%3Ccommon-commits.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/re0b78a3d0a4ba2cf9f4e14e1d05040bde9051d5c78071177186336c9@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/rc7eb5634b71d284483e58665b22bf274a69bd184d9bd7ede52015d91@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/r90030b0117490caed526e57271bf4d7f9b012091ac5083c895d16543@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/re78eaef7d01ad65c370df30e45c686fffff00b37f7bfd78b26a08762@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/r0c3d49bfdbc62fd3915676433cc5899c5506d06da1c552ef1b7923a5@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb3361f6c6a5f834ad3db5e998c352760d393c0891b8d3bea90baa836@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/rf2bf8e2eb0a03227f5bc100b544113f8cafea01e887bb068e8d1fa41@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/r8402d67fdfe9cf169f859d52a7670b28a08eff31e54b522cc1432532@%3Ccommon-issues.hadoop.apache.org%3E",
+                "https://lists.apache.org/thread.html/rd0e44e8ef71eeaaa3cf3d1b8b41eb25894372e2995ec908ce7624d26@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/r832724df393a7ef25ca4c7c2eb83ad2d6c21c74569acda5233f9f1ec@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/r7790b9d99696d9eddce8a8c96f13bb68460984294ea6fea3800143e4@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/rdb69125652311d0c41f6066ff44072a3642cf33a4b5e3c4f9c1ec9c2@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/r96e08f929234e8ba1ef4a93a0fd2870f535a1f9ab628fabc46115986@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r489886fe72a98768eed665474cba13bad8d6fe0654f24987706636c5@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r059b042bca47be53ff8a51fd04d95eb01bb683f1afa209db136e8cb7@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r34912a9b1a5c269a77b8be94ef6fb6d1e9b3c69129719dc00f01cf0b@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r804895eedd72c9ec67898286eb185e04df852b0dd5fe53cf5b6138f9@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r36fcf538b28f2029e8b4f6b9a772f3b107913a78f09b095c5b153a62@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/ra9fbfe7d4830ae675bf34c7c0f8c22fc8a4099f65706c1bc4f54c593@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/ra2ace4bcb5cf487f72cbcbfa0f8cc08e755ec2b93d7e69f276148b08@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r640eb9b3213058a963e18291f903fc1584e577f60035f941e32f760a@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r6945f3c346b7af89bbd3526a7c9b705b1e3569070ebcd0964bcedd7d@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r1fcccf8bdb3531c28bc9aa605a6a1bea7e68cef6fc12e01faafb2fb5@%3Cissues.zookeeper.apache.org%3E",
+                "https://access.redhat.com/errata/RHSA-2020:0497",
+                "https://access.redhat.com/errata/RHSA-2020:0567",
+                "https://access.redhat.com/errata/RHSA-2020:0601",
+                "https://access.redhat.com/errata/RHSA-2020:0605",
+                "https://access.redhat.com/errata/RHSA-2020:0606",
+                "https://access.redhat.com/errata/RHSA-2020:0804",
+                "https://access.redhat.com/errata/RHSA-2020:0805",
+                "https://access.redhat.com/errata/RHSA-2020:0806",
+                "https://access.redhat.com/errata/RHSA-2020:0811",
+                "https://usn.ubuntu.com/4532-1/"
+            ],
+            "type": "security",
+            "watch_name": "licenses-watch",
+            "fail_build": true,
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/d61dc437d",
+            "ignore_url_id": "4"
+        },
+        {
+            "cves": [
+                {
+                    "cve": "CVE-2021-21290",
+                    "cvss_v2_score": "1.9",
+                    "cvss_v2_vector": "CVSS:2.0/AV:L/AC:M/Au:N/C:P/I:N/A:N",
+                    "cvss_v3_score": "5.5",
+                    "cvss_v3_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:N/A:N"
+                }
+            ],
+            "summary": "Netty is an open-source, asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients. In Netty before version 4.1.59.Final there is a vulnerability on Unix-like systems involving an insecure temp file. When netty's multipart decoders are used local information disclosure can occur via the local system temporary directory if temporary storing uploads on the disk is enabled. On unix-like systems, the temporary directory is shared between all user. As such, writing to this directory using APIs that do not explicitly set the file/directory permissions can lead to information disclosure. Of note, this does not impact modern MacOS Operating Systems. The method \"File.createTempFile\" on unix-like systems creates a random file, but, by default will create this file with the permissions \"-rw-r--r--\". Thus, if sensitive information is written to this file, other local users can read this information. This is the case in netty's \"AbstractDiskHttpData\" is vulnerable. This has been fixed in version 4.1.59.Final. As a workaround, one may specify your own \"java.io.tmpdir\" when you start the JVM or use \"DefaultHttpDataFactory.setBaseDir(...)\" to set the directory to something that is only readable by the current user.",
+            "severity": "Medium",
+            "components": {
+                "gav://io.netty:netty-codec-http:4.1.31.Final": {
+                    "package_name": "io.netty:netty-codec-http",
+                    "package_version": "4.1.31.Final",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[4.1.59.Final]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "gav://io.netty:netty-codec-http:4.1.31.Final"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "XRAY-140251",
+            "references": [
+                "https://github.com/netty/netty/security/advisories/GHSA-5mcr-gq6c-3hq2",
+                "https://www.debian.org/security/2021/dsa-4885",
+                "https://github.com/netty/netty/commit/c735357bf29d07856ad171c6611a2e1a0e0000ec",
+                "https://lists.apache.org/thread.html/r0053443ce19ff125981559f8c51cf66e3ab4350f47812b8cf0733a05@%3Cdev.kafka.apache.org%3E",
+                "https://www.oracle.com/security-alerts/cpuApr2021.html",
+                "https://lists.apache.org/thread.html/r5c701840aa2845191721e39821445e1e8c59711e71942b7796a6ec29@%3Cusers.activemq.apache.org%3E",
+                "https://lists.apache.org/thread.html/r790c2926efcd062067eb18fde2486527596d7275381cfaff2f7b3890@%3Cissues.bookkeeper.apache.org%3E",
+                "https://lists.debian.org/debian-lts-announce/2021/02/msg00016.html",
+                "https://lists.apache.org/thread.html/r5e4a540089760c8ecc2c411309d74264f1dad634ad93ad583ca16214@%3Ccommits.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r71dbb66747ff537640bb91eb0b2b24edef21ac07728097016f58b01f@%3Ccommits.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r2748097ea4b774292539cf3de6e3b267fc7a88d6c8ec40f4e2e87bd4@%3Cdev.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r326ec431f06eab7cb7113a7a338e59731b8d556d05258457f12bac1b@%3Cdev.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb06c1e766aa45ee422e8261a8249b561784186483e8f742ea627bda4@%3Cdev.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r2fda4dab73097051977f2ab818f75e04fbcb15bb1003c8530eac1059@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r10308b625e49d4e9491d7e079606ca0df2f0a4d828f1ad1da64ba47b@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/ra503756ced78fdc2136bd33e87cb7553028645b261b1f5c6186a121e@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/rc488f80094872ad925f0c73d283d4c00d32def81977438e27a3dc2bb@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/ra0fc2b4553dd7aaf75febb61052b7f1243ac3a180a71c01f29093013@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r0857b613604c696bf9743f0af047360baaded48b1c75cf6945a083c5@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/rdba4f78ac55f803893a1a2265181595e79e3aa027e2e651dfba98c18@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r59bac5c09f7a4179b9e2460e8f41c278aaf3b9a21cc23678eb893e41@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r5e66e286afb5506cdfe9bbf68a323e8d09614f6d1ddc806ed0224700@%3Cjira.kafka.apache.org%3E",
+                "https://lists.apache.org/thread.html/r9924ef9357537722b28d04c98a189750b80694a19754e5057c34ca48@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb51d6202ff1a773f96eaa694b7da4ad3f44922c40b3d4e1a19c2f325@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/rcd163e421273e8dca1c71ea298dce3dd11b41d51c3a812e0394e6a5d@%3Ccommits.pulsar.apache.org%3E",
+                "https://lists.apache.org/thread.html/r7bb3cdc192e9a6f863d3ea05422f09fa1ae2b88d4663e63696ee7ef5@%3Cdev.ranger.apache.org%3E",
+                "https://lists.apache.org/thread.html/r02e467123d45006a1dda20a38349e9c74c3a4b53e2e07be0939ecb3f@%3Cdev.ranger.apache.org%3E",
+                "https://lists.apache.org/thread.html/r4efed2c501681cb2e8d629da16e48d9eac429624fd4c9a8c6b8e7020@%3Cdev.tinkerpop.apache.org%3E",
+                "https://lists.apache.org/thread.html/r743149dcc8db1de473e6bff0b3ddf10140a7357bc2add75f7d1fbb12@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r1908a34b9cc7120e5c19968a116ddbcffea5e9deb76c2be4fa461904@%3Cdev.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r5bf303d7c04da78f276765da08559fdc62420f1df539b277ca31f63b@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rb592033a2462548d061a83ac9449c5ff66098751748fcd1e2d008233@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/rc0087125cb15b4b78e44000f841cd37fefedfda942fd7ddf3ad1b528@%3Cissues.zookeeper.apache.org%3E",
+                "https://lists.apache.org/thread.html/r2936730ef0a06e724b96539bc7eacfcd3628987c16b1b99c790e7b87@%3Cissues.zookeeper.apache.org%3E",
+                "https://www.oracle.com//security-alerts/cpujul2021.html"
+            ],
+            "type": "security",
+            "watch_name": "licenses-watch",
+            "fail_build": true,
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/310566723",
+            "ignore_url_id": "5"
+        },
+        {
+            "cves": [
+                {
+                    "cve": "CVE-2020-7238",
+                    "cvss_v2_score": "5.0",
+                    "cvss_v2_vector": "CVSS:2.0/AV:N/AC:L/Au:N/C:N/I:P/A:N",
+                    "cvss_v3_score": "7.5",
+                    "cvss_v3_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+                }
+            ],
+            "summary": "Netty 4.1.43.Final allows HTTP Request Smuggling because it mishandles Transfer-Encoding whitespace (such as a [space]Transfer-Encoding:chunked line) and a later Content-Length header. This issue exists because of an incomplete fix for CVE-2019-16869.",
+            "severity": "High",
+            "components": {
+                "gav://io.netty:netty-codec-http:4.1.31.Final": {
+                    "package_name": "io.netty:netty-codec-http",
+                    "package_version": "4.1.31.Final",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[4.1.44.Final]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "gav://io.netty:netty-codec-http:4.1.31.Final"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "XRAY-94098",
+            "references": [
+                "https://github.com/jdordonezn/CVE-2020-72381/issues/1",
+                "https://netty.io/news/"
+            ],
+            "type": "security",
+            "watch_name": "licenses-watch",
+            "fail_build": true,
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/c0bda8684",
+            "ignore_url_id": "6"
+        },
+        {
+            "cves": [
+                {
+                    "cve": "CVE-2021-43797",
+                    "cvss_v3_score": "6.5",
+                    "cvss_v3_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:H/A:N"
+                }
+            ],
+            "summary": "Netty is an asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients. Netty prior to version 4.1.7.1.Final skips control chars when they are present at the beginning / end of the header name. It should instead fail fast as these are not allowed by the spec and could lead to HTTP request smuggling. Failing to do the validation might cause netty to \"sanitize\" header names before it forward these to another remote system when used as proxy. This remote system can't see the invalid usage anymore, and therefore does not do the validation itself. Users should upgrade to version 4.1.7.1.Final to receive a patch.",
+            "severity": "Medium",
+            "components": {
+                "gav://io.netty:netty-codec-http:4.1.31.Final": {
+                    "package_name": "io.netty:netty-codec-http",
+                    "package_version": "4.1.31.Final",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[4.1.71.Final]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "gav://io.netty:netty-codec-http:4.1.31.Final"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "XRAY-191882",
+            "references": [
+                "https://github.com/netty/netty/security/advisories/GHSA-wx5j-54mm-rqqq",
+                "https://github.com/netty/netty/commit/07aa6b5938a8b6ed7a6586e066400e2643897323"
+            ],
+            "type": "security",
+            "watch_name": "licenses-watch",
+            "fail_build": true,
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/0d4b59742",
+            "ignore_url_id": "7"
+        },
+        {
+            "cves": [
+                {
+                    "cvss_v2_score": "7.8",
+                    "cvss_v2_vector": "AV:N/AC:L/Au:N/C:N/I:N/A:C",
+                    "cvss_v3_score": "7.5",
+                    "cvss_v3_vector": "CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H"
+                }
+            ],
+            "summary": "Netty AbstractDiskHttpData.delete() Function POST Request Handling File Deletion Memory Exhaustion Remote DoS",
+            "severity": "High",
+            "components": {
+                "gav://io.netty:netty-codec-http:4.1.31.Final": {
+                    "package_name": "io.netty:netty-codec-http",
+                    "package_version": "4.1.31.Final",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[4.1.53.Final]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "gav://io.netty:netty-codec-http:4.1.31.Final"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "XRAY-127557",
+            "references": [
+                "https://github.com/netty/netty/pull/10560",
+                "https://github.com/netty/netty/issues/10351",
+                "https://github.com/netty/netty/commit/95ce1b95ea5679f826cdefcbaabb3b7c2d596100"
+            ],
+            "type": "security",
+            "watch_name": "licenses-watch",
+            "fail_build": true,
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/c3c53d289",
+            "ignore_url_id": "8"
+        },
+        {
+            "license_key": "Apache-2.0",
+            "license_name": "The Apache Software License, Version 2.0",
+            "components": {
+                "gav://io.netty:netty-codec-http:4.1.31.Final": {
+                    "package_name": "io.netty:netty-codec-http",
+                    "package_version": "4.1.31.Final",
+                    "package_type": "maven",
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "gav://io.netty:netty-codec-http:4.1.31.Final"
+                            }
+                        ]
+                    ]
+                },
+                "gav://org.apache.commons:commons-lang3:3.12.0": {
+                    "package_name": "org.apache.commons:commons-lang3",
+                    "package_version": "3.12.0",
+                    "package_type": "maven",
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "gav://org.apache.commons:commons-lang3:3.12.0"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "Apache-2.0",
+            "references": [
+                "http://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+                "https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+                "http://licenses.nuget.org/Apache-2.0",
+                "https://licenses.nuget.org/Apache-2.0",
+                "http://www.apache.org/licenses/LICENSE-2.0",
+                "https://spdx.org/licenses/Apache-2.0.html",
+                "https://spdx.org/licenses/Apache-2.0",
+                "http://www.opensource.org/licenses/apache2.0.php",
+                "http://www.opensource.org/licenses/Apache-2.0"
+            ],
+            "type": "license",
+            "severity": "High",
+            "watch_name": "licenses-watch",
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/514542c30",
+            "ignore_url_id": "9"
+        }
+    ],
+    "scan_id": "50f07f50-83a7-4f50-551d-bc76001e8b04",
+    "status": "completed",
+    "top_vulnerability_severity": "High"
+}

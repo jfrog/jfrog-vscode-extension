@@ -10,6 +10,7 @@ import { NpmDependencyUpdate } from '../../main/dependencyUpdate/npmDependencyUp
 import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { NpmTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
@@ -24,7 +25,13 @@ import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test'
 describe('Npm Utils Tests', () => {
     let logManager: LogManager = new LogManager().activate();
     let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
-    let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
+    let treesManager: TreesManager = new TreesManager(
+        [],
+        new ConnectionManager(logManager),
+        dummyScanCacheManager,
+        {} as ScanLogicManager,
+        logManager
+    );
     let projectDirs: string[] = ['dependency', 'dependencyPackageLock', 'empty'];
     let npmDependencyUpdate: NpmDependencyUpdate = new NpmDependencyUpdate();
     let workspaceFolders: vscode.WorkspaceFolder[];

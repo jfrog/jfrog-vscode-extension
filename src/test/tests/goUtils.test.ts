@@ -9,10 +9,12 @@ import { GoDependencyUpdate } from '../../main/dependencyUpdate/goDependencyUpda
 import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
-import { License } from '../../main/types/license';
+import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
+import { ILicenseKey } from '../../main/types/licenseKey';
 import { GoUtils } from '../../main/utils/goUtils';
 import { PackageDescriptorType, ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
@@ -23,7 +25,13 @@ import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test'
 describe('Go Utils Tests', () => {
     let logManager: LogManager = new LogManager().activate();
     let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
-    let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
+    let treesManager: TreesManager = new TreesManager(
+        [],
+        new ConnectionManager(logManager),
+        dummyScanCacheManager,
+        {} as ScanLogicManager,
+        logManager
+    );
     let projectDirs: string[] = ['dependency', 'empty'];
     let goDependencyUpdate: GoDependencyUpdate = new GoDependencyUpdate();
     let workspaceFolders: vscode.WorkspaceFolder[];
@@ -169,13 +177,13 @@ describe('Go Utils Tests', () => {
         assert.deepEqual(child.parent, parent.children[0]);
 
         // Xray general data.
-        let actualLicenseName: string = child.licenses.toArray()[0];
-        let actualLicense: License | undefined = dummyScanCacheManager.getLicense(actualLicenseName)!;
+        let actualLicenseName: ILicenseKey = child.licenses.toArray()[0];
+        let actualLicense: ILicenseCacheObject | undefined = dummyScanCacheManager.getLicense(actualLicenseName.licenseName)!;
         assert.isDefined(actualLicense);
 
         let expectedLicense: ILicense[] = xrayScanResults[0].licenses;
         assert.deepEqual(actualLicense.name, expectedLicense[0].name);
-        assert.deepEqual(actualLicense.moreInfoUrl, expectedLicense[0].more_info_url);
+        assert.deepEqual(actualLicense.moreInfoUrl, expectedLicense[0].more_info_url[0]);
         assert.deepEqual(actualLicense.fullName, expectedLicense[0].full_name);
     });
 
@@ -186,7 +194,7 @@ describe('Go Utils Tests', () => {
         );
         let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.GO);
         await GoUtils.createDependenciesTrees(goMods, componentsToScan, treesManager, parent, false);
-        await dummyScanCacheManager.storeArtifactComponents(xrayScanResults);
+        await dummyScanCacheManager.storeArtifacts(xrayScanResults);
         parent.children.forEach(child => {
             treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);
         });

@@ -2,8 +2,8 @@ import { ICve, IGeneral, IIssue, ILicense, IVulnerableComponent, Severity as Cli
 import Set from 'typescript-collections/dist/lib/Set';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
 import { GeneralInfo } from '../types/generalInfo';
-import { Issue } from '../types/issue';
-import { License } from '../types/license';
+import { IIssueCacheObject } from '../types/issueCacheObject';
+import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
 
 export class Translators {
@@ -14,15 +14,14 @@ export class Translators {
             : new GavGeneralInfo(components[0], components[1], components[2], [], clientGeneral.path, clientGeneral.pkg_type);
     }
 
-    public static toIssue(clientIssue: IIssue): Issue {
-        return new Issue(
-            clientIssue.summary,
-            Translators.toSeverity(clientIssue.severity),
-            clientIssue.description,
-            Translators.capitalize(clientIssue.issue_type),
-            Translators.toFixedVersions(clientIssue.components),
-            Translators.toCves(clientIssue.cves)
-        );
+    public static toCacheIssue(clientIssue: IIssue): IIssueCacheObject {
+        return {
+            issueId: clientIssue.issue_id,
+            summary: clientIssue.summary,
+            severity: Translators.toSeverity(clientIssue.severity),
+            cves: Translators.toCves(clientIssue.cves),
+            fixedVersions: Translators.toFixedVersions(clientIssue.components)
+        } as IIssueCacheObject;
     }
 
     public static toSeverity(clientSeverity: ClientSeverity | string): Severity {
@@ -46,12 +45,12 @@ export class Translators {
         }
     }
 
-    public static toLicense(clientLicense: ILicense): License {
-        return new License(clientLicense.more_info_url, clientLicense.full_name, clientLicense.name);
-    }
-
-    public static stringToLicense(clientLicense: string): License {
-        return new License([], '', clientLicense);
+    public static toCacheLicense(clientLicense: ILicense): ILicenseCacheObject {
+        return {
+            name: clientLicense.name,
+            fullName: clientLicense.full_name,
+            moreInfoUrl: clientLicense.more_info_url && clientLicense.more_info_url.length > 0 ? clientLicense.more_info_url[0] : ''
+        } as ILicenseCacheObject;
     }
 
     private static toCves(clientCves: ICve[]): string[] {

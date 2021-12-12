@@ -1,9 +1,9 @@
-import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'jfrog-client-js';
+import { ComponentDetails } from 'jfrog-client-js';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
+import { ScanLogicManager } from '../../scanLogic/scanLogicManager';
 import { GeneralInfo } from '../../types/generalInfo';
-import { Issue } from '../../types/issue';
-import { License } from '../../types/license';
+import { ILicenseKey } from '../../types/licenseKey';
 import { INodeInfo } from '../../types/nodeInfo';
 import { Scope } from '../../types/scope';
 import { Severity, SeverityUtils } from '../../types/severity';
@@ -15,13 +15,17 @@ import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
-    private _filterLicenses: Set<string> = new Set();
+    private _filterLicenses: Set<ILicenseKey> = new Set();
     private _filterScopes: Set<Scope> = new Set(scope => scope.label);
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
     protected _dependenciesTree!: DependenciesTreeNode;
     private _scanInProgress: boolean = false;
 
-    constructor(protected _workspaceFolders: vscode.WorkspaceFolder[], protected _treesManager: TreesManager) {}
+    constructor(
+        protected _workspaceFolders: vscode.WorkspaceFolder[],
+        protected _treesManager: TreesManager,
+        private _scanLogicManager: ScanLogicManager
+    ) {}
 
     public get dependenciesTree() {
         return this._dependenciesTree;
@@ -51,12 +55,12 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 this._treesManager.logManager.setSuccess();
             })
             .catch(error => {
-                if (!(error instanceof ScanCancellationError)) {
-                    // Unexpected error
-                    throw error;
-                }
                 this.clearTree();
-                vscode.window.showInformationMessage(error.message);
+                if (error instanceof ScanCancellationError) {
+                    vscode.window.showInformationMessage(error.message);
+                } else {
+                    this._treesManager.logManager.logError(error, !quickScan);
+                }
             })
             .finally(() => {
                 this._scanInProgress = false;
@@ -106,53 +110,11 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         this.refresh(true, onChangeFire);
     }
 
-    private async scanAndCacheComponents(
-        progress: vscode.Progress<{ message?: string; increment?: number }>,
-        componentsToScan: Set<ComponentDetails>,
-        checkCanceled: () => void
-    ) {
-        const totalComponents: number = componentsToScan.size();
-        if (totalComponents === 0) {
-            return;
-        }
-        progress.report({ message: `${totalComponents} components` });
-        await this.scanAndCache(progress, checkCanceled, totalComponents, componentsToScan.toArray());
-    }
-
-    private async scanAndCache(
-        progress: vscode.Progress<{ message?: string; increment?: number }>,
-        checkCanceled: () => void,
-        totalComponents: number,
-        componentDetails: ComponentDetails[]
-    ) {
-        try {
-            checkCanceled();
-            let step: number = (100 / totalComponents) * 100;
-            for (let currentIndex: number = 0; currentIndex < componentDetails.length; currentIndex += 100) {
-                let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
-                let artifacts: IArtifact[] = await this._treesManager.connectionManager.getComponents(partialComponents);
-                this.addMissingXrayComponents(partialComponents, artifacts);
-                await this._treesManager.scanCacheManager.storeArtifactComponents(artifacts);
-                progress.report({ message: `${totalComponents} components`, increment: step });
-                checkCanceled();
-            }
-        } catch (error) {
-            if (error instanceof ScanCancellationError) {
-                // If it's not a cancellation error, throw it up
-                throw error;
-            }
-            vscode.window.showErrorMessage((<any>error).message);
-        }
-    }
-
     public addXrayInfoToTree(root: DependenciesTreeNode) {
         root.children.forEach(child => {
             let generalInfo: GeneralInfo = child.generalInfo;
             let scanCacheObject: INodeInfo | undefined = this._treesManager.scanCacheManager.getNodeInfo(generalInfo.getComponentId());
             if (scanCacheObject) {
-                if (scanCacheObject.pkg_type) {
-                    child.generalInfo.pkgType = scanCacheObject.pkg_type;
-                }
                 child.topSeverity = scanCacheObject.top_severity;
                 scanCacheObject.issues.forEach(issue => child.issues.add(issue));
                 scanCacheObject.licenses.forEach(license => child.licenses.add(license));
@@ -175,7 +137,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 workspaceRoot,
                 quickScan
             );
-            await this.scanAndCacheComponents(progress, componentsToScan, checkCanceled);
+            await this._scanLogicManager.scanAndCache(progress, componentsToScan, checkCanceled);
             for (let node of workspaceRoot.children) {
                 this.addXrayInfoToTree(node);
                 if (node instanceof RootNode) {
@@ -193,34 +155,12 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         this._dependenciesTree = new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.Expanded);
     }
 
-    public get filterLicenses(): Set<string> {
+    public get filterLicenses(): Set<ILicenseKey> {
         return this._filterLicenses;
     }
 
     public get filterScopes(): Set<Scope> {
         return this._filterScopes;
-    }
-
-    private addMissingXrayComponents(partialComponents: ComponentDetails[], artifacts: IArtifact[]) {
-        if (artifacts.length === partialComponents.length) {
-            return;
-        }
-        let missingComponents: Set<string> = new Set<string>();
-        // Add all partial components to the missing components set
-        partialComponents
-            .map(component => component.component_id)
-            .map(componentId => componentId.substring(componentId.indexOf('://') + 3))
-            .forEach(component => missingComponents.add(component));
-        // Remove successfully scanned components
-        artifacts.map(artifact => artifact.general.component_id).forEach(componentId => missingComponents.remove(componentId));
-
-        missingComponents.forEach(missingComponent => {
-            artifacts.push(<IArtifact>{
-                general: <IGeneral>{ component_id: missingComponent },
-                issues: [<IIssue>{ summary: Issue.MISSING_COMPONENT.summary, severity: Issue.MISSING_COMPONENT.severity.toString() }],
-                licenses: [<ILicense>{ name: License.UNKNOWN_LICENSE, full_name: License.UNKNOWN_LICENSE_FULL_NAME }]
-            });
-        });
     }
 
     public getDependenciesTreeNode(pkgType: string, path?: string): DependenciesTreeNode | undefined {

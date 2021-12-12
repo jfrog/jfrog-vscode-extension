@@ -1,21 +1,24 @@
+import { execSync } from 'child_process';
 import crypto from 'crypto'; // Important - Don't import '*'. It'll import deprecated encryption methods
-import * as keytar from 'keytar';
-import * as vscode from 'vscode';
 import {
     ComponentDetails,
     IAqlSearchResult,
     IArtifact,
     IDetailsResponse,
+    IGraphRequestModel,
+    IGraphResponse,
     ISummaryRequestModel,
     ISummaryResponse,
     IUsageFeature,
     JfrogClient
 } from 'jfrog-client-js';
+import * as keytar from 'keytar';
+import * as semver from 'semver';
+import Set from 'typescript-collections/dist/lib/Set';
+import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
 import { ConnectionUtils } from './connectionUtils';
-import { execSync } from 'child_process';
-import * as semver from 'semver';
 
 /**
  * Manage the Xray credentials and perform connection with Xray server.
@@ -44,9 +47,9 @@ export class ConnectionManager implements ExtensionComponent {
     private static readonly MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT: any = semver.coerce('2.6.1');
 
     private _context!: vscode.ExtensionContext;
+    private _accessToken: string = '';
     private _username: string = '';
     private _password: string = '';
-    private _accessToken: string = '';
     private _xrayUrl: string = '';
     private _rtUrl: string = '';
     private _url: string = '';
@@ -78,18 +81,6 @@ export class ConnectionManager implements ExtensionComponent {
                 return true;
             }
         );
-    }
-
-    public async getComponents(componentDetails: ComponentDetails[]): Promise<IArtifact[]> {
-        if (!this.areXrayCredentialsSet()) {
-            await this.populateCredentials(false);
-        }
-        let summaryRequest: ISummaryRequestModel = { component_details: componentDetails };
-        let summaryResponse: ISummaryResponse = await this.createJfrogClient()
-            .xray()
-            .summary()
-            .component(summaryRequest);
-        return Promise.resolve(summaryResponse.artifacts);
     }
 
     public areXrayCredentialsSet(): boolean {
@@ -276,7 +267,7 @@ export class ConnectionManager implements ExtensionComponent {
             this._xrayUrl = this._url;
             if (this._url.endsWith('/xray') || this._url.endsWith('/xray/')) {
                 // Assuming platform URL was extracted. Checking against Artifactory.
-                this._url = this._url.substr(0, this._url.lastIndexOf('/xray'));
+                this._url = this._url.substring(0, this._url.lastIndexOf('/xray'));
                 this._rtUrl = this.getRtUrlFromPlatform();
                 if (!(await ConnectionUtils.validateArtifactoryConnection(this._rtUrl, this._username, this._password, this._accessToken))) {
                     this._url = '';
@@ -599,6 +590,32 @@ export class ConnectionManager implements ExtensionComponent {
             this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined)
         ]);
         return passOk && tokenOk;
+    }
+
+    public async scanGraph(componentsToScan: Set<ComponentDetails>, checkCanceled: () => void, project: string): Promise<IGraphResponse> {
+        if (!this.areXrayCredentialsSet()) {
+            await this.populateCredentials(false);
+        }
+        let graphRequest: IGraphRequestModel = {
+            component_id: 'vscode-project',
+            nodes: <IGraphRequestModel[]>componentsToScan.toArray()
+        } as IGraphRequestModel;
+        return await this.createJfrogClient()
+            .xray()
+            .scan()
+            .graph(graphRequest, checkCanceled, project);
+    }
+
+    public async summaryComponent(componentDetails: ComponentDetails[]): Promise<IArtifact[]> {
+        if (!this.areXrayCredentialsSet()) {
+            await this.populateCredentials(false);
+        }
+        let summaryRequest: ISummaryRequestModel = { component_details: componentDetails };
+        let summaryResponse: ISummaryResponse = await this.createJfrogClient()
+            .xray()
+            .summary()
+            .component(summaryRequest);
+        return Promise.resolve(summaryResponse.artifacts);
     }
 
     public async searchArtifactsByAql(aql: string): Promise<IAqlSearchResult> {

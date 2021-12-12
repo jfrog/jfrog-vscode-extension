@@ -21,4 +21,11 @@ export class Configuration {
     public static getBuildsPattern(): string {
         return vscode.workspace.getConfiguration('jfrog').get('xray.ciIntegration.buildNamePattern') || '';
     }
+
+    /**
+     * @returns JFrog project Key
+     */
+    public static getProjectKey(): string {
+        return vscode.workspace.getConfiguration('jfrog').get('projectKey', '');
+    }
 }

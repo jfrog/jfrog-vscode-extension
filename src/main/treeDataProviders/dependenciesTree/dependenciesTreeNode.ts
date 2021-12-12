@@ -3,12 +3,13 @@ import * as vscode from 'vscode';
 import { ContextKeys } from '../../constants/contextKeys';
 import { GeneralInfo } from '../../types/generalInfo';
 import { IIssueKey } from '../../types/issueKey';
+import { ILicenseKey } from '../../types/licenseKey';
 import { Severity } from '../../types/severity';
 import { IconsPaths } from '../../utils/iconsPaths';
 
 export class DependenciesTreeNode extends vscode.TreeItem {
     private _children: DependenciesTreeNode[] = [];
-    private _licenses: Set<string> = new Set();
+    private _licenses: Set<ILicenseKey> = new Set(license => license.licenseName);
     private _issues: Set<IIssueKey> = new Set(issue => issue.issue_id);
     private _topSeverity: Severity;
 
@@ -57,11 +58,11 @@ export class DependenciesTreeNode extends vscode.TreeItem {
      * Getter licenses
      * @return {Set<License>}
      */
-    public get licenses(): Set<string> {
+    public get licenses(): Set<ILicenseKey> {
         return this._licenses;
     }
 
-    public set licenses(value: Set<string>) {
+    public set licenses(value: Set<ILicenseKey>) {
         this._licenses = value;
     }
 
@@ -132,6 +133,28 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         if (child.topSeverity > this.topSeverity) {
             this._topSeverity = child.topSeverity;
         }
+    }
+
+    public getViolatedLicenses(): Map<string, Set<string>> {
+        let violatedLicenses: Map<string, Set<string>> = new Map();
+        this.recursivelySetViolatedLicenses(violatedLicenses);
+        return violatedLicenses;
+    }
+
+    private recursivelySetViolatedLicenses(violatedLicenses: Map<string, Set<string>>) {
+        this.licenses.forEach(licenseKey => {
+            if (licenseKey.violated) {
+                let components: Set<string> | undefined = violatedLicenses.get(licenseKey.licenseName);
+                if (!components) {
+                    components = new Set<string>();
+                }
+                components.add(this.componentId);
+                violatedLicenses.set(licenseKey.licenseName, components);
+            }
+        });
+        this._children.forEach(child => {
+            child.recursivelySetViolatedLicenses(violatedLicenses);
+        });
     }
 
     private sortChildren() {

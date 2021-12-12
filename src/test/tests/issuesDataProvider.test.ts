@@ -1,16 +1,16 @@
 import { assert } from 'chai';
 import * as faker from 'faker';
-import { IIssue, Severity } from 'jfrog-client-js';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
-import { IIssueKey } from '../../main/types/issueKey';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { IssueNode, IssuesDataProvider } from '../../main/treeDataProviders/issuesDataProvider';
+import { VulnerabilityNode, IssuesDataProvider, VulnerabilitiesTitleNode, LicensesTitleNode } from '../../main/treeDataProviders/issuesDataProvider';
 import { GeneralInfo } from '../../main/types/generalInfo';
-import { Issue } from '../../main/types/issue';
+import { IIssueCacheObject } from '../../main/types/issueCacheObject';
+import { IIssueKey } from '../../main/types/issueKey';
+import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
 import * as issueSeverity from '../../main/types/severity';
-import { Translators } from '../../main/utils/translators';
+import { Severity } from '../../main/types/severity';
 
 /**
  * Test functionality of @class IssuesDataProvider.
@@ -38,19 +38,19 @@ describe('Issues Data Provider Tests', () => {
     });
 
     it('One issue', async () => {
-        let issue: IIssue = createDummyIssue('Low');
+        let issue: IIssueCacheObject = createDummyIssue(Severity.Low);
         storeIssue(dependenciesTreeNode, issue);
         dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
-        let children: IssueNode[] = await issuesDataProvider.getChildren();
+        let children: VulnerabilityNode[] = await issuesDataProvider.getChildren();
         assert.lengthOf(children, 1);
         assertIssue(children[0], issue, 'odin:1.2.3');
     });
 
     it('Two issues', async () => {
-        let issue: IIssue = createDummyIssue('High');
+        let issue: IIssueCacheObject = createDummyIssue(Severity.High);
         storeIssue(dependenciesTreeNode, issue);
         dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
-        let children: IssueNode[] = await issuesDataProvider.getChildren();
+        let children: VulnerabilityNode[] = await issuesDataProvider.getChildren();
         assert.lengthOf(children, 2);
         assertIssue(children[0], issue, 'odin:1.2.3');
     });
@@ -61,12 +61,12 @@ describe('Issues Data Provider Tests', () => {
         dependenciesTreeNode.addChild(secondNode);
 
         // Add a new issue to the second node
-        let issue: IIssue = createDummyIssue('Medium');
+        let issue: IIssueCacheObject = createDummyIssue(Severity.Medium);
         storeIssue(secondNode, issue);
 
         // Assert the root issues contain the second node issue
         dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
-        let children: IssueNode[] = await issuesDataProvider.getChildren();
+        let children: VulnerabilityNode[] = await issuesDataProvider.getChildren();
         assert.lengthOf(children, 3);
         assertIssue(children[1], issue, 'thor:1.2.4');
 
@@ -79,15 +79,15 @@ describe('Issues Data Provider Tests', () => {
 
     it('Many issues', async () => {
         // Add all kind of issues to the root node
-        storeIssue(dependenciesTreeNode, createDummyIssue('Pending'));
-        storeIssue(dependenciesTreeNode, createDummyIssue('Unknown'));
-        storeIssue(dependenciesTreeNode, createDummyIssue('Information'));
-        storeIssue(dependenciesTreeNode, createDummyIssue('Low'));
-        storeIssue(dependenciesTreeNode, createDummyIssue('Medium'));
-        storeIssue(dependenciesTreeNode, createDummyIssue('High'));
+        storeIssue(dependenciesTreeNode, createDummyIssue(Severity.Pending));
+        storeIssue(dependenciesTreeNode, createDummyIssue(Severity.Unknown));
+        storeIssue(dependenciesTreeNode, createDummyIssue(Severity.Information));
+        storeIssue(dependenciesTreeNode, createDummyIssue(Severity.Low));
+        storeIssue(dependenciesTreeNode, createDummyIssue(Severity.Medium));
+        storeIssue(dependenciesTreeNode, createDummyIssue(Severity.High));
 
         dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
-        let children: IssueNode[] = await issuesDataProvider.getChildren();
+        let children: VulnerabilityNode[] = await issuesDataProvider.getChildren();
 
         // Verify all issues exist and sorted
         assert.lengthOf(children, 9);
@@ -102,26 +102,41 @@ describe('Issues Data Provider Tests', () => {
         assert.deepEqual(children[8].severity, issueSeverity.Severity.Pending);
     });
 
-    function assertIssue(actual: IssueNode, expected: IIssue, expectedComponent: string) {
-        let expectedIssue: Issue = Translators.toIssue(expected);
-        assert.deepEqual(actual.severity, expectedIssue.severity);
-        assert.deepEqual(actual.summary, expectedIssue.summary);
-        assert.deepEqual(actual.issueType, expectedIssue.issueType);
+    it('Violated licenses', async () => {
+        storeViolatedLicense(dependenciesTreeNode, { name: 'MIT', fullName: 'The MIT License' } as ILicenseCacheObject);
+        dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
+        let titleNodes: vscode.TreeItem[] = await issuesDataProvider.getChildren();
+        assert.lengthOf(titleNodes, 2);
+        assert.instanceOf(titleNodes[0], VulnerabilitiesTitleNode);
+        assert.instanceOf(titleNodes[1], LicensesTitleNode);
+        let licensesTitleNode: LicensesTitleNode = titleNodes[1] as LicensesTitleNode;
+        assert.hasAllKeys(licensesTitleNode.violatedLicenses, ['MIT']);
+    });
+
+    function assertIssue(actual: VulnerabilityNode, expected: IIssueCacheObject, expectedComponent: string) {
+        assert.deepEqual(actual.severity, expected.severity);
+        assert.deepEqual(actual.summary, expected.summary);
         assert.deepEqual(actual.component, expectedComponent);
-        assert.deepEqual(actual.fixedVersions, expectedIssue.fixedVersions);
+        assert.deepEqual(actual.fixedVersions, expected.fixedVersions);
     }
 
-    function createDummyIssue(severity: Severity): IIssue {
+    function createDummyIssue(severity: Severity): IIssueCacheObject {
         return {
-            issue_id: faker.random.word(),
+            issueId: 'XRAY-' + faker.datatype.uuid(),
             severity: severity,
-            description: faker.random.words(),
-            issue_type: faker.random.word()
-        } as IIssue;
+            summary: faker.random.words(),
+            cves: faker.datatype.array(),
+            fixedVersions: faker.datatype.array()
+        } as IIssueCacheObject;
     }
 
-    function storeIssue(node: DependenciesTreeNode, issue: IIssue) {
-        node.issues.add({ issue_id: issue.issue_id } as IIssueKey);
+    function storeIssue(node: DependenciesTreeNode, issue: IIssueCacheObject) {
+        node.issues.add({ issue_id: issue.issueId } as IIssueKey);
         scanCacheManager.storeIssue(issue);
+    }
+
+    function storeViolatedLicense(node: DependenciesTreeNode, license: ILicenseCacheObject) {
+        node.licenses.add({ licenseName: license.name, violated: true });
+        scanCacheManager.storeLicense(license);
     }
 });
