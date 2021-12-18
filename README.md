@@ -1,19 +1,16 @@
 # JFrog Visual Studio Code Extension
-
 [![Visual Studio Marketplace](https://vsmarketplacebadge.apphb.com/version/JFrog.jfrog-vscode-extension.svg)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension)
 
 # Table of Contents
-
 - [About this Extension](#about-this-extension)
-  - [General](#general)
-  - [Need a FREE JFrog Instance?](#need-a-free-jfrog-instance)
+- [Getting Started](#getting-started)
+- [Set Up a FREE JFrog Environment in the Cloud](#set-up-a-free-jfrog-environment-in-the-cloud)
+- [Connecting VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
+- [Proxy Configuration](#proxy-configuration)
+  - [Proxy Authorization](#proxy-authorization)
+- [Extension Settings](#extension-settings)
+- [Using the Extension](#using-the-extension)
   - [Component Tree Icons](#component-tree-icons)
-- [General Configuration](#general-configuration)
-  - [Configuring JFrog Platform](#configuring-jfrog-platform)
-  - [Proxy Configuration](#proxy-configuration)
-    - [Proxy Authorization](#proxy-authorization)
-  - [Extension Settings](#extension-settings)
-- [Using the Extension - General](#using-the-extension---general)
 - [The Local View](#the-local-view)
   - [Supported Features](#supported-features)
   - [Viewing and Updating Project Dependencies](#viewing-and-updating-project-dependencies)
@@ -35,7 +32,6 @@
   - [Guidelines](#guidelines)
 
 ## About this Extension
-### General
 The cost of remediating a vulnerability is akin to the cost of fixing a bug.
 The earlier you remediate a vulnerability in the release cycle, the lower the cost.
 [JFrog Xray](https://jfrog.com/xray/) is instrumental in flagging components when vulnerabilities are discovered in production systems at runtime,
@@ -45,41 +41,47 @@ The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to 
 
 The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
-<a name="need-a-free-jfrog-instance"></a>
-### Need a FREE JFrog instance?
-Don't have a running JFrog instance? No problem! [Get a FREE instance in the cloud](https://jfrog.com/start-free/).
+## Getting Started
+1. Install the **JFrog** extension in VS Code
+2. Need a FREE JFrog environment in the cloud? [Create one now and connect VS Code to it](#set-up-a-free-jfrog-environment-in-the-cloud)
+3. Already have a working JFrog environment? [Connect VS Code to it](#connecting-vs-code-to-your-jfrog-environment)
+4. [Start](#using-the-extension) using the extension
 
-### Component Tree Icons
-The icon demonstrates the top severity issue of a selected component and its transitive dependencies. The following table describes the severities from lowest to highest:
+## Set Up a FREE JFrog Environment in the Cloud
+Need a FREE JFrog environment in the cloud, so that VS Code can connect to it? Just run one of the following commands in your terminal. The commands will do the following.
 
-|                 Icon                | Severity |                                       Description                                      |
-|:-----------------------------------:|:--------:|:---------------------------------------------------------------------------------------|
-|   ![Normal](resources/normal.png)   |  Normal  | Scanned - No Issues                                                                    |
-|  ![Unknown](resources/unknown.png)  |  Unknown | No CVEs attached to the vulnerability or the selected component not identified in Xray |
-|      ![Low](resources/low.png)      |    Low   | Top issue with low severity                                                            |
-|   ![Medium](resources/medium.png)   |  Medium  | Top issue with medium severity                                                         |
-|     ![High](resources/high.png)     |   High   | Top issue with high severity                                                           |
-| ![Critical](resources/critical.png) | Critical | Top issue with critical severity                                                       |
+1. Install JFrog CLI on your machine.
+2. Create a FREE JFrog environment in the cloud for you.
+3. Configure VS Code to connect to your new environment.
 
-## General Configuration
-### Configuring JFrog Platform
-Connect to JFrog Platform by clicking on the green Connect ![Connect](resources/readme/connect.png) button:
+**MacOS and Linux using cUrl**
+```
+curl -fL https://getcli.jfrog.io/setup | sh
+```
+
+**Windows using PowerShell**
+```
+powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/[RELEASE]/jfrog-cli-windows-amd64/jf.exe -OutFile $env:SYSTEMROOT\system32\jf.exe'" && jf setup
+```
+
+## Connecting VS Code to Your JFrog Environment
+Connect to your JFrog environment by clicking on the green Connect ![Connect](resources/readme/connect.png) button:
 ![Connect](resources/readme/gifs/connect.gif)
 
-You can leave the platformUrl empty to connect to custom Artifactory and Xray instances.
+You can leave the platform URL empty, to enter the separate URLs for Artifactory and Xray.
 
-The extension also supports connecting to the JFrog platform using environment variables. You may provide basic auth credentials or access token as follows:
+The extension also supports connecting to your JFrog environment using environment variables. You may provide basic auth credentials or access token as follows:
 
 Note: For security reasons, it is recommended to unset the environment variables after launching VS Code.
 
-- `JFROG_IDE_URL` - JFrog Platform URL
-- `JFROG_IDE_USERNAME` - JFrog Platform username
-- `JFROG_IDE_PASSWORD` - JFrog Platform password
-- `JFROG_IDE_ACCESS_TOKEN` - JFrog Platform access token
+- `JFROG_IDE_URL` - JFrog URL
+- `JFROG_IDE_USERNAME` - JFrog username
+- `JFROG_IDE_PASSWORD` - JFrog password
+- `JFROG_IDE_ACCESS_TOKEN` - JFrog access token
 - `JFROG_IDE_STORE_CONNECTION` - Set the value of this environment variable to **true**, if you'd like VS Code to store the connection details after reading them from the environment variables.
 
-### Proxy Configuration
-If your JFrog Platform is behind an HTTP/S proxy, follow these steps to configure the proxy server:
+## Proxy Configuration
+If your JFrog environment is behind an HTTP/S proxy, follow these steps to configure the proxy server:
 
 1. Go to Preferences --> Settings --> Application --> Proxy
 1. Set the proxy URL under 'Proxy'.
@@ -87,7 +89,7 @@ If your JFrog Platform is behind an HTTP/S proxy, follow these steps to configur
 
 - Alternatively, you can use the HTTP_PROXY and HTTPS_PROXY environment variables.
 
-#### Proxy Authorization
+### Proxy Authorization
 If your proxy server requires credentials, follow these steps:
 
 1. Follow 1-3 steps under [Proxy configuration](#proxy-configuration).
@@ -95,7 +97,7 @@ If your proxy server requires credentials, follow these steps:
 1. Under 'Proxy Authorization' click on 'Edit in settings.json'.
 1. Add to settings.json: `"http.proxyAuthorization": "Basic [Encoded credentials]"`.
 
-##### Example
+#### Example
 - `Username: foo`
 - `Password: bar`
 
@@ -107,13 +109,13 @@ settings.json:
 }
 ```
 
-### Extension Settings
+## Extension Settings
 To open the extension settings, use the following VS Code menu command:
 
 - On Windows/Linux - File > Preferences > Settings > Extensions > JFrog
 - On macOS - Code > Preferences > Settings > Extensions > JFrog
 
-## Using the Extension - General
+## Using the Extension
 The extension offers two modes, **Local** and **CI**. 
 The two modes can be toggled by pressing on their respective buttons that will appear next to the components tree.
 
@@ -137,6 +139,18 @@ With this information, a developer can make an informed decision on whether to u
 | Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ❌           |          ❌           |
 | Automatically trigger a scan upon code changes          |         ✅         |            ❌            |          ✅          |           ❌           |          ❌           |
 | Exclude transitive dependencies from project descriptor |         ❌         |            ✅            |          ❌          |           ❌           |          ❌           |
+
+### Component Tree Icons
+The icon demonstrates the top severity issue of a selected component and its transitive dependencies. The following table describes the severities from lowest to highest:
+
+|                 Icon                | Severity |                                       Description                                      |
+|:-----------------------------------:|:--------:|:---------------------------------------------------------------------------------------|
+|   ![Normal](resources/normal.png)   |  Normal  | Scanned - No Issues                                                                    |
+|  ![Unknown](resources/unknown.png)  |  Unknown | No CVEs attached to the vulnerability or the selected component not identified in Xray |
+|      ![Low](resources/low.png)      |    Low   | Top issue with low severity                                                            |
+|   ![Medium](resources/medium.png)   |  Medium  | Top issue with medium severity                                                         |
+|     ![High](resources/high.png)     |   High   | Top issue with high severity                                                           |
+| ![Critical](resources/critical.png) | Critical | Top issue with critical severity                                                       |
 
 ### Viewing and Updating Project Dependencies
 View the dependencies used by the project in a tree, where the direct dependencies are at the top.
