@@ -48,7 +48,7 @@ The extension also applies [JFrog File Spec JSON schema](https://raw.githubuserc
 4. [Start](#using-the-extension) using the extension
 
 ## Set Up a FREE JFrog Environment in the Cloud
-Need a FREE JFrog environment in the cloud, so that VS Code can connect to it? Just run one of the following commands in your terminal. The commands will do the following.
+Need a FREE JFrog environment in the cloud, so that VS Code can connect to it? Just run one of the following commands in your terminal. The commands will do the following:
 
 1. Install JFrog CLI on your machine.
 2. Create a FREE JFrog environment in the cloud for you.
