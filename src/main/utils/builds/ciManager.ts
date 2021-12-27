@@ -12,11 +12,11 @@ import { TreesManager } from '../../treeDataProviders/treesManager';
 import { BuildGeneralInfo } from '../../types/buildGeneralinfo';
 import { Dependency } from '../../types/dependency';
 import { GeneralInfo } from '../../types/generalInfo';
-import { Issue } from '../../types/issue';
 import { IIssueKey } from '../../types/issueKey';
-import { License } from '../../types/license';
+import { ILicenseKey } from '../../types/licenseKey';
 import { Severity } from '../../types/severity';
 import { Configuration } from '../configuration';
+import { Consts } from '../consts';
 import { ScanCancellationError } from '../scanUtils';
 import { Translators } from '../translators';
 import { BuildsUtils } from './buildsUtils';
@@ -196,13 +196,13 @@ export class CiManager {
                 if (component.issues.length > 0) {
                     for (const issue of component.issues) {
                         issuesAndLicenses._issues.add(new IssueIdWithSeverity(issue.issue_id, Translators.toSeverity(issue.severity)));
-                        scanCacheManager.storeIssue(issue);
+                        scanCacheManager.storeIssue(Translators.toCacheIssue(issue));
                     }
                 }
                 if (component.licenses.length > 0) {
                     for (const license of component.licenses) {
                         issuesAndLicenses._licenses.add(license.name);
-                        scanCacheManager.storeLicense(license);
+                        scanCacheManager.storeLicense(Translators.toCacheLicense(license));
                     }
                 }
             }
@@ -253,7 +253,7 @@ export class CiManager {
         }
         if (artifact.licenses.length > 0) {
             for (const license of artifact.licenses) {
-                node.licenses.add(license.name);
+                node.licenses.add({ licenseName: license.name } as ILicenseKey);
             }
         }
         if (!isArtifact) {
@@ -274,21 +274,21 @@ export class CiManager {
                 }
             });
             node.topSeverity = topSeverity;
-            issuesAndLicenses._licenses.forEach(license => {
-                node.licenses.add(license);
+            issuesAndLicenses._licenses.forEach(licenseName => {
+                node.licenses.add({ licenseName } as ILicenseKey);
             });
         }
     }
 
     private addUnknownLicenseToMissingNode(node: DependenciesTreeNode) {
-        node.licenses.add(License.UNKNOWN_LICENSE);
+        node.licenses.add({ licenseName: Consts.UNKNOWN_LICENSE } as ILicenseKey);
     }
 
     public populateTreeWithUnknownIssues(modulesTree: DependenciesTreeNode) {
         for (const node of modulesTree.children) {
             this.populateTreeWithUnknownIssues(node);
         }
-        modulesTree.issues.add({ issue_id: Issue.MISSING_COMPONENT.summary } as IIssueKey);
+        modulesTree.issues.add({ issue_id: Consts.MISSING_COMPONENT } as IIssueKey);
         this.addUnknownLicenseToMissingNode(modulesTree);
     }
 

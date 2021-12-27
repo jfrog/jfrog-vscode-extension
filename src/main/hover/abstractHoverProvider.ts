@@ -1,11 +1,12 @@
-import * as Collections from 'typescript-collections';
+import { Set } from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { Issue } from '../types/issue';
-import { Severity, SeverityUtils } from '../types/severity';
+import { IIssueCacheObject } from '../types/issueCacheObject';
 import { IIssueKey } from '../types/issueKey';
+import { ILicenseKey } from '../types/licenseKey';
+import { Severity, SeverityUtils } from '../types/severity';
 
 /**
  * @see HoverManager
@@ -38,34 +39,46 @@ export abstract class AbstractHoverProvider implements vscode.HoverProvider, Ext
         return new vscode.Hover(new vscode.MarkdownString(this.getDetailsFromXray(node)));
     }
 
-    protected licensesToMarkdown(licenses: Collections.Set<string>) {
+    private licensesToMarkdown(licenses: Set<ILicenseKey>) {
         let markDownSyntax: string[] = [];
-        licenses.forEach(licenseName => {
-            markDownSyntax.push(licenseName);
+        licenses.forEach(licenseKey => {
+            markDownSyntax.push(licenseKey.licenseName);
         });
         return markDownSyntax;
     }
 
-    protected getDetailsFromXray(node: DependenciesTreeNode): string {
+    private getDetailsFromXray(node: DependenciesTreeNode): string {
         let xrayText: string = '### Details from Xray:\n\n';
         if (node.topSeverity !== Severity.Normal) {
             xrayText += '**Vulnerabilities**: ' + this.getIssueSummary(node.issues);
         }
+        let violatedLicenses: Map<string, Set<string>> = node.getViolatedLicenses();
+        if (violatedLicenses.size > 0) {
+            xrayText += '\n\n**Transitive Violated Licenses**: ' + this.getViolatedLicenseInfo(violatedLicenses);
+        }
         return xrayText + '\n\n' + this.createLicensesText(this.licensesToMarkdown(node.licenses));
     }
 
-    protected createLicensesText(licenses: string[]) {
+    private getViolatedLicenseInfo(violatedLicenses: Map<string, Set<string>>): string {
+        let summary: string = '';
+        for (let violatedLicense of violatedLicenses.keys()) {
+            summary += violatedLicense + ', ';
+        }
+        return summary.substring(0, summary.length - 2) + '\n\n';
+    }
+
+    private createLicensesText(licenses: string[]) {
         return `${licenses ? `**Licenses**: ${licenses}\n\n` : '\n\n'}`;
     }
 
-    protected getIssueSummary(issues: Collections.Set<IIssueKey>): string {
+    private getIssueSummary(issues: Set<IIssueKey>): string {
         if (!issues) {
             return '';
         }
         let summary: string = '';
         let totalNumOfSeverities: Array<number> = new Array<number>(Object.keys(Severity).length / 2);
         issues.forEach(issueId => {
-            let issue: Issue | undefined = this._treesManager.scanCacheManager.getIssue(issueId.issue_id);
+            let issue: IIssueCacheObject | undefined = this._treesManager.scanCacheManager.getIssue(issueId.issue_id);
             if (issue) {
                 totalNumOfSeverities[issue.severity] = totalNumOfSeverities[issue.severity] ? totalNumOfSeverities[issue.severity] + 1 : 1;
             }

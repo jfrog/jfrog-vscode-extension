@@ -24,6 +24,9 @@ export class IconsPaths {
     static readonly BUILD_FAILED: string = IconsPaths.getIconPath('critical');
     static readonly BUILD_UNKNOWN: string = IconsPaths.getIconPath('unknown');
 
+    // License
+    static readonly VIOLATED_LICENSE: string = IconsPaths.getIconPath('violatedLicense');
+
     private static getIconPath(iconName: string) {
         return path.join(ScanUtils.RESOURCES_DIR, iconName + '.png');
     }

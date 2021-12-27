@@ -1,13 +1,13 @@
 import { assert } from 'chai';
 import * as faker from 'faker';
-import { ILicense } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { ComponentDetailsDataProvider, LicensesNode } from '../../main/treeDataProviders/componentDetailsDataProvider';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from '../../main/treeDataProviders/utils/treeDataHolder';
 import { GeneralInfo } from '../../main/types/generalInfo';
-import { License } from '../../main/types/license';
+import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
+import { ILicenseKey } from '../../main/types/licenseKey';
 import { createScanCacheManager } from './utils/utils.test';
 
 /**
@@ -43,21 +43,26 @@ describe('Component Details Tests', () => {
     });
 
     it('One license', async () => {
-        let license: License = createDummyLicense();
-        scanCacheManager.storeLicense({ name: license.name, full_name: license.fullName, more_info_url: license.moreInfoUrl } as ILicense);
-        dependenciesTreeNode.licenses.add(license.name);
+        let license: ILicenseCacheObject = createDummyLicense();
+        scanCacheManager.storeLicense(license);
+        dependenciesTreeNode.licenses.add({ licenseName: license.name, violated: license.violated } as ILicenseKey);
         await assertLicense(license, 0);
     });
 
     it('Two licenses', async () => {
-        let license: License = createDummyLicense();
-        scanCacheManager.storeLicense({ name: license.name, full_name: license.fullName, more_info_url: license.moreInfoUrl } as ILicense);
-        dependenciesTreeNode.licenses.add(license.name);
+        let license: ILicenseCacheObject = createDummyLicense();
+        scanCacheManager.storeLicense(license);
+        dependenciesTreeNode.licenses.add({ licenseName: license.name, violated: license.violated } as ILicenseKey);
         await assertLicense(license, 1);
     });
 
-    function createDummyLicense(): License {
-        return new License([faker.internet.url()], faker.name.firstName(), faker.name.firstName() + ' ' + faker.name.lastName());
+    function createDummyLicense(): ILicenseCacheObject {
+        return {
+            name: faker.name.firstName(),
+            fullName: faker.name.lastName(),
+            violated: faker.datatype.boolean(),
+            moreInfoUrl: faker.internet.url()
+        } as ILicenseCacheObject;
     }
 
     async function getAndAssertLicenses(): Promise<any[]> {
@@ -68,11 +73,11 @@ describe('Component Details Tests', () => {
         return licensesNode.getChildren();
     }
 
-    async function assertLicense(license: License, index: number) {
+    async function assertLicense(license: ILicenseCacheObject, index: number) {
         let licenses: any[] = await getAndAssertLicenses();
         assert.lengthOf(licenses, index + 1);
         assert.deepEqual(licenses[index]._key, license.fullName + ' (' + license.name + ')');
-        assert.deepEqual(licenses[index]._value, license.moreInfoUrl[0]);
-        assert.deepEqual(licenses[index]._link, license.moreInfoUrl[0]);
+        assert.deepEqual(licenses[index]._value, license.moreInfoUrl);
+        assert.deepEqual(licenses[index]._link, license.moreInfoUrl);
     }
 });

@@ -8,6 +8,7 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { PypiTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
@@ -21,7 +22,13 @@ import { createScanCacheManager } from './utils/utils.test';
 describe('Pypi Utils Tests', () => {
     let logManager: LogManager = new LogManager().activate();
     let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
-    let treesManager: TreesManager = new TreesManager([], new ConnectionManager(logManager), dummyScanCacheManager, logManager);
+    let treesManager: TreesManager = new TreesManager(
+        [],
+        new ConnectionManager(logManager),
+        dummyScanCacheManager,
+        {} as ScanLogicManager,
+        logManager
+    );
     let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements'];
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
     let tmpDir: vscode.Uri = vscode.Uri.file(tmp.dirSync({} as tmp.DirOptions).name);

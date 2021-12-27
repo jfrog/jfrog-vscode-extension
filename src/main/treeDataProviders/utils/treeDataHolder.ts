@@ -2,7 +2,7 @@
  * Stores {key, value, link} information for the component details and component issues details trees.
  */
 export class TreeDataHolder {
-    constructor(private _key: string, private _value?: string, private _link?: string) {}
+    constructor(private _key: string, private _value?: string, private _link?: string, private _icon?: string) {}
 
     public get key(): string {
         return this._key;
@@ -14,5 +14,9 @@ export class TreeDataHolder {
 
     public get link(): string | undefined {
         return this._link;
+    }
+
+    public get icon(): string | undefined {
+        return this._icon;
     }
 }

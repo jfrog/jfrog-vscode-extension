@@ -2,7 +2,10 @@ import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { BuildGeneralInfo, Status } from '../types/buildGeneralinfo';
-import { License } from '../types/license';
+import { ILicenseCacheObject } from '../types/licenseCacheObject';
+import { ILicenseKey } from '../types/licenseKey';
+import { Consts } from '../utils/consts';
+import { IconsPaths } from '../utils/iconsPaths';
 import { BuildsNode } from './dependenciesTree/ciNodes/buildsTree';
 import { CiTitleNode } from './dependenciesTree/ciNodes/ciTitleNode';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
@@ -34,6 +37,9 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
                 command: 'vscode.open',
                 arguments: [vscode.Uri.parse(holder.link)]
             } as vscode.Command;
+        }
+        if (holder.icon) {
+            treeItem.iconPath = holder.icon;
         }
         return treeItem;
     }
@@ -104,21 +110,35 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
 }
 
 export class LicensesNode extends vscode.TreeItem {
-    constructor(private _scanCacheManager: ScanCacheManager, private _licenses: Collections.Set<string>) {
+    constructor(private _scanCacheManager: ScanCacheManager, private _licenses: Collections.Set<ILicenseKey>) {
         super('Licenses', vscode.TreeItemCollapsibleState.Expanded);
     }
 
     public getChildren(): any[] {
         let children: any[] = [];
 
-        this._licenses.forEach(licenseName => {
-            let license: License | undefined = this._scanCacheManager.getLicense(licenseName);
+        this._licenses.forEach(licenseKey => {
+            let license: ILicenseCacheObject | undefined = this._scanCacheManager.getLicense(licenseKey.licenseName);
             if (!license) {
                 return;
             }
-            let moreInfoUrl: string | undefined = license.moreInfoUrl ? license.moreInfoUrl[0] : undefined;
-            children.push(new TreeDataHolder(license.createLicenseString(), moreInfoUrl, moreInfoUrl));
+            let icon: string | undefined;
+            if (licenseKey.violated) {
+                icon = IconsPaths.VIOLATED_LICENSE;
+            }
+            children.push(new TreeDataHolder(this.createLicenseString(license), license.moreInfoUrl, license.moreInfoUrl, icon));
         });
         return children;
+    }
+
+    public createLicenseString(license: ILicenseCacheObject): string {
+        if (!license.fullName && this.isFullNameEmpty(license)) {
+            return license.name;
+        }
+        return license.fullName + ' (' + license.name + ')';
+    }
+
+    public isFullNameEmpty(license: ILicenseCacheObject) {
+        return !license.fullName || license.fullName === Consts.UNKNOWN_LICENSE_FULL_NAME;
     }
 }

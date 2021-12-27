@@ -1,9 +1,9 @@
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
+import { IIssueCacheObject } from '../types/issueCacheObject';
 import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { Issue } from '../types/issue';
 import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 import { GoDependencyUpdate } from './goDependencyUpdate';
 import { MavenDependencyUpdate } from './mavenDependencyUpdate';
@@ -41,7 +41,7 @@ export class DependencyUpdateManager implements ExtensionComponent {
         let fixedVersions: Set<string> = new Set<string>();
         dependenciesTreeNode.issues.forEach(xrayIssueId => {
             if (xrayIssueId.component === dependenciesTreeNode.componentId) {
-                let issue: Issue | undefined = this._scanCacheManager.getIssue(xrayIssueId.issue_id);
+                let issue: IIssueCacheObject | undefined = this._scanCacheManager.getIssue(xrayIssueId.issue_id);
                 if (!issue) {
                     return;
                 }

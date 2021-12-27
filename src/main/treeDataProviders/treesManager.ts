@@ -3,6 +3,7 @@ import { ConnectionManager } from '../connect/connectionManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
 import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { ScanLogicManager } from '../scanLogic/scanLogicManager';
 import { ComponentDetailsDataProvider } from './componentDetailsDataProvider';
 import { BuildsDataProvider } from './dependenciesTree/buildsDataProvider';
 import { DependenciesTreeDataProvider } from './dependenciesTree/dependenciesDataProvider';
@@ -26,9 +27,10 @@ export class TreesManager implements ExtensionComponent {
         workspaceFolders: vscode.WorkspaceFolder[],
         private _connectionManager: ConnectionManager,
         private _scanCacheManager: ScanCacheManager,
+        scanLogicManager: ScanLogicManager,
         private _logManager: LogManager
     ) {
-        this._dependenciesTreeDataProvider = new DependenciesTreeDataProvider(workspaceFolders, this);
+        this._dependenciesTreeDataProvider = new DependenciesTreeDataProvider(workspaceFolders, this, scanLogicManager);
         this._buildsTreesProvider = new BuildsDataProvider(this);
         this._treeDataProviderManager = new TreeDataProviderManager(this);
         this._componentDetailsDataProvider = new ComponentDetailsDataProvider(_scanCacheManager);
