@@ -3,6 +3,10 @@ import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { AbstractScanLogic } from './abstractScanLogic';
 
+/**
+ * Used in Xray < 3.29.0.
+ * Run /summary/components REST API for each 100 components and populate the cache with the responses.
+ */
 export class ComponentSummaryScanLogic extends AbstractScanLogic {
     public async scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,

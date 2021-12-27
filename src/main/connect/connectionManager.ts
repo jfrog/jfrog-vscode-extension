@@ -592,6 +592,13 @@ export class ConnectionManager implements ExtensionComponent {
         return passOk && tokenOk;
     }
 
+    /**
+     * Do Xray's scan/graph REST API.
+     * @param componentsToScan - The components to scan
+     * @param checkCanceled    - A function that throws ScanCancellationError if the user chose to stop the scan
+     * @param project          - JFrog project key
+     * @returns graph of all requested components with vulnerabilities and licenses information.
+     */
     public async scanGraph(componentsToScan: Set<ComponentDetails>, checkCanceled: () => void, project: string): Promise<IGraphResponse> {
         if (!this.areXrayCredentialsSet()) {
             await this.populateCredentials(false);
@@ -606,6 +613,11 @@ export class ConnectionManager implements ExtensionComponent {
             .graph(graphRequest, checkCanceled, project);
     }
 
+    /**
+     * Do Xray's summary/component REST API.
+     * @param componentDetails - The components to scan
+     * @returns list of all requested components with vulnerabilities and licenses information.
+     */
     public async summaryComponent(componentDetails: ComponentDetails[]): Promise<IArtifact[]> {
         if (!this.areXrayCredentialsSet()) {
             await this.populateCredentials(false);

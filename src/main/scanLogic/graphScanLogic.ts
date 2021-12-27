@@ -12,6 +12,12 @@ import { Configuration } from '../utils/configuration';
 import { Translators } from '../utils/translators';
 import { AbstractScanLogic } from './abstractScanLogic';
 
+/**
+ * Used in Xray >= 3.29.0.
+ * Run /scan/graph REST API and populate the cache with the results.
+ * When the project key is provided - only violated vulnerabilities should appear in the results. Licenses may mark as violated.
+ * When the project key isn't provided - all vulnerabilities and licenses information should appear in the results.
+ */
 export class GraphScanLogic extends AbstractScanLogic {
     public async scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
@@ -93,7 +99,7 @@ export class GraphScanLogic extends AbstractScanLogic {
         scannedComponents: Map<string, INodeInfo>
     ) {
         for (const license of scannedLicenses) {
-            // If the license is violated, we want to keep it as is. Therefore we will add only licenses which weren't been added in populateViolations.
+            // If the license is violated, we want to keep it as is. Therefore we will add only licenses which haven't been added in populateViolations.
             if (!licenses.containsKey(license.license_key)) {
                 this.populateLicense(license, licenses, scannedComponents, false);
             }
