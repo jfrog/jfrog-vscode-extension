@@ -644,11 +644,11 @@ export class ConnectionManager implements ExtensionComponent {
             .downloadArtifact(artifactPath);
     }
 
-    public async downloadBuildDetails(buildName: string, buildNumber: string): Promise<IDetailsResponse> {
+    public async downloadBuildDetails(buildName: string, buildNumber: string, projectKey: string): Promise<IDetailsResponse> {
         return this.createJfrogClient()
             .xray()
             .details()
-            .build(buildName, buildNumber);
+            .build(buildName, buildNumber, projectKey);
     }
 
     public createJfrogClient(): JfrogClient {

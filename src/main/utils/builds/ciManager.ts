@@ -25,7 +25,6 @@ import { BuildsUtils } from './buildsUtils';
  * Manage the filters of the components tree.
  */
 export class CiManager {
-    private static readonly BUILD_INFO_REPO: string = '/artifactory-build-info/';
     private static readonly DISPLAY_BUILDS_NUM: string = '100';
 
     private readonly buildsCache: BuildsScanCache;
@@ -41,7 +40,8 @@ export class CiManager {
     }
 
     public loadBuildTree(timestamp: string, buildName: string, buildNumber: string, parent: DependenciesTreeNode) {
-        const build: any = this.buildsCache.loadBuildInfo(timestamp, buildName, buildNumber);
+        let projectKey: string = Configuration.getProjectKey();
+        const build: any = this.buildsCache.loadBuildInfo(timestamp, buildName, buildNumber, projectKey);
         if (!build) {
             throw new Error(`Couldn't find build info object in cache for '${buildName}/${buildNumber}'.`);
         }
@@ -59,7 +59,7 @@ export class CiManager {
         }
 
         // If the build was scanned by Xray, load Xray 'details/build' response from cache.
-        let detailsResponse: IDetailsResponse | null = this.buildsCache.loadScanResults(timestamp, buildName, buildNumber);
+        let detailsResponse: IDetailsResponse | null = this.buildsCache.loadScanResults(timestamp, buildName, buildNumber, projectKey);
         this.populateBuildDependencyTree(detailsResponse, modulesTree);
         modulesTree.issues = modulesTree.processTreeIssues();
     }
@@ -308,8 +308,9 @@ export class CiManager {
         checkCanceled: () => void
     ): Promise<void> {
         try {
+            let projectKey: string = Configuration.getProjectKey();
             const searchResult: IAqlSearchResult = await this._treesManager.connectionManager.searchArtifactsByAql(
-                CiManager.createAqlForBuildArtifacts(buildsPattern)
+                CiManager.createAqlForBuildArtifacts(buildsPattern, projectKey)
             );
             if (!searchResult) {
                 throw new Error('Failed searching for builds in Artifactory');
@@ -335,7 +336,8 @@ export class CiManager {
                         progress,
                         checkCanceled,
                         searchResult.results.length,
-                        xraySupported
+                        xraySupported,
+                        projectKey
                     )
                 );
             }
@@ -357,7 +359,8 @@ export class CiManager {
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void,
         buildsNum: number,
-        xraySupported: boolean
+        xraySupported: boolean,
+        projectKey: string
     ): Promise<void> {
         try {
             checkCanceled();
@@ -369,14 +372,18 @@ export class CiManager {
             const buildNumber: string = split[0];
             const timestamp: string = split[1];
 
-            let build: any = buildsCache.loadBuildInfo(timestamp, buildName, buildNumber) || (await this.downloadBuildInfo(searchEntry, buildsCache));
+            let build: any =
+                buildsCache.loadBuildInfo(timestamp, buildName, buildNumber, projectKey) ||
+                (await this.downloadBuildInfo(searchEntry, buildsCache, projectKey));
             let buildGeneralInfo: BuildGeneralInfo = BuildsUtils.createBuildGeneralInfo(build, this._treesManager.logManager);
             if (!build) {
                 progress.report({ message: `${buildsNum} builds`, increment: 100 / (buildsNum * 2) });
                 return;
             }
             this.addResults(buildGeneralInfo);
-            consumerQueue.add(() => this.handleXrayBuildDetails(buildGeneralInfo, buildsCache, progress, checkCanceled, buildsNum, xraySupported));
+            consumerQueue.add(() =>
+                this.handleXrayBuildDetails(buildGeneralInfo, buildsCache, progress, checkCanceled, buildsNum, xraySupported, projectKey)
+            );
         } catch (error) {
             if (error instanceof ScanCancellationError) {
                 // If it's not a cancellation error, throw it up
@@ -389,12 +396,12 @@ export class CiManager {
         }
     }
 
-    private async downloadBuildInfo(searchEntry: ISearchEntry, buildsCache: BuildsScanCache): Promise<any> {
-        const artifactPath: string = CiManager.BUILD_INFO_REPO + searchEntry.path + '/' + searchEntry.name;
+    private async downloadBuildInfo(searchEntry: ISearchEntry, buildsCache: BuildsScanCache, projectKey: string): Promise<any> {
+        const artifactPath: string = '/' + CiManager.getBuildInfoRepo(projectKey) + '/' + searchEntry.path + '/' + searchEntry.name;
         try {
             const build: any = await this._treesManager.connectionManager.downloadArtifact(artifactPath);
             const timestamp: string = Date.parse(build.started).toString();
-            buildsCache.save(JSON.stringify(build), timestamp, build.name, build.number, Type.BUILD_INFO);
+            buildsCache.save(JSON.stringify(build), timestamp, build.name, build.number, projectKey, Type.BUILD_INFO);
             return build;
         } catch (error) {
             this._treesManager.logManager.logMessage(
@@ -405,11 +412,11 @@ export class CiManager {
         }
     }
 
-    private async downloadBuildDetails(buildGeneralInfo: BuildGeneralInfo, buildsCache: BuildsScanCache): Promise<void> {
+    private async downloadBuildDetails(buildGeneralInfo: BuildGeneralInfo, buildsCache: BuildsScanCache, projectKey: string): Promise<void> {
         let timestamp: string = buildGeneralInfo.startedTimestamp;
         let buildName: string = buildGeneralInfo.artifactId;
         let buildNumber: string = buildGeneralInfo.version;
-        const detailsResponse: IDetailsResponse = await this._treesManager.connectionManager.downloadBuildDetails(buildName, buildNumber);
+        const detailsResponse: IDetailsResponse = await this._treesManager.connectionManager.downloadBuildDetails(buildName, buildNumber, projectKey);
         if (!detailsResponse.is_scan_completed || !!detailsResponse.error_details || !detailsResponse.components) {
             if (!!detailsResponse.error_details) {
                 this._treesManager.logManager.logMessage(
@@ -420,7 +427,7 @@ export class CiManager {
             }
             return;
         }
-        buildsCache.save(JSON.stringify(detailsResponse), timestamp, buildName, buildNumber, Type.BUILD_SCAN_RESULTS);
+        buildsCache.save(JSON.stringify(detailsResponse), timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS);
     }
 
     private addResults(bgi: BuildGeneralInfo): void {
@@ -434,7 +441,8 @@ export class CiManager {
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void,
         buildsNum: number,
-        xraySupported: boolean
+        xraySupported: boolean,
+        projectKey: string
     ): Promise<void> {
         try {
             if (!xraySupported) {
@@ -444,8 +452,8 @@ export class CiManager {
             const buildNumber: string = buildGeneralInfo.version;
             const timestamp: string = buildGeneralInfo.startedTimestamp;
             checkCanceled();
-            if (!buildsCache.loadScanResults(timestamp, buildName, buildNumber)) {
-                await this.downloadBuildDetails(buildGeneralInfo, buildsCache);
+            if (!buildsCache.loadScanResults(timestamp, buildName, buildNumber, projectKey)) {
+                await this.downloadBuildDetails(buildGeneralInfo, buildsCache, projectKey);
             }
         } catch (error) {
             if (error instanceof ScanCancellationError) {
@@ -458,7 +466,7 @@ export class CiManager {
         }
     }
 
-    private static createAqlForBuildArtifacts(buildsPattern: string): string {
+    private static createAqlForBuildArtifacts(buildsPattern: string, projectKey: string): string {
         // Since build artifacts are stored with their names encoded but spaces remain untouched,
         // we are replacing spaces with a placeholder before encoding and then replacing back.
         const spaceReplacementPlaceholder: string = 'JFROG_VSCODE_EXTENSION_SPACE_PLACEHOLDER';
@@ -470,12 +478,16 @@ export class CiManager {
         buildsPattern = buildsPattern.replace(/%/g, '?');
         return (
             `items.find({` +
-            `"repo":"artifactory-build-info",` +
+            `"repo":"${CiManager.getBuildInfoRepo(projectKey)}",` +
             `"path":{"$match":"${buildsPattern}"}})` +
             `.include("name","repo","path","created")` +
             `.sort({"$desc":["created"]})` +
             `.limit(${CiManager.DISPLAY_BUILDS_NUM})`
         );
+    }
+
+    private static getBuildInfoRepo(repoKey: string): string {
+        return (repoKey || 'artifactory') + '-build-info';
     }
 }
 

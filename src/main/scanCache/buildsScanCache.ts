@@ -46,14 +46,14 @@ export class BuildsScanCache {
         }
     }
 
-    public save(content: string, timestamp: string, buildName: string, buildNumber: string, type: Type): void {
+    public save(content: string, timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): void {
         let zip: AdmZip = new AdmZip();
         zip.addFile(type.toString(), Buffer.alloc(content.length, content));
-        zip.writeZip(this.getZipPath(timestamp, buildName, buildNumber, type));
+        zip.writeZip(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type));
     }
 
-    public load(timestamp: string, buildName: string, buildNumber: string, type: Type): any {
-        const buildPath: string = this.getZipPath(timestamp, buildName, buildNumber, type);
+    public load(timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): any {
+        const buildPath: string = this.getZipPath(timestamp, buildName, buildNumber, projectKey, type);
         if (!fs.existsSync(buildPath)) {
             return '';
         }
@@ -65,16 +65,16 @@ export class BuildsScanCache {
         return entry.getData().toString('utf8');
     }
 
-    public loadBuildInfo(timestamp: string, buildName: string, buildNumber: string): any {
-        let build: any = this.load(timestamp, buildName, buildNumber, Type.BUILD_INFO);
+    public loadBuildInfo(timestamp: string, buildName: string, buildNumber: string, projectKey: string): any {
+        let build: any = this.load(timestamp, buildName, buildNumber, projectKey, Type.BUILD_INFO);
         if (!build) {
             return null;
         }
         return JSON.parse(build);
     }
 
-    public loadScanResults(timestamp: string, buildName: string, buildNumber: string): IDetailsResponse | null {
-        let response: any = this.load(timestamp, buildName, buildNumber, Type.BUILD_SCAN_RESULTS);
+    public loadScanResults(timestamp: string, buildName: string, buildNumber: string, projectKey: string): IDetailsResponse | null {
+        let response: any = this.load(timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS);
         if (!response) {
             return null;
         }
@@ -84,13 +84,17 @@ export class BuildsScanCache {
     /**
      * Returns the expected file path to the zip in cache.
      * Zip name for example: '012345_0<base64 build name>.zip'
-     * @param timestamp
-     * @param buildName
-     * @param buildNumber
+     * @param timestamp   - Build timestamp
+     * @param buildName   - Build name
+     * @param buildNumber - Build number
+     * @param projectKey  - Project key
      * @param type - build info or build scan results
      */
-    public getZipPath(timestamp: string, buildName: string, buildNumber: string, type: Type): string {
-        const buildIdentifier: string = buildName + '_' + buildNumber;
+    public getZipPath(timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): string {
+        let buildIdentifier: string = buildName + '_' + buildNumber;
+        if (projectKey) {
+            buildIdentifier += '_' + projectKey;
+        }
         return path.resolve(this.buildsDir, timestamp + '_' + type.toString() + this.getNameInBase64(buildIdentifier) + '.zip');
     }
 }
