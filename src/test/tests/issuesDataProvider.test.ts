@@ -4,26 +4,28 @@ import * as tmp from 'tmp';
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { VulnerabilityNode, IssuesDataProvider, VulnerabilitiesTitleNode, LicensesTitleNode } from '../../main/treeDataProviders/issuesDataProvider';
+import { IssuesDataProvider, LicensesTitleNode, VulnerabilitiesTitleNode, VulnerabilityNode } from '../../main/treeDataProviders/issuesDataProvider';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { IIssueCacheObject } from '../../main/types/issueCacheObject';
 import { IIssueKey } from '../../main/types/issueKey';
 import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
 import * as issueSeverity from '../../main/types/severity';
 import { Severity } from '../../main/types/severity';
+import { TestMemento } from './utils/testMemento.test';
 
 /**
  * Test functionality of @class IssuesDataProvider.
  */
 describe('Issues Data Provider Tests', () => {
-    let scanCacheManager: ScanCacheManager = new ScanCacheManager().activate({
-        storagePath: tmp.dirSync().name
-    } as vscode.ExtensionContext);
+    let scanCacheManager: ScanCacheManager = new ScanCacheManager();
     let issuesDataProvider: IssuesDataProvider = new IssuesDataProvider(scanCacheManager);
-
     let dependenciesTreeNode: DependenciesTreeNode;
 
     before(() => {
+        scanCacheManager.activate((<any>{
+            storagePath: tmp.dirSync({} as tmp.DirOptions).name,
+            workspaceState: new TestMemento()
+        }) as vscode.ExtensionContext);
         let generalInfo: GeneralInfo = new GeneralInfo('odin', '1.2.3', [], __dirname, 'asgard');
         dependenciesTreeNode = new DependenciesTreeNode(generalInfo);
     });

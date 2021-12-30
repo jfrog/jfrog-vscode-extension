@@ -183,7 +183,7 @@ export class ConnectionManager implements ExtensionComponent {
 
     private async getJfrogCliVersion(): Promise<string> {
         try {
-            const versionPrefix: string = 'jfrog version ';
+            const versionPrefix: string = 'jf version ';
             let output: string = execSync('jf -v').toString();
             if (!output.startsWith(versionPrefix)) {
                 this._logManager.logMessage('Unexpected output to JFrog CLI version command: ' + output, 'DEBUG');
