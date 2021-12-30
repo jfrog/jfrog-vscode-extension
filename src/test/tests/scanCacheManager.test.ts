@@ -49,7 +49,10 @@ describe('Scan Cache Manager Tests', () => {
 
         let actualLicenses: ILicenseKey[] | undefined = nodeInfo?.licenses;
         assert.isDefined(actualLicenses);
-        assert.deepEqual(actualLicenses, [{ licenseName: 'MIT' } as ILicenseKey, { licenseName: 'MIT/X11' } as ILicenseKey]);
+        assert.deepEqual(actualLicenses, [
+            { licenseName: 'MIT', violated: false } as ILicenseKey,
+            { licenseName: 'MIT/X11', violated: false } as ILicenseKey
+        ]);
     });
 
     it('Store components', async () => {
@@ -58,7 +61,10 @@ describe('Scan Cache Manager Tests', () => {
         let licenses: ILicenseCacheObject[] = [{ name: 'MIT' }, { name: 'MIT/X11' }] as ILicenseCacheObject[];
         let issues: IIssueCacheObject[] = [{ issueId: 'XRAY-1' }, { issueId: 'XRAY-2' }] as IIssueCacheObject[];
         scannedComponents.set('a:b:c', {
-            issues: [{ issue_id: 'XRAY-1' }, { issue_id: 'XRAY-2' }] as IIssueKey[],
+            issues: [
+                { issue_id: 'XRAY-1', component: 'a:b:c' },
+                { issue_id: 'XRAY-2', component: 'a:b:c' }
+            ] as IIssueKey[],
             licenses: [{ licenseName: 'MIT' }, { licenseName: 'MIT/X11' }] as ILicenseKey[]
         } as INodeInfo);
 
