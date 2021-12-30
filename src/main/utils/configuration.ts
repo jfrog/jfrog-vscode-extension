@@ -26,6 +26,9 @@ export class Configuration {
      * @returns JFrog project Key
      */
     public static getProjectKey(): string {
-        return vscode.workspace.getConfiguration('jfrog').get('projectKey', '');
+        return vscode.workspace
+            .getConfiguration('jfrog')
+            .get('projectKey', '')
+            .trim();
     }
 }
