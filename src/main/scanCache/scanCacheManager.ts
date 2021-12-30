@@ -130,7 +130,7 @@ export class ScanCacheManager implements ExtensionComponent {
         let licenses: ILicenseCacheObject[] = [];
         for (let artifact of artifacts) {
             let nodeInfo: INodeInfo = {
-                top_severity: Severity.Unknown,
+                top_severity: Severity.Normal,
                 issues: [] as IIssueKey[],
                 licenses: [] as ILicenseKey[]
             } as INodeInfo;

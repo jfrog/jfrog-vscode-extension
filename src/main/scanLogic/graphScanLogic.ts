@@ -127,7 +127,7 @@ export class GraphScanLogic extends AbstractScanLogic {
     }
 
     private addLicenseToScannedComponents(scannedComponents: Map<string, INodeInfo>, componentId: string, licenseName: string, violated: boolean) {
-        let nodeInfo: INodeInfo = scannedComponents.get(componentId) || this.createNodeInfo();
+        let nodeInfo: INodeInfo = scannedComponents.get(componentId) || this.createNodeInfo(Severity.Normal);
         nodeInfo.licenses.push({ licenseName: licenseName, violated: violated } as ILicenseKey);
         scannedComponents.set(componentId, nodeInfo);
     }
