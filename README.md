@@ -82,7 +82,7 @@ Note: For security reasons, it is recommended to unset the environment variables
 - `JFROG_IDE_STORE_CONNECTION` - Set the value of this environment variable to **true**, if you'd like VS Code to store the connection details after reading them from the environment variables.
 
 ## Applying Your Xray Policies
-To configure JFrog VS-Code extension to reflect the Security Policies required by your organization, follow these steps.
+To configure JFrog VS-Code extension to reflect the Security Policies required by your organization, follow these steps:
 1. Create a [JFrog Project](https://www.jfrog.com/confluence/display/JFROG/Projects), or obtain the relevant JFrog Project key.
 1. Create a [Policy](https://www.jfrog.com/confluence/display/JFROG/Creating+Xray+Policies+and+Rules) on JFrog Xray.
 1. Create a [Watch](https://www.jfrog.com/confluence/display/JFROG/Configuring+Xray+Watches) on JFrog Xray and assign your Policy and Project as resources to it.
