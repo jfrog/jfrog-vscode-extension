@@ -24,10 +24,11 @@ export class DependencyUpdateManager implements ExtensionComponent {
     }
 
     public async updateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode): Promise<boolean> {
-        const fixedVersion: string = await this.getFixedVersion(dependenciesTreeNode);
+        let fixedVersion: string = await this.getFixedVersion(dependenciesTreeNode);
         if (!fixedVersion) {
             return false;
         }
+        fixedVersion = fixedVersion.replace(/[\][]/g, '')
         this._dependencyUpdaters
             .filter(node => node.isMatched(dependenciesTreeNode))
             .forEach(node => node.updateDependencyVersion(dependenciesTreeNode, fixedVersion));
@@ -45,7 +46,7 @@ export class DependencyUpdateManager implements ExtensionComponent {
                 if (!issue) {
                     return;
                 }
-                issue.fixedVersions.forEach(fixedVersion => fixedVersions.add(fixedVersion));
+                issue.fixedVersions?.forEach(fixedVersion => fixedVersions.add(fixedVersion));
             }
         });
         let fixedVersionsArr: string[] = fixedVersions.toArray();
