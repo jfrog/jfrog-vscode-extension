@@ -38,7 +38,7 @@ describe('Connection Manager Tests', () => {
         ConnectionUtils.addUserAgentHeader(clientConfig);
         let userAgent: string | undefined = clientConfig.headers!['User-Agent'];
         assert.isDefined(userAgent);
-        assert.match(userAgent, new RegExp(/^jfrog-vscode-extension\/\d.\d.\d$/));
+        assert.match(userAgent, new RegExp(/^jfrog-vscode-extension\/\d+.\d+.\d+$/));
     });
 
     it('Proxy authorization header', async () => {
