@@ -170,7 +170,7 @@ To invoke a scan manually, click on the Refresh ![Refresh](resources/readme/refr
 
 View the security information for a dependency by hovering over it in the editor.
 You can also navigate from the dependency declaration directly into the tree view. This allows you to see transitive (indirect) dependencies.
-![Refresh](resources/readme/gifs/maven_pom_tree.gif)
+![Show_In_Dependency_tree](resources/readme/gifs/show_in_dependency_tree.gif)
 
 Search for a dependency in the tree:
 ![Search_In_Tree](resources/readme/gifs/search.gif)
