@@ -1,5 +1,5 @@
 # JFrog Visual Studio Code Extension
-[![Visual Studio Marketplace](https://vsmarketplacebadge.apphb.com/version/JFrog.jfrog-vscode-extension.svg)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension)
+[![Visual Studio Marketplace](https://vsmarketplacebadge.apphb.com/version/JFrog.jfrog-vscode-extension.svg)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension) [![Open VSX Registry](https://img.shields.io/open-vsx/v/jfrog/jfrog-vscode-extension?label=Open%20VSX%20Regisry)](https://open-vsx.org/extension/JFrog/jfrog-vscode-extension)
 
 # Table of Contents
 - [About this Extension](#about-this-extension)
