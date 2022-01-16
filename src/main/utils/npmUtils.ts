@@ -77,7 +77,7 @@ export class NpmUtils {
             return;
         }
         if (!NpmUtils.verifyNpmInstalled()) {
-            vscode.window.showErrorMessage('Could not scan npm project dependencies, because npm CLI is not in the PATH.');
+            treesManager.logManager.logError(new Error('Could not scan npm project dependencies, because npm CLI is not in the PATH.'), !quickScan);
             return;
         }
         treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');

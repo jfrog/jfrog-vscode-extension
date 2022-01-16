@@ -33,7 +33,7 @@ export class NpmTreeNode extends RootNode {
                 this._treesManager.logManager.logMessage(
                     'Possible cause: The project needs to be installed by npm. Install it by running "npm install" from "' +
                         this.workspaceFolder +
-                        '",.',
+                        '".',
                     'INFO'
                 );
                 scopedProject.loadProjectDetails(JSON.parse((<any>error).stdout.toString()));

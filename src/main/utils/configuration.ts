@@ -31,4 +31,8 @@ export class Configuration {
             .get('projectKey', '')
             .trim();
     }
+
+    public static getLogLevel(): string {
+        return vscode.workspace.getConfiguration('jfrog').get('logLevel', 'info');
+    }
 }

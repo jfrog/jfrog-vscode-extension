@@ -76,7 +76,7 @@ export class GoUtils {
         }
         treesManager.logManager.logMessage('go.mod files to scan: [' + goMods.toString() + ']', 'DEBUG');
         if (!GoUtils.verifyGoInstalled()) {
-            vscode.window.showErrorMessage('Could not scan go project dependencies, because go CLI is not in the PATH.');
+            treesManager.logManager.logError(new Error('Could not scan go project dependencies, because go CLI is not in the PATH.'), !quickScan);
             return;
         }
         for (let goMod of goMods) {
