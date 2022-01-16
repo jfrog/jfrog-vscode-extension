@@ -113,7 +113,7 @@ export class CiManager {
     }
 
     public populateDependencies(dependenciesNode: DependenciesTreeNode, module: any): void {
-        let directDependencies: Set<Dependency> = new Set<Dependency>();
+        let directDependencies: Set<Dependency> = new Set<Dependency>(dependency => dependency.id);
         let parentToChildren: Map<string, Dependency[]> = new Map<string, Dependency[]>();
         for (const dependency of module.dependencies) {
             let requestedBy: string[][] = dependency.requestedBy;
