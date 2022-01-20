@@ -163,7 +163,7 @@ export class MavenUtils {
         }
         treesManager.logManager.logMessage('pom.xml files to scan: [' + pomXmls.toString() + ']', 'DEBUG');
         if (!MavenUtils.verifyMavenInstalled()) {
-            vscode.window.showErrorMessage('Could not scan Maven project dependencies, because "mvn" is not in the PATH.');
+            treesManager.logManager.logError(new Error('Could not scan Maven project dependencies, because "mvn" is not in the PATH.'), !quickScan);
             return;
         }
         treesManager.logManager.logMessage('Generating Maven Dependency Tree', 'INFO');

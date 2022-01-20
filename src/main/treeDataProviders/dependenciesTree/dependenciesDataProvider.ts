@@ -48,7 +48,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
         this._scanInProgress = true;
         ScanUtils.setScanInProgress(true);
-        this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'slow') + ' scan', 'INFO');
+        this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'full') + ' scan', 'INFO');
         this.repopulateTree(quickScan, onChangeFire)
             .then(() => {
                 vscode.commands.executeCommand('jfrog.xray.focus');
@@ -65,6 +65,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
             .finally(() => {
                 this._scanInProgress = false;
                 ScanUtils.setScanInProgress(false);
+                this._treesManager.logManager.logMessage('Xray scan completed', 'INFO');
             });
     }
 
@@ -126,27 +127,31 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     }
 
     private async repopulateTree(quickScan: boolean, onChangeFire: () => void) {
-        await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
-            this.clearTree();
-            let workspaceRoot: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
-            let componentsToScan: Set<ComponentDetails> = new Set();
-            await DependenciesTreesFactory.createDependenciesTrees(
-                this._workspaceFolders,
-                componentsToScan,
-                this._treesManager,
-                workspaceRoot,
-                quickScan
-            );
-            await this._scanLogicManager.scanAndCache(progress, componentsToScan, checkCanceled);
-            for (let node of workspaceRoot.children) {
-                this.addXrayInfoToTree(node);
-                if (node instanceof RootNode) {
-                    node.setUpgradableDependencies(this._treesManager.scanCacheManager);
+        await ScanUtils.scanWithProgress(
+            async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
+                this.clearTree();
+                let workspaceRoot: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
+                let componentsToScan: Set<ComponentDetails> = new Set();
+                await DependenciesTreesFactory.createDependenciesTrees(
+                    this._workspaceFolders,
+                    componentsToScan,
+                    this._treesManager,
+                    workspaceRoot,
+                    quickScan
+                );
+                await this._scanLogicManager.scanAndCache(progress, componentsToScan, checkCanceled);
+                for (let node of workspaceRoot.children) {
+                    this.addXrayInfoToTree(node);
+                    if (node instanceof RootNode) {
+                        node.setUpgradableDependencies(this._treesManager.scanCacheManager);
+                    }
+                    node.issues = node.processTreeIssues();
                 }
-                node.issues = node.processTreeIssues();
-            }
-            onChangeFire();
-        }, 'Scanning project dependencies ');
+                onChangeFire();
+            },
+            'Scanning project dependencies ',
+            quickScan
+        );
     }
 
     private clearTree() {

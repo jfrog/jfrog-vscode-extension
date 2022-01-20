@@ -291,6 +291,8 @@ After your builds were fetched from Artifactory, press on the Builds ![Builds](r
 ![CI](resources/readme/gifs/ci.gif)
 
 ## Troubleshooting
+Change the log level to 'debug', 'info', 'warn', or 'err' in the [Extension Settings](#extension-settings).
+
 View the extension log:
 ![Logs](resources/readme/gifs/logs.gif)
 

@@ -102,9 +102,12 @@ export class PypiUtils {
             if (!pythonExtension) {
                 pythonExtension = await PypiUtils.getAndActivatePythonExtension();
                 if (!pythonExtension) {
-                    vscode.window.showErrorMessage(
-                        'Could not scan Pypi project dependencies, because python extension is not installed. ' +
-                            'Please install Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python'
+                    treesManager.logManager.logError(
+                        new Error(
+                            'Could not scan Pypi project dependencies, because python extension is not installed. ' +
+                                'Please install Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python'
+                        ),
+                        !quickScan
                     );
                     return;
                 }
@@ -112,12 +115,18 @@ export class PypiUtils {
 
             let pythonPath: string | undefined = PypiUtils.getPythonPath(pythonExtension, workspaceFolder);
             if (!pythonPath) {
-                vscode.window.showErrorMessage('Could not scan Pypi project dependencies, because python interpreter is not set.');
+                treesManager.logManager.logError(
+                    new Error('Could not scan Pypi project dependencies, because python interpreter is not set.'),
+                    !quickScan
+                );
                 return;
             }
             if (!PypiUtils.isInVirtualEnv(pythonPath, workspaceFolder.uri.fsPath, treesManager.logManager)) {
-                vscode.window.showErrorMessage(
-                    'Please install and activate a virtual environment before running Xray scan. Then, install your Python project in that environment.'
+                treesManager.logManager.logError(
+                    new Error(
+                        'Please install and activate a virtual environment before running Xray scan. Then, install your Python project in that environment.'
+                    ),
+                    !quickScan
                 );
                 return;
             }

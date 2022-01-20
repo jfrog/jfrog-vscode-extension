@@ -12,11 +12,17 @@ export class ScanUtils {
 
     public static async scanWithProgress(
         scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => Promise<void>,
-        title: string
+        title: string,
+        quickScan?: boolean
     ) {
+        if (quickScan) {
+            title = 'JFrog: ' + title;
+        }
         await vscode.window.withProgress(
             <vscode.ProgressOptions>{
-                location: vscode.ProgressLocation.Notification,
+                // Start progress in balloon only if the user initiated a full scan by clicking on the "Refresh" button.
+                // Otherwise - show the progress in the status bar.
+                location: quickScan ? vscode.ProgressLocation.Window : vscode.ProgressLocation.Notification,
                 title: title,
                 cancellable: true
             },

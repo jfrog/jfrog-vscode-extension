@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
+import { Configuration } from '../utils/configuration';
 
 type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERR';
 
@@ -28,12 +29,17 @@ export class LogManager implements ExtensionComponent {
      * @param level - The log level
      */
     public logMessage(message: string, level: LogLevel, focusOutput: boolean = false): void {
-        if (!!message) {
-            const title: string = new Date().toLocaleTimeString();
-            this._outputChannel.appendLine(`[${level} - ${title}] ${message}`);
-            if (focusOutput) {
-                this.showOutput();
-            }
+        if (!message) {
+            return;
+        }
+        let selectedLogLevel: LogLevel = Configuration.getLogLevel().toUpperCase() as LogLevel;
+        if (this.logLevelToNumber(level) < this.logLevelToNumber(selectedLogLevel)) {
+            return;
+        }
+        const title: string = new Date().toLocaleTimeString();
+        this._outputChannel.appendLine(`[${level} - ${title}] ${message}`);
+        if (focusOutput) {
+            this.showOutput();
         }
     }
 
@@ -44,16 +50,17 @@ export class LogManager implements ExtensionComponent {
      */
     public logError(error: Error, shouldToast: boolean) {
         this.setFailed();
-        this.logMessage(error.name, 'ERR');
+        let logMessage: string = error.name;
         if (error.message) {
-            this._outputChannel.appendLine(error.message);
+            logMessage += ': ' + error.message;
             if (shouldToast) {
                 vscode.window.showErrorMessage(error.message);
                 this.showOutput();
             }
         }
+        this.logMessage(logMessage, 'ERR');
         if (error.stack) {
-            this._outputChannel.appendLine(error.stack);
+            this.logMessage(error.stack, 'DEBUG');
         }
     }
 
@@ -76,5 +83,18 @@ export class LogManager implements ExtensionComponent {
      */
     private setFailed() {
         this._statusBar.text = 'JFrog: $(error)';
+    }
+
+    private logLevelToNumber(level: LogLevel): number {
+        switch (level) {
+            case 'DEBUG':
+                return 0;
+            case 'INFO':
+                return 1;
+            case 'WARN':
+                return 2;
+            case 'ERR':
+                return 3;
+        }
     }
 }
