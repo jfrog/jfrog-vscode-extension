@@ -4,6 +4,7 @@ import { IDetailsResponse } from 'jfrog-client-js';
 import * as os from 'os';
 import * as path from 'path';
 import { LogManager } from '../log/logManager';
+import * as crypto from 'crypto';
 
 export enum Type {
     BUILD_INFO,
@@ -17,22 +18,17 @@ export class BuildsScanCache {
 
     private readonly buildsDir: string;
 
-    constructor(private _projectName: string, private _logger: LogManager) {
-        this.buildsDir = path.resolve(BuildsScanCache.CACHE_BASE_PATH, this.getNameInBase64(this._projectName));
+    constructor(private _projectKey: string, private _url: string, private _logger: LogManager) {
+        this.buildsDir = path.resolve(BuildsScanCache.CACHE_BASE_PATH, this.sha1(this._projectKey + '_' + this._url));
         if (!fs.existsSync(this.buildsDir)) {
             fs.mkdirSync(this.buildsDir, { recursive: true });
         }
         this.cleanUpOldBuilds();
     }
 
-    private getNameInBase64(str: string) {
-        return Buffer.from(str).toString('base64');
-    }
-
     /**
      * Clean up old builds.
      * Sorting by the timestamp prefix, deleting from the beginning (oldest).
-     * @private
      */
     private cleanUpOldBuilds(): void {
         const currentBuildScanCaches: string[] = fs
@@ -83,7 +79,7 @@ export class BuildsScanCache {
 
     /**
      * Returns the expected file path to the zip in cache.
-     * Zip name for example: '012345_0<base64 build name>.zip'
+     * Zip name for example: '012345_0<sha1 of buildName_buildNumber_projectKey>.zip'
      * @param timestamp   - Build timestamp
      * @param buildName   - Build name
      * @param buildNumber - Build number
@@ -95,6 +91,18 @@ export class BuildsScanCache {
         if (projectKey) {
             buildIdentifier += '_' + projectKey;
         }
-        return path.resolve(this.buildsDir, timestamp + '_' + type.toString() + this.getNameInBase64(buildIdentifier) + '.zip');
+        return path.resolve(this.buildsDir, timestamp + '_' + type.toString() + this.sha1(buildIdentifier) + '.zip');
+    }
+
+    /**
+     * Calculates sha1 for the input string.
+     * @param data - The string to hash
+     * @returns sha1 representation of the input string.
+     */
+    private sha1(data: string) {
+        return crypto
+            .createHash('sha1')
+            .update(data, 'binary')
+            .digest('hex');
     }
 }

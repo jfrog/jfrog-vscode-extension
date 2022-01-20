@@ -31,7 +31,11 @@ export class CiManager {
     private root: DependenciesTreeNode;
 
     constructor(private _treesManager: TreesManager, root?: DependenciesTreeNode) {
-        this.buildsCache = new BuildsScanCache(Configuration.getBuildsPattern(), this._treesManager.logManager);
+        this.buildsCache = new BuildsScanCache(
+            Configuration.getProjectKey(),
+            this._treesManager.connectionManager.url,
+            this._treesManager.logManager
+        );
         if (!root) {
             this.root = new DependenciesTreeNode(new GeneralInfo('', '', ['None'], '', ''), vscode.TreeItemCollapsibleState.Expanded, undefined, '');
         } else {
@@ -375,11 +379,11 @@ export class CiManager {
             let build: any =
                 buildsCache.loadBuildInfo(timestamp, buildName, buildNumber, projectKey) ||
                 (await this.downloadBuildInfo(searchEntry, buildsCache, projectKey));
-            let buildGeneralInfo: BuildGeneralInfo = BuildsUtils.createBuildGeneralInfo(build, this._treesManager.logManager);
             if (!build) {
                 progress.report({ message: `${buildsNum} builds`, increment: 100 / (buildsNum * 2) });
                 return;
             }
+            let buildGeneralInfo: BuildGeneralInfo = BuildsUtils.createBuildGeneralInfo(build, this._treesManager.logManager);
             this.addResults(buildGeneralInfo);
             consumerQueue.add(() =>
                 this.handleXrayBuildDetails(buildGeneralInfo, buildsCache, progress, checkCanceled, buildsNum, xraySupported, projectKey)
