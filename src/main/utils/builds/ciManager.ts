@@ -374,7 +374,7 @@ export class CiManager {
                 throw new Error('unexpected build artifact name');
             }
             const buildNumber: string = split[0];
-            const timestamp: string = split[1];
+            const timestamp: string = split[1].replace(/.json$/, '');
 
             let build: any =
                 buildsCache.loadBuildInfo(timestamp, buildName, buildNumber, projectKey) ||
