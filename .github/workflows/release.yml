@@ -1,35 +1,45 @@
 name: Release
 
 on:
-    release:
-        types: published
+  release:
+    types: [published]
 jobs:
-    release:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v2
-            - name: Config Github
-              run: git config --global user.name ${{ github.actor }}
-            - name: Setup NodeJS
-              uses: actions/setup-node@v2
-              with:
-                  node-version: '14'
-                  check-latest: true
-            - name: Install vsce
-              run: npm i -g vsce
-            - name: Install
-              run: npm i
-            - name: Lint
-              run: npm run lint
-            - name: Publish to marketplace
-              run: echo ${{ github.ref }} | cut -c 11- | xargs vsce publish -p ${{ secrets.VS_MARKETPLACE_TOKEN }}
-            - name: Push changes
-              uses: ad-m/github-push-action@master
-              with:
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
-            - name: Build
-              run: vsce package
-            - name: Upload asset
-              run: cd releaseScripts && npm i && node uploadAsset.js
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Config Github
+        run: git config --global user.name ${{ github.actor }}
+      - name: Setup NodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: "14"
+          check-latest: true
+
+      # Install and update version
+      - name: Install
+        run: npm i
+      - name: Lint
+        run: npm run lint
+      - name: Update version
+        run: echo ${{ github.ref }} | cut -c 11- | xargs npm version
+
+      # Publish to marketplaces
+      - name: Publish to VS marketplace
+        run: npx vsce publish -p ${{ secrets.VS_MARKETPLACE_TOKEN }}
+      - name: Publish to the Open VSX Registry
+        run: npx ovsx publish -p ${{ secrets.OPEN_VSX_REGISTRY_TOKEN }}
+
+      # Push to GitHub
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Upload the .VSIX file to the release
+      - name: Build
+        run: vsce package
+      - name: Upload asset
+        run: cd releaseScripts && npm i && node uploadAsset.js
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
