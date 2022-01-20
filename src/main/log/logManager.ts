@@ -50,14 +50,15 @@ export class LogManager implements ExtensionComponent {
      */
     public logError(error: Error, shouldToast: boolean) {
         this.setFailed();
-        this.logMessage(error.name, 'ERR');
-        this.logMessage(error.message, 'ERR');
+        let logMessage: string = error.name;
         if (error.message) {
+            logMessage += ': ' + error.message;
             if (shouldToast) {
                 vscode.window.showErrorMessage(error.message);
                 this.showOutput();
             }
         }
+        this.logMessage(logMessage, 'ERR');
         if (error.stack) {
             this.logMessage(error.stack, 'DEBUG');
         }

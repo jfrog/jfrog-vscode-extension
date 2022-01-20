@@ -20,6 +20,8 @@ export class ScanUtils {
         }
         await vscode.window.withProgress(
             <vscode.ProgressOptions>{
+                // Start progress in balloon only if the user initiated a full scan by clicking on the "Refresh" button.
+                // Otherwise - show the progress in the status bar.
                 location: quickScan ? vscode.ProgressLocation.Window : vscode.ProgressLocation.Notification,
                 title: title,
                 cancellable: true
