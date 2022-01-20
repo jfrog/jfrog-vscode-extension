@@ -38,7 +38,7 @@ jobs:
 
       # Upload the .VSIX file to the release
       - name: Build
-        run: vsce package
+        run: npx vsce package
       - name: Upload asset
         run: cd releaseScripts && npm i && node uploadAsset.js
         env:
