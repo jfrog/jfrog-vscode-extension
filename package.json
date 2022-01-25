@@ -237,7 +237,7 @@
                     "*filespec*.json",
                     "*.filespec"
                 ],
-                "url": "https://github.com/jfrog/jfrog-cli/raw/master/schema/filespec-schema.json"
+                "url": "https://github.com/jfrog/jfrog-cli/raw/v2/schema/filespec-schema.json"
             }
         ]
     },
