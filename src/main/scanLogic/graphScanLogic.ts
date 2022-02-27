@@ -24,8 +24,12 @@ export class GraphScanLogic extends AbstractScanLogic {
         componentsToScan: Set<ComponentDetails>,
         checkCanceled: () => void
     ) {
-        progress.report({ message: `${componentsToScan.size()} components` });
-        let graphResponse: IGraphResponse = await this._connectionManager.scanGraph(componentsToScan, checkCanceled, Configuration.getProjectKey());
+        let graphResponse: IGraphResponse = await this._connectionManager.scanGraph(
+            componentsToScan,
+            progress,
+            checkCanceled,
+            Configuration.getProjectKey()
+        );
         let scannedComponents: Map<string, INodeInfo> = new Map();
         let licenses: Dictionary<string, ILicenseCacheObject> = new Dictionary();
         let issues: IIssueCacheObject[] = [];

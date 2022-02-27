@@ -28,7 +28,7 @@ export class DependencyUpdateManager implements ExtensionComponent {
         if (!fixedVersion) {
             return false;
         }
-        fixedVersion = fixedVersion.replace(/[\][]/g, '')
+        fixedVersion = fixedVersion.replace(/[\][]/g, '');
         this._dependencyUpdaters
             .filter(node => node.isMatched(dependenciesTreeNode))
             .forEach(node => node.updateDependencyVersion(dependenciesTreeNode, fixedVersion));
