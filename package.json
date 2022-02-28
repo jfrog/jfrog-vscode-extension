@@ -266,9 +266,9 @@
         "xmlbuilder2": "~3.0.2"
     },
     "devDependencies": {
+        "@faker-js/faker": "^6.0.0-alpha.7",
         "@types/adm-zip": "^0.4.34",
         "@types/chai": "^4.2.21",
-        "@types/faker": "^5.5.7",
         "@types/fs-extra": "^9.0.12",
         "@types/glob": "^7.1.4",
         "@types/mocha": "^9.0.0",
@@ -280,7 +280,6 @@
         "chai": "^4.3.4",
         "eslint": "^8.1.0",
         "eslint-config-prettier": "^8.3.0",
-        "faker": "^5.5.3",
         "glob": "^7.1.7",
         "mocha": "^9.1.3",
         "ovsx": "^0.2.1",

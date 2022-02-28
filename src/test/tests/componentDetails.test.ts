@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import * as faker from 'faker';
+import { faker } from '@faker-js/faker';
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { ComponentDetailsDataProvider, LicensesNode } from '../../main/treeDataProviders/componentDetailsDataProvider';
