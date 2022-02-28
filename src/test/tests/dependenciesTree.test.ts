@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import * as faker from 'faker';
+import { faker } from '@faker-js/faker';
 import { before } from 'mocha';
 import * as Collections from 'typescript-collections';
 import { IIssueKey } from '../../main/types/issueKey';
