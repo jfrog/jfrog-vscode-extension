@@ -19,9 +19,9 @@ export class CsvVulnerabilitiesExporter extends CsvExporter {
             new CsvField('impactedDependencyName', CsvVulnerabilitiesExporter.IMPACTED_DEPENDENCY_COL),
             new CsvField('impactedDependencyVersion', CsvVulnerabilitiesExporter.IMPACTED_DEPENDENCY_VERSION_COL),
             new CsvField('type', CsvVulnerabilitiesExporter.TYPE_COL),
-            new CsvField((row: any) => row.fixedVersions.join(';'), CsvVulnerabilitiesExporter.FIXED_VERSION_COL),
-            new CsvField((row: any) => row.directDependencies.join(';'), CsvVulnerabilitiesExporter.DIRECT_DEPENDENCIES_COL),
-            new CsvField((row: any) => row.cves.join(';'), CsvVulnerabilitiesExporter.CVES_COL),
+            new CsvField((row: any) => row.fixedVersions?.join(';'), CsvVulnerabilitiesExporter.FIXED_VERSION_COL),
+            new CsvField((row: any) => row.directDependencies?.join(';'), CsvVulnerabilitiesExporter.DIRECT_DEPENDENCIES_COL),
+            new CsvField((row: any) => row.cves?.join(';'), CsvVulnerabilitiesExporter.CVES_COL),
             new CsvField('issueId', CsvVulnerabilitiesExporter.ISSUE_ID_COL),
             new CsvField('summary', CsvVulnerabilitiesExporter.SUMMARY_COL)
         ];
