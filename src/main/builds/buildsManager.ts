@@ -6,7 +6,7 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { GeneralInfo } from '../types/generalInfo';
 
 /**
- * Manage the filters of the components tree.
+ * Manage the build tree in the CI view.
  */
 export class BuildsManager implements ExtensionComponent {
     constructor(private _treesManager: TreesManager) {}

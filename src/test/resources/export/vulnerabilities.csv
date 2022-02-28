@@ -1,0 +1,4 @@
+"SEVERITY","IMPACTED DEPENDENCY","VERSION","TYPE","FIXED VERSIONS","DIRECT DEPENDENCIES","CVES","ISSUE ID","SUMMARY"
+"Critical","impacted-1","1.0.0","Go","2.0.0;3.0.0","node-1:1.0.0;node-2:1.1.0","CVE-1;CVE-11","XRAY-1","Issue 1 summary"
+"High","impacted-3","1.0.0","Go","4.0.0","node-2:1.1.0","CVE-3","XRAY-3","Issue 3 summary"
+"Low","impacted-2","1.0.0","Go","1.0.0","node-2:1.1.0","CVE-2","XRAY-2","Issue 2 summary"

@@ -13,6 +13,7 @@ import { TreeDataHolder } from '../treeDataProviders/utils/treeDataHolder';
 import { ScanUtils } from '../utils/scanUtils';
 import { BuildsManager } from '../builds/buildsManager';
 import { Configuration } from '../utils/configuration';
+import { ExportManager } from '../export/exportManager';
 
 /**
  * Register and execute all commands in the extension.
@@ -26,7 +27,8 @@ export class CommandManager implements ExtensionComponent {
         private _focusManager: FocusManager,
         private _exclusionManager: ExclusionsManager,
         private _DependencyUpdateManager: DependencyUpdateManager,
-        private _buildsManager: BuildsManager
+        private _buildsManager: BuildsManager,
+        private _exportManager: ExportManager
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
@@ -45,6 +47,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.local', () => this.doLocal());
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
         this.registerCommand(context, 'jfrog.xray.builds', () => this.doBuildSelected());
+        this.registerCommand(context, 'jfrog.xray.export', () => this.doExport());
         this.updateLocalCiIcons();
     }
 
@@ -249,5 +252,12 @@ export class CommandManager implements ExtensionComponent {
     private onSelectNode(dependenciesTreeNode: DependenciesTreeNode) {
         this._treesManager.componentDetailsDataProvider.selectNode(dependenciesTreeNode);
         this._treesManager.issuesDataProvider.selectNode(dependenciesTreeNode);
+    }
+
+    /**
+     * Export vulnerabilities/violations to an external file.
+     */
+    private doExport() {
+        this._exportManager.showExportMenu();
     }
 }

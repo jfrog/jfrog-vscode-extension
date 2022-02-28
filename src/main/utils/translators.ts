@@ -56,7 +56,13 @@ export class Translators {
     private static toCves(clientCves: ICve[]): string[] {
         let cves: string[] = [];
         if (clientCves) {
-            clientCves.filter(cve => cve.cve).forEach(cve => cves.push(cve.cve));
+            clientCves
+                .filter(cve => cve.cve)
+                .forEach(cve => {
+                    if (!!cve.cve) {
+                        cves.push(cve.cve);
+                    }
+                });
         }
         return cves;
     }
