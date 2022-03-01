@@ -1,13 +1,13 @@
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { ExportableVulnerability } from './exportable/exportableVulnerability';
-import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
-import { IIssueCacheObject } from '../types/issueCacheObject';
-import { IIssueKey } from '../types/issueKey';
+import * as fs from 'fs';
+import * as path from 'path';
 import Dictionary from 'typescript-collections/dist/lib/Dictionary';
 import * as vscode from 'vscode';
-import * as fs from 'fs';
 import { ScanCacheManager } from '../scanCache/scanCacheManager';
-import * as path from 'path';
+import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
+import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { IIssueCacheObject } from '../types/issueCacheObject';
+import { IIssueKey } from '../types/issueKey';
+import { ExportableVulnerability } from './exportable/exportableVulnerability';
 
 export abstract class Exporter {
     private static FILE_SAVE_LABEL: string = 'Export';

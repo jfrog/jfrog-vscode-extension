@@ -1,10 +1,10 @@
-import { Exporter } from '../exporter';
-import { ExportableVulnerability } from '../exportable/exportableVulnerability';
-import { CsvField } from './csvField';
 import { Parser } from 'json2csv';
-import { SeverityUtils } from '../../types/severity';
-import { DependenciesTreeNode } from '../../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { ScanCacheManager } from '../../scanCache/scanCacheManager';
+import { DependenciesTreeNode } from '../../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { SeverityUtils } from '../../types/severity';
+import { ExportableVulnerability } from '../exportable/exportableVulnerability';
+import { Exporter } from '../exporter';
+import { CsvField } from './csvField';
 
 export abstract class CsvExporter extends Exporter {
     static SEVERITY_COL: string = 'SEVERITY';

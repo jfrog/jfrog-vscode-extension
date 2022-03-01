@@ -1,11 +1,11 @@
+import { ScanCacheManager } from '../../scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { IIssueCacheObject } from '../../types/issueCacheObject';
 import { IIssueKey } from '../../types/issueKey';
 import { ExportableVulnerability } from '../exportable/exportableVulnerability';
-import { CsvVulnerabilityRow } from './csvVulnerabilityRow';
-import { CsvField } from './csvField';
 import { CsvExporter } from './csvExporter';
-import { ScanCacheManager } from '../../scanCache/scanCacheManager';
+import { CsvField } from './csvField';
+import { CsvVulnerabilityRow } from './csvVulnerabilityRow';
 
 export class CsvVulnerabilitiesExporter extends CsvExporter {
     constructor(_root: DependenciesTreeNode, _scanCacheManager: ScanCacheManager) {

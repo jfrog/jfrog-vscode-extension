@@ -1,10 +1,8 @@
-import { ExtensionComponent } from '../extensionComponent';
-
 import * as vscode from 'vscode';
+import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { CsvVulnerabilitiesExporter } from './csv/csvVulnerabilitiesExporter';
-
 import { TreesManager } from '../treeDataProviders/treesManager';
+import { CsvVulnerabilitiesExporter } from './csv/csvVulnerabilitiesExporter';
 
 enum ExportTypes {
     CSV_VULNERABILITIES = '$(file-text)   CSV - Vulnerabilities'
