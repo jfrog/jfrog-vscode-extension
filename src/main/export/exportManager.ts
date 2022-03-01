@@ -25,20 +25,24 @@ export class ExportManager implements ExtensionComponent {
         });
         switch (choice) {
             case ExportTypes.CSV_VULNERABILITIES:
-                return await new CsvVulnerabilitiesExporter(
-                    this._treeManager.dependenciesTreeDataProvider.dependenciesTree,
-                    this._treeManager.scanCacheManager
-                ).generateVulnerabilitiesReportFile(this._workspaceFolders);
+                return await new CsvVulnerabilitiesExporter(this.getRoot(), this._treeManager.scanCacheManager).generateVulnerabilitiesReportFile(
+                    this._workspaceFolders
+                );
         }
     }
 
     private getExports(): string[] {
         let results: string[] = [];
-        let root: DependenciesTreeNode = this._treeManager.dependenciesTreeDataProvider.dependenciesTree;
+        let root: DependenciesTreeNode = this.getRoot();
         // If there are any issues, allow exporting vulnerabilities.
         if (!root.issues.isEmpty() || root.children.some(element => !element.issues.isEmpty())) {
             results.push(ExportTypes.CSV_VULNERABILITIES);
         }
         return results;
+    }
+
+    private getRoot(): DependenciesTreeNode {
+        let filteredTree: DependenciesTreeNode | undefined = this._treeManager.dependenciesTreeDataProvider.filteredDependenciesTree;
+        return filteredTree ? filteredTree : this._treeManager.dependenciesTreeDataProvider.dependenciesTree;
     }
 }
