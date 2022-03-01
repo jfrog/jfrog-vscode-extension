@@ -80,4 +80,37 @@ describe('Translators Tests', () => {
         expect(issues.cves).to.have.members(['CVE-2020-1', 'CVE-2020-2']);
         expect(issues.cves.toString()).to.be.oneOf(['CVE-2020-1,CVE-2020-2', 'CVE-2020-2,CVE-2020-1']);
     });
+
+    it('References - One reference', async () => {
+        let issues: IIssueCacheObject = Translators.toCacheIssue({ references: ['www.a.com'] } as IIssue);
+        assert.lengthOf(issues.references || [], 1);
+        assert.equal(issues.references[0], 'www.a.com');
+    });
+
+    it('References - One GitHub reference', async () => {
+        let issues: IIssueCacheObject = Translators.toCacheIssue({ references: ['[a](www.a.com)'] } as IIssue);
+        assert.lengthOf(issues.references || [], 1);
+        assert.equal(issues.references[0], 'www.a.com');
+    });
+
+    it('References - Two references', async () => {
+        let issues: IIssueCacheObject = Translators.toCacheIssue({ references: ['www.a.com', 'www.b.com'] } as IIssue);
+        assert.lengthOf(issues.references || [], 2);
+        assert.equal(issues.references[0], 'www.a.com');
+        assert.equal(issues.references[1], 'www.b.com');
+    });
+
+    it('References - Two combined references', async () => {
+        let issues: IIssueCacheObject = Translators.toCacheIssue({ references: ['www.a.com\nwww.b.com'] } as IIssue);
+        assert.lengthOf(issues.references || [], 2);
+        assert.equal(issues.references[0], 'www.a.com');
+        assert.equal(issues.references[1], 'www.b.com');
+    });
+
+    it('References - Two GitHub combined references', async () => {
+        let issues: IIssueCacheObject = Translators.toCacheIssue({ references: ['[a](www.a.com)\n[b](www.b.com)'] } as IIssue);
+        assert.lengthOf(issues.references || [], 2);
+        assert.equal(issues.references[0], 'www.a.com');
+        assert.equal(issues.references[1], 'www.b.com');
+    });
 });

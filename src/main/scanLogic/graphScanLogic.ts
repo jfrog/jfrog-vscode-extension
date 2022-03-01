@@ -1,4 +1,4 @@
-import { ComponentDetails, ICve, IGraphLicense, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
+import { ComponentDetails, IGraphLicense, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
 import Dictionary from 'typescript-collections/dist/lib/Dictionary';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
@@ -74,7 +74,8 @@ export class GraphScanLogic extends AbstractScanLogic {
                 severity: severity,
                 summary: vuln.summary != '' ? vuln.summary : 'N/A',
                 fixedVersions: vulnComponent.fixed_versions,
-                cves: this.getCves(vuln.cves)
+                cves: Translators.toCves(vuln.cves),
+                references: vuln.references
             } as IIssueCacheObject);
 
             // Add vulnerability to the scanned commponents map
@@ -139,17 +140,6 @@ export class GraphScanLogic extends AbstractScanLogic {
                 scannedComponents.set(componentId, this.createNodeInfo());
             }
         });
-    }
-
-    private getCves(graphCves: ICve[] | undefined): string[] {
-        let cves: string[] = [];
-        if (!graphCves) {
-            return cves;
-        }
-        for (let cve of graphCves) {
-            cves.push(cve.cve);
-        }
-        return cves;
     }
 
     private getShortComponentId(componentId: string): string {
