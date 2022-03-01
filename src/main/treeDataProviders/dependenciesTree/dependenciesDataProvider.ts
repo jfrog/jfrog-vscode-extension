@@ -31,6 +31,10 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         return this._dependenciesTree;
     }
 
+    public get filteredDependenciesTree() {
+        return this._filteredDependenciesTree;
+    }
+
     public async stateChange(onChangeFire: () => void) {
         if (!this.dependenciesTree) {
             this.refresh(false, onChangeFire);

@@ -14,6 +14,7 @@ import { LogManager } from './main/log/logManager';
 import { DependencyUpdateManager } from './main/dependencyUpdate/dependencyUpdateManager';
 import { BuildsManager } from './main/builds/buildsManager';
 import { ScanLogicManager } from './main/scanLogic/scanLogicManager';
+import { ExportManager } from './main/export/exportManager';
 
 /**
  * This method is called when the extension is activated.
@@ -38,6 +39,7 @@ export async function activate(context: vscode.ExtensionContext) {
     let exclusionManager: ExclusionsManager = new ExclusionsManager(treesManager).activate();
     let dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager(scanCacheManager).activate();
     let buildsManager: BuildsManager = new BuildsManager(treesManager).activate();
+    let exportManager: ExportManager = new ExportManager(workspaceFolders, treesManager).activate();
 
     new DiagnosticsManager(treesManager).activate(context);
     new WatcherManager(treesManager).activate(context);
@@ -51,6 +53,7 @@ export async function activate(context: vscode.ExtensionContext) {
         focusManager,
         exclusionManager,
         dependencyUpdateManager,
-        buildsManager
+        buildsManager,
+        exportManager
     ).activate(context);
 }

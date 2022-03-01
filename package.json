@@ -169,6 +169,12 @@
                     "dark": "resources/dark/ci.png"
                 },
                 "enablement": "!scanInProgress"
+            },
+            {
+                "command": "jfrog.xray.export",
+                "title": "Export",
+                "icon": "$(link-external)",
+                "enablement": "!scanInProgress"
             }
         ],
         "menus": {
@@ -207,6 +213,11 @@
                     "command": "jfrog.xray.refresh",
                     "when": "view == jfrog.xray",
                     "group": "navigation@4"
+                },
+                {
+                    "command": "jfrog.xray.export",
+                    "when": "view == jfrog.xray && isLocal",
+                    "group": "navigation@5"
                 }
             ],
             "view/item/context": [
@@ -257,6 +268,7 @@
         "adm-zip": "~0.5.5",
         "fs-extra": "~10.0.0",
         "jfrog-client-js": "^2.3.0",
+        "json2csv": "^5.0.7",
         "keytar": "~7.7.0",
         "nuget-deps-tree": "^0.2.2",
         "original-fs": "^1.1.0",
@@ -271,6 +283,7 @@
         "@types/chai": "^4.2.21",
         "@types/fs-extra": "^9.0.12",
         "@types/glob": "^7.1.4",
+        "@types/json2csv": "^5.0.3",
         "@types/mocha": "^9.0.0",
         "@types/semver": "^7.3.8",
         "@types/tmp": "^0.2.1",
