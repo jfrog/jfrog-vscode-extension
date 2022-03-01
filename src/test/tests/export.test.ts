@@ -13,7 +13,7 @@ import { IIssueCacheObject } from '../../main/types/issueCacheObject';
 import { Severity } from '../../main/types/severity';
 import { IIssueKey } from '../../main/types/issueKey';
 import { CsvVulnerabilitiesExporter } from '../../main/export/csv/csvVulnerabilitiesExporter';
-import { Exporter } from '../../main/export/exporter';
+import { AbstractExporter } from '../../main/export/abstractExporter';
 
 /**
  * Test functionality of exports.
@@ -23,7 +23,7 @@ describe('Exports Tests', () => {
     let resourceDir: string = path.join(__dirname, '..', 'resources', 'export');
 
     it('Generate vulnerabilities report', async () => {
-        let exporter: Exporter = new CsvVulnerabilitiesExporter(createTestTree(), scanCacheManager);
+        let exporter: AbstractExporter = new CsvVulnerabilitiesExporter(createTestTree(), scanCacheManager);
         let data: string = await (await exporter.generateVulnerabilitiesReportData()).trim();
         let expected: string = fs.readFileSync(path.join(resourceDir, 'vulnerabilities.csv'), 'utf8').trim();
         assert.equal(data, expected);

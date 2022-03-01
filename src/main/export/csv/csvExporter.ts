@@ -2,11 +2,11 @@ import { Parser } from 'json2csv';
 import { ScanCacheManager } from '../../scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { SeverityUtils } from '../../types/severity';
+import { AbstractExporter } from '../abstractExporter';
 import { ExportableVulnerability } from '../exportable/exportableVulnerability';
-import { Exporter } from '../exporter';
 import { CsvField } from './csvField';
 
-export abstract class CsvExporter extends Exporter {
+export abstract class CsvExporter extends AbstractExporter {
     static SEVERITY_COL: string = 'SEVERITY';
     static IMPACTED_DEPENDENCY_COL: string = 'IMPACTED DEPENDENCY';
     static IMPACTED_DEPENDENCY_VERSION_COL: string = 'VERSION';
