@@ -30,9 +30,8 @@ export abstract class CsvExporter extends AbstractExporter {
     abstract getCsvFields(): CsvField[];
 
     private async createCsvFileFromRows(rows: any[]): Promise<string> {
-        let json2csvParser: Parser<any> = new Parser({ fields: this.getCsvFields() });
-        let csvData: string = json2csvParser.parse(rows);
-        return csvData;
+        let json2csvParser: Parser<string> = new Parser({ fields: this.getCsvFields() });
+        return json2csvParser.parse(rows);
     }
 
     /** @override */

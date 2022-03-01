@@ -1,19 +1,16 @@
 import { assert } from 'chai';
-
-import * as path from 'path';
-
 import * as fs from 'fs';
+import * as path from 'path';
+import { AbstractExporter } from '../../main/export/abstractExporter';
+import { CsvVulnerabilitiesExporter } from '../../main/export/csv/csvVulnerabilitiesExporter';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
-
 import { GeneralInfo } from '../../main/types/generalInfo';
+import { IIssueCacheObject } from '../../main/types/issueCacheObject';
+import { IIssueKey } from '../../main/types/issueKey';
+import { Severity } from '../../main/types/severity';
 import { GoUtils } from '../../main/utils/goUtils';
 import { createScanCacheManager } from './utils/utils.test';
-import { IIssueCacheObject } from '../../main/types/issueCacheObject';
-import { Severity } from '../../main/types/severity';
-import { IIssueKey } from '../../main/types/issueKey';
-import { CsvVulnerabilitiesExporter } from '../../main/export/csv/csvVulnerabilitiesExporter';
-import { AbstractExporter } from '../../main/export/abstractExporter';
 
 /**
  * Test functionality of exports.
