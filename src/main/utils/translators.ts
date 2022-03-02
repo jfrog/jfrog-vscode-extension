@@ -20,7 +20,6 @@ export class Translators {
             summary: clientIssue.summary,
             severity: Translators.toSeverity(clientIssue.severity),
             cves: Translators.toCves(clientIssue.cves),
-            references: Translators.cleanReferencesLink(clientIssue.references),
             fixedVersions: Translators.toFixedVersions(clientIssue.components)
         } as IIssueCacheObject;
     }
@@ -84,7 +83,7 @@ export class Translators {
         return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
     }
 
-    private static cleanReferencesLink(references: string[] | undefined): string[] {
+    public static cleanReferencesLink(references: string[] | undefined): string[] {
         let results: string[] = [];
         if (!references) {
             return [];

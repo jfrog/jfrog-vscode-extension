@@ -75,7 +75,7 @@ export class GraphScanLogic extends AbstractScanLogic {
                 summary: vuln.summary != '' ? vuln.summary : 'N/A',
                 fixedVersions: vulnComponent.fixed_versions,
                 cves: Translators.toCves(vuln.cves),
-                references: vuln.references
+                references: Translators.cleanReferencesLink(vuln.references)
             } as IIssueCacheObject);
 
             // Add vulnerability to the scanned commponents map

@@ -82,35 +82,35 @@ describe('Translators Tests', () => {
     });
 
     it('References - One reference', async () => {
-        let issues: IIssueCacheObject = Translators.toCacheIssue({ references: ['www.a.com'] } as IIssue);
-        assert.lengthOf(issues.references || [], 1);
-        assert.equal(issues.references[0], 'www.a.com');
+        let cleaned: string[] = Translators.cleanReferencesLink(['www.a.com']);
+        assert.lengthOf(cleaned, 1);
+        assert.equal(cleaned[0], 'www.a.com');
     });
 
-    it('References - One GitHub reference', async () => {
-        let issues: IIssueCacheObject = Translators.toCacheIssue({ references: ['[a](www.a.com)'] } as IIssue);
-        assert.lengthOf(issues.references || [], 1);
-        assert.equal(issues.references[0], 'www.a.com');
+    it('References - One Markdown reference', async () => {
+        let cleaned: string[] = Translators.cleanReferencesLink(['[a](www.a.com)']);
+        assert.lengthOf(cleaned || [], 1);
+        assert.equal(cleaned[0], 'www.a.com');
     });
 
     it('References - Two references', async () => {
-        let issues: IIssueCacheObject = Translators.toCacheIssue({ references: ['www.a.com', 'www.b.com'] } as IIssue);
-        assert.lengthOf(issues.references || [], 2);
-        assert.equal(issues.references[0], 'www.a.com');
-        assert.equal(issues.references[1], 'www.b.com');
+        let cleaned: string[] = Translators.cleanReferencesLink(['www.a.com', 'www.b.com']);
+        assert.lengthOf(cleaned || [], 2);
+        assert.equal(cleaned[0], 'www.a.com');
+        assert.equal(cleaned[1], 'www.b.com');
     });
 
     it('References - Two combined references', async () => {
-        let issues: IIssueCacheObject = Translators.toCacheIssue({ references: ['www.a.com\nwww.b.com'] } as IIssue);
-        assert.lengthOf(issues.references || [], 2);
-        assert.equal(issues.references[0], 'www.a.com');
-        assert.equal(issues.references[1], 'www.b.com');
+        let cleaned: string[] = Translators.cleanReferencesLink(['www.a.com\nwww.b.com']);
+        assert.lengthOf(cleaned || [], 2);
+        assert.equal(cleaned[0], 'www.a.com');
+        assert.equal(cleaned[1], 'www.b.com');
     });
 
-    it('References - Two GitHub combined references', async () => {
-        let issues: IIssueCacheObject = Translators.toCacheIssue({ references: ['[a](www.a.com)\n[b](www.b.com)'] } as IIssue);
-        assert.lengthOf(issues.references || [], 2);
-        assert.equal(issues.references[0], 'www.a.com');
-        assert.equal(issues.references[1], 'www.b.com');
+    it('References - Two Markdown combined references', async () => {
+        let cleaned: string[] = Translators.cleanReferencesLink(['[a](www.a.com)\n[b](www.b.com)']);
+        assert.lengthOf(cleaned || [], 2);
+        assert.equal(cleaned[0], 'www.a.com');
+        assert.equal(cleaned[1], 'www.b.com');
     });
 });

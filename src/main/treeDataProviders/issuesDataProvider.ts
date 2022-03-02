@@ -67,10 +67,12 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
         if (element instanceof LicensesTitleNode) {
             return Promise.resolve(this.getLicenseNodes(element));
         }
+
         // References node - Return references
         if (element instanceof ReferencesNode) {
             return Promise.resolve(element.getChildren());
         }
+
         // License selected
         return Promise.resolve(this.getViolatedLicenseComponentsNodes(element as ViolatedLicenseNode));
     }
@@ -141,13 +143,13 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
         if (cves && cves.length > 0) {
             children.push(new TreeDataHolder('CVEs', cves.toString()));
         }
-        let references: string[] | undefined = node.references;
-        if (references && references.length > 0) {
-            children.push(new ReferencesNode(references));
-        }
         let fixedVersions: string[] | undefined = node.fixedVersions;
         if (fixedVersions && fixedVersions.length > 0) {
             children.push(new TreeDataHolder('Fixed Versions', fixedVersions.join(', ')));
+        }
+        let references: string[] | undefined = node.references;
+        if (references && references.length > 0) {
+            children.push(new ReferencesNode(references));
         }
         return children;
     }
@@ -235,9 +237,7 @@ export class ReferencesNode extends vscode.TreeItem {
     constructor(readonly references?: string[]) {
         super('References', vscode.TreeItemCollapsibleState.Collapsed);
     }
-    public length(): number {
-        return this.references?.length || 0;
-    }
+
     public getChildren(): any[] {
         let children: any[] = [];
         this.references?.forEach(reference => {
