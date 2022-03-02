@@ -68,6 +68,11 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
             return Promise.resolve(this.getLicenseNodes(element));
         }
 
+        // References node - Return references
+        if (element instanceof ReferencesNode) {
+            return Promise.resolve(element.getChildren());
+        }
+
         // License selected
         return Promise.resolve(this.getViolatedLicenseComponentsNodes(element as ViolatedLicenseNode));
     }
@@ -114,6 +119,7 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
                 issue.severity,
                 issue.summary,
                 issue.cves,
+                issue.references,
                 xrayIssueId.component,
                 issue.fixedVersions
             );
@@ -128,8 +134,8 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
      * @param node - the vulnerability node
      * @returns Severity, Component, CVEs, and Fixed Versions of a vulnerability
      */
-    private getVulnerabilityDetailsNodes(node: VulnerabilityNode): TreeDataHolder[] {
-        let children: TreeDataHolder[] = [
+    private getVulnerabilityDetailsNodes(node: VulnerabilityNode): (TreeDataHolder | ReferencesNode)[] {
+        let children: (TreeDataHolder | ReferencesNode)[] = [
             new TreeDataHolder('Severity', SeverityUtils.getString(node.severity)),
             new TreeDataHolder('Component', node.component)
         ];
@@ -140,6 +146,10 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
         let fixedVersions: string[] | undefined = node.fixedVersions;
         if (fixedVersions && fixedVersions.length > 0) {
             children.push(new TreeDataHolder('Fixed Versions', fixedVersions.join(', ')));
+        }
+        let references: string[] | undefined = node.references;
+        if (references && references.length > 0) {
+            children.push(new ReferencesNode(references));
         }
         return children;
     }
@@ -214,10 +224,25 @@ export class VulnerabilityNode extends vscode.TreeItem {
         readonly severity: Severity,
         readonly summary: string,
         readonly cves?: string[],
+        readonly references?: string[],
         readonly component?: string,
         readonly fixedVersions?: string[]
     ) {
         super(summary, vscode.TreeItemCollapsibleState.Collapsed);
         this.iconPath = SeverityUtils.getIcon(severity ? severity : Severity.Normal);
+    }
+}
+
+export class ReferencesNode extends vscode.TreeItem {
+    constructor(readonly references?: string[]) {
+        super('References', vscode.TreeItemCollapsibleState.Collapsed);
+    }
+
+    public getChildren(): any[] {
+        let children: any[] = [];
+        this.references?.forEach(reference => {
+            children.push(new TreeDataHolder(reference, '', reference));
+        });
+        return children;
     }
 }

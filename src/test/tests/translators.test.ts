@@ -80,4 +80,37 @@ describe('Translators Tests', () => {
         expect(issues.cves).to.have.members(['CVE-2020-1', 'CVE-2020-2']);
         expect(issues.cves.toString()).to.be.oneOf(['CVE-2020-1,CVE-2020-2', 'CVE-2020-2,CVE-2020-1']);
     });
+
+    it('References - One reference', async () => {
+        let cleaned: string[] = Translators.cleanReferencesLink(['www.a.com']);
+        assert.lengthOf(cleaned, 1);
+        assert.equal(cleaned[0], 'www.a.com');
+    });
+
+    it('References - One Markdown reference', async () => {
+        let cleaned: string[] = Translators.cleanReferencesLink(['[a](www.a.com)']);
+        assert.lengthOf(cleaned || [], 1);
+        assert.equal(cleaned[0], 'www.a.com');
+    });
+
+    it('References - Two references', async () => {
+        let cleaned: string[] = Translators.cleanReferencesLink(['www.a.com', 'www.b.com']);
+        assert.lengthOf(cleaned || [], 2);
+        assert.equal(cleaned[0], 'www.a.com');
+        assert.equal(cleaned[1], 'www.b.com');
+    });
+
+    it('References - Two combined references', async () => {
+        let cleaned: string[] = Translators.cleanReferencesLink(['www.a.com\nwww.b.com']);
+        assert.lengthOf(cleaned || [], 2);
+        assert.equal(cleaned[0], 'www.a.com');
+        assert.equal(cleaned[1], 'www.b.com');
+    });
+
+    it('References - Two Markdown combined references', async () => {
+        let cleaned: string[] = Translators.cleanReferencesLink(['[a](www.a.com)\n[b](www.b.com)']);
+        assert.lengthOf(cleaned || [], 2);
+        assert.equal(cleaned[0], 'www.a.com');
+        assert.equal(cleaned[1], 'www.b.com');
+    });
 });

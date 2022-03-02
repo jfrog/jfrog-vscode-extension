@@ -128,6 +128,7 @@ describe('Issues Data Provider Tests', () => {
             severity: severity,
             summary: faker.random.words(),
             cves: faker.datatype.array(),
+            references: faker.datatype.array(),
             fixedVersions: faker.datatype.array()
         } as IIssueCacheObject;
     }

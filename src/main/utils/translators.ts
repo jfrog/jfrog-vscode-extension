@@ -53,7 +53,7 @@ export class Translators {
         } as ILicenseCacheObject;
     }
 
-    private static toCves(clientCves: ICve[]): string[] {
+    public static toCves(clientCves: ICve[]): string[] {
         let cves: string[] = [];
         if (clientCves) {
             clientCves
@@ -81,5 +81,29 @@ export class Translators {
 
     public static capitalize(str: string): string {
         return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
+    }
+
+    public static cleanReferencesLink(references: string[] | undefined): string[] {
+        let results: string[] = [];
+        if (!references) {
+            return [];
+        }
+        for (let reference of references) {
+            // A single reference may includes multiples links separated by \n
+            if (reference.includes('\n')) {
+                results.push(...this.cleanReferencesLink(reference.split('\n')));
+                continue;
+            }
+            // The format of some references is [text](link-url).
+            let openBracket: number = reference.indexOf('(');
+            if (openBracket != -1) {
+                // Extract the URL.
+                const normalizedReference: string = reference.slice(openBracket + 1, reference.length - 1);
+                results.push(normalizedReference);
+                continue;
+            }
+            results.push(reference);
+        }
+        return results;
     }
 }
