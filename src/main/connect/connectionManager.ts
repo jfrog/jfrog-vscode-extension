@@ -12,6 +12,7 @@ import {
     IUsageFeature,
     JfrogClient
 } from 'jfrog-client-js';
+import { XrayScanProgress } from 'jfrog-client-js/dist/src/Xray/XrayScanProgress';
 import * as keytar from 'keytar';
 import * as semver from 'semver';
 import Set from 'typescript-collections/dist/lib/Set';
@@ -599,7 +600,12 @@ export class ConnectionManager implements ExtensionComponent {
      * @param project          - JFrog project key
      * @returns graph of all requested components with vulnerabilities and licenses information.
      */
-    public async scanGraph(componentsToScan: Set<ComponentDetails>, checkCanceled: () => void, project: string): Promise<IGraphResponse> {
+    public async scanGraph(
+        componentsToScan: Set<ComponentDetails>,
+        progress: vscode.Progress<{ message?: string; increment?: number }>,
+        checkCanceled: () => void,
+        project: string
+    ): Promise<IGraphResponse> {
         if (!this.areXrayCredentialsSet()) {
             await this.populateCredentials(false);
         }
@@ -610,7 +616,7 @@ export class ConnectionManager implements ExtensionComponent {
         return await this.createJfrogClient()
             .xray()
             .scan()
-            .graph(graphRequest, checkCanceled, project);
+            .graph(graphRequest, new XrayScanProgressImpl(progress), checkCanceled, project);
     }
 
     /**
@@ -670,5 +676,16 @@ export class ConnectionManager implements ExtensionComponent {
             return;
         }
         this._logManager.logMessage(usagePrefix + 'Usage report sent successfully.', 'DEBUG');
+    }
+}
+
+class XrayScanProgressImpl implements XrayScanProgress {
+    private lastPercentage: number = 0;
+    constructor(private _indicator: vscode.Progress<{ message?: string; increment?: number }>) {}
+
+    /** @override */
+    public setPercentage(percentage: number): void {
+        this._indicator.report({ message: '2/2:🧐 Xray scanning', increment: percentage - this.lastPercentage });
+        this.lastPercentage = percentage;
     }
 }

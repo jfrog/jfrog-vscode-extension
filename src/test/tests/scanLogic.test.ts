@@ -92,8 +92,16 @@ describe('Scan Logic Tests', () => {
 
     function createScanGraphConnectionManager(type: string): ConnectionManager {
         return {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            async scanGraph(componentsToScan: Set<ComponentDetails>, checkCanceled: () => void, project: string): Promise<IGraphResponse> {
+            async scanGraph(
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                componentsToScan: Set<ComponentDetails>,
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                progress: vscode.Progress<{ message?: string; increment?: number }>,
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                checkCanceled: () => void,
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                project: string
+            ): Promise<IGraphResponse> {
                 let graphResponse: string = fs.readFileSync(path.join(scanResponses, type + '.json'), 'utf8');
                 return Object.assign({} as IGraphResponse, JSON.parse(graphResponse));
             }

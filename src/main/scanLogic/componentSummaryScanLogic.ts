@@ -14,7 +14,7 @@ export class ComponentSummaryScanLogic extends AbstractScanLogic {
         checkCanceled: () => void
     ) {
         const totalComponents: number = componentsToScan.size();
-        progress.report({ message: `${totalComponents} components` });
+        progress.report({ message: `2/2:🧐 Xray scanning`, increment: 0 });
         let componentDetails: ComponentDetails[] = componentsToScan.toArray();
         let step: number = (100 / totalComponents) * 100;
         for (let currentIndex: number = 0; currentIndex < componentsToScan.size(); currentIndex += 100) {
@@ -23,7 +23,7 @@ export class ComponentSummaryScanLogic extends AbstractScanLogic {
             let artifacts: IArtifact[] = await this._connectionManager.summaryComponent(partialComponents);
             this.addMissingComponents(partialComponents, artifacts);
             await this._scanCacheManager.storeArtifacts(artifacts);
-            progress.report({ message: `${totalComponents} components`, increment: step });
+            progress.report({ message: `2/2:🧐 Xray scanning`, increment: step });
         }
     }
 

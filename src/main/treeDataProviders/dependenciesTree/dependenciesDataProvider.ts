@@ -133,6 +133,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     private async repopulateTree(quickScan: boolean, onChangeFire: () => void) {
         await ScanUtils.scanWithProgress(
             async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
+                progress.report({ message: '1/2:👷 Building dependency tree' });
                 this.clearTree();
                 let workspaceRoot: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
                 let componentsToScan: Set<ComponentDetails> = new Set();
@@ -143,6 +144,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     workspaceRoot,
                     quickScan
                 );
+                progress.report({ message: '2/2:🧐 Xray scanning' });
                 await this._scanLogicManager.scanAndCache(progress, componentsToScan, checkCanceled);
                 for (let node of workspaceRoot.children) {
                     this.addXrayInfoToTree(node);
@@ -153,7 +155,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 }
                 onChangeFire();
             },
-            'Scanning project dependencies ',
+            'Scanning workspace',
             quickScan
         );
     }
