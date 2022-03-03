@@ -1,6 +1,5 @@
 import { assert } from 'chai';
 import { faker } from '@faker-js/faker';
-import * as tmp from 'tmp';
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -12,6 +11,7 @@ import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
 import * as issueSeverity from '../../main/types/severity';
 import { Severity } from '../../main/types/severity';
 import { TestMemento } from './utils/testMemento.test';
+import { ScanUtils } from '../../main/utils/scanUtils';
 
 /**
  * Test functionality of @class IssuesDataProvider.
@@ -23,7 +23,7 @@ describe('Issues Data Provider Tests', () => {
 
     before(() => {
         scanCacheManager.activate((<any>{
-            storagePath: tmp.dirSync({} as tmp.DirOptions).name,
+            storagePath: ScanUtils.createTmpDir(),
             workspaceState: new TestMemento()
         }) as vscode.ExtensionContext);
         let generalInfo: GeneralInfo = new GeneralInfo('odin', '1.2.3', [], __dirname, 'asgard');
