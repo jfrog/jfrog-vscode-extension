@@ -267,9 +267,9 @@
     "dependencies": {
         "adm-zip": "~0.5.5",
         "fs-extra": "~10.0.0",
-        "jfrog-client-js": "github:jfrog/jfrog-client-js#master",
+        "jfrog-client-js": "2.4.0",
         "json2csv": "^5.0.7",
-        "keytar": "~7.7.0",
+        "keytar": "~7.9.0",
         "nuget-deps-tree": "^0.2.2",
         "original-fs": "^1.1.0",
         "p-queue": "^6.6.2",
