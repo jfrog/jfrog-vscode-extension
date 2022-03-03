@@ -2,7 +2,6 @@ import { assert } from 'chai';
 import * as exec from 'child_process';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import * as tmp from 'tmp';
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
@@ -14,6 +13,7 @@ import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesT
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { PypiUtils } from '../../main/utils/pypiUtils';
+import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager } from './utils/utils.test';
 
 /**
@@ -31,7 +31,7 @@ describe('Pypi Utils Tests', () => {
     );
     let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements'];
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
-    let tmpDir: vscode.Uri = vscode.Uri.file(tmp.dirSync({} as tmp.DirOptions).name);
+    let tmpDir: vscode.Uri = vscode.Uri.file(ScanUtils.createTmpDir());
 
     before(() => {
         fs.copySync(path.join(__dirname, '..', 'resources', 'python'), tmpDir.fsPath);

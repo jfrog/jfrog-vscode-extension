@@ -8,6 +8,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+        with:
+          submodules: true
       - name: Config Github
         run: git config --global user.name ${{ github.actor }}
       - name: Setup NodeJS

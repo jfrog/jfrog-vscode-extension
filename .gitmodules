@@ -1,0 +1,3 @@
+[submodule "resources/gomod-absolutizer"]
+	path = resources/gomod-absolutizer
+	url = https://github.com/jfrog/gomod-absolutizer

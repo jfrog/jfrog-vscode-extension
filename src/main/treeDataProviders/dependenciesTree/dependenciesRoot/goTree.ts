@@ -11,15 +11,15 @@ import { RootNode } from './rootTree';
 export class GoTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
     constructor(
-        workspaceFolder: string,
+        tmpWorkspaceFolder: string,
         private _componentsToScan: Collections.Set<ComponentDetails>,
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
-        super(workspaceFolder, parent);
+        super(tmpWorkspaceFolder, parent);
     }
 
-    public async refreshDependencies(quickScan: boolean) {
+    public refreshDependencies(quickScan: boolean) {
         let goModGraph: PackageDependencyPair[] = [];
         let goList: string[] = [];
         let rootPackageName: string = '';

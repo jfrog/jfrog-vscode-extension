@@ -2,6 +2,7 @@ import * as exec from 'child_process';
 import * as fse from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
+import * as tmp from 'tmp';
 import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
 import { Configuration } from './configuration';
@@ -121,6 +122,10 @@ export class ScanUtils {
             return PackageDescriptorType.NUGET;
         }
         return PackageDescriptorType.PYTHON;
+    }
+
+    static createTmpDir(): string {
+        return tmp.dirSync({} as tmp.DirOptions).name;
     }
 }
 
