@@ -12,6 +12,10 @@ export class RootNode extends DependenciesTreeNode {
         return this._workspaceFolder;
     }
 
+    public set workspaceFolder(wsFolder: string) {
+        this._workspaceFolder = wsFolder;
+    }
+
     /**
      * Sets the root nodes' context to show the update dependency icon if available.
      */

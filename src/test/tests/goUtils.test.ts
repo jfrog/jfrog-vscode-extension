@@ -32,15 +32,15 @@ describe('Go Utils Tests', () => {
         {} as ScanLogicManager,
         logManager
     );
-    let projectDirs: string[] = ['dependency', 'empty'];
     let goDependencyUpdate: GoDependencyUpdate = new GoDependencyUpdate();
-    let workspaceFolders: vscode.WorkspaceFolder[];
-    let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'go'));
+    let tmpDir: string = path.join(__dirname, '..', 'resources', 'go');
+    let commonProjDir: vscode.Uri = vscode.Uri.file(path.join(tmpDir, 'common'));
+    let commonWorkspaceFolders: vscode.WorkspaceFolder[];
 
     before(() => {
-        workspaceFolders = [
+        commonWorkspaceFolders = [
             {
-                uri: tmpDir,
+                uri: commonProjDir,
                 name: '',
                 index: 0
             } as vscode.WorkspaceFolder
@@ -52,16 +52,17 @@ describe('Go Utils Tests', () => {
      */
     it('Locate go mods', async () => {
         let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
-            workspaceFolders,
+            commonWorkspaceFolders,
             treesManager.logManager
         );
+        let projectDirs: string[] = ['dependency', 'empty'];
         let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.GO);
         assert.isDefined(goMods);
         assert.strictEqual(goMods?.length, projectDirs.length);
 
         // Assert that results contains all projects
         for (let expectedProjectDir of projectDirs) {
-            let expectedGoMod: string = path.join(tmpDir.fsPath, expectedProjectDir, 'go.mod');
+            let expectedGoMod: string = path.join(commonProjDir.fsPath, expectedProjectDir, 'go.mod');
             assert.isDefined(
                 goMods?.find(goMod => goMod.fsPath === expectedGoMod),
                 'Should contain ' + expectedGoMod
@@ -74,14 +75,14 @@ describe('Go Utils Tests', () => {
      */
     it('Get dependencies position', async () => {
         // Test 'resources/go/dependency/go.mod'
-        let goMod: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'go.mod'));
+        let goMod: vscode.Uri = vscode.Uri.file(path.join(commonProjDir.fsPath, 'dependency', 'go.mod'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(goMod);
         let dependenciesPos: vscode.Position[] = GoUtils.getDependenciesPos(textDocument);
         assert.deepEqual(dependenciesPos[0], new vscode.Position(4, 0));
         assert.deepEqual(dependenciesPos[1], new vscode.Position(4, 7));
 
         // Test 'resources/go/empty/go.mod'
-        goMod = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'go.mod'));
+        goMod = vscode.Uri.file(path.join(commonProjDir.fsPath, 'empty', 'go.mod'));
         textDocument = await vscode.workspace.openTextDocument(goMod);
         dependenciesPos = GoUtils.getDependenciesPos(textDocument);
         assert.isEmpty(dependenciesPos);
@@ -92,7 +93,7 @@ describe('Go Utils Tests', () => {
      */
     it('Get dependency position', async () => {
         // Test 'resources/go/dependency/go.mod'
-        let goMod: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'go.mod'));
+        let goMod: vscode.Uri = vscode.Uri.file(path.join(commonProjDir.fsPath, 'dependency', 'go.mod'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(goMod);
 
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
@@ -103,7 +104,7 @@ describe('Go Utils Tests', () => {
         assert.deepEqual(dependencyPos[1], new vscode.Position(5, 39));
 
         // Test 'resources/go/empty/go.mod'
-        goMod = vscode.Uri.file(path.join(tmpDir.fsPath, 'empty', 'go.mod'));
+        goMod = vscode.Uri.file(path.join(commonProjDir.fsPath, 'empty', 'go.mod'));
         textDocument = await vscode.workspace.openTextDocument(goMod);
         dependencyPos = GoUtils.getDependencyPos(textDocument, dependenciesTreeNode, FocusType.Dependency);
         assert.isEmpty(dependencyPos);
@@ -112,7 +113,7 @@ describe('Go Utils Tests', () => {
     it('Update fixed version', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
-        await runCreateGoDependenciesTrees(componentsToScan, parent);
+        await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
 
         // Get specific dependency node.
         let node: DependenciesTreeNode | null = getNodeByArtifactId(parent, 'github.com/jfrog/jfrog-cli-core');
@@ -124,7 +125,7 @@ describe('Go Utils Tests', () => {
 
         // Recalculate the dependency tree.
         parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        await runCreateGoDependenciesTrees(componentsToScan, parent);
+        await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
 
         // Verify the node's version was modified.
         node = getNodeByArtifactId(parent, 'github.com/jfrog/jfrog-cli-core');
@@ -136,7 +137,7 @@ describe('Go Utils Tests', () => {
 
         // Recalculate the dependency tree.
         parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        await runCreateGoDependenciesTrees(componentsToScan, parent);
+        await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
 
         node = getNodeByArtifactId(parent, 'github.com/jfrog/jfrog-cli-core');
         assert.isNotNull(node);
@@ -149,7 +150,7 @@ describe('Go Utils Tests', () => {
     it('Create go Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
         let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
-        await runCreateGoDependenciesTrees(componentsToScan, parent);
+        await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
 
         assert.isAbove(componentsToScan.size(), 0);
         let gofrog: ComponentDetails | undefined;
@@ -187,7 +188,54 @@ describe('Go Utils Tests', () => {
         assert.deepEqual(actualLicense.fullName, expectedLicense[0].full_name);
     });
 
-    async function runCreateGoDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
+    /**
+     * The project is with dependencies, but without go.sum
+     */
+    it('Project 1 - Create go project with dependencies', async () => {
+        let projectName: string = 'project1';
+        let expectedChildren: Map<string, number> = new Map();
+        expectedChildren.set('github.com/jfrog/jfrog-cli-core:1.9.0', 11);
+        expectedChildren.set('github.com/jfrog/jfrog-client-go:0.26.1', 9);
+        createGoDependencyTreeAndValidate(projectName, expectedChildren);
+    });
+
+    /**
+     * The project is with dependencies and go.sum, but with checksum mismatch on github.com/dsnet/compress
+     */
+    it('Project 2 - Create go project with dependencies', async () => {
+        let projectName: string = 'project2';
+        let expectedChildren: Map<string, number> = new Map();
+        expectedChildren.set('github.com/jfrog/gocmd:0.1.12', 2);
+        createGoDependencyTreeAndValidate(projectName, expectedChildren);
+    });
+
+    /**
+     * The project is with dependencies and go.sum, but contains a relative path in go.mod
+     * The submodule is a subdirectory of the project directory.
+     */
+    it('Project 3 - Create go project with dependencies', async () => {
+        let projectName: string = 'project3';
+        let expectedChildren: Map<string, number> = new Map();
+        expectedChildren.set('github.com/test/subproject:0.0.0-00010101000000-000000000000', 1);
+        createGoDependencyTreeAndValidate(projectName, expectedChildren);
+    });
+
+    /**
+     * The project is with dependencies and go.sum, but contains a relative path in go.mod.
+     * The submodule is a sibling of the project directory.
+     */
+    it('Project 4 - Create go project with dependencies', async () => {
+        let projectName: string = 'project4';
+        let expectedChildren: Map<string, number> = new Map();
+        expectedChildren.set('github.com/test/subproject:0.0.0-00010101000000-000000000000', 1);
+        createGoDependencyTreeAndValidate(projectName, expectedChildren);
+    });
+
+    async function runCreateGoDependenciesTrees(
+        workspaceFolders: vscode.WorkspaceFolder[],
+        componentsToScan: Collections.Set<ComponentDetails>,
+        parent: DependenciesTreeNode
+    ) {
         let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
             workspaceFolders,
             treesManager.logManager
@@ -199,6 +247,44 @@ describe('Go Utils Tests', () => {
             treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);
         });
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
+    }
+
+    async function createGoDependencyTreeAndValidate(projectName: string, expectedChildren: Map<string, number>) {
+        try {
+            let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
+            let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+            await runCreateGoDependenciesTrees(getWorkspaceFolders(projectName), componentsToScan, parent);
+
+            validateDependencyTreeResults(projectName, expectedChildren, parent);
+        } catch (error) {
+            assert.fail('creating go tree failed with error: ' + error);
+        }
+    }
+
+    function validateDependencyTreeResults(projectName: string, expectedChildren: Map<string, number>, node: DependenciesTreeNode) {
+        let parent: DependenciesTreeNode | null = getNodeByArtifactId(node, projectName);
+        if (!parent) {
+            assert.isNotNull(node);
+            return;
+        }
+
+        let children: DependenciesTreeNode[] = parent.children;
+        assert.lengthOf(children, expectedChildren.size);
+        children.forEach(child => {
+            assert.isTrue(expectedChildren.has(child.componentId));
+            assert.equal(child.children.length, expectedChildren.get(child.componentId));
+            assert.isTrue(child.generalInfo.scopes.includes('None'));
+        });
+    }
+
+    function getWorkspaceFolders(projectName: string): vscode.WorkspaceFolder[] {
+        return [
+            {
+                uri: vscode.Uri.file(path.join(tmpDir, projectName)),
+                name: '',
+                index: 0
+            } as vscode.WorkspaceFolder
+        ];
     }
 });
 
