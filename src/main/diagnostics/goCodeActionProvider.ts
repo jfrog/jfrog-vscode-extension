@@ -17,7 +17,7 @@ export class GoCodeActionProvider extends AbstractCodeActionProvider implements 
     }
 
     /** @override */
-    public updateDiagnostics(document: vscode.TextDocument): void {
+    public async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
         if (!vscode.languages.match(this._documentSelector, document)) {
             return;
         }
@@ -26,12 +26,14 @@ export class GoCodeActionProvider extends AbstractCodeActionProvider implements 
         if (!goDependenciesTree) {
             return;
         }
+        const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document);
         goDependenciesTree.children.forEach(child => {
             let dependencyPos: vscode.Position[] = GoUtils.getDependencyPos(document, child, FocusType.Dependency);
             if (dependencyPos.length === 0) {
                 return;
             }
             this.addDiagnostic(diagnostics, child, dependencyPos);
+            this.addGutter(textEditor, child.topSeverity, dependencyPos);
         });
         this._diagnosticCollection.set(document.uri, diagnostics);
     }
