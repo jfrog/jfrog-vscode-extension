@@ -7,7 +7,7 @@ import { Severity, SeverityUtils } from '../types/severity';
 /**
  * @see DiagnosticsManager
  */
-export abstract class AbstractCodeActionProvider implements vscode.CodeActionProvider, ExtensionComponent {
+export abstract class AbstractCodeActionProvider implements vscode.CodeActionProvider, ExtensionComponent, vscode.Disposable {
     static readonly XRAY_DIAGNOSTIC_SOURCE: string = 'JFrog Xray';
     private _gutterDecorations: vscode.TextEditorDecorationType[] = [];
 
@@ -35,6 +35,7 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
         this.registerListeners(context.subscriptions);
         vscode.workspace.textDocuments.forEach(this.updateDiagnostics, this);
         context.subscriptions.push(
+            this,
             vscode.languages.registerCodeActionsProvider(this._documentSelector, this, {
                 providedCodeActionKinds: [vscode.CodeActionKind.Empty]
             })
@@ -106,13 +107,12 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
     addGutter(textEditor: vscode.TextEditor, severity: Severity, dependencyPos: vscode.Position[]) {
         if (textEditor) {
             for (let i: number = 0; i < dependencyPos.length; i += 2) {
-            const gutterIconPath: string = SeverityUtils.getIcon(severity);
-            textEditor.setDecorations(
-                vscode.window.createTextEditorDecorationType({
-                    gutterIconPath: gutterIconPath
-                }),
-                [new vscode.Range(dependencyPos[i], dependencyPos[i + 1])]
-            );
+                const decoration: vscode.TextEditorDecorationType = vscode.window.createTextEditorDecorationType({
+                    gutterIconPath: SeverityUtils.getIcon(severity)
+                });
+
+                textEditor.setDecorations(decoration, [new vscode.Range(dependencyPos[i], dependencyPos[i + 1])]);
+                this._gutterDecorations.push(decoration);
             }
         }
     }
@@ -123,11 +123,11 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
         }
     }
 
+    /** @override */
     dispose() {
         this._diagnosticCollection.clear();
         this._diagnosticCollection.dispose();
         this.disposeGutterDecorations();
-
     }
 
     private disposeGutterDecorations() {
