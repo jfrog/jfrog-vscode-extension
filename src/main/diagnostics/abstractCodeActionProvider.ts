@@ -3,13 +3,13 @@ import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { Severity, SeverityUtils } from '../types/severity';
-import { DiagnosticsUtils } from './diagnosticsUtils';
 
 /**
  * @see DiagnosticsManager
  */
-export abstract class AbstractCodeActionProvider implements vscode.CodeActionProvider, ExtensionComponent {
+export abstract class AbstractCodeActionProvider implements vscode.CodeActionProvider, ExtensionComponent, vscode.Disposable {
     static readonly XRAY_DIAGNOSTIC_SOURCE: string = 'JFrog Xray';
+    private _gutterDecorations: vscode.TextEditorDecorationType[] = [];
 
     constructor(
         protected _documentSelector: vscode.DocumentSelector,
@@ -35,6 +35,7 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
         this.registerListeners(context.subscriptions);
         vscode.workspace.textDocuments.forEach(this.updateDiagnostics, this);
         context.subscriptions.push(
+            this,
             vscode.languages.registerCodeActionsProvider(this._documentSelector, this, {
                 providedCodeActionKinds: [vscode.CodeActionKind.Empty]
             })
@@ -89,11 +90,30 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
             let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
                 new vscode.Range(dependencyPos[i], dependencyPos[i + 1]),
                 node.topSeverity === Severity.Normal ? 'No issues found.' : 'Top issue severity: ' + SeverityUtils.getString(node.topSeverity),
-                DiagnosticsUtils.getDiagnosticSeverity(node.topSeverity)
+                vscode.DiagnosticSeverity.Hint
             );
             diagnostic.source = this.getSource();
             diagnostic.code = node.componentId;
             diagnostics.push(diagnostic);
+        }
+    }
+
+    /**
+     * Add a new severity icon on the gutter.
+     * @param textEditor Gutter's editor.
+     * @param severity Severity icon.
+     * @param dependencyPos The dependency position in the descriptor.
+     */
+    addGutter(textEditor: vscode.TextEditor, severity: Severity, dependencyPos: vscode.Position[]) {
+        if (textEditor) {
+            for (let i: number = 0; i < dependencyPos.length; i += 2) {
+                const decoration: vscode.TextEditorDecorationType = vscode.window.createTextEditorDecorationType({
+                    gutterIconPath: SeverityUtils.getIcon(severity)
+                });
+
+                textEditor.setDecorations(decoration, [new vscode.Range(dependencyPos[i], dependencyPos[i + 1])]);
+                this._gutterDecorations.push(decoration);
+            }
         }
     }
 
@@ -103,9 +123,18 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
         }
     }
 
+    /** @override */
     dispose() {
         this._diagnosticCollection.clear();
         this._diagnosticCollection.dispose();
+        this.disposeGutterDecorations();
+    }
+
+    private disposeGutterDecorations() {
+        this._gutterDecorations.forEach(decoration => {
+            decoration.dispose();
+        });
+        this._gutterDecorations = [];
     }
 
     protected getSource(): string {

@@ -16,7 +16,7 @@ export class PypiCodeActionProvider extends AbstractCodeActionProvider implement
     }
 
     /** @override */
-    public updateDiagnostics(document: vscode.TextDocument): void {
+    public async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
         if (!vscode.languages.match(this._documentSelector, document)) {
             return;
         }
@@ -26,16 +26,20 @@ export class PypiCodeActionProvider extends AbstractCodeActionProvider implement
             return;
         }
         let requirementsContent: string = document.getText().toLowerCase();
+        const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document);
+
         pyPiDependenciesTree.children.forEach(child => {
             let dependencyPos: vscode.Position[] = PypiUtils.getDependencyPos(document, requirementsContent, child);
             if (dependencyPos.length > 0) {
                 this.addDiagnostic(diagnostics, child, dependencyPos);
+                this.addGutter(textEditor, child.topSeverity, dependencyPos);
                 return;
             }
             for (let grandChild of child.children) {
                 dependencyPos = PypiUtils.getDependencyPos(document, requirementsContent, grandChild);
                 if (dependencyPos.length > 0) {
                     this.addDiagnostic(diagnostics, grandChild, dependencyPos);
+                    this.addGutter(textEditor, child.topSeverity, dependencyPos);
                 }
             }
         });

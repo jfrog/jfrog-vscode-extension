@@ -22,7 +22,7 @@ export class MavenCodeActionProvider extends AbstractCodeActionProvider implemen
     }
 
     /** @override */
-    public updateDiagnostics(document: vscode.TextDocument): void {
+    public async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
         if (!vscode.languages.match(this._documentSelector, document)) {
             return;
         }
@@ -31,6 +31,7 @@ export class MavenCodeActionProvider extends AbstractCodeActionProvider implemen
         if (!mavenDependenciesTree) {
             return;
         }
+        const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document);
         mavenDependenciesTree.children.forEach(child => {
             if (child instanceof MavenTreeNode) {
                 return;
@@ -40,6 +41,7 @@ export class MavenCodeActionProvider extends AbstractCodeActionProvider implemen
                 return;
             }
             this.addDiagnostic(diagnostics, child, dependencyPos);
+            this.addGutter(textEditor, child.topSeverity, dependencyPos);
         });
         this._diagnosticCollection.set(document.uri, diagnostics);
     }

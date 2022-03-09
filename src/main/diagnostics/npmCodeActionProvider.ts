@@ -21,11 +21,12 @@ export class NpmCodeActionProvider extends AbstractCodeActionProvider implements
     }
 
     /** @override */
-    public updateDiagnostics(document: vscode.TextDocument): void {
+    public async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
         if (!vscode.languages.match(this._documentSelector, document)) {
             return;
         }
         let diagnostics: vscode.Diagnostic[] = [];
+        const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document);
         let npmDependenciesTree: DependenciesTreeNode | undefined = this.getDependenciesTree(document);
         if (!npmDependenciesTree) {
             return;
@@ -36,6 +37,7 @@ export class NpmCodeActionProvider extends AbstractCodeActionProvider implements
                 return;
             }
             this.addDiagnostic(diagnostics, child, dependencyPos);
+            this.addGutter(textEditor, child.topSeverity, dependencyPos);
         });
         this._diagnosticCollection.set(document.uri, diagnostics);
     }

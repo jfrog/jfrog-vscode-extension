@@ -27,7 +27,7 @@ export class IconsPaths {
     // License
     static readonly VIOLATED_LICENSE: string = IconsPaths.getIconPath('violatedLicense');
 
-    private static getIconPath(iconName: string) {
+    public static getIconPath(iconName: string) {
         return path.join(ScanUtils.RESOURCES_DIR, iconName + '.png');
     }
 }
