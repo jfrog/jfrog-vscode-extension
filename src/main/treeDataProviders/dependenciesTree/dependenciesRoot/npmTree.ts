@@ -77,6 +77,6 @@ export class NpmTreeNode extends RootNode {
     }
 
     private runNpmLs(scope: NpmGlobalScopes): any {
-        return JSON.parse(ScanUtils.executeCmd('npm ls --json --all --' + scope, this.workspaceFolder).toString());
+        return JSON.parse(ScanUtils.executeCmd('npm ls --json --all --package-lock-only --' + scope, this.workspaceFolder).toString());
     }
 }

@@ -306,9 +306,12 @@ View the extension log:
 The extension is licensed under [Apache License 2.0](LICENSE).
 
 ## Building and Testing the Sources
+### Preconditions
+* npm 7 and above
+* JFrog CLI's `jf` executable - required for tests
+
 To build the extension sources, please follow these steps:
 
-1. Install JFrog CLI's `jf` executable - required for tests.
 1. Clone the code from Github.
 1. Build and create the VS-Code extension vsix file by running the following npm command.
 
@@ -317,8 +320,8 @@ npm i
 npm run package
 ```
 
-   After the build finishes, you'll find the vsix file in the _jfrog-vscode-extension_ directory.
-   The vsix file can be loaded into VS-Code
+After the build finishes, you'll find the vsix file in the _jfrog-vscode-extension_ directory.
+The vsix file can be loaded into VS-Code
 
 To run the tests:
 
