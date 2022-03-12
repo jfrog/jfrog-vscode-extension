@@ -32,7 +32,17 @@ export class Configuration {
             .trim();
     }
 
+    /**
+     * @returns the log level
+     */
     public static getLogLevel(): string {
         return vscode.workspace.getConfiguration('jfrog').get('logLevel', 'info');
+    }
+
+    /**
+     * @returns the number of connection retries
+     */
+    public static getConnectionRetries(): number {
+        return vscode.workspace.getConfiguration('jfrog').get('connectionRetries', 3);
     }
 }

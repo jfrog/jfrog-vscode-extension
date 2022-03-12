@@ -90,8 +90,8 @@ export class MavenUtils {
      * @param artifactId  - The dependency's artifact ID
      */
     public static getDependencyTag(pomXmlContent: string, groupId: string, artifactId: string): string {
-        let groupIdRegex:RegExp = new RegExp(`<groupId>\\s*${groupId}\\s*</groupId>`, 'gi');
-        let artifactIdRegex:RegExp = new RegExp(`<artifactId>\\s*${artifactId}\\s*</artifactId>`, 'gi');
+        let groupIdRegex: RegExp = new RegExp(`<groupId>\\s*${groupId}\\s*</groupId>`, 'gi');
+        let artifactIdRegex: RegExp = new RegExp(`<artifactId>\\s*${artifactId}\\s*</artifactId>`, 'gi');
         let dependencyMatch: string[] | undefined = pomXmlContent
             .match(/<dependency>(.|\s)*?<\/dependency>/gi)
             ?.filter(group => group.match(groupIdRegex) && group.match(artifactIdRegex));

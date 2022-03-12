@@ -95,6 +95,12 @@
                     ],
                     "scope": "application",
                     "markdownDescription": "The logging level the extension logs at, defaults to 'info'"
+                },
+                "jfrog.connectionRetries": {
+                    "type": "number",
+                    "default": 3,
+                    "scope": "application",
+                    "markdownDescription": "Maximum connection retry attempts"
                 }
             }
         },
@@ -267,12 +273,13 @@
     "dependencies": {
         "adm-zip": "~0.5.5",
         "fs-extra": "~10.0.0",
-        "jfrog-client-js": "2.4.0",
+        "jfrog-client-js": "github:yahavi/jfrog-client-js#retries",
         "json2csv": "^5.0.7",
         "keytar": "~7.9.0",
         "nuget-deps-tree": "^0.2.2",
         "original-fs": "^1.1.0",
         "p-queue": "^6.6.2",
+        "retries": "^1.0.0",
         "semver": "~7.3.5",
         "typescript-collections": "~1.3.3",
         "walkdir": "^0.4.1",
