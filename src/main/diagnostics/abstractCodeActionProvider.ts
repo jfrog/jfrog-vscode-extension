@@ -108,7 +108,8 @@ export abstract class AbstractCodeActionProvider implements vscode.CodeActionPro
         if (textEditor) {
             for (let i: number = 0; i < dependencyPos.length; i += 2) {
                 const decoration: vscode.TextEditorDecorationType = vscode.window.createTextEditorDecorationType({
-                    gutterIconPath: SeverityUtils.getIcon(severity)
+                    gutterIconPath: SeverityUtils.getIcon(severity),
+                    gutterIconSize: 'cover'
                 });
 
                 textEditor.setDecorations(decoration, [new vscode.Range(dependencyPos[i], dependencyPos[i + 1])]);

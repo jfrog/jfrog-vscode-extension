@@ -173,7 +173,10 @@
             {
                 "command": "jfrog.xray.export",
                 "title": "Export",
-                "icon": "$(link-external)",
+                "icon": {
+                    "light": "resources/light/export.png",
+                    "dark": "resources/dark/export.png"
+                },
                 "enablement": "!scanInProgress"
             }
         ],
