@@ -5,6 +5,7 @@ import { SemVer } from 'semver';
 import { URL } from 'url';
 import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
+import { Configuration } from '../utils/configuration';
 
 export class ConnectionUtils {
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED_FOR_GRAPH_SCAN: any = semver.coerce('3.29.0');
@@ -248,7 +249,8 @@ export class ConnectionUtils {
             password: password,
             accessToken: accessToken,
             headers: {},
-            proxy: ConnectionUtils.getProxyConfig()
+            proxy: ConnectionUtils.getProxyConfig(),
+            retries: Configuration.getConnectionRetries()
         } as IJfrogClientConfig;
         ConnectionUtils.addUserAgentHeader(clientConfig);
         ConnectionUtils.addProxyAuthHeader(clientConfig);
