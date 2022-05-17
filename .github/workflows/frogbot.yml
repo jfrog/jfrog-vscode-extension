@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: "16.x"
 
-      - uses: jfrog/frogbot@v2
+      - uses: asafgabai/frogbot@v2
         env:
           # [Mandatory]
           # The command that installs the dependencies
