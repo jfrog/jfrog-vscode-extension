@@ -23,7 +23,7 @@ jobs:
         with:
           node-version: "16.x"
 
-      - uses: asafgabai/frogbot@v2
+      - uses: asafgabai/frogbot@create-npm-fix-prs
         env:
           # [Mandatory]
           # The command that installs the dependencies
