@@ -280,7 +280,7 @@
         "original-fs": "^1.1.0",
         "p-queue": "^6.6.2",
         "retries": "^1.0.0",
-        "semver": "~7.3.5",
+        "semver": "~7.3.2",
         "typescript-collections": "~1.3.3",
         "walkdir": "^0.4.1",
         "xmlbuilder2": "~3.0.2"
