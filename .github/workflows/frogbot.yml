@@ -2,8 +2,11 @@ name: "Frogbot"
 on:
   pull_request_target:
     types: [opened, synchronize]
+  push:
+    branches:
+      - 'master'
 jobs:
-  scan-pull-request:
+  frogbot:
     runs-on: ubuntu-latest
     # A pull request needs to be approved, before Frogbot scans it. Any GitHub user who is associated with the
     # "frogbot" GitHub environment can approve the pull request to be scanned.
@@ -23,7 +26,7 @@ jobs:
         with:
           node-version: "16.x"
 
-      - uses: asafgabai/frogbot@create-npm-fix-prs
+      - uses: jfrog/frogbot@dev
         env:
           # [Mandatory]
           # The command that installs the dependencies
