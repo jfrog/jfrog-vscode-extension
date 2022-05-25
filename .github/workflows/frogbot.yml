@@ -4,7 +4,7 @@ on:
     types: [opened, synchronize]
   push:
     branches:
-      - ${{ github.event.repository.default_branch }}
+      - $default-branch
 jobs:
   frogbot:
     runs-on: ubuntu-latest
