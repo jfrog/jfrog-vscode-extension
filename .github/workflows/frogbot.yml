@@ -4,7 +4,8 @@ on:
     types: [opened, synchronize]
   push:
     branches:
-      - "$default-branch"
+      - "main"
+      - "master"
 jobs:
   frogbot:
     runs-on: ubuntu-latest
