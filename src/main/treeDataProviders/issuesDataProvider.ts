@@ -89,7 +89,7 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
         if (element instanceof ReferencesNode) {
             return Promise.resolve(element.getChildren());
         }
-        
+
         if (element instanceof ViolatedLicenseNode) {
             // License selected
             return Promise.resolve(this.getViolatedLicenseComponentsNodes(element as ViolatedLicenseNode));
@@ -129,6 +129,7 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
             if (issue.cves.length === 0) {
                 // In case we dont have anny CVE for the given Xray issue, Show the summary as the title.
                 let issueNode: VulnerabilityNode = new VulnerabilityNode(
+                    xrayIssueId.issue_id,
                     issue.severity,
                     issue.summary,
                     undefined,
@@ -151,6 +152,7 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
                     //     cve = cve + ' 🔴 ' + ' Applicable';
                     // }
                     let issueNode: VulnerabilityNode = new VulnerabilityNode(
+                        xrayIssueId.issue_id,
                         issue.severity,
                         issue.summary,
                         cve,
@@ -174,11 +176,11 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
      * @returns Severity, Component, CVEs, and Fixed Versions of a vulnerability
      */
     private getVulnerabilityDetailsNodes(node: VulnerabilityNode): (TreeDataHolder | ReferencesNode)[] {
-        let children: (TreeDataHolder | ReferencesNode)[] = [];
-        if (!node.showSummaryOnTitle()) {
-            children.push(new TreeDataHolder('Summary', node.summary));
-        }
-        children.push(new TreeDataHolder('Severity', SeverityUtils.getString(node.severity)), new TreeDataHolder('Component', node.component));
+        let children: (TreeDataHolder | ReferencesNode)[] = [
+            new TreeDataHolder('Summary', node.summary),
+            new TreeDataHolder('Severity', SeverityUtils.getString(node.severity)),
+            new TreeDataHolder('Component', node.component)
+        ];
         let fixedVersions: string[] | undefined = node.fixedVersions;
         if (fixedVersions && fixedVersions.length > 0) {
             children.push(new TreeDataHolder('Fixed Versions', fixedVersions.join(', ')));
@@ -257,19 +259,20 @@ export class ViolatedLicenseNode extends IssueNode {
  */
 export class VulnerabilityNode extends IssueNode {
     constructor(
+        readonly xrayId: string,
         readonly severity: Severity,
         readonly summary: string,
         readonly cve?: string,
         readonly references?: string[],
         readonly component?: string,
-        readonly fixedVersions?: string[] // If true, the given CVE is applicable in the source code.
-    ) // If false, the given CVE is not applicable in the source code.
+        readonly fixedVersions?: string[] // If false, the given CVE is not applicable in the source code.
+    ) // If true, the given CVE is applicable in the source code.
     // If undefined, The CVE cannot be discovered.
     // readonly applicable?: boolean,
     // 'sourceCodeCveTreeNode' is the corresponding node in the CVE applicability view if the current CVE is applicable.
     // readonly sourceCodeCveTreeNode?: SourceCodeCveTreeNode
     {
-        super(cve ? cve : summary, vscode.TreeItemCollapsibleState.Collapsed);
+        super(cve ? cve : xrayId, vscode.TreeItemCollapsibleState.Collapsed);
         // Enable eye button if we can jump to source code.
         // if (sourceCodeCveTreeNode !== undefined) {
         //     this.contextValue = ContextKeys.SHOW_IN_SOURCE_CODE_ENABLED;

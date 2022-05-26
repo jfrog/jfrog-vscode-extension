@@ -17,7 +17,6 @@ import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
 import { Components } from '../../main/types/component';
-import { ComponentDetails } from 'jfrog-client-js';
 
 /**
  * Test functionality of @class NpmUtils.
