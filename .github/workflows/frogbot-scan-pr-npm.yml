@@ -1,4 +1,4 @@
-name: "Frogbot"
+name: "Frogbot Scan PR"
 on:
   pull_request_target:
     types: [opened, synchronize]
@@ -8,10 +8,6 @@ jobs:
     # A pull request needs to be approved, before Frogbot scans it. Any GitHub user who is associated with the
     # "frogbot" GitHub environment can approve the pull request to be scanned.
     environment: frogbot
-    permissions:
-      issues: write
-      pull-requests: write
-      contents: write
     steps:
       - uses: actions/checkout@v2
         with:
@@ -23,7 +19,7 @@ jobs:
         with:
           node-version: "16.x"
 
-      - uses: asafgabai/frogbot@create-npm-fix-prs
+      - uses: jfrog/frogbot@v2.1.1
         env:
           # [Mandatory]
           # The command that installs the dependencies
@@ -41,7 +37,7 @@ jobs:
           # JFrog password. Must be provided with JF_USER
           JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
 
-          # [Manadatory]
+          # [Mandatory]
           # The GitHub token automatically generated for the job
           JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
