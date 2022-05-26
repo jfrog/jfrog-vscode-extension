@@ -157,12 +157,14 @@ describe('Go Utils Tests', async () => {
 
         assert.isAbove(componentsToScan.length, 0);
         let gofrog: ComponentDetails | undefined;
-        for (let component of componentsToScan[0].toArray()) {
-            if (component.component_id === 'go://github.com/jfrog/gofrog:1.0.6') {
-                gofrog = component;
+        for (let index:number = 0; index < componentsToScan.length; index++) {
+            for (let component of componentsToScan[index].toArray()) {
+                if (component.component_id === 'go://github.com/jfrog/gofrog:1.0.6') {
+                    gofrog = component;
+                }
             }
         }
-        assert.isDefined(gofrog);
+            assert.isDefined(gofrog);
 
         // Check labels.
         assert.deepEqual(parent.children[0].label, 'github.com/shield/black-widow');

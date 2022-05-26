@@ -188,10 +188,15 @@ describe('Npm Utils Tests', async () => {
 
         // Check that components to scan contains progress:2.0.3
         assert.isTrue(componentsToScan.length === 3);
-        let component: ComponentDetails | undefined = componentsToScan[2]
-            .toArray()
-            .find(component => component.component_id === 'npm://progress:2.0.3');
-        assert.deepEqual(component?.component_id, 'npm://progress:2.0.3');
+        let found: boolean = false;
+        for (let index: number = 0; index < componentsToScan.length; index++) {
+            componentsToScan[index].componentsDetails.forEach(el => {
+                if (el.component_id === 'npm://progress:2.0.3') {
+                    found = true;
+                }
+            });
+        }
+        assert.isTrue(found);
 
         // Check labels
         assert.deepEqual(res[0].label, 'package-name1');
