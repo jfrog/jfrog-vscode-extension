@@ -1,12 +1,12 @@
-import { ComponentDetails } from 'jfrog-client-js';
 import { NugetDepsTree } from 'nuget-deps-tree';
 import * as path from 'path';
-import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
 import { NugetTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/nugetTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
+import { Components } from '../types/component';
+import { PackageType } from '../types/projectType';
 
 export class NugetUtils {
     public static readonly PKG_TYPE: string = 'nuget';
@@ -20,7 +20,7 @@ export class NugetUtils {
      */
     public static async createDependenciesTrees(
         solutions: vscode.Uri[] | undefined,
-        componentsToScan: Set<ComponentDetails>,
+        components: Components[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
@@ -37,6 +37,8 @@ export class NugetUtils {
                 continue;
             }
             let solutionDir: string = path.dirname(solution.fsPath);
+            const componentsToScan: Components = new Components(solutionDir, PackageType.NUGET);
+            components.push(componentsToScan);
             for (let project of tree.projects) {
                 let dependenciesTreeNode: NugetTreeNode = new NugetTreeNode(solutionDir, componentsToScan, treesManager, parent);
                 dependenciesTreeNode.refreshDependencies(quickScan, project);

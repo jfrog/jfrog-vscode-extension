@@ -1,9 +1,7 @@
 import { assert } from 'chai';
 import * as exec from 'child_process';
-import { ComponentDetails } from 'jfrog-client-js';
 import { before } from 'mocha';
 import * as path from 'path';
-import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { MavenDependencyUpdate } from '../../main/dependencyUpdate/mavenDependencyUpdate';
@@ -19,13 +17,16 @@ import { GavGeneralInfo } from '../../main/types/gavGeneralinfo';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenUtils } from '../../main/utils/mavenUtils';
 import { PomTree } from '../../main/utils/pomTree';
-import { PackageDescriptorType, ScanUtils } from '../../main/utils/scanUtils';
+import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
+import { PackageType } from '../../main/types/projectType';
+import { Components } from '../../main/types/component';
+import { ComponentDetails } from 'jfrog-client-js';
 
 /**
  * Test functionality of Maven.
  */
-describe('Maven Tests', () => {
+describe('Maven Tests', async () => {
     let logManager: LogManager = new LogManager().activate();
     let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
     let treesManager: TreesManager = new TreesManager(
@@ -58,11 +59,8 @@ describe('Maven Tests', () => {
      * Test locatePomXml.
      */
     it('Locate pom.xml', async () => {
-        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
-            workspaceFolders,
-            treesManager.logManager
-        );
-        let pomXmls: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.MAVEN);
+        let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
+        let pomXmls: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.MAVEN);
         assert.isDefined(pomXmls);
         assert.strictEqual(pomXmls!.length, 6);
 
@@ -240,7 +238,7 @@ describe('Maven Tests', () => {
      */
     it('Create Maven dependencies trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+        let componentsToScan: Components[] = [];
         let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
         let toCompare: string[] = [
             'gav://aopalliance:aopalliance:1.0',
@@ -260,12 +258,12 @@ describe('Maven Tests', () => {
             'gav://org.springframework:spring-core:2.5.6',
             'gav://org.testng:testng:5.9'
         ];
-        const componentArray: ComponentDetails[] = componentsToScan
+        const componentArray: ComponentDetails[] = componentsToScan[0]
             .toArray()
             .sort((a: ComponentDetails, b: ComponentDetails) => a.component_id.localeCompare(b.component_id));
         // Check that components to scan contains progress:2.0.3
-        for (let i: number = 0; i < componentsToScan.size(); i++) {
-            assert.deepEqual(componentArray[i], new ComponentDetails(toCompare[i]));
+        for (let i: number = 0; i < toCompare.length; i++) {
+            assert.deepEqual(componentArray[i].component_id, toCompare[i]);
         }
         // Check multi pom tree
         // Check node
@@ -338,7 +336,7 @@ describe('Maven Tests', () => {
     it('Update fixed version', async () => {
         // Create dependencies tree.
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+        let componentsToScan: Components[] = [];
         let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
 
         // Get specific dependency node.
@@ -376,7 +374,7 @@ describe('Maven Tests', () => {
      */
     it('Exclude dependency', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+        let componentsToScan: Components[] = [];
         let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
 
         // Read two nodes from tree
@@ -400,18 +398,15 @@ describe('Maven Tests', () => {
         assert.equal(directParent.children[0].generalInfo.artifactId, node2.generalInfo.artifactId);
     });
 
-    async function runCreateMavenDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
+    async function runCreateMavenDependenciesTrees(componentsToScan: Components[], parent: DependenciesTreeNode) {
         let pomXmlsArray: vscode.Uri[] | undefined = await locatePomXmls(workspaceFolders);
         await MavenUtils.createDependenciesTrees(pomXmlsArray, componentsToScan, treesManager, parent, false);
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 
     async function locatePomXmls(workspaceFolders: vscode.WorkspaceFolder[]): Promise<vscode.Uri[] | undefined> {
-        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
-            workspaceFolders,
-            treesManager.logManager
-        );
-        let pomXmlsArray: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.MAVEN);
+        let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
+        let pomXmlsArray: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.MAVEN);
         assert.isDefined(pomXmlsArray);
         pomXmlsArray = pomXmlsArray?.sort((a: vscode.Uri, b: vscode.Uri) => a.fsPath.localeCompare(b.fsPath));
         return pomXmlsArray;

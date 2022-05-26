@@ -2,7 +2,6 @@ import { assert } from 'chai';
 import * as exec from 'child_process';
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
@@ -15,11 +14,13 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { PypiUtils } from '../../main/utils/pypiUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager } from './utils/utils.test';
+import { Components } from '../../main/types/component';
+import { PackageType } from '../../main/types/projectType';
 
 /**
  * Test functionality of @class PypiUtils.
  */
-describe('Pypi Utils Tests', () => {
+describe('Pypi Utils Tests', async () => {
     let logManager: LogManager = new LogManager().activate();
     let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
     let treesManager: TreesManager = new TreesManager(
@@ -99,7 +100,7 @@ describe('Pypi Utils Tests', () => {
         // Test 'resources/python/requirements'
         let dependenciesTreeNode: PypiTreeNode = new PypiTreeNode(
             workspaceFolders[0].uri.fsPath,
-            new Collections.Set(),
+            new Components('', PackageType.UNKNOWN),
             treesManager,
             path.join(workspaceFolders[0].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
@@ -112,7 +113,7 @@ describe('Pypi Utils Tests', () => {
         // Test 'resources/python/setup'
         dependenciesTreeNode = new PypiTreeNode(
             workspaceFolders[1].uri.fsPath,
-            new Collections.Set(),
+            new Components('', PackageType.UNKNOWN),
             treesManager,
             path.join(workspaceFolders[1].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
@@ -128,7 +129,7 @@ describe('Pypi Utils Tests', () => {
         // Test 'resources/python/setupAndRequirements'
         dependenciesTreeNode = new PypiTreeNode(
             workspaceFolders[2].uri.fsPath,
-            new Collections.Set(),
+            new Components('', PackageType.UNKNOWN),
             treesManager,
             path.join(workspaceFolders[2].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))

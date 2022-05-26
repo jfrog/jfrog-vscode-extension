@@ -8,9 +8,11 @@ import { IIssueKey } from '../types/issueKey';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { ILicenseKey } from '../types/licenseKey';
 import { INodeInfo } from '../types/nodeInfo';
+// import { IScannedCveObject } from '../types/scannedCveObject';
 import { Severity } from '../types/severity';
 import { Translators } from '../utils/translators';
 import { ScanCacheObject } from './scanCacheObject';
+// import crypto from 'crypto'; // Important - Don't import '*'. It'll import deprecated encryption methods
 
 /**
  * Provide the cache mechanism. The scan cache consists of 3 components -
@@ -31,6 +33,7 @@ export class ScanCacheManager implements ExtensionComponent {
     private _scanCache!: vscode.Memento;
     private _licensesCache!: string;
     private _issuesCache!: string;
+    // private _scannedCvesCache!: string;
     private _isOutdated!: boolean;
 
     public activate(context: vscode.ExtensionContext): ScanCacheManager {
@@ -40,10 +43,15 @@ export class ScanCacheManager implements ExtensionComponent {
             return this;
         }
         this._issuesCache = path.join(storageDir, 'issues');
+        // CVEs found in the workspace.
+        // this._scannedCvesCache = path.join(storageDir, 'scanned.cves');
         this._licensesCache = path.join(storageDir, 'licenses');
         if (!fs.existsSync(this._issuesCache)) {
             fs.mkdirSync(this._issuesCache, { recursive: true } as fs.MakeDirectoryOptions);
         }
+        // if (!fs.existsSync(this._scannedCvesCache)) {
+        //     fs.mkdirSync(this._scannedCvesCache, { recursive: true } as fs.MakeDirectoryOptions);
+        // }
         if (!fs.existsSync(this._licensesCache)) {
             fs.mkdirSync(this._licensesCache);
         }
@@ -65,6 +73,70 @@ export class ScanCacheManager implements ExtensionComponent {
         return scanCacheObject ? scanCacheObject.nodeInfo : undefined;
     }
 
+    // /**
+    //  * Stores a list of CVEs in the cache.
+    //  */
+    // private storeScannedCves(scannedCveObject: IScannedCveObject) {
+    //     const prevObject: IScannedCveObject | undefined = this.getScannedCves(scannedCveObject.projectPath);
+    //     if (prevObject) {
+    //         for (const [cve, sevirity] of prevObject.cves) {
+    //             scannedCveObject.cves.set(cve, sevirity);
+    //         }
+    //     }
+    //     fs.writeFileSync(
+    //         this.getScannedCvesPath(scannedCveObject.projectPath),
+    //         JSON.stringify(scannedCveObject, (key, value) => {
+    //             if (value instanceof Map) {
+    //                 return {
+    //                     dataType: 'Map',
+    //                     value: Array.from(value.entries())
+    //                 };
+    //             } else {
+    //                 return value;
+    //             }
+    //         })
+    //     );
+    // }
+    // /**
+    //  * Generate a local file id for the scanned CVEs for a given project path.
+    //  * @param projectPath File path of the scanned CVEs
+    //  * @returns hashed project path
+    //  */
+    // private createScannedCvesId(projectPath: string): string {
+    //     return crypto
+    //         .createHash('sha256')
+    //         .update(projectPath)
+    //         .digest('hex');
+    // }
+
+    // /**
+    //  * Get a list of CVEs from the cache.
+    //  */
+    // public deleteScannedCves(projectPath: string) {
+    //     let scannedCvesPath: string = this.getScannedCvesPath(projectPath);
+    //     if (fs.existsSync(scannedCvesPath)) {
+    //         fs.rmdirSync(projectPath, { recursive: true });
+    //     }
+    // }
+
+    // public getScannedCves(projectPath: string): IScannedCveObject | undefined {
+    //     let scannedCvesPath: string = this.getScannedCvesPath(projectPath);
+    //     if (!fs.existsSync(scannedCvesPath)) {
+    //         return undefined;
+    //     }
+    //     let content: string = fs.readFileSync(scannedCvesPath, 'utf8');
+    //     return Object.assign(
+    //         {} as IIssue,
+    //         JSON.parse(content, (key, value) => {
+    //             if (typeof value === 'object' && value !== null) {
+    //                 if (value.dataType === 'Map') {
+    //                     return new Map(value.value);
+    //                 }
+    //             }
+    //             return value;
+    //         })
+    //     );
+    // }
     public storeIssue(issue: IIssueCacheObject) {
         fs.writeFileSync(this.getIssuePath(issue.issueId), JSON.stringify(issue));
     }
@@ -110,7 +182,13 @@ export class ScanCacheManager implements ExtensionComponent {
         return ScanCacheObject.isValid(scanCacheObject);
     }
 
-    public async storeComponents(components: Map<string, INodeInfo>, issues: IIssueCacheObject[], licenses: ILicenseCacheObject[]) {
+    public async storeComponents(
+        components: Map<string, INodeInfo>,
+        issues: IIssueCacheObject[],
+        licenses: ILicenseCacheObject[]
+        // scannedCVes: IScannedCveObject
+    ) {
+        // this.storeScannedCves(scannedCVes);
         for (let issue of issues) {
             this.storeIssue(issue);
         }
@@ -124,7 +202,15 @@ export class ScanCacheManager implements ExtensionComponent {
         await this._scanCache.update(ScanCacheManager.CACHE_VERSION_KEY, ScanCacheManager.CACHE_VERSION);
     }
 
-    public async storeArtifacts(artifacts: IArtifact[]): Promise<void> {
+    /**
+    /  * Store Artifacts (vulnerability data from Xray) in local cache
+    /  * @param artifacts - The data to save
+    /  * @param scannedCVes - list of CVE found by Xray
+    /  */
+    public async storeArtifacts(
+        artifacts: IArtifact[]
+        // , scannedCves: IScannedCveObject
+    ): Promise<void> {
         let scannedComponents: Map<string, INodeInfo> = new Map();
         let issues: IIssueCacheObject[] = [];
         let licenses: ILicenseCacheObject[] = [];
@@ -139,7 +225,11 @@ export class ScanCacheManager implements ExtensionComponent {
                 if (severity > nodeInfo.top_severity) {
                     nodeInfo.top_severity = severity;
                 }
-                issues.push(Translators.toCacheIssue(issue));
+                // const cacheIssueObject: IIssueCacheObject = Translators.toCacheIssue(issue);
+                // issues.push(cacheIssueObject);
+                // cacheIssueObject.cves.forEach(cve => {
+                //     scannedCves.cves.set(cve, cacheIssueObject.severity);
+                // });
                 nodeInfo.issues.push({ issue_id: issue.issue_id, component: artifact.general.component_id } as IIssueKey);
             }
             for (let license of artifact.licenses) {
@@ -159,6 +249,15 @@ export class ScanCacheManager implements ExtensionComponent {
     private getIssuePath(issueId: string): string {
         return path.join(this._issuesCache, issueId);
     }
+
+    /**
+     * Return list of CVEs found for a given project path.
+     * @param issueId - the Xray issue ID e.g. XRAY-12345
+     * @returns path to the issue in the file system.
+     */
+    // private getScannedCvesPath(projectPath: string): string {
+    //     return path.join(this._scannedCvesCache, this.createScannedCvesId(projectPath));
+    // }
 
     /**
      * Return license path in file system.

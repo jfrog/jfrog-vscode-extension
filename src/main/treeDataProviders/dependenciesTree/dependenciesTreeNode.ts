@@ -168,4 +168,8 @@ export class DependenciesTreeNode extends vscode.TreeItem {
             // 1st priority - Sort by top severity
             .sort((lhs, rhs) => rhs.topSeverity - lhs.topSeverity);
     }
+
+    // public getWorkingDir(): string {
+    //     return this._generalInfo.path;
+    // }
 }

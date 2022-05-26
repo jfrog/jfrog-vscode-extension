@@ -1,7 +1,6 @@
 import { execSync } from 'child_process';
 import crypto from 'crypto'; // Important - Don't import '*'. It'll import deprecated encryption methods
 import {
-    ComponentDetails,
     IAqlSearchResult,
     IArtifact,
     IDetailsResponse,
@@ -10,15 +9,17 @@ import {
     ISummaryRequestModel,
     ISummaryResponse,
     IUsageFeature,
-    JfrogClient
+    JfrogClient,
+    XrayScanProgress,
+    // IChecksumResult,
+    ComponentDetails
 } from 'jfrog-client-js';
-import { XrayScanProgress } from 'jfrog-client-js/dist/src/Xray/XrayScanProgress';
 import * as keytar from 'keytar';
 import * as semver from 'semver';
-import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
+import { Components } from '../types/component';
 import { ConnectionUtils } from './connectionUtils';
 
 /**
@@ -601,7 +602,7 @@ export class ConnectionManager implements ExtensionComponent {
      * @returns graph of all requested components with vulnerabilities and licenses information.
      */
     public async scanGraph(
-        componentsToScan: Set<ComponentDetails>,
+        componentsToScan: Components,
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void,
         project: string
@@ -621,7 +622,7 @@ export class ConnectionManager implements ExtensionComponent {
 
     /**
      * Do Xray's summary/component REST API.
-     * @param componentDetails - The components to scan
+     * @param Components - The components to scan
      * @returns list of all requested components with vulnerabilities and licenses information.
      */
     public async summaryComponent(componentDetails: ComponentDetails[]): Promise<IArtifact[]> {
@@ -650,6 +651,19 @@ export class ConnectionManager implements ExtensionComponent {
             .downloadArtifact(artifactPath);
     }
 
+    // public async downloadArtifactToFile(from: string, to: string): Promise<void> {
+    //     return this.createJfrogClient()
+    //         .artifactory()
+    //         .download()
+    //         .downloadArtifactToFile(from, to);
+    // }
+
+    // public async getArtifactChecksum(from: string): Promise<IChecksumResult> {
+    //     return this.createJfrogClient()
+    //         .artifactory()
+    //         .download()
+    //         .getArtifactChecksum(from);
+    // }
     public async downloadBuildDetails(buildName: string, buildNumber: string, projectKey: string): Promise<IDetailsResponse> {
         return this.createJfrogClient()
             .xray()
@@ -685,7 +699,7 @@ class XrayScanProgressImpl implements XrayScanProgress {
 
     /** @override */
     public setPercentage(percentage: number): void {
-        this._indicator.report({ message: '2/2:🧐 Xray scanning', increment: percentage - this.lastPercentage });
+        this._indicator.report({ message: '2/2:🔗 Dependencies scanning', increment: percentage - this.lastPercentage });
         this.lastPercentage = percentage;
     }
 }

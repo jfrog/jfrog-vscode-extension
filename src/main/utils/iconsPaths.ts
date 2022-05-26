@@ -27,6 +27,10 @@ export class IconsPaths {
     // License
     static readonly VIOLATED_LICENSE: string = IconsPaths.getIconPath('violatedLicense');
 
+    //Project type
+    // static readonly PYTHON: string = IconsPaths.getIconPath(path.join('package', 'pypl'));
+    // static readonly NPM: string = IconsPaths.getIconPath(path.join('package', 'npm'));
+
     public static getIconPath(iconName: string) {
         return path.join(ScanUtils.RESOURCES_DIR, iconName + '.png');
     }

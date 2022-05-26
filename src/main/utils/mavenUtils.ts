@@ -1,7 +1,5 @@
 import * as exec from 'child_process';
-import { ComponentDetails } from 'jfrog-client-js';
 import * as path from 'path';
-import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ContextKeys } from '../constants/contextKeys';
 import { FocusType } from '../focus/abstractFocus';
@@ -9,6 +7,8 @@ import { LogManager } from '../log/logManager';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
+import { Components } from '../types/component';
+import { PackageType } from '../types/projectType';
 import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
 
@@ -154,7 +154,7 @@ export class MavenUtils {
      */
     public static async createDependenciesTrees(
         pomXmls: vscode.Uri[] | undefined,
-        componentsToScan: Set<ComponentDetails>,
+        components: Components[],
         treesManager: TreesManager,
         root: DependenciesTreeNode,
         quickScan: boolean
@@ -174,6 +174,8 @@ export class MavenUtils {
             try {
                 treesManager.logManager.logMessage('Analyzing pom.xml at ' + ProjectTree.pomPath, 'INFO');
                 ProjectTree.runMavenDependencyTree();
+                const componentsToScan: Components = new Components(ProjectTree.pomPath, PackageType.MAVEN);
+                components.push(componentsToScan);
                 let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, componentsToScan, treesManager, root);
                 await dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree);
                 if (dependenciesTreeNode.children.length === 0) {

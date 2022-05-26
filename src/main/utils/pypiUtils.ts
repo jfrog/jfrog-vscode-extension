@@ -1,12 +1,12 @@
 import * as exec from 'child_process';
-import { ComponentDetails } from 'jfrog-client-js';
 import * as path from 'path';
-import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
 import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
+import { Components } from '../types/component';
+import { PackageType } from '../types/projectType';
 import { Configuration } from './configuration';
 import { ScanUtils } from './scanUtils';
 
@@ -83,7 +83,7 @@ export class PypiUtils {
     public static async createDependenciesTrees(
         pythonFiles: vscode.Uri[] | undefined,
         workspaceFolders: vscode.WorkspaceFolder[],
-        componentsToScan: Collections.Set<ComponentDetails>,
+        components: Components[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
@@ -132,6 +132,8 @@ export class PypiUtils {
             }
 
             treesManager.logManager.logMessage('Analyzing setup.py and requirements files of ' + workspaceFolder.name, 'INFO');
+            const componentsToScan: Components = new Components(path.dirname(workspaceFolder.uri.fsPath), PackageType.PYTHON);
+            components.push(componentsToScan);
             let dependenciesTreeNode: PypiTreeNode = new PypiTreeNode(workspaceFolder.uri.fsPath, componentsToScan, treesManager, pythonPath, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
         }

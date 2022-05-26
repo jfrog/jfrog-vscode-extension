@@ -1,8 +1,7 @@
-import { ComponentDetails } from 'jfrog-client-js';
-import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
 import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { Components } from '../types/component';
 
 export abstract class AbstractScanLogic {
     constructor(protected _connectionManager: ConnectionManager, protected _scanCacheManager: ScanCacheManager) {}
@@ -15,7 +14,7 @@ export abstract class AbstractScanLogic {
      */
     public abstract scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
-        componentsToScan: Set<ComponentDetails>,
+        componentsToScan: Components[],
         checkCanceled: () => void
     ): Promise<void>;
 }

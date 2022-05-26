@@ -1,6 +1,9 @@
 import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'jfrog-client-js';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
+import { Components } from '../types/component';
+// import { IScannedCveObject } from '../types/scannedCveObject';
+// import { Severity } from '../types/severity';
 import { AbstractScanLogic } from './abstractScanLogic';
 
 /**
@@ -10,20 +13,29 @@ import { AbstractScanLogic } from './abstractScanLogic';
 export class ComponentSummaryScanLogic extends AbstractScanLogic {
     public async scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
-        componentsToScan: Set<ComponentDetails>,
+        Components: Components[],
         checkCanceled: () => void
     ) {
-        const totalComponents: number = componentsToScan.size();
-        progress.report({ message: `2/2:🧐 Xray scanning`, increment: 0 });
-        let componentDetails: ComponentDetails[] = componentsToScan.toArray();
-        let step: number = (100 / totalComponents) * 100;
-        for (let currentIndex: number = 0; currentIndex < componentsToScan.size(); currentIndex += 100) {
-            checkCanceled();
-            let partialComponents: ComponentDetails[] = componentDetails.slice(currentIndex, currentIndex + 100);
-            let artifacts: IArtifact[] = await this._connectionManager.summaryComponent(partialComponents);
-            this.addMissingComponents(partialComponents, artifacts);
-            await this._scanCacheManager.storeArtifacts(artifacts);
-            progress.report({ message: `2/2:🧐 Xray scanning`, increment: step });
+        for (const componentsToScan of Components) {
+            // let scannedCVes: IScannedCveObject = {
+            //     cves: new Map<string, Severity>(),
+            //     projectPath: componentsToScan.projectPath
+            // } as IScannedCveObject;
+            const totalComponents: number = componentsToScan.componentsDetails.size();
+            progress.report({ message: `2/2:🔗 Dependencies scanning`, increment: 0 });
+            let step: number = (100 / totalComponents) * 100;
+            const ComponentsDetails: ComponentDetails[] = componentsToScan.componentsDetails.toArray();
+            for (let currentIndex: number = 0; currentIndex < componentsToScan.componentsDetails.size(); currentIndex += 100) {
+                checkCanceled();
+                let partialComponentsDetails: ComponentDetails[] = ComponentsDetails.slice(currentIndex, currentIndex + 100);
+                let artifacts: IArtifact[] = await this._connectionManager.summaryComponent(partialComponentsDetails);
+                this.addMissingComponents(partialComponentsDetails, artifacts);
+                await this._scanCacheManager.storeArtifacts(
+                    artifacts
+                    // , scannedCVes
+                );
+                progress.report({ message: `2/2:🔗 Dependencies scanning`, increment: step });
+            }
         }
     }
 

@@ -1,6 +1,5 @@
-import { ComponentDetails } from 'jfrog-client-js';
-import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
+import { Components } from '../../../types/component';
 import { GavGeneralInfo } from '../../../types/gavGeneralinfo';
 import { MavenUtils } from '../../../utils/mavenUtils';
 import { PomTree } from '../../../utils/pomTree';
@@ -11,12 +10,7 @@ import { RootNode } from './rootTree';
 export class MavenTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'gav://';
 
-    constructor(
-        workspaceFolder: string,
-        private _componentsToScan: Collections.Set<ComponentDetails>,
-        private _treesManager: TreesManager,
-        parent?: DependenciesTreeNode
-    ) {
+    constructor(workspaceFolder: string, private _componentsToScan: Components, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
         super(workspaceFolder, parent);
         MavenUtils.pathToNode.set(workspaceFolder, this);
     }
@@ -69,7 +63,7 @@ export class MavenTreeNode extends RootNode {
             child.label = group + ':' + name;
             let componentId: string = gavGeneralInfo.getComponentId();
             if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-                this._componentsToScan.add(new ComponentDetails(MavenTreeNode.COMPONENT_PREFIX + componentId));
+                this._componentsToScan.add(MavenTreeNode.COMPONENT_PREFIX + componentId);
             }
             if (rawDependenciesPtr.index + 1 < rawDependenciesList.length) {
                 while (

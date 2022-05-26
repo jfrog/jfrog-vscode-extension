@@ -8,11 +8,14 @@ import { LogManager } from '../../main/log/logManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
 import { execSync } from 'child_process';
 import { getCliHomeDir, setCliHomeDir } from './utils/utils.test';
+import nock from 'nock';
 
 describe('Connection Manager Tests', () => {
     let connectionManager: ConnectionManager;
 
     before(async () => {
+        nock.disableNetConnect();
+        nock.enableNetConnect('https://httpbin.org');
         // Don't override existing connection details
         process.env[ConnectionManager.STORE_CONNECTION_ENV] = 'FALSE';
 
@@ -87,6 +90,11 @@ describe('Connection Manager Tests', () => {
                 expectedXrayUrl: 'https://httpbin.org/status/404/different-xray-url/'
             }
         ].forEach(async testCase => {
+            nock('https://httpbin.org/anything')
+                .get('/xray/api/v1/system/ping')
+                .reply(200, 'RESPONSE')
+                .get('/artifactory/api/system/ping')
+                .reply(200, 'RESPONSE');
             it('Input URL: ' + testCase.inputUrl, async () => {
                 // Clean up env before tests.
                 process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[

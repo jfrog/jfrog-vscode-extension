@@ -1,7 +1,7 @@
-import { ComponentDetails } from 'jfrog-client-js';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ScanLogicManager } from '../../scanLogic/scanLogicManager';
+import { Components } from '../../types/component';
 import { GeneralInfo } from '../../types/generalInfo';
 import { ILicenseKey } from '../../types/licenseKey';
 import { INodeInfo } from '../../types/nodeInfo';
@@ -20,12 +20,21 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
     protected _dependenciesTree!: DependenciesTreeNode;
     private _scanInProgress: boolean = false;
+    private _scannedComponents: Components[] | undefined;
 
     constructor(
         protected _workspaceFolders: vscode.WorkspaceFolder[],
         protected _treesManager: TreesManager,
         private _scanLogicManager: ScanLogicManager
     ) {}
+
+    public get scannedComponents(): Components[] | undefined {
+        return this._scannedComponents;
+    }
+
+    public set scannedComponents(value: Components[] | undefined) {
+        this._scannedComponents = value;
+    }
 
     public get dependenciesTree() {
         return this._dependenciesTree;
@@ -136,16 +145,16 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 progress.report({ message: '1/2:👷 Building dependency tree' });
                 this.clearTree();
                 let workspaceRoot: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
-                let componentsToScan: Set<ComponentDetails> = new Set();
+                this._scannedComponents = [];
                 await DependenciesTreesFactory.createDependenciesTrees(
                     this._workspaceFolders,
-                    componentsToScan,
+                    this._scannedComponents,
                     this._treesManager,
                     workspaceRoot,
                     quickScan
                 );
-                progress.report({ message: '2/2:🧐 Xray scanning' });
-                await this._scanLogicManager.scanAndCache(progress, componentsToScan, checkCanceled);
+                progress.report({ message: '2/2:🔗 Dependencies scanning' });
+                await this._scanLogicManager.scanAndCache(progress, this._scannedComponents, checkCanceled);
                 for (let node of workspaceRoot.children) {
                     this.addXrayInfoToTree(node);
                     if (node instanceof RootNode) {
@@ -153,6 +162,8 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     }
                     node.issues = node.processTreeIssues();
                 }
+                // progress.report({ message: '3/3📝 Code vulnerability scanning' });
+                // await this._treesManager.sourceCodeTreeDataProvider.refresh();
                 onChangeFire();
             },
             'Scanning workspace',

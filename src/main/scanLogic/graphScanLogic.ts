@@ -1,12 +1,13 @@
-import { ComponentDetails, IGraphLicense, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
+import { IGraphLicense, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
 import Dictionary from 'typescript-collections/dist/lib/Dictionary';
-import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
+import { Components } from '../types/component';
 import { IIssueCacheObject } from '../types/issueCacheObject';
 import { IIssueKey } from '../types/issueKey';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { ILicenseKey } from '../types/licenseKey';
 import { INodeInfo } from '../types/nodeInfo';
+// import { IScannedCveObject } from '../types/scannedCveObject';
 import { Severity } from '../types/severity';
 import { Configuration } from '../utils/configuration';
 import { Translators } from '../utils/translators';
@@ -21,31 +22,54 @@ import { AbstractScanLogic } from './abstractScanLogic';
 export class GraphScanLogic extends AbstractScanLogic {
     public async scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
-        componentsToScan: Set<ComponentDetails>,
+        Components: Components[],
         checkCanceled: () => void
     ) {
-        let graphResponse: IGraphResponse = await this._connectionManager.scanGraph(
-            componentsToScan,
-            progress,
-            checkCanceled,
-            Configuration.getProjectKey()
-        );
-        let scannedComponents: Map<string, INodeInfo> = new Map();
-        let licenses: Dictionary<string, ILicenseCacheObject> = new Dictionary();
-        let issues: IIssueCacheObject[] = [];
+        for (const componentsToScan of Components) {
+            let graphResponse: IGraphResponse = await this._connectionManager.scanGraph(
+                componentsToScan,
+                progress,
+                checkCanceled,
+                Configuration.getProjectKey()
+            );
+            let scannedComponents: Map<string, INodeInfo> = new Map();
+            // let scannedCVes: IScannedCveObject = {
+            //     cves: new Map<string, Severity>(),
+            //     projectPath: componentsToScan.projectPath
+            // } as IScannedCveObject;
+            // this._scanCacheManager.deleteScannedCves(componentsToScan.projectPath);
+            let licenses: Dictionary<string, ILicenseCacheObject> = new Dictionary();
+            let issues: IIssueCacheObject[] = [];
 
-        if (graphResponse.violations) {
-            this.populateViolations(graphResponse.violations, issues, licenses, scannedComponents);
-        }
-        if (graphResponse.vulnerabilities) {
-            this.populateVulnerabilities(graphResponse.vulnerabilities, issues, scannedComponents);
-        }
-        if (graphResponse.licenses) {
-            this.populateLicenses(graphResponse.licenses, licenses, scannedComponents);
-        }
+            if (graphResponse.violations) {
+                this.populateViolations(
+                    graphResponse.violations,
+                    issues,
+                    licenses,
+                    scannedComponents
+                    // , scannedCVes
+                );
+            }
+            if (graphResponse.vulnerabilities) {
+                this.populateVulnerabilities(
+                    graphResponse.vulnerabilities,
+                    issues,
+                    scannedComponents
+                    // , scannedCVes
+                );
+            }
+            if (graphResponse.licenses) {
+                this.populateLicenses(graphResponse.licenses, licenses, scannedComponents);
+            }
 
-        this.addMissingComponents(componentsToScan, scannedComponents);
-        await this._scanCacheManager.storeComponents(scannedComponents, issues, licenses.values());
+            this.addMissingComponents(componentsToScan, scannedComponents);
+            await this._scanCacheManager.storeComponents(
+                scannedComponents,
+                issues,
+                licenses.values()
+                // , scannedCVes
+            );
+        }
     }
 
     private populateViolations(
@@ -53,36 +77,60 @@ export class GraphScanLogic extends AbstractScanLogic {
         issues: IIssueCacheObject[],
         licenses: Dictionary<string, ILicenseCacheObject>,
         scannedComponents: Map<string, INodeInfo>
+        // scannedCVes: IScannedCveObject
     ) {
         for (const violation of violations) {
             if (violation.license_key && violation.license_key !== '') {
                 this.populateLicense(violation, licenses, scannedComponents, true);
             } else {
-                this.populateVulnerability(violation, issues, scannedComponents);
+                this.populateVulnerability(
+                    violation,
+                    issues,
+                    scannedComponents
+                    // ,scannedCVes
+                );
             }
         }
     }
 
-    private populateVulnerabilities(vulnerabilities: IVulnerability[], issues: IIssueCacheObject[], scannedComponents: Map<string, INodeInfo>) {
+    private populateVulnerabilities(
+        vulnerabilities: IVulnerability[],
+        issues: IIssueCacheObject[],
+        scannedComponents: Map<string, INodeInfo>
+        // scannedCVes: IScannedCveObject
+    ) {
         for (const vuln of vulnerabilities) {
-            this.populateVulnerability(vuln, issues, scannedComponents);
+            this.populateVulnerability(
+                vuln,
+                issues,
+                scannedComponents
+                // , scannedCVes
+            );
         }
     }
 
-    private populateVulnerability(vuln: IVulnerability, issues: IIssueCacheObject[], scannedComponents: Map<string, INodeInfo>) {
+    private populateVulnerability(
+        vuln: IVulnerability,
+        issues: IIssueCacheObject[],
+        scannedComponents: Map<string, INodeInfo>
+        // scannedCVes: IScannedCveObject
+    ) {
         for (let [componentId, vulnComponent] of Object.entries(vuln.components)) {
             // Add vulnerability to the issues array
             let severity: Severity = Translators.toSeverity(vuln.severity);
+            const cves: string[] = Translators.toCves(vuln.cves);
             issues.push({
                 issueId: vuln.issue_id,
                 severity: severity,
                 summary: vuln.summary != '' ? vuln.summary : 'N/A',
                 fixedVersions: vulnComponent.fixed_versions,
-                cves: Translators.toCves(vuln.cves),
+                cves: cves,
                 references: Translators.cleanReferencesLink(vuln.references)
             } as IIssueCacheObject);
-
-            // Add vulnerability to the scanned commponents map
+            // cves.forEach(cve => {
+            //     scannedCVes.cves.set(cve, severity);
+            // });
+            // Add vulnerability to the scanned components map
             this.addIssueToScannedComponents(scannedComponents, this.getShortComponentId(componentId), vuln.issue_id, severity);
         }
     }
@@ -137,8 +185,8 @@ export class GraphScanLogic extends AbstractScanLogic {
         scannedComponents.set(componentId, nodeInfo);
     }
 
-    private addMissingComponents(componentsToScan: Set<ComponentDetails>, scannedComponents: Map<string, INodeInfo>): void {
-        componentsToScan.forEach(componentToScan => {
+    private addMissingComponents(componentsToScan: Components, scannedComponents: Map<string, INodeInfo>): void {
+        componentsToScan.componentsDetails.forEach(componentToScan => {
             let componentId: string = this.getShortComponentId(componentToScan.component_id);
             if (!scannedComponents.has(componentId)) {
                 scannedComponents.set(componentId, this.createNodeInfo());

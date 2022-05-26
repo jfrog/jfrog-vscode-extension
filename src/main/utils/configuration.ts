@@ -31,6 +31,12 @@ export class Configuration {
             .get('projectKey', '')
             .trim();
     }
+    // public static getRemoteArtifactory(): string {
+    //     return vscode.workspace
+    //         .getConfiguration('jfrog')
+    //         .get('jfrog.remote.artifactory', '')
+    //         .trim();
+    // }
 
     /**
      * @returns the log level

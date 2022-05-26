@@ -1,8 +1,17 @@
 /**
  * Stores {key, value, link} information for the component details and component issues details trees.
  */
+import * as vscode from 'vscode';
+
 export class TreeDataHolder {
-    constructor(private _key: string, private _value?: string, private _link?: string, private _icon?: string) {}
+    constructor(
+        private _key: string,
+        private _value?: string,
+        private _link?: string,
+        private _icon?: string,
+        private _toolTip?: string,
+        private _command?: vscode.Command
+    ) {}
 
     public get key(): string {
         return this._key;
@@ -18,5 +27,17 @@ export class TreeDataHolder {
 
     public get icon(): string | undefined {
         return this._icon;
+    }
+
+    public get toolTip(): string | undefined {
+        return this._toolTip;
+    }
+
+    public get command(): vscode.Command | undefined {
+        return this._command;
+    }
+
+    public set command(value: vscode.Command | undefined) {
+        this._command = value;
     }
 }

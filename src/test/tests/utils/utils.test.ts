@@ -1,6 +1,7 @@
 import * as os from 'os';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
+import { ConnectionManager } from '../../../main/connect/connectionManager';
 import { ScanCacheManager } from '../../../main/scanCache/scanCacheManager';
 import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TestMemento } from './testMemento.test';
@@ -30,6 +31,10 @@ export function createScanCacheManager(): ScanCacheManager {
         workspaceState: new TestMemento() as vscode.Memento,
         storagePath: tmp.dirSync().name
     } as vscode.ExtensionContext);
+}
+
+export function createConnectionManager(): ConnectionManager {
+    return {} as ConnectionManager;
 }
 
 export function getCliHomeDir(): string {

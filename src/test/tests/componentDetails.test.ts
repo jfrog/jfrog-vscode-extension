@@ -2,39 +2,58 @@ import { assert } from 'chai';
 import { faker } from '@faker-js/faker';
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
-import { ComponentDetailsDataProvider, LicensesNode } from '../../main/treeDataProviders/componentDetailsDataProvider';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { TreeDataHolder } from '../../main/treeDataProviders/utils/treeDataHolder';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
 import { ILicenseKey } from '../../main/types/licenseKey';
 import { createScanCacheManager } from './utils/utils.test';
+import { LicensesNode } from '../../main/treeDataProviders/generalDetailsDataProvider';
+import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependencyDetailsProvider';
+// import { SourceCodeTreeDataProvider } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeTreeDataProvider';
+// import { TreesManager } from '../../main/treeDataProviders/treesManager';
+// import { LogManager } from '../../main/log/logManager';
+// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+// import { ConnectionManager } from '../../main/connect/connectionManager';
+import { TreeDataHolder } from '../../main/treeDataProviders/utils/treeDataHolder';
 
 /**
- * Test functionality of @class ComponentDetailsDataProvider.
+ * Test functionality of @class DependencyDataProvider.
  */
-describe('Component Details Tests', () => {
+describe('Dependency Details Tests', () => {
     let scanCacheManager: ScanCacheManager = createScanCacheManager();
-    let componentDetails: ComponentDetailsDataProvider = new ComponentDetailsDataProvider(scanCacheManager);
+    // let logManager: LogManager = new LogManager().activate();
+    // let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
+    // let treesManager: TreesManager = new TreesManager(
+    //     [],
+    //     new ConnectionManager(logManager),
+    //     dummyScanCacheManager,
+    //     {} as ScanLogicManager,
+    //     logManager
+    // );
+    // let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider([], treesManager);
+    let Components: DependencyDetailsProvider = new DependencyDetailsProvider(
+        scanCacheManager
+        // , sourceCodeTreeDataProvider
+    );
     let dependenciesTreeNode: DependenciesTreeNode;
     before(() => {
         let generalInfo: GeneralInfo = new GeneralInfo('artifactId', '1.2.3', [], __dirname, 'testPkg');
         dependenciesTreeNode = new DependenciesTreeNode(generalInfo);
-        componentDetails.selectNode(dependenciesTreeNode);
+        Components.selectNode(dependenciesTreeNode);
     });
 
     it('No licenses', async () => {
-        let treeItem: any[] = await componentDetails.getChildren();
+        let generalDetailNode: any = await Components.generalDetailsProvider.getChildren();
 
-        let artifactNode: TreeDataHolder = treeItem[0];
+        let artifactNode: TreeDataHolder = generalDetailNode[0];
         assert.deepEqual(artifactNode.key, 'Artifact');
         assert.deepEqual(artifactNode.value, 'artifactId');
 
-        let versionNode: TreeDataHolder = treeItem[1];
+        let versionNode: TreeDataHolder = generalDetailNode[1];
         assert.deepEqual(versionNode.key, 'Version');
         assert.deepEqual(versionNode.value, '1.2.3');
 
-        let pkgTypeNode: TreeDataHolder = treeItem[2];
+        let pkgTypeNode: TreeDataHolder = generalDetailNode[2];
         assert.deepEqual(pkgTypeNode.key, 'Type');
         assert.deepEqual(pkgTypeNode.value, 'testPkg');
 
@@ -66,7 +85,7 @@ describe('Component Details Tests', () => {
     }
 
     async function getAndAssertLicenses(): Promise<any[]> {
-        let treeItem: any[] = await componentDetails.getChildren();
+        let treeItem: any[] = await Components.generalDetailsProvider.getChildren();
         let licensesNode: LicensesNode = treeItem[5];
         assert.deepEqual(licensesNode.label, 'Licenses');
         assert.deepEqual(licensesNode.collapsibleState, vscode.TreeItemCollapsibleState.Expanded);

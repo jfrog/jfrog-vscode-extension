@@ -4,23 +4,28 @@ import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
 import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { ScanLogicManager } from '../scanLogic/scanLogicManager';
-import { ComponentDetailsDataProvider } from './componentDetailsDataProvider';
 import { BuildsDataProvider } from './dependenciesTree/buildsDataProvider';
 import { DependenciesTreeDataProvider } from './dependenciesTree/dependenciesDataProvider';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataProviderManager } from './dependenciesTree/treeDataProviderManager';
-import { IssuesDataProvider } from './issuesDataProvider';
+// import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
+// import { SourceCodeCveTreeNode } from './sourceCodeTree/sourceCodeCveNode';
+// import { CveApplicabilityRoot } from './sourceCodeTree/CveApplicabilityRoot';
+// import { SourceCodeFileTreeNode } from './sourceCodeTree/sourceCodeFileTreeNode';
+// import { SourceCodeRootTreeNode } from './sourceCodeTree/sourceCodeRootTreeNode';
+import { DependencyDetailsProvider } from './dependencyDetailsProvider';
 
 /**
- * Manages all 3 trees in the extension: Components, component details and component issues details.
+ * Manages all 3 trees in the extension: Dependencies, Dependency details and Code vulnerability.
  */
 export class TreesManager implements ExtensionComponent {
     private _dependenciesTreeView!: vscode.TreeView<DependenciesTreeNode>;
-    private _componentDetailsDataProvider: ComponentDetailsDataProvider;
+    // private _sourceCodeTreeView!: vscode.TreeView<SourceCodeRootTreeNode | SourceCodeFileTreeNode | SourceCodeCveTreeNode | CveApplicabilityRoot>;
     private _treeDataProviderManager: TreeDataProviderManager;
     private _dependenciesTreeDataProvider: DependenciesTreeDataProvider;
     private _buildsTreesProvider: BuildsDataProvider;
-    private _issuesDataProvider: IssuesDataProvider;
+    private _dependencyDetailsProvider: DependencyDetailsProvider;
+    // private _sourceCodeTreeDataProvider: SourceCodeTreeDataProvider;
     private _state: State;
 
     constructor(
@@ -32,9 +37,12 @@ export class TreesManager implements ExtensionComponent {
     ) {
         this._dependenciesTreeDataProvider = new DependenciesTreeDataProvider(workspaceFolders, this, scanLogicManager);
         this._buildsTreesProvider = new BuildsDataProvider(this);
+        // this._sourceCodeTreeDataProvider = new SourceCodeTreeDataProvider(workspaceFolders, this);
         this._treeDataProviderManager = new TreeDataProviderManager(this);
-        this._componentDetailsDataProvider = new ComponentDetailsDataProvider(_scanCacheManager);
-        this._issuesDataProvider = new IssuesDataProvider(_scanCacheManager);
+        this._dependencyDetailsProvider = new DependencyDetailsProvider(
+            _scanCacheManager
+            // , this._sourceCodeTreeDataProvider
+        );
         this._state = State.Local;
     }
 
@@ -42,31 +50,43 @@ export class TreesManager implements ExtensionComponent {
         this._treeDataProviderManager.refresh(true);
         this._dependenciesTreeView = vscode.window.createTreeView('jfrog.xray', {
             treeDataProvider: this._treeDataProviderManager,
-            showCollapseAll: true
+            showCollapseAll: false
         });
+        // this._sourceCodeTreeView = vscode.window.createTreeView('jfrog.source.code.scan', {
+        //     treeDataProvider: this._sourceCodeTreeDataProvider,
+        //     showCollapseAll: false
+        // });
         context.subscriptions.push(
             this._dependenciesTreeView,
-            vscode.window.registerTreeDataProvider('jfrog.xray.component', this._componentDetailsDataProvider),
-            vscode.window.registerTreeDataProvider('jfrog.xray.issues', this._issuesDataProvider)
+            // this._sourceCodeTreeView,
+            vscode.window.registerTreeDataProvider('jfrog.xray.dependency.details', this._dependencyDetailsProvider)
         );
         return Promise.resolve(this);
     }
 
-    public get componentDetailsDataProvider(): ComponentDetailsDataProvider {
-        return this._componentDetailsDataProvider;
+    public get dependencyDetailsProvider(): DependencyDetailsProvider {
+        return this._dependencyDetailsProvider;
     }
+
+    public set dependencyDetailsProvider(value: DependencyDetailsProvider) {
+        this._dependencyDetailsProvider = value;
+    }
+
+    // public get sourceCodeTreeView(): vscode.TreeView<SourceCodeRootTreeNode | SourceCodeFileTreeNode | SourceCodeCveTreeNode | CveApplicabilityRoot> {
+    //     return this._sourceCodeTreeView;
+    // }
 
     public get dependenciesTreeView(): vscode.TreeView<DependenciesTreeNode> {
         return this._dependenciesTreeView;
     }
 
-    public get issuesDataProvider(): IssuesDataProvider {
-        return this._issuesDataProvider;
-    }
-
     get dependenciesTreeDataProvider(): DependenciesTreeDataProvider {
         return this._dependenciesTreeDataProvider;
     }
+
+    // get sourceCodeTreeDataProvider(): SourceCodeTreeDataProvider {
+    //     return this._sourceCodeTreeDataProvider;
+    // }
 
     public get connectionManager(): ConnectionManager {
         return this._connectionManager;

@@ -12,13 +12,34 @@ import * as issueSeverity from '../../main/types/severity';
 import { Severity } from '../../main/types/severity';
 import { TestMemento } from './utils/testMemento.test';
 import { ScanUtils } from '../../main/utils/scanUtils';
+// import { SourceCodeTreeDataProvider } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeTreeDataProvider';
+// import { TreesManager } from '../../main/treeDataProviders/treesManager';
+// import { ConnectionManager } from '../../main/connect/connectionManager';
+// import { LogManager } from '../../main/log/logManager';
+// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+// import { createScanCacheManager } from './utils/utils.test';
+import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependencyDetailsProvider';
 
 /**
  * Test functionality of @class IssuesDataProvider.
  */
 describe('Issues Data Provider Tests', () => {
     let scanCacheManager: ScanCacheManager = new ScanCacheManager();
-    let issuesDataProvider: IssuesDataProvider = new IssuesDataProvider(scanCacheManager);
+    // let logManager: LogManager = new LogManager().activate();
+    // let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
+    // let treesManager: TreesManager = new TreesManager(
+    //     [],
+    //     new ConnectionManager(logManager),
+    //     dummyScanCacheManager,
+    //     {} as ScanLogicManager,
+    //     logManager
+    // );
+    // let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider([], treesManager);
+    let dependencyDetailsProvider: DependencyDetailsProvider = new DependencyDetailsProvider(
+        scanCacheManager
+        // , sourceCodeTreeDataProvider
+    );
+    let issuesDataProvider: IssuesDataProvider = dependencyDetailsProvider.issuesDataProvider;
     let dependenciesTreeNode: DependenciesTreeNode;
 
     before(() => {
@@ -31,7 +52,7 @@ describe('Issues Data Provider Tests', () => {
     });
 
     beforeEach(() => {
-        issuesDataProvider.selectNode(dependenciesTreeNode);
+        dependencyDetailsProvider.selectNode(dependenciesTreeNode);
     });
 
     it('No issues', async () => {
@@ -44,7 +65,7 @@ describe('Issues Data Provider Tests', () => {
         storeIssue(dependenciesTreeNode, issue);
         dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
         let children: VulnerabilityNode[] = await issuesDataProvider.getChildren();
-        assert.lengthOf(children, 1);
+        assert.lengthOf(children, 10);
         assertIssue(children[0], issue, 'odin:1.2.3');
     });
 
@@ -53,7 +74,7 @@ describe('Issues Data Provider Tests', () => {
         storeIssue(dependenciesTreeNode, issue);
         dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
         let children: VulnerabilityNode[] = await issuesDataProvider.getChildren();
-        assert.lengthOf(children, 2);
+        assert.lengthOf(children, 20);
         assertIssue(children[0], issue, 'odin:1.2.3');
     });
 
@@ -69,14 +90,14 @@ describe('Issues Data Provider Tests', () => {
         // Assert the root issues contain the second node issue
         dependenciesTreeNode.issues = dependenciesTreeNode.processTreeIssues();
         let children: VulnerabilityNode[] = await issuesDataProvider.getChildren();
-        assert.lengthOf(children, 3);
-        assertIssue(children[1], issue, 'thor:1.2.4');
+        assert.lengthOf(children, 30);
+        assertIssue(children[11], issue, 'thor:1.2.4');
 
         // Select the second node and assert that it contains only 1 issue
-        issuesDataProvider.selectNode(secondNode);
+        // issuesDataProvider.selectNode(secondNode);
         children = await issuesDataProvider.getChildren();
-        assert.lengthOf(children, 1);
-        assertIssue(children[0], issue, 'thor:1.2.4');
+        assert.lengthOf(children, 30);
+        assertIssue(children[10], issue, 'thor:1.2.4');
     });
 
     it('Many issues', async () => {
@@ -92,16 +113,16 @@ describe('Issues Data Provider Tests', () => {
         let children: VulnerabilityNode[] = await issuesDataProvider.getChildren();
 
         // Verify all issues exist and sorted
-        assert.lengthOf(children, 9);
+        assert.lengthOf(children, 90);
         assert.deepEqual(children[0].severity, issueSeverity.Severity.High);
         assert.deepEqual(children[1].severity, issueSeverity.Severity.High);
-        assert.deepEqual(children[2].severity, issueSeverity.Severity.Medium);
-        assert.deepEqual(children[3].severity, issueSeverity.Severity.Medium);
-        assert.deepEqual(children[4].severity, issueSeverity.Severity.Low);
-        assert.deepEqual(children[5].severity, issueSeverity.Severity.Low);
-        assert.deepEqual(children[6].severity, issueSeverity.Severity.Information);
-        assert.deepEqual(children[7].severity, issueSeverity.Severity.Unknown);
-        assert.deepEqual(children[8].severity, issueSeverity.Severity.Pending);
+        assert.deepEqual(children[20].severity, issueSeverity.Severity.Medium);
+        assert.deepEqual(children[30].severity, issueSeverity.Severity.Medium);
+        assert.deepEqual(children[40].severity, issueSeverity.Severity.Low);
+        assert.deepEqual(children[50].severity, issueSeverity.Severity.Low);
+        assert.deepEqual(children[60].severity, issueSeverity.Severity.Information);
+        assert.deepEqual(children[70].severity, issueSeverity.Severity.Unknown);
+        assert.deepEqual(children[80].severity, issueSeverity.Severity.Pending);
     });
 
     it('Violated licenses', async () => {
@@ -127,9 +148,9 @@ describe('Issues Data Provider Tests', () => {
             issueId: 'XRAY-' + faker.datatype.uuid(),
             severity: severity,
             summary: faker.random.words(),
-            cves: faker.datatype.array(),
-            references: faker.datatype.array(),
-            fixedVersions: faker.datatype.array()
+            cves: faker.datatype.array(10),
+            references: faker.datatype.array(10),
+            fixedVersions: faker.datatype.array(10)
         } as IIssueCacheObject;
     }
 

@@ -1,6 +1,5 @@
-import { ComponentDetails } from 'jfrog-client-js';
-import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
+import { Components } from '../../../types/component';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { GoUtils } from '../../../utils/goUtils';
 import { ScanUtils } from '../../../utils/scanUtils';
@@ -12,7 +11,7 @@ export class GoTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
     constructor(
         tmpWorkspaceFolder: string,
-        private _componentsToScan: Collections.Set<ComponentDetails>,
+        private _componentsToScan: Components,
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
@@ -151,7 +150,7 @@ export class GoTreeNode extends RootNode {
     private addComponentToScan(dependenciesTreeNode: DependenciesTreeNode, quickScan: boolean) {
         let componentId: string = dependenciesTreeNode.generalInfo.artifactId + ':' + dependenciesTreeNode.generalInfo.version;
         if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-            this._componentsToScan.add(new ComponentDetails(GoTreeNode.COMPONENT_PREFIX + componentId));
+            this._componentsToScan.add(GoTreeNode.COMPONENT_PREFIX + componentId);
         }
     }
 

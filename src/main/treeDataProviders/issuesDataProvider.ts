@@ -1,28 +1,52 @@
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
+// import { ContextKeys } from '../constants/contextKeys';
 import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { IIssueCacheObject } from '../types/issueCacheObject';
 import { Severity, SeverityUtils } from '../types/severity';
 import { Consts } from '../utils/consts';
 import { IconsPaths } from '../utils/iconsPaths';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
+// import { SourceCodeCveTreeNode } from './sourceCodeTree/sourceCodeCveNode';
+// import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
 import { TreeDataHolder } from './utils/treeDataHolder';
-
+export abstract class IssueNode extends vscode.TreeItem {
+    constructor(label: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
+        super(label, collapsibleState);
+    }
+}
 /**
- * The component issues details tree.
+ * The component issues tab in 'Dependency Details' panel.
  */
-export class IssuesDataProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
-    private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined> = new vscode.EventEmitter<vscode.TreeItem | undefined>();
-    readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined> = this._onDidChangeTreeData.event;
-    private _selectedNode: DependenciesTreeNode | undefined;
+export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProvider<vscode.TreeItem> {
+    private _selectedNode!: DependenciesTreeNode;
 
-    constructor(protected _scanCacheManager: ScanCacheManager) {}
+    constructor(
+        protected _scanCacheManager: ScanCacheManager // , private _sourceCodeTreeDataProvider: SourceCodeTreeDataProvider
+    ) {
+        // Open issue tab by default.
+        super('Issues', vscode.TreeItemCollapsibleState.Expanded);
+    }
 
-    refresh(): void {
-        this._onDidChangeTreeData.fire();
+    public get selectedNode(): DependenciesTreeNode {
+        return this._selectedNode;
+    }
+
+    public set selectedNode(value: DependenciesTreeNode) {
+        this._selectedNode = value;
     }
 
     getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+        // if (element instanceof VulnerabilityNode) {
+        //     if (element.sourceCodeCveTreeNode !== undefined) {
+        //         // Focus on vulnerable line on issue (CVE) left click.
+        //         element.command = {
+        //             command: 'jfrog.source.code.scan.jumpToSource',
+        //             title: 'Jump To Code',
+        //             arguments: [element]
+        //         };
+        //     }
+        // }
         if (!(element instanceof TreeDataHolder)) {
             // VulnerabilityNode, ViolatedLicenseNode, LicensesTitleNode, or VulnerabilitiesTitleNode
             return element;
@@ -38,21 +62,14 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
                 arguments: [vscode.Uri.parse(holder.link)]
             } as vscode.Command;
         }
-
+        if (holder.toolTip) {
+            treeItem.tooltip = holder.toolTip;
+        }
+        treeItem.command = holder.command;
         return treeItem;
     }
 
     getChildren(element?: vscode.TreeItem): Thenable<any[]> {
-        // No selected node - No component issues details view
-        if (!this._selectedNode) {
-            return Promise.resolve([]);
-        }
-
-        // Return title nodes
-        if (!element) {
-            return Promise.resolve(this.getTitleNodes(this._selectedNode));
-        }
-
         // Return vulnerabilities under VulnerabilitiesTitleNode
         if (element instanceof VulnerabilitiesTitleNode) {
             return Promise.resolve(this.getVulnerabilityNodes(this._selectedNode));
@@ -72,18 +89,12 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
         if (element instanceof ReferencesNode) {
             return Promise.resolve(element.getChildren());
         }
-
-        // License selected
-        return Promise.resolve(this.getViolatedLicenseComponentsNodes(element as ViolatedLicenseNode));
-    }
-
-    /**
-     * Select node in Component Issues Details after selecting a node in the Components Tree.
-     * @param selectedNode - the selected node in the DependenciesTreeNode
-     */
-    public selectNode(selectedNode: DependenciesTreeNode): void {
-        this._selectedNode = selectedNode;
-        this.refresh();
+        
+        if (element instanceof ViolatedLicenseNode) {
+            // License selected
+            return Promise.resolve(this.getViolatedLicenseComponentsNodes(element as ViolatedLicenseNode));
+        }
+        return Promise.resolve(this.getTitleNodes(this._selectedNode));
     }
 
     /**
@@ -115,15 +126,43 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
             if (!issue) {
                 return;
             }
-            let issueNode: VulnerabilityNode = new VulnerabilityNode(
-                issue.severity,
-                issue.summary,
-                issue.cves,
-                issue.references,
-                xrayIssueId.component,
-                issue.fixedVersions
-            );
-            children.push(issueNode);
+            if (issue.cves.length === 0) {
+                // In case we dont have anny CVE for the given Xray issue, Show the summary as the title.
+                let issueNode: VulnerabilityNode = new VulnerabilityNode(
+                    issue.severity,
+                    issue.summary,
+                    undefined,
+                    issue.references,
+                    xrayIssueId.component,
+                    issue.fixedVersions
+                );
+                children.push(issueNode);
+            } else {
+                for (let cve of issue.cves) {
+                    // let applicable: boolean | undefined = undefined;
+                    // let sourceCodeCveTreeNode: SourceCodeCveTreeNode | undefined;
+                    // if (this._sourceCodeTreeDataProvider.isCveNotApplicable(selectedNode.getWorkingDir(), cve)) {
+                    //     applicable = false;
+                    //     cve = cve + ' 🟢 ' + ' Not applicable';
+                    // }
+                    // if (this._sourceCodeTreeDataProvider.isCveApplicable(selectedNode.getWorkingDir(), cve)) {
+                    //     applicable = true;
+                    //     sourceCodeCveTreeNode = this._sourceCodeTreeDataProvider.getCveApplicable(selectedNode.getWorkingDir(), cve);
+                    //     cve = cve + ' 🔴 ' + ' Applicable';
+                    // }
+                    let issueNode: VulnerabilityNode = new VulnerabilityNode(
+                        issue.severity,
+                        issue.summary,
+                        cve,
+                        issue.references,
+                        xrayIssueId.component,
+                        issue.fixedVersions
+                        // applicable,
+                        // sourceCodeCveTreeNode
+                    );
+                    children.push(issueNode);
+                }
+            }
         });
         children.sort((lhs, rhs) => rhs.severity - lhs.severity);
         return children;
@@ -135,14 +174,11 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
      * @returns Severity, Component, CVEs, and Fixed Versions of a vulnerability
      */
     private getVulnerabilityDetailsNodes(node: VulnerabilityNode): (TreeDataHolder | ReferencesNode)[] {
-        let children: (TreeDataHolder | ReferencesNode)[] = [
-            new TreeDataHolder('Severity', SeverityUtils.getString(node.severity)),
-            new TreeDataHolder('Component', node.component)
-        ];
-        let cves: string[] | undefined = node.cves;
-        if (cves && cves.length > 0) {
-            children.push(new TreeDataHolder('CVEs', cves.toString()));
+        let children: (TreeDataHolder | ReferencesNode)[] = [];
+        if (!node.showSummaryOnTitle()) {
+            children.push(new TreeDataHolder('Summary', node.summary));
         }
+        children.push(new TreeDataHolder('Severity', SeverityUtils.getString(node.severity)), new TreeDataHolder('Component', node.component));
         let fixedVersions: string[] | undefined = node.fixedVersions;
         if (fixedVersions && fixedVersions.length > 0) {
             children.push(new TreeDataHolder('Fixed Versions', fixedVersions.join(', ')));
@@ -184,7 +220,7 @@ export class IssuesDataProvider implements vscode.TreeDataProvider<vscode.TreeIt
 /**
  * Represents "Vulnerabilities" node.
  */
-export class VulnerabilitiesTitleNode extends vscode.TreeItem {
+export class VulnerabilitiesTitleNode extends IssueNode {
     constructor() {
         super('Vulnerabilities', vscode.TreeItemCollapsibleState.Expanded);
     }
@@ -193,7 +229,7 @@ export class VulnerabilitiesTitleNode extends vscode.TreeItem {
 /**
  * Represents "Violated Licenses" node.
  */
-export class LicensesTitleNode extends vscode.TreeItem {
+export class LicensesTitleNode extends IssueNode {
     private _violatedLicenses: Map<string, Set<string>>;
 
     constructor(violatedLicenses: Map<string, Set<string>>) {
@@ -209,7 +245,7 @@ export class LicensesTitleNode extends vscode.TreeItem {
 /**
  * Represents a violated license node.
  */
-export class ViolatedLicenseNode extends vscode.TreeItem {
+export class ViolatedLicenseNode extends IssueNode {
     constructor(readonly licenseName: string, readonly components: Set<string>) {
         super(licenseName, vscode.TreeItemCollapsibleState.Collapsed);
         this.iconPath = IconsPaths.VIOLATED_LICENSE;
@@ -219,21 +255,34 @@ export class ViolatedLicenseNode extends vscode.TreeItem {
 /**
  * Represents a vulnerability node.
  */
-export class VulnerabilityNode extends vscode.TreeItem {
+export class VulnerabilityNode extends IssueNode {
     constructor(
         readonly severity: Severity,
         readonly summary: string,
-        readonly cves?: string[],
+        readonly cve?: string,
         readonly references?: string[],
         readonly component?: string,
-        readonly fixedVersions?: string[]
-    ) {
-        super(summary, vscode.TreeItemCollapsibleState.Collapsed);
+        readonly fixedVersions?: string[] // If true, the given CVE is applicable in the source code.
+    ) // If false, the given CVE is not applicable in the source code.
+    // If undefined, The CVE cannot be discovered.
+    // readonly applicable?: boolean,
+    // 'sourceCodeCveTreeNode' is the corresponding node in the CVE applicability view if the current CVE is applicable.
+    // readonly sourceCodeCveTreeNode?: SourceCodeCveTreeNode
+    {
+        super(cve ? cve : summary, vscode.TreeItemCollapsibleState.Collapsed);
+        // Enable eye button if we can jump to source code.
+        // if (sourceCodeCveTreeNode !== undefined) {
+        //     this.contextValue = ContextKeys.SHOW_IN_SOURCE_CODE_ENABLED;
+        // }
         this.iconPath = SeverityUtils.getIcon(severity ? severity : Severity.Normal);
+    }
+
+    public showSummaryOnTitle(): boolean {
+        return this.cve !== undefined;
     }
 }
 
-export class ReferencesNode extends vscode.TreeItem {
+export class ReferencesNode extends IssueNode {
     constructor(readonly references?: string[]) {
         super('References', vscode.TreeItemCollapsibleState.Collapsed);
     }

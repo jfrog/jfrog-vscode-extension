@@ -45,15 +45,11 @@
             "jfrog": [
                 {
                     "id": "jfrog.xray",
-                    "name": "Components Tree"
+                    "name": "Dependencies"
                 },
                 {
-                    "id": "jfrog.xray.component",
-                    "name": "Component Details"
-                },
-                {
-                    "id": "jfrog.xray.issues",
-                    "name": "Component Issues Details"
+                    "id": "jfrog.xray.dependency.details",
+                    "name": "Dependency Details"
                 }
             ]
         },
@@ -115,6 +111,15 @@
                 "enablement": "areCredentialsSet && !scanInProgress"
             },
             {
+                "command": "jfrog.source.code.scan.refresh",
+                "title": "Refresh",
+                "icon": {
+                    "light": "resources/light/refresh.png",
+                    "dark": "resources/dark/refresh.png"
+                },
+                "enablement": "areCredentialsSet && !scanInProgress"
+            },
+            {
                 "command": "jfrog.xray.connect",
                 "title": "Connect",
                 "icon": "resources/connect.png"
@@ -148,6 +153,11 @@
                 "command": "jfrog.xray.updateDependency",
                 "title": "Update dependency to fixed version",
                 "icon": "$(arrow-up)"
+            },
+            {
+                "command": "jfrog.source.code.scan.jumpToSource",
+                "title": "Jump To Source",
+                "icon": "$(eye)"
             },
             {
                 "command": "jfrog.xray.copyToClipboard",
@@ -224,12 +234,22 @@
                     "command": "jfrog.xray.export",
                     "when": "view == jfrog.xray && isLocal",
                     "group": "navigation@5"
+                },
+                {
+                    "command": "jfrog.source.code.scan.refresh",
+                    "when": "view == jfrog.source.code.scan",
+                    "group": "navigation@6"
                 }
             ],
             "view/item/context": [
                 {
                     "command": "jfrog.xray.showInProjectDesc",
                     "when": "viewItem =~ /jfrog.xray.showInProjectDesc.enabled/",
+                    "group": "inline"
+                },
+                {
+                    "command": "jfrog.source.code.scan.jumpToSource",
+                    "when": "viewItem =~ /jfrog.source.code.scan.jumpToSource.enabled/",
                     "group": "inline"
                 },
                 {
@@ -273,9 +293,11 @@
     "dependencies": {
         "adm-zip": "~0.5.5",
         "fs-extra": "~10.0.0",
-        "jfrog-client-js": "github:yahavi/jfrog-client-js#retries",
+        "global-tunnel-ng": "^2.7.1",
+        "jfrog-client-js": "github:jfrog/jfrog-client-js#master",
         "json2csv": "^5.0.7",
         "keytar": "~7.9.0",
+        "nock": "^13.2.4",
         "nuget-deps-tree": "^0.2.2",
         "original-fs": "^1.1.0",
         "p-queue": "^6.6.2",
@@ -329,7 +351,6 @@
         "nodejs",
         "python",
         "dotnet",
-        "gocenter",
         "security",
         "devsecops",
         "javascript",
