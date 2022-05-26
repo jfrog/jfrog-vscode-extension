@@ -1,25 +1,14 @@
-name: "Frogbot"
+name: "Frogbot Fix"
 on:
-  pull_request_target:
-    types: [opened, synchronize]
   push:
     branches:
       - "main"
       - "master"
 jobs:
-  frogbot:
+  create-fix-pull-requests:
     runs-on: ubuntu-latest
-    # A pull request needs to be approved, before Frogbot scans it. Any GitHub user who is associated with the
-    # "frogbot" GitHub environment can approve the pull request to be scanned.
-    environment: frogbot
-    permissions:
-      issues: write
-      pull-requests: write
-      contents: write
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
 
       # Install prerequisites
       - name: Setup NodeJS
@@ -45,7 +34,7 @@ jobs:
           # JFrog password. Must be provided with JF_USER
           JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
 
-          # [Manadatory]
+          # [Mandatory]
           # The GitHub token automatically generated for the job
           JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
