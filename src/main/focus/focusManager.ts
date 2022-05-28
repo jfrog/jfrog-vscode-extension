@@ -8,6 +8,9 @@ import { NpmFocus } from './npmFocus';
 import { PypiFocus } from './pypiFocus';
 // import * as vscode from 'vscode';
 
+/**
+ * Show the dependency in the project descriptor (i.e package.json) or CVE in the source code file after left click on the eye icon".
+ */
 export class FocusManager implements ExtensionComponent {
     private _focuses: AbstractFocus[] = [];
 
@@ -19,18 +22,12 @@ export class FocusManager implements ExtensionComponent {
         return this;
     }
 
-    /**
-     * Show the dependency in the project descriptor (i.e package.json) file after right click on the components tree and a left click on "Show in project descriptor" button.
-     */
     public focusOnDependency(dependenciesTreeNode: DependenciesTreeNode, focusType: FocusType) {
         this._focuses
             .filter(focus => focus.isMatched(dependenciesTreeNode))
             .forEach(focus => focus.focusOnDependency(dependenciesTreeNode, focusType));
     }
 
-    // /**
-    //  * Show the CVE in the source code file after click on the cve node or left click on "Jump to source" button.
-    //  */
     // public async focusOnCve(node?: SourceCodeCveTreeNode, index?: number) {
     //     if (node === undefined || node.getFile() === '') {
     //         return;

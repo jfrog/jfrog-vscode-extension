@@ -153,7 +153,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     workspaceRoot,
                     quickScan
                 );
-                progress.report({ message: '2/2:🔗 Dependencies scanning' });
+                progress.report({ message: '2/2:📦 Dependencies scanning' });
                 await this._scanLogicManager.scanAndCache(progress, this._scannedComponents, checkCanceled);
                 for (let node of workspaceRoot.children) {
                     this.addXrayInfoToTree(node);

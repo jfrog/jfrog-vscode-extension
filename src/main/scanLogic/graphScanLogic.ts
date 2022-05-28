@@ -33,7 +33,7 @@ export class GraphScanLogic extends AbstractScanLogic {
                 Configuration.getProjectKey()
             );
             let scannedComponents: Map<string, INodeInfo> = new Map();
-            // let scannedCVes: IScannedCveObject = {
+            // let scannedCves: IScannedCveObject = {
             //     cves: new Map<string, Severity>(),
             //     projectPath: componentsToScan.projectPath
             // } as IScannedCveObject;
@@ -47,7 +47,7 @@ export class GraphScanLogic extends AbstractScanLogic {
                     issues,
                     licenses,
                     scannedComponents
-                    // , scannedCVes
+                    // , scannedCves
                 );
             }
             if (graphResponse.vulnerabilities) {
@@ -55,7 +55,7 @@ export class GraphScanLogic extends AbstractScanLogic {
                     graphResponse.vulnerabilities,
                     issues,
                     scannedComponents
-                    // , scannedCVes
+                    // , scannedCves
                 );
             }
             if (graphResponse.licenses) {
@@ -67,7 +67,7 @@ export class GraphScanLogic extends AbstractScanLogic {
                 scannedComponents,
                 issues,
                 licenses.values()
-                // , scannedCVes
+                // , scannedCves
             );
         }
     }
@@ -77,7 +77,7 @@ export class GraphScanLogic extends AbstractScanLogic {
         issues: IIssueCacheObject[],
         licenses: Dictionary<string, ILicenseCacheObject>,
         scannedComponents: Map<string, INodeInfo>
-        // scannedCVes: IScannedCveObject
+        // scannedCves: IScannedCveObject
     ) {
         for (const violation of violations) {
             if (violation.license_key && violation.license_key !== '') {
@@ -87,7 +87,7 @@ export class GraphScanLogic extends AbstractScanLogic {
                     violation,
                     issues,
                     scannedComponents
-                    // ,scannedCVes
+                    // ,scannedCves
                 );
             }
         }
@@ -97,14 +97,14 @@ export class GraphScanLogic extends AbstractScanLogic {
         vulnerabilities: IVulnerability[],
         issues: IIssueCacheObject[],
         scannedComponents: Map<string, INodeInfo>
-        // scannedCVes: IScannedCveObject
+        // scannedCves: IScannedCveObject
     ) {
         for (const vuln of vulnerabilities) {
             this.populateVulnerability(
                 vuln,
                 issues,
                 scannedComponents
-                // , scannedCVes
+                // , scannedCves
             );
         }
     }
@@ -113,7 +113,7 @@ export class GraphScanLogic extends AbstractScanLogic {
         vuln: IVulnerability,
         issues: IIssueCacheObject[],
         scannedComponents: Map<string, INodeInfo>
-        // scannedCVes: IScannedCveObject
+        // scannedCves: IScannedCveObject
     ) {
         for (let [componentId, vulnComponent] of Object.entries(vuln.components)) {
             // Add vulnerability to the issues array
@@ -128,7 +128,7 @@ export class GraphScanLogic extends AbstractScanLogic {
                 references: Translators.cleanReferencesLink(vuln.references)
             } as IIssueCacheObject);
             // cves.forEach(cve => {
-            //     scannedCVes.cves.set(cve, severity);
+            //     scannedCves.cves.set(cve, severity);
             // });
             // Add vulnerability to the scanned components map
             this.addIssueToScannedComponents(scannedComponents, this.getShortComponentId(componentId), vuln.issue_id, severity);

@@ -699,7 +699,7 @@ class XrayScanProgressImpl implements XrayScanProgress {
 
     /** @override */
     public setPercentage(percentage: number): void {
-        this._indicator.report({ message: '2/2:🔗 Dependencies scanning', increment: percentage - this.lastPercentage });
+        this._indicator.report({ message: '2/2:📦 Dependencies scanning', increment: percentage - this.lastPercentage });
         this.lastPercentage = percentage;
     }
 }

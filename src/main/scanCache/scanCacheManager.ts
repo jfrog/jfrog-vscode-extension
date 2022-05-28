@@ -186,9 +186,9 @@ export class ScanCacheManager implements ExtensionComponent {
         components: Map<string, INodeInfo>,
         issues: IIssueCacheObject[],
         licenses: ILicenseCacheObject[]
-        // scannedCVes: IScannedCveObject
+        // scannedCves: IScannedCveObject
     ) {
-        // this.storeScannedCves(scannedCVes);
+        // this.storeScannedCves(scannedCves);
         for (let issue of issues) {
             this.storeIssue(issue);
         }
@@ -205,7 +205,7 @@ export class ScanCacheManager implements ExtensionComponent {
     /**
     /  * Store Artifacts (vulnerability data from Xray) in local cache
     /  * @param artifacts - The data to save
-    /  * @param scannedCVes - list of CVE found by Xray
+    /  * @param scannedCves - list of CVE found by Xray
     /  */
     public async storeArtifacts(
         artifacts: IArtifact[]
@@ -225,8 +225,8 @@ export class ScanCacheManager implements ExtensionComponent {
                 if (severity > nodeInfo.top_severity) {
                     nodeInfo.top_severity = severity;
                 }
-                // const cacheIssueObject: IIssueCacheObject = Translators.toCacheIssue(issue);
-                // issues.push(cacheIssueObject);
+                const cacheIssueObject: IIssueCacheObject = Translators.toCacheIssue(issue);
+                issues.push(cacheIssueObject);
                 // cacheIssueObject.cves.forEach(cve => {
                 //     scannedCves.cves.set(cve, cacheIssueObject.severity);
                 // });

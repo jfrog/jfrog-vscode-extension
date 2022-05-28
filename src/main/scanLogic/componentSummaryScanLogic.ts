@@ -16,14 +16,17 @@ export class ComponentSummaryScanLogic extends AbstractScanLogic {
         Components: Components[],
         checkCanceled: () => void
     ) {
+        let totalComponents: number = 0;
         for (const componentsToScan of Components) {
-            // let scannedCVes: IScannedCveObject = {
+            totalComponents = componentsToScan.componentsDetails.size();
+        }
+        progress.report({ message: `2/2:📦 Dependencies scanning`, increment: 0 });
+        let step: number = (100 / totalComponents) * 100;
+        for (const componentsToScan of Components) {
+            // let scannedCves: IScannedCveObject = {
             //     cves: new Map<string, Severity>(),
             //     projectPath: componentsToScan.projectPath
             // } as IScannedCveObject;
-            const totalComponents: number = componentsToScan.componentsDetails.size();
-            progress.report({ message: `2/2:🔗 Dependencies scanning`, increment: 0 });
-            let step: number = (100 / totalComponents) * 100;
             const ComponentsDetails: ComponentDetails[] = componentsToScan.componentsDetails.toArray();
             for (let currentIndex: number = 0; currentIndex < componentsToScan.componentsDetails.size(); currentIndex += 100) {
                 checkCanceled();
@@ -32,9 +35,9 @@ export class ComponentSummaryScanLogic extends AbstractScanLogic {
                 this.addMissingComponents(partialComponentsDetails, artifacts);
                 await this._scanCacheManager.storeArtifacts(
                     artifacts
-                    // , scannedCVes
+                    // , scannedCves
                 );
-                progress.report({ message: `2/2:🔗 Dependencies scanning`, increment: step });
+                progress.report({ message: `2/2:📦 Dependencies scanning`, increment: step });
             }
         }
     }
