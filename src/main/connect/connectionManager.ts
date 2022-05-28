@@ -19,7 +19,7 @@ import * as semver from 'semver';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
-import { Components } from '../types/component';
+import Set from 'typescript-collections/dist/lib/Set';
 import { ConnectionUtils } from './connectionUtils';
 
 /**
@@ -602,7 +602,7 @@ export class ConnectionManager implements ExtensionComponent {
      * @returns graph of all requested components with vulnerabilities and licenses information.
      */
     public async scanGraph(
-        componentsToScan: Components,
+        componentsToScan: Set<ComponentDetails>,
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void,
         project: string

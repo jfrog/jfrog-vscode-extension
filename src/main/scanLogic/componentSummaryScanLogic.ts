@@ -18,7 +18,7 @@ export class ComponentSummaryScanLogic extends AbstractScanLogic {
     ) {
         let totalComponents: number = 0;
         for (const componentsToScan of Components) {
-            totalComponents = componentsToScan.componentsDetails.size();
+            totalComponents = componentsToScan.componentsDetails.size;
         }
         progress.report({ message: `2/2:📦 Dependencies scanning`, increment: 0 });
         let step: number = (100 / totalComponents) * 100;
@@ -27,10 +27,10 @@ export class ComponentSummaryScanLogic extends AbstractScanLogic {
             //     cves: new Map<string, Severity>(),
             //     projectPath: componentsToScan.projectPath
             // } as IScannedCveObject;
-            const ComponentsDetails: ComponentDetails[] = componentsToScan.componentsDetails.toArray();
-            for (let currentIndex: number = 0; currentIndex < componentsToScan.componentsDetails.size(); currentIndex += 100) {
+            const componentsDetails: ComponentDetails[] = componentsToScan.toArray();
+            for (let currentIndex: number = 0; currentIndex < componentsToScan.componentsDetails.size; currentIndex += 100) {
                 checkCanceled();
-                let partialComponentsDetails: ComponentDetails[] = ComponentsDetails.slice(currentIndex, currentIndex + 100);
+                let partialComponentsDetails: ComponentDetails[] = componentsDetails.slice(currentIndex, currentIndex + 100);
                 let artifacts: IArtifact[] = await this._connectionManager.summaryComponent(partialComponentsDetails);
                 this.addMissingComponents(partialComponentsDetails, artifacts);
                 await this._scanCacheManager.storeArtifacts(

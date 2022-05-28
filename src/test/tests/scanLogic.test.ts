@@ -14,6 +14,7 @@ import { INodeInfo } from '../../main/types/nodeInfo';
 import { PackageType } from '../../main/types/projectType';
 import { Severity } from '../../main/types/severity';
 import { createScanCacheManager } from './utils/utils.test';
+import Set from 'typescript-collections/dist/lib/Set';
 
 describe('Scan Logic Tests', () => {
     const scanResponses: string = path.join(__dirname, '..', 'resources', 'scanResponses');
@@ -95,7 +96,7 @@ describe('Scan Logic Tests', () => {
         return {
             async scanGraph(
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                componentsToScan: Components,
+                componentsToScan: Set<ComponentDetails>,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 progress: vscode.Progress<{ message?: string; increment?: number }>,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
