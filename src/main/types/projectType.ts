@@ -1,3 +1,8 @@
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
 // import { IconsPaths } from '../utils/iconsPaths';
 
 export enum PackageType {
@@ -8,7 +13,11 @@ export enum PackageType {
     NUGET,
     PYTHON
 }
-
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
 // export class PackageDescriptorUtils {
 //     public static getIcon(packageType: PackageType) {
 //         switch (packageType) {

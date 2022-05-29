@@ -6,6 +6,11 @@ import { NpmCodeActionProvider } from './npmCodeActionProvider';
 import { PypiCodeActionProvider } from './pypiCodeActionProvider';
 import { GoCodeActionProvider } from './goCodeActionProvider';
 import { MavenCodeActionProvider } from './mavenCodeActionProvider';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
 // import { ApplicabilityCodeActionProvider } from './applicabilityActionProvider';
 
 /**
@@ -27,6 +32,11 @@ export class DiagnosticsManager implements ExtensionComponent {
             new PypiCodeActionProvider(diagnosticCollection, treesManager),
             new GoCodeActionProvider(diagnosticCollection, treesManager),
             new MavenCodeActionProvider(diagnosticCollection, treesManager)
+            /*************************************************************
+             * The following logic is part of the CVE applicability scan.*
+             * It will be hidden until it is officially released.        *
+             * ***********************************************************
+             */
             // new ApplicabilityCodeActionProvider(diagnosticCollection, treesManager)
         );
     }

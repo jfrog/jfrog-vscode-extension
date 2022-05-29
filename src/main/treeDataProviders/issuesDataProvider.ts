@@ -1,15 +1,20 @@
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
-// import { ContextKeys } from '../constants/contextKeys';
 import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { IIssueCacheObject } from '../types/issueCacheObject';
 import { Severity, SeverityUtils } from '../types/severity';
 import { Consts } from '../utils/consts';
 import { IconsPaths } from '../utils/iconsPaths';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
+import { TreeDataHolder } from './utils/treeDataHolder';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
+// import { ContextKeys } from '../constants/contextKeys';
 // import { SourceCodeCveTreeNode } from './sourceCodeTree/sourceCodeCveNode';
 // import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
-import { TreeDataHolder } from './utils/treeDataHolder';
 export abstract class IssueNode extends vscode.TreeItem {
     constructor(label: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
         super(label, collapsibleState);
@@ -22,6 +27,11 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
     private _selectedNode!: DependenciesTreeNode;
 
     constructor(
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         protected _scanCacheManager: ScanCacheManager // , private _sourceCodeTreeDataProvider: SourceCodeTreeDataProvider
     ) {
         // Open issue tab by default.
@@ -37,6 +47,11 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
     }
 
     getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // if (element instanceof VulnerabilityNode) {
         //     if (element.sourceCodeCveTreeNode !== undefined) {
         //         // Focus on vulnerable line on issue (CVE) left click.
@@ -140,6 +155,11 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
                 children.push(issueNode);
             } else {
                 for (let cve of issue.cves) {
+                    /*************************************************************
+                     * The following logic is part of the CVE applicability scan.*
+                     * It will be hidden until it is officially released.        *
+                     * ***********************************************************
+                     */
                     // let applicable: boolean | undefined = undefined;
                     // let sourceCodeCveTreeNode: SourceCodeCveTreeNode | undefined;
                     // if (this._sourceCodeTreeDataProvider.isCveNotApplicable(selectedNode.getWorkingDir(), cve)) {
@@ -159,6 +179,11 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
                         issue.references,
                         xrayIssueId.component,
                         issue.fixedVersions
+                        /*************************************************************
+                         * The following logic is part of the CVE applicability scan.*
+                         * It will be hidden until it is officially released.        *
+                         * ***********************************************************
+                         */
                         // applicable,
                         // sourceCodeCveTreeNode
                     );
@@ -265,9 +290,19 @@ export class VulnerabilityNode extends IssueNode {
         readonly cve?: string,
         readonly references?: string[],
         readonly component?: string,
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         readonly fixedVersions?: string[] // 'sourceCodeCveTreeNode' is the corresponding node in the CVE applicability view if the current CVE is applicable. // readonly applicable?: boolean, // If false, the given CVE is not applicable in the source code. // If true, the given CVE is applicable in the source code. // If undefined, The CVE cannot be discovered. // readonly sourceCodeCveTreeNode?: SourceCodeCveTreeNode
     ) {
         super(cve ? cve : xrayId, vscode.TreeItemCollapsibleState.Collapsed);
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // Enable eye button if we can jump to source code.
         // if (sourceCodeCveTreeNode !== undefined) {
         //     this.contextValue = ContextKeys.SHOW_IN_SOURCE_CODE_ENABLED;

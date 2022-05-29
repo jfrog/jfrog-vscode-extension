@@ -1,11 +1,16 @@
 import { ExtensionComponent } from '../extensionComponent';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-// import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
 import { AbstractFocus, FocusType } from './abstractFocus';
 import { GoFocus } from './goFocus';
 import { MavenFocus } from './mavenFocus';
 import { NpmFocus } from './npmFocus';
 import { PypiFocus } from './pypiFocus';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
+// import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
 // import * as vscode from 'vscode';
 
 /**
@@ -28,6 +33,11 @@ export class FocusManager implements ExtensionComponent {
             .forEach(focus => focus.focusOnDependency(dependenciesTreeNode, focusType));
     }
 
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // public async focusOnCve(node?: SourceCodeCveTreeNode, index?: number) {
     //     if (node === undefined || node.getFile() === '') {
     //         return;

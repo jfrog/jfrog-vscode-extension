@@ -74,7 +74,6 @@ describe('Nuget Utils Tests', async () => {
         // Check that components to scan contains MyLogger:1.0.0
         assert.equal(componentsToScan.length, 1);
         assert.deepEqual(componentsToScan[0].toArray()[0].component_id, 'nuget://MyLogger:1.0.0');
-        // assert.deepEqual(componentsToScan[0].componentsDetails.values(), 'nuget://MyLogger:1.0.0');
 
         // Check labels
         assert.deepEqual(res[0].label, 'api');

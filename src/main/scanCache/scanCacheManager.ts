@@ -8,10 +8,15 @@ import { IIssueKey } from '../types/issueKey';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { ILicenseKey } from '../types/licenseKey';
 import { INodeInfo } from '../types/nodeInfo';
-// import { IScannedCveObject } from '../types/scannedCveObject';
 import { Severity } from '../types/severity';
 import { Translators } from '../utils/translators';
 import { ScanCacheObject } from './scanCacheObject';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
+// import { IScannedCveObject } from '../types/scannedCveObject';
 // import crypto from 'crypto'; // Important - Don't import '*'. It'll import deprecated encryption methods
 
 /**
@@ -33,6 +38,11 @@ export class ScanCacheManager implements ExtensionComponent {
     private _scanCache!: vscode.Memento;
     private _licensesCache!: string;
     private _issuesCache!: string;
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // private _scannedCvesCache!: string;
     private _isOutdated!: boolean;
 
@@ -43,12 +53,22 @@ export class ScanCacheManager implements ExtensionComponent {
             return this;
         }
         this._issuesCache = path.join(storageDir, 'issues');
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // CVEs found in the workspace.
         // this._scannedCvesCache = path.join(storageDir, 'scanned.cves');
         this._licensesCache = path.join(storageDir, 'licenses');
         if (!fs.existsSync(this._issuesCache)) {
             fs.mkdirSync(this._issuesCache, { recursive: true } as fs.MakeDirectoryOptions);
         }
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // if (!fs.existsSync(this._scannedCvesCache)) {
         //     fs.mkdirSync(this._scannedCvesCache, { recursive: true } as fs.MakeDirectoryOptions);
         // }
@@ -73,6 +93,11 @@ export class ScanCacheManager implements ExtensionComponent {
         return scanCacheObject ? scanCacheObject.nodeInfo : undefined;
     }
 
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // /**
     //  * Stores a list of CVEs in the cache.
     //  */
@@ -186,8 +211,18 @@ export class ScanCacheManager implements ExtensionComponent {
         components: Map<string, INodeInfo>,
         issues: IIssueCacheObject[],
         licenses: ILicenseCacheObject[]
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // scannedCves: IScannedCveObject
     ) {
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // this.storeScannedCves(scannedCves);
         for (let issue of issues) {
             this.storeIssue(issue);
@@ -209,6 +244,11 @@ export class ScanCacheManager implements ExtensionComponent {
     /  */
     public async storeArtifacts(
         artifacts: IArtifact[]
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // , scannedCves: IScannedCveObject
     ): Promise<void> {
         let scannedComponents: Map<string, INodeInfo> = new Map();
@@ -227,6 +267,11 @@ export class ScanCacheManager implements ExtensionComponent {
                 }
                 const cacheIssueObject: IIssueCacheObject = Translators.toCacheIssue(issue);
                 issues.push(cacheIssueObject);
+                /*************************************************************
+                 * The following logic is part of the CVE applicability scan.*
+                 * It will be hidden until it is officially released.        *
+                 * ***********************************************************
+                 */
                 // cacheIssueObject.cves.forEach(cve => {
                 //     scannedCves.cves.set(cve, cacheIssueObject.severity);
                 // });
@@ -254,6 +299,11 @@ export class ScanCacheManager implements ExtensionComponent {
      * Return list of CVEs found for a given project path.
      * @param issueId - the Xray issue ID e.g. XRAY-12345
      * @returns path to the issue in the file system.
+     */
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
      */
     // private getScannedCvesPath(projectPath: string): string {
     //     return path.join(this._scannedCvesCache, this.createScannedCvesId(projectPath));

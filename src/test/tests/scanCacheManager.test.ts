@@ -6,9 +6,14 @@ import { IIssueKey } from '../../main/types/issueKey';
 import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
 import { ILicenseKey } from '../../main/types/licenseKey';
 import { INodeInfo } from '../../main/types/nodeInfo';
+import { createScanCacheManager } from './utils/utils.test';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
 // import { IScannedCveObject } from '../../main/types/scannedCveObject';
 // import { Severity } from '../../main/types/severity';
-import { createScanCacheManager } from './utils/utils.test';
 
 /**
  * Test functionality of @class ScanCacheManager`.
@@ -38,6 +43,11 @@ describe('Scan Cache Manager Tests', () => {
         } as IArtifact;
         await scanCacheManager.storeArtifacts(
             [artifact]
+            /*************************************************************
+             * The following logic is part of the CVE applicability scan.*
+             * It will be hidden until it is officially released.        *
+             * ***********************************************************
+             */
             // , { cves: new Map<string, Severity>(), projectPath: 'dummy-path' } as IScannedCveObject
         );
 
@@ -77,6 +87,11 @@ describe('Scan Cache Manager Tests', () => {
             scannedComponents,
             issues,
             licenses
+            /*************************************************************
+             * The following logic is part of the CVE applicability scan.*
+             * It will be hidden until it is officially released.        *
+             * ***********************************************************
+             */
             //     , {
             //     cves: new Map<string, Severity>(),
             //     projectPath: 'dummy-path'

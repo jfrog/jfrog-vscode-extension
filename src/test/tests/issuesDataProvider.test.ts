@@ -12,19 +12,29 @@ import * as issueSeverity from '../../main/types/severity';
 import { Severity } from '../../main/types/severity';
 import { TestMemento } from './utils/testMemento.test';
 import { ScanUtils } from '../../main/utils/scanUtils';
+import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependencyDetailsProvider';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
 // import { SourceCodeTreeDataProvider } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeTreeDataProvider';
 // import { TreesManager } from '../../main/treeDataProviders/treesManager';
 // import { ConnectionManager } from '../../main/connect/connectionManager';
 // import { LogManager } from '../../main/log/logManager';
 // import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 // import { createScanCacheManager } from './utils/utils.test';
-import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependencyDetailsProvider';
 
 /**
  * Test functionality of @class IssuesDataProvider.
  */
 describe('Issues Data Provider Tests', () => {
     let scanCacheManager: ScanCacheManager = new ScanCacheManager();
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // let logManager: LogManager = new LogManager().activate();
     // let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
     // let treesManager: TreesManager = new TreesManager(
@@ -37,6 +47,11 @@ describe('Issues Data Provider Tests', () => {
     // let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider([], treesManager);
     let dependencyDetailsProvider: DependencyDetailsProvider = new DependencyDetailsProvider(
         scanCacheManager
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // , sourceCodeTreeDataProvider
     );
     let issuesDataProvider: IssuesDataProvider = dependencyDetailsProvider.issuesDataProvider;

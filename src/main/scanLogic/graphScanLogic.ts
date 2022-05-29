@@ -6,12 +6,17 @@ import { IIssueKey } from '../types/issueKey';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { ILicenseKey } from '../types/licenseKey';
 import { INodeInfo } from '../types/nodeInfo';
-// import { IScannedCveObject } from '../types/scannedCveObject';
 import { Severity } from '../types/severity';
 import { Configuration } from '../utils/configuration';
 import { Translators } from '../utils/translators';
 import { AbstractScanLogic } from './abstractScanLogic';
 import Set from 'typescript-collections/dist/lib/Set';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
+// import { IScannedCveObject } from '../types/scannedCveObject';
 
 /**
  * Used in Xray >= 3.29.0.
@@ -32,7 +37,11 @@ export class GraphScanLogic extends AbstractScanLogic {
             Configuration.getProjectKey()
         );
         let scannedComponents: Map<string, INodeInfo> = new Map();
-
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         //TODO: update each component with the corresponding graphResponse result according to component id.
         // let scannedCves: IScannedCveObject = {
         //     cves: new Map<string, Severity>(),
@@ -48,6 +57,11 @@ export class GraphScanLogic extends AbstractScanLogic {
                 issues,
                 licenses,
                 scannedComponents
+                /*************************************************************
+                 * The following logic is part of the CVE applicability scan.*
+                 * It will be hidden until it is officially released.        *
+                 * ***********************************************************
+                 */
                 // , scannedCves
             );
         }
@@ -56,6 +70,11 @@ export class GraphScanLogic extends AbstractScanLogic {
                 graphResponse.vulnerabilities,
                 issues,
                 scannedComponents
+                /*************************************************************
+                 * The following logic is part of the CVE applicability scan.*
+                 * It will be hidden until it is officially released.        *
+                 * ***********************************************************
+                 */
                 // , scannedCves
             );
         }
@@ -68,6 +87,11 @@ export class GraphScanLogic extends AbstractScanLogic {
             scannedComponents,
             issues,
             licenses.values()
+            /*************************************************************
+             * The following logic is part of the CVE applicability scan.*
+             * It will be hidden until it is officially released.        *
+             * ***********************************************************
+             */
             // , scannedCves
         );
     }
@@ -77,6 +101,11 @@ export class GraphScanLogic extends AbstractScanLogic {
         issues: IIssueCacheObject[],
         licenses: Dictionary<string, ILicenseCacheObject>,
         scannedComponents: Map<string, INodeInfo>
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // scannedCves: IScannedCveObject
     ) {
         for (const violation of violations) {
@@ -87,6 +116,11 @@ export class GraphScanLogic extends AbstractScanLogic {
                     violation,
                     issues,
                     scannedComponents
+                    /*************************************************************
+                     * The following logic is part of the CVE applicability scan.*
+                     * It will be hidden until it is officially released.        *
+                     * ***********************************************************
+                     */
                     // ,scannedCves
                 );
             }
@@ -104,6 +138,11 @@ export class GraphScanLogic extends AbstractScanLogic {
                 vuln,
                 issues,
                 scannedComponents
+                /*************************************************************
+                 * The following logic is part of the CVE applicability scan.*
+                 * It will be hidden until it is officially released.        *
+                 * ***********************************************************
+                 */
                 // , scannedCves
             );
         }
@@ -127,6 +166,11 @@ export class GraphScanLogic extends AbstractScanLogic {
                 cves: cves,
                 references: Translators.cleanReferencesLink(vuln.references)
             } as IIssueCacheObject);
+            /*************************************************************
+             * The following logic is part of the CVE applicability scan.*
+             * It will be hidden until it is officially released.        *
+             * ***********************************************************
+             */
             // cves.forEach(cve => {
             //     scannedCves.cves.set(cve, severity);
             // });

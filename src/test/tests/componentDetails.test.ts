@@ -9,18 +9,28 @@ import { ILicenseKey } from '../../main/types/licenseKey';
 import { createScanCacheManager } from './utils/utils.test';
 import { LicensesNode } from '../../main/treeDataProviders/generalDetailsDataProvider';
 import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependencyDetailsProvider';
+import { TreeDataHolder } from '../../main/treeDataProviders/utils/treeDataHolder';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
 // import { SourceCodeTreeDataProvider } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeTreeDataProvider';
 // import { TreesManager } from '../../main/treeDataProviders/treesManager';
 // import { LogManager } from '../../main/log/logManager';
 // import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 // import { ConnectionManager } from '../../main/connect/connectionManager';
-import { TreeDataHolder } from '../../main/treeDataProviders/utils/treeDataHolder';
 
 /**
  * Test functionality of @class DependencyDataProvider.
  */
 describe('Dependency Details Tests', () => {
     let scanCacheManager: ScanCacheManager = createScanCacheManager();
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // let logManager: LogManager = new LogManager().activate();
     // let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
     // let treesManager: TreesManager = new TreesManager(
@@ -33,6 +43,11 @@ describe('Dependency Details Tests', () => {
     // let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider([], treesManager);
     let Components: DependencyDetailsProvider = new DependencyDetailsProvider(
         scanCacheManager
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // , sourceCodeTreeDataProvider
     );
     let dependenciesTreeNode: DependenciesTreeNode;

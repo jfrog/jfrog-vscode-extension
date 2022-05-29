@@ -1,9 +1,14 @@
 import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'jfrog-client-js';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
+import { AbstractScanLogic } from './abstractScanLogic';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
 // import { IScannedCveObject } from '../types/scannedCveObject';
 // import { Severity } from '../types/severity';
-import { AbstractScanLogic } from './abstractScanLogic';
 
 /**
  * Used in Xray < 3.29.0.
@@ -16,6 +21,11 @@ export class ComponentSummaryScanLogic extends AbstractScanLogic {
         checkCanceled: () => void
     ) {
         progress.report({ message: `2/2:📦 Dependencies scanning`, increment: 0 });
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // let scannedCves: IScannedCveObject = {
         //     cves: new Map<string, Severity>(),
         //     projectPath: componentsToScan.projectPath
@@ -29,6 +39,11 @@ export class ComponentSummaryScanLogic extends AbstractScanLogic {
             this.addMissingComponents(partialComponentsDetails, artifacts);
             await this._scanCacheManager.storeArtifacts(
                 artifacts
+                /*************************************************************
+                 * The following logic is part of the CVE applicability scan.*
+                 * It will be hidden until it is officially released.        *
+                 * ***********************************************************
+                 */
                 // , scannedCves
             );
             progress.report({ message: `2/2:📦 Dependencies scanning`, increment: step });

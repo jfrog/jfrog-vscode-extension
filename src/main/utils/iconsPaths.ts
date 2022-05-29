@@ -28,6 +28,11 @@ export class IconsPaths {
     static readonly VIOLATED_LICENSE: string = IconsPaths.getIconPath('violatedLicense');
 
     //Project type
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // static readonly PYTHON: string = IconsPaths.getIconPath(path.join('package', 'pypi'));
     // static readonly NPM: string = IconsPaths.getIconPath(path.join('package', 'npm'));
 

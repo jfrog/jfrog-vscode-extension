@@ -7,24 +7,39 @@ import { ScanLogicManager } from '../scanLogic/scanLogicManager';
 import { BuildsDataProvider } from './dependenciesTree/buildsDataProvider';
 import { DependenciesTreeDataProvider } from './dependenciesTree/dependenciesDataProvider';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
+import { DependencyDetailsProvider } from './dependencyDetailsProvider';
 import { TreeDataProviderManager } from './dependenciesTree/treeDataProviderManager';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
 // import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
 // import { SourceCodeCveTreeNode } from './sourceCodeTree/sourceCodeCveNode';
 // import { CveApplicabilityRoot } from './sourceCodeTree/CveApplicabilityRoot';
 // import { SourceCodeFileTreeNode } from './sourceCodeTree/sourceCodeFileTreeNode';
 // import { SourceCodeRootTreeNode } from './sourceCodeTree/sourceCodeRootTreeNode';
-import { DependencyDetailsProvider } from './dependencyDetailsProvider';
 
 /**
  * Manages all 3 trees in the extension: Dependencies, Dependency details and Code vulnerability.
  */
 export class TreesManager implements ExtensionComponent {
     private _dependenciesTreeView!: vscode.TreeView<DependenciesTreeNode>;
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // private _sourceCodeTreeView!: vscode.TreeView<SourceCodeRootTreeNode | SourceCodeFileTreeNode | SourceCodeCveTreeNode | CveApplicabilityRoot>;
     private _treeDataProviderManager: TreeDataProviderManager;
     private _dependenciesTreeDataProvider: DependenciesTreeDataProvider;
     private _buildsTreesProvider: BuildsDataProvider;
     private _dependencyDetailsProvider: DependencyDetailsProvider;
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // private _sourceCodeTreeDataProvider: SourceCodeTreeDataProvider;
     private _state: State;
 
@@ -37,10 +52,20 @@ export class TreesManager implements ExtensionComponent {
     ) {
         this._dependenciesTreeDataProvider = new DependenciesTreeDataProvider(workspaceFolders, this, scanLogicManager);
         this._buildsTreesProvider = new BuildsDataProvider(this);
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // this._sourceCodeTreeDataProvider = new SourceCodeTreeDataProvider(workspaceFolders, this);
         this._treeDataProviderManager = new TreeDataProviderManager(this);
         this._dependencyDetailsProvider = new DependencyDetailsProvider(
             _scanCacheManager
+            /*************************************************************
+             * The following logic is part of the CVE applicability scan.*
+             * It will be hidden until it is officially released.        *
+             * ***********************************************************
+             */
             // , this._sourceCodeTreeDataProvider
         );
         this._state = State.Local;
@@ -52,12 +77,22 @@ export class TreesManager implements ExtensionComponent {
             treeDataProvider: this._treeDataProviderManager,
             showCollapseAll: true
         });
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // this._sourceCodeTreeView = vscode.window.createTreeView('jfrog.source.code.scan', {
         //     treeDataProvider: this._sourceCodeTreeDataProvider,
         //     showCollapseAll: false
         // });
         context.subscriptions.push(
             this._dependenciesTreeView,
+            /*************************************************************
+             * The following logic is part of the CVE applicability scan.*
+             * It will be hidden until it is officially released.        *
+             * ***********************************************************
+             */
             // this._sourceCodeTreeView,
             vscode.window.registerTreeDataProvider('jfrog.xray.dependency.details', this._dependencyDetailsProvider)
         );
@@ -72,6 +107,11 @@ export class TreesManager implements ExtensionComponent {
         this._dependencyDetailsProvider = value;
     }
 
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // public get sourceCodeTreeView(): vscode.TreeView<SourceCodeRootTreeNode | SourceCodeFileTreeNode | SourceCodeCveTreeNode | CveApplicabilityRoot> {
     //     return this._sourceCodeTreeView;
     // }
@@ -83,7 +123,12 @@ export class TreesManager implements ExtensionComponent {
     get dependenciesTreeDataProvider(): DependenciesTreeDataProvider {
         return this._dependenciesTreeDataProvider;
     }
-
+    
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // get sourceCodeTreeDataProvider(): SourceCodeTreeDataProvider {
     //     return this._sourceCodeTreeDataProvider;
     // }

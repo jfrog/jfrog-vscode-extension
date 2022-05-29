@@ -1,3 +1,8 @@
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
 // import * as fs from 'fs';
 // import * as path from 'path';
 // import * as crypto from 'crypto';

@@ -162,6 +162,11 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     }
                     node.issues = node.processTreeIssues();
                 }
+                /*************************************************************
+                 * The following logic is part of the CVE applicability scan.*
+                 * It will be hidden until it is officially released.        *
+                 * ***********************************************************
+                 */
                 // progress.report({ message: '3/3📝 Code vulnerability scanning' });
                 // await this._treesManager.sourceCodeTreeDataProvider.refresh();
                 onChangeFire();

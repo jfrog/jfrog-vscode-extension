@@ -1,3 +1,8 @@
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
 // import * as vscode from 'vscode';
 // import { ContextKeys } from '../../constants/contextKeys';
 // import { Severity } from '../../types/severity';
