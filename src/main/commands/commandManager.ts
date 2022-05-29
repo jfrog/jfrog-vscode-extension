@@ -14,6 +14,11 @@ import { ScanUtils } from '../utils/scanUtils';
 import { BuildsManager } from '../builds/buildsManager';
 import { Configuration } from '../utils/configuration';
 import { ExportManager } from '../export/exportManager';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
 // import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
 // import { VulnerabilityNode } from '../treeDataProviders/issuesDataProvider';
 
@@ -34,6 +39,11 @@ export class CommandManager implements ExtensionComponent {
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
         // this.registerCommand(context, 'jfrog.source.code.scan.jumpToSource', (sourceCodeTreeNode, index) =>
         //     this.jumpToSource(sourceCodeTreeNode, index)
         // );
@@ -114,7 +124,11 @@ export class CommandManager implements ExtensionComponent {
         this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.Dependency);
         this.onSelectNode(dependenciesTreeNode);
     }
-
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // private jumpToSource(node: SourceCodeCveTreeNode | VulnerabilityNode, index?: number) {
     //     if (node instanceof VulnerabilityNode) {
     //         this._focusManager.focusOnCve(node.sourceCodeCveTreeNode);
@@ -170,6 +184,11 @@ export class CommandManager implements ExtensionComponent {
         this.onSelectNode(dependenciesTreeNode);
     }
 
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // private showInSourceCodeTree(sourceCodeCveTreeNode: SourceCodeCveTreeNode) {
     //     this._treesManager.sourceCodeTreeView.reveal(sourceCodeCveTreeNode, { focus: true, select: true, expand: true });
     // }
@@ -223,7 +242,11 @@ export class CommandManager implements ExtensionComponent {
     private doRefresh(quickScan: boolean = false) {
         this._treesManager.treeDataProviderManager.refresh(quickScan);
     }
-
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
     // private async doCodeScanRefresh(quickScan: boolean = false) {
     //     await vscode.window.withProgress(
     //         <vscode.ProgressOptions>{
