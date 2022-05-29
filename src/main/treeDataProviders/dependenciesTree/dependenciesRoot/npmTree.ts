@@ -1,20 +1,19 @@
 import * as path from 'path';
-import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'jfrog-client-js';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { TreesManager } from '../../treesManager';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { NpmGlobalScopes, ScopedNpmProject, NpmUtils } from '../../../utils/npmUtils';
 import { RootNode } from './rootTree';
+import { ProjectDetails } from '../../../types/component';
 
 export class NpmTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
 
     constructor(
         workspaceFolder: string,
-        private _componentsToScan: Collections.Set<ComponentDetails>,
+        private _projectToScan: ProjectDetails,
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
@@ -36,8 +35,9 @@ export class NpmTreeNode extends RootNode {
                         '".',
                     'INFO'
                 );
-                scopedProject.loadProjectDetails(JSON.parse((<any>error).stdout.toString()));
+                scopedProject.loadProjectDetailsFromFile(path.join(this.workspaceFolder, 'package.json'));
                 npmLsFailed = true;
+                return;
             }
             this.populateDependenciesTree(this, scopedProject.dependencies, quickScan, scopedProject.scope);
         });
@@ -69,7 +69,7 @@ export class NpmTreeNode extends RootNode {
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
                 let componentId: string = key + ':' + version;
                 if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-                    this._componentsToScan.add(new ComponentDetails(NpmTreeNode.COMPONENT_PREFIX + componentId));
+                    this._projectToScan.add(NpmTreeNode.COMPONENT_PREFIX + componentId);
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan, globalScope);
             }

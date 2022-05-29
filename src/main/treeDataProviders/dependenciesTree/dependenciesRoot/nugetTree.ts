@@ -1,18 +1,17 @@
-import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ComponentDetails } from 'jfrog-client-js';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { TreesManager } from '../../treesManager';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { NugetUtils } from '../../../utils/nugetUtils';
 import { RootNode } from './rootTree';
+import { ProjectDetails } from '../../../types/component';
 
 export class NugetTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'nuget://';
 
     constructor(
         workspaceFolder: string,
-        private _componentsToScan: Collections.Set<ComponentDetails>,
+        private _projectToScan: ProjectDetails,
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
@@ -41,7 +40,7 @@ export class NugetTreeNode extends RootNode {
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode, '');
                 let combined: string = id + ':' + version;
                 if (!quickScan || !this._treesManager.scanCacheManager.isValid(combined)) {
-                    this._componentsToScan.add(new ComponentDetails(NugetTreeNode.COMPONENT_PREFIX + combined));
+                    this._projectToScan.add(NugetTreeNode.COMPONENT_PREFIX + combined);
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan);
             }

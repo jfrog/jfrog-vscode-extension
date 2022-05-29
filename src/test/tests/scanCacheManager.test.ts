@@ -7,6 +7,13 @@ import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
 import { ILicenseKey } from '../../main/types/licenseKey';
 import { INodeInfo } from '../../main/types/nodeInfo';
 import { createScanCacheManager } from './utils/utils.test';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
+// import { IScannedCveObject } from '../../main/types/scannedCveObject';
+// import { Severity } from '../../main/types/severity';
 
 /**
  * Test functionality of @class ScanCacheManager`.
@@ -34,7 +41,15 @@ describe('Scan Cache Manager Tests', () => {
             issues: [{ issue_id: 'XRAY-1' } as IIssue, { issue_id: 'XRAY-2' } as IIssue],
             licenses: [{ name: 'MIT' } as ILicense, { name: 'MIT/X11' } as ILicense]
         } as IArtifact;
-        await scanCacheManager.storeArtifacts([artifact]);
+        await scanCacheManager.storeArtifacts(
+            [artifact]
+            /*************************************************************
+             * The following logic is part of the CVE applicability scan.*
+             * It will be hidden until it is officially released.        *
+             * ***********************************************************
+             */
+            // , { cves: new Map<string, Severity>(), projectPath: 'dummy-path' } as IScannedCveObject
+        );
 
         let nodeInfo: INodeInfo | undefined = scanCacheManager.getNodeInfo('a:b:c');
 
@@ -68,7 +83,20 @@ describe('Scan Cache Manager Tests', () => {
             licenses: [{ licenseName: 'MIT' }, { licenseName: 'MIT/X11' }] as ILicenseKey[]
         } as INodeInfo);
 
-        await scanCacheManager.storeComponents(scannedComponents, issues, licenses);
+        await scanCacheManager.storeComponents(
+            scannedComponents,
+            issues,
+            licenses
+            /*************************************************************
+             * The following logic is part of the CVE applicability scan.*
+             * It will be hidden until it is officially released.        *
+             * ***********************************************************
+             */
+            //     , {
+            //     cves: new Map<string, Severity>(),
+            //     projectPath: 'dummy-path'
+            // } as IScannedCveObject
+        );
 
         let nodeInfo: INodeInfo | undefined = scanCacheManager.getNodeInfo('a:b:c');
 

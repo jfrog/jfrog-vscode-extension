@@ -1,9 +1,7 @@
 import { assert } from 'chai';
 import * as fs from 'fs';
-import { ComponentDetails } from 'jfrog-client-js';
 import { before } from 'mocha';
 import * as path from 'path';
-import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
@@ -12,14 +10,16 @@ import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
+import { PackageType } from '../../main/types/projectType';
 import { NugetUtils } from '../../main/utils/nugetUtils';
-import { PackageDescriptorType, ScanUtils } from '../../main/utils/scanUtils';
+import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, isWindows } from './utils/utils.test';
+import { ProjectDetails } from '../../main/types/component';
 
 /**
  * Test functionality of @class NugetUtils.
  */
-describe('Nuget Utils Tests', () => {
+describe('Nuget Utils Tests', async () => {
     let logManager: LogManager = new LogManager().activate();
     let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
     let treesManager: TreesManager = new TreesManager(
@@ -48,11 +48,8 @@ describe('Nuget Utils Tests', () => {
      * Test NugetUtils.locateSolutions.
      */
     it('Locate solutions', async () => {
-        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
-            workspaceFolders,
-            treesManager.logManager
-        );
-        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.NUGET);
+        let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
+        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.NUGET);
         assert.isDefined(solutions);
         assert.strictEqual(solutions?.length, solutionsDirs.length);
 
@@ -71,12 +68,12 @@ describe('Nuget Utils Tests', () => {
      */
     it('Create NuGet Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+        let componentsToScan: ProjectDetails[] = [];
         let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(componentsToScan, parent);
 
         // Check that components to scan contains MyLogger:1.0.0
-        assert.equal(componentsToScan.size(), 1);
-        assert.deepEqual(componentsToScan.toArray()[0], new ComponentDetails('nuget://MyLogger:1.0.0'));
+        assert.equal(componentsToScan.length, 1);
+        assert.deepEqual(componentsToScan[0].toArray()[0].component_id, 'nuget://MyLogger:1.0.0');
 
         // Check labels
         assert.deepEqual(res[0].label, 'api');
@@ -97,12 +94,9 @@ describe('Nuget Utils Tests', () => {
         assert.deepEqual(child.parent, res[0]);
     });
 
-    async function runCreateNugetDependenciesTrees(componentsToScan: Collections.Set<ComponentDetails>, parent: DependenciesTreeNode) {
-        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
-            workspaceFolders,
-            treesManager.logManager
-        );
-        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.NUGET);
+    async function runCreateNugetDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
+        let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
+        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.NUGET);
         assert.isDefined(solutions);
         await NugetUtils.createDependenciesTrees(solutions, componentsToScan, treesManager, parent, false);
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));

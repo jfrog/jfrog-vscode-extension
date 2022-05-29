@@ -14,6 +14,13 @@ import { ScanUtils } from '../utils/scanUtils';
 import { BuildsManager } from '../builds/buildsManager';
 import { Configuration } from '../utils/configuration';
 import { ExportManager } from '../export/exportManager';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
+// import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
+// import { VulnerabilityNode } from '../treeDataProviders/issuesDataProvider';
 
 /**
  * Register and execute all commands in the extension.
@@ -32,6 +39,17 @@ export class CommandManager implements ExtensionComponent {
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
+        // this.registerCommand(context, 'jfrog.source.code.scan.jumpToSource', (sourceCodeTreeNode, index) =>
+        //     this.jumpToSource(sourceCodeTreeNode, index)
+        // );
+        // this.registerCommand(context, 'jfrog.source.code.scan.showInSourceCodeTree', sourceCodeTreeNode =>
+        //     this.showInSourceCodeTree(sourceCodeTreeNode)
+        // );
         this.registerCommand(context, 'jfrog.xray.showInProjectDesc', dependenciesTreeNode => this.doShowInProjectDesc(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.excludeDependency', dependenciesTreeNode => this.doExcludeDependency(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.updateDependency', dependenciesTreeNode => this.doUpdateDependencyVersion(dependenciesTreeNode));
@@ -42,6 +60,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.disconnect', () => this.doDisconnect());
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
+        // this.registerCommand(context, 'jfrog.source.code.scan.refresh', () => this.doCodeScanRefresh());
         this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
         this.registerCommand(context, 'jfrog.xray.filter', () => this.doFilter());
         this.registerCommand(context, 'jfrog.xray.local', () => this.doLocal());
@@ -105,6 +124,18 @@ export class CommandManager implements ExtensionComponent {
         this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.Dependency);
         this.onSelectNode(dependenciesTreeNode);
     }
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
+    // private jumpToSource(node: SourceCodeCveTreeNode | VulnerabilityNode, index?: number) {
+    //     if (node instanceof VulnerabilityNode) {
+    //         this._focusManager.focusOnCve(node.sourceCodeCveTreeNode);
+    //     } else {
+    //         this._focusManager.focusOnCve(node, index);
+    //     }
+    // }
 
     /**
      * Exclude dependency in the project descriptor (e.g. package.json).
@@ -152,6 +183,15 @@ export class CommandManager implements ExtensionComponent {
         this._treesManager.dependenciesTreeView.reveal(dependenciesTreeNode, { focus: true });
         this.onSelectNode(dependenciesTreeNode);
     }
+
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
+    // private showInSourceCodeTree(sourceCodeCveTreeNode: SourceCodeCveTreeNode) {
+    //     this._treesManager.sourceCodeTreeView.reveal(sourceCodeCveTreeNode, { focus: true, select: true, expand: true });
+    // }
 
     /**
      * Focus on dependency after a click on a dependency in the components tree.
@@ -202,6 +242,26 @@ export class CommandManager implements ExtensionComponent {
     private doRefresh(quickScan: boolean = false) {
         this._treesManager.treeDataProviderManager.refresh(quickScan);
     }
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
+    // private async doCodeScanRefresh(quickScan: boolean = false) {
+    //     await vscode.window.withProgress(
+    //         <vscode.ProgressOptions>{
+    //             // Start progress in balloon only if the user initiated a full scan by clicking on the "Refresh" button.
+    //             // Otherwise - show the progress in the status bar.
+    //             location: quickScan ? vscode.ProgressLocation.Window : vscode.ProgressLocation.Notification,
+    //             title: 'Code vulnerability scanning',
+    //             cancellable: true
+    //         },
+    //         async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {
+    //             progress.report({ message: '📝 Code vulnerability scanning' });
+    //             await this._treesManager.sourceCodeTreeDataProvider.refresh();
+    //         }
+    //     );
+    // }
 
     /**
      * Connect to Xray server. If connection success, perform a quick scan.
@@ -250,8 +310,7 @@ export class CommandManager implements ExtensionComponent {
      * @param dependenciesTreeNode - The selected node in the components tree.
      */
     private onSelectNode(dependenciesTreeNode: DependenciesTreeNode) {
-        this._treesManager.componentDetailsDataProvider.selectNode(dependenciesTreeNode);
-        this._treesManager.issuesDataProvider.selectNode(dependenciesTreeNode);
+        this._treesManager.dependencyDetailsProvider.selectNode(dependenciesTreeNode);
     }
 
     /**

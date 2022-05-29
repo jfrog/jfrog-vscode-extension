@@ -2,7 +2,6 @@ import { assert } from 'chai';
 import { ComponentDetails, IArtifact, IGeneral, ILicense } from 'jfrog-client-js';
 import { before } from 'mocha';
 import * as path from 'path';
-import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { GoDependencyUpdate } from '../../main/dependencyUpdate/goDependencyUpdate';
@@ -16,13 +15,22 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
 import { ILicenseKey } from '../../main/types/licenseKey';
 import { GoUtils } from '../../main/utils/goUtils';
-import { PackageDescriptorType, ScanUtils } from '../../main/utils/scanUtils';
+import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
+import { PackageType } from '../../main/types/projectType';
+import { ProjectDetails } from '../../main/types/component';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
+// import { IScannedCveObject } from '../../main/types/scannedCveObject';
+// import { Severity } from '../../main/types/severity';
 
 /**
  * Test functionality of @class GoUtils.
  */
-describe('Go Utils Tests', () => {
+describe('Go Utils Tests', async () => {
     let logManager: LogManager = new LogManager().activate();
     let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
     let treesManager: TreesManager = new TreesManager(
@@ -51,12 +59,12 @@ describe('Go Utils Tests', () => {
      * Test GoUtils.locateGoMods.
      */
     it('Locate go mods', async () => {
-        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+        let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
             commonWorkspaceFolders,
             treesManager.logManager
         );
         let projectDirs: string[] = ['dependency', 'empty'];
-        let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.GO);
+        let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.GO);
         assert.isDefined(goMods);
         assert.strictEqual(goMods?.length, projectDirs.length);
 
@@ -112,7 +120,7 @@ describe('Go Utils Tests', () => {
 
     it('Update fixed version', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+        let componentsToScan: ProjectDetails[] = [];
         await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
 
         // Get specific dependency node.
@@ -149,14 +157,16 @@ describe('Go Utils Tests', () => {
      */
     it('Create go Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+        let componentsToScan: ProjectDetails[] = [];
         await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
 
-        assert.isAbove(componentsToScan.size(), 0);
+        assert.isAbove(componentsToScan.length, 0);
         let gofrog: ComponentDetails | undefined;
-        for (let component of componentsToScan.toArray()) {
-            if (component.component_id === 'go://github.com/jfrog/gofrog:1.0.6') {
-                gofrog = component;
+        for (let index: number = 0; index < componentsToScan.length; index++) {
+            for (let component of componentsToScan[index].toArray()) {
+                if (component.component_id === 'go://github.com/jfrog/gofrog:1.0.6') {
+                    gofrog = component;
+                }
             }
         }
         assert.isDefined(gofrog);
@@ -233,16 +243,31 @@ describe('Go Utils Tests', () => {
 
     async function runCreateGoDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
-        componentsToScan: Collections.Set<ComponentDetails>,
+        componentsToScan: ProjectDetails[],
         parent: DependenciesTreeNode
     ) {
-        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
-            workspaceFolders,
-            treesManager.logManager
-        );
-        let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageDescriptorType.GO);
+        let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
+        let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.GO);
         await GoUtils.createDependenciesTrees(goMods, componentsToScan, treesManager, parent, false);
-        await dummyScanCacheManager.storeArtifacts(xrayScanResults);
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
+        // for (const goMod in goMods) {
+        await dummyScanCacheManager.storeArtifacts(
+            xrayScanResults
+            /*************************************************************
+             * The following logic is part of the CVE applicability scan.*
+             * It will be hidden until it is officially released.        *
+             * ***********************************************************
+             */
+            //     , {
+            //     cves: new Map<string, Severity>(),
+            //     projectPath: goMod
+            // } as IScannedCveObject
+        );
+        // }
         parent.children.forEach(child => {
             treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);
         });
@@ -252,7 +277,7 @@ describe('Go Utils Tests', () => {
     async function createGoDependencyTreeAndValidate(projectName: string, expectedChildren: Map<string, number>) {
         try {
             let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-            let componentsToScan: Collections.Set<ComponentDetails> = new Collections.Set();
+            let componentsToScan: ProjectDetails[] = [];
             await runCreateGoDependenciesTrees(getWorkspaceFolders(projectName), componentsToScan, parent);
 
             validateDependencyTreeResults(projectName, expectedChildren, parent);

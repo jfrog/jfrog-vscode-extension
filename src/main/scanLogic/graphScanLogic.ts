@@ -1,6 +1,5 @@
 import { ComponentDetails, IGraphLicense, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
 import Dictionary from 'typescript-collections/dist/lib/Dictionary';
-import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { IIssueCacheObject } from '../types/issueCacheObject';
 import { IIssueKey } from '../types/issueKey';
@@ -11,6 +10,13 @@ import { Severity } from '../types/severity';
 import { Configuration } from '../utils/configuration';
 import { Translators } from '../utils/translators';
 import { AbstractScanLogic } from './abstractScanLogic';
+import Set from 'typescript-collections/dist/lib/Set';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
+// import { IScannedCveObject } from '../types/scannedCveObject';
 
 /**
  * Used in Xray >= 3.29.0.
@@ -31,21 +37,63 @@ export class GraphScanLogic extends AbstractScanLogic {
             Configuration.getProjectKey()
         );
         let scannedComponents: Map<string, INodeInfo> = new Map();
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
+        //TODO: update each component with the corresponding graphResponse result according to component id.
+        // let scannedCves: IScannedCveObject = {
+        //     cves: new Map<string, Severity>(),
+        //     projectPath: componentsToScan.projectPath
+        // } as IScannedCveObject;
+        // this._scanCacheManager.deleteScannedCves(componentsToScan.projectPath);
         let licenses: Dictionary<string, ILicenseCacheObject> = new Dictionary();
         let issues: IIssueCacheObject[] = [];
 
         if (graphResponse.violations) {
-            this.populateViolations(graphResponse.violations, issues, licenses, scannedComponents);
+            this.populateViolations(
+                graphResponse.violations,
+                issues,
+                licenses,
+                scannedComponents
+                /*************************************************************
+                 * The following logic is part of the CVE applicability scan.*
+                 * It will be hidden until it is officially released.        *
+                 * ***********************************************************
+                 */
+                // , scannedCves
+            );
         }
         if (graphResponse.vulnerabilities) {
-            this.populateVulnerabilities(graphResponse.vulnerabilities, issues, scannedComponents);
+            this.populateVulnerabilities(
+                graphResponse.vulnerabilities,
+                issues,
+                scannedComponents
+                /*************************************************************
+                 * The following logic is part of the CVE applicability scan.*
+                 * It will be hidden until it is officially released.        *
+                 * ***********************************************************
+                 */
+                // , scannedCves
+            );
         }
         if (graphResponse.licenses) {
             this.populateLicenses(graphResponse.licenses, licenses, scannedComponents);
         }
 
         this.addMissingComponents(componentsToScan, scannedComponents);
-        await this._scanCacheManager.storeComponents(scannedComponents, issues, licenses.values());
+        await this._scanCacheManager.storeComponents(
+            scannedComponents,
+            issues,
+            licenses.values()
+            /*************************************************************
+             * The following logic is part of the CVE applicability scan.*
+             * It will be hidden until it is officially released.        *
+             * ***********************************************************
+             */
+            // , scannedCves
+        );
     }
 
     private populateViolations(
@@ -53,36 +101,80 @@ export class GraphScanLogic extends AbstractScanLogic {
         issues: IIssueCacheObject[],
         licenses: Dictionary<string, ILicenseCacheObject>,
         scannedComponents: Map<string, INodeInfo>
+        /*************************************************************
+         * The following logic is part of the CVE applicability scan.*
+         * It will be hidden until it is officially released.        *
+         * ***********************************************************
+         */
+        // scannedCves: IScannedCveObject
     ) {
         for (const violation of violations) {
             if (violation.license_key && violation.license_key !== '') {
                 this.populateLicense(violation, licenses, scannedComponents, true);
             } else {
-                this.populateVulnerability(violation, issues, scannedComponents);
+                this.populateVulnerability(
+                    violation,
+                    issues,
+                    scannedComponents
+                    /*************************************************************
+                     * The following logic is part of the CVE applicability scan.*
+                     * It will be hidden until it is officially released.        *
+                     * ***********************************************************
+                     */
+                    // ,scannedCves
+                );
             }
         }
     }
 
-    private populateVulnerabilities(vulnerabilities: IVulnerability[], issues: IIssueCacheObject[], scannedComponents: Map<string, INodeInfo>) {
+    private populateVulnerabilities(
+        vulnerabilities: IVulnerability[],
+        issues: IIssueCacheObject[],
+        scannedComponents: Map<string, INodeInfo>
+        // scannedCves: IScannedCveObject
+    ) {
         for (const vuln of vulnerabilities) {
-            this.populateVulnerability(vuln, issues, scannedComponents);
+            this.populateVulnerability(
+                vuln,
+                issues,
+                scannedComponents
+                /*************************************************************
+                 * The following logic is part of the CVE applicability scan.*
+                 * It will be hidden until it is officially released.        *
+                 * ***********************************************************
+                 */
+                // , scannedCves
+            );
         }
     }
 
-    private populateVulnerability(vuln: IVulnerability, issues: IIssueCacheObject[], scannedComponents: Map<string, INodeInfo>) {
+    private populateVulnerability(
+        vuln: IVulnerability,
+        issues: IIssueCacheObject[],
+        scannedComponents: Map<string, INodeInfo>
+        // scannedCves: IScannedCveObject
+    ) {
         for (let [componentId, vulnComponent] of Object.entries(vuln.components)) {
             // Add vulnerability to the issues array
             let severity: Severity = Translators.toSeverity(vuln.severity);
+            const cves: string[] = Translators.toCves(vuln.cves);
             issues.push({
                 issueId: vuln.issue_id,
                 severity: severity,
                 summary: vuln.summary != '' ? vuln.summary : 'N/A',
                 fixedVersions: vulnComponent.fixed_versions,
-                cves: Translators.toCves(vuln.cves),
+                cves: cves,
                 references: Translators.cleanReferencesLink(vuln.references)
             } as IIssueCacheObject);
-
-            // Add vulnerability to the scanned commponents map
+            /*************************************************************
+             * The following logic is part of the CVE applicability scan.*
+             * It will be hidden until it is officially released.        *
+             * ***********************************************************
+             */
+            // cves.forEach(cve => {
+            //     scannedCves.cves.set(cve, severity);
+            // });
+            // Add vulnerability to the scanned components map
             this.addIssueToScannedComponents(scannedComponents, this.getShortComponentId(componentId), vuln.issue_id, severity);
         }
     }

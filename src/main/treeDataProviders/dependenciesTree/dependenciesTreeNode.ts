@@ -168,4 +168,12 @@ export class DependenciesTreeNode extends vscode.TreeItem {
             // 1st priority - Sort by top severity
             .sort((lhs, rhs) => rhs.topSeverity - lhs.topSeverity);
     }
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
+    // public getWorkingDir(): string {
+    //     return this._generalInfo.path;
+    // }
 }

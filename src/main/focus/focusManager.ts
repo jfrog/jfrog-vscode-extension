@@ -5,9 +5,16 @@ import { GoFocus } from './goFocus';
 import { MavenFocus } from './mavenFocus';
 import { NpmFocus } from './npmFocus';
 import { PypiFocus } from './pypiFocus';
+/*************************************************************
+ * The following logic is part of the CVE applicability scan.*
+ * It will be hidden until it is officially released.        *
+ * ***********************************************************
+ */
+// import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
+// import * as vscode from 'vscode';
 
 /**
- * Show the dependency in the project descriptor (i.e package.json) file after right click on the components tree and a left click on "Show in project descriptor".
+ * Show the dependency in the project descriptor (i.e package.json) or CVE in the source code file after left click on the eye icon".
  */
 export class FocusManager implements ExtensionComponent {
     private _focuses: AbstractFocus[] = [];
@@ -25,4 +32,35 @@ export class FocusManager implements ExtensionComponent {
             .filter(focus => focus.isMatched(dependenciesTreeNode))
             .forEach(focus => focus.focusOnDependency(dependenciesTreeNode, focusType));
     }
+
+    /*************************************************************
+     * The following logic is part of the CVE applicability scan.*
+     * It will be hidden until it is officially released.        *
+     * ***********************************************************
+     */
+    // public async focusOnCve(node?: SourceCodeCveTreeNode, index?: number) {
+    //     if (node === undefined || node.getFile() === '') {
+    //         return;
+    //     }
+    //     let openPath: vscode.Uri = vscode.Uri.file(node.getFile());
+    //     if (!openPath) {
+    //         return;
+    //     }
+    //     let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(openPath);
+    //     let textEditor: vscode.TextEditor | undefined = await vscode.window.showTextDocument(textDocument);
+    //     if (!textEditor) {
+    //         return;
+    //     }
+    //     const startPos: vscode.Position = new vscode.Position(
+    //         node.getNodeDetails()[index ?? 0].startLine - 1,
+    //         node.getNodeDetails()[index ?? 0].startColumn
+    //     );
+    //     const endPosition: vscode.Position = new vscode.Position(
+    //         node.getNodeDetails()[index ?? 0].endLine - 1,
+    //         node.getNodeDetails()[index ?? 0].endColumn
+    //     );
+
+    //     textEditor.selection = new vscode.Selection(startPos, endPosition);
+    //     textEditor.revealRange(new vscode.Range(startPos, endPosition), vscode.TextEditorRevealType.InCenter);
+    // }
 }

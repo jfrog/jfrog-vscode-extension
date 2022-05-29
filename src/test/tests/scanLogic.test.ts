@@ -2,7 +2,6 @@ import { assert } from 'chai';
 import * as fs from 'fs';
 import { ComponentDetails, IArtifact, IGraphResponse, ISummaryResponse } from 'jfrog-client-js';
 import * as path from 'path';
-import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
@@ -13,6 +12,7 @@ import { ILicenseKey } from '../../main/types/licenseKey';
 import { INodeInfo } from '../../main/types/nodeInfo';
 import { Severity } from '../../main/types/severity';
 import { createScanCacheManager } from './utils/utils.test';
+import Set from 'typescript-collections/dist/lib/Set';
 
 describe('Scan Logic Tests', () => {
     const scanResponses: string = path.join(__dirname, '..', 'resources', 'scanResponses');
