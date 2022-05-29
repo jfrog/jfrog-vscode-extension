@@ -80,7 +80,7 @@ export class GeneralDetailsDataProvider extends vscode.TreeItem implements vscod
         if (path) {
             children.push(new TreeDataHolder('Path', path));
         }
-        if (!(this._selectedNode instanceof CiTitleNode)) {
+        if (!(this._selectedNode instanceof CiTitleNode) && this._selectedNode.licenses.size() > 0) {
             children.push(new LicensesNode(this._scanCacheManager, this._selectedNode.licenses));
         }
         return Promise.resolve(children);
