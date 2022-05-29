@@ -5,7 +5,7 @@ import { GeneralInfo } from '../../../types/generalInfo';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { PypiUtils } from '../../../utils/pypiUtils';
 import { RootNode } from './rootTree';
-import { Components } from '../../../types/component';
+import { ProjectDetails } from '../../../types/component';
 
 /**
  * Pypi packages can be installed in two different ways:
@@ -17,7 +17,7 @@ export class PypiTreeNode extends RootNode {
 
     constructor(
         workspaceFolder: string,
-        private _componentsToScan: Components,
+        private _projectToScan: ProjectDetails,
         private _treesManager: TreesManager,
         private _pythonPath: string,
         parent?: DependenciesTreeNode
@@ -56,7 +56,7 @@ export class PypiTreeNode extends RootNode {
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
                 let componentId: string = dependency.key + ':' + version;
                 if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-                    this._componentsToScan.add(PypiTreeNode.COMPONENT_PREFIX + componentId);
+                    this._projectToScan.add(PypiTreeNode.COMPONENT_PREFIX + componentId);
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan);
             }

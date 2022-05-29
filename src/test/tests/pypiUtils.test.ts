@@ -14,7 +14,7 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { PypiUtils } from '../../main/utils/pypiUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager } from './utils/utils.test';
-import { Components } from '../../main/types/component';
+import { ProjectDetails } from '../../main/types/component';
 import { PackageType } from '../../main/types/projectType';
 
 /**
@@ -100,7 +100,7 @@ describe('Pypi Utils Tests', async () => {
         // Test 'resources/python/requirements'
         let dependenciesTreeNode: PypiTreeNode = new PypiTreeNode(
             workspaceFolders[0].uri.fsPath,
-            new Components('', PackageType.UNKNOWN),
+            new ProjectDetails('', PackageType.UNKNOWN),
             treesManager,
             path.join(workspaceFolders[0].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
@@ -113,7 +113,7 @@ describe('Pypi Utils Tests', async () => {
         // Test 'resources/python/setup'
         dependenciesTreeNode = new PypiTreeNode(
             workspaceFolders[1].uri.fsPath,
-            new Components('', PackageType.UNKNOWN),
+            new ProjectDetails('', PackageType.UNKNOWN),
             treesManager,
             path.join(workspaceFolders[1].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
@@ -129,7 +129,7 @@ describe('Pypi Utils Tests', async () => {
         // Test 'resources/python/setupAndRequirements'
         dependenciesTreeNode = new PypiTreeNode(
             workspaceFolders[2].uri.fsPath,
-            new Components('', PackageType.UNKNOWN),
+            new ProjectDetails('', PackageType.UNKNOWN),
             treesManager,
             path.join(workspaceFolders[2].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))

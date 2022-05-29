@@ -8,10 +8,8 @@ import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
 import { AbstractScanLogic } from '../../main/scanLogic/abstractScanLogic';
 import { ComponentSummaryScanLogic } from '../../main/scanLogic/componentSummaryScanLogic';
 import { GraphScanLogic } from '../../main/scanLogic/graphScanLogic';
-import { Components } from '../../main/types/component';
 import { ILicenseKey } from '../../main/types/licenseKey';
 import { INodeInfo } from '../../main/types/nodeInfo';
-import { PackageType } from '../../main/types/projectType';
 import { Severity } from '../../main/types/severity';
 import { createScanCacheManager } from './utils/utils.test';
 import Set from 'typescript-collections/dist/lib/Set';
@@ -41,13 +39,13 @@ describe('Scan Logic Tests', () => {
     });
 
     async function testScanLogic(scanCacheManager: ScanCacheManager, scanLogic: AbstractScanLogic, licenseViolated: boolean) {
-        let componentsToScan: Components = new Components('', PackageType.UNKNOWN);
-        componentsToScan.add('gav://io.netty:netty-codec-http:4.1.31.Final');
-        componentsToScan.add('gav://org.apache.commons:commons-lang3:3.12.0');
-        componentsToScan.add('gav://commons-io:commons-io:2.11.0');
+        let componentsToScan: Set<ComponentDetails> = new Set<ComponentDetails>(component => component.component_id);
+        componentsToScan.add({ component_id: 'gav://io.netty:netty-codec-http:4.1.31.Final' });
+        componentsToScan.add({ component_id: 'gav://org.apache.commons:commons-lang3:3.12.0' });
+        componentsToScan.add({ component_id: 'gav://commons-io:commons-io:2.11.0' });
         await scanLogic.scanAndCache(
             { report: () => false } as vscode.Progress<{ message?: string; increment?: number }>,
-            [componentsToScan],
+            componentsToScan,
             () => false
         );
 

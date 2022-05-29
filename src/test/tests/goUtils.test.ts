@@ -18,7 +18,7 @@ import { GoUtils } from '../../main/utils/goUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
-import { Components } from '../../main/types/component';
+import { ProjectDetails } from '../../main/types/component';
 // import { IScannedCveObject } from '../../main/types/scannedCveObject';
 // import { Severity } from '../../main/types/severity';
 
@@ -115,7 +115,7 @@ describe('Go Utils Tests', async () => {
 
     it('Update fixed version', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Components[] = [];
+        let componentsToScan: ProjectDetails[] = [];
         await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
 
         // Get specific dependency node.
@@ -152,7 +152,7 @@ describe('Go Utils Tests', async () => {
      */
     it('Create go Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Components[] = [];
+        let componentsToScan: ProjectDetails[] = [];
         await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
 
         assert.isAbove(componentsToScan.length, 0);
@@ -238,7 +238,7 @@ describe('Go Utils Tests', async () => {
 
     async function runCreateGoDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
-        componentsToScan: Components[],
+        componentsToScan: ProjectDetails[],
         parent: DependenciesTreeNode
     ) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
@@ -262,7 +262,7 @@ describe('Go Utils Tests', async () => {
     async function createGoDependencyTreeAndValidate(projectName: string, expectedChildren: Map<string, number>) {
         try {
             let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-            let componentsToScan: Components[] = [];
+            let componentsToScan: ProjectDetails[] = [];
             await runCreateGoDependenciesTrees(getWorkspaceFolders(projectName), componentsToScan, parent);
 
             validateDependencyTreeResults(projectName, expectedChildren, parent);

@@ -16,7 +16,7 @@ import { NpmUtils } from '../../main/utils/npmUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
-import { Components } from '../../main/types/component';
+import { ProjectDetails } from '../../main/types/component';
 
 /**
  * Test functionality of @class NpmUtils.
@@ -138,7 +138,7 @@ describe('Npm Utils Tests', async () => {
 
     it('Update fixed version', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Components = new Components('', PackageType.UNKNOWN);
+        let componentsToScan: ProjectDetails = new ProjectDetails('', PackageType.UNKNOWN);
         let res: DependenciesTreeNode[] = await runCreateNpmDependenciesTrees([componentsToScan], parent);
         let dependencyProject: DependenciesTreeNode | undefined = res.find(
             node => node instanceof NpmTreeNode && node.workspaceFolder.endsWith('project-3')
@@ -182,7 +182,7 @@ describe('Npm Utils Tests', async () => {
      */
     it('Create npm Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Components[] = [];
+        let componentsToScan: ProjectDetails[] = [];
         let res: DependenciesTreeNode[] = await runCreateNpmDependenciesTrees(componentsToScan, parent);
 
         // Check that components to scan contains progress:2.0.3
@@ -236,7 +236,7 @@ describe('Npm Utils Tests', async () => {
         assert.deepEqual(child?.parent, res[2]);
     });
 
-    async function runCreateNpmDependenciesTrees(componentsToScan: Components[], parent: DependenciesTreeNode) {
+    async function runCreateNpmDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let packageJsons: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.NPM);
         assert.isDefined(packageJsons);

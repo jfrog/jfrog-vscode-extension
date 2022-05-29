@@ -14,7 +14,7 @@ import { PackageType } from '../../main/types/projectType';
 import { NugetUtils } from '../../main/utils/nugetUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, isWindows } from './utils/utils.test';
-import { Components } from '../../main/types/component';
+import { ProjectDetails } from '../../main/types/component';
 
 /**
  * Test functionality of @class NugetUtils.
@@ -68,7 +68,7 @@ describe('Nuget Utils Tests', async () => {
      */
     it('Create NuGet Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Components[] = [];
+        let componentsToScan: ProjectDetails[] = [];
         let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(componentsToScan, parent);
 
         // Check that components to scan contains MyLogger:1.0.0
@@ -95,7 +95,7 @@ describe('Nuget Utils Tests', async () => {
         assert.deepEqual(child.parent, res[0]);
     });
 
-    async function runCreateNugetDependenciesTrees(componentsToScan: Components[], parent: DependenciesTreeNode) {
+    async function runCreateNugetDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.NUGET);
         assert.isDefined(solutions);

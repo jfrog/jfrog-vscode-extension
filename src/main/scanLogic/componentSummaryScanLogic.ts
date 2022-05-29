@@ -1,7 +1,6 @@
 import { ComponentDetails, IArtifact, IGeneral, IIssue, ILicense } from 'jfrog-client-js';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
-import { Components } from '../types/component';
 // import { IScannedCveObject } from '../types/scannedCveObject';
 // import { Severity } from '../types/severity';
 import { AbstractScanLogic } from './abstractScanLogic';
@@ -13,32 +12,26 @@ import { AbstractScanLogic } from './abstractScanLogic';
 export class ComponentSummaryScanLogic extends AbstractScanLogic {
     public async scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
-        Components: Components[],
+        componentsToScan: Set<ComponentDetails>,
         checkCanceled: () => void
     ) {
-        let totalComponents: number = 0;
-        for (const componentsToScan of Components) {
-            totalComponents = componentsToScan.componentsDetails.size;
-        }
         progress.report({ message: `2/2:📦 Dependencies scanning`, increment: 0 });
-        let step: number = (100 / totalComponents) * 100;
-        for (const componentsToScan of Components) {
-            // let scannedCves: IScannedCveObject = {
-            //     cves: new Map<string, Severity>(),
-            //     projectPath: componentsToScan.projectPath
-            // } as IScannedCveObject;
-            const componentsDetails: ComponentDetails[] = componentsToScan.toArray();
-            for (let currentIndex: number = 0; currentIndex < componentsToScan.componentsDetails.size; currentIndex += 100) {
-                checkCanceled();
-                let partialComponentsDetails: ComponentDetails[] = componentsDetails.slice(currentIndex, currentIndex + 100);
-                let artifacts: IArtifact[] = await this._connectionManager.summaryComponent(partialComponentsDetails);
-                this.addMissingComponents(partialComponentsDetails, artifacts);
-                await this._scanCacheManager.storeArtifacts(
-                    artifacts
-                    // , scannedCves
-                );
-                progress.report({ message: `2/2:📦 Dependencies scanning`, increment: step });
-            }
+        // let scannedCves: IScannedCveObject = {
+        //     cves: new Map<string, Severity>(),
+        //     projectPath: componentsToScan.projectPath
+        // } as IScannedCveObject;
+        const componentsDetails: ComponentDetails[] = componentsToScan.toArray();
+        let step: number = (100 / componentsToScan.size()) * 100;
+        for (let currentIndex: number = 0; currentIndex < componentsToScan.size(); currentIndex += 100) {
+            checkCanceled();
+            let partialComponentsDetails: ComponentDetails[] = componentsDetails.slice(currentIndex, currentIndex + 100);
+            let artifacts: IArtifact[] = await this._connectionManager.summaryComponent(partialComponentsDetails);
+            this.addMissingComponents(partialComponentsDetails, artifacts);
+            await this._scanCacheManager.storeArtifacts(
+                artifacts
+                // , scannedCves
+            );
+            progress.report({ message: `2/2:📦 Dependencies scanning`, increment: step });
         }
     }
 

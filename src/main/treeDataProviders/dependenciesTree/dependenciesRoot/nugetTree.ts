@@ -4,12 +4,17 @@ import { TreesManager } from '../../treesManager';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { NugetUtils } from '../../../utils/nugetUtils';
 import { RootNode } from './rootTree';
-import { Components } from '../../../types/component';
+import { ProjectDetails } from '../../../types/component';
 
 export class NugetTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'nuget://';
 
-    constructor(workspaceFolder: string, private _componentsToScan: Components, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
+    constructor(
+        workspaceFolder: string,
+        private _projectToScan: ProjectDetails,
+        private _treesManager: TreesManager,
+        parent?: DependenciesTreeNode
+    ) {
         super(workspaceFolder, parent, '');
     }
 
@@ -35,7 +40,7 @@ export class NugetTreeNode extends RootNode {
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode, '');
                 let combined: string = id + ':' + version;
                 if (!quickScan || !this._treesManager.scanCacheManager.isValid(combined)) {
-                    this._componentsToScan.add(NugetTreeNode.COMPONENT_PREFIX + combined);
+                    this._projectToScan.add(NugetTreeNode.COMPONENT_PREFIX + combined);
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan);
             }

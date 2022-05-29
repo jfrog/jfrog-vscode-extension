@@ -1,7 +1,6 @@
 import { ComponentDetails, IGraphLicense, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
 import Dictionary from 'typescript-collections/dist/lib/Dictionary';
 import * as vscode from 'vscode';
-import { Components } from '../types/component';
 import { IIssueCacheObject } from '../types/issueCacheObject';
 import { IIssueKey } from '../types/issueKey';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
@@ -23,15 +22,9 @@ import Set from 'typescript-collections/dist/lib/Set';
 export class GraphScanLogic extends AbstractScanLogic {
     public async scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
-        components: Components[],
+        componentsToScan: Set<ComponentDetails>,
         checkCanceled: () => void
     ) {
-        let componentsToScan: Set<ComponentDetails> = new Set<ComponentDetails>();
-        for (const component of components) {
-            for (const componentDetails of component.toArray()) {
-                componentsToScan.add(componentDetails);
-            }
-        }
         let graphResponse: IGraphResponse = await this._connectionManager.scanGraph(
             componentsToScan,
             progress,

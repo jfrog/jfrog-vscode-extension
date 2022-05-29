@@ -5,7 +5,7 @@ import { FocusType } from '../focus/abstractFocus';
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { Components } from '../types/component';
+import { ProjectDetails } from '../types/component';
 import { PackageType } from '../types/projectType';
 import * as fs from 'fs';
 
@@ -68,7 +68,7 @@ export class NpmUtils {
      */
     public static async createDependenciesTrees(
         packageJsons: vscode.Uri[] | undefined,
-        components: Components[],
+        projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
@@ -83,9 +83,9 @@ export class NpmUtils {
         }
         treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
         for (let packageJson of packageJsons) {
-            const componentsToScan: Components = new Components(path.dirname(packageJson.fsPath), PackageType.NPM);
-            components.push(componentsToScan);
-            let dependenciesTreeNode: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), componentsToScan, treesManager, parent);
+            const projectToScan: ProjectDetails = new ProjectDetails(path.dirname(packageJson.fsPath), PackageType.NPM);
+            projectsToScan.push(projectToScan);
+            let dependenciesTreeNode: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), projectToScan, treesManager, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
         }
     }

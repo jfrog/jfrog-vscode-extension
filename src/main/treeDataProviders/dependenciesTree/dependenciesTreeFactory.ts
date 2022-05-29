@@ -1,7 +1,7 @@
 import { IUsageFeature } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../connect/connectionManager';
-import { Components } from '../../types/component';
+import { ProjectDetails } from '../../types/component';
 import { PackageType } from '../../types/projectType';
 import { GoUtils } from '../../utils/goUtils';
 import { MavenUtils } from '../../utils/mavenUtils';
@@ -15,7 +15,7 @@ import { DependenciesTreeNode } from './dependenciesTreeNode';
 export class DependenciesTreesFactory {
     public static async createDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
-        componentsToScan: Components[],
+        componentsToScan: ProjectDetails[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean

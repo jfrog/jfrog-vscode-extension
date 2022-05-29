@@ -265,11 +265,8 @@ export class VulnerabilityNode extends IssueNode {
         readonly cve?: string,
         readonly references?: string[],
         readonly component?: string,
-        readonly fixedVersions?: string[] // If false, the given CVE is not applicable in the source code. // If true, the given CVE is applicable in the source code. // If undefined, The CVE cannot be discovered.
-    ) // readonly applicable?: boolean,
-    // 'sourceCodeCveTreeNode' is the corresponding node in the CVE applicability view if the current CVE is applicable.
-    // readonly sourceCodeCveTreeNode?: SourceCodeCveTreeNode
-    {
+        readonly fixedVersions?: string[] // 'sourceCodeCveTreeNode' is the corresponding node in the CVE applicability view if the current CVE is applicable. // readonly applicable?: boolean, // If false, the given CVE is not applicable in the source code. // If true, the given CVE is applicable in the source code. // If undefined, The CVE cannot be discovered. // readonly sourceCodeCveTreeNode?: SourceCodeCveTreeNode
+    ) {
         super(cve ? cve : xrayId, vscode.TreeItemCollapsibleState.Collapsed);
         // Enable eye button if we can jump to source code.
         // if (sourceCodeCveTreeNode !== undefined) {

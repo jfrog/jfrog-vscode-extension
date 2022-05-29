@@ -7,7 +7,7 @@ import { LogManager } from '../log/logManager';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { Components } from '../types/component';
+import { ProjectDetails } from '../types/component';
 import { PackageType } from '../types/projectType';
 import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
@@ -154,7 +154,7 @@ export class MavenUtils {
      */
     public static async createDependenciesTrees(
         pomXmls: vscode.Uri[] | undefined,
-        components: Components[],
+        projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
         root: DependenciesTreeNode,
         quickScan: boolean
@@ -174,9 +174,9 @@ export class MavenUtils {
             try {
                 treesManager.logManager.logMessage('Analyzing pom.xml at ' + ProjectTree.pomPath, 'INFO');
                 ProjectTree.runMavenDependencyTree();
-                const componentsToScan: Components = new Components(ProjectTree.pomPath, PackageType.MAVEN);
-                components.push(componentsToScan);
-                let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, componentsToScan, treesManager, root);
+                const projectToScan: ProjectDetails = new ProjectDetails(ProjectTree.pomPath, PackageType.MAVEN);
+                projectsToScan.push(projectToScan);
+                let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, projectToScan, treesManager, root);
                 await dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree);
                 if (dependenciesTreeNode.children.length === 0) {
                     root.children.splice(root.children.indexOf(dependenciesTreeNode), 1);

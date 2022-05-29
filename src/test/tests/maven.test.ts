@@ -20,7 +20,7 @@ import { PomTree } from '../../main/utils/pomTree';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
-import { Components } from '../../main/types/component';
+import { ProjectDetails } from '../../main/types/component';
 import { ComponentDetails } from 'jfrog-client-js';
 
 /**
@@ -238,7 +238,7 @@ describe('Maven Tests', async () => {
      */
     it('Create Maven dependencies trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Components[] = [];
+        let componentsToScan: ProjectDetails[] = [];
         let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
         let toCompare: string[] = [
             'gav://aopalliance:aopalliance:1.0',
@@ -336,7 +336,7 @@ describe('Maven Tests', async () => {
     it('Update fixed version', async () => {
         // Create dependencies tree.
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Components[] = [];
+        let componentsToScan: ProjectDetails[] = [];
         let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
 
         // Get specific dependency node.
@@ -374,7 +374,7 @@ describe('Maven Tests', async () => {
      */
     it('Exclude dependency', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: Components[] = [];
+        let componentsToScan: ProjectDetails[] = [];
         let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
 
         // Read two nodes from tree
@@ -398,7 +398,7 @@ describe('Maven Tests', async () => {
         assert.equal(directParent.children[0].generalInfo.artifactId, node2.generalInfo.artifactId);
     });
 
-    async function runCreateMavenDependenciesTrees(componentsToScan: Components[], parent: DependenciesTreeNode) {
+    async function runCreateMavenDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
         let pomXmlsArray: vscode.Uri[] | undefined = await locatePomXmls(workspaceFolders);
         await MavenUtils.createDependenciesTrees(pomXmlsArray, componentsToScan, treesManager, parent, false);
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));

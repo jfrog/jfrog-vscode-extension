@@ -7,7 +7,9 @@ import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { AbstractScanLogic } from './abstractScanLogic';
 import { ComponentSummaryScanLogic } from './componentSummaryScanLogic';
 import { GraphScanLogic } from './graphScanLogic';
-import { Components } from '../types/component';
+import { ProjectDetails } from '../types/component';
+import { ComponentDetails } from 'jfrog-client-js';
+import Set from 'typescript-collections/dist/lib/Set';
 
 /**
  * Provides the scan logic type - "summary/component" or "scan/graph" according to the Xray version.
@@ -21,11 +23,16 @@ export class ScanLogicManager implements ExtensionComponent {
 
     public async scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
-        components: Components[],
+        projectsDetails: ProjectDetails[],
         checkCanceled: () => void
     ) {
-        const totalComponents: number = components.length;
-        if (totalComponents === 0) {
+        let totalDependenciesToScan: Set<ComponentDetails> = new Set<ComponentDetails>();
+        for (const projectDetails of projectsDetails) {
+            projectDetails.toArray().forEach(el => {
+                totalDependenciesToScan.add(el);
+            });
+        }
+        if (totalDependenciesToScan.size() === 0) {
             return;
         }
         let scanGraphSupported: boolean = await ConnectionUtils.testXrayVersionForScanGraph(
@@ -35,6 +42,6 @@ export class ScanLogicManager implements ExtensionComponent {
         let scanLogic: AbstractScanLogic = scanGraphSupported
             ? new GraphScanLogic(this._connectionManager, this._scanCacheManager)
             : new ComponentSummaryScanLogic(this._connectionManager, this._scanCacheManager);
-        await scanLogic.scanAndCache(progress, components, checkCanceled);
+        await scanLogic.scanAndCache(progress, totalDependenciesToScan, checkCanceled);
     }
 }

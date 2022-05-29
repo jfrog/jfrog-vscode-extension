@@ -6,12 +6,17 @@ import { GeneralInfo } from '../../../types/generalInfo';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { NpmGlobalScopes, ScopedNpmProject, NpmUtils } from '../../../utils/npmUtils';
 import { RootNode } from './rootTree';
-import { Components } from '../../../types/component';
+import { ProjectDetails } from '../../../types/component';
 
 export class NpmTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
 
-    constructor(workspaceFolder: string, private _componentsToScan: Components, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
+    constructor(
+        workspaceFolder: string,
+        private _projectToScan: ProjectDetails,
+        private _treesManager: TreesManager,
+        parent?: DependenciesTreeNode
+    ) {
         super(workspaceFolder, parent);
     }
 
@@ -64,7 +69,7 @@ export class NpmTreeNode extends RootNode {
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
                 let componentId: string = key + ':' + version;
                 if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-                    this._componentsToScan.add(NpmTreeNode.COMPONENT_PREFIX + componentId);
+                    this._projectToScan.add(NpmTreeNode.COMPONENT_PREFIX + componentId);
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan, globalScope);
             }
