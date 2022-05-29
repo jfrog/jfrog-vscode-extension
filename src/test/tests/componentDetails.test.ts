@@ -102,6 +102,9 @@ describe('Dependency Details Tests', () => {
     async function getAndAssertLicenses(): Promise<any[]> {
         let treeItem: any[] = await Components.generalDetailsProvider.getChildren();
         let licensesNode: LicensesNode = treeItem[5];
+        if (licensesNode === undefined) {
+            return [];
+        }
         assert.deepEqual(licensesNode.label, 'Licenses');
         assert.deepEqual(licensesNode.collapsibleState, vscode.TreeItemCollapsibleState.Expanded);
         return licensesNode.getChildren();
