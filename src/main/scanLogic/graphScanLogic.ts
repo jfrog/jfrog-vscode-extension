@@ -28,7 +28,8 @@ export class GraphScanLogic extends AbstractScanLogic {
             componentsToScan,
             progress,
             checkCanceled,
-            Configuration.getProjectKey()
+            Configuration.getProjectKey(),
+            Configuration.getWatches()
         );
         let scannedComponents: Map<string, INodeInfo> = new Map();
         let licenses: Dictionary<string, ILicenseCacheObject> = new Dictionary();

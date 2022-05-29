@@ -33,6 +33,13 @@ export class Configuration {
     }
 
     /**
+     * @returns JFrog Watches
+     */
+    public static getWatches(): string[] {
+        return vscode.workspace.getConfiguration('jfrog').get('watches', []);
+    }
+
+    /**
      * @returns the log level
      */
     public static getLogLevel(): string {

@@ -604,11 +604,19 @@ export class ConnectionManager implements ExtensionComponent {
         componentsToScan: Set<ComponentDetails>,
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void,
-        project: string
+        project: string,
+        watches: string[]
     ): Promise<IGraphResponse> {
         if (!this.areXrayCredentialsSet()) {
             await this.populateCredentials(false);
         }
+        let policyMessage: string = '';
+        if (watches.length > 0) {
+            policyMessage += ` Using Watches: [${watches.join(', ')}]`;
+        } else if (project && project !== '') {
+            policyMessage += ` Using Project key: ${project}`;
+        }
+        this._logManager.logMessage('Sending dependency graph to Xray for analyzing.' + policyMessage, 'DEBUG');
         let graphRequest: IGraphRequestModel = {
             component_id: 'vscode-project',
             nodes: <IGraphRequestModel[]>componentsToScan.toArray()
@@ -616,7 +624,7 @@ export class ConnectionManager implements ExtensionComponent {
         return await this.createJfrogClient()
             .xray()
             .scan()
-            .graph(graphRequest, new XrayScanProgressImpl(progress), checkCanceled, project);
+            .graph(graphRequest, new XrayScanProgressImpl(progress), checkCanceled, project, watches);
     }
 
     /**
