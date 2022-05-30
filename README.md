@@ -26,6 +26,7 @@
   - [Go Projects](#go-projects)
   - [Maven Projects](#maven-projects)
   - [Npm Projects](#npm-projects)
+  - [Yarn v1 Projects](#yarn-v1-projects)
   - [Pypi Projects](#pypi-projects)
   - [.NET Projects](#net-projects)
 - [The CI View](#the-ci-view)
@@ -142,17 +143,18 @@ It allows developers to view panels displaying vulnerability information about t
 With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
 ### Supported Features
-| Features                                                | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
-| ------------------------------------------------------- | :----------------: | :----------------------: | :------------------: | :--------------------: | :-------------------: |
-| Issues and licenses scanning                            |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
-| Filter dependencies by severity, license, and scope     |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
-| Trigger scan on startup                                 |         ✅         |            ✅            |          ✅          |           ✅           |          ✅           |
-| Jump from dependency tree to project descriptor         |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
-| Jump from project descriptor to dependency tree         |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
-| Show vulnerabilities inside the project descriptor      |         ✅         |            ✅            |          ✅          |           ✅           |          ❌           |
-| Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ❌           |          ❌           |
-| Automatically trigger a scan upon code changes          |         ✅         |            ❌            |          ✅          |           ❌           |          ❌           |
-| Exclude transitive dependencies from project descriptor |         ❌         |            ✅            |          ❌          |           ❌           |          ❌           |
+| Features                                                | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
+| ------------------------------------------------------- | :----------------: | :----------------------: | :------------------: | :--------------------: | :--------------------: | :-------------------: |
+| Issues and licenses scanning                            |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
+| Filter dependencies by severity, license, and scope     |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
+| Trigger scan on startup                                 |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
+| Jump from dependency tree to project descriptor         |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ❌           |
+| Jump from project descriptor to dependency tree         |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ❌           |
+| Show vulnerabilities inside the project descriptor      |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ❌           |
+| Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ✅           |           ❌           |          ❌           |
+| Automatically trigger a scan upon code changes          |         ✅         |            ❌            |          ✅          |           ✅           |           ❌           |          ❌           |
+| Exclude transitive dependencies from project descriptor |         ❌         |            ✅            |          ❌          |           ❌           |           ❌           |          ❌           |
+
 
 ### Component Tree Icons
 The icon demonstrates the top severity issue of a selected component and its transitive dependencies. The following table describes the severities from lowest to highest:
@@ -235,6 +237,13 @@ Behind the scenes, the extension builds the npm dependencies tree by running `np
 Important:
 To have your project dependencies scanned by JFrog Xray, make sure the npm CLI is installed on your local machine and that it is in your system PATH.
 In addition, the project dependencies must be installed using `npm install`.
+
+### Yarn v1 Projects
+Behind the scenes, the extension builds the Yarn dependencies tree by running `yarn list`. View licenses and top issue severities directly from the yarn.lock.
+
+Important:
+- To have your project dependencies scanned by JFrog Xray, make sure the Yarn CLI is installed on your local machine and that it is in your system PATH.
+- Yarn v2 is not yet supported.
 
 ### Pypi Projects
 Behind the scenes, the extension builds the Pypi dependencies tree by running `pipdeptree` on your Python virtual environment. It also uses the Python interpreter path configured by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python). View licenses and top issue severities directly from your requirements.txt files. The scan your Pypi dependencies, make sure the following requirements are met:

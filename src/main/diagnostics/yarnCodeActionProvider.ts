@@ -1,25 +1,21 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
-import { FocusType } from '../focus/abstractFocus';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { NpmUtils } from '../utils/npmUtils';
 import { YarnUtils } from '../utils/yarnUtils';
 import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 
-export class NpmCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
+export class YarnCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
     constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager) {
-        super(NpmUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager);
+        super(YarnUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager);
     }
 
     /** @override */
     protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
-        let fsPath: string | undefined = document ? path.dirname(document.uri.fsPath) : document;
-        return (
-            this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(NpmUtils.PKG_TYPE, fsPath) ||
-            // Display diagnostics in package.json for Yarn projects
-            this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(YarnUtils.PKG_TYPE, fsPath)
+        return this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(
+            YarnUtils.PKG_TYPE,
+            document ? path.dirname(document.uri.fsPath) : document
         );
     }
 
@@ -30,12 +26,12 @@ export class NpmCodeActionProvider extends AbstractCodeActionProvider implements
         }
         let diagnostics: vscode.Diagnostic[] = [];
         const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document);
-        let npmDependenciesTree: DependenciesTreeNode | undefined = this.getDependenciesTree(document);
-        if (!npmDependenciesTree) {
+        let yarnDependenciesTree: DependenciesTreeNode | undefined = this.getDependenciesTree(document);
+        if (!yarnDependenciesTree) {
             return;
         }
-        npmDependenciesTree.children.forEach(child => {
-            let dependencyPos: vscode.Position[] = NpmUtils.getDependencyPos(document, child, FocusType.Dependency);
+        yarnDependenciesTree.children.forEach(child => {
+            let dependencyPos: vscode.Position[] = YarnUtils.getDependencyPos(document, child);
             if (dependencyPos.length === 0) {
                 return;
             }

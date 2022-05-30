@@ -8,6 +8,7 @@ import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 import { GoDependencyUpdate } from './goDependencyUpdate';
 import { MavenDependencyUpdate } from './mavenDependencyUpdate';
 import { NpmDependencyUpdate } from './npmDependencyUpdate';
+import { YarnDependencyUpdate } from './yarnDependencyUpdate';
 
 /**
  * Update the dependency version in the project descriptor (e.g. pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
@@ -16,7 +17,7 @@ export class DependencyUpdateManager implements ExtensionComponent {
     private _dependencyUpdaters: AbstractDependencyUpdate[] = [];
 
     constructor(private _scanCacheManager: ScanCacheManager) {
-        this._dependencyUpdaters.push(new MavenDependencyUpdate(), new NpmDependencyUpdate(), new GoDependencyUpdate());
+        this._dependencyUpdaters.push(new MavenDependencyUpdate(), new NpmDependencyUpdate(), new YarnDependencyUpdate(), new GoDependencyUpdate());
     }
 
     public activate() {

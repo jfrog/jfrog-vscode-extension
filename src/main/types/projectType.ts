@@ -10,6 +10,7 @@ export enum PackageType {
     GO,
     MAVEN,
     NPM,
+    YARN,
     NUGET,
     PYTHON
 }

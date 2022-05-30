@@ -5,6 +5,7 @@ import { GoFocus } from './goFocus';
 import { MavenFocus } from './mavenFocus';
 import { NpmFocus } from './npmFocus';
 import { PypiFocus } from './pypiFocus';
+import { YarnFocus } from './yarnFocus';
 /*************************************************************
  * The following logic is part of the CVE applicability scan.*
  * It will be hidden until it is officially released.        *
@@ -20,7 +21,7 @@ export class FocusManager implements ExtensionComponent {
     private _focuses: AbstractFocus[] = [];
 
     constructor() {
-        this._focuses.push(new NpmFocus(), new PypiFocus(), new GoFocus(), new MavenFocus());
+        this._focuses.push(new NpmFocus(), new YarnFocus(), new PypiFocus(), new GoFocus(), new MavenFocus());
     }
 
     public activate() {

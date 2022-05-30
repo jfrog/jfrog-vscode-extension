@@ -1,4 +1,5 @@
 import * as exec from 'child_process';
+import * as fs from 'fs';
 import * as fse from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
@@ -47,11 +48,14 @@ export class ScanUtils {
         for (let workspace of workspaceFolders) {
             logManager.logMessage('Locating package descriptors in workspace "' + workspace.name + '".', 'INFO');
             let wsPackageDescriptors: vscode.Uri[] = await vscode.workspace.findFiles(
-                { base: workspace.uri.fsPath, pattern: '**/{go.mod,pom.xml,package.json,*.sln,setup.py,requirements*.txt}' },
+                { base: workspace.uri.fsPath, pattern: '**/{go.mod,pom.xml,package.json,yarn.lock,*.sln,setup.py,requirements*.txt}' },
                 Configuration.getScanExcludePattern(workspace)
             );
             for (let wsPackageDescriptor of wsPackageDescriptors) {
-                let type: PackageType = ScanUtils.extractDescriptorTypeFromPath(wsPackageDescriptor.fsPath);
+                let type: PackageType | undefined = ScanUtils.extractDescriptorTypeFromPath(wsPackageDescriptor.fsPath);
+                if (!type) {
+                    continue;
+                }
                 let uri: vscode.Uri[] | undefined = packageDescriptors.get(type);
                 if (!uri) {
                     packageDescriptors.set(type, [wsPackageDescriptor]);
@@ -107,16 +111,23 @@ export class ScanUtils {
     /**
      * Extract PackageType from the input path.
      * @param fsPath - path to package descriptor such as pom.xml, go.mod, etc.
-     * @returns PackageType
+     * @returns PackageType or undefined
      */
-    private static extractDescriptorTypeFromPath(fsPath: string): PackageType {
+    private static extractDescriptorTypeFromPath(fsPath: string): PackageType | undefined {
         if (fsPath.endsWith('go.mod')) {
             return PackageType.GO;
         }
         if (fsPath.endsWith('pom.xml')) {
             return PackageType.MAVEN;
         }
+        if (fsPath.endsWith('yarn.lock')) {
+            return PackageType.YARN;
+        }
         if (fsPath.endsWith('package.json')) {
+            if (fs.existsSync(path.join(path.dirname(fsPath), 'yarn.lock'))) {
+                // The package type is yarn, but we already saved the fsPath of yarn.lock as the project descriptor
+                return undefined;
+            }
             return PackageType.NPM;
         }
         if (fsPath.endsWith('.sln')) {

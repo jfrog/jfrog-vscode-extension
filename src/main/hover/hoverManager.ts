@@ -6,6 +6,7 @@ import { GoHover } from './goHover';
 import { NpmHover } from './npmHover';
 import { PypiHover } from './pypiHover';
 import { MavenHover } from './mavenHover';
+import { YarnHover } from './yarnHover';
 
 /**
  * Hover on a dependency in the project descriptor (i.e. package.json) to show its licenses.
@@ -14,7 +15,13 @@ export class HoverManager implements ExtensionComponent {
     private _hoverProviders: AbstractHoverProvider[] = [];
 
     constructor(treesManager: TreesManager) {
-        this._hoverProviders.push(new NpmHover(treesManager), new PypiHover(treesManager), new GoHover(treesManager), new MavenHover(treesManager));
+        this._hoverProviders.push(
+            new NpmHover(treesManager),
+            new YarnHover(treesManager),
+            new PypiHover(treesManager),
+            new GoHover(treesManager),
+            new MavenHover(treesManager)
+        );
     }
 
     public activate(context: vscode.ExtensionContext) {
