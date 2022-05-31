@@ -318,7 +318,7 @@ To build the extension sources, please follow these steps:
 git submodule init
 git submodule update
 ```
-3. Build and create the VS-Code extension vsix file by running the following npm command.
+3. Build and create the VS-Code extension vsix file by running the following npm command:
 
 ```bash
 npm i
