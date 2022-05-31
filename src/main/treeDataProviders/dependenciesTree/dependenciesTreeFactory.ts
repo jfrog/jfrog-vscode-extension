@@ -9,6 +9,7 @@ import { NpmUtils } from '../../utils/npmUtils';
 import { NugetUtils } from '../../utils/nugetUtils';
 import { PypiUtils } from '../../utils/pypiUtils';
 import { ScanUtils } from '../../utils/scanUtils';
+import { YarnUtils } from '../../utils/yarnUtils';
 import { TreesManager } from '../treesManager';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 
@@ -28,6 +29,7 @@ export class DependenciesTreesFactory {
         this.sendUsageReport(projectDescriptors, treesManager.connectionManager);
         await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageType.GO), componentsToScan, treesManager, parent, quickScan);
         await NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageType.NPM), componentsToScan, treesManager, parent, quickScan);
+        await YarnUtils.createDependenciesTrees(projectDescriptors.get(PackageType.YARN), componentsToScan, treesManager, parent, quickScan);
         await PypiUtils.createDependenciesTrees(
             projectDescriptors.get(PackageType.PYTHON),
             workspaceFolders,

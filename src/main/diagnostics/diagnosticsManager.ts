@@ -2,10 +2,11 @@ import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
-import { NpmCodeActionProvider } from './npmCodeActionProvider';
-import { PypiCodeActionProvider } from './pypiCodeActionProvider';
 import { GoCodeActionProvider } from './goCodeActionProvider';
 import { MavenCodeActionProvider } from './mavenCodeActionProvider';
+import { NpmCodeActionProvider } from './npmCodeActionProvider';
+import { PypiCodeActionProvider } from './pypiCodeActionProvider';
+import { YarnCodeActionProvider } from './yarnCodeActionProvider';
 /*************************************************************
  * The following logic is part of the CVE applicability scan.*
  * It will be hidden until it is officially released.        *
@@ -29,6 +30,7 @@ export class DiagnosticsManager implements ExtensionComponent {
         let diagnosticCollection: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection();
         this._codeActionProviders.push(
             new NpmCodeActionProvider(diagnosticCollection, treesManager),
+            new YarnCodeActionProvider(diagnosticCollection, treesManager),
             new PypiCodeActionProvider(diagnosticCollection, treesManager),
             new GoCodeActionProvider(diagnosticCollection, treesManager),
             new MavenCodeActionProvider(diagnosticCollection, treesManager)
