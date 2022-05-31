@@ -309,6 +309,7 @@ The extension is licensed under [Apache License 2.0](LICENSE).
 ### Preconditions
 * npm 7 and above
 * JFrog CLI's `jf` executable - required for tests
+* Check that the folder `resources/gomod-absolutizer` is not empty. Run `git submodule update --init --recursive` from the root of the project to fill it
 
 To build the extension sources, please follow these steps:
 
