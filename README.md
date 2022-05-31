@@ -131,10 +131,10 @@ To open the extension settings, use the following VS Code menu command:
 - On macOS - Code > Preferences > Settings > Extensions > JFrog
 
 ## Using the Extension
-The extension offers two modes, **Local** and **CI**. 
+The extension offers two modes, **Local** and **CI**.
 The two modes can be toggled by pressing on their respective buttons that will appear next to the components tree.
 
-- The **Local** view displays information about the local code as it is being developed in VS Code. JFrog Xray continuously scans the project's dependencies locally, and the information is displayed in the **Local** view. 
+- The **Local** view displays information about the local code as it is being developed in VS Code. JFrog Xray continuously scans the project's dependencies locally, and the information is displayed in the **Local** view.
 - The **CI** view allows the tracking of the code as it is built, tested and scanned by the CI server. It displays information about the status of the build and includes a link to the build log on the CI server.
 
 ## The Local View
@@ -269,7 +269,7 @@ Behind the scenes, the extension builds the Pypi dependencies tree by running `p
 5. In the same terminal, install your python project and dependencies according to your project specifications.
 
 ### .NET Projects
-For .NET projects which use NuGet packages as dependencies, the extension displays the NuGet dependencies tree, together with the information for each dependency.  
+For .NET projects which use NuGet packages as dependencies, the extension displays the NuGet dependencies tree, together with the information for each dependency.
 Behind the scenes, the extension builds the NuGet dependencies tree using the [NuGet deps tree](https://github.com/jfrog/nuget-deps-tree) npm package.
 
 Important:
@@ -290,12 +290,12 @@ The following details can be made available in the CI view.
 - Security information about the build artifacts and dependencies
 
 ### How Does It Work?
-The CI information displayed in VS Code is pulled by the JFrog Extension directly from JFrog Artifactory. This information is stored in Artifactory as part of the build-info, which is published to Artifactory by the CI server. 
+The CI information displayed in VS Code is pulled by the JFrog Extension directly from JFrog Artifactory. This information is stored in Artifactory as part of the build-info, which is published to Artifactory by the CI server.
 
 Read more about build-info in the [Build Integration](https://www.jfrog.com/confluence/display/JFROG/Build+Integration) documentation page. If the CI pipeline is also configured to scan the build-info by JFrog Xray, the JFrog VS Code Extension will pull the results of the scan from JFrog Xray and display them in the CI view as well.
 
 ### Setting Up Your CI Pipeline
-Before VS Code can display information from your CI in the CI View, your CI pipeline needs to be configured to expose this data. 
+Before VS Code can display information from your CI in the CI View, your CI pipeline needs to be configured to expose this data.
 Read [this guide](https://www.jfrog.com/confluence/display/JFROG/Setting+Up+CI+Integration) which describes how to configure your CI pipeline.
 
 ### Setting Up the CI View
@@ -319,10 +319,15 @@ The extension is licensed under [Apache License 2.0](LICENSE).
 * npm 7 and above
 * JFrog CLI's `jf` executable - required for tests
 
-To build the extension sources, please follow these steps:
+To build the extension from sources, please follow these steps:
 
 1. Clone the code from Github.
-1. Build and create the VS-Code extension vsix file by running the following npm command.
+2. Update submodules:
+```bash
+git submodule init
+git submodule update
+```
+3. Build and create the VS-Code extension vsix file by running the following npm command:
 
 ```bash
 npm i
