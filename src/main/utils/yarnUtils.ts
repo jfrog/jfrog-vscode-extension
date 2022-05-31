@@ -70,7 +70,7 @@ export class YarnUtils {
         treesManager.logManager.logMessage('yarn.lock files to scan: [' + yarnLocks.toString() + ']', 'DEBUG');
         for (let yarnLock of yarnLocks) {
             // In yarn, the version may vary in different workspaces. Therefore we run 'yarn --version' for each workspace.
-            if (!YarnUtils.verifyYarnVersion(parent, treesManager.logManager, path.dirname(yarnLock.fsPath), quickScan)) {
+            if (!YarnUtils.isVersionSupported(parent, treesManager.logManager, path.dirname(yarnLock.fsPath), quickScan)) {
                 return;
             }
             const projectToScan: ProjectDetails = new ProjectDetails(path.dirname(yarnLock.fsPath), PackageType.YARN);
@@ -80,7 +80,7 @@ export class YarnUtils {
         }
     }
 
-    public static verifyYarnVersion(parent: DependenciesTreeNode, logManager: LogManager, workspaceFolder: string, quickScan: boolean): boolean {
+    public static isVersionSupported(parent: DependenciesTreeNode, logManager: LogManager, workspaceFolder: string, quickScan: boolean): boolean {
         try {
             let version: string = ScanUtils.executeCmd('yarn --version', workspaceFolder).toString();
             let yarnSemver: semver.SemVer = new semver.SemVer(version);
