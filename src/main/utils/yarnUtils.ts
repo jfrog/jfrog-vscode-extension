@@ -1,4 +1,3 @@
-import { execSync } from 'child_process';
 import * as path from 'path';
 import * as semver from 'semver';
 import * as vscode from 'vscode';
@@ -7,7 +6,10 @@ import { YarnTreeNode } from '../treeDataProviders/dependenciesTree/dependencies
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ProjectDetails } from '../types/component';
+import { GeneralInfo } from '../types/generalInfo';
 import { PackageType } from '../types/projectType';
+import { NpmGlobalScopes, ScopedNpmProject } from './npmUtils';
+import { ScanUtils } from './scanUtils';
 
 export class YarnUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/yarn.lock' };
@@ -66,10 +68,11 @@ export class YarnUtils {
             return;
         }
         treesManager.logManager.logMessage('yarn.lock files to scan: [' + yarnLocks.toString() + ']', 'DEBUG');
-        if (!YarnUtils.verifyYarnVersion(treesManager.logManager, quickScan)) {
-            return;
-        }
         for (let yarnLock of yarnLocks) {
+            // In yarn, the version may vary in different workspaces. Therefore we run 'yarn --version' for each workspace.
+            if (!YarnUtils.verifyYarnVersion(parent, treesManager.logManager, path.dirname(yarnLock.fsPath), quickScan)) {
+                return;
+            }
             const projectToScan: ProjectDetails = new ProjectDetails(path.dirname(yarnLock.fsPath), PackageType.YARN);
             projectsToScan.push(projectToScan);
             let dependenciesTreeNode: YarnTreeNode = new YarnTreeNode(path.dirname(yarnLock.fsPath), projectToScan, treesManager, parent);
@@ -77,12 +80,21 @@ export class YarnUtils {
         }
     }
 
-    public static verifyYarnVersion(logManager: LogManager, quickScan: boolean): boolean {
+    public static verifyYarnVersion(parent: DependenciesTreeNode, logManager: LogManager, workspaceFolder: string, quickScan: boolean): boolean {
         try {
-            let version: string = execSync('yarn --version').toString();
+            let version: string = ScanUtils.executeCmd('yarn --version', workspaceFolder).toString();
             let yarnSemver: semver.SemVer = new semver.SemVer(version);
             if (yarnSemver.compare('2.0.0') >= 0) {
                 logManager.logError(new Error('Could not scan Yarn project dependencies, because currently only Yarn 1 is supported.'), !quickScan);
+                let yarnProject: ScopedNpmProject = this.getYarnProjectDetails(workspaceFolder);
+                let generalInfo: GeneralInfo = new GeneralInfo(
+                    (yarnProject.projectName || workspaceFolder) + ` [Not supported]`,
+                    yarnProject.projectVersion,
+                    [],
+                    workspaceFolder,
+                    YarnUtils.PKG_TYPE
+                );
+                new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.None, parent);
                 return false;
             }
         } catch (error) {
@@ -90,5 +102,17 @@ export class YarnUtils {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Return ScopedNpmProject which contain the name and version of Yarn project.
+     * The name and version are extracted from the package.json.
+     * @param workspaceFolder - The workspace folder
+     * @returns ScopedNpmProject
+     */
+    public static getYarnProjectDetails(workspaceFolder: string): ScopedNpmProject {
+        const yarnProject: ScopedNpmProject = new ScopedNpmProject(NpmGlobalScopes.PRODUCTION);
+        yarnProject.loadProjectDetailsFromFile(path.join(workspaceFolder, 'package.json'));
+        return yarnProject;
     }
 }
