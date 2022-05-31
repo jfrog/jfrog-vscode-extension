@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
+import { PackageType } from '../types/projectType';
 import { Configuration } from './configuration';
 
 export class ScanUtils {
@@ -41,8 +42,8 @@ export class ScanUtils {
     public static async locatePackageDescriptors(
         workspaceFolders: vscode.WorkspaceFolder[],
         logManager: LogManager
-    ): Promise<Map<PackageDescriptorType, vscode.Uri[]>> {
-        let packageDescriptors: Map<PackageDescriptorType, vscode.Uri[]> = new Map();
+    ): Promise<Map<PackageType, vscode.Uri[]>> {
+        let packageDescriptors: Map<PackageType, vscode.Uri[]> = new Map();
         for (let workspace of workspaceFolders) {
             logManager.logMessage('Locating package descriptors in workspace "' + workspace.name + '".', 'INFO');
             let wsPackageDescriptors: vscode.Uri[] = await vscode.workspace.findFiles(
@@ -50,7 +51,7 @@ export class ScanUtils {
                 Configuration.getScanExcludePattern(workspace)
             );
             for (let wsPackageDescriptor of wsPackageDescriptors) {
-                let type: PackageDescriptorType = ScanUtils.extractDescriptorTypeFromPath(wsPackageDescriptor.fsPath);
+                let type: PackageType = ScanUtils.extractDescriptorTypeFromPath(wsPackageDescriptor.fsPath);
                 let uri: vscode.Uri[] | undefined = packageDescriptors.get(type);
                 if (!uri) {
                     packageDescriptors.set(type, [wsPackageDescriptor]);
@@ -104,37 +105,29 @@ export class ScanUtils {
     }
 
     /**
-     * Extract PackageDescriptorType from the input path.
+     * Extract PackageType from the input path.
      * @param fsPath - path to package descriptor such as pom.xml, go.mod, etc.
-     * @returns PackageDescriptorType
+     * @returns PackageType
      */
-    private static extractDescriptorTypeFromPath(fsPath: string): PackageDescriptorType {
+    private static extractDescriptorTypeFromPath(fsPath: string): PackageType {
         if (fsPath.endsWith('go.mod')) {
-            return PackageDescriptorType.GO;
+            return PackageType.GO;
         }
         if (fsPath.endsWith('pom.xml')) {
-            return PackageDescriptorType.MAVEN;
+            return PackageType.MAVEN;
         }
         if (fsPath.endsWith('package.json')) {
-            return PackageDescriptorType.NPM;
+            return PackageType.NPM;
         }
         if (fsPath.endsWith('.sln')) {
-            return PackageDescriptorType.NUGET;
+            return PackageType.NUGET;
         }
-        return PackageDescriptorType.PYTHON;
+        return PackageType.PYTHON;
     }
 
     static createTmpDir(): string {
         return tmp.dirSync({} as tmp.DirOptions).name;
     }
-}
-
-export enum PackageDescriptorType {
-    GO,
-    MAVEN,
-    NPM,
-    NUGET,
-    PYTHON
 }
 
 export class ScanCancellationError extends Error {

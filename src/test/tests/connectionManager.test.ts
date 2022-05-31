@@ -11,7 +11,6 @@ import { getCliHomeDir, setCliHomeDir } from './utils/utils.test';
 
 describe('Connection Manager Tests', () => {
     let connectionManager: ConnectionManager;
-
     before(async () => {
         // Don't override existing connection details
         process.env[ConnectionManager.STORE_CONNECTION_ENV] = 'FALSE';

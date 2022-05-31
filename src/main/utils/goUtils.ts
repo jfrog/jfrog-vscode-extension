@@ -1,8 +1,6 @@
 import { execSync } from 'child_process';
 import fs from 'fs-extra';
-import { ComponentDetails } from 'jfrog-client-js';
 import * as path from 'path';
-import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import * as walkdir from 'walkdir';
 import { FocusType } from '../focus/abstractFocus';
@@ -10,6 +8,8 @@ import { LogManager } from '../log/logManager';
 import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
+import { ProjectDetails } from '../types/component';
+import { PackageType } from '../types/projectType';
 import { ScanUtils } from './scanUtils';
 
 export class GoUtils {
@@ -73,7 +73,7 @@ export class GoUtils {
      */
     public static async createDependenciesTrees(
         goMods: vscode.Uri[] | undefined,
-        componentsToScan: Set<ComponentDetails>,
+        projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
@@ -90,6 +90,8 @@ export class GoUtils {
         for (let goMod of goMods) {
             treesManager.logManager.logMessage('Analyzing go.mod files', 'INFO');
             let projectDir: string = path.dirname(goMod.fsPath);
+            const projectToScan: ProjectDetails = new ProjectDetails(projectDir, PackageType.GO);
+            projectsToScan.push(projectToScan);
             let tmpWorkspace: string = '';
             try {
                 tmpWorkspace = this.createGoWorkspace(projectDir, treesManager.logManager);
@@ -98,7 +100,7 @@ export class GoUtils {
                 treesManager.logManager.logMessage('Failed creating go temporary workspace: ' + error, 'ERR');
             }
 
-            let dependenciesTreeNode: GoTreeNode = new GoTreeNode(tmpWorkspace, componentsToScan, treesManager, parent);
+            let dependenciesTreeNode: GoTreeNode = new GoTreeNode(tmpWorkspace, projectToScan, treesManager, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
             // Set actual paths.
             dependenciesTreeNode.generalInfo.path = projectDir;

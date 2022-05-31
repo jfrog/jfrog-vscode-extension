@@ -12,21 +12,32 @@ import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from './utils/treeDataHolder';
 
 /**
- * The component details tree.
+ * The General section in the 'Dependency Details' panel.
  */
-export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any> {
+export class GeneralDetailsDataProvider extends vscode.TreeItem implements vscode.TreeDataProvider<any> {
+    // The selected node in the dependency tree. The General details are represented by this node.
+    private _selectedNode!: DependenciesTreeNode;
     private _onDidChangeTreeData: vscode.EventEmitter<any> = new vscode.EventEmitter<any>();
     readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
-    private _selectedNode: DependenciesTreeNode | undefined;
 
-    constructor(private _scanCacheManager: ScanCacheManager) {}
+    constructor(private _scanCacheManager: ScanCacheManager) {
+        super('General', vscode.TreeItemCollapsibleState.Collapsed);
+    }
+
+    public get selectedNode(): DependenciesTreeNode {
+        return this._selectedNode;
+    }
+
+    public set selectedNode(value: DependenciesTreeNode) {
+        this._selectedNode = value;
+    }
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
     }
 
     getTreeItem(element: any): vscode.TreeItem {
-        if (element instanceof LicensesNode) {
+        if (element instanceof LicensesNode || element instanceof GeneralDetailsDataProvider) {
             return element;
         }
         let holder: TreeDataHolder = <TreeDataHolder>element;
@@ -45,10 +56,6 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
     }
 
     getChildren(element?: any): Thenable<any[]> {
-        // No selected node - No component details view
-        if (!this._selectedNode) {
-            return Promise.resolve([]);
-        }
         // Licenses node - Return licenses
         if (element instanceof LicensesNode) {
             return Promise.resolve(element.getChildren());
@@ -63,7 +70,6 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
         if (!(this._selectedNode instanceof CiTitleNode && !this._selectedNode.generalInfo.version)) {
             children.push(new TreeDataHolder('Version', this._selectedNode.generalInfo.version));
         }
-
         children.push(new TreeDataHolder('Type', this._selectedNode.generalInfo.pkgType));
         const scopes: string[] = this._selectedNode.generalInfo.scopes;
         if (scopes.length > 0 && !this.isNoneScope(scopes)) {
@@ -74,7 +80,7 @@ export class ComponentDetailsDataProvider implements vscode.TreeDataProvider<any
         if (path) {
             children.push(new TreeDataHolder('Path', path));
         }
-        if (!(this._selectedNode instanceof CiTitleNode)) {
+        if (!(this._selectedNode instanceof CiTitleNode) && this._selectedNode.licenses.size() > 0) {
             children.push(new LicensesNode(this._scanCacheManager, this._selectedNode.licenses));
         }
         return Promise.resolve(children);

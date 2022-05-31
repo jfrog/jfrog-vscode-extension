@@ -1,12 +1,13 @@
 import { execSync } from 'child_process';
-import { ComponentDetails } from 'jfrog-client-js';
 import * as path from 'path';
-import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { FocusType } from '../focus/abstractFocus';
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
+import { ProjectDetails } from '../types/component';
+import { PackageType } from '../types/projectType';
+import * as fs from 'fs';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
@@ -67,7 +68,7 @@ export class NpmUtils {
      */
     public static async createDependenciesTrees(
         packageJsons: vscode.Uri[] | undefined,
-        componentsToScan: Set<ComponentDetails>,
+        projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         quickScan: boolean
@@ -82,7 +83,9 @@ export class NpmUtils {
         }
         treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
         for (let packageJson of packageJsons) {
-            let dependenciesTreeNode: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), componentsToScan, treesManager, parent);
+            const projectToScan: ProjectDetails = new ProjectDetails(path.dirname(packageJson.fsPath), PackageType.NPM);
+            projectsToScan.push(projectToScan);
+            let dependenciesTreeNode: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), projectToScan, treesManager, parent);
             dependenciesTreeNode.refreshDependencies(quickScan);
         }
     }
@@ -138,6 +141,13 @@ export class ScopedNpmProject {
         this._projectName = lsOutput.name;
         this._projectVersion = lsOutput.version;
         this._dependencies = lsOutput.dependencies;
+    }
+
+    public loadProjectDetailsFromFile(filePath: any) {
+        let content: string = fs.readFileSync(filePath, 'utf8');
+        const fileData: any = JSON.parse(content);
+        this._projectName = fileData.name;
+        this._projectVersion = fileData.version;
     }
 
     public get scope(): NpmGlobalScopes {

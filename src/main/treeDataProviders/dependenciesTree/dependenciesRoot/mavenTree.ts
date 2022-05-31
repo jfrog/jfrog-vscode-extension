@@ -1,6 +1,5 @@
-import { ComponentDetails } from 'jfrog-client-js';
-import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
+import { ProjectDetails } from '../../../types/component';
 import { GavGeneralInfo } from '../../../types/gavGeneralinfo';
 import { MavenUtils } from '../../../utils/mavenUtils';
 import { PomTree } from '../../../utils/pomTree';
@@ -13,7 +12,7 @@ export class MavenTreeNode extends RootNode {
 
     constructor(
         workspaceFolder: string,
-        private _componentsToScan: Collections.Set<ComponentDetails>,
+        private _projectToScan: ProjectDetails,
         private _treesManager: TreesManager,
         parent?: DependenciesTreeNode
     ) {
@@ -37,7 +36,7 @@ export class MavenTreeNode extends RootNode {
             this.populateDependenciesTree(this, rawDependenciesList, { index: 0 }, quickScan);
         }
         for (const childPom of prototypeTree.children) {
-            const dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(childPom.pomPath, this._componentsToScan, this._treesManager, this);
+            const dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(childPom.pomPath, this._projectToScan, this._treesManager, this);
             await dependenciesTreeNode.refreshDependencies(quickScan, childPom, rawDependenciesList);
             if (dependenciesTreeNode.children.length === 0) {
                 this.children.splice(this.children.indexOf(dependenciesTreeNode), 1);
@@ -69,7 +68,7 @@ export class MavenTreeNode extends RootNode {
             child.label = group + ':' + name;
             let componentId: string = gavGeneralInfo.getComponentId();
             if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-                this._componentsToScan.add(new ComponentDetails(MavenTreeNode.COMPONENT_PREFIX + componentId));
+                this._projectToScan.add(MavenTreeNode.COMPONENT_PREFIX + componentId);
             }
             if (rawDependenciesPtr.index + 1 < rawDependenciesList.length) {
                 while (
@@ -88,7 +87,7 @@ export class MavenTreeNode extends RootNode {
 
     /** @override */
     public shallowClone(): MavenTreeNode {
-        const clone: MavenTreeNode = new MavenTreeNode(this.workspaceFolder, this._componentsToScan, this._treesManager, undefined);
+        const clone: MavenTreeNode = new MavenTreeNode(this.workspaceFolder, this._projectToScan, this._treesManager, undefined);
         clone.generalInfo = this.generalInfo;
         clone.licenses = this.licenses;
         clone.issues = this.issues;
