@@ -10,12 +10,7 @@ import { RootNode } from './rootTree';
 export class MavenTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'gav://';
 
-    constructor(
-        workspaceFolder: string,
-        private _projectToScan: ProjectDetails,
-        private _treesManager: TreesManager,
-        parent?: DependenciesTreeNode
-    ) {
+    constructor(workspaceFolder: string, private _projectToScan: ProjectDetails, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
         super(workspaceFolder, parent);
         MavenUtils.pathToNode.set(workspaceFolder, this);
     }

@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { ProjectDetails } from '../../../types/component';
 import { GeneralInfo } from '../../../types/generalInfo';
-import { NpmGlobalScopes, NpmUtils, ScopedNpmProject } from '../../../utils/npmUtils';
+import { NpmUtils, ScopedNpmProject } from '../../../utils/npmUtils';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { YarnUtils } from '../../../utils/yarnUtils';
 import { TreesManager } from '../../treesManager';
@@ -35,17 +35,15 @@ export class YarnTreeNode extends RootNode {
             this.populateDependencyTree(this, listResults?.data?.trees, quickScan);
         }
 
-        const productionScope: ScopedNpmProject = new ScopedNpmProject(NpmGlobalScopes.PRODUCTION);
-        productionScope.loadProjectDetailsFromFile(path.join(this.workspaceFolder, 'package.json'));
-
+        const yarnProject: ScopedNpmProject = YarnUtils.getYarnProjectDetails(this.workspaceFolder);
         this.generalInfo = new GeneralInfo(
-            productionScope.projectName + (yarnListFailed ? ' [Not installed]' : ''),
-            productionScope.projectVersion,
+            yarnProject.projectName + (yarnListFailed ? ' [Not installed]' : ''),
+            yarnProject.projectVersion,
             [],
             this.workspaceFolder,
             YarnUtils.PKG_TYPE
         );
-        this.label = productionScope.projectName ? productionScope.projectName : path.join(this.workspaceFolder, 'yarn.lock');
+        this.label = yarnProject.projectName || path.join(this.workspaceFolder, 'yarn.lock');
     }
 
     private populateDependencyTree(dependencyTreeNode: DependenciesTreeNode, nodes: any[], quickScan: boolean) {

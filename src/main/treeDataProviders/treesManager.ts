@@ -123,7 +123,7 @@ export class TreesManager implements ExtensionComponent {
     get dependenciesTreeDataProvider(): DependenciesTreeDataProvider {
         return this._dependenciesTreeDataProvider;
     }
-    
+
     /*************************************************************
      * The following logic is part of the CVE applicability scan.*
      * It will be hidden until it is officially released.        *

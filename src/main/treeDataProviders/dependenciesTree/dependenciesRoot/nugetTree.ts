@@ -9,12 +9,7 @@ import { ProjectDetails } from '../../../types/component';
 export class NugetTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'nuget://';
 
-    constructor(
-        workspaceFolder: string,
-        private _projectToScan: ProjectDetails,
-        private _treesManager: TreesManager,
-        parent?: DependenciesTreeNode
-    ) {
+    constructor(workspaceFolder: string, private _projectToScan: ProjectDetails, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
         super(workspaceFolder, parent, '');
     }
 
