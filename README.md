@@ -310,7 +310,7 @@ The extension is licensed under [Apache License 2.0](LICENSE).
 * npm 7 and above
 * JFrog CLI's `jf` executable - required for tests
 
-To build the extension sources, please follow these steps:
+To build the extension from sources, please follow these steps:
 
 1. Clone the code from Github.
 2. Update submodules:
