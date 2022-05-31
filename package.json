@@ -80,7 +80,7 @@
                 "jfrog.projectKey": {
                     "type": "string",
                     "scope": "application",
-                    "markdownDescription": "Optionally use the project key field to allow the security and license compliance information displayed in VS-Code, to reflect the security policies required by your organization. This is done as follows:\n\nCreate a [JFrog Project](https://www.jfrog.com/confluence/display/JFROG/Projects), or obtain the relevant JFrog Project key.\n\nCreate a [Policy](https://www.jfrog.com/confluence/display/JFROG/Creating+Xray+Policies+and+Rules) on JFrog Xray.\n\nCreate a [Watch](https://www.jfrog.com/confluence/display/JFROG/Configuring+Xray+Watches) on JFrog Xray and assign your Policy and Project as resources to it."
+                    "markdownDescription": "Optionally use the Project Key field to allow the security and license compliance information displayed in VS-Code, to reflect the security policies required by your organization. This is done as follows:\n\nCreate a [JFrog Project](https://www.jfrog.com/confluence/display/JFROG/Projects), or obtain the relevant JFrog Project key.\n\nCreate a [Policy](https://www.jfrog.com/confluence/display/JFROG/Creating+Xray+Policies+and+Rules) on JFrog Xray.\n\nCreate a [Watch](https://www.jfrog.com/confluence/display/JFROG/Configuring+Xray+Watches) on JFrog Xray and assign your Policy and Project as resources to it."
                 },
                 "jfrog.watches": {
                     "type": "array",
@@ -88,7 +88,7 @@
                         "type": "string"
                     },
                     "scope": "application",
-                    "markdownDescription": "Optionally add one or more Xray Watches, to reflect the security policies required by your organization."
+                    "markdownDescription": "Add one or more Xray Watches, to reflect the security policies required by your organization.\n\nIf both “Project Key” and “Watches” are configured, VS Code will use the configured Watches, and not the Project Key to determine the policy for for the security scanning."
                 },
                 "jfrog.logLevel": {
                     "type": "string",

@@ -33,7 +33,7 @@ export class Configuration {
     }
 
     /**
-     * @returns JFrog Watches
+     * @returns Xray Watches
      */
     public static getWatches(): string[] {
         return vscode.workspace.getConfiguration('jfrog').get('watches', []);
