@@ -34,7 +34,8 @@ export class GraphScanLogic extends AbstractScanLogic {
             componentsToScan,
             progress,
             checkCanceled,
-            Configuration.getProjectKey()
+            Configuration.getProjectKey(),
+            Configuration.getWatches()
         );
         let scannedComponents: Map<string, INodeInfo> = new Map();
         /*************************************************************

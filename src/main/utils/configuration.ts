@@ -44,6 +44,13 @@ export class Configuration {
     // }
 
     /**
+     * @returns Xray Watches
+     */
+    public static getWatches(): string[] {
+        return vscode.workspace.getConfiguration('jfrog').get('watches', []);
+    }
+
+    /**
      * @returns the log level
      */
     public static getLogLevel(): string {

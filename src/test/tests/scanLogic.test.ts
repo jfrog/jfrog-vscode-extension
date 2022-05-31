@@ -100,7 +100,9 @@ describe('Scan Logic Tests', () => {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 checkCanceled: () => void,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                project: string
+                project: string,
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                watches: string[]
             ): Promise<IGraphResponse> {
                 let graphResponse: string = fs.readFileSync(path.join(scanResponses, type + '.json'), 'utf8');
                 return Object.assign({} as IGraphResponse, JSON.parse(graphResponse));
