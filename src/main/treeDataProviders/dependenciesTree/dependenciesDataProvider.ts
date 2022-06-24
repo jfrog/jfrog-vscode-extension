@@ -142,7 +142,9 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     private async repopulateTree(quickScan: boolean, onChangeFire: () => void) {
         await ScanUtils.scanWithProgress(
             async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
-                progress.report({ message: '1/2:👷 Building dependency tree' });
+                // Skip the 'await' here to avoid blocking dependency tree scanning
+                const updatePromise: Promise<void> = this._treesManager.sourceCodeTreeDataProvider.update();
+                progress.report({ message: '1/3:👷 Building dependency tree' });
                 this.clearTree();
                 let workspaceRoot: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
                 this._scannedProjects = [];
@@ -153,8 +155,8 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     workspaceRoot,
                     quickScan
                 );
-                progress.report({ message: '2/2:📦 Dependencies scanning' });
-                await this._scanLogicManager.scanAndCache(progress, this._scannedProjects, checkCanceled);
+                progress.report({ message: '2/3:📦 Dependencies scanning' });
+                await this._scanLogicManager.scanAndCache(progress, this._scannedProjects, quickScan, checkCanceled);
                 for (let node of workspaceRoot.children) {
                     this.addXrayInfoToTree(node);
                     if (node instanceof RootNode) {
@@ -162,13 +164,9 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     }
                     node.issues = node.processTreeIssues();
                 }
-                /*************************************************************
-                 * The following logic is part of the CVE applicability scan.*
-                 * It will be hidden until it is officially released.        *
-                 * ***********************************************************
-                 */
-                // progress.report({ message: '3/3📝 Code vulnerability scanning' });
-                // await this._treesManager.sourceCodeTreeDataProvider.refresh();
+                progress.report({ message: '3/3📝 Code vulnerability scanning' });
+                await updatePromise;
+                await this._treesManager.sourceCodeTreeDataProvider.refresh();
                 onChangeFire();
             },
             'Scanning workspace',

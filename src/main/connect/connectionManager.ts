@@ -11,12 +11,6 @@ import {
     IUsageFeature,
     JfrogClient,
     XrayScanProgress,
-    /*************************************************************
-     * The following logic is part of the CVE applicability scan.*
-     * It will be hidden until it is officially released.        *
-     * ***********************************************************
-     */
-    // IChecksumResult,
     ComponentDetails
 } from 'jfrog-client-js';
 import * as keytar from 'keytar';
@@ -664,24 +658,6 @@ export class ConnectionManager implements ExtensionComponent {
             .downloadArtifact(artifactPath);
     }
 
-    /*************************************************************
-     * The following logic is part of the CVE applicability scan.*
-     * It will be hidden until it is officially released.        *
-     * ***********************************************************
-     */
-    // public async downloadArtifactToFile(from: string, to: string): Promise<void> {
-    //     return this.createJfrogClient()
-    //         .artifactory()
-    //         .download()
-    //         .downloadArtifactToFile(from, to);
-    // }
-
-    // public async getArtifactChecksum(from: string): Promise<IChecksumResult> {
-    //     return this.createJfrogClient()
-    //         .artifactory()
-    //         .download()
-    //         .getArtifactChecksum(from);
-    // }
     public async downloadBuildDetails(buildName: string, buildNumber: string, projectKey: string): Promise<IDetailsResponse> {
         return this.createJfrogClient()
             .xray()
@@ -717,7 +693,7 @@ class XrayScanProgressImpl implements XrayScanProgress {
 
     /** @override */
     public setPercentage(percentage: number): void {
-        this._indicator.report({ message: '2/2:📦 Dependencies scanning', increment: percentage - this.lastPercentage });
+        this._indicator.report({ message: '2/3:📦 Dependencies scanning', increment: percentage - this.lastPercentage });
         this.lastPercentage = percentage;
     }
 }

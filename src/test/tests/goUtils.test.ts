@@ -19,13 +19,7 @@ import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
 import { ProjectDetails } from '../../main/types/component';
-/*************************************************************
- * The following logic is part of the CVE applicability scan.*
- * It will be hidden until it is officially released.        *
- * ***********************************************************
- */
-// import { IScannedCveObject } from '../../main/types/scannedCveObject';
-// import { Severity } from '../../main/types/severity';
+import { ProjectComponents } from '../../main/types/projectComponents';
 
 /**
  * Test functionality of @class GoUtils.
@@ -249,25 +243,7 @@ describe('Go Utils Tests', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.GO);
         await GoUtils.createDependenciesTrees(goMods, componentsToScan, treesManager, parent, false);
-        /*************************************************************
-         * The following logic is part of the CVE applicability scan.*
-         * It will be hidden until it is officially released.        *
-         * ***********************************************************
-         */
-        // for (const goMod in goMods) {
-        await dummyScanCacheManager.storeArtifacts(
-            xrayScanResults
-            /*************************************************************
-             * The following logic is part of the CVE applicability scan.*
-             * It will be hidden until it is officially released.        *
-             * ***********************************************************
-             */
-            //     , {
-            //     cves: new Map<string, Severity>(),
-            //     projectPath: goMod
-            // } as IScannedCveObject
-        );
-        // }
+        await dummyScanCacheManager.storeArtifacts(xrayScanResults, { componentIdToCve: new Map() } as ProjectComponents);
         parent.children.forEach(child => {
             treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);
         });

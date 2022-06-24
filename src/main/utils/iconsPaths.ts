@@ -1,4 +1,5 @@
 import * as path from 'path';
+import { PackageType } from '../types/projectType';
 import { ScanUtils } from './scanUtils';
 
 export class IconsPaths {
@@ -28,15 +29,23 @@ export class IconsPaths {
     static readonly VIOLATED_LICENSE: string = IconsPaths.getIconPath('violatedLicense');
 
     //Project type
-    /*************************************************************
-     * The following logic is part of the CVE applicability scan.*
-     * It will be hidden until it is officially released.        *
-     * ***********************************************************
-     */
-    // static readonly PYTHON: string = IconsPaths.getIconPath(path.join('package', 'pypi'));
-    // static readonly NPM: string = IconsPaths.getIconPath(path.join('package', 'npm'));
+    static readonly PYTHON: string = IconsPaths.getIconPath(path.join('package', 'pypi'));
+    static readonly NPM: string = IconsPaths.getIconPath(path.join('package', 'npm'));
 
     public static getIconPath(iconName: string) {
         return path.join(ScanUtils.RESOURCES_DIR, iconName + '.png');
+    }
+}
+
+export class PackageDescriptorUtils {
+    public static getIcon(packageType: PackageType): string {
+        switch (packageType) {
+            case PackageType.PYTHON:
+                return IconsPaths.PYTHON;
+            case PackageType.NPM:
+                return IconsPaths.NPM;
+            default:
+                return IconsPaths.NPM;
+        }
     }
 }

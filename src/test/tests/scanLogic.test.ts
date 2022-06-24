@@ -13,6 +13,7 @@ import { INodeInfo } from '../../main/types/nodeInfo';
 import { Severity } from '../../main/types/severity';
 import { createScanCacheManager } from './utils/utils.test';
 import Set from 'typescript-collections/dist/lib/Set';
+import { ProjectComponents } from '../../main/types/projectComponents';
 
 describe('Scan Logic Tests', () => {
     const scanResponses: string = path.join(__dirname, '..', 'resources', 'scanResponses');
@@ -46,6 +47,7 @@ describe('Scan Logic Tests', () => {
         await scanLogic.scanAndCache(
             { report: () => false } as vscode.Progress<{ message?: string; increment?: number }>,
             componentsToScan,
+            { componentIdToCve: new Map() } as ProjectComponents,
             () => false
         );
 

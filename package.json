@@ -50,6 +50,10 @@
                 {
                     "id": "jfrog.xray.dependency.details",
                     "name": "Dependency Details"
+                },
+                {
+                    "id": "jfrog.source.code.scan",
+                    "name": "Code Vulnerabilities"
                 }
             ]
         },
@@ -329,6 +333,7 @@
         "eslint-config-prettier": "^8.5.0",
         "glob": "^8.0.3",
         "mocha": "^10.0.0",
+        "nock": "^13.2.7",
         "ovsx": "^0.5.0",
         "prettier": "^1.19.1",
         "tmp": "^0.2.1",
@@ -361,5 +366,11 @@
         "typescript",
         "artifactory",
         "vulnerabilities"
-    ]
+    ],
+    "__metadata": {
+        "id": "2387d33f-8794-47e8-830e-a0573ba80988",
+        "publisherDisplayName": "JFrog",
+        "publisherId": "38fb619f-642a-42fd-b593-7de38dedfd23",
+        "isPreReleaseVersion": false
+    }
 }
