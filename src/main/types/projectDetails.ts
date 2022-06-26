@@ -1,12 +1,21 @@
 import { ComponentDetails } from 'jfrog-client-js';
+import * as path from 'path';
 import { PackageType } from './projectType';
 
 export class ProjectDetails {
     // dependencyGAV -> ComponentDetails
     private _dependencies: Map<string, ComponentDetails> = new Map<string, ComponentDetails>();
+    private _name: string;
 
-    constructor(private _path: string, private _type: PackageType) {}
-
+    constructor(private _path: string, private _type: PackageType) {
+        this._name = _path.substring(_path.lastIndexOf(path.sep) + 1);
+    }
+    public get name(): string {
+        return this._name;
+    }
+    public set name(value: string) {
+        this._name = value;
+    }
     public get type(): PackageType {
         return this._type;
     }
@@ -30,26 +39,15 @@ export class ProjectDetails {
     public set componentsDetails(value: Map<string, ComponentDetails>) {
         this._dependencies = value;
     }
-
-    public add(component: string) {
-        this._dependencies.set(component, new ComponentDetails(component));
-    }
-
-    public addAll(components: string[]) {
-        for (const component in components) {
-            this.add(component);
-        }
+/**
+ * 
+ * @param dependencyId - component id of the dependency
+ */
+    public addDependency(dependencyId: string) {
+        this._dependencies.set(dependencyId, new ComponentDetails(dependencyId));
     }
 
     public toArray(): ComponentDetails[] {
         return [...this._dependencies.values()];
-    }
-
-    public slice(startIndex: number, endIndex: number): ProjectDetails {
-        const partialComponents: ComponentDetails[] = this.toArray().slice(startIndex, endIndex);
-        let result: ProjectDetails = new ProjectDetails(this._path, this.type);
-        result.addAll(partialComponents.map(el => el.component_id));
-        result.path = this.path;
-        return result;
     }
 }

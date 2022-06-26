@@ -44,11 +44,11 @@ export class ApplicabilityCodeActionProvider implements vscode.CodeActionProvide
         }
         return undefined;
     }
-/**
- * Add an eye icon to the CVE node. Clicking on it opens the source code for the CVE.
- * @param node 
- * @returns 
- */
+    /**
+     * Add an eye icon to the CVE node. Clicking on it opens the source code for the CVE.
+     * @param node
+     * @returns
+     */
     private createCommand(node: SourceCodeCveTreeNode): vscode.Command {
         return {
             command: 'jfrog.source.code.scan.showInSourceCodeTree',

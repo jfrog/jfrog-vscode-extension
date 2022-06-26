@@ -43,6 +43,7 @@ export class Resource {
         if (!updateAvailable) {
             return;
         }
+        this._logManager.logMessage('Downloading new update from ' + this.downloadTarget, 'DEBUG');
         if (!fs.existsSync(this.downloadDir)) {
             fs.mkdirSync(this.downloadDir, { recursive: true });
         } else if (Date.now() - fs.statSync(this.downloadDir).birthtimeMs <= Resource.MILLISECONDS_IN_HOUR) {

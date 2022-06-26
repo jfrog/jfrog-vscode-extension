@@ -8,8 +8,7 @@ import { LogManager } from '../log/logManager';
 import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { ProjectDetails } from '../types/component';
-import { PackageType } from '../types/projectType';
+import { ProjectDetails } from '../types/projectDetails';
 import { ScanUtils } from './scanUtils';
 
 export class GoUtils {
@@ -90,8 +89,6 @@ export class GoUtils {
         for (let goMod of goMods) {
             treesManager.logManager.logMessage('Analyzing go.mod files', 'INFO');
             let projectDir: string = path.dirname(goMod.fsPath);
-            const projectToScan: ProjectDetails = new ProjectDetails(projectDir, PackageType.GO);
-            projectsToScan.push(projectToScan);
             let tmpWorkspace: string = '';
             try {
                 tmpWorkspace = this.createGoWorkspace(projectDir, treesManager.logManager);
@@ -100,11 +97,12 @@ export class GoUtils {
                 treesManager.logManager.logMessage('Failed creating go temporary workspace: ' + error, 'ERR');
             }
 
-            let dependenciesTreeNode: GoTreeNode = new GoTreeNode(tmpWorkspace, projectToScan, treesManager, parent);
-            dependenciesTreeNode.refreshDependencies(quickScan);
+            let root: GoTreeNode = new GoTreeNode(tmpWorkspace, treesManager, parent);
+            root.refreshDependencies(quickScan);
+            projectsToScan.push(root.projectDetails);
             // Set actual paths.
-            dependenciesTreeNode.generalInfo.path = projectDir;
-            dependenciesTreeNode.workspaceFolder = projectDir;
+            root.generalInfo.path = projectDir;
+            root.workspaceFolder = projectDir;
 
             try {
                 await ScanUtils.removeFolder(tmpWorkspace);

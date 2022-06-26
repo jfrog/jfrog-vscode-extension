@@ -11,9 +11,9 @@ import { INodeInfo } from '../types/nodeInfo';
 import { Severity } from '../types/severity';
 import { Translators } from '../utils/translators';
 import { ScanCacheObject } from './scanCacheObject';
-import { IScannedCveObject } from '../types/scannedCveObject';
 import crypto from 'crypto'; // Important - Don't import '*'. It'll import deprecated encryption methods
 import { CveDetails, ProjectComponents } from '../types/projectComponents';
+import { IProjectDetailsCacheObject } from '../types/IProjectDetailsCacheObject';
 
 /**
  * Provide the cache mechanism. The scan cache consists of 3 components -
@@ -77,10 +77,13 @@ export class ScanCacheManager implements ExtensionComponent {
     // /**
     //  * Stores a list of project's CVEs in the cache.
     //  */
-    public storeScannedCves(scannedCveObject: IScannedCveObject) {
-        const prevObject: IScannedCveObject | undefined = this.getScannedCves(scannedCveObject.projectPath);
+    public storeProjectDetailsCacheObject(scannedCveObject: IProjectDetailsCacheObject) {
+        const prevObject: IProjectDetailsCacheObject | undefined = this.getProjectDetailsCacheObject(scannedCveObject.projectPath);
         if (prevObject) {
             for (const [cve, sevirity] of prevObject.cves) {
+                if (scannedCveObject.cves == undefined) {
+                    scannedCveObject.cves = new Map<string, Severity>();
+                }
                 scannedCveObject.cves.set(cve, sevirity);
             }
         }
@@ -99,28 +102,26 @@ export class ScanCacheManager implements ExtensionComponent {
         );
     }
     // /**
-    //  * Generate a uniq local file id for the scanned CVEs for a given project path.
-    //  * @param projectPath File path of the scanned CVEs
-    //  * @returns hashed project path
+    //  * Generate a uniq local file id for the scanned CVEs.
     //  */
-    private createScannedCvesId(projectPath: string): string {
+    private createKey(key: string): string {
         return crypto
             .createHash('sha256')
-            .update(projectPath)
+            .update(key)
             .digest('hex');
     }
 
     // /**
     //  * Delete the old CVE list cache associated with 'projectPath'.
     //  */
-    public deleteScannedCves(projectPath: string) {
+    public deleteProjectDetailsCacheObject(projectPath: string) {
         let scannedCvesPath: string = this.getScannedCvesPath(projectPath);
         if (fs.existsSync(scannedCvesPath)) {
             fs.rmSync(scannedCvesPath);
         }
     }
 
-    public getScannedCves(projectPath: string): IScannedCveObject | undefined {
+    public getProjectDetailsCacheObject(projectPath: string): IProjectDetailsCacheObject | undefined {
         let scannedCvesPath: string = this.getScannedCvesPath(projectPath);
         if (!fs.existsSync(scannedCvesPath)) {
             return undefined;
@@ -253,7 +254,7 @@ export class ScanCacheManager implements ExtensionComponent {
      * @param projectPath - The project path
      */
     private getScannedCvesPath(projectPath: string): string {
-        return path.join(this._scannedCvesCache, this.createScannedCvesId(projectPath));
+        return path.join(this._scannedCvesCache, this.createKey(projectPath));
     }
 
     /**

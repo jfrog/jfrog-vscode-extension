@@ -7,12 +7,12 @@ import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { AbstractScanLogic } from './abstractScanLogic';
 import { ComponentSummaryScanLogic } from './componentSummaryScanLogic';
 import { GraphScanLogic } from './graphScanLogic';
-import { ProjectDetails } from '../types/component';
+import { ProjectDetails } from '../types/projectDetails';
 import { ComponentDetails } from 'jfrog-client-js';
 import Set from 'typescript-collections/dist/lib/Set';
 import { Severity } from '../types/severity';
-import { IScannedCveObject } from '../types/scannedCveObject';
 import { CveDetails, ProjectComponents } from '../types/projectComponents';
+import { IProjectDetailsCacheObject } from '../types/IProjectDetailsCacheObject';
 
 /**
  * Provides the scan logic type - "summary/component" or "scan/graph" according to the Xray version.
@@ -50,24 +50,25 @@ export class ScanLogicManager implements ExtensionComponent {
             : new ComponentSummaryScanLogic(this._connectionManager, this._scanCacheManager);
         await scanLogic.scanAndCache(progress, totalDependenciesToScan, projectComponents, checkCanceled);
         for (const projectDetails of projectsDetails) {
-            const scannedCveObject: IScannedCveObject = {
+            const projectDetailsCacheObject: IProjectDetailsCacheObject = {
                 cves: new Map<string, Severity>(),
-                projectPath: projectDetails.path
-            } as IScannedCveObject;
+                projectPath: projectDetails.path,
+                projectName: projectDetails.name
+            } as IProjectDetailsCacheObject;
             if (!quickScan) {
                 // Deletes old cache file related to Project's CVEs.
-                this._scanCacheManager.deleteScannedCves(scannedCveObject.projectPath);
+                this._scanCacheManager.deleteProjectDetailsCacheObject(projectDetailsCacheObject.projectPath);
             }
             projectDetails.toArray().forEach(project => {
                 const cveDetails: CveDetails | undefined = projectComponents.componentIdToCve.get(project.component_id);
                 if (cveDetails !== undefined) {
                     // Set all the component's CVEs
                     for (const [cve, sevirity] of cveDetails.cveToSeverity) {
-                        scannedCveObject.cves.set(cve, sevirity);
+                        projectDetailsCacheObject.cves.set(cve, sevirity);
                     }
                 }
             });
-            this._scanCacheManager.storeScannedCves(scannedCveObject);
+            this._scanCacheManager.storeProjectDetailsCacheObject(projectDetailsCacheObject);
         }
     }
 }

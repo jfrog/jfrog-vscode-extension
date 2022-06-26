@@ -7,7 +7,7 @@ import { LogManager } from '../../main/log/logManager';
 describe('Cve Applicability Runner Tests', () => {
     let logManager: LogManager = new LogManager().activate();
     const runner: CveApplicabilityRunner = new CveApplicabilityRunner(new ConnectionManager(logManager), logManager);
-    let projectToScan: string = path.join(__dirname, '..', 'resources', 'npm', 'cveApplicability');
+    let projectToScan: string = path.join(__dirname, '..', 'resources', 'cveApplicability', 'project');
 
     before(async () => {
         await runner.update();

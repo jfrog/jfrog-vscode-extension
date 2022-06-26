@@ -1,23 +1,23 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { PackageType } from '../../types/projectType';
 import { SourceCodeCveTreeNode } from './sourceCodeCveNode';
 import { SourceCodeFileTreeNode } from './sourceCodeFileTreeNode';
-import * as path from 'path';
 import { CveApplicabilityRoot } from './CveApplicabilityRoot';
 
 // Represent a root project node containing vulnerable files, in the CVE Applicability view.
 export class SourceCodeRootTreeNode extends vscode.TreeItem {
     private _notApplicableCves: Set<string> = new Set<string>();
+    private _children: SourceCodeFileTreeNode[] = [];
     // Map of cve -> cve tree node.
     private _applicableCves: Map<string, SourceCodeCveTreeNode> = new Map<string, SourceCodeCveTreeNode>();
 
-    constructor(
-        private _workspaceFolder: string,
-        private _projectType: PackageType,
-        private _children: SourceCodeFileTreeNode[],
-        private _parent?: CveApplicabilityRoot
-    ) {
-        super(_workspaceFolder.substring(_workspaceFolder.lastIndexOf(path.sep) + 1), vscode.TreeItemCollapsibleState.Expanded);
+    constructor(private _workspaceFolder: string, private _projectType: PackageType, projectName?: string, private _parent?: CveApplicabilityRoot) {
+        super(
+            // If not supplied, set root node to project dir.
+            !projectName ? _workspaceFolder.substring(_workspaceFolder.lastIndexOf(path.sep) + 1) : projectName,
+            vscode.TreeItemCollapsibleState.Expanded
+        );
         if (_parent) {
             _parent.children.push(this);
         }

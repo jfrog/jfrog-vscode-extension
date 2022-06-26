@@ -10,10 +10,9 @@ import * as path from 'path';
 import { ScanUtils } from '../../utils/scanUtils';
 import { ApplicabilityScanResult, ApplicabilityScanResults } from '../../types/applicabilityScanResults';
 import { PackageType } from '../../types/projectType';
-import { IScannedCveObject } from '../../types/scannedCveObject';
-import { ProjectDetails } from '../../types/component';
 import { PackageDescriptorUtils } from '../../utils/iconsPaths';
 import { CveApplicabilityRunner } from '../../binary/cveApplicabilityRunner';
+import { IProjectDetailsCacheObject } from '../../types/IProjectDetailsCacheObject';
 
 export class SourceCodeTreeDataProvider
     implements vscode.TreeDataProvider<SourceCodeRootTreeNode | SourceCodeFileTreeNode | SourceCodeCveTreeNode | CveApplicabilityRoot> {
@@ -36,32 +35,31 @@ export class SourceCodeTreeDataProvider
 
     public async scanProjects() {
         try {
-            let projectDetails: ProjectDetails[] | undefined;
             let projectDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
                 this._workspaceFolders,
                 this._treesManager.logManager
             );
-            if (projectDescriptors.size > 0) {
-                projectDetails = [];
-            }
-            for (const [projectType, uris] of projectDescriptors) {
-                for (const uri of uris) {
-                    projectDetails?.push(new ProjectDetails(path.dirname(uri.fsPath), projectType));
-                }
-            }
-            // Scan the source code project with Xray result CVE.
-            if (projectDetails !== undefined && projectDetails.length > 0) {
-                for (const projectDetail of projectDetails) {
-                    if (![PackageType.NPM, PackageType.PYTHON].includes(projectDetail.type)) {
-                        continue;
-                    }
-                    let scannedCves: IScannedCveObject | undefined = this._treesManager.scanCacheManager.getScannedCves(projectDetail.path);
-                    this.scanProject(projectDetail.path, projectDetail.type, scannedCves);
-                }
-            } else {
-                // Scan the source code project for all CVE.
+            // No projects descriptors are found.
+            // Scan each workspaces for all known CVEs using the CVE Applicability Scanner.
+            if (projectDescriptors.size === 0) {
                 for (const workspace of this._workspaceFolders) {
                     this.scanProject(workspace.uri.path, PackageType.UNKNOWN);
+                }
+            }
+            // Found project descriptors.
+            // Utilize the CVEs from the dependency tree scan for the applicability scan.
+            for (const [projectType, uris] of projectDescriptors) {
+                for (const uri of uris) {
+                    // Only python & npm are supported for CVE Applicability scan.
+                    if (![PackageType.NPM, PackageType.PYTHON].includes(projectType)) {
+                        continue;
+                    }
+                    // Load CVEs from cache (if any) and pass it to CVE applicability scanner.
+                    const projectPath: string = path.dirname(uri.fsPath);
+                    let scannedCves: IProjectDetailsCacheObject | undefined = this._treesManager.scanCacheManager.getProjectDetailsCacheObject(
+                        projectPath
+                    );
+                    this.scanProject(projectPath, projectType, scannedCves);
                 }
             }
         } catch (error) {
@@ -69,16 +67,16 @@ export class SourceCodeTreeDataProvider
         }
     }
 
-    private scanProject(pathToRoot: string, packageType: PackageType, scannedCves?: IScannedCveObject) {
+    private scanProject(pathToRoot: string, packageType: PackageType, scannedCves?: IProjectDetailsCacheObject) {
         try {
-            const root: SourceCodeRootTreeNode = new SourceCodeRootTreeNode(pathToRoot, packageType, []);
+            const root: SourceCodeRootTreeNode = new SourceCodeRootTreeNode(pathToRoot, packageType, scannedCves?.projectName);
             this.workspaceToTree.set(pathToRoot, root);
             let whiteListCves: string = '';
             let cmdOutput: string = '';
 
-            // CVEs from Xray scans should be sent to the Applicability scanner..
+            // CVEs from Xray scans should be sent to the Applicability scanner.
             // Alternatively, scan All Known CVEs.
-            if (scannedCves !== undefined && scannedCves.cves.size > 0) {
+            if (scannedCves !== undefined && scannedCves.cves?.size > 0) {
                 whiteListCves = Array.from(scannedCves.cves.keys()).join(',');
             }
 
@@ -89,7 +87,7 @@ export class SourceCodeTreeDataProvider
             const parsedJson: ApplicabilityScanResults = <ApplicabilityScanResults>JSON.parse(cmdOutput);
             for (const [cve, cveData] of Object.entries(parsedJson.results)) {
                 for (const data of cveData) {
-                    this.addCveNode(cve, data, root, scannedCves?.cves.get(cve));
+                    this.addCveNode(cve, data, root, scannedCves?.cves?.get(cve));
                 }
             }
             for (const cve of parsedJson.scanners_ran) {

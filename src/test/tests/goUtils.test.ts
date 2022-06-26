@@ -18,7 +18,7 @@ import { GoUtils } from '../../main/utils/goUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
-import { ProjectDetails } from '../../main/types/component';
+import { ProjectDetails } from '../../main/types/projectDetails';
 import { ProjectComponents } from '../../main/types/projectComponents';
 
 /**

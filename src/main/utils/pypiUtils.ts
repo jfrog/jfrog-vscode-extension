@@ -5,8 +5,7 @@ import { LogManager } from '../log/logManager';
 import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { ProjectDetails } from '../types/component';
-import { PackageType } from '../types/projectType';
+import { ProjectDetails } from '../types/projectDetails';
 import { Configuration } from './configuration';
 import { ScanUtils } from './scanUtils';
 
@@ -132,10 +131,9 @@ export class PypiUtils {
             }
 
             treesManager.logManager.logMessage('Analyzing setup.py and requirements files of ' + workspaceFolder.name, 'INFO');
-            const projectToScan: ProjectDetails = new ProjectDetails(path.dirname(workspaceFolder.uri.fsPath), PackageType.PYTHON);
-            projectsToScan.push(projectToScan);
-            let dependenciesTreeNode: PypiTreeNode = new PypiTreeNode(workspaceFolder.uri.fsPath, projectToScan, treesManager, pythonPath, parent);
-            dependenciesTreeNode.refreshDependencies(quickScan);
+            let root: PypiTreeNode = new PypiTreeNode(path.dirname(workspaceFolder.uri.fsPath), treesManager, pythonPath, parent);
+            root.refreshDependencies(quickScan);
+            projectsToScan.push(root.projectDetails);
         }
     }
 

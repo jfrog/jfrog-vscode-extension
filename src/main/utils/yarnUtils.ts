@@ -5,9 +5,8 @@ import { LogManager } from '../log/logManager';
 import { YarnTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/yarnTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { ProjectDetails } from '../types/component';
+import { ProjectDetails } from '../types/projectDetails';
 import { GeneralInfo } from '../types/generalInfo';
-import { PackageType } from '../types/projectType';
 import { NpmGlobalScopes, ScopedNpmProject } from './npmUtils';
 import { ScanUtils } from './scanUtils';
 
@@ -73,10 +72,9 @@ export class YarnUtils {
             if (!YarnUtils.isVersionSupported(parent, treesManager.logManager, path.dirname(yarnLock.fsPath), quickScan)) {
                 return;
             }
-            const projectToScan: ProjectDetails = new ProjectDetails(path.dirname(yarnLock.fsPath), PackageType.YARN);
-            projectsToScan.push(projectToScan);
-            let dependenciesTreeNode: YarnTreeNode = new YarnTreeNode(path.dirname(yarnLock.fsPath), projectToScan, treesManager, parent);
-            dependenciesTreeNode.refreshDependencies(quickScan);
+            let root: YarnTreeNode = new YarnTreeNode(path.dirname(yarnLock.fsPath), treesManager, parent);
+            projectsToScan.push(root.projectDetails);
+            root.refreshDependencies(quickScan);
         }
     }
 

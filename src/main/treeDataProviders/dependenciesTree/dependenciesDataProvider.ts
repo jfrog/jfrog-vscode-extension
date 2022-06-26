@@ -1,7 +1,7 @@
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ScanLogicManager } from '../../scanLogic/scanLogicManager';
-import { ProjectDetails } from '../../types/component';
+import { ProjectDetails } from '../../types/projectDetails';
 import { GeneralInfo } from '../../types/generalInfo';
 import { ILicenseKey } from '../../types/licenseKey';
 import { INodeInfo } from '../../types/nodeInfo';

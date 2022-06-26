@@ -1,6 +1,5 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { ProjectDetails } from '../../../types/component';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { NpmUtils, ScopedNpmProject } from '../../../utils/npmUtils';
 import { ScanUtils } from '../../../utils/scanUtils';
@@ -8,12 +7,13 @@ import { YarnUtils } from '../../../utils/yarnUtils';
 import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { RootNode } from './rootTree';
+import { PackageType } from '../../../types/projectType';
 
 export class YarnTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
 
-    constructor(workspaceFolder: string, private _projectToScan: ProjectDetails, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, parent);
+    constructor(workspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
+        super(workspaceFolder, PackageType.YARN, parent);
     }
 
     public refreshDependencies(quickScan: boolean) {
@@ -43,7 +43,8 @@ export class YarnTreeNode extends RootNode {
             this.workspaceFolder,
             YarnUtils.PKG_TYPE
         );
-        this.label = yarnProject.projectName || path.join(this.workspaceFolder, 'yarn.lock');
+        this.projectDetails.name = yarnProject.projectName || path.join(this.workspaceFolder, 'yarn.lock');
+        this.label = this.projectDetails.name;
     }
 
     private populateDependencyTree(dependencyTreeNode: DependenciesTreeNode, nodes: any[], quickScan: boolean) {
@@ -67,7 +68,7 @@ export class YarnTreeNode extends RootNode {
                 : vscode.TreeItemCollapsibleState.None;
             let componentId: string = dependencyName + ':' + dependencyVersion;
             if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-                this._projectToScan.add(YarnTreeNode.COMPONENT_PREFIX + componentId);
+                this.projectDetails.addDependency(YarnTreeNode.COMPONENT_PREFIX + componentId);
             }
 
             let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependencyTreeNode);

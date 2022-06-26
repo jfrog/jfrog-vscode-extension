@@ -14,7 +14,7 @@ import { PackageType } from '../../main/types/projectType';
 import { NugetUtils } from '../../main/utils/nugetUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, isWindows } from './utils/utils.test';
-import { ProjectDetails } from '../../main/types/component';
+import { ProjectDetails } from '../../main/types/projectDetails';
 
 /**
  * Test functionality of @class NugetUtils.

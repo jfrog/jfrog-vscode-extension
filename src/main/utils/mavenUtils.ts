@@ -7,8 +7,7 @@ import { LogManager } from '../log/logManager';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { ProjectDetails } from '../types/component';
-import { PackageType } from '../types/projectType';
+import { ProjectDetails } from '../types/projectDetails';
 import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
 
@@ -174,14 +173,13 @@ export class MavenUtils {
             try {
                 treesManager.logManager.logMessage('Analyzing pom.xml at ' + ProjectTree.pomPath, 'INFO');
                 ProjectTree.runMavenDependencyTree();
-                const projectToScan: ProjectDetails = new ProjectDetails(ProjectTree.pomPath, PackageType.MAVEN);
-                projectsToScan.push(projectToScan);
-                let dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, projectToScan, treesManager, root);
-                await dependenciesTreeNode.refreshDependencies(quickScan, ProjectTree);
-                if (dependenciesTreeNode.children.length === 0) {
-                    root.children.splice(root.children.indexOf(dependenciesTreeNode), 1);
+                let mavenRoot: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, treesManager, root);
+                projectsToScan.push(mavenRoot.projectDetails);
+                await mavenRoot.refreshDependencies(quickScan, ProjectTree);
+                if (mavenRoot.children.length === 0) {
+                    root.children.splice(root.children.indexOf(mavenRoot), 1);
                 } else {
-                    this.updateContextValue(dependenciesTreeNode);
+                    this.updateContextValue(mavenRoot);
                 }
             } catch (error) {
                 treesManager.logManager.logMessage(
