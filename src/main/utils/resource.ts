@@ -59,13 +59,9 @@ export class Resource {
                 .download()
                 .downloadArtifactToFile(this.downloadSource, this.downloadTarget);
             if (withExecPrem) {
-                fs.chmod(this.downloadTarget, '755', err => {
-                    if (err) throw err;
-                });
+                fs.chmodSync(this.downloadTarget, '755', );
             }
-            fs.copyFile(this.downloadTarget, this.path, err => {
-                if (err) throw err;
-            });
+            fs.copyFileSync(this.downloadTarget, this.path);
             this._logManager.logMessage('Update resource was successfully upgraded for ' + this.downloadSource, 'DEBUG');
         } finally {
             fs.rmSync(this.downloadDir, { recursive: true, force: true });
