@@ -3,7 +3,7 @@ import * as path from 'path';
 import { PackageType } from '../../types/projectType';
 import { SourceCodeCveTreeNode } from './sourceCodeCveNode';
 import { SourceCodeFileTreeNode } from './sourceCodeFileTreeNode';
-import { CveApplicabilityRoot } from './CveApplicabilityRoot';
+import { CveApplicabilityRoot } from './cveApplicabilityRoot';
 
 // Represent a root project node containing vulnerable files, in the CVE Applicability view.
 export class SourceCodeRootTreeNode extends vscode.TreeItem {

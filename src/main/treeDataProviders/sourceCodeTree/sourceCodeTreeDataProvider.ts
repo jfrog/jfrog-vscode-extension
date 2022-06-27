@@ -5,7 +5,7 @@ import { SourceCodeRootTreeNode } from './sourceCodeRootTreeNode';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { SourceCodeCveTreeNode, SourceCodeCveTreeNodeDetails } from './sourceCodeCveNode';
 import { TreeDataHolder } from '../utils/treeDataHolder';
-import { CveApplicabilityRoot } from './CveApplicabilityRoot';
+import { CveApplicabilityRoot } from './cveApplicabilityRoot';
 import * as path from 'path';
 import { ScanUtils } from '../../utils/scanUtils';
 import { ApplicabilityScanResult, ApplicabilityScanResults } from '../../types/applicabilityScanResults';

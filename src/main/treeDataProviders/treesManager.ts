@@ -11,7 +11,7 @@ import { DependencyDetailsProvider } from './dependencyDetailsProvider';
 import { TreeDataProviderManager } from './dependenciesTree/treeDataProviderManager';
 import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
 import { SourceCodeCveTreeNode } from './sourceCodeTree/sourceCodeCveNode';
-import { CveApplicabilityRoot } from './sourceCodeTree/CveApplicabilityRoot';
+import { CveApplicabilityRoot } from './sourceCodeTree/cveApplicabilityRoot';
 import { SourceCodeFileTreeNode } from './sourceCodeTree/sourceCodeFileTreeNode';
 import { SourceCodeRootTreeNode } from './sourceCodeTree/sourceCodeRootTreeNode';
 
