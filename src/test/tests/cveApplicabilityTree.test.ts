@@ -125,7 +125,7 @@ describe('Cve Applicability Tree Tests', () => {
         await sourceCodeTreeDataProvider.update();
         await sourceCodeTreeDataProvider.scanProjects();
 
-        const projectPath: string = workspaceFolders[0].uri.path;
+        const projectPath: string = path.join(__dirname, '..', 'resources', 'cveApplicability', 'project');
         const filePath: string = path.join(projectPath, 'bad.js');
         assert.isTrue(sourceCodeTreeDataProvider.isFileScanned(filePath));
         assert.isFalse(sourceCodeTreeDataProvider.isFileScanned('not-found-path'));
@@ -167,8 +167,9 @@ describe('Cve Applicability Tree Tests', () => {
     });
 
     it('Source Code Tree Data Provider Read Project Name From Cache', async () => {
+        const projectPath: string = path.join(__dirname, '..', 'resources', 'cveApplicability', 'project');
         let projectDetails: IProjectDetailsCacheObject = {
-            projectPath: tmpDir.path,
+            projectPath: projectPath,
             projectName: 'jfrog-test-project'
         } as IProjectDetailsCacheObject;
 
@@ -176,7 +177,7 @@ describe('Cve Applicability Tree Tests', () => {
         dummyScanCacheManager.storeProjectDetailsCacheObject(projectDetails);
         await sourceCodeTreeDataProvider.update();
         await sourceCodeTreeDataProvider.scanProjects();
-        const tree: SourceCodeFileTreeNode | undefined = sourceCodeTreeDataProvider.getFileTreeNode(path.join(tmpDir.path, 'bad.js'));
+        const tree: SourceCodeFileTreeNode | undefined = sourceCodeTreeDataProvider.getFileTreeNode(path.join(projectPath, 'bad.js'));
         assert.strictEqual(tree?.parent?.label, 'jfrog-test-project');
     });
 });
