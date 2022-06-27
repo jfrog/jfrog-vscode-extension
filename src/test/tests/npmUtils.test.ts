@@ -189,7 +189,7 @@ describe('Npm Utils Tests', async () => {
         assert.isTrue(componentsToScan.length === 3);
         let found: boolean = false;
         for (let index: number = 0; index < componentsToScan.length; index++) {
-            componentsToScan[index].componentsDetails.forEach(el => {
+            componentsToScan[index].dependencies.forEach(el => {
                 if (el.component_id === 'npm://progress:2.0.3') {
                     found = true;
                 }

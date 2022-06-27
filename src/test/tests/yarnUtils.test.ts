@@ -188,7 +188,7 @@ describe('Yarn Utils Tests', async () => {
         assert.isTrue(componentsToScan.length === 3);
         let found: boolean = false;
         for (let index: number = 0; index < componentsToScan.length; index++) {
-            componentsToScan[index].componentsDetails.forEach(componentDetails => {
+            componentsToScan[index].dependencies.forEach(componentDetails => {
                 if (componentDetails.component_id === 'npm://progress:2.0.3') {
                     found = true;
                 }

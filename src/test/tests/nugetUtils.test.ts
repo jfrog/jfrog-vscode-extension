@@ -68,12 +68,16 @@ describe('Nuget Utils Tests', async () => {
      */
     it('Create NuGet Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: ProjectDetails[] = [];
-        let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(componentsToScan, parent);
+        let projectDetails: ProjectDetails[] = [];
+        let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(projectDetails, parent);
+        projectDetails.sort((a, b) => a.name.localeCompare(b.name));
 
-        // Check that components to scan contains MyLogger:1.0.0
-        assert.equal(componentsToScan.length, 1);
-        assert.deepEqual(componentsToScan[0].toArray()[0].component_id, 'nuget://MyLogger:1.0.0');
+        // Check that project details data.
+        assert.equal(projectDetails.length, 2);
+        assert.deepEqual(projectDetails[0].name, 'api');
+        assert.deepEqual(projectDetails[1].name, 'core');
+        assert.deepEqual(projectDetails[0].toArray()[0].component_id, 'nuget://MyLogger:1.0.0');
+        assert.deepEqual(projectDetails[1].toArray()[0].component_id, 'nuget://MyLogger:1.0.0');
 
         // Check labels
         assert.deepEqual(res[0].label, 'api');
@@ -99,6 +103,7 @@ describe('Nuget Utils Tests', async () => {
         let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.NUGET);
         assert.isDefined(solutions);
         await NugetUtils.createDependenciesTrees(solutions, componentsToScan, treesManager, parent, false);
+        componentsToScan = componentsToScan.sort((l, r) => l.name.localeCompare(r.name));
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 

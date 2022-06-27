@@ -146,14 +146,14 @@ export class MavenUtils {
 
     /**
      * @param pomXmls          - Paths to pom.xml files
-     * @param componentsToScan - Set of maven components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
+     * @param projectDetails   - Maven project details which includes all dependencies GAV. We'll use this set later on, while scanning the packages with Xray.
      * @param treesManager     - The trees manager
      * @param root             - The base tree node
      * @param quickScan        - True to allow using the scan cache
      */
     public static async createDependenciesTrees(
         pomXmls: vscode.Uri[] | undefined,
-        projectsToScan: ProjectDetails[],
+        projectDetails: ProjectDetails[],
         treesManager: TreesManager,
         root: DependenciesTreeNode,
         quickScan: boolean
@@ -174,11 +174,11 @@ export class MavenUtils {
                 treesManager.logManager.logMessage('Analyzing pom.xml at ' + ProjectTree.pomPath, 'INFO');
                 ProjectTree.runMavenDependencyTree();
                 let mavenRoot: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, treesManager, root);
-                projectsToScan.push(mavenRoot.projectDetails);
-                await mavenRoot.refreshDependencies(quickScan, ProjectTree);
+                const mavenProjectsDetails: ProjectDetails[] = await mavenRoot.refreshDependencies(quickScan, ProjectTree);
                 if (mavenRoot.children.length === 0) {
                     root.children.splice(root.children.indexOf(mavenRoot), 1);
                 } else {
+                    projectDetails.push(...mavenProjectsDetails);
                     this.updateContextValue(mavenRoot);
                 }
             } catch (error) {

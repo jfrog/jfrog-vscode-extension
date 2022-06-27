@@ -238,33 +238,70 @@ describe('Maven Tests', async () => {
      */
     it('Create Maven dependencies trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: ProjectDetails[] = [];
-        let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
-        let toCompare: string[] = [
-            'gav://aopalliance:aopalliance:1.0',
-            'gav://commons-io:commons-io:1.4',
-            'gav://commons-logging:commons-logging:1.1.1',
-            'gav://hsqldb:hsqldb:1.8.0.10',
-            'gav://javax.activation:activation:1.1',
-            'gav://javax.mail:mail:1.4',
-            'gav://javax.servlet:servlet-api:2.5',
-            'gav://javax.servlet.jsp:jsp-api:2.1',
-            'gav://junit:junit:3.8.1',
-            'gav://org.apache.commons:commons-email:1.1',
-            'gav://org.codehaus.plexus:plexus-utils:1.5.1',
-            'gav://org.jfrog.test:multi1:3.7-SNAPSHOT',
-            'gav://org.springframework:spring-aop:2.5.6',
-            'gav://org.springframework:spring-beans:2.5.6',
-            'gav://org.springframework:spring-core:2.5.6',
-            'gav://org.testng:testng:5.9'
-        ];
-        const componentArray: ComponentDetails[] = componentsToScan[0]
-            .toArray()
-            .sort((a: ComponentDetails, b: ComponentDetails) => a.component_id.localeCompare(b.component_id));
-        // Check that components to scan contains progress:2.0.3
-        for (let i: number = 0; i < toCompare.length; i++) {
-            assert.deepEqual(componentArray[i].component_id, toCompare[i]);
+        let projectDetails: ProjectDetails[] = [];
+        let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(projectDetails, parent);
+        let expectedProjectDetails: Map<string, string[]> = new Map([
+            ['org.jfrog.test:multi', ['gav://junit:junit:3.8.1']],
+            [
+                'org.jfrog.test:multi1',
+                [
+                    'gav://aopalliance:aopalliance:1.0',
+                    'gav://commons-io:commons-io:1.4',
+                    'gav://commons-logging:commons-logging:1.1.1',
+                    'gav://javax.activation:activation:1.1',
+                    'gav://javax.mail:mail:1.4',
+                    'gav://javax.servlet.jsp:jsp-api:2.1',
+                    'gav://org.apache.commons:commons-email:1.1',
+                    'gav://org.codehaus.plexus:plexus-utils:1.5.1',
+                    'gav://org.springframework:spring-aop:2.5.6',
+                    'gav://org.springframework:spring-beans:2.5.6',
+                    'gav://org.springframework:spring-core:2.5.6',
+                    'gav://org.testng:testng:5.9'
+                ]
+            ],
+            [
+                'org.jfrog.test:multi3',
+                [
+                    'gav://org.jfrog.test:multi1:3.7-SNAPSHOT',
+                    'gav://org.apache.commons:commons-email:1.1',
+                    'gav://javax.mail:mail:1.4',
+                    'gav://javax.activation:activation:1.1',
+                    'gav://org.codehaus.plexus:plexus-utils:1.5.1',
+                    'gav://javax.servlet.jsp:jsp-api:2.1',
+                    'gav://commons-io:commons-io:1.4',
+                    'gav://org.springframework:spring-aop:2.5.6',
+                    'gav://aopalliance:aopalliance:1.0',
+                    'gav://commons-logging:commons-logging:1.1.1',
+                    'gav://org.springframework:spring-beans:2.5.6',
+                    'gav://org.springframework:spring-core:2.5.6',
+                    'gav://hsqldb:hsqldb:1.8.0.10',
+                    'gav://javax.servlet:servlet-api:2.5'
+                ]
+            ]
+        ]);
+        // Ensure all expected projects were found.
+        assert.strictEqual(projectDetails.length, expectedProjectDetails.size);
+
+        for (let i: number = 0; i < projectDetails.length; i++) {
+            // Select the right project from the expected map.
+            let componentsDetails: string[] | undefined = expectedProjectDetails.get(projectDetails[i].name);
+            if (componentsDetails === undefined) {
+                assert.isNotNull(componentsDetails);
+                return;
+            }
+            // Compare the size of the two dependencies lists.
+            assert.strictEqual(projectDetails[i].dependencies.size(), componentsDetails.length);
+            // Sort the two dependencies lists.
+            const aComponent: ComponentDetails[] = projectDetails[i]
+                .toArray()
+                .sort((a: ComponentDetails, b: ComponentDetails) => a.component_id.localeCompare(b.component_id));
+            componentsDetails.sort((a: string, b: string) => a.localeCompare(b));
+            // Check that both of the dependencies lists have the same data
+            for (let i: number = 0; i < aComponent.length; i++) {
+                assert.deepEqual(aComponent[i].component_id, componentsDetails[i]);
+            }
         }
+
         // Check multi pom tree
         // Check node
         assert.deepEqual(res[0].label, 'org.jfrog.test:multi');

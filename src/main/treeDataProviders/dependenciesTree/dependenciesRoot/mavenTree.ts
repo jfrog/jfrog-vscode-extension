@@ -6,6 +6,7 @@ import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
+import { ProjectDetails } from '../../../types/projectDetails';
 
 export class MavenTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'gav://';
@@ -20,11 +21,14 @@ export class MavenTreeNode extends RootNode {
      * @param quickScan - True to allow reading from scan cache.
      * @param prototypeTree - Tree that each node contain pom.xml path.
      */
-    public async refreshDependencies(quickScan: boolean, prototypeTree: PomTree, parentDependencies?: string[]) {
+    public async refreshDependencies(quickScan: boolean, prototypeTree: PomTree, parentDependencies?: string[]): Promise<ProjectDetails[]> {
+        const mavenProjectDetails: ProjectDetails[] = [];
         const [group, name, version] = prototypeTree.pomGav.split(':');
         this.generalInfo = new GavGeneralInfo(group, name, version, [], this.workspaceFolder, MavenUtils.PKG_TYPE);
         this.label = group + ':' + name;
         this.projectDetails.name = this.label;
+        // Add project details of root node.
+        mavenProjectDetails.push(this.projectDetails);
         let rawDependenciesList: string[] | undefined = await prototypeTree.getRawDependencies(this._treesManager);
         if (!!rawDependenciesList && rawDependenciesList.length > 0) {
             rawDependenciesList = MavenUtils.filterParentDependencies(rawDependenciesList, parentDependencies) || rawDependenciesList;
@@ -36,8 +40,12 @@ export class MavenTreeNode extends RootNode {
             await dependenciesTreeNode.refreshDependencies(quickScan, childPom, rawDependenciesList);
             if (dependenciesTreeNode.children.length === 0) {
                 this.children.splice(this.children.indexOf(dependenciesTreeNode), 1);
+            } else {
+                // Add project details of child node.
+                mavenProjectDetails.push(dependenciesTreeNode.projectDetails);
             }
         }
+        return mavenProjectDetails;
     }
 
     /**
