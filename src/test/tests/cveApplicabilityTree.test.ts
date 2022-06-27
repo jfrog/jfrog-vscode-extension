@@ -36,8 +36,7 @@ describe('Cve Applicability Tree Tests', () => {
         {} as ScanLogicManager,
         logManager
     );
-
-    before(() => {
+    before(async () => {
         let generalInfo: GeneralInfo = new GeneralInfo('odin', '1.2.3', [], tmpDir.path, 'asgard');
         dependenciesTreeNode = new DependenciesTreeNode(generalInfo);
         workspaceFolders = [
@@ -47,6 +46,9 @@ describe('Cve Applicability Tree Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
+        // Download CVE Applicability binary for all tests
+        const sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider(workspaceFolders, treesManager);
+        await sourceCodeTreeDataProvider.update();
     });
 
     it('Source Code Cve Tree Node', () => {
@@ -123,7 +125,6 @@ describe('Cve Applicability Tree Tests', () => {
         let issuesDataProvider: IssuesDataProvider = dependencyDetailsProvider.issuesDataProvider;
         dependenciesTreeNode.issues.add({ issue_id: issue.issueId } as IIssueKey);
         dummyScanCacheManager.storeIssue(issue);
-        await sourceCodeTreeDataProvider.update();
         await sourceCodeTreeDataProvider.scanProjects();
 
         const projectPath: string = workspaceFolders[0].uri.path;
@@ -175,7 +176,6 @@ describe('Cve Applicability Tree Tests', () => {
 
         const sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider(workspaceFolders, treesManager);
         dummyScanCacheManager.storeProjectDetailsCacheObject(projectDetails);
-        await sourceCodeTreeDataProvider.update();
         await sourceCodeTreeDataProvider.scanProjects();
         const tree: SourceCodeFileTreeNode | undefined = sourceCodeTreeDataProvider.getFileTreeNode(path.join(tmpDir.path, 'bad.js'));
         assert.strictEqual(tree?.parent?.label, 'jfrog-test-project');

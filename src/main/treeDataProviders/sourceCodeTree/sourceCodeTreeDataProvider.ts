@@ -63,7 +63,7 @@ export class SourceCodeTreeDataProvider
                 }
             }
         } catch (error) {
-            this._treesManager.logManager.logMessage('failed to scan error: ' + error, 'ERR');
+            this._treesManager.logManager.logMessage('CVE Applicability failed to scan project. Error: ' + error, 'ERR');
         }
     }
 
@@ -82,7 +82,7 @@ export class SourceCodeTreeDataProvider
 
             cmdOutput = this._cveApplicabilityRunner.scan(pathToRoot, whiteListCves, packageType);
             if (cmdOutput === '') {
-                return;
+                throw new Error('CVE Applicability did not generate any output');
             }
             const parsedJson: ApplicabilityScanResults = <ApplicabilityScanResults>JSON.parse(cmdOutput);
             for (const [cve, cveData] of Object.entries(parsedJson.results)) {
@@ -249,7 +249,10 @@ export class SourceCodeTreeDataProvider
 
     public async refresh() {
         this.clearCveTreeView();
-        const version: string = this._treesManager.sourceCodeTreeDataProvider._cveApplicabilityRunner.version();
+        const version: string | undefined = this._treesManager.sourceCodeTreeDataProvider._cveApplicabilityRunner.version();
+        if (version == undefined) {
+            return;
+        }
         this._treesManager.logManager.logMessage("Running CVE Applicability scan version '" + version + "'", 'INFO');
         await this._treesManager.sourceCodeTreeDataProvider.scanProjects();
         this.onChangeFire();

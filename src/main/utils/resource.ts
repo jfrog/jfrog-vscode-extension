@@ -12,7 +12,6 @@ export class Resource {
     private downloadTarget: string;
     private downloadDir: string;
     private path: string;
-    private sha2: string = '';
 
     private _connectionManager: JfrogClient = ConnectionUtils.createJfrogClient(
         'https://releases.jfrog.io',
@@ -67,7 +66,6 @@ export class Resource {
             fs.copyFile(this.downloadTarget, this.path, err => {
                 if (err) throw err;
             });
-            this.sha2 = '';
             this._logManager.logMessage('Update resource was successfully upgraded for ' + this.downloadSource, 'DEBUG');
         } finally {
             fs.rmSync(this.downloadDir, { recursive: true, force: true });
@@ -88,12 +86,11 @@ export class Resource {
             this._logManager.logMessage("Error occurred while fetching an update from '" + this.downloadSource + "'. Error: " + error, 'ERR');
             return false;
         }
-        if (this.sha2 === '') {
-            const fileBuffer: Buffer = fs.readFileSync(this.path);
-            const hashSum: crypto.Hash = crypto.createHash('sha256').update(fileBuffer);
-            this.sha2 = hashSum.digest('hex');
-        }
-        return checksumResult.sha256 !== this.sha2;
+        // Compare the sha256 of the cve applicability binary with the latest released binary.
+        const fileBuffer: Buffer = fs.readFileSync(this.path);
+        const hashSum: crypto.Hash = crypto.createHash('sha256').update(fileBuffer);
+        const sha2: string = hashSum.digest('hex');
+        return checksumResult.sha256 !== sha2;
     }
 
     public getPath(): string {
