@@ -46,9 +46,6 @@ describe('Cve Applicability Tree Tests', () => {
                 index: 0
             } as vscode.WorkspaceFolder
         ];
-        // Download CVE Applicability binary for all tests
-        const sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider(workspaceFolders, treesManager);
-        await sourceCodeTreeDataProvider.update();
     });
 
     it('Source Code Cve Tree Node', () => {
@@ -70,7 +67,7 @@ describe('Cve Applicability Tree Tests', () => {
     it('Source Code File Tree Node', () => {
         const cve: string = 'CVE-2021-31597';
         const sourceCodeCveTreeNodeDetails: SourceCodeCveTreeNodeDetails[] = [new SourceCodeCveTreeNodeDetails('abc', 'def', 1, 2, 3, 4)];
-        let sourceCodeFileTreeNode: SourceCodeFileTreeNode = new SourceCodeFileTreeNode('a/b/c', []);
+        let sourceCodeFileTreeNode: SourceCodeFileTreeNode = new SourceCodeFileTreeNode(path.join('a','b','c'), []);
         const node1: SourceCodeCveTreeNode = new SourceCodeCveTreeNode(cve, sourceCodeCveTreeNodeDetails, sourceCodeFileTreeNode, Severity.High);
         const node2: SourceCodeCveTreeNode = new SourceCodeCveTreeNode(cve, sourceCodeCveTreeNodeDetails, sourceCodeFileTreeNode, Severity.Low);
         assert.strictEqual(sourceCodeFileTreeNode.topSeverity, Severity.High);
@@ -95,11 +92,11 @@ describe('Cve Applicability Tree Tests', () => {
         const sourceCodeCveTreeNodeDetails: SourceCodeCveTreeNodeDetails[] = [new SourceCodeCveTreeNodeDetails('abc', 'def', 1, 2, 3, 4)];
         const node1: SourceCodeCveTreeNode = new SourceCodeCveTreeNode(cve1, sourceCodeCveTreeNodeDetails, undefined, Severity.High);
         const node2: SourceCodeCveTreeNode = new SourceCodeCveTreeNode(cve2, sourceCodeCveTreeNodeDetails, undefined, Severity.Low);
-        let sourceCodeFileTreeNode: SourceCodeFileTreeNode = new SourceCodeFileTreeNode('a/b/c', [node1, node2]);
-        let sourceCodeRootTreeNode: SourceCodeRootTreeNode = new SourceCodeRootTreeNode('path/to/my-project', PackageType.NPM, 'my-project');
+        let sourceCodeFileTreeNode: SourceCodeFileTreeNode = new SourceCodeFileTreeNode(path.join('a','b','c'), [node1, node2]);
+        let sourceCodeRootTreeNode: SourceCodeRootTreeNode = new SourceCodeRootTreeNode(path.join('path','to','my-project'), PackageType.NPM, 'my-project');
         sourceCodeRootTreeNode.addChild(sourceCodeFileTreeNode);
         assert.strictEqual(sourceCodeRootTreeNode.label, 'my-project');
-        assert.strictEqual(sourceCodeRootTreeNode.description, 'path/to/my-project');
+        assert.strictEqual(sourceCodeRootTreeNode.description, path.join('path','to','my-project'));
         assert.strictEqual(sourceCodeRootTreeNode.isCveApplicable(cve1), false);
         assert.strictEqual(sourceCodeRootTreeNode.isCveNotApplicable(cve1), false);
 
@@ -125,6 +122,7 @@ describe('Cve Applicability Tree Tests', () => {
         let issuesDataProvider: IssuesDataProvider = dependencyDetailsProvider.issuesDataProvider;
         dependenciesTreeNode.issues.add({ issue_id: issue.issueId } as IIssueKey);
         dummyScanCacheManager.storeIssue(issue);
+        await sourceCodeTreeDataProvider.update();
         await sourceCodeTreeDataProvider.scanProjects();
 
         const projectPath: string = workspaceFolders[0].uri.path;
@@ -176,6 +174,7 @@ describe('Cve Applicability Tree Tests', () => {
 
         const sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider(workspaceFolders, treesManager);
         dummyScanCacheManager.storeProjectDetailsCacheObject(projectDetails);
+        await sourceCodeTreeDataProvider.update();
         await sourceCodeTreeDataProvider.scanProjects();
         const tree: SourceCodeFileTreeNode | undefined = sourceCodeTreeDataProvider.getFileTreeNode(path.join(tmpDir.path, 'bad.js'));
         assert.strictEqual(tree?.parent?.label, 'jfrog-test-project');

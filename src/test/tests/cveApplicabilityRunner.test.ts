@@ -9,15 +9,13 @@ describe('Cve Applicability Runner Tests', () => {
     const runner: CveApplicabilityRunner = new CveApplicabilityRunner(new ConnectionManager(logManager), logManager);
     let projectToScan: string = path.join(__dirname, '..', 'resources', 'cveApplicability', 'project');
 
-    before(async () => {
+    it('Version Test', async () => {
         await runner.update();
-    });
-
-    it('Version Test', () => {
         assert.isNotEmpty(runner.version());
     });
 
-    it('Scan Test', () => {
+    it('Scan Test', async () => {
+        await runner.update();
         let cmdOutput: string = runner.scan(projectToScan);
         assert.isNotEmpty(cmdOutput);
         cmdOutput.includes('CVE-2020-11022');
