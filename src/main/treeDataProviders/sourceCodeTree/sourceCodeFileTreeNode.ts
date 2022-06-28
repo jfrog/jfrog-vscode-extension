@@ -23,17 +23,6 @@ export class SourceCodeFileTreeNode extends vscode.TreeItem {
         }
     }
 
-    public static createNoVulnerabilitiesFound(): SourceCodeFileTreeNode {
-        const node: SourceCodeFileTreeNode = new SourceCodeFileTreeNode(
-            'No vulnerabilities found',
-            [],
-            undefined,
-            vscode.TreeItemCollapsibleState.None
-        );
-        node._topSeverity = Severity.Normal;
-        return node;
-    }
-
     public static createFailedScan(): SourceCodeFileTreeNode {
         const node: SourceCodeFileTreeNode = new SourceCodeFileTreeNode('Fail to scan project', [], undefined, vscode.TreeItemCollapsibleState.None);
         node._topSeverity = Severity.Medium;

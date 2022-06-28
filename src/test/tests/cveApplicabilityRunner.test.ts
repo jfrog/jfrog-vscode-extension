@@ -16,11 +16,11 @@ describe('Cve Applicability Runner Tests', () => {
 
     it('Scan Test', async () => {
         await runner.update();
-        let cmdOutput: string = runner.scan(projectToScan);
+        let cmdOutput: string | undefined = runner.scan(projectToScan);
         assert.isNotEmpty(cmdOutput);
-        cmdOutput.includes('CVE-2020-11022');
+        cmdOutput?.includes('CVE-2020-11022');
         cmdOutput = runner.scan(projectToScan, 'CVE-2020-11022');
         assert.isNotEmpty(cmdOutput);
-        cmdOutput.includes('CVE-2020-11022');
+        cmdOutput?.includes('CVE-2020-11022');
     });
 });

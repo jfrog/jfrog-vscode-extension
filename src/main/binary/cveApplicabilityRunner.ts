@@ -11,6 +11,7 @@ import { PackageType } from '../types/projectType';
  */
 export class CveApplicabilityRunner {
     private _resource: Resource;
+    private _isOsSupported: boolean = true;
     constructor(connectionManager: ConnectionManager, private _logManager: LogManager) {
         let downloadUrl: string = 'ide-scanners/applicability_scanner/[RELEASE]';
         let binary: string = 'applicability_scanner';
@@ -25,6 +26,8 @@ export class CveApplicabilityRunner {
             case 'darwin':
                 downloadUrl += '/mac/' + binary;
                 break;
+            default:
+                this._isOsSupported = false;
         }
         this._resource = new Resource(
             path.join(ScanUtils.getHomePath(), 'applicability.scan'),
@@ -39,6 +42,9 @@ export class CveApplicabilityRunner {
      * Update the runner(binary) to latest release.
      */
     public async update(): Promise<void> {
+        if (!this._isOsSupported) {
+            return;
+        }
         try {
             await this._resource.update(true);
         } catch (error) {
@@ -51,9 +57,12 @@ export class CveApplicabilityRunner {
      * @param pathToRoot - Project to scan.
      * @param cvesToScan - CVEs to search.
      * @param packageType - Project type.
-     * @returns Command output.
+     * @returns Command output or undefined if the current OS is not supported.
      */
-    public scan(pathToRoot: string, cvesToScan?: string, packageType?: PackageType): string {
+    public scan(pathToRoot: string, cvesToScan?: string, packageType?: PackageType): string | undefined {
+        if (!this._isOsSupported) {
+            return;
+        }
         let cmdArgs: string = '';
         if (packageType === PackageType.NPM) {
             cmdArgs = ' --skipped-folders=node_modules ';
@@ -64,7 +73,10 @@ export class CveApplicabilityRunner {
         return ScanUtils.executeCmd(this._resource.getPath() + ' scan ' + pathToRoot + cmdArgs, pathToRoot).toString();
     }
 
-    public version(): string {
+    public version(): string | undefined {
+        if (!this._isOsSupported) {
+            return;
+        }
         return ScanUtils.executeCmd(this._resource.getPath() + ' version ').toString();
     }
 }

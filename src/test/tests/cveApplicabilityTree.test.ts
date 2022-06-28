@@ -67,7 +67,7 @@ describe('Cve Applicability Tree Tests', () => {
     it('Source Code File Tree Node', () => {
         const cve: string = 'CVE-2021-31597';
         const sourceCodeCveTreeNodeDetails: SourceCodeCveTreeNodeDetails[] = [new SourceCodeCveTreeNodeDetails('abc', 'def', 1, 2, 3, 4)];
-        let sourceCodeFileTreeNode: SourceCodeFileTreeNode = new SourceCodeFileTreeNode(path.join('a','b','c'), []);
+        let sourceCodeFileTreeNode: SourceCodeFileTreeNode = new SourceCodeFileTreeNode(path.join('a', 'b', 'c'), []);
         const node1: SourceCodeCveTreeNode = new SourceCodeCveTreeNode(cve, sourceCodeCveTreeNodeDetails, sourceCodeFileTreeNode, Severity.High);
         const node2: SourceCodeCveTreeNode = new SourceCodeCveTreeNode(cve, sourceCodeCveTreeNodeDetails, sourceCodeFileTreeNode, Severity.Low);
         assert.strictEqual(sourceCodeFileTreeNode.topSeverity, Severity.High);
@@ -79,11 +79,6 @@ describe('Cve Applicability Tree Tests', () => {
         assert.strictEqual(sourceCodeFileTreeNode.children.length, 0);
         assert.strictEqual(sourceCodeFileTreeNode.label, 'Fail to scan project');
         assert.strictEqual(sourceCodeFileTreeNode.collapsibleState, vscode.TreeItemCollapsibleState.None);
-
-        sourceCodeFileTreeNode = SourceCodeFileTreeNode.createNoVulnerabilitiesFound();
-        assert.strictEqual(sourceCodeFileTreeNode.children.length, 0);
-        assert.strictEqual(sourceCodeFileTreeNode.label, 'No vulnerabilities found');
-        assert.strictEqual(sourceCodeFileTreeNode.collapsibleState, vscode.TreeItemCollapsibleState.None);
     });
 
     it('Source Code Root Tree Node', () => {
@@ -92,11 +87,15 @@ describe('Cve Applicability Tree Tests', () => {
         const sourceCodeCveTreeNodeDetails: SourceCodeCveTreeNodeDetails[] = [new SourceCodeCveTreeNodeDetails('abc', 'def', 1, 2, 3, 4)];
         const node1: SourceCodeCveTreeNode = new SourceCodeCveTreeNode(cve1, sourceCodeCveTreeNodeDetails, undefined, Severity.High);
         const node2: SourceCodeCveTreeNode = new SourceCodeCveTreeNode(cve2, sourceCodeCveTreeNodeDetails, undefined, Severity.Low);
-        let sourceCodeFileTreeNode: SourceCodeFileTreeNode = new SourceCodeFileTreeNode(path.join('a','b','c'), [node1, node2]);
-        let sourceCodeRootTreeNode: SourceCodeRootTreeNode = new SourceCodeRootTreeNode(path.join('path','to','my-project'), PackageType.NPM, 'my-project');
+        let sourceCodeFileTreeNode: SourceCodeFileTreeNode = new SourceCodeFileTreeNode(path.join('a', 'b', 'c'), [node1, node2]);
+        let sourceCodeRootTreeNode: SourceCodeRootTreeNode = new SourceCodeRootTreeNode(
+            path.join('path', 'to', 'my-project'),
+            PackageType.NPM,
+            'my-project'
+        );
         sourceCodeRootTreeNode.addChild(sourceCodeFileTreeNode);
         assert.strictEqual(sourceCodeRootTreeNode.label, 'my-project');
-        assert.strictEqual(sourceCodeRootTreeNode.description, path.join('path','to','my-project'));
+        assert.strictEqual(sourceCodeRootTreeNode.description, path.join('path', 'to', 'my-project'));
         assert.strictEqual(sourceCodeRootTreeNode.isCveApplicable(cve1), false);
         assert.strictEqual(sourceCodeRootTreeNode.isCveNotApplicable(cve1), false);
 

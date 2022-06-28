@@ -59,7 +59,7 @@ export class Resource {
                 .download()
                 .downloadArtifactToFile(this.downloadSource, this.downloadTarget);
             if (withExecPrem) {
-                fs.chmodSync(this.downloadTarget, '755', );
+                fs.chmodSync(this.downloadTarget, '755');
             }
             fs.copyFileSync(this.downloadTarget, this.path);
             this._logManager.logMessage('Update resource was successfully upgraded for ' + this.downloadSource, 'DEBUG');

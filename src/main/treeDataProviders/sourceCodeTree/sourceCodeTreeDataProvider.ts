@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as os from 'os';
 import { TreesManager } from '../treesManager';
 import { SourceCodeFileTreeNode } from './sourceCodeFileTreeNode';
 import { SourceCodeRootTreeNode } from './sourceCodeRootTreeNode';
@@ -45,6 +46,7 @@ export class SourceCodeTreeDataProvider
                 for (const workspace of this._workspaceFolders) {
                     this.scanProject(workspace.uri.path, PackageType.UNKNOWN);
                 }
+                return;
             }
             // Found project descriptors.
             // Utilize the CVEs from the dependency tree scan for the applicability scan.
@@ -72,7 +74,7 @@ export class SourceCodeTreeDataProvider
             const root: SourceCodeRootTreeNode = new SourceCodeRootTreeNode(pathToRoot, packageType, scannedCves?.projectName);
             this.workspaceToTree.set(pathToRoot, root);
             let whiteListCves: string = '';
-            let cmdOutput: string = '';
+            let cmdOutput: string | undefined;
 
             // CVEs from Xray scans should be sent to the Applicability scanner.
             // Alternatively, scan All Known CVEs.
@@ -81,6 +83,10 @@ export class SourceCodeTreeDataProvider
             }
 
             cmdOutput = this._cveApplicabilityRunner.scan(pathToRoot, whiteListCves, packageType);
+            if (cmdOutput === undefined) {
+                this._treesManager.logManager.logMessage('CVE Aplicability is not supported for' + os.platform(), 'DEBUG');
+                return;
+            }
             if (cmdOutput === '') {
                 throw new Error('CVE Applicability did not generate any output');
             }
@@ -230,12 +236,11 @@ export class SourceCodeTreeDataProvider
         );
         for (let files of projects.values()) {
             files.parent = cveApplicabilityRoot;
-            if (files.children.length === 0) {
-                files.children.push(SourceCodeFileTreeNode.createNoVulnerabilitiesFound());
+            if (files.children.length > 0) {
+                sourceCodeRootTreeNodes.push(files);
             }
-            sourceCodeRootTreeNodes.push(files);
         }
-        return cveApplicabilityRoot;
+        return cveApplicabilityRoot.children.length > 0 ? cveApplicabilityRoot : undefined;
     }
 
     public onChangeFire(): void {
