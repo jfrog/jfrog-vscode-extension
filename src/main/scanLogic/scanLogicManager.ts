@@ -63,8 +63,8 @@ export class ScanLogicManager implements ExtensionComponent {
                 const cveDetails: CveDetails | undefined = projectComponents.componentIdToCve.get(project.component_id);
                 if (cveDetails !== undefined) {
                     // Set all the component's CVEs
-                    for (const [cve, sevirity] of cveDetails.cveToSeverity) {
-                        projectDetailsCacheObject.cves.set(cve, sevirity);
+                    for (const [cve, severity] of cveDetails.cveToSeverity) {
+                        projectDetailsCacheObject.cves.set(cve, severity);
                     }
                 }
             });

@@ -23,18 +23,22 @@ export class Resource {
     );
 
     constructor(
-        homeDir: string,
+        private _homeDir: string,
         private downloadSource: string,
         resourceName: string,
         private _logManager: LogManager,
         connectionManager?: JfrogClient
     ) {
-        this.downloadDir = path.join(homeDir, 'download');
+        this.downloadDir = path.join(_homeDir, 'download');
         this.downloadTarget = path.join(this.downloadDir, resourceName);
-        this.path = path.join(homeDir, resourceName);
+        this.path = path.join(_homeDir, resourceName);
         if (connectionManager !== undefined) {
             this._connectionManager = connectionManager;
         }
+    }
+
+    public get homeDir(): string {
+        return this._homeDir;
     }
 
     public async update(withExecPrem: boolean) {
@@ -45,7 +49,8 @@ export class Resource {
         this._logManager.logMessage('Downloading new update from ' + this.downloadTarget, 'DEBUG');
         if (!fs.existsSync(this.downloadDir)) {
             fs.mkdirSync(this.downloadDir, { recursive: true });
-        } else if (Date.now() - fs.statSync(this.downloadDir).birthtimeMs <= Resource.MILLISECONDS_IN_HOUR) {
+        } else if (Date.now() - fs.statSync(this.downloadDir).birthtimeMs > Resource.MILLISECONDS_IN_HOUR) {
+            this._logManager.logMessage('The new update will be skipped as it is already in progress', 'DEBUG');
             // By here, someone else is already downloading the scanner.
             return;
         } else {

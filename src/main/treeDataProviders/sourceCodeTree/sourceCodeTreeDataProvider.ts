@@ -258,7 +258,7 @@ export class SourceCodeTreeDataProvider
         if (version == undefined) {
             return;
         }
-        this._treesManager.logManager.logMessage("Running CVE Applicability scan version '" + version + "'", 'INFO');
+        this._treesManager.logManager.logMessage("Running CVE Applicability  version '" + version.trim() + "'", 'INFO');
         await this._treesManager.sourceCodeTreeDataProvider.scanProjects();
         this.onChangeFire();
     }

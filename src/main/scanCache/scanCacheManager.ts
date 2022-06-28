@@ -30,11 +30,13 @@ import { IProjectDetailsCacheObject } from '../types/IProjectDetailsCacheObject'
 export class ScanCacheManager implements ExtensionComponent {
     private static readonly CACHE_VERSION_KEY: string = 'jfrog.cache.version';
     private static readonly CACHE_VERSION: number = 0;
+    private static readonly ONE_WEEK_IN_MILLISECOND: number = 86400000;
 
     private _scanCache!: vscode.Memento;
     private _licensesCache!: string;
     private _issuesCache!: string;
-    private _scannedCvesCache!: string;
+    // _projectCvesCacheDir - The directory where each project stores its Dependencies CVEs found by Xray.
+    private _projectCvesCache!: string;
     private _isOutdated!: boolean;
 
     public activate(context: vscode.ExtensionContext): ScanCacheManager {
@@ -45,13 +47,13 @@ export class ScanCacheManager implements ExtensionComponent {
         }
         this._issuesCache = path.join(storageDir, 'issues');
         // CVEs found in the workspace.
-        this._scannedCvesCache = path.join(storageDir, 'scanned.cves');
+        this._projectCvesCache = path.join(storageDir, 'scanned.cves');
         this._licensesCache = path.join(storageDir, 'licenses');
         if (!fs.existsSync(this._issuesCache)) {
             fs.mkdirSync(this._issuesCache, { recursive: true } as fs.MakeDirectoryOptions);
         }
-        if (!fs.existsSync(this._scannedCvesCache)) {
-            fs.mkdirSync(this._scannedCvesCache, { recursive: true } as fs.MakeDirectoryOptions);
+        if (!fs.existsSync(this._projectCvesCache)) {
+            fs.mkdirSync(this._projectCvesCache, { recursive: true } as fs.MakeDirectoryOptions);
         }
         if (!fs.existsSync(this._licensesCache)) {
             fs.mkdirSync(this._licensesCache);
@@ -88,7 +90,7 @@ export class ScanCacheManager implements ExtensionComponent {
             }
         }
         fs.writeFileSync(
-            this.getScannedCvesPath(scannedCveObject.projectPath),
+            this.getCvesCacheFile(scannedCveObject.projectPath),
             JSON.stringify(scannedCveObject, (key, value) => {
                 if (value instanceof Map) {
                     return {
@@ -115,14 +117,15 @@ export class ScanCacheManager implements ExtensionComponent {
     //  * Delete the old CVE list cache associated with 'projectPath'.
     //  */
     public deleteProjectDetailsCacheObject(projectPath: string) {
-        let scannedCvesPath: string = this.getScannedCvesPath(projectPath);
+        let scannedCvesPath: string = this.getCvesCacheFile(projectPath);
         if (fs.existsSync(scannedCvesPath)) {
             fs.rmSync(scannedCvesPath);
         }
+        this.cleanupCvesCacheDir();
     }
 
     public getProjectDetailsCacheObject(projectPath: string): IProjectDetailsCacheObject | undefined {
-        let scannedCvesPath: string = this.getScannedCvesPath(projectPath);
+        let scannedCvesPath: string = this.getCvesCacheFile(projectPath);
         if (!fs.existsSync(scannedCvesPath)) {
             return undefined;
         }
@@ -250,11 +253,23 @@ export class ScanCacheManager implements ExtensionComponent {
     }
 
     /**
-     * Get the path to the cache file that contains a list of CVEs found for the given path.
+     * Get the path to the cache file that contains a list of CVEs found by Xray for the given path.
      * @param projectPath - The project path
      */
-    private getScannedCvesPath(projectPath: string): string {
-        return path.join(this._scannedCvesCache, this.createKey(projectPath));
+    private getCvesCacheFile(projectPath: string): string {
+        return path.join(this._projectCvesCache, this.createKey(projectPath));
+    }
+    
+    // Delete any cache from that is older than one week.
+    private cleanupCvesCacheDir(): string {
+        const files: string[] = fs.readdirSync(this._projectCvesCache);
+        files.forEach(file => {
+            const absFilePath: string = path.join(this._projectCvesCache, file);
+            if (Date.now() - fs.statSync(absFilePath).birthtimeMs > ScanCacheManager.ONE_WEEK_IN_MILLISECOND) {
+                fs.rmSync(absFilePath);
+            }
+        });
+        return this._projectCvesCache;
     }
 
     /**
