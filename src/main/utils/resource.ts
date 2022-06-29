@@ -49,18 +49,13 @@ export class Resource {
             return;
         }
         this._logManager.logMessage('Downloading new update from ' + this.downloadTarget, 'DEBUG');
-        if (!fs.existsSync(this.downloadDir)) {
-            fs.mkdirSync(this.downloadDir, { recursive: true });
-        } else if (Date.now() - fs.statSync(this.downloadDir).birthtimeMs < Resource.MILLISECONDS_IN_HOUR) {
-            this._logManager.logMessage('The new update will be skipped as it is already in progress', 'DEBUG');
-            // By here, someone else is already downloading the scanner.
-            return;
-        } else {
-            // Seems like it is a left over from other download.
-            this._logManager.logMessage('Cleanup old update process at' + this.downloadDir, 'DEBUG');
+        if(this.isUpdateStarted()){
+            if (this.isUpdateStuck() === false){
+                return
+            }
             fs.rmSync(this.downloadDir, { recursive: true });
-            fs.mkdirSync(this.downloadDir, { recursive: true });
         }
+        fs.mkdirSync(this.downloadDir, { recursive: true });
         try {
             await this._connectionManager
                 .artifactory()
@@ -98,5 +93,13 @@ export class Resource {
 
     public getPath(): string {
         return this.path;
+    }
+
+    private isUpdateStarted():boolean{
+        return fs.existsSync(this.downloadDir);
+    }
+    
+    private isUpdateStuck():boolean{
+        return Date.now() - fs.statSync(this.downloadDir).birthtimeMs > Resource.MILLISECONDS_IN_HOUR
     }
 }
