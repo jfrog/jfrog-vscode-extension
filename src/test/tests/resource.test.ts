@@ -21,19 +21,15 @@ describe('Resource Tests', () => {
         ConnectionUtils.createJfrogClient(SERVER_URL, SERVER_URL + '/artifactory', '', '', '', '')
     );
     const file: string = path.join(__dirname, '..', 'resources', 'testsdata', 'file1.txt');
+    const fileBuffer: Buffer = fs.readFileSync(file);
+    const hashSum: crypto.Hash = crypto.createHash('sha256').update(fileBuffer);
     after(() => {
         nock.cleanAll();
     });
 
     it('Update resource', async () => {
         try {
-            const fileBuffer: Buffer = fs.readFileSync(file);
-            const hashSum: crypto.Hash = crypto.createHash('sha256').update(fileBuffer);
-            const scope: nock.Scope = nock(SERVER_URL)
-                .get(`/artifactory/download/path/to/resource/file1`)
-                .replyWithFile(200, file)
-                .head(`/artifactory/download/path/to/resource/file1`)
-                .reply(200, { license: 'mit' }, { 'x-checksum-md5': '1', 'x-checksum-sha1': '2', 'x-checksum-sha256': hashSum.digest('hex') });
+            const scope: nock.Scope = createNockServer();
             assert.isTrue(await resource.isUpdateAvailable());
             await resource.update(true);
             assert.isTrue(fs.existsSync(path.join(tmpPath, 'file1')));
@@ -47,9 +43,45 @@ describe('Resource Tests', () => {
         }
     });
 
+    it('Timeout while update resource', async () => {
+        let err: Error | unknown;
+        try {
+            createNockServer();
+            // Download updates.
+            await resource.update(true);
+            // Try to check if we have the latest and expect to fail for timeout.
+            await resource.update(true);
+        } catch (error) {
+            err = error;
+        }
+        assert.isDefined(err, 'Expect to have a timeout error');
+    });
+
     it('Update of resource has already begun', async () => {
         fs.mkdirSync(path.join(tmpPath, 'download'), { recursive: true });
         await resource.update(true);
         assert.isFalse(fs.existsSync(path.join(tmpPath, 'file1')));
     });
+
+    it('Update of resource has already begun long time ago', async () => {
+        const scope: nock.Scope = createNockServer();
+        const tmp: number = Resource.MILLISECONDS_IN_HOUR;
+        try {
+            fs.mkdirSync(path.join(tmpPath, 'download'), { recursive: true });
+            Resource.MILLISECONDS_IN_HOUR = 1;
+            await resource.update(true);
+            assert.isTrue(fs.existsSync(path.join(tmpPath, 'file1')), 'expected to find' + path.join(tmpPath, 'file1'));
+            assert.isTrue(scope.isDone(), 'not all endpoint were reached for nock server');
+        } finally {
+            Resource.MILLISECONDS_IN_HOUR = tmp;
+        }
+    });
+
+    function createNockServer(): nock.Scope {
+        return nock(SERVER_URL)
+            .get(`/artifactory/download/path/to/resource/file1`)
+            .replyWithFile(200, file)
+            .head(`/artifactory/download/path/to/resource/file1`)
+            .reply(200, { license: 'mit' }, { 'x-checksum-md5': '1', 'x-checksum-sha1': '2', 'x-checksum-sha256': hashSum.digest('hex') });
+    }
 });

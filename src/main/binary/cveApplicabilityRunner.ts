@@ -77,7 +77,7 @@ export class CveApplicabilityRunner {
             if (cvesToScan != undefined && cvesToScan.length > 0) {
                 cmdArgs += ' --cve-whitelist ' + cvesToScan;
             }
-            return this.run(['scan', '"'+pathToRoot+'"', cmdArgs]).toString();
+            return this.run(['scan', '"' + pathToRoot + '"', cmdArgs]).toString();
         } catch (error) {
             this._logManager.logMessage('failed to run CVE Applicability scan at ' + pathToRoot + '. ' + error, 'ERR');
             return '{}';
@@ -110,7 +110,7 @@ export class CveApplicabilityRunner {
         return Date.now() - Number(timestamp) > CveApplicabilityRunner.MILLISECONDS_IN_TWO_DAYS;
     }
 
-    private run(args :string[], runAt?:string):string {
-        return ScanUtils.executeCmd('"' + this._resource.getPath() + '" ' + args.join(" "),runAt).toString();
+    private run(args: string[], runAt?: string): string {
+        return ScanUtils.executeCmd('"' + this._resource.getPath() + '" ' + args.join(' '), runAt).toString();
     }
 }

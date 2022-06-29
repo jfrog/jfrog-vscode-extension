@@ -259,7 +259,7 @@ export class ScanCacheManager implements ExtensionComponent {
     private getCvesCacheFile(projectPath: string): string {
         return path.join(this._projectCvesCache, this.createKey(projectPath));
     }
-    
+
     // Delete any cache from that is older than one week.
     private cleanupCvesCacheDir(): string {
         const files: string[] = fs.readdirSync(this._projectCvesCache);

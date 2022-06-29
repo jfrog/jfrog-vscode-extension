@@ -8,7 +8,8 @@ import { ConnectionUtils } from '../connect/connectionUtils';
 import { LogManager } from '../log/logManager';
 
 export class Resource {
-    private static readonly MILLISECONDS_IN_HOUR: number = 3600000;
+    // You should not change this variable. This may only be done for testing purposes.
+    public static MILLISECONDS_IN_HOUR: number = 3600000;
     private downloadTarget: string;
     private downloadDir: string;
     private path: string;
@@ -49,14 +50,15 @@ export class Resource {
         this._logManager.logMessage('Downloading new update from ' + this.downloadTarget, 'DEBUG');
         if (!fs.existsSync(this.downloadDir)) {
             fs.mkdirSync(this.downloadDir, { recursive: true });
-        } else if (Date.now() - fs.statSync(this.downloadDir).birthtimeMs > Resource.MILLISECONDS_IN_HOUR) {
+        } else if (Date.now() - fs.statSync(this.downloadDir).birthtimeMs < Resource.MILLISECONDS_IN_HOUR) {
             this._logManager.logMessage('The new update will be skipped as it is already in progress', 'DEBUG');
             // By here, someone else is already downloading the scanner.
             return;
         } else {
             // Seems like it is a left over from other download.
             this._logManager.logMessage('Cleanup old update process at' + this.downloadDir, 'DEBUG');
-            fs.rmSync(this.downloadDir);
+            fs.rmSync(this.downloadDir, { recursive: true });
+            fs.mkdirSync(this.downloadDir, { recursive: true });
         }
         try {
             await this._connectionManager
@@ -78,15 +80,12 @@ export class Resource {
             return true;
         }
         let checksumResult: IChecksumResult = { sha256: '', sha1: '', md5: '' };
-        try {
-            checksumResult = await this._connectionManager
-                .artifactory()
-                .download()
-                .getArtifactChecksum(this.downloadSource);
-        } catch (error) {
-            this._logManager.logMessage("Error occurred while fetching an update from '" + this.downloadSource + "'. Error: " + error, 'ERR');
-            return false;
-        }
+
+        checksumResult = await this._connectionManager
+            .artifactory()
+            .download()
+            .getArtifactChecksum(this.downloadSource);
+
         // Compare the sha256 of the cve applicability binary with the latest released binary.
         const fileBuffer: Buffer = fs.readFileSync(this.path);
         const hashSum: crypto.Hash = crypto.createHash('sha256').update(fileBuffer);
