@@ -13,7 +13,7 @@ export class Resource {
     private downloadTarget: string;
     private downloadDir: string;
     private path: string;
-    private sha2: string|undefined;
+    private sha2: string | undefined;
 
     private _connectionManager: JfrogClient = ConnectionUtils.createJfrogClient(
         'https://releases.jfrog.io',
@@ -88,7 +88,7 @@ export class Resource {
             .getArtifactChecksum(this.downloadSource);
 
         // Compare the sha256 of the cve applicability binary with the latest released binary.
-        if (this.sha2 === undefined){
+        if (this.sha2 === undefined) {
             const fileBuffer: Buffer = fs.readFileSync(this.path);
             const hashSum: crypto.Hash = crypto.createHash('sha256').update(fileBuffer);
             this.sha2 = hashSum.digest('hex');
