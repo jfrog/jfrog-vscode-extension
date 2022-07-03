@@ -44,10 +44,9 @@ export class ApplicabilityCodeActionProvider implements vscode.CodeActionProvide
         }
         return undefined;
     }
+    
     /**
-     * Add an eye icon to the CVE node. Clicking on it opens the source code for the CVE.
-     * @param node
-     * @returns
+     * Add an eye icon to the CVE node. Clicking on it opens the file at which the CVE applies.
      */
     private createCommand(node: SourceCodeCveTreeNode): vscode.Command {
         return {
@@ -57,6 +56,9 @@ export class ApplicabilityCodeActionProvider implements vscode.CodeActionProvide
         } as vscode.Command;
     }
 
+    /**
+     * Updates a diagnostics in a document based on CVEs  found in it.
+     */
     public async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
         const scanResult: SourceCodeFileTreeNode | undefined = this._treesManager.sourceCodeTreeDataProvider.getFileTreeNode(document.fileName);
         if (scanResult === undefined) {

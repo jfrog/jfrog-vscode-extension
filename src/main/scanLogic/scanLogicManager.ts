@@ -56,7 +56,7 @@ export class ScanLogicManager implements ExtensionComponent {
                 projectName: projectDetails.name
             } as IProjectDetailsCacheObject;
             if (!quickScan) {
-                // Deletes old cache file related to Project's CVEs.
+                // Deletes the old CVEs cache file for the given project.
                 this._scanCacheManager.deleteProjectDetailsCacheObject(projectDetailsCacheObject.projectPath);
             }
             projectDetails.toArray().forEach(project => {

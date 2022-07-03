@@ -28,7 +28,7 @@ export class IconsPaths {
     // License
     static readonly VIOLATED_LICENSE: string = IconsPaths.getIconPath('violatedLicense');
 
-    //Project type
+    // Icons for source code tree view.
     static readonly PYTHON: string = IconsPaths.getIconPath(path.join('package', 'pypi'));
     static readonly NPM: string = IconsPaths.getIconPath(path.join('package', 'npm'));
 

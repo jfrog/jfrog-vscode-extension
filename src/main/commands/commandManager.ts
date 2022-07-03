@@ -114,7 +114,13 @@ export class CommandManager implements ExtensionComponent {
         this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.Dependency);
         this.onSelectNode(dependenciesTreeNode);
     }
-    private jumpToSource(node: SourceCodeCveTreeNode | VulnerabilityNode, index?: number) {
+    
+    /**
+     * Reveal the file and a specific line number that aCVE is found by the CVE applicability scan.
+     * @param node - CVE node
+     * @param index - index to jump in the CVE Node.
+     */
+    private jumpToSource(node: SourceCodeCveTreeNode | VulnerabilityNode, index: number) {
         if (node instanceof VulnerabilityNode) {
             this._focusManager.focusOnCve(node.sourceCodeCveTreeNode);
         } else {
@@ -169,6 +175,10 @@ export class CommandManager implements ExtensionComponent {
         this.onSelectNode(dependenciesTreeNode);
     }
 
+    /**
+     * Shows a specific node in the source code tree after clicking on the bulb icon in the source code.
+     * @param sourceCodeCveTreeNode
+     */
     private showInSourceCodeTree(sourceCodeCveTreeNode: SourceCodeCveTreeNode) {
         this._treesManager.sourceCodeTreeView.reveal(sourceCodeCveTreeNode, { focus: true, select: true, expand: true });
     }
@@ -234,6 +244,9 @@ export class CommandManager implements ExtensionComponent {
             },
             async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {
                 progress.report({ message: '📝 Code vulnerability scanning' });
+                token.onCancellationRequested(() => {
+                    console.log('Canceled CVE Applicability scan');
+                });
                 await this._treesManager.sourceCodeTreeDataProvider.update();
                 await this._treesManager.sourceCodeTreeDataProvider.refresh();
             }

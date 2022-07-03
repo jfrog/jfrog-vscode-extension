@@ -23,7 +23,7 @@ export class GraphScanLogic extends AbstractScanLogic {
     public async scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Set<ComponentDetails>,
-        componentToCves: ProjectComponents,
+        projectComponents: ProjectComponents,
         checkCanceled: () => void
     ) {
         let graphResponse: IGraphResponse = await this._connectionManager.scanGraph(
@@ -38,10 +38,10 @@ export class GraphScanLogic extends AbstractScanLogic {
         let issues: IIssueCacheObject[] = [];
 
         if (graphResponse.violations) {
-            this.populateViolations(graphResponse.violations, issues, licenses, scannedComponents, componentToCves);
+            this.populateViolations(graphResponse.violations, issues, licenses, scannedComponents, projectComponents);
         }
         if (graphResponse.vulnerabilities) {
-            this.populateVulnerabilities(graphResponse.vulnerabilities, issues, scannedComponents, componentToCves);
+            this.populateVulnerabilities(graphResponse.vulnerabilities, issues, scannedComponents, projectComponents);
         }
         if (graphResponse.licenses) {
             this.populateLicenses(graphResponse.licenses, licenses, scannedComponents);
@@ -56,13 +56,13 @@ export class GraphScanLogic extends AbstractScanLogic {
         issues: IIssueCacheObject[],
         licenses: Dictionary<string, ILicenseCacheObject>,
         scannedComponents: Map<string, INodeInfo>,
-        componentToCves: ProjectComponents
+        projectComponents: ProjectComponents
     ) {
         for (const violation of violations) {
             if (violation.license_key && violation.license_key !== '') {
                 this.populateLicense(violation, licenses, scannedComponents, true);
             } else {
-                this.populateVulnerability(violation, issues, scannedComponents, componentToCves);
+                this.populateVulnerability(violation, issues, scannedComponents, projectComponents);
             }
         }
     }
@@ -71,10 +71,10 @@ export class GraphScanLogic extends AbstractScanLogic {
         vulnerabilities: IVulnerability[],
         issues: IIssueCacheObject[],
         scannedComponents: Map<string, INodeInfo>,
-        componentToCves: ProjectComponents
+        projectComponents: ProjectComponents
     ) {
         for (const vuln of vulnerabilities) {
-            this.populateVulnerability(vuln, issues, scannedComponents, componentToCves);
+            this.populateVulnerability(vuln, issues, scannedComponents, projectComponents);
         }
     }
 
@@ -82,7 +82,7 @@ export class GraphScanLogic extends AbstractScanLogic {
         vuln: IVulnerability,
         issues: IIssueCacheObject[],
         scannedComponents: Map<string, INodeInfo>,
-        componentToCves: ProjectComponents
+        projectComponents: ProjectComponents
     ) {
         for (let [componentId, vulnComponent] of Object.entries(vuln.components)) {
             // Add vulnerability to the issues array
@@ -97,10 +97,10 @@ export class GraphScanLogic extends AbstractScanLogic {
                 references: Translators.cleanReferencesLink(vuln.references)
             } as IIssueCacheObject);
             cves.forEach(cve => {
-                let cveDetails: CveDetails | undefined = componentToCves.componentIdToCve.get(componentId);
+                let cveDetails: CveDetails | undefined = projectComponents.componentIdToCve.get(componentId);
                 if (cveDetails === undefined) {
                     cveDetails = { cveToSeverity: new Map() };
-                    componentToCves.componentIdToCve.set(componentId, cveDetails);
+                    projectComponents.componentIdToCve.set(componentId, cveDetails);
                 }
                 cveDetails.cveToSeverity.set(cve, severity);
             });

@@ -35,7 +35,7 @@ export class ScanCacheManager implements ExtensionComponent {
     private _scanCache!: vscode.Memento;
     private _licensesCache!: string;
     private _issuesCache!: string;
-    // _projectCvesCacheDir - The directory where each project stores its Dependencies CVEs found by Xray.
+    // The directory where each project stores its Dependencies CVEs found by Xray.
     private _projectCvesCache!: string;
     private _isOutdated!: boolean;
 
@@ -76,9 +76,9 @@ export class ScanCacheManager implements ExtensionComponent {
         return scanCacheObject ? scanCacheObject.nodeInfo : undefined;
     }
 
-    // /**
-    //  * Stores a list of project's CVEs in the cache.
-    //  */
+    /**
+     * Stores a list of project's CVEs in the cache.
+     */
     public storeProjectDetailsCacheObject(scannedCveObject: IProjectDetailsCacheObject) {
         const prevObject: IProjectDetailsCacheObject | undefined = this.getProjectDetailsCacheObject(scannedCveObject.projectPath);
         if (prevObject) {
@@ -103,19 +103,20 @@ export class ScanCacheManager implements ExtensionComponent {
             })
         );
     }
-    // /**
-    //  * Generate a uniq local file id for the scanned CVEs.
-    //  */
-    private createKey(key: string): string {
+    
+    /**
+     * Generate a uniq id using sha 256.
+     */
+    private createUniqueKey(id: string): string {
         return crypto
             .createHash('sha256')
-            .update(key)
+            .update(id)
             .digest('hex');
     }
 
-    // /**
-    //  * Delete the old CVE list cache associated with 'projectPath'.
-    //  */
+    /**
+     * Delete the old CVE list cache associated with 'projectPath' id.
+     */
     public deleteProjectDetailsCacheObject(projectPath: string) {
         let scannedCvesPath: string = this.getCvesCacheFile(projectPath);
         if (fs.existsSync(scannedCvesPath)) {
@@ -124,6 +125,11 @@ export class ScanCacheManager implements ExtensionComponent {
         this.cleanupCvesCacheDir();
     }
 
+    /**
+     *  Load project details from cache base on the provided 'projectPath' id
+     * @param projectPath - the id of the project to load
+     * @returns Cache object
+     */
     public getProjectDetailsCacheObject(projectPath: string): IProjectDetailsCacheObject | undefined {
         let scannedCvesPath: string = this.getCvesCacheFile(projectPath);
         if (!fs.existsSync(scannedCvesPath)) {
@@ -257,7 +263,7 @@ export class ScanCacheManager implements ExtensionComponent {
      * @param projectPath - The project path
      */
     private getCvesCacheFile(projectPath: string): string {
-        return path.join(this._projectCvesCache, this.createKey(projectPath));
+        return path.join(this._projectCvesCache, this.createUniqueKey(projectPath));
     }
 
     // Delete any cache from that is older than one week.

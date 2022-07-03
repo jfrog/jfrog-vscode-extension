@@ -53,7 +53,7 @@ export class SourceCodeTreeDataProvider
             for (const [projectType, uris] of projectDescriptors) {
                 for (const uri of uris) {
                     // Only python & npm are supported for CVE Applicability scan.
-                    if (![PackageType.NPM, PackageType.PYTHON].includes(projectType)) {
+                    if (![PackageType.NPM, PackageType.YARN, PackageType.PYTHON].includes(projectType)) {
                         continue;
                     }
                     // Load CVEs from cache (if any) and pass it to CVE applicability scanner.
@@ -84,7 +84,7 @@ export class SourceCodeTreeDataProvider
 
             cmdOutput = this._cveApplicabilityRunner.scan(pathToRoot, whiteListCves, packageType);
             if (cmdOutput === undefined) {
-                this._treesManager.logManager.logMessage('CVE Aplicability is not supported for' + os.platform(), 'DEBUG');
+                this._treesManager.logManager.logMessage('CVE Applicability is not supported for' + os.platform(), 'DEBUG');
                 return;
             }
             if (cmdOutput === '') {

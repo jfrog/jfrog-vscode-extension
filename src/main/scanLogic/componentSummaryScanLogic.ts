@@ -12,7 +12,7 @@ export class ComponentSummaryScanLogic extends AbstractScanLogic {
     public async scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Set<ComponentDetails>,
-        componentToCves: ProjectComponents,
+        projectComponents: ProjectComponents,
         checkCanceled: () => void
     ) {
         progress.report({ message: `2/3:📦 Dependencies scanning`, increment: 0 });
@@ -23,7 +23,7 @@ export class ComponentSummaryScanLogic extends AbstractScanLogic {
             let partialComponentsDetails: ComponentDetails[] = componentsDetails.slice(currentIndex, currentIndex + 100);
             let artifacts: IArtifact[] = await this._connectionManager.summaryComponent(partialComponentsDetails);
             this.addMissingComponents(partialComponentsDetails, artifacts);
-            await this._scanCacheManager.storeArtifacts(artifacts, componentToCves);
+            await this._scanCacheManager.storeArtifacts(artifacts, projectComponents);
             progress.report({ message: `2/3:📦 Dependencies scanning`, increment: step });
         }
     }

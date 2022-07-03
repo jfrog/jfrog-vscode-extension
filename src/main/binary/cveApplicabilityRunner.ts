@@ -7,14 +7,16 @@ import { Resource } from '../utils/resource';
 import { ScanUtils } from '../utils/scanUtils';
 import * as path from 'path';
 import { PackageType } from '../types/projectType';
+
 /**
- * Executes the CVE Applicability binary. Each binary command is a method.
+ * Executes the CVE Applicability binary. Each binary's command is a method.
  */
 export class CveApplicabilityRunner {
     private static readonly MILLISECONDS_IN_TWO_DAYS: number = 172800000;
-
     private _resource: Resource;
     private _isOsSupported: boolean = true;
+    // A file that contains a timestamp.
+    // This tells us when we last checked for an update.
     private _lastUpdateFile: string;
     constructor(connectionManager: ConnectionManager, private _logManager: LogManager) {
         let downloadUrl: string = 'ide-scanners/applicability_scanner/[RELEASE]';
@@ -44,7 +46,7 @@ export class CveApplicabilityRunner {
     }
 
     /**
-     * Update the runner(binary) to latest release.
+     * Update Cve Applicability Runner to the latest released.
      */
     public async update(): Promise<void> {
         if (!this.shouldUpdate()) {
@@ -61,9 +63,9 @@ export class CveApplicabilityRunner {
     /**
      *
      * @param pathToRoot - Project to scan.
-     * @param cvesToScan - CVEs to search.
+     * @param cvesToScan - CVEs to scan.
      * @param packageType - Project type.
-     * @returns Command output or undefined if the current OS is not supported.
+     * @returns Scans a project based on the provided project path. Scans all CVEs or specific ones if 'cveToScan' was provided
      */
     public scan(pathToRoot: string, cvesToScan?: string, packageType?: PackageType): string | undefined {
         try {
@@ -83,7 +85,10 @@ export class CveApplicabilityRunner {
             return '{}';
         }
     }
-
+    
+    /**
+     * @returns Version of the CVE Applicability runner.
+     */
     public version(): string | undefined {
         try {
             if (!this._isOsSupported) {
@@ -101,6 +106,7 @@ export class CveApplicabilityRunner {
             return false;
         }
         if (!fs.existsSync(this._lastUpdateFile)) {
+            // We don't have the time of the last update.
             return true;
         }
         const timestamp: string = fs.readFileSync(this._lastUpdateFile).toString();

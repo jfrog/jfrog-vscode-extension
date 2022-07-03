@@ -13,12 +13,12 @@ export abstract class AbstractScanLogic {
      * @param progress - the progress bar
      * @param componentsToScan - the components to scan
      * @param checkCanceled - a function that throws ScanCancellationError if the user chose to stop the scan
-     * @param componentToCves - A map of componentId (dependency) -> (Cve, severity)
+     * @param projectComponents - A map of componentId (dependency) -> (Cve, severity)
      */
     public abstract scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Set<ComponentDetails>,
-        componentToCves: ProjectComponents,
+        projectComponents: ProjectComponents,
         checkCanceled: () => void
     ): Promise<void>;
 }

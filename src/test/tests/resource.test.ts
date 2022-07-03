@@ -50,11 +50,11 @@ describe('Resource Tests', () => {
         let err: Error | unknown;
         try {
             nock(SERVER_URL)
-            .get(`/artifactory/download/path/to/resource/file1`)
-            .replyWithFile(200, file)
-            .head(`/artifactory/download/path/to/resource/file1`)
-            .delay(6000)
-            .reply(200, { license: 'mit' }, { 'x-checksum-md5': '1', 'x-checksum-sha1': '2', 'x-checksum-sha256': "123" });
+                .get(`/artifactory/download/path/to/resource/file1`)
+                .replyWithFile(200, file)
+                .head(`/artifactory/download/path/to/resource/file1`)
+                .delay(6000)
+                .reply(200, { license: 'mit' }, { 'x-checksum-md5': '1', 'x-checksum-sha1': '2', 'x-checksum-sha256': '123' });
             // Download updates.
             await resource.update(true);
             // Try to check if we have the latest and expect to fail for timeout.
@@ -74,7 +74,7 @@ describe('Resource Tests', () => {
     });
 
     it('Update of resource has already begun long time ago', async () => {
-        createNockServer("123");
+        createNockServer('123');
         const tmp: number = Resource.MILLISECONDS_IN_HOUR;
         try {
             fs.mkdirSync(path.join(tmpPath, 'download'), { recursive: true });
@@ -87,11 +87,11 @@ describe('Resource Tests', () => {
         }
     });
 
-    function createNockServer(sha256?:string): nock.Scope {
+    function createNockServer(sha256?: string): nock.Scope {
         return nock(SERVER_URL)
             .get(`/artifactory/download/path/to/resource/file1`)
             .replyWithFile(200, file)
             .head(`/artifactory/download/path/to/resource/file1`)
-            .reply(200, { license: 'mit' }, { 'x-checksum-md5': '1', 'x-checksum-sha1': '2', 'x-checksum-sha256': sha256 ??fileSha256 });
+            .reply(200, { license: 'mit' }, { 'x-checksum-md5': '1', 'x-checksum-sha1': '2', 'x-checksum-sha256': sha256 ?? fileSha256 });
     }
 });

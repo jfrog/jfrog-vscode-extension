@@ -44,7 +44,6 @@ export class ProjectDetails {
     }
 
     /**
-     *
      * @param dependencyId - component id of the dependency
      */
     public addDependency(dependencyId: string) {
