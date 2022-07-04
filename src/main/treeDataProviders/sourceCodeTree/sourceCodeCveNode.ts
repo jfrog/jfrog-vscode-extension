@@ -60,18 +60,34 @@ export class SourceCodeCveTreeNode extends vscode.TreeItem {
         const results: TreeDataHolder[] = [];
         for (let i: number = 0; i < this._children.length; i++) {
             results.push(
-                new TreeDataHolder('Code issue', this._children[i].codeIssue, undefined, undefined, undefined, {
-                    command: 'jfrog.source.code.scan.jumpToSource',
-                    title: 'Jump To Code',
-                    arguments: [this, i]
-                })
+                new TreeDataHolder(
+                    'Code issue',
+                    this._children[i].codeIssue,
+                    undefined,
+                    undefined,
+                    undefined,
+                    {
+                        command: 'jfrog.source.code.scan.jumpToSource',
+                        title: 'Jump To Code',
+                        arguments: [this, i]
+                    },
+                    ContextKeys.SHOW_IN_SOURCE_CODE_ENABLED
+                )
             );
             results.push(
-                new TreeDataHolder('Code reference', this._children[i].codeReferences, undefined, undefined, undefined, {
-                    command: 'jfrog.source.code.scan.jumpToSource',
-                    title: 'Jump To Code',
-                    arguments: [this, i]
-                })
+                new TreeDataHolder(
+                    'Code reference',
+                    this._children[i].codeReferences,
+                    undefined,
+                    undefined,
+                    undefined,
+                    {
+                        command: 'jfrog.source.code.scan.jumpToSource',
+                        title: 'Jump To Code',
+                        arguments: [this, i]
+                    },
+                    ContextKeys.SHOW_IN_SOURCE_CODE_ENABLED
+                )
             );
         }
         return results;

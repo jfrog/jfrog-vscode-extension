@@ -191,6 +191,7 @@ export class SourceCodeTreeDataProvider
             let holder: TreeDataHolder = <TreeDataHolder>element;
             let treeItem: vscode.TreeItem = new vscode.TreeItem(holder.key);
             treeItem.description = holder.value;
+            treeItem.contextValue = holder.context;
             treeItem.command = holder.command;
             if (holder.link) {
                 treeItem.command = {

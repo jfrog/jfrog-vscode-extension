@@ -85,7 +85,7 @@ export class CveApplicabilityRunner {
             return '{}';
         }
     }
-    
+
     /**
      * @returns Version of the CVE Applicability runner.
      */

@@ -114,18 +114,25 @@ export class CommandManager implements ExtensionComponent {
         this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.Dependency);
         this.onSelectNode(dependenciesTreeNode);
     }
-    
+
     /**
-     * Reveal the file and a specific line number that aCVE is found by the CVE applicability scan.
+     * Reveal the file and a specific line number that a CVE is found by the CVE applicability scan.
+     * This functionality is included in:
+     * 1. Click on the 'eye' button
+     * 2. Click on the actual CVE in the CVE applicability view
+     * 3. Click on the reference/ actual CVE in the CVE applicability view
+     * 4. Click on the cve node in the dependency detail view
      * @param node - CVE node
      * @param index - index to jump in the CVE Node.
      */
-    private jumpToSource(node: SourceCodeCveTreeNode | VulnerabilityNode, index: number) {
+    private jumpToSource(node: SourceCodeCveTreeNode | VulnerabilityNode | TreeDataHolder, index: number) {
         if (node instanceof VulnerabilityNode) {
-            this._focusManager.focusOnCve(node.sourceCodeCveTreeNode);
-        } else {
-            this._focusManager.focusOnCve(node, index);
+            return this._focusManager.focusOnCve(node.sourceCodeCveTreeNode);
         }
+        if (node instanceof TreeDataHolder) {
+            return this._focusManager.focusOnCve(node.command?.arguments?.[0], node.command?.arguments?.[1]);
+        }
+        return this._focusManager.focusOnCve(node, index);
     }
 
     /**

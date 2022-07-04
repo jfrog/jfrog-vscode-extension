@@ -44,7 +44,7 @@ export class ApplicabilityCodeActionProvider implements vscode.CodeActionProvide
         }
         return undefined;
     }
-    
+
     /**
      * Add an eye icon to the CVE node. Clicking on it opens the file at which the CVE applies.
      */

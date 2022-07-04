@@ -103,7 +103,7 @@ export class ScanCacheManager implements ExtensionComponent {
             })
         );
     }
-    
+
     /**
      * Generate a uniq id using sha 256.
      */
