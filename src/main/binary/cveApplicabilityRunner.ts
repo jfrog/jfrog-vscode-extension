@@ -54,7 +54,8 @@ export class CveApplicabilityRunner {
         }
         try {
             await this._resource.update(true);
-            fs.writeFileSync(this._lastUpdateFile, Date.now().toString());
+            // Save time when the update accrued.
+            this.saveTime();
         } catch (error) {
             this._logManager.logMessage('failed to update the applicable scanner: ' + error, 'WARN');
         }
@@ -105,15 +106,27 @@ export class CveApplicabilityRunner {
         if (!this._isOsSupported) {
             return false;
         }
+        // Ensure that the last update occurred more than two days ago..
+        const timestamp:number = this.getTime()
+        return Date.now() - timestamp > CveApplicabilityRunner.MILLISECONDS_IN_TWO_DAYS;
+    }
+
+    // Saves the current timestamp.
+    private saveTime(){
+        fs.writeFileSync(this._lastUpdateFile, Date.now().toString());
+    }
+
+    // Returns the last timestamp.
+    private getTime():number{
         if (!fs.existsSync(this._lastUpdateFile)) {
             // We don't have the time of the last update.
-            return true;
+            return 0;
         }
         const timestamp: string = fs.readFileSync(this._lastUpdateFile).toString();
         if (timestamp === '') {
-            return true;
+            return 0;
         }
-        return Date.now() - Number(timestamp) > CveApplicabilityRunner.MILLISECONDS_IN_TWO_DAYS;
+        return Number(timestamp);
     }
 
     private run(args: string[], runAt?: string): string {
