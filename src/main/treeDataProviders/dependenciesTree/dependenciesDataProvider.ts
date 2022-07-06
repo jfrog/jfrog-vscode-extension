@@ -53,6 +53,9 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     }
 
     public async refresh(quickScan: boolean, onChangeFire: () => void) {
+        if (!this._treesManager.connectionManager.areXrayCredentialsSet()) {
+            return;
+        }
         if (this._scanInProgress) {
             if (!quickScan) {
                 vscode.window.showInformationMessage('Previous scan still running...');
