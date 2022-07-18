@@ -2,11 +2,12 @@ import * as os from 'os';
 import * as fs from 'fs';
 import { ConnectionManager } from '../connect/connectionManager';
 import { LogManager } from '../log/logManager';
-import { Configuration } from '../utils/configuration';
-import { Resource } from '../utils/resource';
-import { ScanUtils } from '../utils/scanUtils';
+import { Resource } from './resource';
+import { ScanUtils } from './scanUtils';
 import * as path from 'path';
 import { PackageType } from '../types/projectType';
+import { IClientError } from 'jfrog-client-js';
+import { Configuration } from './configuration';
 
 /**
  * Executes the CVE Applicability binary. Each binary's command is a method.
@@ -36,7 +37,7 @@ export class CveApplicabilityRunner {
                 this._isOsSupported = false;
         }
         this._resource = new Resource(
-            path.join(ScanUtils.getHomePath(), 'applicability.scan'),
+            path.join(ScanUtils.getHomePath(), 'applicability-scan'),
             downloadUrl,
             binary,
             _logManager,
@@ -53,20 +54,20 @@ export class CveApplicabilityRunner {
             return;
         }
         try {
-            await this._resource.update(true);
+            await this._resource.update();
             // Save time when the update accrued.
             this.saveTime();
         } catch (error) {
-            this._logManager.logMessage('failed to update the applicable scanner: ' + error, 'WARN');
+            this._logManager.logMessage('failed to update the applicable scanner: ' + (<IClientError>error).message, 'WARN');
         }
     }
 
     /**
      *
+     * Scans a project based on the provided project path. Scans all CVEs or specific ones if 'cveToScan' was provided.
      * @param pathToRoot - Project to scan.
      * @param cvesToScan - CVEs to scan.
      * @param packageType - Project type.
-     * @returns Scans a project based on the provided project path. Scans all CVEs or specific ones if 'cveToScan' was provided
      */
     public scan(pathToRoot: string, cvesToScan?: string, packageType?: PackageType): string | undefined {
         try {
@@ -82,7 +83,7 @@ export class CveApplicabilityRunner {
             }
             return this.run(['scan', '"' + pathToRoot + '"', cmdArgs]).toString();
         } catch (error) {
-            this._logManager.logMessage('failed to run CVE Applicability scan at ' + pathToRoot + '. ' + error, 'ERR');
+            this._logManager.logMessage('failed to run CVE Applicability scan at ' + pathToRoot + '. ' + (<IClientError>error).message, 'ERR');
             return '{}';
         }
     }
@@ -97,7 +98,7 @@ export class CveApplicabilityRunner {
             }
             return this.run(['version']).toString();
         } catch (error) {
-            this._logManager.logMessage('failed to run CVE Applicability version command.' + error, 'ERR');
+            this._logManager.logMessage('failed to run CVE Applicability version command.' + (<IClientError>error).message, 'ERR');
             return;
         }
     }
@@ -129,7 +130,7 @@ export class CveApplicabilityRunner {
         return Number(timestamp);
     }
 
-    private run(args: string[], runAt?: string): string {
-        return ScanUtils.executeCmd('"' + this._resource.getPath() + '" ' + args.join(' '), runAt).toString();
+    private run(args: string[], cwd?: string): string {
+        return ScanUtils.executeCmd('"' + this._resource.getPath() + '" ' + args.join(' '), cwd).toString();
     }
 }

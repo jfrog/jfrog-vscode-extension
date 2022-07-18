@@ -11,9 +11,9 @@ import { INodeInfo } from '../types/nodeInfo';
 import { Severity } from '../types/severity';
 import { Translators } from '../utils/translators';
 import { ScanCacheObject } from './scanCacheObject';
-import crypto from 'crypto'; // Important - Don't import '*'. It'll import deprecated encryption methods
 import { CveDetails, ProjectComponents } from '../types/projectComponents';
 import { IProjectDetailsCacheObject } from '../types/IProjectDetailsCacheObject';
+import { ScanUtils } from '../utils/scanUtils';
 
 /**
  * Provide the cache mechanism. The scan cache consists of 3 components -
@@ -47,7 +47,7 @@ export class ScanCacheManager implements ExtensionComponent {
         }
         this._issuesCache = path.join(storageDir, 'issues');
         // CVEs found in the workspace.
-        this._projectCvesCache = path.join(storageDir, 'scanned.cves');
+        this._projectCvesCache = path.join(storageDir, 'scanned-cves');
         this._licensesCache = path.join(storageDir, 'licenses');
         if (!fs.existsSync(this._issuesCache)) {
             fs.mkdirSync(this._issuesCache, { recursive: true } as fs.MakeDirectoryOptions);
@@ -82,11 +82,11 @@ export class ScanCacheManager implements ExtensionComponent {
     public storeProjectDetailsCacheObject(scannedCveObject: IProjectDetailsCacheObject) {
         const prevObject: IProjectDetailsCacheObject | undefined = this.getProjectDetailsCacheObject(scannedCveObject.projectPath);
         if (prevObject) {
-            for (const [cve, sevirity] of prevObject.cves) {
+            for (const [cve, severity] of prevObject.cves) {
                 if (scannedCveObject.cves == undefined) {
                     scannedCveObject.cves = new Map<string, Severity>();
                 }
-                scannedCveObject.cves.set(cve, sevirity);
+                scannedCveObject.cves.set(cve, severity);
             }
         }
         fs.writeFileSync(
@@ -97,21 +97,15 @@ export class ScanCacheManager implements ExtensionComponent {
                         dataType: 'Map',
                         value: Array.from(value.entries())
                     };
-                } else {
-                    return value;
                 }
+                return value;
             })
         );
     }
 
-    /**
-     * Generate a uniq id using sha 256.
-     */
+    // Generate a unique id using SHA 1 algorithm.
     private createUniqueKey(id: string): string {
-        return crypto
-            .createHash('sha256')
-            .update(id)
-            .digest('hex');
+        return ScanUtils.Hash('sha1', id);
     }
 
     /**
@@ -119,9 +113,7 @@ export class ScanCacheManager implements ExtensionComponent {
      */
     public deleteProjectDetailsCacheObject(projectPath: string) {
         let scannedCvesPath: string = this.getCvesCacheFile(projectPath);
-        if (fs.existsSync(scannedCvesPath)) {
-            fs.rmSync(scannedCvesPath);
-        }
+        fs.rmSync(scannedCvesPath, { force: true } as fs.RmOptions);
         this.cleanupCvesCacheDir();
     }
 
@@ -148,6 +140,7 @@ export class ScanCacheManager implements ExtensionComponent {
             })
         );
     }
+
     public storeIssue(issue: IIssueCacheObject) {
         fs.writeFileSync(this.getIssuePath(issue.issueId), JSON.stringify(issue));
     }
@@ -208,10 +201,10 @@ export class ScanCacheManager implements ExtensionComponent {
     }
 
     /**
-    /  * Store Artifacts (vulnerability data from Xray) in local cache
-    /  * @param artifacts - The data to save
-    /  * @param componentToCves - A map of componentId (dependency key) -> (Cve, severity)
-    /  */
+     * Store Artifacts (vulnerability data from Xray) in local cache
+     * @param artifacts - The data to save
+     * @param componentToCves - A map of componentId (dependency key) -> (Cve, severity)
+     */
     public async storeArtifacts(artifacts: IArtifact[], componentToCves: ProjectComponents): Promise<void> {
         let scannedComponents: Map<string, INodeInfo> = new Map();
         let issues: IIssueCacheObject[] = [];

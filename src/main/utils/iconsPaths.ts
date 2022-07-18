@@ -38,14 +38,14 @@ export class IconsPaths {
 }
 
 export class PackageDescriptorUtils {
-    public static getIcon(packageType: PackageType): string {
+    public static getIcon(packageType: PackageType): string | undefined {
         switch (packageType) {
             case PackageType.PYTHON:
                 return IconsPaths.PYTHON;
             case PackageType.NPM:
                 return IconsPaths.NPM;
             default:
-                return IconsPaths.NPM;
+                return undefined;
         }
     }
 }

@@ -48,7 +48,7 @@ describe('Cve Applicability Tree Tests', () => {
         ];
     });
 
-    it('Source Code Cve Tree Node', () => {
+    it('Source code CVE tree node', () => {
         const cve: string = 'CVE-2021-31597';
         const sourceCodeCveTreeNodeDetails: SourceCodeCveTreeNodeDetails[] = [new SourceCodeCveTreeNodeDetails('abc', 'def', 1, 2, 3, 4)];
         const node: SourceCodeCveTreeNode = new SourceCodeCveTreeNode(cve, sourceCodeCveTreeNodeDetails, undefined, Severity.High);
@@ -64,7 +64,7 @@ describe('Cve Applicability Tree Tests', () => {
         assert.strictEqual(children.length, 2);
     });
 
-    it('Source Code File Tree Node', () => {
+    it('Source code file tree node', () => {
         const cve: string = 'CVE-2021-31597';
         const sourceCodeCveTreeNodeDetails: SourceCodeCveTreeNodeDetails[] = [new SourceCodeCveTreeNodeDetails('abc', 'def', 1, 2, 3, 4)];
         let sourceCodeFileTreeNode: SourceCodeFileTreeNode = new SourceCodeFileTreeNode(path.join('a', 'b', 'c'), []);
@@ -75,13 +75,13 @@ describe('Cve Applicability Tree Tests', () => {
         assert.deepEqual(sourceCodeFileTreeNode.children[0], node1);
         assert.deepEqual(sourceCodeFileTreeNode.children[1], node2);
 
-        sourceCodeFileTreeNode = SourceCodeFileTreeNode.createFailedScan();
+        sourceCodeFileTreeNode = SourceCodeFileTreeNode.createFailedScanNode();
         assert.strictEqual(sourceCodeFileTreeNode.children.length, 0);
         assert.strictEqual(sourceCodeFileTreeNode.label, 'Fail to scan project');
         assert.strictEqual(sourceCodeFileTreeNode.collapsibleState, vscode.TreeItemCollapsibleState.None);
     });
 
-    it('Source Code Root Tree Node', () => {
+    it('Source code root tree node', () => {
         const cve1: string = 'CVE-2021-31597';
         const cve2: string = 'CVE-2021-43818';
         const sourceCodeCveTreeNodeDetails: SourceCodeCveTreeNodeDetails[] = [new SourceCodeCveTreeNodeDetails('abc', 'def', 1, 2, 3, 4)];
@@ -96,20 +96,20 @@ describe('Cve Applicability Tree Tests', () => {
         sourceCodeRootTreeNode.addChild(sourceCodeFileTreeNode);
         assert.strictEqual(sourceCodeRootTreeNode.label, 'my-project');
         assert.strictEqual(sourceCodeRootTreeNode.description, path.join('path', 'to', 'my-project'));
-        assert.strictEqual(sourceCodeRootTreeNode.isCveApplicable(cve1), false);
-        assert.strictEqual(sourceCodeRootTreeNode.isCveNotApplicable(cve1), false);
+        assert.isFalse(sourceCodeRootTreeNode.isCveApplicable(cve1));
+        assert.isFalse(sourceCodeRootTreeNode.isCveNotApplicable(cve1));
 
         sourceCodeRootTreeNode.noApplicableCves = new Set<string>([cve1]);
         sourceCodeRootTreeNode.applicableCves = new Map<string, SourceCodeCveTreeNode>([[cve2, node2]]);
 
-        assert.strictEqual(sourceCodeRootTreeNode.isCveNotApplicable(cve1), true);
-        assert.strictEqual(sourceCodeRootTreeNode.isCveNotApplicable(cve2), false);
+        assert.isTrue(sourceCodeRootTreeNode.isCveNotApplicable(cve1));
+        assert.isFalse(sourceCodeRootTreeNode.isCveNotApplicable(cve2));
 
-        assert.strictEqual(sourceCodeRootTreeNode.isCveApplicable(cve2), true);
-        assert.strictEqual(sourceCodeRootTreeNode.isCveApplicable(cve1), false);
+        assert.isTrue(sourceCodeRootTreeNode.isCveApplicable(cve2));
+        assert.isFalse(sourceCodeRootTreeNode.isCveApplicable(cve1));
     });
 
-    it('Source Code Tree Data Provider', async () => {
+    it('Source code tree data provider', async () => {
         let issue: IIssueCacheObject = {
             issueId: 'XRAY-123',
             severity: Severity.Critical,
@@ -131,7 +131,7 @@ describe('Cve Applicability Tree Tests', () => {
 
         assert.isTrue(sourceCodeTreeDataProvider.isCveApplicable(projectPath, 'CVE-2020-11022'));
         assert.isFalse(sourceCodeTreeDataProvider.isCveApplicable(projectPath, 'CVE-2018-7749'));
-        const node: SourceCodeCveTreeNode | undefined = sourceCodeTreeDataProvider.getCveApplicable(projectPath, 'CVE-2020-11022');
+        const node: SourceCodeCveTreeNode | undefined = sourceCodeTreeDataProvider.getApplicableCve(projectPath, 'CVE-2020-11022');
         assert.isTrue(node !== undefined);
         assert.strictEqual(node?.label, 'CVE-2020-11022');
         assert.strictEqual(node?.cve, 'CVE-2020-11022');
@@ -165,7 +165,7 @@ describe('Cve Applicability Tree Tests', () => {
         assert;
     });
 
-    it('Source Code Tree Data Provider Read Project Name From Cache', async () => {
+    it('Source code tree data provider read project name from cache', async () => {
         const projectPath: string = path.join(__dirname, '..', 'resources', 'cveApplicability', 'project');
         let projectDetails: IProjectDetailsCacheObject = {
             projectPath: projectPath,

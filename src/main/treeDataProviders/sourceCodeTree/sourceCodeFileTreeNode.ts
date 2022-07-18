@@ -3,8 +3,11 @@ import { Severity } from '../../types/severity';
 import * as path from 'path';
 import { SourceCodeCveTreeNode } from './sourceCodeCveNode';
 import { SourceCodeRootTreeNode } from './sourceCodeRootTreeNode';
+import { Utils } from '../utils/utils';
 
-// Represent a file node containing CVEs in the CVE Applicability view.
+/**
+ * Represent a file node containing CVEs in the CVE Applicability view.
+ */
 export class SourceCodeFileTreeNode extends vscode.TreeItem {
     private _topSeverity?: Severity;
 
@@ -14,7 +17,8 @@ export class SourceCodeFileTreeNode extends vscode.TreeItem {
         private _parent?: SourceCodeRootTreeNode,
         collapsibleState?: vscode.TreeItemCollapsibleState
     ) {
-        super(_filePath.substring(_filePath.lastIndexOf(path.sep) + 1), collapsibleState ?? vscode.TreeItemCollapsibleState.Expanded);
+        // File node is named as its file name.
+        super(Utils.getLastSegment(_filePath), collapsibleState ?? vscode.TreeItemCollapsibleState.Expanded);
         if (_parent) {
             _parent.children.push(this);
         }
@@ -23,7 +27,7 @@ export class SourceCodeFileTreeNode extends vscode.TreeItem {
         }
     }
 
-    public static createFailedScan(): SourceCodeFileTreeNode {
+    public static createFailedScanNode(): SourceCodeFileTreeNode {
         const node: SourceCodeFileTreeNode = new SourceCodeFileTreeNode('Fail to scan project', [], undefined, vscode.TreeItemCollapsibleState.None);
         node._topSeverity = Severity.Medium;
         return node;

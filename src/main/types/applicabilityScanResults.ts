@@ -1,5 +1,6 @@
 export interface ApplicabilityScanResults {
     results: Map<string, ApplicabilityScanResult[]>;
+    // All CVEs that the Applicability scanner searched for (regardless of whether they were found)
     scanners_ran: string[];
 }
 

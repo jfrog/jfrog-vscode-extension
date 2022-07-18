@@ -4,7 +4,9 @@ import { Severity } from '../../types/severity';
 import { TreeDataHolder } from '../utils/treeDataHolder';
 import { SourceCodeFileTreeNode } from './sourceCodeFileTreeNode';
 
-// Represent a CVE node in CVE Applicability view.
+/**
+ * Represent a CVE node in CVE Applicability view.
+ */
 export class SourceCodeCveTreeNode extends vscode.TreeItem {
     private _children: SourceCodeCveTreeNodeDetails[] = [];
 
@@ -68,7 +70,7 @@ export class SourceCodeCveTreeNode extends vscode.TreeItem {
                     undefined,
                     {
                         command: 'jfrog.source.code.scan.jumpToSource',
-                        title: 'Jump To Code',
+                        title: 'Show in source code',
                         arguments: [this, i]
                     },
                     ContextKeys.SHOW_IN_SOURCE_CODE_ENABLED
@@ -83,7 +85,7 @@ export class SourceCodeCveTreeNode extends vscode.TreeItem {
                     undefined,
                     {
                         command: 'jfrog.source.code.scan.jumpToSource',
-                        title: 'Jump To Code',
+                        title: 'Show in source code',
                         arguments: [this, i]
                     },
                     ContextKeys.SHOW_IN_SOURCE_CODE_ENABLED

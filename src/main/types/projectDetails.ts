@@ -4,9 +4,9 @@ import { PackageType } from './projectType';
 import Set from 'typescript-collections/dist/lib/Set';
 
 export class ProjectDetails {
-    // dependencyGAV -> ComponentDetails
     private _dependencies: Set<ComponentDetails> = new Set<ComponentDetails>();
     private _name: string;
+
     constructor(private _path: string, private _type: PackageType) {
         this._name = _path.substring(_path.lastIndexOf(path.sep) + 1);
     }

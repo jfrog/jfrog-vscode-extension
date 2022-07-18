@@ -1,5 +1,4 @@
 import { execSync } from 'child_process';
-import crypto from 'crypto'; // Important - Don't import '*'. It'll import deprecated encryption methods
 import {
     IAqlSearchResult,
     IArtifact,
@@ -20,6 +19,7 @@ import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
 import Set from 'typescript-collections/dist/lib/Set';
 import { ConnectionUtils } from './connectionUtils';
+import { ScanUtils } from '../utils/scanUtils';
 
 /**
  * Manage the Xray credentials and perform connection with Xray server.
@@ -548,10 +548,7 @@ export class ConnectionManager implements ExtensionComponent {
      * @returns hashed account id
      */
     private createAccountId(url: string, username: string): string {
-        return crypto
-            .createHash('sha256')
-            .update(url + username)
-            .digest('hex');
+        return ScanUtils.Hash('sha256', url + username);
     }
 
     private updateConnectionIcon() {

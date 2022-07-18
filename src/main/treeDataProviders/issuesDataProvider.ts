@@ -40,9 +40,9 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
                 // Focus on vulnerable line on issue (CVE) left click.
                 element.command = {
                     command: 'jfrog.source.code.scan.jumpToSource',
-                    title: 'Jump To Code',
+                    title: 'Show in source code',
                     arguments: [element]
-                };
+                } as vscode.Command;
             }
         }
         if (!(element instanceof TreeDataHolder)) {
@@ -147,7 +147,7 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
                     }
                     if (this._sourceCodeTreeDataProvider.isCveApplicable(selectedNode.getWorkingDir(), cve)) {
                         applicable = true;
-                        sourceCodeCveTreeNode = this._sourceCodeTreeDataProvider.getCveApplicable(selectedNode.getWorkingDir(), cve);
+                        sourceCodeCveTreeNode = this._sourceCodeTreeDataProvider.getApplicableCve(selectedNode.getWorkingDir(), cve);
                         cve = cve + ' 🔴 ' + ' Applicable';
                     }
                     let issueNode: VulnerabilityNode = new VulnerabilityNode(

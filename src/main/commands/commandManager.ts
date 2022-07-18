@@ -120,8 +120,8 @@ export class CommandManager implements ExtensionComponent {
      * This functionality is included in:
      * 1. Click on the 'eye' button
      * 2. Click on the actual CVE in the CVE applicability view
-     * 3. Click on the reference/ actual CVE in the CVE applicability view
-     * 4. Click on the cve node in the dependency detail view
+     * 3. Click on the reference / actual CVE in the CVE applicability view
+     * 4. Click on the CVE node in the dependency details view
      * @param node - CVE node
      * @param index - index to jump in the CVE Node.
      */
@@ -241,6 +241,14 @@ export class CommandManager implements ExtensionComponent {
     }
 
     private async doCodeScanRefresh(quickScan: boolean = false) {
+        await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
+            progress.report({ message: '📝 Code vulnerability scanning' });
+            checkCanceled();
+            await this._treesManager.sourceCodeTreeDataProvider.update();
+            checkCanceled();
+            await this._treesManager.sourceCodeTreeDataProvider.refresh();
+        }, 'Code vulnerability scanning');
+
         await vscode.window.withProgress(
             <vscode.ProgressOptions>{
                 // Start progress in balloon only if the user initiated a full scan by clicking on the "Refresh" button.

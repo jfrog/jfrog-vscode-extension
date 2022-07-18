@@ -12,7 +12,9 @@ import { assert } from 'chai';
 const SERVER_URL: string = 'http://localhost:8000';
 describe('Resource Tests', () => {
     let logManager: LogManager = new LogManager().activate();
-    const tmpPath: string = path.join(tmp.dirSync().name, 'applicability.scan');
+    const serviceId: string = 'jfrog@some.me';
+
+    const tmpPath: string = path.join(tmp.dirSync().name, 'applicability-scan');
     const resource: Resource = new Resource(
         tmpPath,
         'download/path/to/resource/file1',
@@ -33,12 +35,12 @@ describe('Resource Tests', () => {
     it('Update resource', async () => {
         try {
             const scope: nock.Scope = createNockServer();
-            assert.isTrue(await resource.isUpdateAvailable());
-            await resource.update(true);
+            assert.isTrue(await resource.shouldUpdate());
+            await resource.update();
             assert.isTrue(fs.existsSync(path.join(tmpPath, 'file1')));
             const text: string = fs.readFileSync(path.join(tmpPath, 'file1')).toString();
             assert.equal(text, 'hello-world');
-            assert.isFalse(await resource.isUpdateAvailable());
+            assert.isFalse(await resource.shouldUpdate());
             assert.equal(resource.getPath(), path.join(tmpPath, 'file1'));
             assert.isTrue(scope.isDone());
         } finally {
@@ -46,19 +48,41 @@ describe('Resource Tests', () => {
         }
     });
 
+    it('Bad request while update resource', async () => {
+        let err: any;
+        try {
+            nock(SERVER_URL)
+                .get('/artifactory/api/system/ping')
+                .reply(200, serviceId)
+                .get(`/artifactory/download/path/to/resource/file1`)
+                .reply(400)
+                .head(`/artifactory/download/path/to/resource/file1`)
+                .reply(400);
+            // Download updates.
+            await resource.update();
+        } catch (error) {
+            err = error;
+        }
+        assert.isDefined(err, 'Expect to have a timeout error');
+        assert.strictEqual(err.code, 'ERR_BAD_REQUEST');
+        assert.isDefined(err.message, 'Request failed with status code 400');
+    });
+
     it('Timeout while update resource', async () => {
         let err: Error | unknown;
         try {
             nock(SERVER_URL)
+                .get('/artifactory/api/system/ping')
+                .reply(200, serviceId)
                 .get(`/artifactory/download/path/to/resource/file1`)
                 .replyWithFile(200, file)
                 .head(`/artifactory/download/path/to/resource/file1`)
                 .delay(6000)
                 .reply(200, { license: 'mit' }, { 'x-checksum-md5': '1', 'x-checksum-sha1': '2', 'x-checksum-sha256': '123' });
             // Download updates.
-            await resource.update(true);
+            await resource.update();
             // Try to check if we have the latest and expect to fail for timeout.
-            await resource.update(true);
+            await resource.update();
         } catch (error) {
             err = error;
         } finally {
@@ -69,7 +93,7 @@ describe('Resource Tests', () => {
 
     it('Update of resource has already begun', async () => {
         fs.mkdirSync(path.join(tmpPath, 'download'), { recursive: true });
-        await resource.update(true);
+        await resource.update();
         assert.isFalse(fs.existsSync(path.join(tmpPath, 'file1')));
     });
 
@@ -81,7 +105,7 @@ describe('Resource Tests', () => {
             fs.mkdirSync(path.join(tmpPath, 'download'), { recursive: true });
             // Reduce the time limit for indicating the previous update was stuck.
             Resource.MILLISECONDS_IN_HOUR = 0;
-            await resource.update(true);
+            await resource.update();
             // See that the upload was successfully finished and the resource was updated.
             assert.isTrue(fs.existsSync(path.join(tmpPath, 'file1')), 'expected to find' + path.join(tmpPath, 'file1'));
         } finally {

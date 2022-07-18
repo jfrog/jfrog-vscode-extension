@@ -10,7 +10,7 @@ import { DiagnosticsUtils } from './diagnosticsUtils';
  * @see DiagnosticsManager
  */
 export class ApplicabilityCodeActionProvider implements vscode.CodeActionProvider, ExtensionComponent, vscode.Disposable {
-    static readonly APPLICABILITY_DIAGNOSTIC_SOURCE: string = 'JFrog Applicability Diagnostic';
+    static readonly APPLICABILITY_DIAGNOSTIC_SOURCE: string = 'JFrog CVE Applicability Diagnostic';
     constructor(protected _diagnosticCollection: vscode.DiagnosticCollection, protected _treesManager: TreesManager) {}
 
     activate(context: vscode.ExtensionContext) {
@@ -57,7 +57,7 @@ export class ApplicabilityCodeActionProvider implements vscode.CodeActionProvide
     }
 
     /**
-     * Updates a diagnostics in a document based on CVEs  found in it.
+     * Updates diagnostics in a document based on CVEs found in it.
      */
     public async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
         const scanResult: SourceCodeFileTreeNode | undefined = this._treesManager.sourceCodeTreeDataProvider.getFileTreeNode(document.fileName);
@@ -72,7 +72,7 @@ export class ApplicabilityCodeActionProvider implements vscode.CodeActionProvide
                 let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
                     new vscode.Range(startPos, endPosition),
                     nodeDetails.codeIssue,
-                    DiagnosticsUtils.toDiagnosticSeverity(node.severity ?? Severity.Critical)
+                    DiagnosticsUtils.toDiagnosticSeverity(node.severity ?? Severity.Unknown)
                 );
                 diagnostic.source = this.getSource();
                 diagnostic.code = node.cve;

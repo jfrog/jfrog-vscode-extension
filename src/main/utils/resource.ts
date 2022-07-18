@@ -1,11 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as crypto from 'crypto';
 
 import { JfrogClient } from 'jfrog-client-js';
 import { IChecksumResult } from 'jfrog-client-js';
 import { ConnectionUtils } from '../connect/connectionUtils';
 import { LogManager } from '../log/logManager';
+import { ScanUtils } from './scanUtils';
 
 // Resource classes represent generic instances of external artifact (e.g. binary).
 export class Resource {
@@ -32,7 +32,7 @@ export class Resource {
     constructor(
         private _homeDir: string,
         private downloadSource: string,
-        resourceName: string,
+        private resourceName: string,
         private _logManager: LogManager,
         connectionManager?: JfrogClient
     ) {
@@ -50,14 +50,14 @@ export class Resource {
     }
 
     // Update the resource to the latest released
-    public async update(withExecPrem: boolean) {
-        const updateAvailable: boolean = await this.isUpdateAvailable();
+    public async update() {
+        const updateAvailable: boolean = await this.shouldUpdate();
         if (!updateAvailable) {
             return;
         }
-        this._logManager.logMessage('Downloading new update from ' + this.downloadTarget, 'DEBUG');
+        this._logManager.logMessage('Downloading CVE Applicability scanner from ' + this.downloadTarget, 'DEBUG');
         if (this.isUpdateStarted()) {
-            if (this.isUpdateStuck() === false) {
+            if (!this.isUpdateStuck()) {
                 return;
             }
             fs.rmSync(this.downloadDir, { recursive: true });
@@ -68,17 +68,15 @@ export class Resource {
                 .artifactory()
                 .download()
                 .downloadArtifactToFile(this.downloadSource, this.downloadTarget);
-            if (withExecPrem) {
-                fs.chmodSync(this.downloadTarget, '755');
-            }
+            fs.chmodSync(this.downloadTarget, '755');
             fs.copyFileSync(this.downloadTarget, this.path);
-            this._logManager.logMessage('Update resource was successfully upgraded for ' + this.downloadSource, 'DEBUG');
+            this._logManager.logMessage('The ' + this.resourceName + ' was successfully updated. (' + this.downloadSource + ')', 'DEBUG');
         } finally {
             fs.rmSync(this.downloadDir, { recursive: true, force: true });
         }
     }
 
-    public async isUpdateAvailable(): Promise<boolean> {
+    public async shouldUpdate(): Promise<boolean> {
         if (!fs.existsSync(this.path)) {
             return true;
         }
@@ -92,8 +90,7 @@ export class Resource {
         // Compare the sha256 of the resource with the latest released resource.
         if (this.sha2 === undefined) {
             const fileBuffer: Buffer = fs.readFileSync(this.path);
-            const hashSum: crypto.Hash = crypto.createHash('sha256').update(fileBuffer);
-            this.sha2 = hashSum.digest('hex');
+            this.sha2 = ScanUtils.Hash('sha256', fileBuffer.toString());
         }
         return checksumResult.sha256 !== this.sha2;
     }

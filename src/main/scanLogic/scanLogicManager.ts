@@ -24,31 +24,52 @@ export class ScanLogicManager implements ExtensionComponent {
         return this;
     }
 
+    // Run an Xry scan on all projects dependencies and cache the results.
     public async scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         projectsDetails: ProjectDetails[],
         quickScan: boolean,
         checkCanceled: () => void
     ) {
+        let totalDependenciesToScan: Set<ComponentDetails> = this.mergeProjectsDependencies(projectsDetails);
+        let ScanResults: ProjectComponents = await this.runXrayScan(progress, totalDependenciesToScan, checkCanceled);
+        this.mapProjectsCves(projectsDetails, quickScan, ScanResults);
+    }
+
+    // Merge all known project dependencies in a hash set
+    private mergeProjectsDependencies(projectsDetails: ProjectDetails[]): Set<ComponentDetails> {
         let totalDependenciesToScan: Set<ComponentDetails> = new Set<ComponentDetails>();
-        // Save all the components that will be sent to Xray for scanning.
         for (const projectDetails of projectsDetails) {
             projectDetails.toArray().forEach(el => {
                 totalDependenciesToScan.add(el);
             });
         }
+        return totalDependenciesToScan;
+    }
+
+    // Run Xray scan and cache the results.
+    private async runXrayScan(
+        progress: vscode.Progress<{ message?: string; increment?: number }>,
+        totalDependenciesToScan: Set<ComponentDetails>,
+        checkCanceled: () => void
+    ): Promise<ProjectComponents> {
+        let scanResults: ProjectComponents = { componentIdToCve: new Map() };
         if (totalDependenciesToScan.size() === 0) {
-            return;
+            return scanResults;
         }
         let scanGraphSupported: boolean = await ConnectionUtils.testXrayVersionForScanGraph(
             this._connectionManager.createJfrogClient(),
             this._logManager
         );
-        let projectComponents: ProjectComponents = { componentIdToCve: new Map() };
         let scanLogic: AbstractScanLogic = scanGraphSupported
             ? new GraphScanLogic(this._connectionManager, this._scanCacheManager)
             : new ComponentSummaryScanLogic(this._connectionManager, this._scanCacheManager);
-        await scanLogic.scanAndCache(progress, totalDependenciesToScan, projectComponents, checkCanceled);
+        await scanLogic.scanAndCache(progress, totalDependenciesToScan, scanResults, checkCanceled);
+        return scanResults;
+    }
+
+    // Update each project's CVEs using X-ray scan results
+    private mapProjectsCves(projectsDetails: ProjectDetails[], quickScan: boolean, scanResults: ProjectComponents) {
         for (const projectDetails of projectsDetails) {
             const projectDetailsCacheObject: IProjectDetailsCacheObject = {
                 cves: new Map<string, Severity>(),
@@ -60,7 +81,7 @@ export class ScanLogicManager implements ExtensionComponent {
                 this._scanCacheManager.deleteProjectDetailsCacheObject(projectDetailsCacheObject.projectPath);
             }
             projectDetails.toArray().forEach(project => {
-                const cveDetails: CveDetails | undefined = projectComponents.componentIdToCve.get(project.component_id);
+                const cveDetails: CveDetails | undefined = scanResults.componentIdToCve.get(project.component_id);
                 if (cveDetails !== undefined) {
                     // Set all the component's CVEs
                     for (const [cve, severity] of cveDetails.cveToSeverity) {

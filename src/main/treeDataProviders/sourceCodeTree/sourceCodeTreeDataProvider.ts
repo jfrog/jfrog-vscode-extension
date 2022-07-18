@@ -12,7 +12,7 @@ import { ScanUtils } from '../../utils/scanUtils';
 import { ApplicabilityScanResult, ApplicabilityScanResults } from '../../types/applicabilityScanResults';
 import { PackageType } from '../../types/projectType';
 import { PackageDescriptorUtils } from '../../utils/iconsPaths';
-import { CveApplicabilityRunner } from '../../binary/cveApplicabilityRunner';
+import { CveApplicabilityRunner } from '../../utils/cveApplicabilityRunner';
 import { IProjectDetailsCacheObject } from '../../types/IProjectDetailsCacheObject';
 
 export class SourceCodeTreeDataProvider
@@ -104,7 +104,7 @@ export class SourceCodeTreeDataProvider
         } catch (error) {
             const node: SourceCodeRootTreeNode | undefined = this.workspaceToTree.get(pathToRoot);
             if (node !== undefined) {
-                node.addChild(SourceCodeFileTreeNode.createFailedScan());
+                node.addChild(SourceCodeFileTreeNode.createFailedScanNode());
             }
             this._treesManager.logManager.logError(<any>error, false);
         }
@@ -142,15 +142,15 @@ export class SourceCodeTreeDataProvider
     }
 
     public isCveApplicable(workspace: string, cve: string): boolean {
-        return this.workspaceToTree.get(workspace)?.applicableCves.has(cve) || false;
+        return this.workspaceToTree.get(workspace)?.isCveApplicable(cve) || false;
     }
 
-    public getCveApplicable(workspace: string, cve: string): SourceCodeCveTreeNode | undefined {
+    public getApplicableCve(workspace: string, cve: string): SourceCodeCveTreeNode | undefined {
         return this.workspaceToTree.get(workspace)?.applicableCves.get(cve);
     }
 
     public isCveNotApplicable(workspace: string, cve: string): boolean {
-        return this.workspaceToTree.get(workspace)?.noApplicableCves.has(cve) || false;
+        return this.workspaceToTree.get(workspace)?.isCveNotApplicable(cve) || false;
     }
 
     public getFileTreeNode(file: string): SourceCodeFileTreeNode | undefined {
@@ -175,16 +175,16 @@ export class SourceCodeTreeDataProvider
             return element;
         }
         if (element instanceof SourceCodeFileTreeNode) {
-            element.iconPath = SeverityUtils.getIcon(element.topSeverity !== undefined ? element.topSeverity : Severity.Critical);
+            element.iconPath = SeverityUtils.getIcon(element.topSeverity !== undefined ? element.topSeverity : Severity.Unknown);
             return element;
         }
         if (element instanceof SourceCodeCveTreeNode) {
             element.command = {
                 command: 'jfrog.source.code.scan.jumpToSource',
-                title: 'Jump To Code',
+                title: 'Show in source code',
                 arguments: [element]
             };
-            element.iconPath = SeverityUtils.getIcon(element.severity !== undefined ? element.severity : Severity.Critical);
+            element.iconPath = SeverityUtils.getIcon(element.severity !== undefined ? element.severity : Severity.Unknown);
             return element;
         }
         if (element instanceof TreeDataHolder) {
@@ -259,7 +259,7 @@ export class SourceCodeTreeDataProvider
         if (version == undefined) {
             return;
         }
-        this._treesManager.logManager.logMessage("Running CVE Applicability  version '" + version.trim() + "'", 'INFO');
+        this._treesManager.logManager.logMessage("Running CVE Applicability version '" + version.trim() + "'", 'INFO');
         await this._treesManager.sourceCodeTreeDataProvider.scanProjects();
         this.onChangeFire();
     }
