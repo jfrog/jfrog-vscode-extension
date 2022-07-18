@@ -11,6 +11,7 @@ import { CiManager } from '../../utils/builds/ciManager';
 import { Configuration } from '../../utils/configuration';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { TreesManager } from '../treesManager';
+import { Utils } from '../utils/utils';
 import { BuildsNode } from './ciNodes/buildsTree';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 
@@ -75,11 +76,7 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
     }
 
     public getTreeItem(element: DependenciesTreeNode): vscode.TreeItem {
-        element.command = {
-            command: 'jfrog.xray.focus',
-            title: '',
-            arguments: [element]
-        };
+        element.command = Utils.createNodeCommand('jfrog.xray.focus', '', [element]);
         if (element instanceof BuildsNode) {
             let status: Status = (<BuildGeneralInfo>element.generalInfo).status;
             element.iconPath = BuildsUtils.getIcon(status);

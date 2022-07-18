@@ -10,6 +10,7 @@ import { TreeDataHolder } from './utils/treeDataHolder';
 import { ContextKeys } from '../constants/contextKeys';
 import { SourceCodeCveTreeNode } from './sourceCodeTree/sourceCodeCveNode';
 import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
+import { Utils } from './utils/utils';
 export abstract class IssueNode extends vscode.TreeItem {
     constructor(label: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
         super(label, collapsibleState);
@@ -38,11 +39,7 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
         if (element instanceof VulnerabilityNode) {
             if (element.sourceCodeCveTreeNode !== undefined) {
                 // Focus on vulnerable line on issue (CVE) left click.
-                element.command = {
-                    command: 'jfrog.source.code.scan.jumpToSource',
-                    title: 'Show in source code',
-                    arguments: [element]
-                } as vscode.Command;
+                element.command = Utils.createNodeCommand('jfrog.source.code.scan.jumpToSource', 'Show in source cod', [element]);
             }
         }
         if (!(element instanceof TreeDataHolder)) {

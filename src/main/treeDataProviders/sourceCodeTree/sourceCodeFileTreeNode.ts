@@ -33,6 +33,17 @@ export class SourceCodeFileTreeNode extends vscode.TreeItem {
         return node;
     }
 
+    public static createNoVulnerabilitiesFound(): SourceCodeFileTreeNode {
+        const node: SourceCodeFileTreeNode = new SourceCodeFileTreeNode(
+            'No vulnerabilities found',
+            [],
+            undefined,
+            vscode.TreeItemCollapsibleState.None
+        );
+        node._topSeverity = Severity.Normal;
+        return node;
+    }
+    
     public get parent(): SourceCodeRootTreeNode | undefined {
         return this._parent;
     }

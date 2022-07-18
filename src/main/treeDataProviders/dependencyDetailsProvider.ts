@@ -37,7 +37,7 @@ export class DependencyDetailsProvider implements vscode.TreeDataProvider<any> {
             // Get 'Dependency Details' data to be Displayed.
             return this._issuesDataProvider.getChildren(element).then(r => {
                 if (r.length > 0) {
-                    return Promise.resolve([this._generalDetailsProvider, this._issuesDataProvider]);
+                    return Promise.resolve([this._issuesDataProvider, this._generalDetailsProvider]);
                 }
                 return Promise.resolve([this._generalDetailsProvider]);
             });

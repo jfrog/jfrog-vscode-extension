@@ -7,7 +7,6 @@ import { ScanUtils } from './scanUtils';
 import * as path from 'path';
 import { PackageType } from '../types/projectType';
 import { IClientError } from 'jfrog-client-js';
-import { Configuration } from './configuration';
 
 /**
  * Executes the CVE Applicability binary. Each binary's command is a method.
@@ -18,7 +17,7 @@ export class CveApplicabilityRunner {
     private _isOsSupported: boolean = true;
     // A file that contains a timestamp.
     // This tells us when we last checked for an update.
-    private _lastUpdateFile: string;
+    private _lastUpdateCheckFile: string;
     constructor(connectionManager: ConnectionManager, private _logManager: LogManager) {
         let downloadUrl: string = 'ide-scanners/applicability_scanner/[RELEASE]';
         let binary: string = 'applicability_scanner';
@@ -31,7 +30,11 @@ export class CveApplicabilityRunner {
                 downloadUrl += '/linux/' + binary;
                 break;
             case 'darwin':
-                downloadUrl += '/mac/' + binary;
+                if (process.arch === 'x64') {
+                    downloadUrl += '/mac/' + binary;
+                } else {
+                    this._isOsSupported = false;
+                }
                 break;
             default:
                 this._isOsSupported = false;
@@ -41,9 +44,9 @@ export class CveApplicabilityRunner {
             downloadUrl,
             binary,
             _logManager,
-            Configuration.getRemoteArtifactory() !== '' ? connectionManager.createJfrogClient() : undefined
+            connectionManager.areXrayCredentialsSet() ? connectionManager.createJfrogClient() : undefined
         );
-        this._lastUpdateFile = path.join(this._resource.homeDir, 'LastUpdateTimestamp');
+        this._lastUpdateCheckFile = path.join(this._resource.homeDir, 'LastUpdateTimestamp');
     }
 
     /**
@@ -112,18 +115,23 @@ export class CveApplicabilityRunner {
         return Date.now() - timestamp > CveApplicabilityRunner.MILLISECONDS_IN_TWO_DAYS;
     }
 
-    // Saves the current timestamp.
+    /**
+     * Returns the last timestamp of the binary.
+     * @returns the last timestamp
+     */
     private saveTime() {
-        fs.writeFileSync(this._lastUpdateFile, Date.now().toString());
+        fs.writeFileSync(this._lastUpdateCheckFile, Date.now().toString());
     }
 
-    // Returns the last timestamp.
+    /**
+     * Returns the last timestamp.
+     */
     private getTime(): number {
-        if (!fs.existsSync(this._lastUpdateFile)) {
+        if (!fs.existsSync(this._lastUpdateCheckFile)) {
             // We don't have the time of the last update.
             return 0;
         }
-        const timestamp: string = fs.readFileSync(this._lastUpdateFile).toString();
+        const timestamp: string = fs.readFileSync(this._lastUpdateCheckFile).toString();
         if (timestamp === '') {
             return 0;
         }

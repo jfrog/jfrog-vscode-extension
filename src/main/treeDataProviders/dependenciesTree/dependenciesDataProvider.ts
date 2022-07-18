@@ -13,6 +13,7 @@ import { TreesManager } from '../treesManager';
 import { RootNode } from './dependenciesRoot/rootTree';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
+import { Utils } from '../utils/utils';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private _filterLicenses: Set<ILicenseKey> = new Set();
@@ -86,11 +87,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     }
 
     public getTreeItem(element: DependenciesTreeNode): vscode.TreeItem {
-        element.command = {
-            command: 'jfrog.xray.focus',
-            title: '',
-            arguments: [element]
-        };
+        element.command = Utils.createNodeCommand('jfrog.xray.focus', '', [element]);
         let topSeverity: Severity = element.topSeverity;
         element.iconPath = SeverityUtils.getIcon(topSeverity ? topSeverity : Severity.Normal);
         return element;

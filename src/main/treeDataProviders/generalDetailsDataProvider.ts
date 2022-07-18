@@ -21,7 +21,7 @@ export class GeneralDetailsDataProvider extends vscode.TreeItem implements vscod
     readonly onDidChangeTreeData: vscode.Event<any> = this._onDidChangeTreeData.event;
 
     constructor(private _scanCacheManager: ScanCacheManager) {
-        super('General', vscode.TreeItemCollapsibleState.Collapsed);
+        super('General', vscode.TreeItemCollapsibleState.Expanded);
     }
 
     public get selectedNode(): DependenciesTreeNode {

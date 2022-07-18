@@ -7,10 +7,14 @@ import { ConnectionUtils } from '../connect/connectionUtils';
 import { LogManager } from '../log/logManager';
 import { ScanUtils } from './scanUtils';
 
-// Resource classes represent generic instances of external artifact (e.g. binary).
+/**
+ * Resource classes represent generic instances of external artifact (e.g. binary).
+ */
+
 export class Resource {
+    // The max amount of time for the update process to complete in milliseconds.
     // You should not change this variable. This may only be done for testing purposes.
-    public static MILLISECONDS_IN_HOUR: number = 3600000;
+    public static maxUpdateTime: number = 3600000;
     // From which to download from.
     private downloadTarget: string;
     // To which dir download the resource.
@@ -104,6 +108,6 @@ export class Resource {
     }
 
     private isUpdateStuck(): boolean {
-        return Date.now() - fs.statSync(this.downloadDir).birthtimeMs > Resource.MILLISECONDS_IN_HOUR;
+        return Date.now() - fs.statSync(this.downloadDir).birthtimeMs > Resource.maxUpdateTime;
     }
 }

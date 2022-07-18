@@ -32,13 +32,6 @@ export class Configuration {
             .trim();
     }
 
-    public static getRemoteArtifactory(): string {
-        return vscode.workspace
-            .getConfiguration('jfrog')
-            .get('jfrog.remote.artifactory', '')
-            .trim();
-    }
-
     /**
      * @returns Xray Watches
      */

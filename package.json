@@ -30,6 +30,10 @@
                 "view": "jfrog.xray",
                 "contents": "Thank you for installing the JFrog extension. If you already have a JFrog environment, please [configure](command:jfrog.xray.connect) its connection details.\nDon't have a JFrog environment? [Get one for FREE](https://github.com/jfrog/jfrog-vscode-extension#set-up-a-free-jfrog-environment-in-the-cloud).",
                 "when": "!areCredentialsSet"
+            },
+            {
+                "view": "jfrog.source.code.scan",
+                "contents": "This view displays the results of applicability scanning of CVEs in the code."
             }
         ],
         "viewsContainers": {

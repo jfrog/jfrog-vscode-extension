@@ -14,6 +14,7 @@ import { PackageType } from '../../types/projectType';
 import { PackageDescriptorUtils } from '../../utils/iconsPaths';
 import { CveApplicabilityRunner } from '../../utils/cveApplicabilityRunner';
 import { IProjectDetailsCacheObject } from '../../types/IProjectDetailsCacheObject';
+import { Utils } from '../utils/utils';
 
 export class SourceCodeTreeDataProvider
     implements vscode.TreeDataProvider<SourceCodeRootTreeNode | SourceCodeFileTreeNode | SourceCodeCveTreeNode | CveApplicabilityRoot> {
@@ -179,11 +180,7 @@ export class SourceCodeTreeDataProvider
             return element;
         }
         if (element instanceof SourceCodeCveTreeNode) {
-            element.command = {
-                command: 'jfrog.source.code.scan.jumpToSource',
-                title: 'Show in source code',
-                arguments: [element]
-            };
+            element.command = Utils.createNodeCommand('jfrog.source.code.scan.jumpToSource', 'Show in source code', [element]);
             element.iconPath = SeverityUtils.getIcon(element.severity !== undefined ? element.severity : Severity.Unknown);
             return element;
         }
@@ -237,9 +234,10 @@ export class SourceCodeTreeDataProvider
         );
         for (let files of projects.values()) {
             files.parent = cveApplicabilityRoot;
-            if (files.children.length > 0) {
-                sourceCodeRootTreeNodes.push(files);
+            if (files.children.length === 0) {
+                files.children.push(SourceCodeFileTreeNode.createNoVulnerabilitiesFound());
             }
+            sourceCodeRootTreeNodes.push(files);
         }
         return cveApplicabilityRoot.children.length > 0 ? cveApplicabilityRoot : undefined;
     }

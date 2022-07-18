@@ -99,17 +99,17 @@ describe('Resource Tests', () => {
 
     it('Update of resource has already begun long time ago', async () => {
         createNockServer('123');
-        const tmp: number = Resource.MILLISECONDS_IN_HOUR;
+        const tmp: number = Resource.maxUpdateTime;
         try {
             // Fake that the download has already begun.
             fs.mkdirSync(path.join(tmpPath, 'download'), { recursive: true });
             // Reduce the time limit for indicating the previous update was stuck.
-            Resource.MILLISECONDS_IN_HOUR = 0;
+            Resource.maxUpdateTime = 0;
             await resource.update();
             // See that the upload was successfully finished and the resource was updated.
             assert.isTrue(fs.existsSync(path.join(tmpPath, 'file1')), 'expected to find' + path.join(tmpPath, 'file1'));
         } finally {
-            Resource.MILLISECONDS_IN_HOUR = tmp;
+            Resource.maxUpdateTime = tmp;
             fs.rmSync(path.join(tmpPath, 'file1'));
         }
     });

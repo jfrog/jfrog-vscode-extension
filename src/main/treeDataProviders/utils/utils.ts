@@ -1,4 +1,5 @@
 import * as pathUtils from 'path';
+import * as vscode from 'vscode';
 
 export class Utils {
     /**
@@ -11,5 +12,13 @@ export class Utils {
             return '';
         }
         return path.substring(path.lastIndexOf(pathUtils.sep) + 1);
+    }
+
+    public static createNodeCommand(name: string, title: string, args: any[]): vscode.Command {
+        return {
+            command: name,
+            title: title,
+            arguments: args
+        };
     }
 }
