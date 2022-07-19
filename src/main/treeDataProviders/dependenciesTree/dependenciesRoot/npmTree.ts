@@ -6,6 +6,7 @@ import { GeneralInfo } from '../../../types/generalInfo';
 import { NpmGlobalScopes, ScopedNpmProject, NpmUtils } from '../../../utils/npmUtils';
 import { RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
+import { Severity } from '../../../types/severity';
 
 export class NpmTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
@@ -42,6 +43,9 @@ export class NpmTreeNode extends RootNode {
             this.workspaceFolder,
             NpmUtils.PKG_TYPE
         );
+        if (npmLsFailed) {
+            this.topSeverity = Severity.Unknown;
+        }
         this.projectDetails.name = productionScope.projectName ? productionScope.projectName : path.join(this.workspaceFolder, 'package.json');
         this.label = this.projectDetails.name;
     }

@@ -103,7 +103,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         let rootChildren: DependenciesTreeNode[] = this._filteredDependenciesTree
             ? this._filteredDependenciesTree.children
             : this.dependenciesTree.children;
-        return Promise.resolve(rootChildren.length === 1 ? rootChildren[0].children : rootChildren);
+        return Promise.resolve(rootChildren.length === 1 && rootChildren[0].children.length > 0 ? rootChildren[0].children : rootChildren);
     }
 
     public getParent(element: DependenciesTreeNode): Thenable<DependenciesTreeNode | undefined> {
