@@ -39,13 +39,7 @@ export class CveApplicabilityRunner {
             default:
                 this._isOsSupported = false;
         }
-        this._resource = new Resource(
-            path.join(ScanUtils.getHomePath(), 'applicability-scan'),
-            downloadUrl,
-            binary,
-            _logManager,
-            connectionManager.areXrayCredentialsSet() ? connectionManager.createJfrogClient() : undefined
-        );
+        this._resource = new Resource(path.join(ScanUtils.getHomePath(), 'applicability-scan'), downloadUrl, binary, _logManager);
         this._lastUpdateCheckFile = path.join(this._resource.homeDir, 'LastUpdateTimestamp');
     }
 
