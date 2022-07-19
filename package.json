@@ -33,7 +33,7 @@
             },
             {
                 "view": "jfrog.source.code.scan",
-                "contents": "This view displays the results of applicability scanning of CVEs in the code."
+                "contents": "This view displays the results of applicability scanning of CVEs in the code. Python, npm, and yarn are currently supported."
             }
         ],
         "viewsContainers": {

@@ -35,7 +35,7 @@ export class SourceCodeFileTreeNode extends vscode.TreeItem {
 
     public static createNoVulnerabilitiesFound(): SourceCodeFileTreeNode {
         const node: SourceCodeFileTreeNode = new SourceCodeFileTreeNode(
-            'No vulnerabilities found',
+            'No code vulnerabilities were found',
             [],
             undefined,
             vscode.TreeItemCollapsibleState.None
@@ -43,7 +43,7 @@ export class SourceCodeFileTreeNode extends vscode.TreeItem {
         node._topSeverity = Severity.Normal;
         return node;
     }
-    
+
     public get parent(): SourceCodeRootTreeNode | undefined {
         return this._parent;
     }
