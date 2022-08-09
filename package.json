@@ -57,7 +57,8 @@
                 },
                 {
                     "id": "jfrog.source.code.scan",
-                    "name": "Code Vulnerabilities"
+                    "name": "Code Vulnerabilities",
+                    "when": "false"
                 }
             ]
         },

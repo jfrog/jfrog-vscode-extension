@@ -15,7 +15,7 @@ export class ComponentSummaryScanLogic extends AbstractScanLogic {
         projectComponents: ProjectComponents,
         checkCanceled: () => void
     ) {
-        progress.report({ message: `2/3:📦 Dependencies scanning`, increment: 0 });
+        progress.report({ message: `2/2:📦 Dependencies scanning`, increment: 0 });
         const componentsDetails: ComponentDetails[] = componentsToScan.toArray();
         let step: number = (100 / componentsToScan.size()) * 100;
         for (let currentIndex: number = 0; currentIndex < componentsToScan.size(); currentIndex += 100) {
@@ -24,7 +24,7 @@ export class ComponentSummaryScanLogic extends AbstractScanLogic {
             let artifacts: IArtifact[] = await this._connectionManager.summaryComponent(partialComponentsDetails);
             this.addMissingComponents(partialComponentsDetails, artifacts);
             await this._scanCacheManager.storeArtifacts(artifacts, projectComponents);
-            progress.report({ message: `2/3:📦 Dependencies scanning`, increment: step });
+            progress.report({ message: `2/2:📦 Dependencies scanning`, increment: step });
         }
     }
 
