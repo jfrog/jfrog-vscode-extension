@@ -29,7 +29,6 @@
     - [Dependencies Tree Icons](#dependencies-tree-icons)
     - [Viewing and Updating Project Dependencies](#viewing-and-updating-project-dependencies)
     - [Scan after dependencies change](#scan-after-dependencies-change)
-    - [CVE Applicability](#cve-applicability)
     - [Exclude Paths from Scan](#exclude-paths-from-scan)
     - [Go Projects](#go-projects)
     - [Maven Projects](#maven-projects)
@@ -57,7 +56,6 @@ The earlier you remediate a vulnerability in the release cycle, the lower the co
 or even sooner, during the development.
 
 The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to your VS Code IDE. It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE. The extension also allows developers to track the status of the code while it is being built, tested and scanned on the CI server.
-Lastly, CVE Applicability scans allow you to see exactly where the CVEs originate in your source code.
 
 The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
@@ -171,7 +169,6 @@ With this information, a developer can make an informed decision on whether to u
 | Show vulnerabilities inside the project descriptor      |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ❌           |
 | Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ✅           |           ❌           |          ❌           |
 | Automatically trigger a scan upon code changes          |         ✅         |            ❌            |          ✅          |           ✅           |           ❌           |          ❌           |
-| Source code scanning for CVE Applicability              |         ❌         |            ❌            |          ✅          |           ✅           |           ✅            |          ❌           |
 | Exclude transitive dependencies from project descriptor |         ❌         |            ✅            |          ❌          |           ❌           |           ❌           |          ❌           |
 
 
@@ -217,11 +214,6 @@ Navigate from the tree view to a dependency's declaration in the editor.
 ### Scan after dependencies change
 The JFrog VS-Code extension can trigger an Xray scan after a change in go.sum or package-lock.json.
 This feature is disabled by default. You can enable it in the [Extension Settings](#extension-settings).
-
-### CVE Applicability
-Scans for third-party APIs in the source code that contains a vulnerabilities.
-Upon completion of the scan, a list of files will be displayed under the _code vulnerabilities_ section. In every file, there are at least one or more security-impacted APIs used by third-party dependencies.
-![CVE_Scan](resources/readme/gifs/cve_applicability_scan.gif)
 
 ### Exclude Paths from Scan
 By default, paths containing the words `test`, `venv` and `node_modules` are excluded from Xray scan.
