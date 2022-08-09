@@ -3,12 +3,7 @@ import { ScanCacheManager } from '../scanCache/scanCacheManager';
 import { GeneralDetailsDataProvider } from './generalDetailsDataProvider';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { IssueNode, IssuesDataProvider } from './issuesDataProvider';
-/*************************************************************
- * The following logic is part of the CVE applicability scan.*
- * It will be hidden until it is officially released.        *
- * ***********************************************************
- */
-// import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
+import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
 
 /**
  * Dependency Details panel.
@@ -20,23 +15,8 @@ export class DependencyDetailsProvider implements vscode.TreeDataProvider<any> {
     private _generalDetailsProvider: GeneralDetailsDataProvider;
     private _selectedNode: DependenciesTreeNode | undefined;
 
-    constructor(
-        /*************************************************************
-         * The following logic is part of the CVE applicability scan.*
-         * It will be hidden until it is officially released.        *
-         * ***********************************************************
-         */
-        protected _scanCacheManager: ScanCacheManager // , sourceCodeTreeDataProvider: SourceCodeTreeDataProvider
-    ) {
-        this._issuesDataProvider = new IssuesDataProvider(
-            _scanCacheManager
-            /*************************************************************
-             * The following logic is part of the CVE applicability scan.*
-             * It will be hidden until it is officially released.        *
-             * ***********************************************************
-             */
-            // , sourceCodeTreeDataProvider
-        );
+    constructor(protected _scanCacheManager: ScanCacheManager, sourceCodeTreeDataProvider: SourceCodeTreeDataProvider) {
+        this._issuesDataProvider = new IssuesDataProvider(_scanCacheManager, sourceCodeTreeDataProvider);
         this._generalDetailsProvider = new GeneralDetailsDataProvider(_scanCacheManager);
     }
 
@@ -57,7 +37,7 @@ export class DependencyDetailsProvider implements vscode.TreeDataProvider<any> {
             // Get 'Dependency Details' data to be Displayed.
             return this._issuesDataProvider.getChildren(element).then(r => {
                 if (r.length > 0) {
-                    return Promise.resolve([this._generalDetailsProvider, this._issuesDataProvider]);
+                    return Promise.resolve([this._issuesDataProvider, this._generalDetailsProvider]);
                 }
                 return Promise.resolve([this._generalDetailsProvider]);
             });

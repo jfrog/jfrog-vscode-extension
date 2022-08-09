@@ -1,5 +1,4 @@
 import { execSync } from 'child_process';
-import crypto from 'crypto'; // Important - Don't import '*'. It'll import deprecated encryption methods
 import {
     IAqlSearchResult,
     IArtifact,
@@ -11,12 +10,6 @@ import {
     IUsageFeature,
     JfrogClient,
     XrayScanProgress,
-    /*************************************************************
-     * The following logic is part of the CVE applicability scan.*
-     * It will be hidden until it is officially released.        *
-     * ***********************************************************
-     */
-    // IChecksumResult,
     ComponentDetails
 } from 'jfrog-client-js';
 import * as keytar from 'keytar';
@@ -26,6 +19,7 @@ import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
 import Set from 'typescript-collections/dist/lib/Set';
 import { ConnectionUtils } from './connectionUtils';
+import { ScanUtils } from '../utils/scanUtils';
 
 /**
  * Manage the Xray credentials and perform connection with Xray server.
@@ -554,10 +548,7 @@ export class ConnectionManager implements ExtensionComponent {
      * @returns hashed account id
      */
     private createAccountId(url: string, username: string): string {
-        return crypto
-            .createHash('sha256')
-            .update(url + username)
-            .digest('hex');
+        return ScanUtils.Hash('sha256', url + username);
     }
 
     private updateConnectionIcon() {
@@ -664,24 +655,6 @@ export class ConnectionManager implements ExtensionComponent {
             .downloadArtifact(artifactPath);
     }
 
-    /*************************************************************
-     * The following logic is part of the CVE applicability scan.*
-     * It will be hidden until it is officially released.        *
-     * ***********************************************************
-     */
-    // public async downloadArtifactToFile(from: string, to: string): Promise<void> {
-    //     return this.createJfrogClient()
-    //         .artifactory()
-    //         .download()
-    //         .downloadArtifactToFile(from, to);
-    // }
-
-    // public async getArtifactChecksum(from: string): Promise<IChecksumResult> {
-    //     return this.createJfrogClient()
-    //         .artifactory()
-    //         .download()
-    //         .getArtifactChecksum(from);
-    // }
     public async downloadBuildDetails(buildName: string, buildNumber: string, projectKey: string): Promise<IDetailsResponse> {
         return this.createJfrogClient()
             .xray()

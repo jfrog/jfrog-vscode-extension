@@ -13,47 +13,31 @@ import { Severity } from '../../main/types/severity';
 import { TestMemento } from './utils/testMemento.test';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependencyDetailsProvider';
-/*************************************************************
- * The following logic is part of the CVE applicability scan.*
- * It will be hidden until it is officially released.        *
- * ***********************************************************
- */
-// import { SourceCodeTreeDataProvider } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeTreeDataProvider';
-// import { TreesManager } from '../../main/treeDataProviders/treesManager';
-// import { ConnectionManager } from '../../main/connect/connectionManager';
-// import { LogManager } from '../../main/log/logManager';
-// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
-// import { createScanCacheManager } from './utils/utils.test';
+import { SourceCodeTreeDataProvider } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeTreeDataProvider';
+import { TreesManager } from '../../main/treeDataProviders/treesManager';
+import { ConnectionManager } from '../../main/connect/connectionManager';
+import { LogManager } from '../../main/log/logManager';
+import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+import { createScanCacheManager } from './utils/utils.test';
 
 /**
  * Test functionality of @class IssuesDataProvider.
  */
 describe('Issues Data Provider Tests', () => {
     let scanCacheManager: ScanCacheManager = new ScanCacheManager();
-    /*************************************************************
-     * The following logic is part of the CVE applicability scan.*
-     * It will be hidden until it is officially released.        *
-     * ***********************************************************
-     */
-    // let logManager: LogManager = new LogManager().activate();
-    // let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
-    // let treesManager: TreesManager = new TreesManager(
-    //     [],
-    //     new ConnectionManager(logManager),
-    //     dummyScanCacheManager,
-    //     {} as ScanLogicManager,
-    //     logManager
-    // );
-    // let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider([], treesManager);
-    let dependencyDetailsProvider: DependencyDetailsProvider = new DependencyDetailsProvider(
-        scanCacheManager
-        /*************************************************************
-         * The following logic is part of the CVE applicability scan.*
-         * It will be hidden until it is officially released.        *
-         * ***********************************************************
-         */
-        // , sourceCodeTreeDataProvider
+
+    let logManager: LogManager = new LogManager().activate();
+    let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
+    let treesManager: TreesManager = new TreesManager(
+        [],
+        new ConnectionManager(logManager),
+        dummyScanCacheManager,
+        {} as ScanLogicManager,
+        logManager
     );
+    let workspaceFolders: vscode.WorkspaceFolder[] = [];
+    let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider(workspaceFolders, treesManager);
+    let dependencyDetailsProvider: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager, sourceCodeTreeDataProvider);
     let issuesDataProvider: IssuesDataProvider = dependencyDetailsProvider.issuesDataProvider;
     let dependenciesTreeNode: DependenciesTreeNode;
 
@@ -64,6 +48,7 @@ describe('Issues Data Provider Tests', () => {
         }) as vscode.ExtensionContext);
         let generalInfo: GeneralInfo = new GeneralInfo('odin', '1.2.3', [], __dirname, 'asgard');
         dependenciesTreeNode = new DependenciesTreeNode(generalInfo);
+        workspaceFolders.push({ uri: vscode.Uri.file(__dirname), name: '', index: 0 } as vscode.WorkspaceFolder);
     });
 
     beforeEach(() => {
@@ -156,6 +141,8 @@ describe('Issues Data Provider Tests', () => {
         assert.deepEqual(actual.summary, expected.summary);
         assert.deepEqual(actual.component, expectedComponent);
         assert.deepEqual(actual.fixedVersions, expected.fixedVersions);
+        assert.deepEqual(actual.applicable, undefined);
+        assert.deepEqual(actual.sourceCodeCveTreeNode, undefined);
     }
 
     function createDummyIssue(severity: Severity): IIssueCacheObject {

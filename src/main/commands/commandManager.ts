@@ -14,13 +14,8 @@ import { ScanUtils } from '../utils/scanUtils';
 import { BuildsManager } from '../builds/buildsManager';
 import { Configuration } from '../utils/configuration';
 import { ExportManager } from '../export/exportManager';
-/*************************************************************
- * The following logic is part of the CVE applicability scan.*
- * It will be hidden until it is officially released.        *
- * ***********************************************************
- */
-// import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
-// import { VulnerabilityNode } from '../treeDataProviders/issuesDataProvider';
+import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
+import { VulnerabilityNode } from '../treeDataProviders/issuesDataProvider';
 
 /**
  * Register and execute all commands in the extension.
@@ -39,17 +34,12 @@ export class CommandManager implements ExtensionComponent {
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
-        /*************************************************************
-         * The following logic is part of the CVE applicability scan.*
-         * It will be hidden until it is officially released.        *
-         * ***********************************************************
-         */
-        // this.registerCommand(context, 'jfrog.source.code.scan.jumpToSource', (sourceCodeTreeNode, index) =>
-        //     this.jumpToSource(sourceCodeTreeNode, index)
-        // );
-        // this.registerCommand(context, 'jfrog.source.code.scan.showInSourceCodeTree', sourceCodeTreeNode =>
-        //     this.showInSourceCodeTree(sourceCodeTreeNode)
-        // );
+        this.registerCommand(context, 'jfrog.source.code.scan.jumpToSource', (sourceCodeTreeNode, index) =>
+            this.jumpToSource(sourceCodeTreeNode, index)
+        );
+        this.registerCommand(context, 'jfrog.source.code.scan.showInSourceCodeTree', sourceCodeTreeNode =>
+            this.showInSourceCodeTree(sourceCodeTreeNode)
+        );
         this.registerCommand(context, 'jfrog.xray.showInProjectDesc', dependenciesTreeNode => this.doShowInProjectDesc(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.excludeDependency', dependenciesTreeNode => this.doExcludeDependency(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.updateDependency', dependenciesTreeNode => this.doUpdateDependencyVersion(dependenciesTreeNode));
@@ -60,7 +50,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.disconnect', () => this.doDisconnect());
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
-        // this.registerCommand(context, 'jfrog.source.code.scan.refresh', () => this.doCodeScanRefresh());
+        this.registerCommand(context, 'jfrog.source.code.scan.refresh', () => this.doCodeScanRefresh());
         this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
         this.registerCommand(context, 'jfrog.xray.filter', () => this.doFilter());
         this.registerCommand(context, 'jfrog.xray.local', () => this.doLocal());
@@ -124,18 +114,26 @@ export class CommandManager implements ExtensionComponent {
         this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.Dependency);
         this.onSelectNode(dependenciesTreeNode);
     }
-    /*************************************************************
-     * The following logic is part of the CVE applicability scan.*
-     * It will be hidden until it is officially released.        *
-     * ***********************************************************
+
+    /**
+     * Reveal the file and a specific line number that a CVE is found by the CVE applicability scan.
+     * This functionality is included in:
+     * 1. Click on the 'eye' button
+     * 2. Click on the actual CVE in the CVE applicability view
+     * 3. Click on the reference / actual CVE in the CVE applicability view
+     * 4. Click on the CVE node in the dependency details view
+     * @param node - CVE node
+     * @param index - index to jump in the CVE Node.
      */
-    // private jumpToSource(node: SourceCodeCveTreeNode | VulnerabilityNode, index?: number) {
-    //     if (node instanceof VulnerabilityNode) {
-    //         this._focusManager.focusOnCve(node.sourceCodeCveTreeNode);
-    //     } else {
-    //         this._focusManager.focusOnCve(node, index);
-    //     }
-    // }
+    private jumpToSource(node: SourceCodeCveTreeNode | VulnerabilityNode | TreeDataHolder, index: number) {
+        if (node instanceof VulnerabilityNode) {
+            return this._focusManager.focusOnCve(node.sourceCodeCveTreeNode);
+        }
+        if (node instanceof TreeDataHolder) {
+            return this._focusManager.focusOnCve(node.command?.arguments?.[0], node.command?.arguments?.[1]);
+        }
+        return this._focusManager.focusOnCve(node, index);
+    }
 
     /**
      * Exclude dependency in the project descriptor (e.g. package.json).
@@ -184,14 +182,13 @@ export class CommandManager implements ExtensionComponent {
         this.onSelectNode(dependenciesTreeNode);
     }
 
-    /*************************************************************
-     * The following logic is part of the CVE applicability scan.*
-     * It will be hidden until it is officially released.        *
-     * ***********************************************************
+    /**
+     * Shows a specific node in the source code tree after clicking on the bulb icon in the source code.
+     * @param sourceCodeCveTreeNode
      */
-    // private showInSourceCodeTree(sourceCodeCveTreeNode: SourceCodeCveTreeNode) {
-    //     this._treesManager.sourceCodeTreeView.reveal(sourceCodeCveTreeNode, { focus: true, select: true, expand: true });
-    // }
+    private showInSourceCodeTree(sourceCodeCveTreeNode: SourceCodeCveTreeNode) {
+        this._treesManager.sourceCodeTreeView.reveal(sourceCodeCveTreeNode, { focus: true, select: true, expand: true });
+    }
 
     /**
      * Focus on dependency after a click on a dependency in the components tree.
@@ -242,26 +239,34 @@ export class CommandManager implements ExtensionComponent {
     private doRefresh(quickScan: boolean = false) {
         this._treesManager.treeDataProviderManager.refresh(quickScan);
     }
-    /*************************************************************
-     * The following logic is part of the CVE applicability scan.*
-     * It will be hidden until it is officially released.        *
-     * ***********************************************************
-     */
-    // private async doCodeScanRefresh(quickScan: boolean = false) {
-    //     await vscode.window.withProgress(
-    //         <vscode.ProgressOptions>{
-    //             // Start progress in balloon only if the user initiated a full scan by clicking on the "Refresh" button.
-    //             // Otherwise - show the progress in the status bar.
-    //             location: quickScan ? vscode.ProgressLocation.Window : vscode.ProgressLocation.Notification,
-    //             title: 'Code vulnerability scanning',
-    //             cancellable: true
-    //         },
-    //         async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {
-    //             progress.report({ message: '📝 Code vulnerability scanning' });
-    //             await this._treesManager.sourceCodeTreeDataProvider.refresh();
-    //         }
-    //     );
-    // }
+
+    private async doCodeScanRefresh(quickScan: boolean = false) {
+        await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
+            progress.report({ message: '📝 Code vulnerability scanning' });
+            checkCanceled();
+            await this._treesManager.sourceCodeTreeDataProvider.update();
+            checkCanceled();
+            await this._treesManager.sourceCodeTreeDataProvider.refresh();
+        }, 'Code vulnerability scanning');
+
+        await vscode.window.withProgress(
+            <vscode.ProgressOptions>{
+                // Start progress in balloon only if the user initiated a full scan by clicking on the "Refresh" button.
+                // Otherwise - show the progress in the status bar.
+                location: quickScan ? vscode.ProgressLocation.Window : vscode.ProgressLocation.Notification,
+                title: 'Code vulnerability scanning',
+                cancellable: true
+            },
+            async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {
+                progress.report({ message: '📝 Code vulnerability scanning' });
+                token.onCancellationRequested(() => {
+                    console.log('Canceled CVE Applicability scan');
+                });
+                await this._treesManager.sourceCodeTreeDataProvider.update();
+                await this._treesManager.sourceCodeTreeDataProvider.refresh();
+            }
+        );
+    }
 
     /**
      * Connect to Xray server. If connection success, perform a quick scan.

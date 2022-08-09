@@ -5,8 +5,7 @@ import { LogManager } from '../log/logManager';
 import { NugetTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/nugetTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { ProjectDetails } from '../types/component';
-import { PackageType } from '../types/projectType';
+import { ProjectDetails } from '../types/projectDetails';
 
 export class NugetUtils {
     public static readonly PKG_TYPE: string = 'nuget';
@@ -37,11 +36,10 @@ export class NugetUtils {
                 continue;
             }
             let solutionDir: string = path.dirname(solution.fsPath);
-            const projectToScan: ProjectDetails = new ProjectDetails(solutionDir, PackageType.NUGET);
-            projectsToScan.push(projectToScan);
             for (let project of tree.projects) {
-                let dependenciesTreeNode: NugetTreeNode = new NugetTreeNode(solutionDir, projectToScan, treesManager, parent);
-                dependenciesTreeNode.refreshDependencies(quickScan, project);
+                let root: NugetTreeNode = new NugetTreeNode(solutionDir, treesManager, parent);
+                root.refreshDependencies(quickScan, project);
+                projectsToScan.push(root.projectDetails);
             }
         }
     }

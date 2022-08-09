@@ -5,6 +5,7 @@ import * as os from 'os';
 import * as path from 'path';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
+import crypto from 'crypto'; // Important - Don't import '*'. It'll import deprecated encryption methods
 import { LogManager } from '../log/logManager';
 import { PackageType } from '../types/projectType';
 import { Configuration } from './configuration';
@@ -138,6 +139,18 @@ export class ScanUtils {
 
     static createTmpDir(): string {
         return tmp.dirSync({} as tmp.DirOptions).name;
+    }
+
+    /**
+     * @param algorithm - The hash's algorithm to use
+     * @param data - The data to hash
+     * @returns hashed data in Hex
+     */
+    static Hash(algorithm: string, data: string): string {
+        return crypto
+            .createHash(algorithm)
+            .update(data)
+            .digest('hex');
     }
 }
 

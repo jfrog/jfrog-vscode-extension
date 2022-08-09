@@ -3,16 +3,16 @@ import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { TreesManager } from '../../treesManager';
 import { GeneralInfo } from '../../../types/generalInfo';
-import { ScanUtils } from '../../../utils/scanUtils';
 import { NpmGlobalScopes, ScopedNpmProject, NpmUtils } from '../../../utils/npmUtils';
 import { RootNode } from './rootTree';
-import { ProjectDetails } from '../../../types/component';
+import { PackageType } from '../../../types/projectType';
+import { Severity } from '../../../types/severity';
 
 export class NpmTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
 
-    constructor(workspaceFolder: string, private _projectToScan: ProjectDetails, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, parent);
+    constructor(workspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
+        super(workspaceFolder, PackageType.NPM, parent);
     }
 
     public async refreshDependencies(quickScan: boolean) {
@@ -21,7 +21,7 @@ export class NpmTreeNode extends RootNode {
         let npmLsFailed: boolean = false;
         [productionScope, developmentScope].forEach(scopedProject => {
             try {
-                scopedProject.loadProjectDetails(this.runNpmLs(scopedProject.scope));
+                scopedProject.loadProjectDetails(NpmUtils.runNpmLs(scopedProject.scope, this.workspaceFolder));
             } catch (error) {
                 this._treesManager.logManager.logError(<any>error, !quickScan);
                 this._treesManager.logManager.logMessage(
@@ -43,7 +43,11 @@ export class NpmTreeNode extends RootNode {
             this.workspaceFolder,
             NpmUtils.PKG_TYPE
         );
-        this.label = productionScope.projectName ? productionScope.projectName : path.join(this.workspaceFolder, 'package.json');
+        if (npmLsFailed) {
+            this.topSeverity = Severity.Unknown;
+        }
+        this.projectDetails.name = productionScope.projectName ? productionScope.projectName : path.join(this.workspaceFolder, 'package.json');
+        this.label = this.projectDetails.name;
     }
 
     private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any, quickScan: boolean, globalScope: string) {
@@ -64,14 +68,10 @@ export class NpmTreeNode extends RootNode {
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
                 let componentId: string = key + ':' + version;
                 if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-                    this._projectToScan.add(NpmTreeNode.COMPONENT_PREFIX + componentId);
+                    this.projectDetails.addDependency(NpmTreeNode.COMPONENT_PREFIX + componentId);
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan, globalScope);
             }
         }
-    }
-
-    private runNpmLs(scope: NpmGlobalScopes): any {
-        return JSON.parse(ScanUtils.executeCmd('npm ls --json --all --package-lock-only --' + scope, this.workspaceFolder).toString());
     }
 }

@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import { IDetailsResponse } from 'jfrog-client-js';
 import * as path from 'path';
 import { LogManager } from '../log/logManager';
-import * as crypto from 'crypto';
 import { ScanUtils } from '../utils/scanUtils';
 
 export enum Type {
@@ -19,7 +18,7 @@ export class BuildsScanCache {
     private readonly buildsDir: string;
 
     constructor(private _projectKey: string, private _url: string, private _logger: LogManager) {
-        this.buildsDir = path.resolve(BuildsScanCache.CACHE_BASE_PATH, this.sha1(this._projectKey + '_' + this._url));
+        this.buildsDir = path.resolve(BuildsScanCache.CACHE_BASE_PATH, ScanUtils.Hash('sha1', this._projectKey + '_' + this._url));
         if (!fs.existsSync(this.buildsDir)) {
             fs.mkdirSync(this.buildsDir, { recursive: true });
         }
@@ -91,18 +90,6 @@ export class BuildsScanCache {
         if (projectKey) {
             buildIdentifier += '_' + projectKey;
         }
-        return path.resolve(this.buildsDir, timestamp + '_' + type.toString() + this.sha1(buildIdentifier) + '.zip');
-    }
-
-    /**
-     * Calculates sha1 for the input string.
-     * @param data - The string to hash
-     * @returns sha1 representation of the input string.
-     */
-    private sha1(data: string) {
-        return crypto
-            .createHash('sha1')
-            .update(data, 'binary')
-            .digest('hex');
+        return path.resolve(this.buildsDir, timestamp + '_' + type.toString() + ScanUtils.Hash('sha1', buildIdentifier) + '.zip');
     }
 }

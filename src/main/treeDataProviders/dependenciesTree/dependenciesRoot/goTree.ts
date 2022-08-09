@@ -1,21 +1,16 @@
 import * as vscode from 'vscode';
-import { ProjectDetails } from '../../../types/component';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { GoUtils } from '../../../utils/goUtils';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { RootNode } from './rootTree';
+import { PackageType } from '../../../types/projectType';
 
 export class GoTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
-    constructor(
-        tmpWorkspaceFolder: string,
-        private _projectsToScan: ProjectDetails,
-        private _treesManager: TreesManager,
-        parent?: DependenciesTreeNode
-    ) {
-        super(tmpWorkspaceFolder, parent);
+    constructor(tmpWorkspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
+        super(tmpWorkspaceFolder, PackageType.GO, parent);
     }
 
     public refreshDependencies(quickScan: boolean) {
@@ -34,6 +29,7 @@ export class GoTreeNode extends RootNode {
         }
         this.generalInfo = new GeneralInfo(rootPackageName, '', ['None'], this.workspaceFolder, GoUtils.PKG_TYPE);
         this.label = rootPackageName;
+        this.projectDetails.name = rootPackageName;
         if (goModGraph.length === 0) {
             return;
         }
@@ -150,7 +146,7 @@ export class GoTreeNode extends RootNode {
     private addComponentToScan(dependenciesTreeNode: DependenciesTreeNode, quickScan: boolean) {
         let componentId: string = dependenciesTreeNode.generalInfo.artifactId + ':' + dependenciesTreeNode.generalInfo.version;
         if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-            this._projectsToScan.add(GoTreeNode.COMPONENT_PREFIX + componentId);
+            this.projectDetails.addDependency(GoTreeNode.COMPONENT_PREFIX + componentId);
         }
     }
 

@@ -7,12 +7,7 @@ import { MavenCodeActionProvider } from './mavenCodeActionProvider';
 import { NpmCodeActionProvider } from './npmCodeActionProvider';
 import { PypiCodeActionProvider } from './pypiCodeActionProvider';
 import { YarnCodeActionProvider } from './yarnCodeActionProvider';
-/*************************************************************
- * The following logic is part of the CVE applicability scan.*
- * It will be hidden until it is officially released.        *
- * ***********************************************************
- */
-// import { ApplicabilityCodeActionProvider } from './applicabilityActionProvider';
+import { ApplicabilityCodeActionProvider } from './applicabilityActionProvider';
 
 /**
  * In case of project descriptor (i.e package.json) open, perform:
@@ -24,7 +19,7 @@ import { YarnCodeActionProvider } from './yarnCodeActionProvider';
  * 2. Provide red, yellow, green or white line under a vulnerable line in the source code file.
  */
 export class DiagnosticsManager implements ExtensionComponent {
-    private _codeActionProviders: AbstractCodeActionProvider[] = [];
+    private _codeActionProviders: (AbstractCodeActionProvider | ApplicabilityCodeActionProvider)[] = [];
 
     constructor(treesManager: TreesManager) {
         let diagnosticCollection: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection();
@@ -33,13 +28,8 @@ export class DiagnosticsManager implements ExtensionComponent {
             new YarnCodeActionProvider(diagnosticCollection, treesManager),
             new PypiCodeActionProvider(diagnosticCollection, treesManager),
             new GoCodeActionProvider(diagnosticCollection, treesManager),
-            new MavenCodeActionProvider(diagnosticCollection, treesManager)
-            /*************************************************************
-             * The following logic is part of the CVE applicability scan.*
-             * It will be hidden until it is officially released.        *
-             * ***********************************************************
-             */
-            // new ApplicabilityCodeActionProvider(diagnosticCollection, treesManager)
+            new MavenCodeActionProvider(diagnosticCollection, treesManager),
+            new ApplicabilityCodeActionProvider(diagnosticCollection, treesManager)
         );
     }
 

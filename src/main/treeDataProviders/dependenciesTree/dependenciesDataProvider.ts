@@ -1,7 +1,7 @@
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ScanLogicManager } from '../../scanLogic/scanLogicManager';
-import { ProjectDetails } from '../../types/component';
+import { ProjectDetails } from '../../types/projectDetails';
 import { GeneralInfo } from '../../types/generalInfo';
 import { ILicenseKey } from '../../types/licenseKey';
 import { INodeInfo } from '../../types/nodeInfo';
@@ -13,6 +13,7 @@ import { TreesManager } from '../treesManager';
 import { RootNode } from './dependenciesRoot/rootTree';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
+import { Utils } from '../utils/utils';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private _filterLicenses: Set<ILicenseKey> = new Set();
@@ -53,6 +54,9 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     }
 
     public async refresh(quickScan: boolean, onChangeFire: () => void) {
+        if (!this._treesManager.connectionManager.areXrayCredentialsSet()) {
+            return;
+        }
         if (this._scanInProgress) {
             if (!quickScan) {
                 vscode.window.showInformationMessage('Previous scan still running...');
@@ -83,11 +87,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     }
 
     public getTreeItem(element: DependenciesTreeNode): vscode.TreeItem {
-        element.command = {
-            command: 'jfrog.xray.focus',
-            title: '',
-            arguments: [element]
-        };
+        element.command = Utils.createNodeCommand('jfrog.xray.focus', '', [element]);
         let topSeverity: Severity = element.topSeverity;
         element.iconPath = SeverityUtils.getIcon(topSeverity ? topSeverity : Severity.Normal);
         return element;
@@ -103,7 +103,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         let rootChildren: DependenciesTreeNode[] = this._filteredDependenciesTree
             ? this._filteredDependenciesTree.children
             : this.dependenciesTree.children;
-        return Promise.resolve(rootChildren.length === 1 ? rootChildren[0].children : rootChildren);
+        return Promise.resolve(rootChildren.length === 1 && rootChildren[0].children.length > 0 ? rootChildren[0].children : rootChildren);
     }
 
     public getParent(element: DependenciesTreeNode): Thenable<DependenciesTreeNode | undefined> {
@@ -142,6 +142,13 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     private async repopulateTree(quickScan: boolean, onChangeFire: () => void) {
         await ScanUtils.scanWithProgress(
             async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
+                // Skip the 'await' here to avoid blocking dependency tree scanning
+                 /*************************************************************
+                 * The following logic is part of the CVE applicability scan.*
+                 * It will be hidden until it is officially released.        *
+                 * ***********************************************************
+                 */
+                // const updatePromise: Promise<void> = this._treesManager.sourceCodeTreeDataProvider.update();
                 progress.report({ message: '1/2:👷 Building dependency tree' });
                 this.clearTree();
                 let workspaceRoot: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
@@ -154,7 +161,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     quickScan
                 );
                 progress.report({ message: '2/2:📦 Dependencies scanning' });
-                await this._scanLogicManager.scanAndCache(progress, this._scannedProjects, checkCanceled);
+                await this._scanLogicManager.scanAndCache(progress, this._scannedProjects, quickScan, checkCanceled);
                 for (let node of workspaceRoot.children) {
                     this.addXrayInfoToTree(node);
                     if (node instanceof RootNode) {
@@ -162,12 +169,13 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     }
                     node.issues = node.processTreeIssues();
                 }
-                /*************************************************************
+                 /*************************************************************
                  * The following logic is part of the CVE applicability scan.*
                  * It will be hidden until it is officially released.        *
                  * ***********************************************************
                  */
                 // progress.report({ message: '3/3📝 Code vulnerability scanning' });
+                // await updatePromise;
                 // await this._treesManager.sourceCodeTreeDataProvider.refresh();
                 onChangeFire();
             },

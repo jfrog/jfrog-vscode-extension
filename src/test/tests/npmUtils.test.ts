@@ -16,7 +16,7 @@ import { NpmUtils } from '../../main/utils/npmUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
-import { ProjectDetails } from '../../main/types/component';
+import { ProjectDetails } from '../../main/types/projectDetails';
 
 /**
  * Test functionality of @class NpmUtils.
@@ -189,7 +189,7 @@ describe('Npm Utils Tests', async () => {
         assert.isTrue(componentsToScan.length === 3);
         let found: boolean = false;
         for (let index: number = 0; index < componentsToScan.length; index++) {
-            componentsToScan[index].componentsDetails.forEach(el => {
+            componentsToScan[index].dependencies.forEach(el => {
                 if (el.component_id === 'npm://progress:2.0.3') {
                     found = true;
                 }

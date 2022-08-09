@@ -10,7 +10,7 @@ import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { YarnTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/yarnTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
-import { ProjectDetails } from '../../main/types/component';
+import { ProjectDetails } from '../../main/types/projectDetails';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { PackageType } from '../../main/types/projectType';
 import { ScanUtils } from '../../main/utils/scanUtils';
@@ -188,7 +188,7 @@ describe('Yarn Utils Tests', async () => {
         assert.isTrue(componentsToScan.length === 3);
         let found: boolean = false;
         for (let index: number = 0; index < componentsToScan.length; index++) {
-            componentsToScan[index].componentsDetails.forEach(componentDetails => {
+            componentsToScan[index].dependencies.forEach(componentDetails => {
                 if (componentDetails.component_id === 'npm://progress:2.0.3') {
                     found = true;
                 }

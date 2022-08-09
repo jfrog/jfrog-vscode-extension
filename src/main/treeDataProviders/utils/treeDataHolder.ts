@@ -10,7 +10,8 @@ export class TreeDataHolder {
         private _link?: string,
         private _icon?: string,
         private _toolTip?: string,
-        private _command?: vscode.Command
+        private _command?: vscode.Command,
+        private _context?: string
     ) {}
 
     public get key(): string {
@@ -39,5 +40,13 @@ export class TreeDataHolder {
 
     public set command(value: vscode.Command | undefined) {
         this._command = value;
+    }
+
+    public get context(): string | undefined {
+        return this._context;
+    }
+
+    public set context(value: string | undefined) {
+        this._context = value;
     }
 }

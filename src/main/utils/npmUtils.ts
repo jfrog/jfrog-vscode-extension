@@ -5,9 +5,9 @@ import { FocusType } from '../focus/abstractFocus';
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { ProjectDetails } from '../types/component';
-import { PackageType } from '../types/projectType';
+import { ProjectDetails } from '../types/projectDetails';
 import * as fs from 'fs';
+import { ScanUtils } from './scanUtils';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
@@ -83,10 +83,9 @@ export class NpmUtils {
         }
         treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
         for (let packageJson of packageJsons) {
-            const projectToScan: ProjectDetails = new ProjectDetails(path.dirname(packageJson.fsPath), PackageType.NPM);
-            projectsToScan.push(projectToScan);
-            let dependenciesTreeNode: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), projectToScan, treesManager, parent);
-            dependenciesTreeNode.refreshDependencies(quickScan);
+            let root: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), treesManager, parent);
+            root.refreshDependencies(quickScan);
+            projectsToScan.push(root.projectDetails);
         }
     }
 
@@ -104,6 +103,10 @@ export class NpmUtils {
             return dep.substring(1, dep.indexOf('/'));
         }
         return '';
+    }
+
+    public static runNpmLs(scope: NpmGlobalScopes, workspaceFolder: string): any {
+        return JSON.parse(ScanUtils.executeCmd('npm ls --json --all --package-lock-only --' + scope, workspaceFolder).toString());
     }
 }
 

@@ -1,7 +1,7 @@
 import { IUsageFeature } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../connect/connectionManager';
-import { ProjectDetails } from '../../types/component';
+import { ProjectDetails } from '../../types/projectDetails';
 import { PackageType } from '../../types/projectType';
 import { GoUtils } from '../../utils/goUtils';
 import { MavenUtils } from '../../utils/mavenUtils';

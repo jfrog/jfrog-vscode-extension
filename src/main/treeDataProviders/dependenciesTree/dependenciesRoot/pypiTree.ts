@@ -5,7 +5,7 @@ import { GeneralInfo } from '../../../types/generalInfo';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { PypiUtils } from '../../../utils/pypiUtils';
 import { RootNode } from './rootTree';
-import { ProjectDetails } from '../../../types/component';
+import { PackageType } from '../../../types/projectType';
 
 /**
  * Pypi packages can be installed in two different ways:
@@ -15,14 +15,8 @@ import { ProjectDetails } from '../../../types/component';
 export class PypiTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'pypi://';
 
-    constructor(
-        workspaceFolder: string,
-        private _projectToScan: ProjectDetails,
-        private _treesManager: TreesManager,
-        private _pythonPath: string,
-        parent?: DependenciesTreeNode
-    ) {
-        super(workspaceFolder, parent);
+    constructor(workspaceFolder: string, private _treesManager: TreesManager, private _pythonPath: string, parent?: DependenciesTreeNode) {
+        super(workspaceFolder, PackageType.PYTHON, parent);
     }
 
     public async refreshDependencies(quickScan: boolean) {
@@ -35,7 +29,8 @@ export class PypiTreeNode extends RootNode {
         } catch (error) {
             this._treesManager.logManager.logError(<any>error, !quickScan);
         }
-        this.label = this.generalInfo.artifactId;
+        this.projectDetails.name = this.generalInfo.artifactId;
+        this.label = this.projectDetails.name;
         this.populateDependenciesTree(this, pypiList, quickScan);
     }
 
@@ -56,7 +51,7 @@ export class PypiTreeNode extends RootNode {
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
                 let componentId: string = dependency.key + ':' + version;
                 if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-                    this._projectToScan.add(PypiTreeNode.COMPONENT_PREFIX + componentId);
+                    this.projectDetails.addDependency(PypiTreeNode.COMPONENT_PREFIX + componentId);
                 }
                 this.populateDependenciesTree(child, childDependencies, quickScan);
             }
