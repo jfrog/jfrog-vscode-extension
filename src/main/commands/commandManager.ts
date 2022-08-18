@@ -49,6 +49,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
         this.registerCommand(context, 'jfrog.xray.openLink', url => this.doOpenLink(url));
         this.registerCommand(context, 'jfrog.xray.disconnect', () => this.doDisconnect());
+        this.registerCommand(context, 'jfrog.show.connectionStatus', () => this.showConnectionStatus());
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
         this.registerCommand(context, 'jfrog.source.code.scan.refresh', () => this.doCodeScanRefresh());
@@ -286,6 +287,22 @@ export class CommandManager implements ExtensionComponent {
         if (await this._connectionManager.disconnect()) {
             await this.doRefresh(true);
         }
+    }
+
+    private async showConnectionStatus() {
+        if (this._connectionManager.areXrayCredentialsSet()) {
+            vscode.window.showInformationMessage(this.connectedMessage());
+        } else {
+            vscode.window.showErrorMessage('No connection to JFrog Xray');
+        }
+    }
+
+    private connectedMessage(): string {
+        let message: string = 'Connected To Xray ' + this._connectionManager.xrayUrl;
+        if (this._connectionManager.xrayVersion !== '') {
+            message += ' version ' + this._connectionManager.xrayVersion;
+        }
+        return message;
     }
 
     /**

@@ -48,6 +48,7 @@ export class ConnectionManager implements ExtensionComponent {
     // Minimal version supporting exporting default server configuration.
     private static readonly MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT: any = semver.coerce('2.6.1');
 
+    private _statusBar!: vscode.StatusBarItem;
     private _context!: vscode.ExtensionContext;
     private _accessToken: string = '';
     private _username: string = '';
@@ -55,15 +56,23 @@ export class ConnectionManager implements ExtensionComponent {
     private _xrayUrl: string = '';
     private _rtUrl: string = '';
     private _url: string = '';
+    private _xrayVersion: string = '';
 
-    constructor(private _logManager: LogManager) {}
+    constructor(private _logManager: LogManager) {
+        this._statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+        this._statusBar.tooltip = 'JFrog Xray connection details status';
+        this._statusBar.text = '🐸 JFrog Status';
+        this._statusBar.command = 'jfrog.show.connectionStatus';
+    }
 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
         const status: SessionStatus | undefined = await this.getConnectionStatus();
         if (status === SessionStatus.SignedIn || status === undefined) {
             await this.populateCredentials(false);
+            this.updateXrayVersion();
             this.setConnectionView(SessionStatus.SignedIn);
+            this._statusBar.show();
         }
         return this;
     }
@@ -72,6 +81,8 @@ export class ConnectionManager implements ExtensionComponent {
         if (await this.populateCredentials(true)) {
             this.setConnectionStatus(SessionStatus.SignedIn);
             this.setConnectionView(SessionStatus.SignedIn);
+            this.updateXrayVersion();
+            this.updateConnectionIcon();
             return true;
         }
         return false;
@@ -256,6 +267,10 @@ export class ConnectionManager implements ExtensionComponent {
 
     public get accessToken() {
         return this._accessToken;
+    }
+
+    public get xrayVersion() {
+        return this._xrayVersion;
     }
 
     /**
@@ -600,6 +615,7 @@ export class ConnectionManager implements ExtensionComponent {
         this._url = '';
         this._xrayUrl = '';
         this._rtUrl = '';
+        this._xrayVersion = '';
     }
 
     private async deleteCredentialsFromFileSystem(): Promise<boolean> {
@@ -689,6 +705,10 @@ export class ConnectionManager implements ExtensionComponent {
 
     public createJfrogClient(): JfrogClient {
         return ConnectionUtils.createJfrogClient(this._url, this._rtUrl, this._xrayUrl, this._username, this._password, this._accessToken);
+    }
+
+    private async updateXrayVersion() {
+        this._xrayVersion = await ConnectionUtils.getXrayVersion(this.createJfrogClient());
     }
 
     public async sendUsageReport(featureArray: IUsageFeature[]): Promise<void> {
