@@ -44,7 +44,7 @@ export class TreesManager implements ExtensionComponent {
     }
 
     public async activate(context: vscode.ExtensionContext): Promise<TreesManager> {
-        this._treeDataProviderManager.refresh(true);
+        await this._treeDataProviderManager.refresh(true);
         this._dependenciesTreeView = vscode.window.createTreeView('jfrog.xray', {
             treeDataProvider: this._treeDataProviderManager,
             showCollapseAll: true

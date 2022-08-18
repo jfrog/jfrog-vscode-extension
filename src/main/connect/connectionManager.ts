@@ -20,6 +20,7 @@ import { LogManager } from '../log/logManager';
 import Set from 'typescript-collections/dist/lib/Set';
 import { ConnectionUtils } from './connectionUtils';
 import { ScanUtils } from '../utils/scanUtils';
+import { ContextKeys, SessionStatus } from '../constants/contextKeys';
 
 /**
  * Manage the Xray credentials and perform connection with Xray server.
@@ -59,14 +60,18 @@ export class ConnectionManager implements ExtensionComponent {
 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
-        await this.populateCredentials(false);
-        this.updateConnectionIcon();
+        const status: any = await this.getConnectionStatus();
+        if (status === SessionStatus.SignedIn) {
+            await this.populateCredentials(false);
+            this.setConnectionView(SessionStatus.SignedIn);
+        }
         return this;
     }
 
     public async connect(): Promise<boolean> {
         if (await this.populateCredentials(true)) {
-            this.updateConnectionIcon();
+            this.setConnectionStatus(SessionStatus.SignedIn);
+            this.setConnectionView(SessionStatus.SignedIn);
             return true;
         }
         return false;
@@ -78,7 +83,8 @@ export class ConnectionManager implements ExtensionComponent {
             async (): Promise<boolean> => {
                 await this.deleteCredentialsFromFileSystem();
                 this.deleteCredentialsFromMemory();
-                this.updateConnectionIcon();
+                this.setConnectionStatus(SessionStatus.SignedOut);
+                this.setConnectionView(SessionStatus.SignedOut);
                 return true;
             }
         );
@@ -551,10 +557,21 @@ export class ConnectionManager implements ExtensionComponent {
         return ScanUtils.Hash('sha256', url + username);
     }
 
-    private updateConnectionIcon() {
-        vscode.commands.executeCommand('setContext', 'areCredentialsSet', this.areXrayCredentialsSet());
+    private setConnectionStatus(status: SessionStatus) {
+        // By setting the global context, we can save a key/value pair.
+        // VS Code manages the storage and will restore it for each extension activation.
+        this._context.globalState.update(ContextKeys.SET_SESSION_STATUS_KEY, status);
     }
 
+    private async getConnectionStatus() {
+        const status: any = (await this._context.globalState.get(ContextKeys.SET_SESSION_STATUS_KEY)) || '';
+        return status;
+    }
+    private setConnectionView(status: SessionStatus) {
+        // By setting the context with executeCommand we are able to change the extension elements are visibility in the VS=Code UI such as icon or window.
+        // When VS-Code is restarted, this state will be reset.
+        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT_KEY, ContextKeys.SET_SESSION_STATUS_KEY, status);
+    }
     /**
      * Store URLs and username in VS-Code global state.
      * Store Xray password and access token in Keychain.

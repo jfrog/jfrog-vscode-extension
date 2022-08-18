@@ -9,6 +9,7 @@ import crypto from 'crypto'; // Important - Don't import '*'. It'll import depre
 import { LogManager } from '../log/logManager';
 import { PackageType } from '../types/projectType';
 import { Configuration } from './configuration';
+import { ContextKeys } from '../constants/contextKeys';
 
 export class ScanUtils {
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
@@ -96,7 +97,7 @@ export class ScanUtils {
     }
 
     public static setScanInProgress(state: boolean) {
-        vscode.commands.executeCommand('setContext', 'scanInProgress', state);
+        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT_KEY, ContextKeys.SET_SCAN_IN_PROGRESS_KEY, state);
     }
 
     private static getResourcesDir(): string {

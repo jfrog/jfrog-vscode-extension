@@ -32,9 +32,9 @@ export class TreeDataProviderManager implements vscode.TreeDataProvider<Dependen
         return this._treesManager.buildsTreesProvider.getParent(element);
     }
 
-    public refresh(quickScan: boolean = false) {
+    public async refresh(quickScan: boolean = false) {
         if (this._treesManager.isLocalState()) {
-            this._treesManager.dependenciesTreeDataProvider.refresh(quickScan, () => this.onChangeFire());
+            await this._treesManager.dependenciesTreeDataProvider.refresh(quickScan, () => this.onChangeFire());
         } else {
             this._treesManager.buildsTreesProvider.refresh(quickScan, () => this.onChangeFire());
         }

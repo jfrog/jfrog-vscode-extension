@@ -16,6 +16,7 @@ import { Configuration } from '../utils/configuration';
 import { ExportManager } from '../export/exportManager';
 import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
 import { VulnerabilityNode } from '../treeDataProviders/issuesDataProvider';
+import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
 
 /**
  * Register and execute all commands in the extension.
@@ -102,8 +103,8 @@ export class CommandManager implements ExtensionComponent {
     }
 
     private updateLocalCiIcons() {
-        vscode.commands.executeCommand('setContext', 'isLocal', this._treesManager.isLocalState());
-        vscode.commands.executeCommand('setContext', 'isCi', this._treesManager.isCiState());
+        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT_KEY, ExtensionMode.Local, this._treesManager.isLocalState());
+        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT_KEY, ExtensionMode.Ci, this._treesManager.isCiState());
     }
 
     /**
@@ -236,8 +237,8 @@ export class CommandManager implements ExtensionComponent {
      * Refresh the components tree.
      * @param quickScan - True to allow reading from scan cache.
      */
-    private doRefresh(quickScan: boolean = false) {
-        this._treesManager.treeDataProviderManager.refresh(quickScan);
+    private async doRefresh(quickScan: boolean = false) {
+        await this._treesManager.treeDataProviderManager.refresh(quickScan);
     }
 
     private async doCodeScanRefresh(quickScan: boolean = false) {
@@ -274,7 +275,7 @@ export class CommandManager implements ExtensionComponent {
     private async doConnect() {
         let credentialsSet: boolean = await this._connectionManager.connect();
         if (credentialsSet) {
-            this.doRefresh(true);
+            await this.doRefresh(true);
         }
     }
 
@@ -283,7 +284,7 @@ export class CommandManager implements ExtensionComponent {
      */
     private async doDisconnect() {
         if (await this._connectionManager.disconnect()) {
-            this.doRefresh(true);
+            await this.doRefresh(true);
         }
     }
 
