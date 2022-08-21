@@ -71,7 +71,6 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         this.repopulateTree(quickScan, onChangeFire)
             .then(() => {
                 vscode.commands.executeCommand('jfrog.xray.focus');
-                this._treesManager.logManager.setSuccess();
             })
             .catch(error => {
                 this.clearTree();

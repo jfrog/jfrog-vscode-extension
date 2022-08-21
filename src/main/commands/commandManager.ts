@@ -49,6 +49,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
         this.registerCommand(context, 'jfrog.xray.openLink', url => this.doOpenLink(url));
         this.registerCommand(context, 'jfrog.xray.disconnect', () => this.doDisconnect());
+        this.registerCommand(context, 'jfrog.show.connectionStatus', () => this.showConnectionStatus());
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
         this.registerCommand(context, 'jfrog.source.code.scan.refresh', () => this.doCodeScanRefresh());
@@ -288,6 +289,29 @@ export class CommandManager implements ExtensionComponent {
         }
     }
 
+    private async showConnectionStatus() {
+        if (this._connectionManager.xrayUrl) {
+            vscode.window.showInformationMessage(this.xrayConnectionDetails());
+            if (this._connectionManager.rtUrl) {
+                return vscode.window.showInformationMessage(this.artifactoryConnectionDetails());
+            }
+            return;
+        }
+        return vscode.window.showErrorMessage('No connection to JFrog server');
+    }
+
+    private xrayConnectionDetails(): string {
+        return this.createServerDetailsMessage('Xray', this._connectionManager.xrayUrl, this._connectionManager.xrayVersion);
+    }
+
+    private artifactoryConnectionDetails(): string {
+        return this.createServerDetailsMessage('Artifactory', this._connectionManager.rtUrl, this._connectionManager.artifactoryVersion);
+    }
+
+    private createServerDetailsMessage(name: string, url: string, version?: string): string {
+        return `${name} ${url} ${version ? `v${version}` : ''}`;
+    }
+    
     /**
      * Show the filter menu.
      */
