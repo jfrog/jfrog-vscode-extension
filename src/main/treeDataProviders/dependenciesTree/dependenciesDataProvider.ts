@@ -55,6 +55,8 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
 
     public async refresh(quickScan: boolean, onChangeFire: () => void) {
         if (!this._treesManager.connectionManager.areXrayCredentialsSet()) {
+            this.clearTree();
+            onChangeFire();
             return;
         }
         if (this._scanInProgress) {
@@ -143,7 +145,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         await ScanUtils.scanWithProgress(
             async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
                 // Skip the 'await' here to avoid blocking dependency tree scanning
-                 /*************************************************************
+                /*************************************************************
                  * The following logic is part of the CVE applicability scan.*
                  * It will be hidden until it is officially released.        *
                  * ***********************************************************
@@ -169,7 +171,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                     }
                     node.issues = node.processTreeIssues();
                 }
-                 /*************************************************************
+                /*************************************************************
                  * The following logic is part of the CVE applicability scan.*
                  * It will be hidden until it is officially released.        *
                  * ***********************************************************

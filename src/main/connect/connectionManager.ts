@@ -20,6 +20,7 @@ import { LogManager } from '../log/logManager';
 import Set from 'typescript-collections/dist/lib/Set';
 import { ConnectionUtils } from './connectionUtils';
 import { ScanUtils } from '../utils/scanUtils';
+import { ContextKeys, SessionStatus } from '../constants/contextKeys';
 
 /**
  * Manage the Xray credentials and perform connection with Xray server.
@@ -59,14 +60,18 @@ export class ConnectionManager implements ExtensionComponent {
 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
-        await this.populateCredentials(false);
-        this.updateConnectionIcon();
+        const status: SessionStatus | undefined = await this.getConnectionStatus();
+        if (status === SessionStatus.SignedIn || status === undefined) {
+            await this.populateCredentials(false);
+            this.setConnectionView(SessionStatus.SignedIn);
+        }
         return this;
     }
 
     public async connect(): Promise<boolean> {
         if (await this.populateCredentials(true)) {
-            this.updateConnectionIcon();
+            this.setConnectionStatus(SessionStatus.SignedIn);
+            this.setConnectionView(SessionStatus.SignedIn);
             return true;
         }
         return false;
@@ -78,7 +83,8 @@ export class ConnectionManager implements ExtensionComponent {
             async (): Promise<boolean> => {
                 await this.deleteCredentialsFromFileSystem();
                 this.deleteCredentialsFromMemory();
-                this.updateConnectionIcon();
+                this.setConnectionStatus(SessionStatus.SignedOut);
+                this.setConnectionView(SessionStatus.SignedOut);
                 return true;
             }
         );
@@ -550,9 +556,28 @@ export class ConnectionManager implements ExtensionComponent {
     private createAccountId(url: string, username: string): string {
         return ScanUtils.Hash('sha256', url + username);
     }
+    /**
+     * By setting the global context, we can save a key/value pair.
+     * VS Code manages the storage and will restore it for each extension activation.
+     */
+    private setConnectionStatus(status: SessionStatus) {
+        this._context.globalState.update(ContextKeys.SESSION_STATUS, status);
+    }
 
-    private updateConnectionIcon() {
-        vscode.commands.executeCommand('setContext', 'areCredentialsSet', this.areXrayCredentialsSet());
+    /**
+     * @returns The user connection status whether it is connected to JFrog platform or not. First time use will return undefined.
+     */
+    private async getConnectionStatus(): Promise<SessionStatus | undefined> {
+        const status: SessionStatus | undefined = (await this._context.globalState.get(ContextKeys.SESSION_STATUS)) || undefined;
+        return status;
+    }
+
+    /**
+     * By setting the context with ExecuteCommand, we can change the visibility of extension elements in VS-Code's UI, such as icons or windows.
+     * This state will be reset when VS-Code is restarted.
+     */
+    private setConnectionView(status: SessionStatus) {
+        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ContextKeys.SESSION_STATUS, status);
     }
 
     /**
