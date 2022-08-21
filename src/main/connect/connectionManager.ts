@@ -60,8 +60,8 @@ export class ConnectionManager implements ExtensionComponent {
 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
-        const status: any = await this.getConnectionStatus();
-        if (status === SessionStatus.SignedIn) {
+        const status: SessionStatus | undefined = await this.getConnectionStatus();
+        if (status === SessionStatus.SignedIn || status === undefined) {
             await this.populateCredentials(false);
             this.setConnectionView(SessionStatus.SignedIn);
         }
@@ -563,15 +563,17 @@ export class ConnectionManager implements ExtensionComponent {
         this._context.globalState.update(ContextKeys.SET_SESSION_STATUS_KEY, status);
     }
 
-    private async getConnectionStatus() {
-        const status: any = (await this._context.globalState.get(ContextKeys.SET_SESSION_STATUS_KEY)) || '';
+    private async getConnectionStatus(): Promise<SessionStatus | undefined> {
+        const status: SessionStatus | undefined = (await this._context.globalState.get(ContextKeys.SET_SESSION_STATUS_KEY)) || undefined;
         return status;
     }
+
     private setConnectionView(status: SessionStatus) {
         // By setting the context with ExecuteCommand, we can change the visibility of extension elements in VS-Code's UI, such as icons or windows.
         // This state will be reset when VS-Code is restarted.
         vscode.commands.executeCommand(ContextKeys.SET_CONTEXT_KEY, ContextKeys.SET_SESSION_STATUS_KEY, status);
     }
+
     /**
      * Store URLs and username in VS-Code global state.
      * Store Xray password and access token in Keychain.
