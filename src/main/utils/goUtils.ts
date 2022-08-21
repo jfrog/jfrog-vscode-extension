@@ -95,6 +95,12 @@ export class GoUtils {
                 ScanUtils.executeCmd(GoUtils.GO_MOD_TIDY_CMD, tmpWorkspace);
             } catch (error) {
                 treesManager.logManager.logMessage('Failed creating go temporary workspace: ' + error, 'ERR');
+                treesManager.logManager.logMessage(
+                    `Failed to scan go project. Make the command 'go mod tidy' run successfully in ` + goMod.fsPath,
+                    'ERR',
+                    false,
+                    !quickScan
+                );
             }
 
             let root: GoTreeNode = new GoTreeNode(tmpWorkspace, treesManager, parent);

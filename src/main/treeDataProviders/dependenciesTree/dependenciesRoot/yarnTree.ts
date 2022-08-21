@@ -22,12 +22,14 @@ export class YarnTreeNode extends RootNode {
         try {
             listResults = this.runYarnList();
         } catch (error) {
-            this._treesManager.logManager.logError(<any>error, !quickScan);
+            this._treesManager.logManager.logError(<any>error, false);
             this._treesManager.logManager.logMessage(
-                'Possible cause: The project needs to be installed by Yarn. Install it by running "yarn install" from "' +
+                'Failed to scan yarn project. Possible cause: The project needs to be installed by Yarn. Install it by running "yarn install" from "' +
                     this.workspaceFolder +
                     '".',
-                'INFO'
+                'INFO',
+                true,
+                !quickScan
             );
             yarnListFailed = true;
         }

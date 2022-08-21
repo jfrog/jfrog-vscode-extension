@@ -55,10 +55,16 @@ export class NugetUtils {
         try {
             nugetList = NugetDepsTree.generate(slnFilePath);
         } catch (error) {
-            logManager.logError(<any>error, !quickScan);
+            logManager.logError(<any>error, false);
             logManager.logMessage(
-                'Failed building tree for solution "' + slnFilePath + '", due to the above error. Skipping to next solution... ',
+                'Failed building tree for solution "' + slnFilePath + '",  due to the above error. Skipping to next solution... ',
                 'INFO'
+            );
+            logManager.logMessage(
+                `Failed to scan NuGet project. Please make sure you can run 'nuget restore' in ${slnFilePath}.`,
+                'INFO',
+                true,
+                !quickScan
             );
             return null;
         }
