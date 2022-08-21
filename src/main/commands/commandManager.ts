@@ -290,21 +290,28 @@ export class CommandManager implements ExtensionComponent {
     }
 
     private async showConnectionStatus() {
-        if (this._connectionManager.areXrayCredentialsSet()) {
-            vscode.window.showInformationMessage(this.connectedMessage());
-        } else {
-            vscode.window.showErrorMessage('No connection to JFrog Xray');
+        if (this._connectionManager.xrayUrl) {
+            vscode.window.showInformationMessage(this.xrayConnectionDetails());
+            if (this._connectionManager.rtUrl) {
+                return vscode.window.showInformationMessage(this.artifactoryConnectionDetails());
+            }
+            return;
         }
+        return vscode.window.showErrorMessage('No connection to JFrog server');
     }
 
-    private connectedMessage(): string {
-        let message: string = 'Connected To JFrog Xray ' + this._connectionManager.xrayUrl;
-        if (this._connectionManager.xrayVersion !== '') {
-            message += ' version ' + this._connectionManager.xrayVersion;
-        }
-        return message;
+    private xrayConnectionDetails(): string {
+        return this.createServerDetailsMessage('Xray', this._connectionManager.xrayUrl, this._connectionManager.xrayVersion);
     }
 
+    private artifactoryConnectionDetails(): string {
+        return this.createServerDetailsMessage('Artifactory', this._connectionManager.rtUrl, this._connectionManager.artifactoryVersion);
+    }
+
+    private createServerDetailsMessage(name: string, url: string, version?: string): string {
+        return `${name} ${url} ${version ? `v${version}` : ''}`;
+    }
+    
     /**
      * Show the filter menu.
      */

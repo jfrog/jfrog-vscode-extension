@@ -1,5 +1,13 @@
 import * as http2 from 'http2';
-import { ComponentDetails, IJfrogClientConfig, IProxyConfig, ISummaryRequestModel, IXrayVersion, JfrogClient } from 'jfrog-client-js';
+import {
+    ComponentDetails,
+    IArtifactoryVersion,
+    IJfrogClientConfig,
+    IProxyConfig,
+    ISummaryRequestModel,
+    IXrayVersion,
+    JfrogClient
+} from 'jfrog-client-js';
 import * as semver from 'semver';
 import { SemVer } from 'semver';
 import { URL } from 'url';
@@ -204,6 +212,14 @@ export class ConnectionUtils {
             .system()
             .version();
         return xrayVersion.xray_version;
+    }
+
+    public static async getArtifactoryVersion(jfrogClient: JfrogClient): Promise<string> {
+        let artifactoryVersion: IArtifactoryVersion = await jfrogClient
+            .artifactory()
+            .system()
+            .version();
+        return artifactoryVersion.version;
     }
 
     public static async testComponentPermission(jfrogClient: JfrogClient): Promise<any> {
