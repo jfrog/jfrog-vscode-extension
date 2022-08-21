@@ -60,8 +60,8 @@ export class ConnectionManager implements ExtensionComponent {
 
     constructor(private _logManager: LogManager) {
         this._statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
-        this._statusBar.tooltip = 'JFrog Xray connection details status';
-        this._statusBar.text = '🐸 JFrog Status';
+        this._statusBar.tooltip = 'JFrog connection details';
+        this._statusBar.text = '🔴 JFrog';
         this._statusBar.command = 'jfrog.show.connectionStatus';
     }
 

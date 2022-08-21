@@ -298,7 +298,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     private connectedMessage(): string {
-        let message: string = 'Connected To Xray ' + this._connectionManager.xrayUrl;
+        let message: string = 'Connected To JFrog Xray ' + this._connectionManager.xrayUrl;
         if (this._connectionManager.xrayVersion !== '') {
             message += ' version ' + this._connectionManager.xrayVersion;
         }
