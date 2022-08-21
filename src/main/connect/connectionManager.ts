@@ -568,8 +568,8 @@ export class ConnectionManager implements ExtensionComponent {
         return status;
     }
     private setConnectionView(status: SessionStatus) {
-        // By setting the context with executeCommand we are able to change the extension elements are visibility in the VS=Code UI such as icon or window.
-        // When VS-Code is restarted, this state will be reset.
+        // By setting the context with ExecuteCommand, we can change the visibility of extension elements in VS-Code's UI, such as icons or windows.
+        // This state will be reset when VS-Code is restarted.
         vscode.commands.executeCommand(ContextKeys.SET_CONTEXT_KEY, ContextKeys.SET_SESSION_STATUS_KEY, status);
     }
     /**
