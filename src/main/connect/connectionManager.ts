@@ -68,15 +68,21 @@ export class ConnectionManager implements ExtensionComponent {
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
         this._statusBar.show();
-        const status: SessionStatus | undefined = await this.getConnectionStatus();
-        if (status === SessionStatus.SignedIn || status === undefined) {
+        if (await this.isSignedIn()) {
             await this.populateCredentials(false);
             this.updateJfrogVersions();
             this.setConnectionView(SessionStatus.SignedIn);
+        } else {
+            this.setConnectionView(SessionStatus.SignedOut);
         }
         return this;
     }
 
+    private async isSignedIn():Promise<boolean> {
+        const status: SessionStatus | undefined = await this.getConnectionStatus();
+        return status === SessionStatus.SignedIn || status === undefined;
+    }
+    
     public async connect(): Promise<boolean> {
         if (await this.populateCredentials(true)) {
             this.setConnectionStatus(SessionStatus.SignedIn);
