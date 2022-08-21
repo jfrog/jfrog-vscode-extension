@@ -103,8 +103,8 @@ export class CommandManager implements ExtensionComponent {
     }
 
     private updateLocalCiIcons() {
-        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT_KEY, ExtensionMode.Local, this._treesManager.isLocalState());
-        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT_KEY, ExtensionMode.Ci, this._treesManager.isCiState());
+        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ExtensionMode.Local, this._treesManager.isLocalState());
+        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ExtensionMode.Ci, this._treesManager.isCiState());
     }
 
     /**

@@ -97,7 +97,7 @@ export class ScanUtils {
     }
 
     public static setScanInProgress(state: boolean) {
-        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT_KEY, ContextKeys.SET_SCAN_IN_PROGRESS_KEY, state);
+        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ContextKeys.SCAN_IN_PROGRESS, state);
     }
 
     private static getResourcesDir(): string {

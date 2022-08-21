@@ -556,22 +556,28 @@ export class ConnectionManager implements ExtensionComponent {
     private createAccountId(url: string, username: string): string {
         return ScanUtils.Hash('sha256', url + username);
     }
-
+    /**
+     * By setting the global context, we can save a key/value pair.
+     * VS Code manages the storage and will restore it for each extension activation.
+     */
     private setConnectionStatus(status: SessionStatus) {
-        // By setting the global context, we can save a key/value pair.
-        // VS Code manages the storage and will restore it for each extension activation.
-        this._context.globalState.update(ContextKeys.SET_SESSION_STATUS_KEY, status);
+        this._context.globalState.update(ContextKeys.SESSION_STATUS, status);
     }
 
+    /**
+     * @returns The user connection status whether it is connected to JFrog platform or not. First time use will return undefined.
+     */
     private async getConnectionStatus(): Promise<SessionStatus | undefined> {
-        const status: SessionStatus | undefined = (await this._context.globalState.get(ContextKeys.SET_SESSION_STATUS_KEY)) || undefined;
+        const status: SessionStatus | undefined = (await this._context.globalState.get(ContextKeys.SESSION_STATUS)) || undefined;
         return status;
     }
 
+    /**
+     * By setting the context with ExecuteCommand, we can change the visibility of extension elements in VS-Code's UI, such as icons or windows.
+     * This state will be reset when VS-Code is restarted.
+     */
     private setConnectionView(status: SessionStatus) {
-        // By setting the context with ExecuteCommand, we can change the visibility of extension elements in VS-Code's UI, such as icons or windows.
-        // This state will be reset when VS-Code is restarted.
-        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT_KEY, ContextKeys.SET_SESSION_STATUS_KEY, status);
+        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ContextKeys.SESSION_STATUS, status);
     }
 
     /**
