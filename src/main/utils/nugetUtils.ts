@@ -66,7 +66,8 @@ export class NugetUtils {
         if (!nugetList.projects) {
             logManager.logError(new Error('No projects found for solution "' + slnFilePath + '".'), !quickScan);
             logManager.logMessage(
-                'Possible cause: The solution needs to be restored. Restore it by running "nuget restore ' + slnFilePath + '".',
+                'Possible cause: The solution needs to be restored. Restore it by running "nuget restore ' + path.resolve(slnFilePath) ||
+                    slnFilePath + '".',
                 'INFO',
                 true,
                 !quickScan
