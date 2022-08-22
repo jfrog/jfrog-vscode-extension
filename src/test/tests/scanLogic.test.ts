@@ -2,6 +2,7 @@ import { assert } from 'chai';
 import * as fs from 'fs';
 import { ComponentDetails, IArtifact, IGraphResponse, ISummaryResponse } from 'jfrog-client-js';
 import * as path from 'path';
+import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
@@ -10,10 +11,9 @@ import { ComponentSummaryScanLogic } from '../../main/scanLogic/componentSummary
 import { GraphScanLogic } from '../../main/scanLogic/graphScanLogic';
 import { ILicenseKey } from '../../main/types/licenseKey';
 import { INodeInfo } from '../../main/types/nodeInfo';
+import { ProjectComponents } from '../../main/types/projectComponents';
 import { Severity } from '../../main/types/severity';
 import { createScanCacheManager } from './utils/utils.test';
-import Set from 'typescript-collections/dist/lib/Set';
-import { ProjectComponents } from '../../main/types/projectComponents';
 
 describe('Scan Logic Tests', () => {
     const scanResponses: string = path.join(__dirname, '..', 'resources', 'scanResponses');
@@ -22,21 +22,21 @@ describe('Scan Logic Tests', () => {
         let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
         let dummyConnectionManager: ConnectionManager = createComponentSummaryConnectionManager();
         let scanLogic: ComponentSummaryScanLogic = new ComponentSummaryScanLogic(dummyConnectionManager, dummyScanCacheManager);
-        testScanLogic(dummyScanCacheManager, scanLogic, false);
+        await testScanLogic(dummyScanCacheManager, scanLogic, false);
     });
 
     it('scan/graph vulnerabilities', async () => {
         let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
         let dummyConnectionManager: ConnectionManager = createScanGraphConnectionManager('graphScanVulnerabilities');
         let scanLogic: GraphScanLogic = new GraphScanLogic(dummyConnectionManager, dummyScanCacheManager);
-        testScanLogic(dummyScanCacheManager, scanLogic, false);
+        await testScanLogic(dummyScanCacheManager, scanLogic, false);
     });
 
     it('scan/graph violations', async () => {
         let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
         let dummyConnectionManager: ConnectionManager = createScanGraphConnectionManager('graphScanViolations');
         let scanLogic: GraphScanLogic = new GraphScanLogic(dummyConnectionManager, dummyScanCacheManager);
-        testScanLogic(dummyScanCacheManager, scanLogic, true);
+        await testScanLogic(dummyScanCacheManager, scanLogic, true);
     });
 
     async function testScanLogic(scanCacheManager: ScanCacheManager, scanLogic: AbstractScanLogic, licenseViolated: boolean) {
