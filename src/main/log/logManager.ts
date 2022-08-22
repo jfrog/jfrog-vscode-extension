@@ -20,7 +20,7 @@ export class LogManager implements ExtensionComponent {
      * @param message - The message to log
      * @param level - The log level
      * @param focusOutput - Open the extension output view
-     * @param shouldToast - The message should be displayed on a pop-up balloon
+     * @param shouldToast - If true, display the message in a pop-up balloon
      */
     public logMessage(message: string, level: LogLevel, focusOutput: boolean = false, shouldToast: boolean = false): void {
         if (!message) {

@@ -31,7 +31,7 @@ export class NpmTreeNode extends RootNode {
         });
         if (npmLsFailed) {
             this._treesManager.logManager.logMessage(
-                `Failed to scan npm project. Hint: Please make sure the commands 'npm install' or 'npm ci' run successfully in  ${this.workspaceFolder}`,
+                `Failed to scan npm project. Hint: Please make sure the commands 'npm install' or 'npm ci' run successfully in '${this.workspaceFolder}'`,
                 'ERR',
                 true,
                 !quickScan

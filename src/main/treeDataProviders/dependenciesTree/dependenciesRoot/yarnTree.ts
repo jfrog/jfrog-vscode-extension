@@ -24,9 +24,7 @@ export class YarnTreeNode extends RootNode {
         } catch (error) {
             this._treesManager.logManager.logError(<any>error, false);
             this._treesManager.logManager.logMessage(
-                `Failed to scan yarn project. Hint: Please make sure the command "yarn install" run successfully in ` +
-                    this.workspaceFolder +
-                    '".',
+                `Failed to scan Yarn project. Hint: Please make sure the command "yarn install" runs successfully in ` + this.workspaceFolder + '".',
                 'ERR',
                 true,
                 !quickScan

@@ -52,24 +52,26 @@ export class NugetUtils {
      */
     private static async getProjects(slnFilePath: string, logManager: LogManager, quickScan: boolean): Promise<any> {
         let nugetList: any;
-        let commandFailed: boolean = false;
         try {
             nugetList = NugetDepsTree.generate(slnFilePath);
         } catch (error) {
-            logManager.logError(<any>error, false);
-            commandFailed = true;
-        }
-        if (commandFailed) {
+            logManager.logError(<any>error, !quickScan);
             logManager.logMessage(
-                `Failed to scan NuGet project. Hint: Please make sure the command 'nuget restore' run successfully in ` + slnFilePath + '".',
-                'ERR',
+                'Failed building tree for solution "' + slnFilePath + '", due to the above error. Skipping to next solution... ',
+                'INFO'
+            );
+            return null;
+        }
+
+        if (!nugetList.projects) {
+            logManager.logError(new Error('No projects found for solution "' + slnFilePath + '".'), !quickScan);
+            logManager.logMessage(
+                'Possible cause: The solution needs to be restored. Restore it by running "nuget restore ' + slnFilePath + '".',
+                'INFO',
                 true,
                 !quickScan
             );
-            return;
-        }
-        if (!nugetList.projects) {
-            logManager.logError(new Error('No projects found for solution "' + slnFilePath + '".'), !quickScan);
+            return null;
         }
         return nugetList;
     }
