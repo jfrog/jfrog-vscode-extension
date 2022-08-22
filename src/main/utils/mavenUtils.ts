@@ -187,7 +187,9 @@ export class MavenUtils {
                         'Try Install it by running "mvn clean install" from ' +
                         ProjectTree.pomPath +
                         '.',
-                    'ERR'
+                    'ERR',
+                    true,
+                    !quickScan
                 );
                 treesManager.logManager.logMessage((<any>error).stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }

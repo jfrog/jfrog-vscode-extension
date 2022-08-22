@@ -23,19 +23,20 @@ export class NpmTreeNode extends RootNode {
             try {
                 scopedProject.loadProjectDetails(NpmUtils.runNpmLs(scopedProject.scope, this.workspaceFolder));
             } catch (error) {
-                this._treesManager.logManager.logError(<any>error, !quickScan);
-                this._treesManager.logManager.logMessage(
-                    'Possible cause: The project needs to be installed by npm. Install it by running "npm install" from "' +
-                        this.workspaceFolder +
-                        '".',
-                    'INFO'
-                );
+                this._treesManager.logManager.logError(<any>error, false);
                 scopedProject.loadProjectDetailsFromFile(path.join(this.workspaceFolder, 'package.json'));
                 npmLsFailed = true;
-                return;
             }
             this.populateDependenciesTree(this, scopedProject.dependencies, quickScan, scopedProject.scope);
         });
+        if (npmLsFailed) {
+            this._treesManager.logManager.logMessage(
+                `Failed to scan npm project. Hint: Please make sure the commands 'npm install' or 'npm ci' run successfully in '${this.workspaceFolder}'`,
+                'ERR',
+                true,
+                !quickScan
+            );
+        }
         this.generalInfo = new GeneralInfo(
             npmLsFailed ? (productionScope.projectName += ' [Not installed]') : productionScope.projectName,
             productionScope.projectVersion,

@@ -311,7 +311,7 @@ export class CommandManager implements ExtensionComponent {
     private createServerDetailsMessage(name: string, url: string, version?: string): string {
         return `${name} ${url} ${version ? `v${version}` : ''}`;
     }
-    
+
     /**
      * Show the filter menu.
      */
