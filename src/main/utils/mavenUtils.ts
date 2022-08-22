@@ -136,7 +136,7 @@ export class MavenUtils {
             return pomIdCache.get(pathToPomXml) || ['', ''];
         } catch (error) {
             logManager.logMessage(
-                'Could not get parse pom.xml GAV.\n' + 'Try Install it by running "mvn clean install" from ' + pathToPomXml + '.',
+                'Could not get parse pom.xml GAV.\n' + 'Try to install it by running "mvn clean install" from ' + pathToPomXml + '.',
                 'ERR'
             );
             logManager.logMessage((<any>error).stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
@@ -184,7 +184,7 @@ export class MavenUtils {
             } catch (error) {
                 treesManager.logManager.logMessage(
                     'Could not get dependencies tree from pom.xml.\n' +
-                        'Try Install it by running "mvn clean install" from ' +
+                        'Try to install it by running "mvn clean install" from ' +
                         ProjectTree.pomPath +
                         '.',
                     'ERR',
