@@ -65,7 +65,7 @@ describe('Scan Logic Tests', () => {
         nodeInfo = scanCacheManager.getNodeInfo('org.apache.commons:commons-lang3:3.12.0');
         assert.isDefined(nodeInfo);
         if (nodeInfo) {
-            assert.equal(nodeInfo.top_severity, Severity.Unknown);
+            assert.equal(nodeInfo.top_severity, Severity.Normal);
             assert.isEmpty(nodeInfo.issues);
             assert.lengthOf(nodeInfo.licenses, 1);
             assert.deepEqual(nodeInfo.licenses[0], { licenseName: 'Apache-2.0', violated: licenseViolated } as ILicenseKey);
@@ -75,7 +75,11 @@ describe('Scan Logic Tests', () => {
         nodeInfo = scanCacheManager.getNodeInfo('commons-io:commons-io:2.11.0');
         assert.isDefined(nodeInfo);
         if (nodeInfo) {
-            assert.equal(nodeInfo.top_severity, Severity.Unknown);
+            if (scanLogic instanceof ComponentSummaryScanLogic) {
+                assert.equal(nodeInfo.top_severity, Severity.Normal);
+            } else {
+                assert.equal(nodeInfo.top_severity, Severity.Unknown);
+            }
             assert.isEmpty(nodeInfo.issues);
             assert.isEmpty(nodeInfo.licenses);
         }

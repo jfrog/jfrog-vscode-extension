@@ -137,7 +137,7 @@ export class MavenUtils {
         } catch (error) {
             logManager.logMessage(
                 'Could not get parse pom.xml GAV.\n' + 'Try to install it by running "mvn clean install" from ' + path.resolve(pathToPomXml) ||
-                pathToPomXml + '.',
+                    pathToPomXml + '.',
                 'ERR'
             );
             logManager.logMessage((<any>error).stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
