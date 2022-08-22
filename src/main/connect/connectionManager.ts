@@ -78,11 +78,11 @@ export class ConnectionManager implements ExtensionComponent {
         return this;
     }
 
-    private async isSignedIn():Promise<boolean> {
+    private async isSignedIn(): Promise<boolean> {
         const status: SessionStatus | undefined = await this.getConnectionStatus();
         return status === SessionStatus.SignedIn || status === undefined;
     }
-    
+
     public async connect(): Promise<boolean> {
         if (await this.populateCredentials(true)) {
             this.setConnectionStatus(SessionStatus.SignedIn);
