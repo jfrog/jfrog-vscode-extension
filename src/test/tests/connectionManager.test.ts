@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-
+import nock from 'nock';
 import { execSync } from 'child_process';
 import { IJfrogClientConfig, IProxyConfig } from 'jfrog-client-js';
 import * as path from 'path';
@@ -58,6 +58,12 @@ describe('Connection Manager Tests', () => {
     });
 
     describe('Populate credentials from env', () => {
+        nock('https://httpbin.org/anything')
+            .persist()
+            .get('/xray/api/v1/system/ping')
+            .reply(200, 'RESPONSE')
+            .get('/artifactory/api/system/ping')
+            .reply(200, 'RESPONSE');
         [
             {
                 inputUrl: 'https://httpbin.org/anything',
