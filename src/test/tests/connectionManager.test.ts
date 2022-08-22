@@ -1,12 +1,13 @@
 import { assert } from 'chai';
 
-import { ConnectionManager } from '../../main/connect/connectionManager';
-import { IJfrogClientConfig, IProxyConfig } from 'jfrog-client-js';
-import * as vscode from 'vscode';
-import * as path from 'path';
-import { LogManager } from '../../main/log/logManager';
-import { ConnectionUtils } from '../../main/connect/connectionUtils';
 import { execSync } from 'child_process';
+import { IJfrogClientConfig, IProxyConfig } from 'jfrog-client-js';
+import * as path from 'path';
+import * as vscode from 'vscode';
+import { ConnectionManager } from '../../main/connect/connectionManager';
+import { ConnectionUtils } from '../../main/connect/connectionUtils';
+import { ContextKeys, SessionStatus } from '../../main/constants/contextKeys';
+import { LogManager } from '../../main/log/logManager';
 import { getCliHomeDir, setCliHomeDir } from './utils/utils.test';
 
 describe('Connection Manager Tests', () => {
@@ -19,6 +20,9 @@ describe('Connection Manager Tests', () => {
             globalState: {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 get(key: string) {
+                    if (key == ContextKeys.SESSION_STATUS) {
+                        return SessionStatus.SignedOut;
+                    }
                     return;
                 },
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
