@@ -28,7 +28,7 @@
         "viewsWelcome": [
             {
                 "view": "jfrog.xray",
-                "contents": "Thank you for installing the JFrog extension. If you already have a JFrog environment, please [configure](command:jfrog.xray.connect) its connection details.\nDon't have a JFrog environment? [Get one for FREE](https://github.com/jfrog/jfrog-vscode-extension#set-up-a-free-jfrog-environment-in-the-cloud).",
+                "contents": "Thank you for installing the JFrog extension 🐸\nIf you already have a JFrog Platform, please connect it to VS Code:\n[Connect To JFrog Platform](command:jfrog.xray.connect)\nDon't have a JFrog Platform? [Get one for FREE](https://github.com/jfrog/jfrog-vscode-extension#set-up-a-free-jfrog-environment-in-the-cloud) ",
                 "when": "jfrog.connection.status == signedOut || !jfrog.connection.status"
             },
             {
@@ -135,15 +135,10 @@
                 "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
             },
             {
-                "command": "jfrog.xray.connect",
-                "title": "Connect",
-                "icon": "resources/connect.png"
-            },
-            {
                 "command": "jfrog.xray.disconnect",
                 "title": "Disconnect",
-                "icon": "resources/disconnect.png",
-                "enablement": "!jfrog.scanInProgress"
+                "icon": "$(debug-disconnect)",
+                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
             },
             {
                 "command": "jfrog.xray.filter",
@@ -226,13 +221,8 @@
                     "group": "navigation@1"
                 },
                 {
-                    "command": "jfrog.xray.connect",
-                    "when": "view == jfrog.xray && jfrog.connection.status != signedIn",
-                    "group": "navigation@2"
-                },
-                {
                     "command": "jfrog.xray.disconnect",
-                    "when": "view == jfrog.xray && jfrog.connection.status == signedIn",
+                    "when": "view == jfrog.xray",
                     "group": "navigation@2"
                 },
                 {

@@ -284,6 +284,13 @@ export class CommandManager implements ExtensionComponent {
      * Disconnect from Xray server. Delete the URL, username & password from FS.
      */
     private async doDisconnect() {
+        const answer: string | undefined = await vscode.window.showInformationMessage(
+            'Are you sure you want to disconnect from JFrog Platform (' + (this._connectionManager.url || this._connectionManager.xrayUrl) + ') ?',
+            ...['Yes', 'No']
+        );
+        if (answer !== 'Yes') {
+            return;
+        }
         if (await this._connectionManager.disconnect()) {
             await this.doRefresh(true);
         }
