@@ -73,16 +73,16 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         this._context = context;
         switch (await this.getConnectionStatus()) {
             case SessionStatus.SignedIn:
-                this.handledSignedIn();
+                await this.handledSignedIn();
                 break;
             case SessionStatus.connectionLost:
-                this.handledConnectionLost();
+                await this.handledConnectionLost();
                 break;
             case SessionStatus.SignedOut:
                 this.setConnectionView(SessionStatus.SignedOut);
                 break;
             default:
-                this.handelUnknownState();
+                await this.handelUnknownState();
                 break;
         }
 

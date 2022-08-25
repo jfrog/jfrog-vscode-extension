@@ -54,7 +54,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
     }
 
     public async refresh(quickScan: boolean, onChangeFire: () => void) {
-        if (!this._treesManager.connectionManager.isSignedIn()) {
+        if (! await this._treesManager.connectionManager.isSignedIn()) {
             this.clearTree();
             onChangeFire();
             return;
