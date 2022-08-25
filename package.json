@@ -32,6 +32,11 @@
                 "when": "jfrog.connection.status == signedOut || !jfrog.connection.status"
             },
             {
+                "view": "jfrog.xray",
+                "contents": "Couldn't connect to your JFrog Platform. \n[Reconnect](command:jfrog.xray.reConnect)\n[Reset your connection details](command:jfrog.xray.resetConnection)",
+                "when": "jfrog.connection.status == connectionLost "
+            },
+            {
                 "view": "jfrog.source.code.scan",
                 "contents": "This view displays the results of applicability scanning of CVEs in the code. Python, npm, and yarn are currently supported."
             }
@@ -138,7 +143,7 @@
                 "command": "jfrog.xray.disconnect",
                 "title": "Disconnect",
                 "icon": "$(debug-disconnect)",
-                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
+                "enablement": "jfrog.connection.status != signedOut && !jfrog.scanInProgress"
             },
             {
                 "command": "jfrog.xray.filter",
@@ -194,7 +199,7 @@
                     "light": "resources/light/ci.png",
                     "dark": "resources/dark/ci.png"
                 },
-                "enablement": "jfrog.connection.status == signedIn && jfrog.connection.status == signedIn && !jfrog.scanInProgress"
+                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
             },
             {
                 "command": "jfrog.xray.export",
@@ -207,7 +212,7 @@
             "view/title": [
                 {
                     "command": "jfrog.xray.disconnect",
-                    "when": "view == jfrog.xray && jfrog.connection.status == signedIn",
+                    "when": "view == jfrog.xray && jfrog.connection.status != signedOut",
                     "group": "navigation@0"
                 },
                 {

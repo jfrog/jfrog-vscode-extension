@@ -71,25 +71,66 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
-        this._statusBar.show();
-        if (await this.isSignedIn()) {
-            await this.populateCredentials(false);
-            this.updateJfrogVersions();
-            this.setConnectionView(SessionStatus.SignedIn);
-        } else {
-            this.setConnectionView(SessionStatus.SignedOut);
+        switch (await this.getConnectionStatus()) {
+            case SessionStatus.SignedIn:
+                this.handledSignedIn();
+                break;
+            case SessionStatus.connectionLost:
+                this.handledConnectionLost();
+                break;
+            case SessionStatus.SignedOut:
+                this.setConnectionView(SessionStatus.SignedOut);
+                break;
+            default:
+                this.handelUnknownState();
+                break;
         }
+
+        this._statusBar.show();
         return this;
     }
 
-    private async isSignedIn(): Promise<boolean> {
+    public async isSignedIn(): Promise<boolean> {
         const status: SessionStatus | undefined = await this.getConnectionStatus();
-        return status === SessionStatus.SignedIn || status === undefined;
+        return status === SessionStatus.SignedIn;
+    }
+
+    public async isConnectionLost(): Promise<boolean> {
+        const status: SessionStatus | undefined = await this.getConnectionStatus();
+        return status === SessionStatus.connectionLost;
+    }
+
+    private async handledSignedIn() {
+        if (!(await this.tryToSignedIn())) {
+            this.setConnectionView(SessionStatus.connectionLost);
+            await this.setConnectionStatus(SessionStatus.connectionLost);
+        }
+    }
+
+    private async tryToSignedIn(): Promise<boolean> {
+        if ((await this.populateCredentials(false)) && (await this.verifyCredentials(false))) {
+            this.updateJfrogVersions();
+            this.setConnectionView(SessionStatus.SignedIn);
+            await this.setConnectionStatus(SessionStatus.SignedIn);
+            return true;
+        }
+        return false;
+    }
+
+    private async handledConnectionLost() {
+        return this.handledSignedIn();
+    }
+
+    private async handelUnknownState() {
+        if (!(await this.tryToSignedIn())) {
+            this.setConnectionView(SessionStatus.SignedOut);
+            await this.setConnectionStatus(SessionStatus.SignedOut);
+        }
     }
 
     public async connect(): Promise<boolean> {
         if (await this.populateCredentials(true)) {
-            this.setConnectionStatus(SessionStatus.SignedIn);
+            await this.setConnectionStatus(SessionStatus.SignedIn);
             this.setConnectionView(SessionStatus.SignedIn);
             this.updateJfrogVersions();
             return true;
@@ -103,7 +144,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             async (): Promise<boolean> => {
                 await this.deleteCredentialsFromFileSystem();
                 this.deleteCredentialsFromMemory();
-                this.setConnectionStatus(SessionStatus.SignedOut);
+                await this.setConnectionStatus(SessionStatus.SignedOut);
                 this.setConnectionView(SessionStatus.SignedOut);
                 return true;
             }
@@ -136,7 +177,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         );
     }
 
-    private async verifyNewCredentials(prompt: boolean): Promise<boolean> {
+    public async verifyCredentials(prompt: boolean): Promise<boolean> {
         if (!this.areXrayCredentialsSet()) {
             return false;
         }
@@ -349,7 +390,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             this.deleteCredentialsFromMemory();
             return false;
         }
-        if (!(await this.verifyNewCredentials(false))) {
+        if (!(await this.verifyCredentials(false))) {
             this.deleteCredentialsFromMemory();
             return false;
         }
@@ -366,7 +407,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             this.deleteCredentialsFromMemory();
             return false;
         }
-        if (!(await this.verifyNewCredentials(false))) {
+        if (!(await this.verifyCredentials(false))) {
             this.deleteCredentialsFromMemory();
             return false;
         }
@@ -382,7 +423,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         const valid: boolean = await vscode.window.withProgress(
             <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with Xray server...' },
             async (): Promise<boolean> => {
-                return await this.verifyNewCredentials(true);
+                return await this.verifyCredentials(true);
             }
         );
         if (!valid) {
@@ -588,8 +629,8 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
      * By setting the global context, we can save a key/value pair.
      * VS Code manages the storage and will restore it for each extension activation.
      */
-    private setConnectionStatus(status: SessionStatus) {
-        this._context.globalState.update(ContextKeys.SESSION_STATUS, status);
+    private async setConnectionStatus(status: SessionStatus) {
+        await this._context.globalState.update(ContextKeys.SESSION_STATUS, status);
     }
 
     /**
@@ -606,10 +647,16 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
      */
     private setConnectionView(status: SessionStatus) {
         vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ContextKeys.SESSION_STATUS, status);
-        if (status === SessionStatus.SignedOut) {
-            this._statusBar.text = '🔴 JFrog';
-        } else {
-            this._statusBar.text = '🟢 JFrog';
+        switch (status) {
+            case SessionStatus.SignedIn:
+                this._statusBar.text = '🟢 JFrog';
+                break;
+            case SessionStatus.connectionLost:
+                this._statusBar.text = '🟠 JFrog';
+                break;
+            case SessionStatus.SignedOut:
+                this._statusBar.text = '🔴 JFrog';
+                break;
         }
     }
 
