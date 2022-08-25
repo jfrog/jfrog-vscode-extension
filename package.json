@@ -185,7 +185,7 @@
                 "command": "jfrog.xray.local",
                 "title": "Switch to local mode",
                 "icon": "$(home)",
-                "enablement": "!jfrog.scanInProgress"
+                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
             },
             {
                 "command": "jfrog.xray.ci",
@@ -194,7 +194,7 @@
                     "light": "resources/light/ci.png",
                     "dark": "resources/dark/ci.png"
                 },
-                "enablement": "!jfrog.scanInProgress"
+                "enablement": "jfrog.connection.status == signedIn && jfrog.connection.status == signedIn && !jfrog.scanInProgress"
             },
             {
                 "command": "jfrog.xray.export",
@@ -206,44 +206,39 @@
         "menus": {
             "view/title": [
                 {
-                    "command": "jfrog.xray.builds",
-                    "when": "view == jfrog.xray && isCi",
-                    "group": "navigation@0"
-                },
-                {
-                    "command": "jfrog.xray.local",
-                    "when": "view == jfrog.xray && isCi",
-                    "group": "navigation@1"
-                },
-                {
-                    "command": "jfrog.xray.ci",
-                    "when": "view == jfrog.xray && isLocal",
-                    "group": "navigation@1"
-                },
-                {
                     "command": "jfrog.xray.disconnect",
-                    "when": "view == jfrog.xray",
-                    "group": "navigation@2"
-                },
-                {
-                    "command": "jfrog.xray.filter",
-                    "when": "view == jfrog.xray",
-                    "group": "navigation@3"
+                    "when": "view == jfrog.xray && jfrog.connection.status == signedIn",
+                    "group": "navigation@0"
                 },
                 {
                     "command": "jfrog.xray.refresh",
                     "when": "view == jfrog.xray",
-                    "group": "navigation@4"
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "jfrog.xray.filter",
+                    "when": "view == jfrog.xray",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "jfrog.xray.local",
+                    "when": "view == jfrog.xray && isCi",
+                    "group": "navigation@3"
+                },
+                {
+                    "command": "jfrog.xray.ci",
+                    "when": "view == jfrog.xray && isLocal",
+                    "group": "navigation@3"
                 },
                 {
                     "command": "jfrog.xray.export",
                     "when": "view == jfrog.xray && isLocal",
-                    "group": "navigation@5"
+                    "group": "navigation@4"
                 },
                 {
-                    "command": "jfrog.source.code.scan.refresh",
-                    "when": "view == jfrog.source.code.scan",
-                    "group": "navigation@6"
+                    "command": "jfrog.xray.builds",
+                    "when": "view == jfrog.xray && isCi",
+                    "group": "navigation@5"
                 }
             ],
             "view/item/context": [

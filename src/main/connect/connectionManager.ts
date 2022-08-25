@@ -25,7 +25,7 @@ import { ContextKeys, SessionStatus } from '../constants/contextKeys';
 /**
  * Manage the Xray credentials and perform connection with Xray server.
  */
-export class ConnectionManager implements ExtensionComponent {
+export class ConnectionManager implements ExtensionComponent, vscode.Disposable {
     // The username and URL keys in VS-Code global configuration
     private static readonly XRAY_USERNAME_KEY: string = 'jfrog.xray.username';
     private static readonly PLATFORM_URL_KEY: string = 'jfrog.xray.platformUrl';
@@ -63,6 +63,10 @@ export class ConnectionManager implements ExtensionComponent {
         this._statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
         this._statusBar.tooltip = 'JFrog connection details';
         this._statusBar.command = 'jfrog.show.connectionStatus';
+    }
+
+    dispose() {
+        this._statusBar.dispose();
     }
 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
