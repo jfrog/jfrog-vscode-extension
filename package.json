@@ -28,7 +28,7 @@
         "viewsWelcome": [
             {
                 "view": "jfrog.xray",
-                "contents": "Thank you for installing the JFrog extension 🐸\nIf you already have a JFrog Platform, please connect it to VS Code:\n[Connect To JFrog Platform](command:jfrog.xray.connect)\nDon't have a JFrog Platform? [Get one for FREE](https://github.com/jfrog/jfrog-vscode-extension#set-up-a-free-jfrog-environment-in-the-cloud) ",
+                "contents": "Thank you for installing the JFrog extension 🐸\nIf you already have a JFrog Platform, please connect it to VS Code:\n[Connect to JFrog platform](command:jfrog.xray.connect)\nDon't have a JFrog Platform? [Get one for FREE](https://github.com/jfrog/jfrog-vscode-extension#set-up-a-free-jfrog-environment-in-the-cloud) ",
                 "when": "jfrog.connection.status == signedOut || !jfrog.connection.status"
             },
             {
