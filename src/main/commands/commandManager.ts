@@ -285,7 +285,9 @@ export class CommandManager implements ExtensionComponent {
      */
     private async doDisconnect() {
         const answer: string | undefined = await vscode.window.showInformationMessage(
-            'Are you sure you want to disconnect from the JFrog Platform (' + (this._connectionManager.url || this._connectionManager.xrayUrl) + ') ?',
+            'Are you sure you want to disconnect from the JFrog Platform (' +
+                (this._connectionManager.url || this._connectionManager.xrayUrl) +
+                ') ?',
             ...['Yes', 'No']
         );
         if (answer !== 'Yes') {
@@ -304,7 +306,7 @@ export class CommandManager implements ExtensionComponent {
             }
             return;
         }
-        return vscode.window.showErrorMessage('No connection to JFrog server');
+        return vscode.window.showErrorMessage('No connection to JFrog Platform');
     }
 
     private xrayConnectionDetails(): string {
