@@ -23,7 +23,7 @@ import { ScanUtils } from '../utils/scanUtils';
 import { ContextKeys, SessionStatus } from '../constants/contextKeys';
 
 /**
- * Manage the Xray credentials and perform connection with Xray server.
+ * Manage the JFrog Platform credentials and perform connection with JFrog Platform server.
  */
 export class ConnectionManager implements ExtensionComponent, vscode.Disposable {
     // The username and URL keys in VS-Code global configuration
@@ -421,7 +421,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             return false;
         }
         const valid: boolean = await vscode.window.withProgress(
-            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with Xray server...' },
+            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with JFrog Platform server...' },
             async (): Promise<boolean> => {
                 return await this.verifyCredentials(true);
             }

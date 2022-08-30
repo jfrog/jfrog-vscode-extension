@@ -273,7 +273,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Connect to Xray server. If connection success, perform a quick scan.
+     * Connect to JFrog Platform server. If the connection success, perform a quick scan.
      */
     private async doConnect() {
         let credentialsSet: boolean = await this._connectionManager.connect();
@@ -282,6 +282,9 @@ export class CommandManager implements ExtensionComponent {
         }
     }
 
+    /**
+     * Reconnect to an existing JFrog Platform credentials.
+     */
     private async doReconnect() {
         await this._connectionManager.populateCredentials(false);
         let ok: boolean = await this._connectionManager.verifyCredentials(false);
@@ -294,7 +297,8 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Disconnect from Xray server. Delete the URL, username & password from FS.
+     * Disconnect from JFrog Platform server. Delete the URL, username & password from FS.
+     * @param question prompts a yes/no question before perform disconnect
      */
     private async doDisconnect(question: boolean) {
         if (question) {
