@@ -48,12 +48,14 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
         this.registerCommand(context, 'jfrog.xray.openLink', url => this.doOpenLink(url));
-        this.registerCommand(context, 'jfrog.xray.disconnect', () => this.doDisconnect());
+        this.registerCommand(context, 'jfrog.xray.disconnect', () => this.doDisconnect(true));
+        this.registerCommand(context, 'jfrog.xray.resetConnection', () => this.doDisconnect(false));
         this.registerCommand(context, 'jfrog.show.connectionStatus', () => this.showConnectionStatus());
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
         this.registerCommand(context, 'jfrog.source.code.scan.refresh', () => this.doCodeScanRefresh());
         this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
+        this.registerCommand(context, 'jfrog.xray.reConnect', () => this.doReconnect());
         this.registerCommand(context, 'jfrog.xray.filter', () => this.doFilter());
         this.registerCommand(context, 'jfrog.xray.local', () => this.doLocal());
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
@@ -271,7 +273,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Connect to Xray server. If connection success, perform a quick scan.
+     * Connect to JFrog Platform server. If the connection success, perform a quick scan.
      */
     private async doConnect() {
         let credentialsSet: boolean = await this._connectionManager.connect();
@@ -281,17 +283,34 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Disconnect from Xray server. Delete the URL, username & password from FS.
+     * Reconnect to an existing JFrog Platform credentials.
      */
-    private async doDisconnect() {
-        const answer: string | undefined = await vscode.window.showInformationMessage(
-            'Are you sure you want to disconnect from the JFrog Platform (' +
-                (this._connectionManager.url || this._connectionManager.xrayUrl) +
-                ') ?',
-            ...['Yes', 'No']
-        );
-        if (answer !== 'Yes') {
+    private async doReconnect() {
+        await this._connectionManager.populateCredentials(false);
+        let ok: boolean = await this._connectionManager.verifyCredentials(false);
+        if (ok) {
+            await this.doConnect();
+            vscode.window.showInformationMessage('✨ Successfully reconnected ✨');
             return;
+        }
+        vscode.window.showErrorMessage("Couldn't connect to: " + this._connectionManager.xrayUrl);
+    }
+
+    /**
+     * Disconnect from JFrog Platform server. Delete the URL, username & password from FS.
+     * @param question prompts a yes/no question before perform disconnect
+     */
+    private async doDisconnect(question: boolean) {
+        if (question) {
+            const answer: string | undefined = await vscode.window.showInformationMessage(
+                'Are you sure you want to disconnect from the JFrog Platform (' +
+                    (this._connectionManager.url || this._connectionManager.xrayUrl) +
+                    ') ?',
+                ...['Yes', 'No']
+            );
+            if (answer !== 'Yes') {
+                return;
+            }
         }
         if (await this._connectionManager.disconnect()) {
             await this.doRefresh(true);
@@ -299,11 +318,15 @@ export class CommandManager implements ExtensionComponent {
     }
 
     private async showConnectionStatus() {
-        if (this._connectionManager.xrayUrl) {
+        if (await this._connectionManager.isSignedIn()) {
             vscode.window.showInformationMessage(this.xrayConnectionDetails());
             if (this._connectionManager.rtUrl) {
                 return vscode.window.showInformationMessage(this.artifactoryConnectionDetails());
             }
+            return;
+        }
+        if (await this._connectionManager.isConnectionLost()) {
+            vscode.window.showWarningMessage("Couldn't connect to your JFrog Platform.");
             return;
         }
         return vscode.window.showErrorMessage('No connection to JFrog Platform');

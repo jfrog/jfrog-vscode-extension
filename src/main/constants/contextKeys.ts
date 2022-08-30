@@ -10,6 +10,7 @@ export class ContextKeys {
 
 export enum SessionStatus {
     SignedOut = 'signedOut',
+    connectionLost = 'connectionLost',
     SignedIn = 'signedIn'
 }
 
