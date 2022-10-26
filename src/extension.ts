@@ -18,6 +18,7 @@ import { ExportManager } from './main/export/exportManager';
 import { ScanManager } from './main/scanLogic/scanManager';
 import { IssuesFilterManager } from './main/filter/issuesFilterManager';
 import { CacheManager } from './main/cache/cacheManager';
+import { vulnerabilityDetails } from './main/webviews/vulnerabilityDetails';
 
 /**
  * This method is called when the extension is activated.
@@ -55,6 +56,7 @@ export async function activate(context: vscode.ExtensionContext) {
     let buildsManager: BuildsManager = new BuildsManager(treesManager).activate();
     let exportManager: ExportManager = new ExportManager(workspaceFolders, treesManager).activate();
 
+    new vulnerabilityDetails().activate(context);
     new DiagnosticsManager(treesManager).activate(context);
     new WatcherManager(treesManager).activate(context);
     new HoverManager(treesManager).activate(context);
@@ -72,4 +74,7 @@ export async function activate(context: vscode.ExtensionContext) {
         exportManager,
         issueFilterManager
     ).activate(context);
+
+
+
 }

@@ -5,7 +5,7 @@
 const path = require('path');
 
 /**@type {import('webpack').Configuration}*/
-const config = {
+const extensionConfig = {
     target: 'node',
     entry: './src/extension.ts',
     output: {
@@ -36,4 +36,38 @@ const config = {
         __filename: false
     }
 };
-module.exports = config;
+
+const reactConfig = {
+    entry:  path.join(__dirname, "src","main","webviews","app", "index.tsx"),
+    output: {
+        path: path.resolve(__dirname, 'dist'),
+        filename: 'index.js',
+        devtoolModuleFilenameTemplate: "../[resource-path]",
+    },
+    devtool: 'source-map',
+    externals: {
+        vscode: "commonjs vscode"
+    },
+    resolve: {
+        extensions: ['.ts', '.js', '.json', '.tsx', '.css', '.svg']
+    },
+    module: {
+        rules: [
+        {
+            test: /\.tsx?$/,
+            exclude: /node_modules/,
+            loader: 'ts-loader'
+        },
+        {
+            test: /\.css?$/,
+            use: ['style-loader', 'css-loader', 'postcss-loader']
+          },
+        {
+            test: /\.(png|svg|jpg|jpeg|gif)$/i,
+            type: 'asset/resource',
+        }
+        ]
+    },
+}
+
+module.exports = [extensionConfig,reactConfig];
