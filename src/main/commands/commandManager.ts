@@ -207,7 +207,7 @@ export class CommandManager implements ExtensionComponent {
      * @param node The tree node. Can be instance of DependenciesTreeNode or TreeDataHolder.
      */
     private doCopyToClipboard(node: vscode.TreeItem) {
-        let text: string | undefined;
+        let text: string | vscode.TreeItemLabel | undefined;
         if (node instanceof TreeDataHolder) {
             // 'Component Details' or leaf of 'Component Issue Details'
             let treeDataHolder: TreeDataHolder = node;
@@ -225,7 +225,7 @@ export class CommandManager implements ExtensionComponent {
             text = node.label;
         }
         if (text) {
-            vscode.env.clipboard.writeText(text);
+            vscode.env.clipboard.writeText(text?.toString());
         }
     }
 

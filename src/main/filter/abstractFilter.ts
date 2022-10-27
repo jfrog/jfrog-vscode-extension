@@ -28,7 +28,7 @@ export abstract class AbstractFilter {
 
         // Set listeners
         quickPick.onDidChangeSelection(items => {
-            this._choice = items;
+            this._choice = items.map(el => el);
             filterManager.applyFilters();
         });
         quickPick.onDidAccept(() => quickPick.hide());

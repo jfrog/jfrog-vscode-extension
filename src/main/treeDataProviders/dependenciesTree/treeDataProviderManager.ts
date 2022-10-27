@@ -49,7 +49,7 @@ export class TreeDataProviderManager implements vscode.TreeDataProvider<Dependen
     }
 
     public onChangeFire(): void {
-        this._onDidChangeTreeData.fire();
+        this._onDidChangeTreeData.fire(undefined);
     }
 
     public applyFilters(filteredDependenciesTree: DependenciesTreeNode | undefined) {

@@ -21,7 +21,7 @@ import { ExportManager } from './main/export/exportManager';
  * @param context - The extension context
  */
 export async function activate(context: vscode.ExtensionContext) {
-    let workspaceFolders: vscode.WorkspaceFolder[] = vscode.workspace.workspaceFolders || [];
+    let workspaceFolders: vscode.WorkspaceFolder[] = vscode.workspace.workspaceFolders?.map(el => el) || [];
 
     let logManager: LogManager = new LogManager().activate();
     let connectionManager: ConnectionManager = await new ConnectionManager(logManager).activate(context);
