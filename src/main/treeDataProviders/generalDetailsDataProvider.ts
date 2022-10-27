@@ -33,7 +33,7 @@ export class GeneralDetailsDataProvider extends vscode.TreeItem implements vscod
     }
 
     refresh(): void {
-        this._onDidChangeTreeData.fire();
+        this._onDidChangeTreeData.fire(undefined);
     }
 
     getTreeItem(element: any): vscode.TreeItem {

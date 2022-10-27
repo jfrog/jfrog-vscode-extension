@@ -50,7 +50,11 @@ export class ScanUtils {
         for (let workspace of workspaceFolders) {
             logManager.logMessage('Locating package descriptors in workspace "' + workspace.name + '".', 'INFO');
             let wsPackageDescriptors: vscode.Uri[] = await vscode.workspace.findFiles(
-                { base: workspace.uri.fsPath, pattern: '**/{go.mod,pom.xml,package.json,yarn.lock,*.sln,setup.py,requirements*.txt}' },
+                {
+                    baseUri: workspace.uri,
+                    base: workspace.uri.fsPath,
+                    pattern: '**/{go.mod,pom.xml,package.json,yarn.lock,*.sln,setup.py,requirements*.txt}'
+                },
                 Configuration.getScanExcludePattern(workspace)
             );
             for (let wsPackageDescriptor of wsPackageDescriptors) {

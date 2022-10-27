@@ -6,6 +6,9 @@ export class TestMemento implements vscode.Memento {
     constructor() {
         this.storage = new Collections.Dictionary<string, any>();
     }
+    keys(): readonly string[] {
+        return this.storage.keys()
+    }
     get(key: any) {
         if (typeof key === 'string') {
             return this.storage.getValue(key);

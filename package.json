@@ -15,7 +15,7 @@
     },
     "publisher": "JFrog",
     "engines": {
-        "vscode": "^1.37.0"
+        "vscode": "^1.64.2"
     },
     "categories": [
         "Other"
@@ -320,7 +320,7 @@
         "@types/mocha": "^9.1.1",
         "@types/semver": "^7.3.9",
         "@types/tmp": "^0.2.3",
-        "@types/vscode": "1.37.0",
+        "@types/vscode": "1.64.0",
         "@typescript-eslint/eslint-plugin": "^5.27.0",
         "@typescript-eslint/parser": "^5.27.0",
         "chai": "^4.3.6",

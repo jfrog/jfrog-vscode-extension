@@ -243,7 +243,7 @@ export class SourceCodeTreeDataProvider
     }
 
     public onChangeFire(): void {
-        this._onDidChangeTreeData.fire();
+        this._onDidChangeTreeData.fire(undefined);
     }
 
     private clearCveTreeView() {

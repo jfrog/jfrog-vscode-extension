@@ -62,7 +62,7 @@ export class PypiUtils {
         logManager.logMessage('Locating python files in workspace "' + workspaceFolder.name + '".', 'INFO');
 
         let wsPythonFiles: vscode.Uri[] = await vscode.workspace.findFiles(
-            { base: workspaceFolder.uri.fsPath, pattern: '**/*{setup.py,requirements*.txt}' },
+            { baseUri: workspaceFolder.uri, base: workspaceFolder.uri.fsPath, pattern: '**/*{setup.py,requirements*.txt}' },
             Configuration.getScanExcludePattern(workspaceFolder)
         );
         if (logManager && wsPythonFiles.length > 0) {
@@ -184,6 +184,9 @@ export class PypiUtils {
      * @param fsPath - The base path to search
      */
     public static async getRequirementsFiles(fsPath: string): Promise<vscode.Uri[]> {
-        return await vscode.workspace.findFiles({ base: fsPath, pattern: '**/*requirements*.txt' }, Configuration.getScanExcludePattern());
+        return await vscode.workspace.findFiles(
+            { baseUri: vscode.Uri.file(fsPath), base: fsPath, pattern: '**/*requirements*.txt' },
+            Configuration.getScanExcludePattern()
+        );
     }
 }
