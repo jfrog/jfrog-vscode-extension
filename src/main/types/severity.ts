@@ -1,5 +1,6 @@
 import { IconsPaths } from '../utils/iconsPaths';
 import { Translators } from '../utils/translators';
+import { ISeverity } from 'jfrog-ide-webview';
 
 export enum Severity {
     Normal = 0,
@@ -43,6 +44,19 @@ export class SeverityUtils {
             case Severity.Critical:
                 return SeverityStrings.Critical;
         }
+    }
+    public static toWebviewSeverity(severity: Severity):ISeverity {
+        switch (severity) {
+            case Severity.Low:
+                return ISeverity.Low;
+            case Severity.Medium:
+                return ISeverity.Medium;
+            case Severity.High:
+                return ISeverity.High;
+            case Severity.Critical:
+                return ISeverity.Critical;
+        }
+        return ISeverity.Unknown
     }
 
     public static getIcon(severity: Severity | undefined, hover: boolean = false) {

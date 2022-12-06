@@ -134,7 +134,9 @@ export class GraphScanLogic extends AbstractScanLogic {
                 summary: vuln.summary != '' ? vuln.summary : 'N/A',
                 fixedVersions: vulnComponent.fixed_versions,
                 cves: cves,
-                references: Translators.cleanReferencesLink(vuln.references)
+                references: Translators.cleanReferencesLink(vuln.references),
+                edited: vuln.edited,
+                researchInfo: vuln.researchInfo
             } as IIssueCacheObject);
             cves.forEach(cve => {
                 let cveDetails: CveDetails | undefined = projectComponents.componentIdToCve.get(componentId);

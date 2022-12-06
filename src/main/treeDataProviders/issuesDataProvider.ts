@@ -11,6 +11,8 @@ import { ContextKeys } from '../constants/contextKeys';
 import { SourceCodeCveTreeNode } from './sourceCodeTree/sourceCodeCveNode';
 import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
 import { Utils } from './utils/utils';
+import { IReference, IResearch } from 'jfrog-client-js';
+
 export abstract class IssueNode extends vscode.TreeItem {
     constructor(label: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
         super(label, collapsibleState);
@@ -39,8 +41,8 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
         if (element instanceof VulnerabilityNode) {
             if (element.sourceCodeCveTreeNode !== undefined) {
                 // Focus on vulnerable line on issue (CVE) left click.
-                element.command = Utils.createNodeCommand('jfrog.source.code.scan.jumpToSource', 'Show in source cod', [element]);
             }
+            element.command = Utils.createNodeCommand('view.dependency.vulnerability', 'Show details', [element]);
         }
         if (!(element instanceof TreeDataHolder)) {
             // VulnerabilityNode, ViolatedLicenseNode, LicensesTitleNode, or VulnerabilitiesTitleNode
@@ -127,10 +129,14 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
                     xrayIssueId.issue_id,
                     issue.severity,
                     issue.summary,
+                    issue.edited,
                     undefined,
                     issue.references,
                     xrayIssueId.component,
-                    issue.fixedVersions
+                    issue.fixedVersions,
+                    undefined,
+                    undefined,
+                    issue.researchInfo
                 );
                 children.push(issueNode);
             } else {
@@ -151,12 +157,14 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
                         xrayIssueId.issue_id,
                         issue.severity,
                         issue.summary,
+                        issue.edited,
                         cve,
                         issue.references,
                         xrayIssueId.component,
                         issue.fixedVersions,
                         applicable,
-                        sourceCodeCveTreeNode
+                        sourceCodeCveTreeNode,
+                        issue.researchInfo
                     );
                     children.push(issueNode);
                 }
@@ -181,10 +189,10 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
         if (fixedVersions && fixedVersions.length > 0) {
             children.push(new TreeDataHolder('Fixed Versions', fixedVersions.join(', ')));
         }
-        let references: string[] | undefined = node.references;
-        if (references && references.length > 0) {
-            children.push(new ReferencesNode(references));
-        }
+        // let references: IReference[] | undefined = node.references;
+        // if (references && references.length > 0) {
+        //     children.push(new ReferencesNode(references));
+        // }
         return children;
     }
 
@@ -258,12 +266,14 @@ export class VulnerabilityNode extends IssueNode {
         readonly xrayId: string,
         readonly severity: Severity,
         readonly summary: string,
+        readonly edited: string,
         readonly cve?: string,
-        readonly references?: string[],
+        readonly references?: IReference[],
         readonly component?: string,
         readonly fixedVersions?: string[],
         readonly applicable?: boolean, // If false, the given CVE is not applicable in the source code. If true, the given CVE is applicable in the source code.  If undefined, The CVE cannot be discovered.
-        readonly sourceCodeCveTreeNode?: SourceCodeCveTreeNode
+        readonly sourceCodeCveTreeNode?: SourceCodeCveTreeNode,
+        readonly  researchInfo?: IResearch
     ) {
         super(cve ? cve : xrayId, vscode.TreeItemCollapsibleState.Collapsed);
         // Enable eye button if we can jump to source code.

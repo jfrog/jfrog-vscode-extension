@@ -1,4 +1,3 @@
-//@ts-check
 
 'use strict';
 
@@ -37,37 +36,44 @@ const extensionConfig = {
     }
 };
 
-const reactConfig = {
-    entry:  path.join(__dirname, "src","main","webviews","app", "index.tsx"),
-    output: {
-        path: path.resolve(__dirname, 'dist'),
-        filename: 'index.js',
-        devtoolModuleFilenameTemplate: "../[resource-path]",
-    },
-    devtool: 'source-map',
-    externals: {
-        vscode: "commonjs vscode"
-    },
-    resolve: {
-        extensions: ['.ts', '.js', '.json', '.tsx', '.css', '.svg']
-    },
-    module: {
-        rules: [
-        {
-            test: /\.tsx?$/,
-            exclude: /node_modules/,
-            loader: 'ts-loader'
+const reactConfig = (env, argv) => {
+    return {
+        devtool: env.NODE_ENV == "production" ? "" : "source-map",
+        entry: path.join(__dirname, "src", "main", "webviews", "app", "index.tsx"),
+        output: {
+            path: path.resolve(__dirname, 'dist'),
+            filename: 'index.js',
+            devtoolModuleFilenameTemplate: "../[resource-path]",
         },
-        {
-            test: /\.css?$/,
-            use: ['style-loader', 'css-loader', 'postcss-loader']
-          },
-        {
-            test: /\.(png|svg|jpg|jpeg|gif)$/i,
-            type: 'asset/resource',
+        externals: {
+            vscode: "commonjs vscode"
+        },
+        resolve: {
+            extensions: ['.ts', '.js', '.json', '.tsx', '.css', '.svg'],
+            fallback: {
+                "url": false,
+                "path": false,
+                "process": false,
+            }
+        },
+        module: {
+            rules: [
+                {
+                    test: /\.tsx?$/,
+                    loader: 'ts-loader'
+                },
+                {
+                    test: /\.css?$/,
+                    use: ['style-loader', 'css-loader', 'postcss-loader']
+                },
+                {
+                    test: /\.(png|svg|jpg|jpeg|gif)$/i,
+                    type: 'asset/resource',
+                }
+            ]
         }
-        ]
-    },
-}
 
-module.exports = [extensionConfig,reactConfig];
+    }
+};
+
+    module.exports = [extensionConfig, reactConfig]

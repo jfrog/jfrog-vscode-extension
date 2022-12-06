@@ -1,4 +1,4 @@
-import { ICve, IGeneral, IIssue, ILicense, IVulnerableComponent, Severity as ClientSeverity } from 'jfrog-client-js';
+import { ICve, IGeneral, IIssue, ILicense, IVulnerableComponent, Severity as ClientSeverity, IReference } from 'jfrog-client-js';
 import Set from 'typescript-collections/dist/lib/Set';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
 import { GeneralInfo } from '../types/generalInfo';
@@ -20,7 +20,7 @@ export class Translators {
             summary: clientIssue.summary,
             severity: Translators.toSeverity(clientIssue.severity),
             cves: Translators.toCves(clientIssue.cves),
-            fixedVersions: Translators.toFixedVersions(clientIssue.components)
+            fixedVersions: Translators.toFixedVersions(clientIssue.components),
         } as IIssueCacheObject;
     }
 
@@ -83,10 +83,10 @@ export class Translators {
         return str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
     }
 
-    public static cleanReferencesLink(references: string[] | undefined): string[] {
-        let results: string[] = [];
+    public static cleanReferencesLink(references: string[] | undefined): IReference[] {
+        let results: IReference[] = [];
         if (!references) {
-            return [];
+            return results;
         }
         for (let reference of references) {
             // A single reference may includes multiples links separated by \n
@@ -96,13 +96,15 @@ export class Translators {
             }
             // The format of some references is [text](link-url).
             let openBracket: number = reference.indexOf('(');
+            let closeSquareBracket: number = reference.indexOf(']');
             if (openBracket != -1) {
                 // Extract the URL.
-                const normalizedReference: string = reference.slice(openBracket + 1, reference.length - 1);
-                results.push(normalizedReference);
+                const url: string = reference.slice(openBracket + 1, reference.length - 1);
+                const text: string = reference.slice(1, closeSquareBracket);
+                results.push({ text: text, url: url } as IReference);
                 continue;
             }
-            results.push(reference);
+            results.push({ url: reference } as IReference);
         }
         return results;
     }

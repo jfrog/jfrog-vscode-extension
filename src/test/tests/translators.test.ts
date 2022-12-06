@@ -1,5 +1,5 @@
 import { assert, expect } from 'chai';
-import { ICve, IIssue, IVulnerableComponent } from 'jfrog-client-js';
+import { ICve, IIssue, IReference, IVulnerableComponent } from 'jfrog-client-js';
 import { IIssueCacheObject } from '../../main/types/issueCacheObject';
 import { Translators } from '../../main/utils/translators';
 
@@ -49,14 +49,14 @@ describe('Translators Tests', () => {
     });
 
     it('CVEs - Empty CVEs', async () => {
-        let clientCves: ICve[] = [{ cve: '', cvss_v2: '4.3/CVSS:2.0/AV:N/AC:M/Au:N/C:N/I:P/A:N' }];
+        let clientCves: ICve[] = [];
         let issues: IIssueCacheObject = Translators.toCacheIssue({ cves: clientCves } as IIssue);
         assert.isDefined(issues.cves);
         assert.lengthOf(issues.cves || [], 0);
     });
 
     it('CVEs - One CVE', async () => {
-        let clientCves: ICve[] = [{ cve: 'CVE-2020-1', cvss_v2: '4.3/CVSS:2.0/AV:N/AC:M/Au:N/C:N/I:P/A:N' }];
+        let clientCves: ICve[] = [];
         let issues: IIssueCacheObject = Translators.toCacheIssue({ cves: clientCves } as IIssue);
         assert.isDefined(issues.cves);
         if (!issues.cves) {
@@ -68,8 +68,7 @@ describe('Translators Tests', () => {
 
     it('CVEs - Two CVEs', async () => {
         let clientCves: ICve[] = [
-            { cve: 'CVE-2020-1', cvss_v2: '4.3/CVSS:2.0/AV:N/AC:M/Au:N/C:N/I:P/A:N' },
-            { cve: 'CVE-2020-2', cvss_v2: '4.3/CVSS:2.0/AV:N/AC:M/Au:N/C:N/I:P/A:N' }
+            // { cve: 'CVE-2020-1', cvss_v2_vector: '4.3/CVSS:2.0/AV:N/AC:M/Au:N/C:N/I:P/A:N' },
         ];
         let issues: IIssueCacheObject = Translators.toCacheIssue({ cves: clientCves } as IIssue);
         assert.isDefined(issues.cves);
@@ -82,35 +81,38 @@ describe('Translators Tests', () => {
     });
 
     it('References - One reference', async () => {
-        let cleaned: string[] = Translators.cleanReferencesLink(['www.a.com']);
+        let cleaned: IReference[] = Translators.cleanReferencesLink(['www.a.com']);
         assert.lengthOf(cleaned, 1);
-        assert.equal(cleaned[0], 'www.a.com');
+        assert.equal(cleaned[0].url, 'www.a.com');
     });
 
     it('References - One Markdown reference', async () => {
-        let cleaned: string[] = Translators.cleanReferencesLink(['[a](www.a.com)']);
+        let cleaned: IReference[] = Translators.cleanReferencesLink(['[a](www.a.com)']);
         assert.lengthOf(cleaned || [], 1);
-        assert.equal(cleaned[0], 'www.a.com');
+        assert.equal(cleaned[0].url, 'www.a.com');
+        assert.equal(cleaned[0].text, 'a');
     });
 
     it('References - Two references', async () => {
-        let cleaned: string[] = Translators.cleanReferencesLink(['www.a.com', 'www.b.com']);
+        let cleaned: IReference[] = Translators.cleanReferencesLink(['www.a.com', 'www.b.com']);
         assert.lengthOf(cleaned || [], 2);
-        assert.equal(cleaned[0], 'www.a.com');
-        assert.equal(cleaned[1], 'www.b.com');
+        assert.equal(cleaned[0].url, 'www.a.com');
+        assert.equal(cleaned[1].url, 'www.b.com');
     });
 
     it('References - Two combined references', async () => {
-        let cleaned: string[] = Translators.cleanReferencesLink(['www.a.com\nwww.b.com']);
+        let cleaned: IReference[] = Translators.cleanReferencesLink(['www.a.com\nwww.b.com']);
         assert.lengthOf(cleaned || [], 2);
-        assert.equal(cleaned[0], 'www.a.com');
-        assert.equal(cleaned[1], 'www.b.com');
+        assert.equal(cleaned[0].url, 'www.a.com');
+        assert.equal(cleaned[1].url, 'www.b.com');
     });
 
     it('References - Two Markdown combined references', async () => {
-        let cleaned: string[] = Translators.cleanReferencesLink(['[a](www.a.com)\n[b](www.b.com)']);
+        let cleaned: IReference[] = Translators.cleanReferencesLink(['[a](www.a.com)\n[b](www.b.com)']);
         assert.lengthOf(cleaned || [], 2);
-        assert.equal(cleaned[0], 'www.a.com');
-        assert.equal(cleaned[1], 'www.b.com');
+        assert.equal(cleaned[0].url, 'www.a.com');
+        assert.equal(cleaned[0].text, 'a');
+        assert.equal(cleaned[1].url, 'www.b.com');
+        assert.equal(cleaned[1].text, 'b');
     });
 });

@@ -2,7 +2,7 @@
     "name": "jfrog-vscode-extension",
     "displayName": "JFrog",
     "description": "JFrog Xray scanning of Go, npm, Pypi, Maven and NuGet project dependencies.",
-    "version": "1.14.2",
+    "version": "2.0.0",
     "license": "Apache-2.0",
     "icon": "resources/extensionIcon.png",
     "repository": {
@@ -141,9 +141,9 @@
         },
         "commands": [
             {
-                "command": "vulnerability.details",
-                "title": "Vulnerability Details'",
-                "category": "Right pane vulnerability details"
+                "command": "view.dependency.vulnerability",
+                "title": "view.dependency.vulnerability'",
+                "category": "view.dependency.vulnerability"
             },
             {
                 "command": "jfrog.xray.refresh",
@@ -333,8 +333,8 @@
     },
     "scripts": {
         "vscode:prepublish": "webpack --mode production",
-        "webpack": "webpack --mode development",
-        "webpack-dev": "webpack --mode development --watch",
+        "webpack": "rm -rf dist && webpack --mode development",
+        "webpack-dev": "rm -rf dist && webpack --mode development --watch",
         "format": "prettier --write \"src/**/*.ts\" \"package.json\" \"tsconfig.json\" \".eslintrc.js\"",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
