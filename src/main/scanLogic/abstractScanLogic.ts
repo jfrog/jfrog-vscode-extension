@@ -1,7 +1,7 @@
 import { ComponentDetails } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
-import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { ScanCacheManager } from '../cache/scanCacheManager';
 import Set from 'typescript-collections/dist/lib/Set';
 import { ProjectComponents } from '../types/projectComponents';
 

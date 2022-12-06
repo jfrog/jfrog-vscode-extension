@@ -1,5 +1,5 @@
 import { Parser } from 'json2csv';
-import { ScanCacheManager } from '../../scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../cache/scanCacheManager';
 import { DependenciesTreeNode } from '../../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { SeverityUtils } from '../../types/severity';
 import { AbstractExporter } from '../abstractExporter';

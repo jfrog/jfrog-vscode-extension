@@ -1,4 +1,4 @@
-import { ComponentDetails, IGraphLicense, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
+import { ComponentDetails, IGraphLicense, IGraphRequestModel, IGraphResponse, IViolation, IVulnerability, XrayScanProgress } from 'jfrog-client-js';
 import Dictionary from 'typescript-collections/dist/lib/Dictionary';
 import * as vscode from 'vscode';
 import { IIssueCacheObject } from '../types/issueCacheObject';
@@ -12,6 +12,8 @@ import { Translators } from '../utils/translators';
 import { AbstractScanLogic } from './abstractScanLogic';
 import Set from 'typescript-collections/dist/lib/Set';
 import { CveDetails, ProjectComponents } from '../types/projectComponents';
+import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 
 /**
  * Used in Xray >= 3.29.0.
@@ -20,6 +22,44 @@ import { CveDetails, ProjectComponents } from '../types/projectComponents';
  * When the project key isn't provided - all vulnerabilities and licenses information should appear in the results.
  */
 export class GraphScanLogic extends AbstractScanLogic {
+
+    public async scan(
+        projectRoot: RootNode,
+        progress: XrayScanProgress,
+        checkCanceled: () => void
+    ): Promise<IGraphResponse> {
+        // Convert DependenciesTreeNode to IGraphRequestModel
+        let graphRequest: IGraphRequestModel = {
+            component_id: projectRoot.generalInfo.artifactId,
+            nodes:this.getGraphRequestModelNodes(projectRoot)
+        } as IGraphRequestModel;
+        // Run scan
+        return this._connectionManager.scanWithGraph(
+            graphRequest,
+            progress,
+            checkCanceled,
+            Configuration.getProjectKey(),
+            Configuration.getWatches()
+        );
+    }
+
+    private getGraphRequestModelNodes(dependency: DependenciesTreeNode) : IGraphRequestModel[] {
+        let nodes: IGraphRequestModel[] = [];
+        if (dependency.children.length > 0) {
+            for (let child of dependency.children) {
+                nodes.push(
+                    {
+                        component_id: child.dependencyId,
+                        nodes:this.getGraphRequestModelNodes(child)
+                    } as IGraphRequestModel
+                );
+            }
+        }
+        return nodes;
+    }
+
+    // ================
+
     public async scanAndCache(
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         componentsToScan: Set<ComponentDetails>,

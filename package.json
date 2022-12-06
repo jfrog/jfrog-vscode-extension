@@ -39,6 +39,16 @@
             {
                 "view": "jfrog.source.code.scan",
                 "contents": "This view displays the results of applicability scanning of CVEs in the code. Python, npm, and yarn are currently supported."
+            },
+            {
+                "view": "jfrog.xray.issues",
+                "contents": "Thank you for installing the JFrog extension 🐸\nIf you already have a JFrog Platform, please connect it to VS Code:\n[Connect to JFrog platform](command:jfrog.xray.connect)\nDon't have a JFrog Platform? [Get one for FREE](https://github.com/jfrog/jfrog-vscode-extension#set-up-a-free-jfrog-environment-in-the-cloud) ",
+                "when": "jfrog.connection.status == signedOut || !jfrog.connection.status"
+            },
+            {
+                "view": "jfrog.xray.issues",
+                "contents": "This view displays the xray scan results in the project. the results of applicability scanning of CVEs in the code currently support Python, npm, and yarn.\n[Scan](command:jfrog.xray.refresh)",
+                "when": "jfrog.connection.status == signedIn"
             }
         ],
         "viewsContainers": {
@@ -57,13 +67,22 @@
                     "name": "Dependencies"
                 },
                 {
+                    "id": "jfrog.source.code.scan",
+                    "name": "Code Vulnerabilities",
+                    "when": "false"
+                },
+                {
+                    "id": "jfrog.xray.build",
+                    "name": "Builds",
+                    "when": "false"
+                },
+                {
                     "id": "jfrog.xray.dependency.details",
                     "name": "Dependency Details"
                 },
                 {
-                    "id": "jfrog.source.code.scan",
-                    "name": "Code Vulnerabilities",
-                    "when": "false"
+                    "id": "jfrog.xray.issues",
+                    "name": "Issues"
                 }
             ]
         },
@@ -155,6 +174,15 @@
                 "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
             },
             {
+                "command": "jfrog.xray.issues.filter",
+                "title": "Filter",
+                "icon": {
+                    "light": "resources/light/filter.png",
+                    "dark": "resources/dark/filter.png"
+                },
+                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
+            },
+            {
                 "command": "jfrog.xray.showInProjectDesc",
                 "title": "Show in project descriptor",
                 "icon": "$(eye)"
@@ -216,13 +244,23 @@
                     "group": "navigation@0"
                 },
                 {
+                    "command": "jfrog.xray.disconnect",
+                    "when": "view == jfrog.xray.issues && jfrog.connection.status != signedOut",
+                    "group": "navigation@0"
+                },
+                {
                     "command": "jfrog.xray.refresh",
-                    "when": "view == jfrog.xray",
+                    "when": "view == jfrog.xray || view == jfrog.xray.issues",
                     "group": "navigation@1"
                 },
                 {
                     "command": "jfrog.xray.filter",
                     "when": "view == jfrog.xray",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "jfrog.xray.issues.filter",
+                    "when": "view == jfrog.xray.issues",
                     "group": "navigation@2"
                 },
                 {
@@ -233,6 +271,11 @@
                 {
                     "command": "jfrog.xray.ci",
                     "when": "view == jfrog.xray && isLocal",
+                    "group": "navigation@3"
+                },
+                {
+                    "command": "jfrog.xray.ci",
+                    "when": "view == jfrog.xray.issues && isLocal",
                     "group": "navigation@3"
                 },
                 {
@@ -298,7 +341,8 @@
     "dependencies": {
         "adm-zip": "~0.5.9",
         "fs-extra": "~10.1.0",
-        "jfrog-client-js": "^2.6.0",
+        "jfrog-client-js": "file:../jfrog-client-js",
+        "jfrog-ide-webview": "^0.1.1",
         "json2csv": "~5.0.7",
         "keytar": "~7.9.0",
         "nuget-deps-tree": "^0.2.2",

@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 import { IArtifact, IGeneral, IIssue, ILicense } from 'jfrog-client-js';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { IIssueCacheObject } from '../../main/types/issueCacheObject';
 import { IIssueKey } from '../../main/types/issueKey';
 import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';

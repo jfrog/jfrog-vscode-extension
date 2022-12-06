@@ -5,8 +5,9 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+import { ScanManager } from '../../main/scanLogic/scanManager';
 import { PypiTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
@@ -14,6 +15,7 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { PypiUtils } from '../../main/utils/pypiUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager } from './utils/utils.test';
+import { CacheManager } from '../../main/cache/cacheManager';
 
 /**
  * Test functionality of @class PypiUtils.
@@ -26,7 +28,9 @@ describe('Pypi Utils Tests', async () => {
         new ConnectionManager(logManager),
         dummyScanCacheManager,
         {} as ScanLogicManager,
-        logManager
+        logManager,
+        {} as ScanManager,
+        {} as CacheManager
     );
     let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements'];
     let workspaceFolders: vscode.WorkspaceFolder[] = [];

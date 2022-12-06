@@ -1,6 +1,6 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { ScanCacheManager } from '../cache/scanCacheManager';
 import { BuildGeneralInfo, Status } from '../types/buildGeneralinfo';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { ILicenseKey } from '../types/licenseKey';

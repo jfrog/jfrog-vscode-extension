@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 import { faker } from '@faker-js/faker';
 import * as vscode from 'vscode';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { IssuesDataProvider, LicensesTitleNode, VulnerabilitiesTitleNode, VulnerabilityNode } from '../../main/treeDataProviders/issuesDataProvider';
 import { GeneralInfo } from '../../main/types/generalInfo';
@@ -19,6 +19,8 @@ import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { createScanCacheManager } from './utils/utils.test';
+import { ScanManager } from '../../main/scanLogic/scanManager';
+import { CacheManager } from '../../main/cache/cacheManager';
 
 /**
  * Test functionality of @class IssuesDataProvider.
@@ -33,7 +35,9 @@ describe('Issues Data Provider Tests', () => {
         new ConnectionManager(logManager),
         dummyScanCacheManager,
         {} as ScanLogicManager,
-        logManager
+        logManager,
+        {} as ScanManager,
+        {} as CacheManager
     );
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
     let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider(workspaceFolders, treesManager);

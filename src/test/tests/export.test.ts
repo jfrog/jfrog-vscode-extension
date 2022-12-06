@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { AbstractExporter } from '../../main/export/abstractExporter';
 import { CsvVulnerabilitiesExporter } from '../../main/export/csv/csvVulnerabilitiesExporter';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { IIssueCacheObject } from '../../main/types/issueCacheObject';

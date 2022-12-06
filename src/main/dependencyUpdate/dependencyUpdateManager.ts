@@ -2,7 +2,7 @@ import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { IIssueCacheObject } from '../types/issueCacheObject';
-import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { ScanCacheManager } from '../cache/scanCacheManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 import { GoDependencyUpdate } from './goDependencyUpdate';

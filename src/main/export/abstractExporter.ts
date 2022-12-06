@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import Dictionary from 'typescript-collections/dist/lib/Dictionary';
 import * as vscode from 'vscode';
-import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { ScanCacheManager } from '../cache/scanCacheManager';
 import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { IIssueCacheObject } from '../types/issueCacheObject';

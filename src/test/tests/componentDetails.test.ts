@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 import { faker } from '@faker-js/faker';
 import * as vscode from 'vscode';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
@@ -15,6 +15,8 @@ import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { ConnectionManager } from '../../main/connect/connectionManager';
+import { ScanManager } from '../../main/scanLogic/scanManager';
+import { CacheManager } from '../../main/cache/cacheManager';
 
 /**
  * Test functionality of @class DependencyDataProvider.
@@ -28,7 +30,9 @@ describe('Dependency Details Tests', () => {
         new ConnectionManager(logManager),
         dummyScanCacheManager,
         {} as ScanLogicManager,
-        logManager
+        logManager,
+        {} as ScanManager,
+        {} as CacheManager
     );
     let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider([], treesManager);
     let Components: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager, sourceCodeTreeDataProvider);

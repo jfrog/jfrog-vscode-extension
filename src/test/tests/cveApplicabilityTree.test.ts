@@ -7,7 +7,7 @@ import { Severity } from '../../main/types/severity';
 import { SourceCodeRootTreeNode } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeRootTreeNode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { createScanCacheManager } from './utils/utils.test';
@@ -21,6 +21,8 @@ import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependen
 import { TreeDataHolder } from '../../main/treeDataProviders/utils/treeDataHolder';
 import { PackageType } from '../../main/types/projectType';
 import { IProjectDetailsCacheObject } from '../../main/types/IProjectDetailsCacheObject';
+import { ScanManager } from '../../main/scanLogic/scanManager';
+import { CacheManager } from '../../main/cache/cacheManager';
 
 describe('Cve Applicability Tree Tests', () => {
     let workspaceFolders: vscode.WorkspaceFolder[];
@@ -34,7 +36,9 @@ describe('Cve Applicability Tree Tests', () => {
         new ConnectionManager(logManager),
         dummyScanCacheManager,
         {} as ScanLogicManager,
-        logManager
+        logManager,
+        {} as ScanManager,
+        {} as CacheManager
     );
     before(async () => {
         let generalInfo: GeneralInfo = new GeneralInfo('odin', '1.2.3', [], tmpDir.path, 'asgard');

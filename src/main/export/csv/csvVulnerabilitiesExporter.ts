@@ -1,4 +1,4 @@
-import { ScanCacheManager } from '../../scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../cache/scanCacheManager';
 import { DependenciesTreeNode } from '../../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { IIssueCacheObject } from '../../types/issueCacheObject';
 import { IIssueKey } from '../../types/issueKey';

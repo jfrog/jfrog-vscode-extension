@@ -17,6 +17,7 @@ import { ExportManager } from '../export/exportManager';
 import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
 import { VulnerabilityNode } from '../treeDataProviders/issuesDataProvider';
 import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
+import { IssuesFilterManager } from '../filter/issuesFilterManager';
 
 /**
  * Register and execute all commands in the extension.
@@ -31,7 +32,9 @@ export class CommandManager implements ExtensionComponent {
         private _exclusionManager: ExclusionsManager,
         private _DependencyUpdateManager: DependencyUpdateManager,
         private _buildsManager: BuildsManager,
-        private _exportManager: ExportManager
+        private _exportManager: ExportManager,
+        
+        private _issuesFilterManager: IssuesFilterManager,
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
@@ -61,6 +64,9 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
         this.registerCommand(context, 'jfrog.xray.builds', () => this.doBuildSelected());
         this.registerCommand(context, 'jfrog.xray.export', () => this.doExport());
+
+
+        this.registerCommand(context, 'jfrog.xray.issues.filter', () => this.doIssuesFilter());
         this.updateLocalCiIcons();
     }
 
@@ -241,7 +247,9 @@ export class CommandManager implements ExtensionComponent {
      * @param quickScan - True to allow reading from scan cache.
      */
     private async doRefresh(quickScan: boolean = false) {
-        await this._treesManager.treeDataProviderManager.refresh(quickScan);
+        // this._treesManager.vulnerabilitiesTreeDataProvider.onChangeFire();
+        // await this._treesManager.treeDataProviderManager.refresh(quickScan);
+        await this._treesManager.issuesTreeDataProvider.refresh(true);
     }
 
     private async doCodeScanRefresh(quickScan: boolean = false) {
@@ -349,6 +357,13 @@ export class CommandManager implements ExtensionComponent {
      */
     private doFilter() {
         this._filterManager.showFilterMenu();
+    }
+
+    /**
+     * Show the filter menu.
+     */
+     private doIssuesFilter() {
+        this._issuesFilterManager.showFilterMenu();
     }
 
     /**

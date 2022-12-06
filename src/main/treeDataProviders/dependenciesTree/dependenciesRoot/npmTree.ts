@@ -71,6 +71,7 @@ export class NpmTreeNode extends RootNode {
                 if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
                     this.projectDetails.addDependency(NpmTreeNode.COMPONENT_PREFIX + componentId);
                 }
+                child.dependencyId = NpmTreeNode.COMPONENT_PREFIX + componentId;
                 this.populateDependenciesTree(child, childDependencies, quickScan, globalScope);
             }
         }

@@ -6,7 +6,7 @@ import { ConnectionManager } from '../../main/connect/connectionManager';
 import { NpmDependencyUpdate } from '../../main/dependencyUpdate/npmDependencyUpdate';
 import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { NpmTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -17,6 +17,8 @@ import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
 import { ProjectDetails } from '../../main/types/projectDetails';
+import { ScanManager } from '../../main/scanLogic/scanManager';
+import { CacheManager } from '../../main/cache/cacheManager';
 
 /**
  * Test functionality of @class NpmUtils.
@@ -30,7 +32,9 @@ describe('Npm Utils Tests', async () => {
         new ConnectionManager(logManager),
         dummyScanCacheManager,
         {} as ScanLogicManager,
-        logManager
+        logManager,
+        {} as ScanManager,
+        {} as CacheManager
     );
     let projectDirs: string[] = ['project-1', 'project-2', 'project-3'];
     let npmDependencyUpdate: NpmDependencyUpdate = new NpmDependencyUpdate();

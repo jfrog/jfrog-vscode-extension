@@ -43,6 +43,7 @@ export class TreeDataProviderManager implements vscode.TreeDataProvider<Dependen
     public stateChange() {
         if (this._treesManager.isLocalState()) {
             this._treesManager.dependenciesTreeDataProvider.stateChange(() => this.onChangeFire());
+            // this._treesManager.issuesTreeDataProvider.refresh()
         } else {
             this._treesManager.buildsTreesProvider.stateChange(() => this.onChangeFire());
         }

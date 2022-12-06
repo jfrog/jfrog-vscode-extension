@@ -1,6 +1,6 @@
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
-import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { ScanCacheManager } from '../cache/scanCacheManager';
 import { IIssueCacheObject } from '../types/issueCacheObject';
 import { Severity, SeverityUtils } from '../types/severity';
 import { Consts } from '../utils/consts';

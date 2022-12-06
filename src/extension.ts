@@ -7,7 +7,7 @@ import { FilterManager } from './main/filter/filterManager';
 import { FocusManager } from './main/focus/focusManager';
 import { ExclusionsManager } from './main/exclusions/exclusionsManager';
 import { HoverManager } from './main/hover/hoverManager';
-import { ScanCacheManager } from './main/scanCache/scanCacheManager';
+import { ScanCacheManager } from './main/cache/scanCacheManager';
 import { TreesManager } from './main/treeDataProviders/treesManager';
 import { WatcherManager } from './main/watchers/watcherManager';
 import { LogManager } from './main/log/logManager';
@@ -15,6 +15,9 @@ import { DependencyUpdateManager } from './main/dependencyUpdate/dependencyUpdat
 import { BuildsManager } from './main/builds/buildsManager';
 import { ScanLogicManager } from './main/scanLogic/scanLogicManager';
 import { ExportManager } from './main/export/exportManager';
+import { ScanManager } from './main/scanLogic/scanManager';
+import { IssuesFilterManager } from './main/filter/issuesFilterManager';
+import { CacheManager } from './main/cache/cacheManager';
 
 /**
  * This method is called when the extension is activated.
@@ -25,6 +28,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
     let logManager: LogManager = new LogManager().activate();
     let connectionManager: ConnectionManager = await new ConnectionManager(logManager).activate(context);
+
+    let scanManager: ScanManager = new ScanManager(connectionManager,logManager).activate();
+    let cacheManager: CacheManager = new CacheManager(workspaceFolders,logManager).activate(context);
+    cacheManager.activate(context);
+    
+
     let scanCacheManager: ScanCacheManager = new ScanCacheManager().activate(context);
     let scanLogicManager: ScanLogicManager = new ScanLogicManager(connectionManager, scanCacheManager, logManager).activate();
     let treesManager: TreesManager = await new TreesManager(
@@ -32,8 +41,13 @@ export async function activate(context: vscode.ExtensionContext) {
         connectionManager,
         scanCacheManager,
         scanLogicManager,
-        logManager
+        logManager,
+        scanManager,
+        cacheManager
     ).activate(context);
+
+    let issueFilterManager: IssuesFilterManager = new IssuesFilterManager(/*treesManager*/).activate();
+
     let filterManager: FilterManager = new FilterManager(treesManager).activate();
     let focusManager: FocusManager = new FocusManager().activate();
     let exclusionManager: ExclusionsManager = new ExclusionsManager(treesManager).activate();
@@ -45,6 +59,7 @@ export async function activate(context: vscode.ExtensionContext) {
     new WatcherManager(treesManager).activate(context);
     new HoverManager(treesManager).activate(context);
     new CodeLensManager().activate(context);
+
     new CommandManager(
         logManager,
         connectionManager,
@@ -54,6 +69,7 @@ export async function activate(context: vscode.ExtensionContext) {
         exclusionManager,
         dependencyUpdateManager,
         buildsManager,
-        exportManager
+        exportManager,
+        issueFilterManager
     ).activate(context);
 }

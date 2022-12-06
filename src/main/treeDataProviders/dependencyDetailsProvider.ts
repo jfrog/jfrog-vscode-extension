@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { ScanCacheManager } from '../cache/scanCacheManager';
 import { GeneralDetailsDataProvider } from './generalDetailsDataProvider';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { IssueNode, IssuesDataProvider } from './issuesDataProvider';

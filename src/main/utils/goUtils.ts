@@ -107,6 +107,8 @@ export class GoUtils {
             root.refreshDependencies(quickScan);
             projectsToScan.push(root.projectDetails);
             // Set actual paths.
+            root.fullPath = goMod.fsPath;
+            root.projectDetails.path = projectDir;
             root.generalInfo.path = projectDir;
             root.workspaceFolder = projectDir;
 

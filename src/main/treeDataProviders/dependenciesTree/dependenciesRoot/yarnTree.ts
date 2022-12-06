@@ -72,6 +72,7 @@ export class YarnTreeNode extends RootNode {
             }
 
             let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependencyTreeNode);
+            child.dependencyId = YarnTreeNode.COMPONENT_PREFIX + componentId;
             if (hasRealChildren) {
                 this.populateDependencyTree(child, node.children, quickScan);
             }

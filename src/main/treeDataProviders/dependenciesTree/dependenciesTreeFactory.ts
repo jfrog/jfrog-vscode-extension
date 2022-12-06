@@ -8,13 +8,14 @@ import { MavenUtils } from '../../utils/mavenUtils';
 import { NpmUtils } from '../../utils/npmUtils';
 import { NugetUtils } from '../../utils/nugetUtils';
 import { PypiUtils } from '../../utils/pypiUtils';
-import { ScanUtils } from '../../utils/scanUtils';
+// import { ScanUtils } from '../../utils/scanUtils';
 import { YarnUtils } from '../../utils/yarnUtils';
 import { TreesManager } from '../treesManager';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class DependenciesTreesFactory {
     public static async createDependenciesTrees(
+        projectDescriptors: Map<PackageType, vscode.Uri[]>,
         workspaceFolders: vscode.WorkspaceFolder[],
         componentsToScan: ProjectDetails[],
         treesManager: TreesManager,
@@ -24,7 +25,6 @@ export class DependenciesTreesFactory {
         if (!treesManager.connectionManager.areXrayCredentialsSet()) {
             return;
         }
-        let projectDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
 
         this.sendUsageReport(projectDescriptors, treesManager.connectionManager);
         await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageType.GO), componentsToScan, treesManager, parent, quickScan);

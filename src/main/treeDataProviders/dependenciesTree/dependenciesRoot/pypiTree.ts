@@ -53,6 +53,7 @@ export class PypiTreeNode extends RootNode {
                 if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
                     this.projectDetails.addDependency(PypiTreeNode.COMPONENT_PREFIX + componentId);
                 }
+                child.dependencyId = PypiTreeNode.COMPONENT_PREFIX + componentId;
                 this.populateDependenciesTree(child, childDependencies, quickScan);
             }
         }

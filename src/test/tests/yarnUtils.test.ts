@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { YarnDependencyUpdate } from '../../main/dependencyUpdate/yarnDependencyUpdate';
 import { LogManager } from '../../main/log/logManager';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { YarnTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/yarnTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -16,6 +16,8 @@ import { PackageType } from '../../main/types/projectType';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { YarnUtils } from '../../main/utils/yarnUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
+import { ScanManager } from '../../main/scanLogic/scanManager';
+import { CacheManager } from '../../main/cache/cacheManager';
 
 /**
  * Test functionality of @class YarnUtils.
@@ -29,7 +31,9 @@ describe('Yarn Utils Tests', async () => {
         new ConnectionManager(logManager),
         dummyScanCacheManager,
         {} as ScanLogicManager,
-        logManager
+        logManager,
+        {} as ScanManager,
+        {} as CacheManager
     );
     let projectDirs: string[] = ['project-1', 'project-2', 'project-3'];
     let yarnDependencyUpdate: YarnDependencyUpdate = new YarnDependencyUpdate();

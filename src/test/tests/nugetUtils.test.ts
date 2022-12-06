@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
@@ -15,6 +15,8 @@ import { NugetUtils } from '../../main/utils/nugetUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, isWindows } from './utils/utils.test';
 import { ProjectDetails } from '../../main/types/projectDetails';
+import { ScanManager } from '../../main/scanLogic/scanManager';
+import { CacheManager } from '../../main/cache/cacheManager';
 
 /**
  * Test functionality of @class NugetUtils.
@@ -27,7 +29,9 @@ describe('Nuget Utils Tests', async () => {
         new ConnectionManager(logManager),
         dummyScanCacheManager,
         {} as ScanLogicManager,
-        logManager
+        logManager,
+        {} as ScanManager,
+        {} as CacheManager
     );
     let solutionsDirs: string[] = ['assets', 'empty'];
     let workspaceFolders: vscode.WorkspaceFolder[];

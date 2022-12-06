@@ -8,7 +8,7 @@ import { MavenDependencyUpdate } from '../../main/dependencyUpdate/mavenDependen
 import { MavenExclusion } from '../../main/exclusions/mavenExclusion';
 import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -22,6 +22,8 @@ import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test'
 import { PackageType } from '../../main/types/projectType';
 import { ProjectDetails } from '../../main/types/projectDetails';
 import { ComponentDetails } from 'jfrog-client-js';
+import { ScanManager } from '../../main/scanLogic/scanManager';
+import { CacheManager } from '../../main/cache/cacheManager';
 
 /**
  * Test functionality of Maven.
@@ -34,7 +36,9 @@ describe('Maven Tests', async () => {
         new ConnectionManager(logManager),
         dummyScanCacheManager,
         {} as ScanLogicManager,
-        logManager
+        logManager,
+        {} as ScanManager,
+        {} as CacheManager
     );
     let mavenExclusion: MavenExclusion = new MavenExclusion(treesManager);
     let mavenDependencyUpdate: MavenDependencyUpdate = new MavenDependencyUpdate();

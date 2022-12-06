@@ -3,16 +3,18 @@ import { ConnectionManager } from '../connect/connectionManager';
 import { ConnectionUtils } from '../connect/connectionUtils';
 import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
-import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { ScanCacheManager } from '../cache/scanCacheManager';
 import { AbstractScanLogic } from './abstractScanLogic';
-import { ComponentSummaryScanLogic } from './componentSummaryScanLogic';
+// import { ComponentSummaryScanLogic } from './componentSummaryScanLogic';
 import { GraphScanLogic } from './graphScanLogic';
 import { ProjectDetails } from '../types/projectDetails';
-import { ComponentDetails } from 'jfrog-client-js';
+import { ComponentDetails, IGraphResponse, XrayScanProgress } from 'jfrog-client-js';
 import Set from 'typescript-collections/dist/lib/Set';
 import { Severity } from '../types/severity';
 import { CveDetails, ProjectComponents } from '../types/projectComponents';
 import { IProjectDetailsCacheObject } from '../types/IProjectDetailsCacheObject';
+// import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 
 /**
  * Provides the scan logic type - "summary/component" or "scan/graph" according to the Xray version.
@@ -23,6 +25,33 @@ export class ScanLogicManager implements ExtensionComponent {
     activate() {
         return this;
     }
+
+    public async scanWithGraph(
+        progress: XrayScanProgress,
+        projectRoot: RootNode,
+        checkCanceled: () => void
+    ): Promise<IGraphResponse> {
+        let scanGraphSupported: boolean = await ConnectionUtils.testXrayVersionForScanGraph(
+            this._connectionManager.createJfrogClient(),
+            this._logManager
+        );
+        if (!scanGraphSupported) {
+            // TODO: show warning for deprecated
+            this._logManager.logError(new Error("scan with graph is not supported"), true);
+            return {} as IGraphResponse;
+        }
+        let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager, this._scanCacheManager);
+        // return this._connectionManager.scanWithGraph(
+        //     graphRequest,
+        //     progress,
+        //     checkCanceled,
+        //     Configuration.getProjectKey(),
+        //     Configuration.getWatches()
+        // );
+        return scanLogic.scan(projectRoot,progress,checkCanceled);
+    }
+
+    // ==============================
 
     // Run an Xry scan on all projects dependencies and cache the results.
     public async scanAndCache(
@@ -61,9 +90,14 @@ export class ScanLogicManager implements ExtensionComponent {
             this._connectionManager.createJfrogClient(),
             this._logManager
         );
-        let scanLogic: AbstractScanLogic = scanGraphSupported
-            ? new GraphScanLogic(this._connectionManager, this._scanCacheManager)
-            : new ComponentSummaryScanLogic(this._connectionManager, this._scanCacheManager);
+        if (!scanGraphSupported) {
+            // TODO: show warning for deprecated
+            // this._logManager.logError(error, true);
+        }
+        // let scanLogic: AbstractScanLogic = scanGraphSupported
+        //     ? new GraphScanLogic(this._connectionManager, this._scanCacheManager)
+        //     : new ComponentSummaryScanLogic(this._connectionManager, this._scanCacheManager);
+        let scanLogic: AbstractScanLogic = new GraphScanLogic(this._connectionManager, this._scanCacheManager);
         await scanLogic.scanAndCache(progress, totalDependenciesToScan, scanResults, checkCanceled);
         return scanResults;
     }

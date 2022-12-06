@@ -57,6 +57,7 @@ export class Resource {
     public async update() {
         const updateAvailable: boolean = await this.shouldUpdate();
         if (!updateAvailable) {
+            this._logManager.logMessage('UPDATE NOT AVAILABLE FOR ' + this.downloadTarget + " TO " + this.downloadDir, 'DEBUG');
             return;
         }
         this._logManager.logMessage('Downloading CVE Applicability scanner from ' + this.downloadTarget, 'DEBUG');

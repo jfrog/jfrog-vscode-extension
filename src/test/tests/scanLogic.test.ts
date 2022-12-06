@@ -1,13 +1,13 @@
 import { assert } from 'chai';
 import * as fs from 'fs';
-import { ComponentDetails, IArtifact, IGraphResponse, ISummaryResponse } from 'jfrog-client-js';
+import { ComponentDetails/*, IArtifact*/, IGraphResponse/*, ISummaryResponse*/ } from 'jfrog-client-js';
 import * as path from 'path';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { AbstractScanLogic } from '../../main/scanLogic/abstractScanLogic';
-import { ComponentSummaryScanLogic } from '../../main/scanLogic/componentSummaryScanLogic';
+// import { ComponentSummaryScanLogic } from '../../main/scanLogic/componentSummaryScanLogic';
 import { GraphScanLogic } from '../../main/scanLogic/graphScanLogic';
 import { ILicenseKey } from '../../main/types/licenseKey';
 import { INodeInfo } from '../../main/types/nodeInfo';
@@ -18,12 +18,12 @@ import { createScanCacheManager } from './utils/utils.test';
 describe('Scan Logic Tests', () => {
     const scanResponses: string = path.join(__dirname, '..', 'resources', 'scanResponses');
 
-    it('component/summary', async () => {
-        let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
-        let dummyConnectionManager: ConnectionManager = createComponentSummaryConnectionManager();
-        let scanLogic: ComponentSummaryScanLogic = new ComponentSummaryScanLogic(dummyConnectionManager, dummyScanCacheManager);
-        await testScanLogic(dummyScanCacheManager, scanLogic, false);
-    });
+    // it('component/summary', async () => {
+    //     let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
+    //     let dummyConnectionManager: ConnectionManager = createComponentSummaryConnectionManager();
+    //     let scanLogic: ComponentSummaryScanLogic = new ComponentSummaryScanLogic(dummyConnectionManager, dummyScanCacheManager);
+    //     await testScanLogic(dummyScanCacheManager, scanLogic, false);
+    // });
 
     it('scan/graph vulnerabilities', async () => {
         let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
@@ -75,26 +75,27 @@ describe('Scan Logic Tests', () => {
         nodeInfo = scanCacheManager.getNodeInfo('commons-io:commons-io:2.11.0');
         assert.isDefined(nodeInfo);
         if (nodeInfo) {
-            if (scanLogic instanceof ComponentSummaryScanLogic) {
+            /*if (scanLogic instanceof ComponentSummaryScanLogic) {
                 assert.equal(nodeInfo.top_severity, Severity.Normal);
             } else {
                 assert.equal(nodeInfo.top_severity, Severity.Unknown);
-            }
+            }*/
+            assert.equal(nodeInfo.top_severity, Severity.Unknown); // added because of comment
             assert.isEmpty(nodeInfo.issues);
             assert.isEmpty(nodeInfo.licenses);
         }
     }
 
-    function createComponentSummaryConnectionManager(): ConnectionManager {
-        return {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            async summaryComponent(componentDetails: ComponentDetails[]): Promise<IArtifact[]> {
-                let graphResponse: string = fs.readFileSync(path.join(scanResponses, 'summaryComponent.json'), 'utf8');
-                let response: ISummaryResponse = Object.assign({} as ISummaryResponse, JSON.parse(graphResponse));
-                return response.artifacts;
-            }
-        } as ConnectionManager;
-    }
+    // function createComponentSummaryConnectionManager(): ConnectionManager {
+    //     return {
+    //         // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    //         async summaryComponent(componentDetails: ComponentDetails[]): Promise<IArtifact[]> {
+    //             let graphResponse: string = fs.readFileSync(path.join(scanResponses, 'summaryComponent.json'), 'utf8');
+    //             let response: ISummaryResponse = Object.assign({} as ISummaryResponse, JSON.parse(graphResponse));
+    //             return response.artifacts;
+    //         }
+    //     } as ConnectionManager;
+    // }
 
     function createScanGraphConnectionManager(type: string): ConnectionManager {
         return {

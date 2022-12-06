@@ -74,6 +74,7 @@ export class MavenTreeNode extends RootNode {
             if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
                 this.projectDetails.addDependency(MavenTreeNode.COMPONENT_PREFIX + componentId);
             }
+            child.dependencyId = MavenTreeNode.COMPONENT_PREFIX + componentId;
             if (rawDependenciesPtr.index + 1 < rawDependenciesList.length) {
                 while (
                     rawDependenciesPtr.index + 1 < rawDependenciesList.length &&

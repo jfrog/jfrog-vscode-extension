@@ -71,7 +71,7 @@ export class GoTreeNode extends RootNode {
      * @returns "go list" results.
      */
     private runGoList(): string[] {
-        return ScanUtils.executeCmd(`go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all`, this.workspaceFolder)
+        return ScanUtils.executeCmd(`go list -buildvcs=false -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all`, this.workspaceFolder)
             .toString()
             .split(/\n/);
     }
@@ -148,6 +148,7 @@ export class GoTreeNode extends RootNode {
         if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
             this.projectDetails.addDependency(GoTreeNode.COMPONENT_PREFIX + componentId);
         }
+        dependenciesTreeNode.dependencyId = GoTreeNode.COMPONENT_PREFIX + componentId;
     }
 
     private getNameVersionTuple(value: string): string[] {

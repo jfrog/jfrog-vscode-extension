@@ -38,6 +38,7 @@ export class NugetTreeNode extends RootNode {
                 if (!quickScan || !this._treesManager.scanCacheManager.isValid(combined)) {
                     this.projectDetails.addDependency(NugetTreeNode.COMPONENT_PREFIX + combined);
                 }
+                child.dependencyId = NugetTreeNode.COMPONENT_PREFIX + combined;
                 this.populateDependenciesTree(child, childDependencies, quickScan);
             }
         }

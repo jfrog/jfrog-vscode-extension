@@ -14,6 +14,7 @@ import { RootNode } from './dependenciesRoot/rootTree';
 import { DependenciesTreesFactory } from './dependenciesTreeFactory';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 import { Utils } from '../utils/utils';
+import { PackageType } from '../../types/projectType';
 
 export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private _filterLicenses: Set<ILicenseKey> = new Set();
@@ -67,7 +68,7 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
         }
         this._scanInProgress = true;
         ScanUtils.setScanInProgress(true);
-        this._treesManager.logManager.logMessage('Starting ' + (quickScan ? 'quick' : 'full') + ' scan', 'INFO');
+        this._treesManager.logManager.logMessage('dependencies Starting ' + (quickScan ? 'quick' : 'full') + ' scan', 'INFO');
         this.repopulateTree(quickScan, onChangeFire)
             .then(() => {
                 vscode.commands.executeCommand('jfrog.xray.focus');
@@ -149,12 +150,14 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                  * It will be hidden until it is officially released.        *
                  * ***********************************************************
                  */
-                // const updatePromise: Promise<void> = this._treesManager.sourceCodeTreeDataProvider.update();
+                const updatePromise: Promise<void> = this._treesManager.sourceCodeTreeDataProvider.update();
                 progress.report({ message: '1/2:👷 Building dependency tree' });
                 this.clearTree();
                 let workspaceRoot: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
                 this._scannedProjects = [];
+                let projectDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(this._workspaceFolders, this._treesManager.logManager);
                 await DependenciesTreesFactory.createDependenciesTrees(
+                    projectDescriptors,
                     this._workspaceFolders,
                     this._scannedProjects,
                     this._treesManager,
@@ -175,9 +178,12 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                  * It will be hidden until it is officially released.        *
                  * ***********************************************************
                  */
-                // progress.report({ message: '3/3📝 Code vulnerability scanning' });
-                // await updatePromise;
-                // await this._treesManager.sourceCodeTreeDataProvider.refresh();
+                progress.report({ message: '3/3📝 Code vulnerability scanning' });
+                await updatePromise;
+                await this._treesManager.sourceCodeTreeDataProvider.refresh();
+
+                // this._treesManager.vulnerabilitiesTreeDataProvider.onChangeFire();
+
                 onChangeFire();
             },
             'Scanning workspace',

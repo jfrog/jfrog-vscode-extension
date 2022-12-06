@@ -1,0 +1,8 @@
+version: 1
+type: npm
+resolver:
+  repo: npm-virtual
+  serverId: ecosys
+deployer:
+  repo: npm-virtual
+  serverId: ecosys
