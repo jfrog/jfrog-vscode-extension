@@ -1,4 +1,4 @@
-import { ComponentDetails, IGraphLicense, IGraphRequestModel, IGraphResponse, IViolation, IVulnerability, XrayScanProgress } from 'jfrog-client-js';
+import { ComponentDetails, ICve, IGraphLicense, IGraphRequestModel, IGraphResponse, IViolation, IVulnerability, XrayScanProgress } from 'jfrog-client-js';
 import Dictionary from 'typescript-collections/dist/lib/Dictionary';
 import * as vscode from 'vscode';
 import { IIssueCacheObject } from '../types/issueCacheObject';
@@ -127,7 +127,8 @@ export class GraphScanLogic extends AbstractScanLogic {
         for (let [componentId, vulnComponent] of Object.entries(vuln.components)) {
             // Add vulnerability to the issues array
             let severity: Severity = Translators.toSeverity(vuln.severity);
-            const cves: string[] = Translators.toCves(vuln.cves);
+            let temp: ICve[] = [ {cve:"abc",cvss_v2:"123"} as ICve];
+            const cves: string[] = Translators.toCves(temp);
             issues.push({
                 issueId: vuln.issue_id,
                 severity: severity,
