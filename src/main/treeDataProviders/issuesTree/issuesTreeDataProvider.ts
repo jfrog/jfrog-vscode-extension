@@ -21,11 +21,11 @@ import { Severity, SeverityUtils } from '../../types/severity';
 // import { INodeInfo } from '../../types/nodeInfo';
 // import { Utils } from '../utils/utils';
 import { IGraphResponse } from 'jfrog-client-js/dist/model/Xray/Scan/GraphResponse';
-import { /*IImpactPath, IComponent,*/ IVulnerability, XrayScanProgress } from 'jfrog-client-js';
+import { /*IImpactPath, IComponent, IImpactPath,*/ IVulnerability, XrayScanProgress } from 'jfrog-client-js';
 import { ScanManager } from '../../scanLogic/scanManager';
 import { IssueDependencyTreeNode } from './descriptorTree/issueDependencyTreeNode';
 import { CveTreeNode } from './descriptorTree/cveTreeNode';
-import { LogManager } from '../../log/logManager';
+// import { LogManager } from '../../log/logManager';
 // import { IssuesDataProvider } from '../issuesDataProvider';
 // import { Utils } from '../utils/utils';
 // import { Utils } from '../utils/utils';
@@ -33,28 +33,24 @@ import { CveApplicabilityRunner } from '../../utils/cveApplicabilityRunner';
 import { IssuesRootTreeNode } from './issuesRootTreeNode';
 import { CacheManager } from '../../cache/cacheManager';
 import { Utils } from '../utils/utils';
+import { StepProgress } from '../utils/stepProgress';
+import { IImpactedPath } from 'jfrog-ide-webview';
 // import { CacheObject } from '../../cache/issuesCache';
 
-export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRootTreeNode | BaseFileTreeNode> {
-
-    private _issuesTreeView!: vscode.TreeView<IssuesRootTreeNode | BaseFileTreeNode | IssueDependencyTreeNode | CveTreeNode>;
-
-    private _onDidChangeTreeData: vscode.EventEmitter<IssuesRootTreeNode | BaseFileTreeNode | undefined> = new vscode.EventEmitter<IssuesRootTreeNode | BaseFileTreeNode | undefined>();
-    readonly onDidChangeTreeData: vscode.Event<IssuesRootTreeNode | BaseFileTreeNode | undefined> = this._onDidChangeTreeData.event;
-
-    public static readonly MULTI_WORKSPACE_PROGRESS_MSG: string = '🗂️ Workspace scanning';
-    private static readonly TOTAL_PROGRESS: number = 90;
+export class IssuesTreeDataProvider
+    implements vscode.TreeDataProvider<IssuesRootTreeNode | BaseFileTreeNode | IssueDependencyTreeNode | CveTreeNode> {
+    private _onDidChangeTreeData: vscode.EventEmitter<IssuesRootTreeNode | BaseFileTreeNode | CveTreeNode | undefined> = new vscode.EventEmitter<
+        IssuesRootTreeNode | BaseFileTreeNode | CveTreeNode | undefined
+    >();
+    readonly onDidChangeTreeData: vscode.Event<IssuesRootTreeNode | BaseFileTreeNode | CveTreeNode | undefined> = this._onDidChangeTreeData.event;
 
     private _scanInProgress: boolean = false;
-    private _isSingleWorkspace: boolean = true;
+    // private _isSingleWorkspace: boolean = true;
 
-    private _workspaceToRoot: Map<vscode.WorkspaceFolder,IssuesRootTreeNode | undefined> = new Map<vscode.WorkspaceFolder,IssuesRootTreeNode>();
-    private _lastUpdateTime: number | undefined;
+    private _workspaceToRoot: Map<vscode.WorkspaceFolder, IssuesRootTreeNode | undefined> = new Map<vscode.WorkspaceFolder, IssuesRootTreeNode>();
 
+    private _cachedWorkspaceToRoot: Map<vscode.WorkspaceFolder, IssuesRootTreeNode | undefined> | undefined;
 
-    private _cachedWorkspaceToRoot: Map<vscode.WorkspaceFolder,IssuesRootTreeNode | undefined> | undefined;
-    private _cachedlastUpdateTime: number | undefined;
-    
     private _cveApplicabilityRunner: CveApplicabilityRunner;
 
     constructor(
@@ -63,12 +59,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         private _scanManager: ScanManager,
         private _cacheManager: CacheManager
     ) {
-        this._isSingleWorkspace = _workspaceFolders.length === 1;
+        // this._isSingleWorkspace = _workspaceFolders.length === 1;
         this._cveApplicabilityRunner = new CveApplicabilityRunner(_treesManager.connectionManager, _treesManager.logManager);
     }
 
     public async update() {
-        this._treesManager.logManager.logMessage("<ASSAF> updating data provider", 'DEBUG');
+        // TODO: move from here to new componenet of update binary
+        this._treesManager.logManager.logMessage('<ASSAF> updating data provider', 'DEBUG');
         return await this._cveApplicabilityRunner.update();
     }
 
@@ -78,13 +75,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * @param scan - if true, runs Xray scan
      */
     public async refresh(scan: boolean = true) {
-        if (!(await this._treesManager.connectionManager.isSignedIn())) {    
+        if (!(await this._treesManager.connectionManager.isSignedIn())) {
             this.clearTree();
             this.onChangeFire();
             return;
         }
         if (!scan) {
-            this.loadFromCache();
+            // this.loadFromCache();
             this.onChangeFire();
             return;
         }
@@ -98,34 +95,27 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         this._scanInProgress = true;
         ScanUtils.setScanInProgress(true);
         this._cachedWorkspaceToRoot = this._workspaceToRoot;
-        this._cachedlastUpdateTime = this._lastUpdateTime;
-        this.setViewDescription("scanning...");
+        // this._cachedlastUpdateTime = this._lastUpdateTime;
+        // this.setViewDescription("scanning...");
         this.repopulateTree()
             .then(() => {
                 vscode.commands.executeCommand('jfrog.xray.focus');
             })
             .catch(error => {
-                this.clearTree();
                 if (error instanceof ScanCancellationError) {
                     vscode.window.showInformationMessage(error.message);
                     if (revertOnCancle && this._cachedWorkspaceToRoot) {
-                        // return to state before starting the scan
+                        // return to the state before starting the scan
                         this._workspaceToRoot = this._cachedWorkspaceToRoot;
-                        this._lastUpdateTime = this._cachedlastUpdateTime;
-                        this.setViewDescription(Utils.toDate(this._lastUpdateTime));
-                    } else {
-                        this.setViewDescription("scan canceled");
                     }
                 } else {
                     this._treesManager.logManager.logError(error, true);
                     if (revertOnError && this._cachedWorkspaceToRoot) {
-                        // return to state before starting the scan
+                        // return to the state before starting the scan
                         this._workspaceToRoot = this._cachedWorkspaceToRoot;
-                        this._lastUpdateTime = this._cachedlastUpdateTime;
-                        this.setViewDescription(Utils.toDate(this._lastUpdateTime));
                     }
                 }
-                this._treesManager.logManager.logMessage(error,'DEBUG');
+                this._treesManager.logManager.logMessage(error, 'DEBUG');
             })
             .finally(() => {
                 this._cachedWorkspaceToRoot = undefined;
@@ -137,152 +127,222 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     }
 
     public clearTree() {
-        this._workspaceToRoot = new Map<vscode.WorkspaceFolder,IssuesRootTreeNode>();
+        this._workspaceToRoot = new Map<vscode.WorkspaceFolder, IssuesRootTreeNode>();
     }
 
-    private loadFromCache() {
-        for(const workSpace of this._workspaceFolders) {
-            if (this._cacheManager.issuesCache != undefined) {
-                this._workspaceToRoot.set(workSpace, this._cacheManager.issuesCache.get(workSpace));
-            } else {
-                this._workspaceToRoot.set(workSpace,undefined);
-            }
-        }
-    }
+    // private loadFromCache() {
+    //     for(const workSpace of this._workspaceFolders) {
+    //         if (this._cacheManager.issuesCache != undefined) {
+    //             this._workspaceToRoot.set(workSpace, this._cacheManager.issuesCache.get(workSpace));
+    //         } else {
+    //             this._workspaceToRoot.set(workSpace,undefined);
+    //         }
+    //     }
+    // }
 
     private saveToCache(workSpace: vscode.WorkspaceFolder, node: IssuesRootTreeNode) {
         if (this._cacheManager.issuesCache) {
-            this._cacheManager.issuesCache.store(workSpace,node);
+            this._cacheManager.issuesCache.store(workSpace, node);
         }
     }
 
     private async repopulateTree() {
-        await ScanUtils.scanWithProgress(
-            async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
-                // Initialize
-                const updatePromise: Promise<void> = this.update();
-                this.clearTree();
-                this.onChangeFire();
-                let step: number = IssuesTreeDataProvider.TOTAL_PROGRESS;
-                if (!this._isSingleWorkspace) {
-                    progress.report({ message: IssuesTreeDataProvider.MULTI_WORKSPACE_PROGRESS_MSG, increment: 0});
-                    step /= this._workspaceFolders.length;
-                }
-                await updatePromise;
-                // Repopulate tree for every workspace
-                let workspaceScans: Promise<IssuesRootTreeNode | undefined>[] = [];
-                for (const workspace of this._workspaceFolders) {
-                    workspaceScans.push(this.repopulateWorkspaceTree(workspace,progress,step,checkCanceled));
-                }
-                await Promise.all(workspaceScans);
-                // Update view
-                this.calculateLastScanTimeStamp();
-                this.onChangeFire();
-            },
-            'Project Scanning',false
-        );
-    }    
+        // TODO: check if update avaliable in connection, make it better
+        const updatePromise: Promise<void> = this.update();
+        this.clearTree();
+        this.onChangeFire();
+        await updatePromise;
 
-    private async repopulateWorkspaceTree (workspace: vscode.WorkspaceFolder, progress: vscode.Progress<{ message?: string; increment?: number }>, workspaceTotalProgressInc: number, checkCanceled: () => void): Promise<IssuesRootTreeNode> {
-        // Initialize
-        let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace);
-        this._workspaceToRoot.set(workspace,root);
-        const numberOfSteps: number = 2;
-        const progressStepInc: number = workspaceTotalProgressInc / numberOfSteps;
-        // Step 1 - build dependency tree of the workspace
-        if (this._isSingleWorkspace) {
-            progress.report({ message: '1/' + numberOfSteps + ':👷 Building dependency tree' });
-        } 
-        let workspcaeDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([workspace],this._treesManager.logManager);
-        let dependenciesTree : DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('', '', [], '', ''));
-        await DependenciesTreesFactory.createDependenciesTrees(workspcaeDescriptors,[workspace],[],this._treesManager,dependenciesTree,false);
-        if (!this._isSingleWorkspace) {
-            progress.report({ message: IssuesTreeDataProvider.MULTI_WORKSPACE_PROGRESS_MSG, increment: progressStepInc});
-        } 
-        checkCanceled();
-        this._treesManager.logManager.logMessage("<ASSAF> dependenciesTree.children = " + dependenciesTree.children,'DEBUG');
-        // Step 2 - Xray async scanning
-        let scanProgressMsg: string = this._isSingleWorkspace ? '2/' + numberOfSteps + ':🔎 Xray scanning' : IssuesTreeDataProvider.MULTI_WORKSPACE_PROGRESS_MSG;
-        let scanProgressStep: number = progressStepInc;
-        if (this._isSingleWorkspace) {
-            progress.report({ message: scanProgressMsg, increment: 0 });
-            scanProgressStep = IssuesTreeDataProvider.TOTAL_PROGRESS / dependenciesTree.children.length;
-        } 
-        let scansPromises: Promise<BaseFileTreeNode | undefined>[] = [];
-        // TODO: remove total when progress bar is fixed
-        this._testTotal = 0;
-        // Descriptors scanning
-        if (dependenciesTree.children.length > 0) {
-            for(let descriptorRoot of dependenciesTree.children) {
-                if(descriptorRoot instanceof RootNode) {
-                    // Descriptor Not install - no need for scan
-                    if (descriptorRoot.label?.toString().includes('[Not installed]')) {
-                        progress.report({ message: scanProgressMsg, increment: scanProgressStep});
-                        root.addChildAndApply(DescriptorTreeNode.createFailedScanNode(descriptorRoot.label.toString()));
+        let workspaceScans: Promise<void>[] = [];
+        for (const workspace of this._workspaceFolders) {
+            workspaceScans.push(
+                ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
+                    await this.repopulateWorkspaceTree(workspace, progress, checkCanceled).finally(() => {
                         this.onChangeFire();
-                    }
-                    // Scan descriptor
-                    scansPromises.push(this.scanDescriptor(
-                        root,
-                        this.getDescriptorName(descriptorRoot,workspcaeDescriptors),
-                        descriptorRoot,
-                        this.createDescriptorScanProgress(descriptorRoot.generalInfo.artifactId, progress, scanProgressMsg, scanProgressStep),
-                        checkCanceled
-                    ));
-                }
+                    });
+                }, 'Refresh ' + workspace.name + "'")
+            );
+        }
+        await Promise.all(workspaceScans);
+    }
+
+    public test: number = 0;
+
+    private async repopulateWorkspaceTree(
+        workspace: vscode.WorkspaceFolder,
+        progress: vscode.Progress<{ message?: string; increment?: number }>,
+        checkCanceled: () => void
+    ): Promise<IssuesRootTreeNode> {
+        this.test = 0;
+        // Initialize
+        let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, 'scanning...');
+        this._workspaceToRoot.set(workspace, root);
+        const numberOfSteps: number = 2;
+        let onProgress: () => void = () => {
+            this.onChangeFire();
+            checkCanceled();
+        };
+        let progressManager: StepProgress = new StepProgress(this,numberOfSteps,this._treesManager.logManager,progress, onProgress);
+        // Step 1 - build dependency tree of the workspace
+        progressManager.startStep('1/' + numberOfSteps + ':👷 Building dependency tree', 2);
+        let workspcaeDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            [workspace],
+            this._treesManager.logManager
+        );
+        progressManager.report();
+        let dependenciesTree: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('', '', [], '', ''));
+        await DependenciesTreesFactory.createDependenciesTrees(workspcaeDescriptors, [workspace], [], this._treesManager, dependenciesTree, false);
+        progressManager.report();
+        // Step 2 - Xray async scanning
+        progressManager.startStep('2/' + numberOfSteps + ':🔎 Xray scanning', dependenciesTree.children.length + 1);
+        let scansPromises: Promise<BaseFileTreeNode | undefined>[] = [];
+        // Descriptors scanning
+        for (let descriptorRoot of dependenciesTree.children) {
+            if (descriptorRoot instanceof RootNode) {
+                let descriptorName: string = this.getDescriptorName(descriptorRoot, workspcaeDescriptors);
+                scansPromises.push(
+                    this.createDescriptorScanningIssues(descriptorName, descriptorRoot, progressManager,checkCanceled)
+                        .then(child => root.addChildAndApply(child))
+                        .catch(error => this.onFileScanError(root,error, DescriptorTreeNode.createFailedScanNode(descriptorName)))
+                        // TODO: fix when scan is finished with fail, add the leftover to the progress
+                        .finally(() => onProgress())
+                );
             }
         }
         // TODO: Zero-day scanning (source code)
 
         await Promise.all(scansPromises);
-        if (!this._isSingleWorkspace) {
-            progress.report({ message: scanProgressMsg, increment: progressStepInc});
-        }
         // Update view and cache
         root.apply();
+        root.title = Utils.getLastScanString(root.oldestScanTimestamp); // TODO: move into loading from cache, no need to show when scan just completed.
         this.onChangeFire();
-        this.saveToCache(workspace,root);
+        this.saveToCache(workspace, root);
         return root;
     }
 
-    private async scanDescriptor(root: IssuesRootTreeNode, descriptorName: string, descriptor: RootNode, progress: XrayScanProgress, checkCanceled: () => void): Promise<DescriptorTreeNode | undefined> {
-        let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptorName, root);
-
-        // Dependency graph scanning
-        let startTime: number = Date.now();
-        let graphResponse: IGraphResponse = await this._scanManager.scanDependencyGraph(progress, descriptor, checkCanceled);
-        if (!graphResponse.vulnerabilities && !graphResponse.vulnerabilities) {
-            this._treesManager.logManager.logMessage("No issues found for descriptor '" + descriptor.generalInfo.artifactId +"' (elapsed=" + ((Date.now() - startTime) / 1000) + "sec)", 'DEBUG');
-            return undefined;
+    private onFileScanError(root: IssuesRootTreeNode, error: any, fileScanned?: BaseFileTreeNode): BaseFileTreeNode | undefined {
+        if (error instanceof ScanCancellationError) {
+            root.title = 'scan canceled';
+            throw error;
         }
-        this._treesManager.logManager.logMessage("found '" + 
-            ((graphResponse.vulnerabilities ? graphResponse.vulnerabilities.length : 0) + 
-            (graphResponse.violations ? graphResponse.violations.length : 0)) + 
-            "' vulnerabilities/violations for descriptor '" + descriptor.generalInfo.artifactId +"' (elapsed=" + ((Date.now() - startTime) / 1000) + "sec)",'DEBUG'
-        );
-        descriptorNode.dependencyScanTimeStamp = startTime;
-        this.populateGraphScanResponse(descriptorNode,graphResponse);
-        // TODO: applicability scan
-        
-        // Update view with new node
-        root.addChildAndApply(descriptorNode);
-        this.onChangeFire();
-        return descriptorNode;
+        if(fileScanned) {
+            this._treesManager.logManager.logMessage("Scan on file '" + fileScanned.label + "' ended with error", 'ERR');
+        }
+        this._treesManager.logManager.logError(error, true);
+        return root.addChildAndApply(fileScanned);
     }
 
-    private populateGraphScanResponse(descriptorNode: DescriptorTreeNode, graphResponse: IGraphResponse) {
+    private async createDescriptorScanningIssues(
+        descriptorName: string,
+        descriptorRoot: RootNode,
+        stepProgress: StepProgress,
+        checkCanceled: () => void
+    ): Promise<DescriptorTreeNode | undefined> {
+        // Descriptor Not install - no need for scan
+        if (descriptorRoot.label?.toString().includes('[Not installed]')) {
+            return DescriptorTreeNode.createFailedScanNode(descriptorName);
+        }
+        // Scan descriptor
+        let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptorName);
+        let issuesCount: number = await this.scanDescriptor(
+            descriptorNode,
+            descriptorRoot,
+            stepProgress.createScanProgress(descriptorRoot.generalInfo.artifactId),
+            checkCanceled
+        );
+        // descriptorNode.apply();
+        return issuesCount > 0 ? descriptorNode : undefined;
+    }
+
+    private async scanDescriptor(
+        descriptorNode: DescriptorTreeNode,
+        descriptor: RootNode,
+        progress: XrayScanProgress,
+        checkCanceled: () => void
+    ): Promise<number> {
+        // Dependency graph scanning
+        let graphScanStratTime: number = Date.now();
+        let graphResponse: IGraphResponse = await this._scanManager.scanDependencyGraph(progress, descriptor, checkCanceled);
+        if (!graphResponse.vulnerabilities && !graphResponse.vulnerabilities) {
+            this._treesManager.logManager.logMessage(
+                "No issues found for descriptor '" + descriptor.generalInfo.artifactId + "' (elapsed=" + (Date.now() - graphScanStratTime) / 1000 + 'sec)',
+                'DEBUG'
+            );
+            return 0;
+        }
+        this._treesManager.logManager.logMessage(
+            "found '" +
+                ((graphResponse.vulnerabilities ? graphResponse.vulnerabilities.length : 0) +
+                    (graphResponse.violations ? graphResponse.violations.length : 0)) +
+                "' vulnerabilities/violations for descriptor '" +
+                descriptor.generalInfo.artifactId +
+                "' (elapsed=" +
+                (Date.now() - graphScanStratTime) / 1000 +
+                'sec)',
+            'DEBUG'
+        );
+        descriptorNode.dependencyScanTimeStamp = graphScanStratTime;
+        let dependencyIssueCount: number = this.populateGraphScanResponse(descriptorNode, graphResponse);
+        // TODO: applicability scan
+
+        return dependencyIssueCount;
+    }
+
+    // private generateTreeChilds(impact_path: IImpactPath[], root: IImpactedPath) {
+
+    // }
+
+    // private toImpactedPathTree(impact_paths: IImpactPath[][]): IImpactedPath {
+        
+    //     let root: IImpactedPath | undefined;
+    //     for(let i: number = 0; i < impact_paths.length; i++) {
+    //         if(root == undefined) {
+    //             root = {
+    //                 name:
+    //             }
+    //         }
+    //     }
+
+
+    //     for(let i: number = 0; i < impact_paths.length; i++) {
+    //         let current: IImpactedPath = root;
+    //         let depth: number = 0;
+
+    //         while(depth < impact_paths[i].length) {
+    //             if (current.name == impact_paths[i][depth].component_id) {
+    //                 current
+    //                 depth++;
+    //             }
+    //         }
+
+    //         for(let d: number = 0; d < impact_paths[i].length; i++) {
+
+    //             current.children?.map(c => c.name).filter(c => c == impact_paths[i][d].component_id)
+    //             if(current.name == impact_paths[i][d].component_id)
+    //             current.name = impact_paths[i][d].component_id;
+    //             // first one is always the same = descriptor
+    //             if (d == 0) {
+                    
+    //             }
+    //         }
+    //     }
+    //     for(let impactPath of impact_paths) {
+    //     }
+    //     return root;
+    // }
+
+    private populateGraphScanResponse(descriptorNode: DescriptorTreeNode, graphResponse: IGraphResponse): number {
         // TODO: remove saving files below
         // let scanPath: string = '/Users/assafa/Documents/testyWithTree' + Utils.getLastSegment(descriptor.generalInfo.artifactId) + '.json';
         // fs.writeFileSync(scanPath, JSON.stringify(graphResponse));
         let issues: IVulnerability[] = graphResponse.violations ? graphResponse.violations : graphResponse.vulnerabilities;
         let topSeverity: Severity = Severity.Unknown;
         // let issueDependencies: IssueDependencyTreeNode[] = [];
-        
-        // let issueDependencies: 
+
+        // let issueDependencies:
         issues.forEach(issue => {
             let severity: Severity = SeverityUtils.getSeverity(issue.severity);
-            if (severity > topSeverity)
-            {
+            if (severity > topSeverity) {
                 topSeverity = severity;
             }
             // Create dependency component with issues
@@ -294,24 +354,24 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                         componentId,
                         component.package_name,
                         component.package_version,
+                        component.fixed_versions,
+                        {} as IImpactedPath,//this.toImpactedPathTree(component.impact_paths, {} as IImpactedPath),
                         toPackgeType(component.package_type),
                         severity,
                         descriptorNode
                     );
                     descriptorNode.dependenciesWithIssue.push(dependencyWithIssue);
-                } else if (severity > dependencyWithIssue.topSeverity)
-                {
+                } else if (severity > dependencyWithIssue.topSeverity) {
                     dependencyWithIssue.topSeverity = severity;
                 }
 
                 // Create issues for the dependency
                 for (let cveIssue of issue.cves) {
                     if (!!cveIssue.cve) {
-                        dependencyWithIssue.issues.push(new CveTreeNode(cveIssue.cve, severity, dependencyWithIssue));
+                        dependencyWithIssue.issues.push(new CveTreeNode(issue.issue_id, cveIssue.cve, severity, issue.edited, dependencyWithIssue));
                     } else {
-                        dependencyWithIssue.issues.push(new CveTreeNode(issue.issue_id, severity, dependencyWithIssue));
+                        dependencyWithIssue.issues.push(new CveTreeNode(issue.issue_id, issue.issue_id, severity, issue.edited, dependencyWithIssue));
                     }
-                    
                 }
             }
         });
@@ -320,19 +380,19 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         //         let issueComponent: IImpactPath = impactPathEntry[impactPathEntry.length - 1];
         //     });
         // });
-        
+
         descriptorNode.severity = topSeverity;
-        descriptorNode.apply();
+        return descriptorNode.dependenciesWithIssue.length;
     }
 
-    // returns the full path of the descriptor file if exsits in map or artifactId of the root otherwise 
-    private getDescriptorName(descriptorRoot: RootNode, workspcaeDescriptors: Map<PackageType, vscode.Uri[]>) : string {
+    // returns the full path of the descriptor file if exsits in map or artifactId of the root otherwise
+    private getDescriptorName(descriptorRoot: RootNode, workspcaeDescriptors: Map<PackageType, vscode.Uri[]>): string {
         // TODO: insert this inside the logic of building the tree ?
         let details: ProjectDetails = descriptorRoot.projectDetails;
         let descriptorName: string = descriptorRoot.generalInfo.artifactId;
-        let typeDescriptors: vscode.Uri[] | undefined  = workspcaeDescriptors.get(details.type);
+        let typeDescriptors: vscode.Uri[] | undefined = workspcaeDescriptors.get(details.type);
         if (typeDescriptors != undefined) {
-            for(let descriptor of typeDescriptors) {
+            for (let descriptor of typeDescriptors) {
                 let descriptorDir: string = path.dirname(descriptor.fsPath);
                 if (descriptorDir == details.path) {
                     descriptorName = descriptor.fsPath;
@@ -343,88 +403,36 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         return descriptorName;
     }
 
-    private _testTotal: number = 0;
-
-    private createDescriptorScanProgress(id: string, progress: vscode.Progress<{ message?: string; increment?: number }>, progressMsg: string, totalIncrement: number): XrayScanProgress {
-        return new class implements XrayScanProgress {
-            private lastPercentage: number = 0;
-            constructor(private _log: LogManager, private _test: IssuesTreeDataProvider){}
-            /** @override */
-            public setPercentage(percentage: number): void {
-                if (percentage != this.lastPercentage) {
-                    let inc: number = totalIncrement * ((percentage - this.lastPercentage) / 100);
-                    this._test._testTotal += inc;
-                    this._log.logMessage("[" + id + "] reported change in progress " + this.lastPercentage + "% -> " + percentage + "% (increment = " + inc + "% / "+totalIncrement+"%)",'DEBUG');
-                    this._log.logMessage("Overall progress done: " + this._test._testTotal + "%",'DEBUG');
-                    progress.report({ message: progressMsg, increment: inc});
-                }
-                this.lastPercentage = percentage;
-            }
-        }(this._treesManager.logManager,this)
-    }
-
-    private calculateLastScanTimeStamp() {
-        let oldestTimeStamp: number | undefined;
-        // Update
-        for (let root of this._workspaceToRoot.values()) {
-            if (root) {
-                let rootOldestTimeStamp: number | undefined;
-                for (let file of root.children) {
-                    let timestamp: number | undefined = file.timeStamp;
-                    if (timestamp && (!rootOldestTimeStamp || timestamp < rootOldestTimeStamp)) {
-                        rootOldestTimeStamp = timestamp;
-                    }
-                }
-                root.lastScanTimestamp = rootOldestTimeStamp;
-                if (rootOldestTimeStamp && (!oldestTimeStamp || rootOldestTimeStamp < oldestTimeStamp)) {
-                    oldestTimeStamp = rootOldestTimeStamp;
-                }
-            }
-        }
-        // Set on view
-        this._lastUpdateTime = oldestTimeStamp;
-        this.setViewDescription(Utils.getLastScanString(this._lastUpdateTime));
-    }
-
-    private setViewDescription(description: string | undefined) {
-        if (this._issuesTreeView) {
-            this.issuesTreeView.description = description;
-        }
-    }
 
     // Structure of the tree
     getChildren(
-        element?: /*TempRoot | ProjectRootTreeNode |*/IssuesRootTreeNode | BaseFileTreeNode | IssueDependencyTreeNode //| CveTreeNode
+        element?: /*TempRoot | ProjectRootTreeNode |*/ IssuesRootTreeNode | BaseFileTreeNode | IssueDependencyTreeNode //| CveTreeNode
     ): vscode.ProviderResult<any> {
         // Root
         if (!element) {
             let roots: IssuesRootTreeNode[] = [];
             for (const root of this._workspaceToRoot.values()) {
-                this._treesManager.logManager.logMessage("<ASSAF> _workspaceToRoot.children = " + (root ? root.children.length : undefined),'DEBUG');
-                if (root && root.children.length > 0) {
+                if (root) {
                     roots.push(root);
                 }
             }
-            if(this._isSingleWorkspace && roots.length == 1) {
-                return Promise.resolve(roots[0].children);
-            }
             return Promise.resolve(roots);
         }
-        if (element instanceof IssuesRootTreeNode){
+        if (element instanceof IssuesRootTreeNode) {
             return Promise.resolve(element.children);
         }
         // Descriptor file type
-        if (element instanceof DescriptorTreeNode){
+        if (element instanceof DescriptorTreeNode) {
             return Promise.resolve(element.dependenciesWithIssue);
         }
-        if (element instanceof IssueDependencyTreeNode){
+        if (element instanceof IssueDependencyTreeNode) {
             return Promise.resolve(element.issues);
         }
         // TODO: Source code file type
     }
 
     getTreeItem(
-        element: /*TempRoot | ProjectRootTreeNode |*/IssuesRootTreeNode | BaseFileTreeNode | IssueDependencyTreeNode | CveTreeNode
+        element: /*TempRoot | ProjectRootTreeNode |*/ IssuesRootTreeNode | BaseFileTreeNode | IssueDependencyTreeNode | CveTreeNode
     ): vscode.TreeItem | Thenable<vscode.TreeItem> {
         // TODO: Root
         // if (element instanceof ProjectRootTreeNode) {
@@ -444,16 +452,16 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         }
         if (element instanceof CveTreeNode) {
             element.iconPath = SeverityUtils.getIcon(element.severity !== undefined ? element.severity : Severity.Unknown);
+            element.command = Utils.createNodeCommand('view.dependency.details.page', 'Show details', [element.asDetailsPage()]);
             return element;
         }
 
         // TODO: Source code file type
 
-
         // TODO: general / default config
         // if (element) {
         // }
-        
+
         // if (element instanceof DependenciesTreeNode) {
         //     element.command = Utils.createNodeCommand('jfrog.xray.focus', '', [element]);
         //     let topSeverity: Severity = element.topSeverity;
@@ -487,19 +495,17 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         return element;
     }
 
-    public getParent(
-        element: BaseFileTreeNode
-    ): Thenable<IssuesRootTreeNode | undefined> {
+    public getParent(element: BaseFileTreeNode): Thenable<IssuesRootTreeNode | undefined> {
         return Promise.resolve(element.parent);
     }
 
-    public get issuesTreeView(): vscode.TreeView<IssuesRootTreeNode | BaseFileTreeNode | IssueDependencyTreeNode | CveTreeNode> {
-        return this._issuesTreeView;
-    }
+    // public get issuesTreeView(): vscode.TreeView<IssuesRootTreeNode | BaseFileTreeNode | IssueDependencyTreeNode | CveTreeNode> {
+    //     return this._issuesTreeView;
+    // }
 
-    public set issuesTreeView(value: vscode.TreeView<IssuesRootTreeNode | BaseFileTreeNode | IssueDependencyTreeNode | CveTreeNode>) {
-        this._issuesTreeView = value;
-    }
+    // public set issuesTreeView(value: vscode.TreeView<IssuesRootTreeNode | BaseFileTreeNode | IssueDependencyTreeNode | CveTreeNode>) {
+    //     this._issuesTreeView = value;
+    // }
 
     public onChangeFire(): void {
         this._onDidChangeTreeData.fire(undefined);

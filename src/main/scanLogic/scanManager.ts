@@ -8,7 +8,6 @@ import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot
 import { IGraphResponse, XrayScanProgress } from 'jfrog-client-js';
 import { GraphScanLogic } from './scanGraphLogic';
 
-
 export class ScanManager implements ExtensionComponent {
     constructor(protected _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
@@ -16,21 +15,17 @@ export class ScanManager implements ExtensionComponent {
         return this;
     }
 
-    public async scanDependencyGraph(
-        progress: XrayScanProgress,
-        projectRoot: RootNode,
-        checkCanceled: () => void
-    ): Promise<IGraphResponse> {
+    public async scanDependencyGraph(progress: XrayScanProgress, projectRoot: RootNode, checkCanceled: () => void): Promise<IGraphResponse> {
         let scanGraphSupported: boolean = await ConnectionUtils.testXrayVersionForScanGraph(
             this._connectionManager.createJfrogClient(),
             this._logManager
         );
         if (!scanGraphSupported) {
             // TODO: show warning for deprecated
-            this._logManager.logError(new Error("scan with graph is not supported"), true);
+            this._logManager.logError(new Error('scan with graph is not supported'), true);
             return {} as IGraphResponse;
         }
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
-        return scanLogic.scan(projectRoot,progress,checkCanceled);
+        return scanLogic.scan(projectRoot, progress, checkCanceled);
     }
 }

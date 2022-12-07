@@ -33,8 +33,8 @@ export class CommandManager implements ExtensionComponent {
         private _DependencyUpdateManager: DependencyUpdateManager,
         private _buildsManager: BuildsManager,
         private _exportManager: ExportManager,
-        
-        private _issuesFilterManager: IssuesFilterManager,
+
+        private _issuesFilterManager: IssuesFilterManager
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
@@ -64,7 +64,6 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
         this.registerCommand(context, 'jfrog.xray.builds', () => this.doBuildSelected());
         this.registerCommand(context, 'jfrog.xray.export', () => this.doExport());
-
 
         this.registerCommand(context, 'jfrog.xray.issues.filter', () => this.doIssuesFilter());
         this.updateLocalCiIcons();
@@ -362,7 +361,7 @@ export class CommandManager implements ExtensionComponent {
     /**
      * Show the filter menu.
      */
-     private doIssuesFilter() {
+    private doIssuesFilter() {
         this._issuesFilterManager.showFilterMenu();
     }
 

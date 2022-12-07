@@ -64,7 +64,8 @@
             "jfrog": [
                 {
                     "id": "jfrog.xray",
-                    "name": "Dependencies"
+                    "name": "Dependencies",
+                    "when": "false"
                 },
                 {
                     "id": "jfrog.source.code.scan",
@@ -78,7 +79,8 @@
                 },
                 {
                     "id": "jfrog.xray.dependency.details",
-                    "name": "Dependency Details"
+                    "name": "Dependency Details",
+                    "when": "false"
                 },
                 {
                     "id": "jfrog.xray.issues",
@@ -143,6 +145,11 @@
             {
                 "command": "view.dependency.vulnerability",
                 "title": "view.dependency.vulnerability'",
+                "category": "view.dependency.vulnerability"
+            },
+            {
+                "command": "view.dependency.details.page",
+                "title": "view.dependency.details.page",
                 "category": "view.dependency.vulnerability"
             },
             {

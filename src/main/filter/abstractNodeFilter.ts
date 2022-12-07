@@ -2,12 +2,10 @@ import * as vscode from 'vscode';
 import { BaseFileTreeNode } from '../treeDataProviders/issuesTree/baseFileTreeNode';
 import { IssuesFilterManager } from './issuesFilterManager';
 
-
-
 /**
  * @see IssuesFilterManager
  */
- export abstract class AbstractNodeFilter {
+export abstract class AbstractNodeFilter {
     protected _choice: vscode.QuickPickItem[] | undefined;
 
     /**
@@ -51,4 +49,4 @@ import { IssuesFilterManager } from './issuesFilterManager';
     public isPicked(item: string): boolean {
         return !this.choice || this.choice.map(choice => choice.label).some(label => label === item);
     }
- }
+}

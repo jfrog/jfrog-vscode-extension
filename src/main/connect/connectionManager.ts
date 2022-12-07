@@ -744,7 +744,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             component_id: 'vscode-project',
             nodes: <IGraphRequestModel[]>componentsToScan.toArray()
         } as IGraphRequestModel;
-        return await this.scanWithGraph(graphRequest,new XrayScanProgressImpl(progress),checkCanceled,project,watches);
+        return await this.scanWithGraph(graphRequest, new XrayScanProgressImpl(progress), checkCanceled, project, watches);
         // if (!this.areXrayCredentialsSet()) {
         //     await this.populateCredentials(false);
         // }
@@ -755,7 +755,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         //     policyMessage += ` Using Project key: ${project}`;
         // }
         // this._logManager.logMessage('Sending dependency graph to Xray for analyzing.' + policyMessage, 'DEBUG');
-        
+
         // return await this.createJfrogClient()
         //     .xray()
         //     .scan()

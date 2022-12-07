@@ -45,7 +45,7 @@ export class SeverityUtils {
                 return SeverityStrings.Critical;
         }
     }
-    public static toWebviewSeverity(severity: Severity):ISeverity {
+    public static toWebviewSeverity(severity: Severity): ISeverity {
         switch (severity) {
             case Severity.Low:
                 return ISeverity.Low;
@@ -56,7 +56,7 @@ export class SeverityUtils {
             case Severity.Critical:
                 return ISeverity.Critical;
         }
-        return ISeverity.Unknown
+        return ISeverity.Unknown;
     }
 
     public static getIcon(severity: Severity | undefined, hover: boolean = false) {

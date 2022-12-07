@@ -52,12 +52,12 @@ export class TreesManager implements ExtensionComponent {
         this._treeDataProviderManager = new TreeDataProviderManager(this);
         this._dependencyDetailsProvider = new DependencyDetailsProvider(_scanCacheManager, this._sourceCodeTreeDataProvider);
 
-        this._issuesTreeDataProvider = new IssuesTreeDataProvider(workspaceFolders,this, _scanManager,_cacheManager);
+        this._issuesTreeDataProvider = new IssuesTreeDataProvider(workspaceFolders, this, _scanManager, _cacheManager);
         this._state = State.Local;
     }
 
     public async activate(context: vscode.ExtensionContext): Promise<TreesManager> {
-        await this._treeDataProviderManager.refresh(true);
+        //await this._treeDataProviderManager.refresh(true);
         this._dependenciesTreeView = vscode.window.createTreeView('jfrog.xray', {
             treeDataProvider: this._treeDataProviderManager,
             showCollapseAll: true
@@ -76,7 +76,7 @@ export class TreesManager implements ExtensionComponent {
             showCollapseAll: false
         });
         // TODO: add treeView to data provider after refresh also
-        this._issuesTreeDataProvider.issuesTreeView = this._issuesTreeView;
+        // this._issuesTreeDataProvider.issuesTreeView = this._issuesTreeView;
         // if (this.workspaceFolders.length == 1) {
         //     // TODO: handle also in multi workspace - we show extra level of root name, tooltip = path (with Eye to open?), description: last scan
         //     // this._issuesTreeView.description = "last scan completed at '" + new Date(Date.now()).toUTCString()+ "'";

@@ -13,9 +13,9 @@ enum FilterTypes {
 export class IssuesFilterManager implements ExtensionComponent {
     private _severitiesFilter: SeverityNodeFilter;
 
-
-    constructor(){//private _treesManager: TreesManager) {
-        this._severitiesFilter = new SeverityNodeFilter();//_treesManager.issuesTreeDataProvider);
+    constructor() {
+        //private _treesManager: TreesManager) {
+        this._severitiesFilter = new SeverityNodeFilter(); //_treesManager.issuesTreeDataProvider);
     }
 
     public activate() {
@@ -39,9 +39,9 @@ export class IssuesFilterManager implements ExtensionComponent {
             //     break;
             case FilterTypes.CLEAR_ALL:
                 this._severitiesFilter.clearFilters();
-                // this._licensesFilter.clearFilters();
-                // this._scopeFilter.clearFilters();
-                // this._treesManager.treeDataProviderManager.applyFilters(undefined);
+            // this._licensesFilter.clearFilters();
+            // this._scopeFilter.clearFilters();
+            // this._treesManager.treeDataProviderManager.applyFilters(undefined);
         }
     }
 

@@ -26,12 +26,12 @@ export class Utils {
         if (timeStamp) {
             return "scan completed at '" + this.toDate(timeStamp) + "'";
         }
-        return "";
+        return '';
     }
 
     public static toDate(timeStamp: number | undefined): string {
-        if(timeStamp == undefined) {
-            return "Never"
+        if (timeStamp == undefined) {
+            return 'Never';
         }
 
         let dateTimeStamp: Date = new Date(timeStamp);

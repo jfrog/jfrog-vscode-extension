@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { Severity, SeverityUtils } from '../../../types/severity';
 
-import { BaseFileTreeNode } from "../baseFileTreeNode";
+import { BaseFileTreeNode } from '../baseFileTreeNode';
 import { IssueDependencyTreeNode } from './issueDependencyTreeNode';
 import { IssuesRootTreeNode } from '../issuesRootTreeNode';
 import { Utils } from '../../utils/utils';
@@ -10,8 +10,8 @@ import { Utils } from '../../utils/utils';
 // import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
 
 export class DescriptorTreeNode extends BaseFileTreeNode {
-     //_details: ProjectDetails;
-     //_tree?: DependenciesTreeNode;
+    //_details: ProjectDetails;
+    //_tree?: DependenciesTreeNode;
 
     private _dependenciesWithIssue: IssueDependencyTreeNode[] = [];
 
@@ -24,7 +24,7 @@ export class DescriptorTreeNode extends BaseFileTreeNode {
         parent?: IssuesRootTreeNode,
         collapsibleState?: vscode.TreeItemCollapsibleState
     ) {
-        super(fileFullPath,parent,collapsibleState);
+        super(fileFullPath, parent, collapsibleState);
         //this._details = descriptorDetails;
     }
 
@@ -79,32 +79,33 @@ export class DescriptorTreeNode extends BaseFileTreeNode {
     //}
 
     public get dependenciesWithIssue(): IssueDependencyTreeNode[] {
-       return this._dependenciesWithIssue;
+        return this._dependenciesWithIssue;
     }
 
     public static createFailedScanNode(lbl: string): DescriptorTreeNode {
-        const node: DescriptorTreeNode = new DescriptorTreeNode(lbl,undefined, vscode.TreeItemCollapsibleState.None);
-        node.description = "Fail to scan descriptor"
+        const node: DescriptorTreeNode = new DescriptorTreeNode(lbl, undefined, vscode.TreeItemCollapsibleState.None);
+        node.description = 'Fail to scan descriptor';
         node._severity = Severity.Unknown;
         return node;
     }
 
-    public apply() {
+    public apply(): void {
         let issueCount: number = 0;
-        this._dependenciesWithIssue.forEach(dependency =>  {
+        this._dependenciesWithIssue.forEach(dependency => {
             dependency.sortIssues();
             issueCount += dependency.issues.length;
         });
-        this.tooltip = "Severity: " + SeverityUtils.getString(this.severity) + "\nIssues count: " + issueCount + "\n";
 
+        this.setDescription(false);
+
+        this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\nIssues count: ' + issueCount + '\n';
         if (this._dependencyScanTimeStamp == this._applicableScanTimeStamp) {
             this.tooltip += "Last scan completed at '" + Utils.toDate(this._dependencyScanTimeStamp) + "'\n";
         } else {
             this.tooltip += "Dependency scan completed at '" + Utils.toDate(this._dependencyScanTimeStamp) + "'\n";
             this.tooltip += "Applicability scan completed at '" + Utils.toDate(this._applicableScanTimeStamp) + "'\n";
         }
-
-        this.tooltip += "Full path: " + this.filePath;
+        this.tooltip += 'Full path: ' + this.filePath;
 
         this._dependenciesWithIssue
             // 3rd priority - Sort by number of issues

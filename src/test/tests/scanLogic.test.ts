@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 import * as fs from 'fs';
-import { ComponentDetails/*, IArtifact*/, IGraphResponse/*, ISummaryResponse*/ } from 'jfrog-client-js';
+import { ComponentDetails /*, IArtifact*/, IGraphResponse /*, ISummaryResponse*/ } from 'jfrog-client-js';
 import * as path from 'path';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';

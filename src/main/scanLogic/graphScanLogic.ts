@@ -1,4 +1,13 @@
-import { ComponentDetails, ICve, IGraphLicense, IGraphRequestModel, IGraphResponse, IViolation, IVulnerability, XrayScanProgress } from 'jfrog-client-js';
+import {
+    ComponentDetails,
+    ICve,
+    IGraphLicense,
+    IGraphRequestModel,
+    IGraphResponse,
+    IViolation,
+    IVulnerability,
+    XrayScanProgress
+} from 'jfrog-client-js';
 import Dictionary from 'typescript-collections/dist/lib/Dictionary';
 import * as vscode from 'vscode';
 import { IIssueCacheObject } from '../types/issueCacheObject';
@@ -22,16 +31,11 @@ import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot
  * When the project key isn't provided - all vulnerabilities and licenses information should appear in the results.
  */
 export class GraphScanLogic extends AbstractScanLogic {
-
-    public async scan(
-        projectRoot: RootNode,
-        progress: XrayScanProgress,
-        checkCanceled: () => void
-    ): Promise<IGraphResponse> {
+    public async scan(projectRoot: RootNode, progress: XrayScanProgress, checkCanceled: () => void): Promise<IGraphResponse> {
         // Convert DependenciesTreeNode to IGraphRequestModel
         let graphRequest: IGraphRequestModel = {
             component_id: projectRoot.generalInfo.artifactId,
-            nodes:this.getGraphRequestModelNodes(projectRoot)
+            nodes: this.getGraphRequestModelNodes(projectRoot)
         } as IGraphRequestModel;
         // Run scan
         return this._connectionManager.scanWithGraph(
@@ -43,16 +47,14 @@ export class GraphScanLogic extends AbstractScanLogic {
         );
     }
 
-    private getGraphRequestModelNodes(dependency: DependenciesTreeNode) : IGraphRequestModel[] {
+    private getGraphRequestModelNodes(dependency: DependenciesTreeNode): IGraphRequestModel[] {
         let nodes: IGraphRequestModel[] = [];
         if (dependency.children.length > 0) {
             for (let child of dependency.children) {
-                nodes.push(
-                    {
-                        component_id: child.dependencyId,
-                        nodes:this.getGraphRequestModelNodes(child)
-                    } as IGraphRequestModel
-                );
+                nodes.push({
+                    component_id: child.dependencyId,
+                    nodes: this.getGraphRequestModelNodes(child)
+                } as IGraphRequestModel);
             }
         }
         return nodes;
@@ -127,7 +129,7 @@ export class GraphScanLogic extends AbstractScanLogic {
         for (let [componentId, vulnComponent] of Object.entries(vuln.components)) {
             // Add vulnerability to the issues array
             let severity: Severity = Translators.toSeverity(vuln.severity);
-            let temp: ICve[] = [ {cve:"abc",cvss_v2:"123"} as ICve];
+            let temp: ICve[] = [{ cve: 'abc', cvss_v2: '123' } as ICve];
             const cves: string[] = Translators.toCves(temp);
             issues.push({
                 issueId: vuln.issue_id,

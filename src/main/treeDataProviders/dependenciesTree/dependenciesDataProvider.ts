@@ -155,7 +155,10 @@ export class DependenciesTreeDataProvider implements vscode.TreeDataProvider<Dep
                 this.clearTree();
                 let workspaceRoot: DependenciesTreeNode = <DependenciesTreeNode>this.dependenciesTree;
                 this._scannedProjects = [];
-                let projectDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(this._workspaceFolders, this._treesManager.logManager);
+                let projectDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+                    this._workspaceFolders,
+                    this._treesManager.logManager
+                );
                 await DependenciesTreesFactory.createDependenciesTrees(
                     projectDescriptors,
                     this._workspaceFolders,

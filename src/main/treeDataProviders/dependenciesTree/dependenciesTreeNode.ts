@@ -33,7 +33,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         }
     }
 
-    public get dependencyId(): string | undefined{
+    public get dependencyId(): string | undefined {
         return this._dependencyId;
     }
 

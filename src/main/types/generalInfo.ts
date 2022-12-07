@@ -69,7 +69,7 @@ export class GeneralInfo {
     }
 
     public getFullComponentId(): string {
-        return this._pkgType + "//" + this._artifactId + ':' + this._version;
+        return this._pkgType + '//' + this._artifactId + ':' + this._version;
     }
 
     public update(newGeneralInfo: GeneralInfo) {

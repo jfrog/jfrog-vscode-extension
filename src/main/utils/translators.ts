@@ -20,7 +20,7 @@ export class Translators {
             summary: clientIssue.summary,
             severity: Translators.toSeverity(clientIssue.severity),
             cves: Translators.toCves(clientIssue.cves),
-            fixedVersions: Translators.toFixedVersions(clientIssue.components),
+            fixedVersions: Translators.toFixedVersions(clientIssue.components)
         } as IIssueCacheObject;
     }
 

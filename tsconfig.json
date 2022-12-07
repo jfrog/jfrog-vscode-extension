@@ -3,10 +3,7 @@
         "module": "commonjs",
         "target": "es2018",
         "outDir": "out",
-        "lib": [
-            "es2018",
-            "DOM"
-        ],
+        "lib": ["es2018", "DOM"],
         "jsx": "react",
         "sourceMap": true,
         "rootDir": "src",

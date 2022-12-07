@@ -1,10 +1,9 @@
 import * as vscode from 'vscode';
 
 //import { VulnerablitiesTreeDataProvider } from "../treeDataProviders/vulnerablitiesTree/vulnerablitiesTreeDataProvider";
-import { AbstractNodeFilter } from "./abstractNodeFilter";
-import { SeverityStrings/*, SeverityUtils */} from '../types/severity';
+import { AbstractNodeFilter } from './abstractNodeFilter';
+import { SeverityStrings /*, SeverityUtils */ } from '../types/severity';
 import { BaseFileTreeNode } from '../treeDataProviders/issuesTree/baseFileTreeNode';
-
 
 export class SeverityNodeFilter extends AbstractNodeFilter {
     constructor(/*private _issuesTreeDataProvider: VulnerablitiesTreeDataProvider*/) {
@@ -24,18 +23,20 @@ export class SeverityNodeFilter extends AbstractNodeFilter {
 
         // TODO: filter base on actual results (don't show if nothing is back)
 
-        return rawOptions.filter(rawOptions => true).map(
-            option =>
-            <vscode.QuickPickItem>{
-                label: option,
-                picked: true
-            }
-        );
+        return rawOptions
+            .filter(rawOptions => true)
+            .map(
+                option =>
+                    <vscode.QuickPickItem>{
+                        label: option,
+                        picked: true
+                    }
+            );
     }
 
     /** @override */
     public isNodePicked(node: BaseFileTreeNode): boolean {
-        if (!this._choice || (this.isPicked(SeverityStrings.Normal) /*&& this._issuesTreeDataProvider.issues.isEmpty()*/)) {
+        if (!this._choice || this.isPicked(SeverityStrings.Normal) /*&& this._issuesTreeDataProvider.issues.isEmpty()*/) {
             return true;
         }
         return true;

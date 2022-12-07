@@ -30,10 +30,9 @@ export async function activate(context: vscode.ExtensionContext) {
     let logManager: LogManager = new LogManager().activate();
     let connectionManager: ConnectionManager = await new ConnectionManager(logManager).activate(context);
 
-    let scanManager: ScanManager = new ScanManager(connectionManager,logManager).activate();
-    let cacheManager: CacheManager = new CacheManager(workspaceFolders,logManager).activate(context);
+    let scanManager: ScanManager = new ScanManager(connectionManager, logManager).activate();
+    let cacheManager: CacheManager = new CacheManager(workspaceFolders, logManager).activate(context);
     cacheManager.activate(context);
-    
 
     let scanCacheManager: ScanCacheManager = new ScanCacheManager().activate(context);
     let scanLogicManager: ScanLogicManager = new ScanLogicManager(connectionManager, scanCacheManager, logManager).activate();
@@ -74,7 +73,4 @@ export async function activate(context: vscode.ExtensionContext) {
         exportManager,
         issueFilterManager
     ).activate(context);
-
-
-
 }

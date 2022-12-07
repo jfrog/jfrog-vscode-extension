@@ -6,16 +6,14 @@ import { Utils } from '../utils/utils';
 import { IssuesRootTreeNode } from './issuesRootTreeNode';
 // import { ProjectRootTreeNode } from './projectRootTreeNode';
 
-
-export class BaseFileTreeNode extends vscode.TreeItem {
-    
-    private _parent: IssuesRootTreeNode | undefined;
+export abstract class BaseFileTreeNode extends vscode.TreeItem {
+    // private _parent: IssuesRootTreeNode | undefined;
     protected _severity: Severity = Severity.Unknown;
     private _timeStamp: number | undefined;
 
     constructor(
         private _filePath: string,
-        _parent?: IssuesRootTreeNode,
+        private _parent?: IssuesRootTreeNode,
         _timeStamp?: number,
         // private _parent?: ProjectRootTreeNode,
         collapsibleState?: vscode.TreeItemCollapsibleState
@@ -25,7 +23,8 @@ export class BaseFileTreeNode extends vscode.TreeItem {
         // if (_parent) {
         //     _parent.children.push(this);
         // }
-        this.parent = _parent;
+        // this.parent = _parent;
+        // this.setDescription();
     }
 
     public get timeStamp(): number | undefined {
@@ -35,12 +34,12 @@ export class BaseFileTreeNode extends vscode.TreeItem {
         this._timeStamp = value;
     }
 
-    public get parent(): IssuesRootTreeNode | undefined{
+    public get parent(): IssuesRootTreeNode | undefined {
         return this._parent;
     }
     public set parent(value: IssuesRootTreeNode | undefined) {
         this._parent = value;
-        this.setDescription();
+        // this.setDescription(false);
     }
 
     public get severity(): Severity {
@@ -57,18 +56,20 @@ export class BaseFileTreeNode extends vscode.TreeItem {
 
     public set filePath(value: string) {
         this._filePath = value;
-        this.setDescription();
+        // this.setDescription(false);
     }
 
-    private setDescription() {
-        let description: string = this._filePath;
-
-        if(this._parent && this._filePath.startsWith(this._parent.workSpace.uri.fsPath)) {
-            description = "." + this._filePath.substring(this._parent.workSpace.uri.fsPath.length);
-            this.tooltip = "Severity: " + SeverityUtils.getString(this._severity) + "\nPath: " + this._filePath;
+    protected setDescription(forceChange: boolean=true) {
+        if (this.description == undefined || forceChange) {
+            let description: string = this._filePath;
+            if (this._parent && this._filePath.startsWith(this._parent.workSpace.uri.fsPath)) {
+                description = '.' + this._filePath.substring(this._parent.workSpace.uri.fsPath.length);
+                this.tooltip = 'Severity: ' + SeverityUtils.getString(this._severity) + '\nPath: ' + this._filePath;
+            }
+    
+            this.description = description;
         }
-
-        this.description = description;
     }
 
+    public abstract apply(): void;
 }

@@ -273,7 +273,7 @@ export class VulnerabilityNode extends IssueNode {
         readonly fixedVersions?: string[],
         readonly applicable?: boolean, // If false, the given CVE is not applicable in the source code. If true, the given CVE is applicable in the source code.  If undefined, The CVE cannot be discovered.
         readonly sourceCodeCveTreeNode?: SourceCodeCveTreeNode,
-        readonly  researchInfo?: IResearch
+        readonly researchInfo?: IResearch
     ) {
         super(cve ? cve : xrayId, vscode.TreeItemCollapsibleState.Collapsed);
         // Enable eye button if we can jump to source code.

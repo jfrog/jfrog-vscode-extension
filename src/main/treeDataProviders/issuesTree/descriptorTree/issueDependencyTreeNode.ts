@@ -1,4 +1,4 @@
-
+import { IImpactedPath } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
 import { PackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
@@ -13,6 +13,8 @@ export class IssueDependencyTreeNode extends vscode.TreeItem {
         private _artifactId: string,
         private _name: string,
         private _version: string,
+        private _fixVersion: string[],
+        private _issueImpactPath: IImpactedPath,
         private _type: PackageType,
         private _topSeverity: Severity,
         private _parent: DescriptorTreeNode,
@@ -24,13 +26,20 @@ export class IssueDependencyTreeNode extends vscode.TreeItem {
     }
 
     public sortIssues() {
-        this.tooltip = "Severity: " + SeverityUtils.getString(this.topSeverity) + "\nIssues count: " + this._issues.length + "\nArtifact: " + this.artifactId + "";
+        this.tooltip =
+            'Severity: ' +
+            SeverityUtils.getString(this.topSeverity) +
+            '\nIssues count: ' +
+            this._issues.length +
+            '\nArtifact: ' +
+            this.artifactId +
+            '';
 
         this._issues
-        // 2nd priority - Sort by name
-        .sort((lhs, rhs) => rhs.severity - lhs.severity)
-        // 1st priority - Sort by severity
-        .sort((lhs, rhs) => rhs.severity - lhs.severity);
+            // 2nd priority - Sort by name
+            .sort((lhs, rhs) => rhs.severity - lhs.severity)
+            // 1st priority - Sort by severity
+            .sort((lhs, rhs) => rhs.severity - lhs.severity);
     }
 
     public get artifactId(): string {
@@ -59,6 +68,14 @@ export class IssueDependencyTreeNode extends vscode.TreeItem {
 
     public get name(): string {
         return this._name;
+    }
+
+    public get fixVersion(): string[] {
+        return this._fixVersion;
+    }
+
+    public get issueImpactPath(): IImpactedPath {
+        return this._issueImpactPath;
     }
 
     public get version(): string {
