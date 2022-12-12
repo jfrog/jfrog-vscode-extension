@@ -17,7 +17,7 @@ import { SourceCodeRootTreeNode } from './sourceCodeTree/sourceCodeRootTreeNode'
 import { IssuesTreeDataProvider } from './issuesTree/issuesTreeDataProvider';
 import { BaseFileTreeNode } from './issuesTree/baseFileTreeNode';
 import { ScanManager } from '../scanLogic/scanManager';
-import { IssueDependencyTreeNode } from './issuesTree/descriptorTree/issueDependencyTreeNode';
+import { DependencyIssueTreeNode } from './issuesTree/descriptorTree/dependencyIssueTreeNode';
 import { CveTreeNode } from './issuesTree/descriptorTree/cveTreeNode';
 import { IssuesRootTreeNode } from './issuesTree/issuesRootTreeNode';
 import { CacheManager } from '../cache/cacheManager';
@@ -28,7 +28,7 @@ import { CacheManager } from '../cache/cacheManager';
 export class TreesManager implements ExtensionComponent {
     private _dependenciesTreeView!: vscode.TreeView<DependenciesTreeNode>;
     private _sourceCodeTreeView!: vscode.TreeView<SourceCodeRootTreeNode | SourceCodeFileTreeNode | SourceCodeCveTreeNode | CveApplicabilityRoot>;
-    private _issuesTreeView!: vscode.TreeView<IssuesRootTreeNode | BaseFileTreeNode | IssueDependencyTreeNode | CveTreeNode>;
+    private _issuesTreeView!: vscode.TreeView<IssuesRootTreeNode | BaseFileTreeNode | DependencyIssueTreeNode | CveTreeNode>;
     private _issuesTreeDataProvider: IssuesTreeDataProvider;
     private _treeDataProviderManager: TreeDataProviderManager;
     private _dependenciesTreeDataProvider: DependenciesTreeDataProvider;
@@ -75,17 +75,10 @@ export class TreesManager implements ExtensionComponent {
             treeDataProvider: this._issuesTreeDataProvider,
             showCollapseAll: false
         });
-        // TODO: add treeView to data provider after refresh also
-        // this._issuesTreeDataProvider.issuesTreeView = this._issuesTreeView;
-        // if (this.workspaceFolders.length == 1) {
-        //     // TODO: handle also in multi workspace - we show extra level of root name, tooltip = path (with Eye to open?), description: last scan
-        //     // this._issuesTreeView.description = "last scan completed at '" + new Date(Date.now()).toUTCString()+ "'";
-        // }
-        // this._issuesTreeView.description = "scan completed at '" + new Date(Date.now()).toUTCString()+ "' (#workspace=" + this.workspaceFolders.length + ")";
-        return Promise.resolve(this);
+        return Promise.resolve(this).finally(() => this.issuesTreeDataProvider.refresh(false));
     }
 
-    get issuesTreeView(): vscode.TreeView<IssuesRootTreeNode | BaseFileTreeNode | IssueDependencyTreeNode | CveTreeNode> {
+    get issuesTreeView(): vscode.TreeView<IssuesRootTreeNode | BaseFileTreeNode | DependencyIssueTreeNode | CveTreeNode> {
         return this._issuesTreeView;
     }
 

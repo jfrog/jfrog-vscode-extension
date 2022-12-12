@@ -1,17 +1,38 @@
 // import { ISeverityReasons } from 'jfrog-client-js';
-import { /*ICve,*/ IDependencyPage, IImpactedPath, ILicense, IReference /*IResearch, ISeverity */ } from 'jfrog-ide-webview';
+import { IGraphCve, IResearch, IVulnerability } from 'jfrog-client-js';
+import { /*ICve,*/ ICve, IDependencyPage, IReference /*IResearch, ISeverity */ } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
 import { PackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { IssueNode } from '../../issuesDataProvider';
-import { IssueDependencyTreeNode } from './issueDependencyTreeNode';
+import { DependencyIssueTreeNode } from './dependencyIssueTreeNode';
 
 export class CveTreeNode extends IssueNode {
-    constructor(private _id: string, private _cve: string, private _severity: Severity, private _edited: string, private _parent: IssueDependencyTreeNode) {
-        super(_cve, vscode.TreeItemCollapsibleState.None);
+    private _id: string;
+    private _edited: string;
+    private _summary: string;
+    private _references: string[];
+    private _researchInfo?: IResearch;
+
+    constructor(sourceVul: IVulnerability, private _severity: Severity, private _parent: DependencyIssueTreeNode, private _cve?: IGraphCve) {
+        super(_cve && _cve.cve ? _cve.cve : sourceVul.issue_id, vscode.TreeItemCollapsibleState.None);
+        this._id = sourceVul.issue_id;
+        this._edited = sourceVul.edited;
+        this._summary = sourceVul.summary;
+        this._references = sourceVul.references;
+        if (sourceVul.researchInfo) {
+            this._researchInfo = sourceVul.researchInfo;
+        }
     }
 
-    public get cve(): string {
+    public get references(): string[] {
+        return this._references;
+    }
+    public set references(value: string[]) {
+        this._references = value;
+    }
+
+    public get cve(): IGraphCve | undefined {
         return this._cve;
     }
 
@@ -19,120 +40,35 @@ export class CveTreeNode extends IssueNode {
         return this._severity;
     }
 
-    public get parent(): IssueDependencyTreeNode {
+    public get parent(): DependencyIssueTreeNode {
         return this._parent;
     }
 
     public asDetailsPage(): IDependencyPage {
         return {
-            id: this._id,
+            id: this._id, // tell or that the ID is not right, the CVE name appear as id and the XRAY is the title
+            cve: this._cve
+                ? ({
+                      id: this._cve.cve,
+                      cvssV2Score: this._cve.cvss_v2_score,
+                      cvssV2Vector: this._cve.cvss_v2_vector,
+                      cvssV3Score: this._cve.cvss_v3_score,
+                      cvssV3Vector: this._cve.cvss_v3_vector,
+                      applicably: true // TODO: change when adding scan
+                  } as ICve)
+                : ({ applicably: true } as ICve), //undefined,
             name: this._parent.name,
             type: PackageType[this._parent.type],
             version: this._parent.version,
+            // infectedVersion: this.parent , // ["infectedVersion"] // TODO: add in client-js
             severity: SeverityUtils.toWebviewSeverity(this._severity),
             edited: this._edited,
-            summary: 'archiver tar.go untarFile() Function Tar File Unpacking Nested Symbolic Link Handling Arbitrary File Write',
+            summary: this._summary,
             fixedVersion: this._parent.fixVersion,
-            license: { name: 'license-name' } as ILicense,
-            references: [
-                {
-                    text: 'text',
-                    url: 'https://securitylab.github.com/advisories/GHSL-2020-252-zipslip-archiver'
-                } as IReference,
-                {
-                    //text: "text",
-                    url: 'https://github.com/mholt/archiver/commit/fea250ac6eacd56f90a82fbe2481cfdbb9a1bbd1'
-                } as IReference
-            ],
-            researchInfo: undefined,
-            // researchInfo: {
-            //     shortDescription: "shortDescription",
-            //     fullDescription: "fullDescription",
-            //     remediation: "remediation",
-            //     jfrogResearchSeverity: ISeverity.Unknown,
-            //     jfrogResearchSeverityReason: [
-            //         {
-            //             name: "name",
-            //             description: "description",
-            //             isPositive: "isPositive",
-            //         } as ISeverityReasons
-            //     ],
-            // } as IResearch,
-            // impactedPath: this._parent.issueImpactPath,
-            impactedPath: {
-                name: 'Black',
-                children: [
-                    {
-                        name: 'Aquamarine',
-                        children: []
-                    },
-                    {
-                        name: 'Cyan',
-                        children: []
-                    },
-                    {
-                        name: 'Navy',
-                        children: []
-                    },
-                    {
-                        name: 'Turquoise',
-                        children: []
-                    },
-                    {
-                        name: 'Green',
-                        children: [
-                            {
-                                name: 'Purple',
-                                children: [
-                                    {
-                                        name: 'Indigo',
-                                        children: []
-                                    },
-                                    {
-                                        name: 'Violet',
-                                        children: []
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        name: 'Red',
-                        children: [
-                            {
-                                name: 'Crimson',
-                                children: []
-                            },
-                            {
-                                name: 'Maroon',
-                                children: []
-                            },
-                            {
-                                name: 'Scarlet',
-                                children: []
-                            }
-                        ]
-                    },
-                    {
-                        name: 'White',
-                        children: []
-                    },
-                    {
-                        name: 'Yellow',
-                        children: []
-                    }
-                ]
-            } as IImpactedPath
-
-            // cve: {
-            //     id: "id",
-            //     cvssV2Score: "cvssV2Score",
-            //     cvssV2Vector: "cvssV2Vector",
-            //     cvssV3Score: "cvssV3Score",
-            //     cvssV3Vector: "cvssV3Vector",
-            //     //applicably?: false;
-            // } as ICve,
-            // infectedVersion: ["infectedVersion"],
+            license: this.parent.licenses.length >= 0 ? this.parent.licenses.map(l => l.name).join() : undefined, // TODO: tell or about only one when can be multiple
+            references: this._references.map(refrence => ({ url: refrence } as IReference)), // TODO: tell or that there are no text...
+            researchInfo: this._researchInfo,
+            impactedPath: this._parent.impactedTree
         } as IDependencyPage;
     }
 }

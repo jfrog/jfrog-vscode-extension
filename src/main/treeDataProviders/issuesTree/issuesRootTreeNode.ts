@@ -5,7 +5,7 @@ import { BaseFileTreeNode } from './baseFileTreeNode';
 // Root for opened workspace Path
 export class IssuesRootTreeNode extends vscode.TreeItem {
     private _children: BaseFileTreeNode[] = [];
-
+    public test: number = 0;
     constructor(
         private readonly _workSpace: vscode.WorkspaceFolder,
         _title?: string,
@@ -37,16 +37,22 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
     }
 
     public get title(): string | undefined {
-        if(this.description == false || this.description == true) {
+        if (this.description == false || this.description == true) {
             return undefined;
         }
         return this.description;
     }
 
-    public addChildAndApply(child?: BaseFileTreeNode): BaseFileTreeNode | undefined {
+    public addChild(child?: BaseFileTreeNode): BaseFileTreeNode | undefined {
         if (child) {
             this._children.push(child);
             child.parent = this;
+        }
+        return child;
+    }
+
+    public addChildAndApply(child?: BaseFileTreeNode): BaseFileTreeNode | undefined {
+        if (this.addChild(child)) {
             this.apply();
         }
         return child;

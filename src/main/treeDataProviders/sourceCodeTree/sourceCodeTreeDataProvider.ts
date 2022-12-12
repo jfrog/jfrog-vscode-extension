@@ -45,7 +45,7 @@ export class SourceCodeTreeDataProvider
             // Scan each workspaces for all known CVEs using the CVE Applicability Scanner.
             if (projectDescriptors.size === 0) {
                 for (const workspace of this._workspaceFolders) {
-                    this.scanProject(workspace.uri.path, PackageType.UNKNOWN);
+                    this.scanProject(workspace.uri.path, PackageType.Unknown);
                 }
                 return;
             }
@@ -54,7 +54,7 @@ export class SourceCodeTreeDataProvider
             for (const [projectType, uris] of projectDescriptors) {
                 for (const uri of uris) {
                     // Only python & npm are supported for CVE Applicability scan.
-                    if (![PackageType.NPM, PackageType.YARN, PackageType.PYTHON].includes(projectType)) {
+                    if (![PackageType.Npm, PackageType.Yarn, PackageType.Python].includes(projectType)) {
                         continue;
                     }
                     // Load CVEs from cache (if any) and pass it to CVE applicability scanner.

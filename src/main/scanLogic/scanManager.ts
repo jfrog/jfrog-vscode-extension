@@ -15,7 +15,7 @@ export class ScanManager implements ExtensionComponent {
         return this;
     }
 
-    public async scanDependencyGraph(progress: XrayScanProgress, projectRoot: RootNode, checkCanceled: () => void): Promise<IGraphResponse> {
+    private async validateGraphSupported(): Promise<boolean> {
         let scanGraphSupported: boolean = await ConnectionUtils.testXrayVersionForScanGraph(
             this._connectionManager.createJfrogClient(),
             this._logManager
@@ -23,9 +23,22 @@ export class ScanManager implements ExtensionComponent {
         if (!scanGraphSupported) {
             // TODO: show warning for deprecated
             this._logManager.logError(new Error('scan with graph is not supported'), true);
+        }
+        return scanGraphSupported;
+    }
+
+    // scan with dependecy graph
+    public async scanDependencyGraph(
+        progress: XrayScanProgress,
+        projectRoot: RootNode,
+        checkCanceled: () => void,
+        flatten: boolean = true
+    ): Promise<IGraphResponse> {
+        let supported: boolean = await this.validateGraphSupported();
+        if (!supported) {
             return {} as IGraphResponse;
         }
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
-        return scanLogic.scan(projectRoot, progress, checkCanceled);
+        return scanLogic.scan(projectRoot, flatten, progress, checkCanceled);
     }
 }

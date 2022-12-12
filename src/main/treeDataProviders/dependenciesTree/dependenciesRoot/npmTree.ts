@@ -12,7 +12,7 @@ export class NpmTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
 
     constructor(workspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, PackageType.NPM, parent);
+        super(workspaceFolder, PackageType.Npm, parent);
     }
 
     public async refreshDependencies(quickScan: boolean) {

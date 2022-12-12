@@ -64,7 +64,7 @@ describe('Maven Tests', async () => {
      */
     it('Locate pom.xml', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
-        let pomXmls: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.MAVEN);
+        let pomXmls: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Maven);
         assert.isDefined(pomXmls);
         assert.strictEqual(pomXmls!.length, 6);
 
@@ -447,7 +447,7 @@ describe('Maven Tests', async () => {
 
     async function locatePomXmls(workspaceFolders: vscode.WorkspaceFolder[]): Promise<vscode.Uri[] | undefined> {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
-        let pomXmlsArray: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.MAVEN);
+        let pomXmlsArray: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Maven);
         assert.isDefined(pomXmlsArray);
         pomXmlsArray = pomXmlsArray?.sort((a: vscode.Uri, b: vscode.Uri) => a.fsPath.localeCompare(b.fsPath));
         return pomXmlsArray;

@@ -121,25 +121,25 @@ export class ScanUtils {
      */
     private static extractDescriptorTypeFromPath(fsPath: string): PackageType | undefined {
         if (fsPath.endsWith('go.mod')) {
-            return PackageType.GO;
+            return PackageType.Go;
         }
         if (fsPath.endsWith('pom.xml')) {
-            return PackageType.MAVEN;
+            return PackageType.Maven;
         }
         if (fsPath.endsWith('yarn.lock')) {
-            return PackageType.YARN;
+            return PackageType.Yarn;
         }
         if (fsPath.endsWith('package.json')) {
             if (fs.existsSync(path.join(path.dirname(fsPath), 'yarn.lock'))) {
                 // The package type is yarn, but we already saved the fsPath of yarn.lock as the project descriptor
                 return undefined;
             }
-            return PackageType.NPM;
+            return PackageType.Npm;
         }
         if (fsPath.endsWith('.sln')) {
-            return PackageType.NUGET;
+            return PackageType.Nuget;
         }
-        return PackageType.PYTHON;
+        return PackageType.Python;
     }
 
     static createTmpDir(): string {

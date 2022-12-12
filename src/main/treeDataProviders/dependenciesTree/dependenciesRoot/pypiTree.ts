@@ -16,7 +16,7 @@ export class PypiTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'pypi://';
 
     constructor(workspaceFolder: string, private _treesManager: TreesManager, private _pythonPath: string, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, PackageType.PYTHON, parent);
+        super(workspaceFolder, PackageType.Python, parent);
     }
 
     public async refreshDependencies(quickScan: boolean) {

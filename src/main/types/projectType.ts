@@ -1,28 +1,28 @@
 export enum PackageType {
-    UNKNOWN,
-    GO,
-    MAVEN,
-    NPM,
-    YARN,
-    NUGET,
-    PYTHON
+    Unknown,
+    Go,
+    Maven,
+    Npm,
+    Yarn,
+    Nuget,
+    Python
 }
 
 export function toPackgeType(str: string): PackageType {
     switch (str.toUpperCase()) {
         case 'GO':
-            return PackageType.GO;
+            return PackageType.Go;
         case 'MAVEN':
-            return PackageType.MAVEN;
+            return PackageType.Maven;
         case 'NPM':
-            return PackageType.NPM;
+            return PackageType.Npm;
         case 'YARN':
-            return PackageType.YARN;
+            return PackageType.Yarn;
         case 'NUGET':
-            return PackageType.NUGET;
+            return PackageType.Nuget;
         case 'PYTHON':
-            return PackageType.PYTHON;
+            return PackageType.Python;
         default:
-            return PackageType.UNKNOWN;
+            return PackageType.Unknown;
     }
 }

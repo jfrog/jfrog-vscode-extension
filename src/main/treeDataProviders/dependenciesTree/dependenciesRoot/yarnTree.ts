@@ -13,7 +13,7 @@ export class YarnTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
 
     constructor(workspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, PackageType.YARN, parent);
+        super(workspaceFolder, PackageType.Yarn, parent);
     }
 
     public refreshDependencies(quickScan: boolean) {

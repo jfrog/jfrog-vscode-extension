@@ -10,7 +10,7 @@ export class NugetTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'nuget://';
 
     constructor(workspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, PackageType.NUGET, parent, '');
+        super(workspaceFolder, PackageType.Nuget, parent, '');
     }
 
     public refreshDependencies(quickScan: boolean, project: any) {

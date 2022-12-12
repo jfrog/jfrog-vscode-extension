@@ -12,7 +12,7 @@ export class MavenTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'gav://';
 
     constructor(workspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, PackageType.MAVEN, parent);
+        super(workspaceFolder, PackageType.Maven, parent);
         MavenUtils.pathToNode.set(workspaceFolder, this);
     }
 

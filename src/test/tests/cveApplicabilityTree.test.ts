@@ -94,7 +94,7 @@ describe('Cve Applicability Tree Tests', () => {
         let sourceCodeFileTreeNode: SourceCodeFileTreeNode = new SourceCodeFileTreeNode(path.join('a', 'b', 'c'), [node1, node2]);
         let sourceCodeRootTreeNode: SourceCodeRootTreeNode = new SourceCodeRootTreeNode(
             path.join('path', 'to', 'my-project'),
-            PackageType.NPM,
+            PackageType.Npm,
             'my-project'
         );
         sourceCodeRootTreeNode.addChild(sourceCodeFileTreeNode);

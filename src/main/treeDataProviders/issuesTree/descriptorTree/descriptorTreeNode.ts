@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
-import { Severity, SeverityUtils } from '../../../types/severity';
+import { SeverityUtils } from '../../../types/severity';
 
 import { BaseFileTreeNode } from '../baseFileTreeNode';
-import { IssueDependencyTreeNode } from './issueDependencyTreeNode';
+import { DependencyIssueTreeNode } from './dependencyIssueTreeNode';
 import { IssuesRootTreeNode } from '../issuesRootTreeNode';
 import { Utils } from '../../utils/utils';
+import { toPackgeType } from '../../../types/projectType';
 // import { ProjectRootTreeNode } from "./projectRootTreeNode";
 // import { ProjectDetails } from '../../types/projectDetails';
 // import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
@@ -12,8 +13,8 @@ import { Utils } from '../../utils/utils';
 export class DescriptorTreeNode extends BaseFileTreeNode {
     //_details: ProjectDetails;
     //_tree?: DependenciesTreeNode;
-
-    private _dependenciesWithIssue: IssueDependencyTreeNode[] = [];
+    public tempcount: number = 0;
+    private _dependenciesWithIssue: DependencyIssueTreeNode[] = [];
 
     private _dependencyScanTimeStamp?: number;
     private _applicableScanTimeStamp?: number;
@@ -58,12 +59,17 @@ export class DescriptorTreeNode extends BaseFileTreeNode {
                 oldest = this._applicableScanTimeStamp;
             }
         }
-
         return oldest;
     }
 
-    public getDependency(artifactId: string): IssueDependencyTreeNode | undefined {
+    public getDependencyByID(artifactId: string): DependencyIssueTreeNode | undefined {
         return this._dependenciesWithIssue.find(dependncy => dependncy.artifactId == artifactId);
+    }
+
+    public searchDependency(type: string, name: string, version: string): DependencyIssueTreeNode | undefined {
+        return this._dependenciesWithIssue.find(
+            dependncy => dependncy.name == name && dependncy.version == version && dependncy.type == toPackgeType(type)
+        );
     }
 
     //public get details(): ProjectDetails {
@@ -78,25 +84,28 @@ export class DescriptorTreeNode extends BaseFileTreeNode {
     //    this._tree = value;
     //}
 
-    public get dependenciesWithIssue(): IssueDependencyTreeNode[] {
+    public get dependenciesWithIssue(): DependencyIssueTreeNode[] {
         return this._dependenciesWithIssue;
     }
 
-    public static createFailedScanNode(lbl: string): DescriptorTreeNode {
-        const node: DescriptorTreeNode = new DescriptorTreeNode(lbl, undefined, vscode.TreeItemCollapsibleState.None);
-        node.description = 'Fail to scan descriptor';
-        node._severity = Severity.Unknown;
-        return node;
-    }
+    public apply() {
+        super.apply();
 
-    public apply(): void {
         let issueCount: number = 0;
+        if (this.dependenciesWithIssue.length == 0) {
+            this.collapsibleState = vscode.TreeItemCollapsibleState.None;
+        } else {
+            if (this.dependenciesWithIssue.length == 1 && this.parent?.children.length == 1) {
+                this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
+            } else {
+                this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
+            }
+        }
+
         this._dependenciesWithIssue.forEach(dependency => {
-            dependency.sortIssues();
+            dependency.apply();
             issueCount += dependency.issues.length;
         });
-
-        this.setDescription(false);
 
         this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\nIssues count: ' + issueCount + '\n';
         if (this._dependencyScanTimeStamp == this._applicableScanTimeStamp) {
@@ -105,7 +114,7 @@ export class DescriptorTreeNode extends BaseFileTreeNode {
             this.tooltip += "Dependency scan completed at '" + Utils.toDate(this._dependencyScanTimeStamp) + "'\n";
             this.tooltip += "Applicability scan completed at '" + Utils.toDate(this._applicableScanTimeStamp) + "'\n";
         }
-        this.tooltip += 'Full path: ' + this.filePath;
+        this.tooltip += 'Full path: ' + this.fullPath;
 
         this._dependenciesWithIssue
             // 3rd priority - Sort by number of issues

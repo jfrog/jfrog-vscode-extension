@@ -65,7 +65,7 @@
                 {
                     "id": "jfrog.xray",
                     "name": "Dependencies",
-                    "when": "false"
+                    "when": "isCi"
                 },
                 {
                     "id": "jfrog.source.code.scan",
@@ -84,7 +84,8 @@
                 },
                 {
                     "id": "jfrog.xray.issues",
-                    "name": "Issues"
+                    "name": "Issues",
+                    "when": "isLocal"
                 }
             ]
         },
@@ -210,6 +211,11 @@
                 "icon": "$(arrow-up)"
             },
             {
+                "command": "jfrog.xray.file.open",
+                "title": "Open File",
+                "icon": "$(eye)"
+            },
+            {
                 "command": "jfrog.source.code.scan.jumpToSource",
                 "title": "Jump To Source",
                 "icon": "$(eye)"
@@ -305,6 +311,11 @@
                 {
                     "command": "jfrog.xray.showInProjectDesc",
                     "when": "viewItem =~ /jfrog.xray.showInProjectDesc.enabled/",
+                    "group": "inline"
+                },
+                {
+                    "command": "jfrog.xray.file.open",
+                    "when": "viewItem =~ /jfrog.source.code.scan.jumpToSource.enabled/",
                     "group": "inline"
                 },
                 {

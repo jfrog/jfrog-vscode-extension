@@ -6,25 +6,60 @@ import { Utils } from '../utils/utils';
 import { IssuesRootTreeNode } from './issuesRootTreeNode';
 // import { ProjectRootTreeNode } from './projectRootTreeNode';
 
-export abstract class BaseFileTreeNode extends vscode.TreeItem {
+export class BaseFileTreeNode extends vscode.TreeItem {
     // private _parent: IssuesRootTreeNode | undefined;
     protected _severity: Severity = Severity.Unknown;
-    private _timeStamp: number | undefined;
+    // private _timeStamp: number | undefined;
+    private _name: string;
+    private _fullPath: string;
 
     constructor(
-        private _filePath: string,
+        filePath: string,
         private _parent?: IssuesRootTreeNode,
-        _timeStamp?: number,
-        // private _parent?: ProjectRootTreeNode,
-        collapsibleState?: vscode.TreeItemCollapsibleState
+        private _timeStamp?: number // private _parent?: ProjectRootTreeNode,
     ) {
         // File node is named as its file name.
-        super(Utils.getLastSegment(_filePath), collapsibleState ?? vscode.TreeItemCollapsibleState.Collapsed);
+        super('File');
+        this._name = Utils.getLastSegment(filePath);
+        this._fullPath = filePath;
         // if (_parent) {
         //     _parent.children.push(this);
         // }
         // this.parent = _parent;
         // this.setDescription();
+    }
+
+    public static createFailedScanNode(fullPath: string, reason?: string): BaseFileTreeNode {
+        const node: BaseFileTreeNode = new BaseFileTreeNode(fullPath, undefined, vscode.TreeItemCollapsibleState.None);
+        node._name += reason ? ' - ' + reason : '';
+        node.description = 'Fail to scan file';
+        node.tooltip = fullPath;
+        node._severity = Severity.Unknown;
+        return node;
+    }
+
+    protected applyDescription(forceChange: boolean = true) {
+        if (this.description == undefined || forceChange) {
+            let description: string = this._fullPath;
+            if (this._parent && this._fullPath.startsWith(this._parent.workSpace.uri.fsPath)) {
+                description = '.' + this._fullPath.substring(this._parent.workSpace.uri.fsPath.length);
+                this.tooltip = 'Severity: ' + SeverityUtils.getString(this._severity) + '\nPath: ' + this._fullPath;
+            }
+
+            this.description = description;
+        }
+    }
+
+    public apply() {
+        this.label = this._name;
+        this.applyDescription(false);
+    }
+
+    public get name(): string {
+        return this._name;
+    }
+    public set name(value: string) {
+        this._name = value;
     }
 
     public get timeStamp(): number | undefined {
@@ -50,26 +85,12 @@ export abstract class BaseFileTreeNode extends vscode.TreeItem {
         this._severity = value;
     }
 
-    public get filePath(): string {
-        return this._filePath;
+    public get fullPath(): string {
+        return this._fullPath;
     }
 
-    public set filePath(value: string) {
-        this._filePath = value;
+    public set fullPath(value: string) {
+        this._fullPath = value;
         // this.setDescription(false);
     }
-
-    protected setDescription(forceChange: boolean=true) {
-        if (this.description == undefined || forceChange) {
-            let description: string = this._filePath;
-            if (this._parent && this._filePath.startsWith(this._parent.workSpace.uri.fsPath)) {
-                description = '.' + this._filePath.substring(this._parent.workSpace.uri.fsPath.length);
-                this.tooltip = 'Severity: ' + SeverityUtils.getString(this._severity) + '\nPath: ' + this._filePath;
-            }
-    
-            this.description = description;
-        }
-    }
-
-    public abstract apply(): void;
 }

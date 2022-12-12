@@ -62,7 +62,7 @@ describe('Go Utils Tests', async () => {
             treesManager.logManager
         );
         let projectDirs: string[] = ['dependency', 'empty'];
-        let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.GO);
+        let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Go);
         assert.isDefined(goMods);
         assert.strictEqual(goMods?.length, projectDirs.length);
 
@@ -245,7 +245,7 @@ describe('Go Utils Tests', async () => {
         parent: DependenciesTreeNode
     ) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
-        let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.GO);
+        let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Go);
         await GoUtils.createDependenciesTrees(goMods, componentsToScan, treesManager, parent, false);
         await dummyScanCacheManager.storeArtifacts(xrayScanResults, { componentIdToCve: new Map() } as ProjectComponents);
         parent.children.forEach(child => {

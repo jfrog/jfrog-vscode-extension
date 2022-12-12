@@ -40,9 +40,9 @@ export class IconsPaths {
 export class PackageDescriptorUtils {
     public static getIcon(packageType: PackageType): string | undefined {
         switch (packageType) {
-            case PackageType.PYTHON:
+            case PackageType.Python:
                 return IconsPaths.PYTHON;
-            case PackageType.NPM:
+            case PackageType.Npm:
                 return IconsPaths.NPM;
             default:
                 return undefined;

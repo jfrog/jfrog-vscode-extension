@@ -10,7 +10,7 @@ import { PackageType } from '../../../types/projectType';
 export class GoTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
     constructor(tmpWorkspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
-        super(tmpWorkspaceFolder, PackageType.GO, parent);
+        super(tmpWorkspaceFolder, PackageType.Go, parent);
     }
 
     public refreshDependencies(quickScan: boolean) {

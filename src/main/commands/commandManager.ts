@@ -38,6 +38,8 @@ export class CommandManager implements ExtensionComponent {
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
+        this.registerCommand(context, 'jfrog.xray.file.open', file => this.openFile(file));
+
         this.registerCommand(context, 'jfrog.source.code.scan.jumpToSource', (sourceCodeTreeNode, index) =>
             this.jumpToSource(sourceCodeTreeNode, index)
         );
@@ -122,6 +124,10 @@ export class CommandManager implements ExtensionComponent {
     private doShowInProjectDesc(dependenciesTreeNode: DependenciesTreeNode) {
         this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.Dependency);
         this.onSelectNode(dependenciesTreeNode);
+    }
+
+    private openFile(file: any) {
+        return this._focusManager.openFile(file);
     }
 
     /**
@@ -241,14 +247,16 @@ export class CommandManager implements ExtensionComponent {
         this._logManager.showOutput();
     }
 
+    // private firstTime: boolean = true;
+
     /**
      * Refresh the components tree.
      * @param quickScan - True to allow reading from scan cache.
      */
-    private async doRefresh(quickScan: boolean = false) {
+    private async doRefresh(quickScan: boolean = true) {
         // this._treesManager.vulnerabilitiesTreeDataProvider.onChangeFire();
         // await this._treesManager.treeDataProviderManager.refresh(quickScan);
-        await this._treesManager.issuesTreeDataProvider.refresh(true);
+        await this._treesManager.issuesTreeDataProvider.refresh(quickScan);
     }
 
     private async doCodeScanRefresh(quickScan: boolean = false) {
@@ -285,7 +293,7 @@ export class CommandManager implements ExtensionComponent {
     private async doConnect() {
         let credentialsSet: boolean = await this._connectionManager.connect();
         if (credentialsSet) {
-            await this.doRefresh(true);
+            await this.doRefresh(false);
         }
     }
 
@@ -293,8 +301,7 @@ export class CommandManager implements ExtensionComponent {
      * Reconnect to an existing JFrog Platform credentials.
      */
     private async doReconnect() {
-        await this._connectionManager.populateCredentials(false);
-        let ok: boolean = await this._connectionManager.verifyCredentials(false);
+        let ok: boolean = (await this._connectionManager.populateCredentials(false)) && (await this._connectionManager.verifyCredentials(false));
         if (ok) {
             await this.doConnect();
             vscode.window.showInformationMessage('✨ Successfully reconnected ✨');

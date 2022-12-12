@@ -53,7 +53,7 @@ describe('Nuget Utils Tests', async () => {
      */
     it('Locate solutions', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
-        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.NUGET);
+        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Nuget);
         assert.isDefined(solutions);
         assert.strictEqual(solutions?.length, solutionsDirs.length);
 
@@ -104,7 +104,7 @@ describe('Nuget Utils Tests', async () => {
 
     async function runCreateNugetDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
-        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.NUGET);
+        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Nuget);
         assert.isDefined(solutions);
         await NugetUtils.createDependenciesTrees(solutions, componentsToScan, treesManager, parent, false);
         componentsToScan = componentsToScan.sort((l, r) => l.name.localeCompare(r.name));

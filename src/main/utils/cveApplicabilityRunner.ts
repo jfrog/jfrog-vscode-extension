@@ -76,7 +76,7 @@ export class CveApplicabilityRunner {
                 return;
             }
             let cmdArgs: string = '';
-            if (packageType === PackageType.NPM) {
+            if (packageType === PackageType.Npm) {
                 cmdArgs = ' --skipped-folders=node_modules ';
             }
             if (cvesToScan != undefined && cvesToScan.length > 0) {

@@ -1,43 +1,58 @@
 import { XrayScanProgress } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { LogManager } from '../../log/logManager';
-import { IssuesTreeDataProvider } from '../issuesTree/issuesTreeDataProvider';
+import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
+// import { IssuesTreeDataProvider } from '../issuesTree/issuesTreeDataProvider';
 
 export class StepProgress {
-    private static readonly MAX_PROGRESS: number = 90;
+    private static readonly MAX_PROGRESS: number = 95;
+    private static readonly VERBOSE: boolean = true;
 
     private currentStepMsg?: string; // undenifie => first step
-    // private currentSubstepsDone: number = 0;
+    private currentStepsDone: number = 0;
     private currentSubstepsCount?: number;
 
-    constructor(private test: IssuesTreeDataProvider, private _totalSteps: number, private _log: LogManager, private _progress: vscode.Progress<{ message?: string; increment?: number }>, public onChangeCbk?: () => void) {}
+    constructor(
+        private test: IssuesRootTreeNode,
+        private _totalSteps: number,
+        private _log: LogManager,
+        private _progress: vscode.Progress<{ message?: string; increment?: number }>,
+        public onProgress?: () => void
+    ) {}
 
+    public get totalSteps(): number {
+        return this._totalSteps;
+    }
+
+    // TODO: msg postfix -> step / total steps (starts from 1 -> total include), if bigger -> dont add post (make total optional)
     public startStep(msg: string, subSteps?: number) {
-        this.currentStepMsg = msg;
+        this.currentStepsDone++;
+        this.currentStepMsg = msg + ' (' + this.currentStepsDone + '/' + this._totalSteps + ')';
+        this.currentSubstepsCount = subSteps && subSteps > 0 ? subSteps : undefined;
         this._progress.report({ message: msg });
-        this.currentSubstepsCount = subSteps;
-        if (this.onChangeCbk) {
-            this.onChangeCbk();
+        if (this.onProgress) {
+            this.onProgress();
         }
     }
 
     public get getReportIncValue(): number {
-        let incPerStep: number = (StepProgress.MAX_PROGRESS / this._totalSteps);
-        return this.currentSubstepsCount ? (incPerStep / this.currentSubstepsCount) : incPerStep;
+        let incPerStep: number = StepProgress.MAX_PROGRESS / this._totalSteps;
+        return this.currentSubstepsCount ? incPerStep / this.currentSubstepsCount : incPerStep;
     }
 
-    public report(inc: number = this.getReportIncValue) {
+    public reportProgress(inc: number = this.getReportIncValue) {
         if (this.currentStepMsg) {
             this._progress.report({ message: this.currentStepMsg, increment: inc });
             this.test.test += inc;
-            this._log.logMessage('total prgress: ' + this.test.test,'DEBUG');
-            if (this.onChangeCbk) {
-                this.onChangeCbk();
+            if (StepProgress.VERBOSE) {
+                this._log.logMessage('total prgress [' + this.test.workSpace.name + ']: ' + this.test.test, 'DEBUG');
+            }
+            if (this.onProgress) {
+                this.onProgress();
             }
         }
     }
     public createScanProgress(scanName: string): XrayScanProgress {
-        
         // let progressManager: StepProgress = this;
         // let totalIncrement: number = this.currentSubstepsCount ? StepProgress.MAX_PROGRESS / this.currentSubstepsCount : StepProgress.MAX_PROGRESS;
         return new (class implements XrayScanProgress {
@@ -47,21 +62,21 @@ export class StepProgress {
             public setPercentage(percentage: number): void {
                 if (percentage != this.lastPercentage) {
                     let inc: number = this._progressManager.getReportIncValue * ((percentage - this.lastPercentage) / 100);
-                    this._log.logMessage(
-                        '[' +
-                            scanName +
-                            '] reported change in progress ' +
-                            this.lastPercentage +
-                            '% -> ' +
-                            percentage +
-                            '% (increment = ' +
-                            inc +
-                            '% / ' +
-                            this._progressManager.getReportIncValue +
-                            '%)',
-                        'DEBUG'
-                    );
-                    this._progressManager.report(inc);
+                    if (StepProgress.VERBOSE) {
+                        this._log.logMessage(
+                            '[' +
+                                scanName +
+                                '] reported change in progress ' +
+                                this.lastPercentage +
+                                '% -> ' +
+                                percentage +
+                                '% (increment = ' +
+                                inc +
+                                ')',
+                            'DEBUG'
+                        );
+                    }
+                    this._progressManager.reportProgress(inc);
                 }
                 this.lastPercentage = percentage;
             }

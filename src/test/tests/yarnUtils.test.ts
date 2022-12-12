@@ -55,7 +55,7 @@ describe('Yarn Utils Tests', async () => {
      */
     it('Locate yarn locks', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
-        let yarnLocks: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.YARN);
+        let yarnLocks: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Yarn);
         assert.isDefined(yarnLocks);
         assert.strictEqual(yarnLocks?.length, projectDirs.length);
 
@@ -141,7 +141,7 @@ describe('Yarn Utils Tests', async () => {
 
     it('Update fixed version', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: ProjectDetails = new ProjectDetails('', PackageType.UNKNOWN);
+        let componentsToScan: ProjectDetails = new ProjectDetails('', PackageType.Unknown);
         let res: DependenciesTreeNode[] = await runCreateYarnDependencyTrees([componentsToScan], parent);
         let dependencyProject: DependenciesTreeNode | undefined = res.find(
             node => node instanceof YarnTreeNode && node.workspaceFolder.endsWith('project-3')
@@ -241,7 +241,7 @@ describe('Yarn Utils Tests', async () => {
 
     async function runCreateYarnDependencyTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
-        let yarnLocks: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.YARN);
+        let yarnLocks: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Yarn);
         assert.isDefined(yarnLocks);
         await YarnUtils.createDependenciesTrees(yarnLocks, componentsToScan, treesManager, parent, false);
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
