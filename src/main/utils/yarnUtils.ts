@@ -37,9 +37,27 @@ export class YarnUtils {
      * @param dependenciesTreeNode - dependencies tree node
      */
     public static getDependencyPos(document: vscode.TextDocument, dependenciesTreeNode: DependenciesTreeNode): vscode.Position[] {
+        return this.getDependencyPosition(document,dependenciesTreeNode.generalInfo.artifactId);
+        // let res: vscode.Position[] = [];
+        // let yarnLockContent: string = document.getText();
+        // let dependencyMatch: RegExpMatchArray | null = yarnLockContent.match(`([\r\n"]+)(${dependenciesTreeNode.generalInfo.artifactId}@\\S*)[:, ]`);
+        // if (!dependencyMatch) {
+        //     return res;
+        // }
+        // res.push(document.positionAt(<number>dependencyMatch.index + dependencyMatch[1].length));
+        // res.push(new vscode.Position(res[0].line, dependencyMatch[2].length));
+        // return res;
+    }
+
+    /**
+     * Get yarn.lock file and dependencies tree node. return the position of the dependency in the yarn.lock file.
+     * @param document             - yarn.lock file
+     * @param dependenciesTreeNode - dependencies tree node
+     */
+    public static getDependencyPosition(document: vscode.TextDocument, artifactId: string): vscode.Position[] {
         let res: vscode.Position[] = [];
         let yarnLockContent: string = document.getText();
-        let dependencyMatch: RegExpMatchArray | null = yarnLockContent.match(`([\r\n"]+)(${dependenciesTreeNode.generalInfo.artifactId}@\\S*)[:, ]`);
+        let dependencyMatch: RegExpMatchArray | null = yarnLockContent.match(`([\r\n"]+)(${artifactId}@\\S*)[:, ]`);
         if (!dependencyMatch) {
             return res;
         }

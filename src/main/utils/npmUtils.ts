@@ -39,10 +39,41 @@ export class NpmUtils {
         dependenciesTreeNode: DependenciesTreeNode,
         focusType: FocusType
     ): vscode.Position[] {
+        return this.getDependencyPosition(document,dependenciesTreeNode.generalInfo.artifactId,focusType);
+        // let res: vscode.Position[] = [];
+        // let packageJsonContent: string = document.getText();
+        // let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match(
+        //     '("' + dependenciesTreeNode.generalInfo.artifactId + '"\\s*:\\s*).*"'
+        // );
+        // if (!dependencyMatch) {
+        //     return res;
+        // }
+        // switch (focusType) {
+        //     case FocusType.Dependency:
+        //         res.push(document.positionAt(<number>dependencyMatch.index));
+        //         break;
+        //     case FocusType.DependencyVersion:
+        //         res.push(document.positionAt(<number>dependencyMatch.index + dependencyMatch[1].length));
+        //         break;
+        // }
+        // res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));
+        // return res;
+    }
+
+    /**
+     * Get package.json file and dependencies tree node. return the position of the dependency in the package.json file.
+     * @param document             - package.json file
+     * @param dependenciesTreeNode - dependencies tree node
+     */
+    public static getDependencyPosition(
+        document: vscode.TextDocument,
+        artifactId: string,
+        focusType: FocusType
+    ): vscode.Position[] {
         let res: vscode.Position[] = [];
         let packageJsonContent: string = document.getText();
         let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match(
-            '("' + dependenciesTreeNode.generalInfo.artifactId + '"\\s*:\\s*).*"'
+            '("' + artifactId + '"\\s*:\\s*).*"'
         );
         if (!dependencyMatch) {
             return res;

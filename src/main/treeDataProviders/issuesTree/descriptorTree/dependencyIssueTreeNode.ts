@@ -7,7 +7,7 @@ import { DescriptorTreeNode } from './descriptorTreeNode';
 
 import { IComponent /*, IImpactPath*/ } from 'jfrog-client-js';
 
-export class DependencyIssueTreeNode extends vscode.TreeItem {
+export class DependencyIssuesTreeNode extends vscode.TreeItem {
     // infer from data
     private _name: string;
     private _version: string;
@@ -35,36 +35,6 @@ export class DependencyIssueTreeNode extends vscode.TreeItem {
         this.description = this._version;
     }
 
-    // private toImpactedfTree(impactPaths: IImpactPath[][]): IImpactedPath {
-    //     let parent: IImpactedPath = { name: this._parent.id, children: [] } as IImpactedPath;
-    //     impactPaths.forEach(path => {
-    //         this.convertImpactPathToImapcedtPath(path, parent, 0);
-    //     });
-    //     if (!parent.children || (parent.children && parent.children.length != 1)) {
-    //         // return parent;
-    //         throw new Error(
-    //             "Dependency component '" +
-    //                 this._artifactId +
-    //                 "' can't be converted to impact path tree: found more/less than one root ( " +
-    //                 (parent.children ? parent.children.length : 0) +
-    //                 ' roots)'
-    //         );
-    //     }
-    //     return parent.children[0];
-    // }
-
-    // private convertImpactPathToImapcedtPath(impactPath: IImpactPath[], parent: IImpactedPath, depth: number) {
-    //     if (depth < impactPath.length) {
-    //         let path: IImpactPath = impactPath[depth];
-    //         let impactedChild: IImpactedPath | undefined = parent.children?.find(child => path.component_id == child.name);
-    //         if (impactedChild == undefined) {
-    //             impactedChild = { name: path.component_id, children: [] };
-    //             parent.children?.push(impactedChild);
-    //         }
-    //         this.convertImpactPathToImapcedtPath(impactPath, impactedChild, depth + 1);
-    //     }
-    // }
-
     public apply() {
         this.tooltip =
             'Severity: ' +
@@ -86,6 +56,10 @@ export class DependencyIssueTreeNode extends vscode.TreeItem {
             .sort((lhs, rhs) => rhs.severity - lhs.severity)
             // 1st priority - Sort by severity
             .sort((lhs, rhs) => rhs.severity - lhs.severity);
+    }
+
+    public get componenetId(): string {
+        return this._name + ":" + this._version;
     }
 
     public get impactedTree(): IImpactedPath | undefined {

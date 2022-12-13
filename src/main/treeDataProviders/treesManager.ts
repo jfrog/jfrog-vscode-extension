@@ -15,9 +15,9 @@ import { CveApplicabilityRoot } from './sourceCodeTree/cveApplicabilityRoot';
 import { SourceCodeFileTreeNode } from './sourceCodeTree/sourceCodeFileTreeNode';
 import { SourceCodeRootTreeNode } from './sourceCodeTree/sourceCodeRootTreeNode';
 import { IssuesTreeDataProvider } from './issuesTree/issuesTreeDataProvider';
-import { BaseFileTreeNode } from './issuesTree/baseFileTreeNode';
+import { FileTreeNode } from './issuesTree/fileTreeNode';
 import { ScanManager } from '../scanLogic/scanManager';
-import { DependencyIssueTreeNode } from './issuesTree/descriptorTree/dependencyIssueTreeNode';
+import { DependencyIssuesTreeNode } from './issuesTree/descriptorTree/dependencyIssueTreeNode';
 import { CveTreeNode } from './issuesTree/descriptorTree/cveTreeNode';
 import { IssuesRootTreeNode } from './issuesTree/issuesRootTreeNode';
 import { CacheManager } from '../cache/cacheManager';
@@ -28,7 +28,7 @@ import { CacheManager } from '../cache/cacheManager';
 export class TreesManager implements ExtensionComponent {
     private _dependenciesTreeView!: vscode.TreeView<DependenciesTreeNode>;
     private _sourceCodeTreeView!: vscode.TreeView<SourceCodeRootTreeNode | SourceCodeFileTreeNode | SourceCodeCveTreeNode | CveApplicabilityRoot>;
-    private _issuesTreeView!: vscode.TreeView<IssuesRootTreeNode | BaseFileTreeNode | DependencyIssueTreeNode | CveTreeNode>;
+    private _issuesTreeView!: vscode.TreeView<IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | CveTreeNode>;
     private _issuesTreeDataProvider: IssuesTreeDataProvider;
     private _treeDataProviderManager: TreeDataProviderManager;
     private _dependenciesTreeDataProvider: DependenciesTreeDataProvider;
@@ -57,7 +57,7 @@ export class TreesManager implements ExtensionComponent {
     }
 
     public async activate(context: vscode.ExtensionContext): Promise<TreesManager> {
-        //await this._treeDataProviderManager.refresh(true);
+        // await this._treeDataProviderManager.refresh(true);
         this._dependenciesTreeView = vscode.window.createTreeView('jfrog.xray', {
             treeDataProvider: this._treeDataProviderManager,
             showCollapseAll: true
@@ -78,7 +78,7 @@ export class TreesManager implements ExtensionComponent {
         return Promise.resolve(this).finally(() => this.issuesTreeDataProvider.refresh(false));
     }
 
-    get issuesTreeView(): vscode.TreeView<IssuesRootTreeNode | BaseFileTreeNode | DependencyIssueTreeNode | CveTreeNode> {
+    get issuesTreeView(): vscode.TreeView<IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | CveTreeNode> {
         return this._issuesTreeView;
     }
 

@@ -43,8 +43,29 @@ export class PypiUtils {
         requirementsContent: string,
         dependenciesTreeNode: DependenciesTreeNode
     ): vscode.Position[] {
+        // return this.getDependencyPosition(document,dependenciesTreeNode.generalInfo.artifactId);
         let res: vscode.Position[] = [];
         let dependencyMatch: RegExpMatchArray | null = requirementsContent.match(dependenciesTreeNode.generalInfo.artifactId);
+        if (!dependencyMatch) {
+            return res;
+        }
+        res.push(document.positionAt(<number>dependencyMatch.index));
+        res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));
+        return res;
+    }
+
+    /**
+     * Get requirements file and dependencies tree node. return the position of the dependency in the requirements file.
+     * @param document             - requirements file
+     * @param dependenciesTreeNode - dependencies tree node
+     */
+    public static getDependencyPosition(
+        document: vscode.TextDocument,
+        artifactId: string
+    ): vscode.Position[] {
+        let requirementsContent: string = document.getText().toLowerCase();
+        let res: vscode.Position[] = [];
+        let dependencyMatch: RegExpMatchArray | null = requirementsContent.match(artifactId);
         if (!dependencyMatch) {
             return res;
         }

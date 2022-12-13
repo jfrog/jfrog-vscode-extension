@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
 import { Utils } from '../utils/utils';
-import { BaseFileTreeNode } from './baseFileTreeNode';
+import { FileTreeNode } from './fileTreeNode';
 
 // Root for opened workspace Path
 export class IssuesRootTreeNode extends vscode.TreeItem {
-    private _children: BaseFileTreeNode[] = [];
+    private _children: FileTreeNode[] = [];
     public test: number = 0;
     constructor(
         private readonly _workSpace: vscode.WorkspaceFolder,
@@ -20,7 +20,7 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
         return this._workSpace;
     }
 
-    public get children(): BaseFileTreeNode[] {
+    public get children(): FileTreeNode[] {
         return this._children;
     }
 
@@ -43,7 +43,7 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
         return this.description;
     }
 
-    public addChild(child?: BaseFileTreeNode): BaseFileTreeNode | undefined {
+    public addChild(child?: FileTreeNode): FileTreeNode | undefined {
         if (child) {
             this._children.push(child);
             child.parent = this;
@@ -51,7 +51,7 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
         return child;
     }
 
-    public addChildAndApply(child?: BaseFileTreeNode): BaseFileTreeNode | undefined {
+    public addChildAndApply(child?: FileTreeNode): FileTreeNode | undefined {
         if (this.addChild(child)) {
             this.apply();
         }

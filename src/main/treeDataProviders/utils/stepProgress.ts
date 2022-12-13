@@ -6,7 +6,7 @@ import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 
 export class StepProgress {
     private static readonly MAX_PROGRESS: number = 95;
-    private static readonly VERBOSE: boolean = true;
+    private static readonly VERBOSE: boolean = false;
 
     private currentStepMsg?: string; // undenifie => first step
     private currentStepsDone: number = 0;

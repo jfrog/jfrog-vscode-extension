@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-// import * as fs from 'fs';
+import * as fs from 'fs';
 
 import { TreesManager } from '../treesManager';
-import { BaseFileTreeNode } from './baseFileTreeNode';
+import { FileTreeNode } from './fileTreeNode';
 import { DescriptorTreeNode } from './descriptorTree/descriptorTreeNode';
 
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
@@ -23,7 +23,7 @@ import { Severity, SeverityUtils } from '../../types/severity';
 import { IGraphResponse } from 'jfrog-client-js/dist/model/Xray/Scan/GraphResponse';
 import { /*IImpactPath, IComponent, IImpactPath,*/ IComponent, IVulnerability, XrayScanProgress } from 'jfrog-client-js';
 import { ScanManager } from '../../scanLogic/scanManager';
-import { DependencyIssueTreeNode } from './descriptorTree/dependencyIssueTreeNode';
+import { DependencyIssuesTreeNode } from './descriptorTree/dependencyIssueTreeNode';
 import { CveTreeNode } from './descriptorTree/cveTreeNode';
 // import { LogManager } from '../../log/logManager';
 // import { IssuesDataProvider } from '../issuesDataProvider';
@@ -38,18 +38,20 @@ import { IImpactedPath, ILicense } from 'jfrog-ide-webview';
 import { DescriptorIssuesData, FileIssuesData, WorkspaceIssuesData } from '../../cache/issuesCache';
 // import { CacheObject } from '../../cache/issuesCache';
 
+
+
 export class FileScanError extends Error {
     constructor(msg: string, public reason: string) {
         super(msg);
     }
 }
 
-export class IssuesTreeDataProvider
-    implements vscode.TreeDataProvider<IssuesRootTreeNode | BaseFileTreeNode | DependencyIssueTreeNode | CveTreeNode> {
-    private _onDidChangeTreeData: vscode.EventEmitter<IssuesRootTreeNode | BaseFileTreeNode | CveTreeNode | undefined> = new vscode.EventEmitter<
-        IssuesRootTreeNode | BaseFileTreeNode | CveTreeNode | undefined
+export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | CveTreeNode> {
+    
+    private _onDidChangeTreeData: vscode.EventEmitter<IssuesRootTreeNode | FileTreeNode | CveTreeNode | undefined> = new vscode.EventEmitter<
+        IssuesRootTreeNode | FileTreeNode | CveTreeNode | undefined
     >();
-    readonly onDidChangeTreeData: vscode.Event<IssuesRootTreeNode | BaseFileTreeNode | CveTreeNode | undefined> = this._onDidChangeTreeData.event;
+    readonly onDidChangeTreeData: vscode.Event<IssuesRootTreeNode | FileTreeNode | CveTreeNode | undefined> = this._onDidChangeTreeData.event;
 
     private _scanInProgress: boolean = false;
 
@@ -99,6 +101,9 @@ export class IssuesTreeDataProvider
         ScanUtils.setScanInProgress(true);
 
         const startRefreshTimestamp: number = Date.now();
+        this.clearTree();
+        // TODO: check if update avaliable in connection, make it better
+        await this.update();
         this.repopulateTree()
             // .then(() => {
             //     vscode.commands.executeCommand('jfrog.xray.focus');
@@ -165,7 +170,7 @@ export class IssuesTreeDataProvider
             if (workspaceData.failedFiles) {
                 workspaceData.failedFiles.forEach(file => {
                     this._treesManager.logManager.logMessage("<ASSAF> loading failed file '" + file.fullpath + "' from cache", 'DEBUG');
-                    let failed: BaseFileTreeNode = BaseFileTreeNode.createFailedScanNode(file.fullpath, file.name);
+                    let failed: FileTreeNode = FileTreeNode.createFailedScanNode(file.fullpath, file.name);
                     return root.children.push(failed);
                 });
             }
@@ -186,11 +191,6 @@ export class IssuesTreeDataProvider
     }
 
     private async repopulateTree() {
-        this.clearTree();
-
-        // TODO: check if update avaliable in connection, make it better
-        await this.update();
-
         let workspaceScans: Promise<void>[] = [];
         for (const workspace of this._workspaceFolders) {
             workspaceScans.push(
@@ -200,12 +200,6 @@ export class IssuesTreeDataProvider
                         descriptorsIssuesData: [],
                         failedFiles: []
                     } as WorkspaceIssuesData;
-
-                    let workspaceDataCached: WorkspaceIssuesData | undefined = this._cacheManager.issuesCache?.get(workspace);
-                    this._treesManager.logManager.logMessage(
-                        "Workspace data.descriptorsIssuesData '" + workspaceDataCached?.descriptorsIssuesData,
-                        'INFO'
-                    );
 
                     let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, 'scanning...');
                     this._workspaceToRoot.set(workspace, root);
@@ -230,7 +224,6 @@ export class IssuesTreeDataProvider
                             if (workspaceData.descriptorsIssuesData.length == 0 && workspaceData.failedFiles.length == 0) {
                                 this._workspaceToRoot.set(workspace, undefined);
                             } else if (this._cacheManager.issuesCache) {
-                                // this._treesManager.logManager.logMessage('Storing:\n' + IssuesCache.dataToJSON(workspaceData), 'DEBUG');
                                 this._cacheManager.issuesCache.store(workspace, workspaceData);
                             }
                             this.onChangeFire();
@@ -263,7 +256,7 @@ export class IssuesTreeDataProvider
         );
 
         progressManager.startStep('🔎 Xray scanning' /* + ' (2/' + progressManager.totalSteps + ')'*/, dependenciesTree.children.length);
-        let scansPromises: Promise<BaseFileTreeNode | undefined>[] = [];
+        let scansPromises: Promise<FileTreeNode | undefined>[] = [];
         // Descriptors scanning
         for (let descriptorRoot of dependenciesTree.children) {
             if (descriptorRoot instanceof RootNode) {
@@ -314,7 +307,7 @@ export class IssuesTreeDataProvider
         root: IssuesRootTreeNode,
         error: Error,
         failedFile?: FileIssuesData
-    ): BaseFileTreeNode | undefined {
+    ): FileTreeNode | undefined {
         if (error instanceof ScanCancellationError || !failedFile) {
             throw error;
         }
@@ -330,7 +323,7 @@ export class IssuesTreeDataProvider
             failReason = error.reason;
             failedFile.name = error.reason;
         }
-        return root.addChildAndApply(BaseFileTreeNode.createFailedScanNode(failedFile.fullpath, failReason));
+        return root.addChildAndApply(FileTreeNode.createFailedScanNode(failedFile.fullpath, failReason));
     }
 
     private async createDescriptorScanningIssues(
@@ -396,157 +389,32 @@ export class IssuesTreeDataProvider
         return this.populateDescriptorData(descriptorNode, descriptorData);
     }
 
-    public getImpactedTree(pkgType: PackageType, path?: string): DependenciesTreeNode | undefined {
-
-    }
-
-    // TODO: Move to ScanUtils
-    private createImpactedPaths(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactedPath> {
-        let paths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>();
-        let issues: IVulnerability[] = response.violations ? response.violations : response.vulnerabilities;
-
-        for (let i: number = 0; i < issues.length; i++) {
-            let issue: IVulnerability = issues[i];
-            let impactedPath: IImpactedPath = {
-                name: descriptorGraph.componentId,
-                children: this.getImapct(descriptorGraph, new Map<string, IComponent>(Object.entries(issue.components)))
-            } as IImpactedPath;
-            paths.set(issue.issue_id, impactedPath);
-        }
-        return paths;
-    }
-    // TODO: Move to ScanUtils
-    private getImapct(root: DependenciesTreeNode, componentsWithIssue: Map<string, IComponent>): IImpactedPath[] {
-        let impactPaths: IImpactedPath[] = [];
-        for (let child of root.children) {
-            // Direct impact
-            if (child.dependencyId && componentsWithIssue.has(child.dependencyId)) {
-                impactPaths.push({
-                    name: child.componentId,
-                    children: []
-                } as IImpactedPath);
-                continue;
+    public getFileIssuesTree(filePath: string): FileTreeNode | undefined {
+        for (let [workspace, issuesRoot] of this._workspaceToRoot) {
+            if(filePath.includes(workspace.uri.fsPath)) {
+                return issuesRoot?.children.find(file => file.fullPath == filePath);
             }
-            // indirect impact
-            let impactChild: IImpactedPath | undefined = impactPaths.find(p => p.name === child.componentId);
-            if (!impactChild) {
-                let indirectImpact: IImpactedPath[] = this.getImapct(child, componentsWithIssue);
-                if (indirectImpact.length > 0) {
-                    impactPaths.push({
-                        name: child.componentId,
-                        children: indirectImpact
-                    } as IImpactedPath);
+        }
+        return undefined;
+    }
+
+    public getDescriptorIssuesData(filePath: string): DescriptorIssuesData | undefined {
+        for (const workspace of this._workspaceToRoot.keys()) {
+            if(filePath.includes(workspace.uri.fsPath)) {
+                let workspaceIssueData: WorkspaceIssuesData | undefined = this._cacheManager.issuesCache?.get(workspace);
+                if (workspaceIssueData) {
+                    return workspaceIssueData.descriptorsIssuesData.find(descriptor => descriptor.fullpath == filePath);
                 }
             }
         }
-        return impactPaths;
-    }
-    // TODO: Move to ScanUtils
-    private populateDescriptorData(descriptorNode: DescriptorTreeNode, descriptorData: DescriptorIssuesData): number {
-        let graphResponse: IGraphResponse = descriptorData.dependenciesGraphScan;
-        let impactedPaths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>(Object.entries(descriptorData.convertedImpact));
-        // this._treesManager.logManager.logMessage('impact: ' + impactedPaths, 'DEBUG');
-        impactedPaths;
-
-        // TODO: remove saving files below
-        // let scanPath: string = '/Users/assafa/Documents/testyWithTree' + Utils.getLastSegment(descriptorNode.filePath) + '.json';
-        // fs.writeFileSync(scanPath, JSON.stringify(graphResponse));
-
-        let issues: IVulnerability[] = graphResponse.violations ? graphResponse.violations : graphResponse.vulnerabilities;
-        let topSeverity: Severity = Severity.Unknown;
-        for (let i: number = 0; i < issues.length; i++) {
-            let issue: IVulnerability = issues[i];
-            let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id);
-            // this._treesManager.logManager.logMessage("impacted path for '" + issue.issue_id + "':\n" + impactedPath, 'DEBUG');
-            let severity: Severity = SeverityUtils.getSeverity(issue.severity);
-            if (severity > topSeverity) {
-                topSeverity = severity;
-            }
-
-            for (let [componentId, component] of Object.entries(issue.components)) {
-                let dependencyWithIssue: DependencyIssueTreeNode | undefined = descriptorNode.getDependencyByID(componentId);
-
-                if (dependencyWithIssue == undefined) {
-                    dependencyWithIssue = new DependencyIssueTreeNode(componentId, component, severity, descriptorNode, impactedPath);
-                    descriptorNode.dependenciesWithIssue.push(dependencyWithIssue);
-                } else if (severity > dependencyWithIssue.topSeverity) {
-                    dependencyWithIssue.topSeverity = severity;
-                }
-
-                for (let cveIssue of issue.cves) {
-                    dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, cveIssue));
-                }
-            }
-        }
-        descriptorNode.severity = topSeverity;
-        descriptorNode.dependencyScanTimeStamp = descriptorData.graphScanTimestamp;
-
-        // issues.forEach(issue => {
-        //     let severity: Severity = SeverityUtils.getSeverity(issue.severity);
-        //     if (severity > topSeverity) {
-        //         topSeverity = severity;
-        //     }
-        //     // Create dependency component with issues
-        //     // for (let component of Object.values(issue.components)) {
-        //     for (let [componentId, component] of Object.entries(issue.components)) {
-        //         let dependencyWithIssue: DependencyIssueTreeNode | undefined = descriptorNode.getDependencyByID(componentId);
-        //         if (dependencyWithIssue == undefined) {
-        //             dependencyWithIssue = new DependencyIssueTreeNode(componentId, component, severity, descriptorNode);
-        //             descriptorNode.dependenciesWithIssue.push(dependencyWithIssue);
-        //         } else if (severity > dependencyWithIssue.topSeverity) {
-        //             dependencyWithIssue.topSeverity = severity;
-        //         }
-
-        //         // Create issues for the dependency
-        //         for (let cveIssue of issue.cves) {
-        //             dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, cveIssue));
-        //             // if (!!cveIssue.cve) {
-        //             //     dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, cveIssue));
-        //             // } else {
-        //             //     dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue));
-        //             // }
-        //         }
-        //     }
-        // });
-
-        graphResponse.licenses.forEach(license => {
-            Object.values(license.components).forEach(component => {
-                let dependencyWithIssue: DependencyIssueTreeNode | undefined = descriptorNode.searchDependency(
-                    component.package_type,
-                    component.package_name,
-                    component.package_version
-                );
-                if (dependencyWithIssue != undefined) {
-                    dependencyWithIssue.licenses.push({ name: license.license_name } as ILicense); // TODO: tell or, what is the plan about those
-                }
-            });
-        });
-
-        return descriptorNode.dependenciesWithIssue.length;
+        return undefined;
     }
 
-    // TODO: Move to ScanUtils
-    // returns the full path of the descriptor file if exsits in map or artifactId of the root otherwise
-    private getDescriptorName(descriptorRoot: RootNode, workspcaeDescriptors: Map<PackageType, vscode.Uri[]>): string {
-        // TODO: insert this inside the logic of building the tree ?
-        let details: ProjectDetails = descriptorRoot.projectDetails;
-        let descriptorName: string = descriptorRoot.generalInfo.artifactId;
-        let typeDescriptors: vscode.Uri[] | undefined = workspcaeDescriptors.get(details.type);
-        if (typeDescriptors != undefined) {
-            for (let descriptor of typeDescriptors) {
-                let descriptorDir: string = path.dirname(descriptor.fsPath);
-                if (descriptorDir == details.path) {
-                    descriptorName = descriptor.fsPath;
-                    break;
-                }
-            }
-        }
-        return descriptorName;
-    }
+    
 
     // Structure of the tree
     getChildren(
-        element?: /*TempRoot | ProjectRootTreeNode |*/ IssuesRootTreeNode | BaseFileTreeNode | DependencyIssueTreeNode //| CveTreeNode
+        element?: /*TempRoot | ProjectRootTreeNode |*/ IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode //| CveTreeNode
     ): vscode.ProviderResult<any> {
         // Root
         if (!element) {
@@ -565,14 +433,14 @@ export class IssuesTreeDataProvider
         if (element instanceof DescriptorTreeNode) {
             return Promise.resolve(element.dependenciesWithIssue);
         }
-        if (element instanceof DependencyIssueTreeNode) {
+        if (element instanceof DependencyIssuesTreeNode) {
             return Promise.resolve(element.issues);
         }
         // TODO: Zero-day file type
     }
 
     getTreeItem(
-        element: /*TempRoot | ProjectRootTreeNode |*/ IssuesRootTreeNode | BaseFileTreeNode | DependencyIssueTreeNode | CveTreeNode
+        element: /*TempRoot | ProjectRootTreeNode |*/ IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | CveTreeNode
     ): vscode.TreeItem | Thenable<vscode.TreeItem> {
         // TODO: Root
         // if (element instanceof ProjectRootTreeNode) {
@@ -582,11 +450,11 @@ export class IssuesTreeDataProvider
         // }
 
         // Descriptor file type
-        if (element instanceof BaseFileTreeNode) {
+        if (element instanceof FileTreeNode) {
             element.command = Utils.createNodeCommand('jfrog.xray.file.open', 'Open File', [element]);
             element.iconPath = SeverityUtils.getIcon(element.severity !== undefined ? element.severity : Severity.Unknown);
         }
-        if (element instanceof DependencyIssueTreeNode) {
+        if (element instanceof DependencyIssuesTreeNode) {
             element.iconPath = SeverityUtils.getIcon(element.topSeverity !== undefined ? element.topSeverity : Severity.Unknown);
             return element;
         }
@@ -635,7 +503,7 @@ export class IssuesTreeDataProvider
         return element;
     }
 
-    public getParent(element: BaseFileTreeNode): Thenable<IssuesRootTreeNode | undefined> {
+    public getParent(element: FileTreeNode): Thenable<IssuesRootTreeNode | undefined> {
         return Promise.resolve(element.parent);
     }
 

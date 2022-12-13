@@ -4,8 +4,8 @@ import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { Configuration } from '../utils/configuration';
 
-// import * as fs from 'fs';
-// import { Utils } from '../treeDataProviders/utils/utils';
+import * as fs from 'fs';
+import { Utils } from '../treeDataProviders/utils/utils';
 
 /**
  * Used in Xray >= 3.29.0.
@@ -22,8 +22,8 @@ export class GraphScanLogic {
             component_id: projectRoot.generalInfo.artifactId,
             nodes: flatten ? this.getFlattenRequestModelNodes(projectRoot, new Set<string>) : this.getGraphRequestModelNodes(projectRoot)
         } as IGraphRequestModel;
-        // let scanPath: string = '/Users/assafa/Documents/testyWithTreeRequest' + Utils.getLastSegment(projectRoot.generalInfo.artifactId) + '.json';
-        // fs.writeFileSync(scanPath, JSON.stringify(graphRequest));
+        let scanPath: string = '/Users/assafa/Documents/request-' + (flatten ? "flatten-" : "") + Utils.getLastSegment(projectRoot.generalInfo.artifactId) + '.json';
+        fs.writeFileSync(scanPath, JSON.stringify(graphRequest));
         // Run scan
         return this._connectionManager.scanWithGraph(
             graphRequest,

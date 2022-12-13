@@ -8,7 +8,7 @@ import { PypiFocus } from './pypiFocus';
 import { YarnFocus } from './yarnFocus';
 import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
 import * as vscode from 'vscode';
-import { BaseFileTreeNode } from '../treeDataProviders/issuesTree/baseFileTreeNode';
+import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 
 /**
  * Show the dependency in the project descriptor (i.e package.json) or CVE in the source code file after left click on the eye icon".
@@ -30,7 +30,7 @@ export class FocusManager implements ExtensionComponent {
             .forEach(focus => focus.focusOnDependency(dependenciesTreeNode, focusType));
     }
 
-    public async openFile(fileNode: BaseFileTreeNode) {
+    public async openFile(fileNode: FileTreeNode) {
         if (fileNode === undefined || fileNode.fullPath === '') {
             return;
         }

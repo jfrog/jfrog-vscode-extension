@@ -4,9 +4,10 @@ import * as vscode from 'vscode';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { Utils } from '../utils/utils';
 import { IssuesRootTreeNode } from './issuesRootTreeNode';
+import { IssueTreeNode } from './issueTreeNode';
 // import { ProjectRootTreeNode } from './projectRootTreeNode';
 
-export class BaseFileTreeNode extends vscode.TreeItem {
+export class FileTreeNode extends vscode.TreeItem {
     // private _parent: IssuesRootTreeNode | undefined;
     protected _severity: Severity = Severity.Unknown;
     // private _timeStamp: number | undefined;
@@ -29,8 +30,12 @@ export class BaseFileTreeNode extends vscode.TreeItem {
         // this.setDescription();
     }
 
-    public static createFailedScanNode(fullPath: string, reason?: string): BaseFileTreeNode {
-        const node: BaseFileTreeNode = new BaseFileTreeNode(fullPath, undefined, vscode.TreeItemCollapsibleState.None);
+    public get issues(): IssueTreeNode[] {
+        return [];
+    }
+
+    public static createFailedScanNode(fullPath: string, reason?: string): FileTreeNode {
+        const node: FileTreeNode = new FileTreeNode(fullPath);
         node._name += reason ? ' - ' + reason : '';
         node.description = 'Fail to scan file';
         node.tooltip = fullPath;

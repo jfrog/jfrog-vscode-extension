@@ -27,7 +27,7 @@ export class ScanManager implements ExtensionComponent {
         return scanGraphSupported;
     }
 
-    // scan with dependecy graph
+    // scan with dependecy graph with option to flatten the graph and send only distincts dependencies
     public async scanDependencyGraph(
         progress: XrayScanProgress,
         projectRoot: RootNode,

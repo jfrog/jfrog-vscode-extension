@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 //import { VulnerablitiesTreeDataProvider } from "../treeDataProviders/vulnerablitiesTree/vulnerablitiesTreeDataProvider";
 import { AbstractNodeFilter } from './abstractNodeFilter';
 import { SeverityStrings /*, SeverityUtils */ } from '../types/severity';
-import { BaseFileTreeNode } from '../treeDataProviders/issuesTree/baseFileTreeNode';
+import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 
 export class SeverityNodeFilter extends AbstractNodeFilter {
     constructor(/*private _issuesTreeDataProvider: VulnerablitiesTreeDataProvider*/) {
@@ -35,7 +35,7 @@ export class SeverityNodeFilter extends AbstractNodeFilter {
     }
 
     /** @override */
-    public isNodePicked(node: BaseFileTreeNode): boolean {
+    public isNodePicked(node: FileTreeNode): boolean {
         if (!this._choice || this.isPicked(SeverityStrings.Normal) /*&& this._issuesTreeDataProvider.issues.isEmpty()*/) {
             return true;
         }

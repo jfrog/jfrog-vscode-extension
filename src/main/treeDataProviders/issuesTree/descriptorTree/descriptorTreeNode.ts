@@ -1,23 +1,26 @@
 import * as vscode from 'vscode';
 import { SeverityUtils } from '../../../types/severity';
 
-import { BaseFileTreeNode } from '../baseFileTreeNode';
-import { DependencyIssueTreeNode } from './dependencyIssueTreeNode';
+import { FileTreeNode } from '../fileTreeNode';
+import { DependencyIssuesTreeNode } from './dependencyIssueTreeNode';
 import { IssuesRootTreeNode } from '../issuesRootTreeNode';
 import { Utils } from '../../utils/utils';
-import { toPackgeType } from '../../../types/projectType';
+import { PackageType, toPackgeType } from '../../../types/projectType';
+import { IssueTreeNode } from '../issueTreeNode';
 // import { ProjectRootTreeNode } from "./projectRootTreeNode";
 // import { ProjectDetails } from '../../types/projectDetails';
 // import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
 
-export class DescriptorTreeNode extends BaseFileTreeNode {
+export class DescriptorTreeNode extends FileTreeNode {
     //_details: ProjectDetails;
     //_tree?: DependenciesTreeNode;
     public tempcount: number = 0;
-    private _dependenciesWithIssue: DependencyIssueTreeNode[] = [];
+    private _dependenciesWithIssue: DependencyIssuesTreeNode[] = [];
 
     private _dependencyScanTimeStamp?: number;
     private _applicableScanTimeStamp?: number;
+
+    private _packageType: PackageType = PackageType.Unknown;
 
     constructor(
         fileFullPath: string,
@@ -62,11 +65,11 @@ export class DescriptorTreeNode extends BaseFileTreeNode {
         return oldest;
     }
 
-    public getDependencyByID(artifactId: string): DependencyIssueTreeNode | undefined {
+    public getDependencyByID(artifactId: string): DependencyIssuesTreeNode | undefined {
         return this._dependenciesWithIssue.find(dependncy => dependncy.artifactId == artifactId);
     }
 
-    public searchDependency(type: string, name: string, version: string): DependencyIssueTreeNode | undefined {
+    public searchDependency(type: string, name: string, version: string): DependencyIssuesTreeNode | undefined {
         return this._dependenciesWithIssue.find(
             dependncy => dependncy.name == name && dependncy.version == version && dependncy.type == toPackgeType(type)
         );
@@ -84,8 +87,20 @@ export class DescriptorTreeNode extends BaseFileTreeNode {
     //    this._tree = value;
     //}
 
-    public get dependenciesWithIssue(): DependencyIssueTreeNode[] {
+    public get dependenciesWithIssue(): DependencyIssuesTreeNode[] {
         return this._dependenciesWithIssue;
+    }
+
+    public get issues(): IssueTreeNode[] {
+        let issues: IssueTreeNode[] = [];
+        this._dependenciesWithIssue.forEach(dependecy => {
+            issues.push(...dependecy.issues);
+        });
+        return issues;
+    }
+
+    public get type(): PackageType {
+        return this._packageType;
     }
 
     public apply() {
@@ -103,6 +118,7 @@ export class DescriptorTreeNode extends BaseFileTreeNode {
         }
 
         this._dependenciesWithIssue.forEach(dependency => {
+            this._packageType = dependency.type;
             dependency.apply();
             issueCount += dependency.issues.length;
         });

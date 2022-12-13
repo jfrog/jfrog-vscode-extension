@@ -4,17 +4,19 @@ import { /*ICve,*/ ICve, IDependencyPage, IReference /*IResearch, ISeverity */ }
 import * as vscode from 'vscode';
 import { PackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
-import { IssueNode } from '../../issuesDataProvider';
-import { DependencyIssueTreeNode } from './dependencyIssueTreeNode';
+import { IssueTreeNode } from '../issueTreeNode';
+// import { IssueNode } from '../../issuesDataProvider';
 
-export class CveTreeNode extends IssueNode {
+import { DependencyIssuesTreeNode } from './dependencyIssueTreeNode';
+
+export class CveTreeNode extends IssueTreeNode {
     private _id: string;
     private _edited: string;
     private _summary: string;
     private _references: string[];
     private _researchInfo?: IResearch;
 
-    constructor(sourceVul: IVulnerability, private _severity: Severity, private _parent: DependencyIssueTreeNode, private _cve?: IGraphCve) {
+    constructor(sourceVul: IVulnerability, private _severity: Severity, private _parent: DependencyIssuesTreeNode, private _cve?: IGraphCve) {
         super(_cve && _cve.cve ? _cve.cve : sourceVul.issue_id, vscode.TreeItemCollapsibleState.None);
         this._id = sourceVul.issue_id;
         this._edited = sourceVul.edited;
@@ -40,7 +42,7 @@ export class CveTreeNode extends IssueNode {
         return this._severity;
     }
 
-    public get parent(): DependencyIssueTreeNode {
+    public get parent(): DependencyIssuesTreeNode {
         return this._parent;
     }
 

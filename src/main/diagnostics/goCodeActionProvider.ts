@@ -28,6 +28,7 @@ export class GoCodeActionProvider extends AbstractCodeActionProvider implements 
         }
         const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document);
         goDependenciesTree.children.forEach(child => {
+            this._treesManager.logManager.logMessage("<ASSAFA>adding old diag Go dependency '" + child.generalInfo.artifactId + "'", 'DEBUG');
             let dependencyPos: vscode.Position[] = GoUtils.getDependencyPos(document, child, FocusType.Dependency);
             if (dependencyPos.length === 0) {
                 return;
