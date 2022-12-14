@@ -11,7 +11,7 @@ export class LicensesFilter extends AbstractFilter {
 
     /** @override */
     protected getValues(): vscode.QuickPickItem[] {
-        return this._treesManager.treeDataProviderManager.filterLicenses.toArray().map(licenseKey => {
+        return this._treesManager.buildsTreesProvider.filterLicenses.toArray().map(licenseKey => {
             let license: ILicenseCacheObject | undefined = this._treesManager.scanCacheManager.getLicense(licenseKey.licenseName);
             if (!license) {
                 return <vscode.QuickPickItem>{};

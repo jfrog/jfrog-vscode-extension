@@ -1,47 +1,47 @@
-import * as path from 'path';
-import * as vscode from 'vscode';
-import { ExtensionComponent } from '../extensionComponent';
-import { FocusType } from '../focus/abstractFocus';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { TreesManager } from '../treeDataProviders/treesManager';
-import { NpmUtils } from '../utils/npmUtils';
-import { YarnUtils } from '../utils/yarnUtils';
-import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
+// import * as path from 'path';
+// import * as vscode from 'vscode';
+// import { ExtensionComponent } from '../extensionComponent';
+// import { FocusType } from '../focus/abstractFocus';
+// import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+// import { TreesManager } from '../treeDataProviders/treesManager';
+// import { NpmUtils } from '../utils/npmUtils';
+// import { YarnUtils } from '../utils/yarnUtils';
+// import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 
-export class NpmCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
-    constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager) {
-        super(NpmUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager);
-    }
+// export class NpmCodeActionProvider extends AbstractCodeActionProvider implements ExtensionComponent {
+//     constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager) {
+//         super(NpmUtils.DOCUMENT_SELECTOR, diagnosticCollection, treesManager);
+//     }
 
-    /** @override */
-    protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
-        let fsPath: string | undefined = document ? path.dirname(document.uri.fsPath) : document;
-        return (
-            this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(NpmUtils.PKG_TYPE, fsPath) ||
-            // Display diagnostics in package.json for Yarn projects
-            this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(YarnUtils.PKG_TYPE, fsPath)
-        );
-    }
+//     /** @override */
+//     protected getDependenciesTree(document?: vscode.TextDocument): DependenciesTreeNode | undefined {
+//         let fsPath: string | undefined = document ? path.dirname(document.uri.fsPath) : document;
+//         return (
+//             this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(NpmUtils.PKG_TYPE, fsPath) ||
+//             // Display diagnostics in package.json for Yarn projects
+//             this._treesManager.dependenciesTreeDataProvider.getDependenciesTreeNode(YarnUtils.PKG_TYPE, fsPath)
+//         );
+//     }
 
-    /** @override */
-    public async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
-        if (!vscode.languages.match(this._documentSelector, document)) {
-            return;
-        }
-        let diagnostics: vscode.Diagnostic[] = [];
-        const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document);
-        let npmDependenciesTree: DependenciesTreeNode | undefined = this.getDependenciesTree(document);
-        if (!npmDependenciesTree) {
-            return;
-        }
-        npmDependenciesTree.children.forEach(child => {
-            let dependencyPos: vscode.Position[] = NpmUtils.getDependencyPos(document, child, FocusType.Dependency);
-            if (dependencyPos.length === 0) {
-                return;
-            }
-            this.addDiagnostic(diagnostics, child, dependencyPos);
-            this.addGutter(textEditor, child.topSeverity, dependencyPos);
-        });
-        this._diagnosticCollection.set(document.uri, diagnostics);
-    }
-}
+//     /** @override */
+//     public async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
+//         if (!vscode.languages.match(this._documentSelector, document)) {
+//             return;
+//         }
+//         let diagnostics: vscode.Diagnostic[] = [];
+//         const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document);
+//         let npmDependenciesTree: DependenciesTreeNode | undefined = this.getDependenciesTree(document);
+//         if (!npmDependenciesTree) {
+//             return;
+//         }
+//         npmDependenciesTree.children.forEach(child => {
+//             let dependencyPos: vscode.Position[] = NpmUtils.getDependencyPos(document, child, FocusType.Dependency);
+//             if (dependencyPos.length === 0) {
+//                 return;
+//             }
+//             this.addDiagnostic(diagnostics, child, dependencyPos);
+//             this.addGutter(textEditor, child.topSeverity, dependencyPos);
+//         });
+//         this._diagnosticCollection.set(document.uri, diagnostics);
+//     }
+// }

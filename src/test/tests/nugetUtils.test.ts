@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
@@ -28,10 +28,9 @@ describe('Nuget Utils Tests', async () => {
         [],
         new ConnectionManager(logManager),
         dummyScanCacheManager,
-        {} as ScanLogicManager,
-        logManager,
         {} as ScanManager,
-        {} as CacheManager
+        {} as CacheManager,
+        logManager
     );
     let solutionsDirs: string[] = ['assets', 'empty'];
     let workspaceFolders: vscode.WorkspaceFolder[];

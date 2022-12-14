@@ -1,9 +1,9 @@
-// import * as vscode from 'vscode';
+// // import * as vscode from 'vscode';
 
-import { ExtensionComponent } from '../extensionComponent';
+// import { ExtensionComponent } from '../extensionComponent';
 
-export class GraphScanCache implements ExtensionComponent {
-    public activate(): GraphScanCache {
-        return this;
-    }
-}
+// export class GraphScanCache implements ExtensionComponent {
+//     public activate(): GraphScanCache {
+//         return this;
+//     }
+// }

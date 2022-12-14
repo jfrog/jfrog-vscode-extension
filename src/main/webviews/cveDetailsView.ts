@@ -6,7 +6,7 @@ import { IDependencyPage } from 'jfrog-ide-webview';
 import { PageType } from 'jfrog-ide-webview';
 // import { CveTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 
-export class vulnerabilityDetails {
+export class CveDetailsView {
     public async activate(context: vscode.ExtensionContext) {
         let panel: vscode.WebviewPanel | undefined;
         context.subscriptions.push(

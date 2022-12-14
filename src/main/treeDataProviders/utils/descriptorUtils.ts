@@ -2,26 +2,25 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { IComponent, IGraphResponse, IVulnerability } from "jfrog-client-js";
-import { IImpactedPath, ILicense } from "jfrog-ide-webview";
-import { DescriptorIssuesData } from "../../cache/issuesCache";
-import { RootNode } from "../dependenciesTree/dependenciesRoot/rootTree";
-import { DependenciesTreeNode } from "../dependenciesTree/dependenciesTreeNode";
-import { DescriptorTreeNode } from "../issuesTree/descriptorTree/descriptorTreeNode";
-import { Utils } from "./utils";
-import { Severity, SeverityUtils } from "../../types/severity";
-import { DependencyIssuesTreeNode } from "../issuesTree/descriptorTree/dependencyIssueTreeNode";
-import { CveTreeNode } from "../issuesTree/descriptorTree/cveTreeNode";
-import { PackageType } from "../../types/projectType";
+import { IComponent, IGraphResponse, IVulnerability } from 'jfrog-client-js';
+import { IImpactedPath, ILicense } from 'jfrog-ide-webview';
+import { DescriptorIssuesData } from '../../cache/issuesCache';
+import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
+import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
+import { DescriptorTreeNode } from '../issuesTree/descriptorTree/descriptorTreeNode';
+// import { Utils } from "./utils";
+import { Severity, SeverityUtils } from '../../types/severity';
+import { DependencyIssuesTreeNode } from '../issuesTree/descriptorTree/dependencyIssueTreeNode';
+import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
+import { PackageType } from '../../types/projectType';
 import { ProjectDetails } from '../../types/projectDetails';
 
 export class DescriptorUtils {
-
     /**
-     *  Calculates the impact path of each issue in a descriptor
-     * @param descriptorGraph 
-     * @param response 
-     * @returns 
+     *  Creates a map for each Xray issue in the response to the impact path for it in a given dependency graph.
+     * @param descriptorGraph - the descriptor full dependency graph
+     * @param response - the scan result issues and the dependency components for each of them
+     * @returns map from issue_id to IImpactedPath for the given tree root
      */
     public static createImpactedPaths(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactedPath> {
         let paths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>();
@@ -29,15 +28,20 @@ export class DescriptorUtils {
 
         for (let i: number = 0; i < issues.length; i++) {
             let issue: IVulnerability = issues[i];
-            let impactedPath: IImpactedPath = {
+            paths.set(issue.issue_id, {
                 name: descriptorGraph.componentId,
                 children: this.getChildrenImapct(descriptorGraph, new Map<string, IComponent>(Object.entries(issue.components)))
-            } as IImpactedPath;
-            paths.set(issue.issue_id, impactedPath);
+            } as IImpactedPath);
         }
         return paths;
     }
-    // TODO: Move to ScanUtils
+
+    /**
+     *  Get the impact path of all the children of a given root, recusevly, if exists (at least one component has issue in the path)
+     * @param root - the root to get it's children impact
+     * @param componentsWithIssue - map of dependencyId ->
+     * @returns array of impact paths one for each child if exists
+     */
     public static getChildrenImapct(root: DependenciesTreeNode, componentsWithIssue: Map<string, IComponent>): IImpactedPath[] {
         let impactPaths: IImpactedPath[] = [];
         for (let child of root.children) {
@@ -63,6 +67,9 @@ export class DescriptorUtils {
         }
         return impactPaths;
     }
+
+    private static counter: number = 0;
+
     // TODO: Move to ScanUtils
     public static populateDescriptorData(descriptorNode: DescriptorTreeNode, descriptorData: DescriptorIssuesData): number {
         let graphResponse: IGraphResponse = descriptorData.dependenciesGraphScan;
@@ -71,7 +78,7 @@ export class DescriptorUtils {
         impactedPaths;
 
         // TODO: remove saving files below
-        let scanPath: string = '/Users/assafa/Documents/response-' + Utils.getLastSegment(descriptorNode.fullPath) + '.json';
+        let scanPath: string = '/Users/assafa/Documents/response-' + this.counter++ + '.json';
         fs.writeFileSync(scanPath, JSON.stringify(graphResponse));
 
         let issues: IVulnerability[] = graphResponse.violations ? graphResponse.violations : graphResponse.vulnerabilities;
@@ -121,7 +128,7 @@ export class DescriptorUtils {
 
     // TODO: Move to ScanUtils
     // returns the full path of the descriptor file if exsits in map or artifactId of the root otherwise
-    public static getDescriptorName(descriptorRoot: RootNode, workspcaeDescriptors: Map<PackageType, vscode.Uri[]>): string {
+    public static getDescriptorFullPath(descriptorRoot: RootNode, workspcaeDescriptors: Map<PackageType, vscode.Uri[]>): string {
         // TODO: insert this inside the logic of building the tree ?
         let details: ProjectDetails = descriptorRoot.projectDetails;
         let descriptorName: string = descriptorRoot.generalInfo.artifactId;

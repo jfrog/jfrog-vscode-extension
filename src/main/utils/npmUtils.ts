@@ -1,13 +1,13 @@
 import { execSync } from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { FocusType } from '../focus/abstractFocus';
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ProjectDetails } from '../types/projectDetails';
 import * as fs from 'fs';
 import { ScanUtils } from './scanUtils';
+import { FocusType } from '../focus/abstractFocus';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
@@ -39,7 +39,7 @@ export class NpmUtils {
         dependenciesTreeNode: DependenciesTreeNode,
         focusType: FocusType
     ): vscode.Position[] {
-        return this.getDependencyPosition(document,dependenciesTreeNode.generalInfo.artifactId,focusType);
+        return this.getDependencyPosition(document, dependenciesTreeNode.generalInfo.artifactId, focusType);
         // let res: vscode.Position[] = [];
         // let packageJsonContent: string = document.getText();
         // let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match(
@@ -65,16 +65,10 @@ export class NpmUtils {
      * @param document             - package.json file
      * @param dependenciesTreeNode - dependencies tree node
      */
-    public static getDependencyPosition(
-        document: vscode.TextDocument,
-        artifactId: string,
-        focusType: FocusType
-    ): vscode.Position[] {
+    public static getDependencyPosition(document: vscode.TextDocument, artifactId: string, focusType: FocusType): vscode.Position[] {
         let res: vscode.Position[] = [];
         let packageJsonContent: string = document.getText();
-        let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match(
-            '("' + artifactId + '"\\s*:\\s*).*"'
-        );
+        let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match('("' + artifactId + '"\\s*:\\s*).*"');
         if (!dependencyMatch) {
             return res;
         }

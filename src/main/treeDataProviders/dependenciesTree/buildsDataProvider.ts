@@ -16,6 +16,10 @@ import { BuildsNode } from './ciNodes/buildsTree';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
+
+    private _onDidChangeTreeData: vscode.EventEmitter<DependenciesTreeNode | undefined> = new vscode.EventEmitter<DependenciesTreeNode | undefined>();
+    readonly onDidChangeTreeData: vscode.Event<DependenciesTreeNode | undefined> = this._onDidChangeTreeData.event;
+
     private _filteredDependenciesTree: DependenciesTreeNode | undefined;
     protected _dependenciesTree!: DependenciesTreeNode;
     protected _allBuildsTree!: DependenciesTreeNode;
@@ -33,15 +37,19 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
         return this._allBuildsTree;
     }
 
-    public async stateChange(onChangeFire: () => void) {
-        if (!this.dependenciesTree) {
-            this.refresh(false, onChangeFire);
-            return;
-        }
-        onChangeFire();
+    public onChangeFire() {
+        this._onDidChangeTreeData.fire(undefined);
     }
 
-    public async refresh(quickScan: boolean, onChangeFire: () => void) {
+    public async stateChange() {
+        if (!this.dependenciesTree) {
+            this.refresh(false);
+            return;
+        }
+        this.onChangeFire();
+    }
+
+    public async refresh(quickScan: boolean) {
         if (this._ciInProgress) {
             vscode.window.showInformationMessage('Loading still in progress...');
             return;
@@ -52,7 +60,7 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
             const credentialsSet: boolean = this._treesManager.connectionManager.areCompleteCredentialsSet();
             this._treesManager.logManager.logMessage('Starting to load builds details...', 'INFO');
             this.sendUsageReport();
-            await this.repopulateTree(quickScan, credentialsSet, onChangeFire);
+            await this.repopulateTree(quickScan, credentialsSet);
             vscode.commands.executeCommand('jfrog.xray.focus');
             this._treesManager.logManager.logMessage('Done loading builds details.', 'INFO');
         } catch (error) {
@@ -61,7 +69,7 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
                 throw error;
             }
             this.clearAllTrees();
-            onChangeFire();
+            this.onChangeFire();
             vscode.window.showInformationMessage((<any>error).message);
         } finally {
             this._ciInProgress = false;
@@ -99,7 +107,7 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
         return Promise.resolve(rootChildren);
     }
 
-    public loadBuild(buildGeneralInfo: BuildGeneralInfo, onChangeFire: () => void) {
+    public loadBuild(buildGeneralInfo: BuildGeneralInfo) {
         try {
             this.clearDisplayedTree();
             new CiManager(this._treesManager).loadBuildTree(
@@ -109,7 +117,7 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
                 this._dependenciesTree
             );
             this.fillFilters(this._dependenciesTree);
-            onChangeFire();
+            this.onChangeFire();
         } catch (error) {
             this._treesManager.logManager.logError(
                 new Error(`Failed to load build '${buildGeneralInfo.artifactId}/${buildGeneralInfo.version}'.`),
@@ -130,9 +138,9 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
         return Promise.resolve(element.parent);
     }
 
-    public applyFilters(filteredDependenciesTree: DependenciesTreeNode | undefined, onChangeFire: () => void) {
+    public applyFilters(filteredDependenciesTree: DependenciesTreeNode | undefined) {
         this._filteredDependenciesTree = filteredDependenciesTree;
-        onChangeFire();
+        this.onChangeFire();
     }
 
     public removeNode(node: DependenciesTreeNode, onChangeFire: () => void) {
@@ -144,25 +152,25 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
         onChangeFire();
     }
 
-    private async repopulateTree(quickScan: boolean, credentialsSet: boolean, onChangeFire: () => void) {
+    private async repopulateTree(quickScan: boolean, credentialsSet: boolean) {
         await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
             this.clearAllTrees();
             if (credentialsSet) {
                 let allBuilds: DependenciesTreeNode = <DependenciesTreeNode>this.allBuildsTree;
                 await new CiManager(this._treesManager, allBuilds).refreshBuilds(progress, checkCanceled);
-                this.loadFirstBuild(quickScan, onChangeFire);
+                this.loadFirstBuild(quickScan);
             }
         }, 'Loading Builds Scans');
     }
 
-    public loadFirstBuild(quickScan: boolean, onChangeFire: () => void): void {
+    public loadFirstBuild(quickScan: boolean): void {
         if (!!this._allBuildsTree && this._allBuildsTree.children.length > 0) {
             let dependencyTree: DependenciesTreeNode = this._allBuildsTree.children[0];
             let generalInfo: BuildGeneralInfo = <BuildGeneralInfo>dependencyTree.generalInfo;
-            this.loadBuild(generalInfo, onChangeFire);
+            this.loadBuild(generalInfo);
         } else {
             this.clearAllTrees();
-            onChangeFire();
+            this.onChangeFire();
             this._treesManager.logManager.logMessage(
                 'Could not find any builds that match the provided pattern: ' + Configuration.getBuildsPattern(),
                 'INFO'
@@ -194,4 +202,6 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
     public get filterScopes(): Set<Scope> {
         return this._filterScopes;
     }
+
+    
 }

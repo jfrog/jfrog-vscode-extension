@@ -2,6 +2,7 @@
 import { IGraphResponse } from 'jfrog-client-js';
 import { IImpactedPath } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 // import { ScanUtils } from '../utils/scanUtils';
 // storage
 // issue cache saves per workspace the scans and the last time it was scanned completed
@@ -74,7 +75,13 @@ export class IssuesCache {
         return undefined;
     }
 
+    private static counter: number = 0;
+
     store(workSpace: vscode.WorkspaceFolder, value: WorkspaceIssuesData) {
+        // TODO: remove saving files below
+        let scanPath: string = '/Users/assafa/Documents/data-' + IssuesCache.counter++ + '.json';
+        fs.writeFileSync(scanPath, JSON.stringify(value));
+
         return this._cache.update(IssuesCache.toKey(workSpace), IssuesCache.dataToJSON(value));
     }
 

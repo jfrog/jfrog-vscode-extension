@@ -3,11 +3,11 @@ import { before } from 'mocha';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
-import { YarnDependencyUpdate } from '../../main/dependencyUpdate/yarnDependencyUpdate';
+// import { YarnDependencyUpdate } from '../../main/dependencyUpdate/yarnDependencyUpdate';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
-import { YarnTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/yarnTree';
+// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+// import { YarnTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/yarnTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { ProjectDetails } from '../../main/types/projectDetails';
@@ -15,7 +15,7 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { PackageType } from '../../main/types/projectType';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { YarnUtils } from '../../main/utils/yarnUtils';
-import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
+import { createScanCacheManager/*, getNodeByArtifactId*/ } from './utils/utils.test';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
 
@@ -30,13 +30,12 @@ describe('Yarn Utils Tests', async () => {
         [],
         new ConnectionManager(logManager),
         dummyScanCacheManager,
-        {} as ScanLogicManager,
-        logManager,
         {} as ScanManager,
-        {} as CacheManager
+        {} as CacheManager,
+        logManager
     );
     let projectDirs: string[] = ['project-1', 'project-2', 'project-3'];
-    let yarnDependencyUpdate: YarnDependencyUpdate = new YarnDependencyUpdate();
+    // let yarnDependencyUpdate: YarnDependencyUpdate = new YarnDependencyUpdate();
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'yarn'));
 
@@ -139,46 +138,46 @@ describe('Yarn Utils Tests', async () => {
         assert.deepEqual(dependencyPos[1], new vscode.Position(19, 14));
     });
 
-    it('Update fixed version', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: ProjectDetails = new ProjectDetails('', PackageType.Unknown);
-        let res: DependenciesTreeNode[] = await runCreateYarnDependencyTrees([componentsToScan], parent);
-        let dependencyProject: DependenciesTreeNode | undefined = res.find(
-            node => node instanceof YarnTreeNode && node.workspaceFolder.endsWith('project-3')
-        );
-        assert.isNotNull(dependencyProject);
+    // it('Update fixed version', async () => {
+    //     let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
+    //     let componentsToScan: ProjectDetails = new ProjectDetails('', PackageType.Unknown);
+    //     let res: DependenciesTreeNode[] = await runCreateYarnDependencyTrees([componentsToScan], parent);
+    //     let dependencyProject: DependenciesTreeNode | undefined = res.find(
+    //         node => node instanceof YarnTreeNode && node.workspaceFolder.endsWith('project-3')
+    //     );
+    //     assert.isNotNull(dependencyProject);
 
-        // Get specific dependency node.
-        let node: DependenciesTreeNode | null = getNodeByArtifactId(dependencyProject!, 'progress');
-        assert.isNotNull(node);
-        assert.equal(node?.generalInfo.version, '2.0.3');
+    //     // Get specific dependency node.
+    //     let node: DependenciesTreeNode | null = getNodeByArtifactId(dependencyProject!, 'progress');
+    //     assert.isNotNull(node);
+    //     assert.equal(node?.generalInfo.version, '2.0.3');
 
-        // Create a new version different from the node.
-        yarnDependencyUpdate.updateDependencyVersion(node!, '2.0.2');
+    //     // Create a new version different from the node.
+    //     yarnDependencyUpdate.updateDependencyVersion(node!, '2.0.2');
 
-        // Recalculate the dependency tree.
-        res = await runCreateYarnDependencyTrees([componentsToScan], parent);
-        dependencyProject = res.find(node => node instanceof YarnTreeNode && node.workspaceFolder.endsWith('project-3'));
-        assert.isNotNull(dependencyProject);
+    //     // Recalculate the dependency tree.
+    //     res = await runCreateYarnDependencyTrees([componentsToScan], parent);
+    //     dependencyProject = res.find(node => node instanceof YarnTreeNode && node.workspaceFolder.endsWith('project-3'));
+    //     assert.isNotNull(dependencyProject);
 
-        // Verify the node's version was modified.
-        node = getNodeByArtifactId(dependencyProject!, 'progress');
-        assert.isNotNull(node);
-        assert.equal(node?.generalInfo.version, '2.0.2');
+    //     // Verify the node's version was modified.
+    //     node = getNodeByArtifactId(dependencyProject!, 'progress');
+    //     assert.isNotNull(node);
+    //     assert.equal(node?.generalInfo.version, '2.0.2');
 
-        // Revert back the changes.
-        yarnDependencyUpdate.updateDependencyVersion(node!, '2.0.3');
+    //     // Revert back the changes.
+    //     yarnDependencyUpdate.updateDependencyVersion(node!, '2.0.3');
 
-        // Recalculate the dependency tree.
-        res = await runCreateYarnDependencyTrees([componentsToScan], parent);
+    //     // Recalculate the dependency tree.
+    //     res = await runCreateYarnDependencyTrees([componentsToScan], parent);
 
-        dependencyProject = res.find(node => node instanceof YarnTreeNode && node.workspaceFolder.endsWith('project-3'));
-        assert.isNotNull(dependencyProject);
-        // Verify the node's version was modified.
-        node = getNodeByArtifactId(dependencyProject!, 'progress');
-        assert.isNotNull(node);
-        assert.equal(node?.generalInfo.version, '2.0.3');
-    });
+    //     dependencyProject = res.find(node => node instanceof YarnTreeNode && node.workspaceFolder.endsWith('project-3'));
+    //     assert.isNotNull(dependencyProject);
+    //     // Verify the node's version was modified.
+    //     node = getNodeByArtifactId(dependencyProject!, 'progress');
+    //     assert.isNotNull(node);
+    //     assert.equal(node?.generalInfo.version, '2.0.3');
+    // });
 
     /**
      * Test YarnUtils.createYarnDependencyTrees.

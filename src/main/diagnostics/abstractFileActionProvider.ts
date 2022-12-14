@@ -33,7 +33,7 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
     // protected abstract getImpactTree(document?: vscode.TextDocument): IssuesRootTreeNode | undefined;
 
     public activate(context: vscode.ExtensionContext) {
-        this._treesManager.logManager.logMessage("<ASSAFA> Activating '" + AbstractFileActionProvider.name + "'",'DEBUG');
+        this._treesManager.logManager.logMessage("<ASSAFA> Activating '" + AbstractFileActionProvider.name + "'", 'DEBUG');
         this.registerListeners(context.subscriptions);
         vscode.workspace.textDocuments.forEach(this.updateDiagnostics, this);
         // vscode.workspace.textDocuments.forEach(this.updateDiagnostics, this);
@@ -82,7 +82,7 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
      * @param node The dependencies tree node
      * @param dependencyPos The position of the diagnostics in the descriptor
      */
-    createDiagnostics(diagnosticId: string, msg: string, position: vscode.Position[]) : vscode.Diagnostic[] {
+    createDiagnostics(diagnosticId: string, msg: string, position: vscode.Position[]): vscode.Diagnostic[] {
         let diagnostics: vscode.Diagnostic[] = [];
         for (let i: number = 0; i < position.length; i += 2) {
             let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(

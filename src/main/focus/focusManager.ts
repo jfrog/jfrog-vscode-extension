@@ -6,7 +6,7 @@ import { MavenFocus } from './mavenFocus';
 import { NpmFocus } from './npmFocus';
 import { PypiFocus } from './pypiFocus';
 import { YarnFocus } from './yarnFocus';
-import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
+// import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
 import * as vscode from 'vscode';
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 
@@ -45,29 +45,29 @@ export class FocusManager implements ExtensionComponent {
         }
     }
 
-    public async focusOnCve(node?: SourceCodeCveTreeNode, index?: number) {
-        if (node === undefined || node.getFile() === '') {
-            return;
-        }
-        let openPath: vscode.Uri = vscode.Uri.file(node.getFile());
-        if (!openPath) {
-            return;
-        }
-        let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(openPath);
-        let textEditor: vscode.TextEditor | undefined = await vscode.window.showTextDocument(textDocument);
-        if (!textEditor) {
-            return;
-        }
-        const startPos: vscode.Position = new vscode.Position(
-            node.getNodeDetails()[index ?? 0].startLine - 1,
-            node.getNodeDetails()[index ?? 0].startColumn
-        );
-        const endPosition: vscode.Position = new vscode.Position(
-            node.getNodeDetails()[index ?? 0].endLine - 1,
-            node.getNodeDetails()[index ?? 0].endColumn
-        );
+    // public async focusOnCve(node?: SourceCodeCveTreeNode, index?: number) {
+    //     if (node === undefined || node.getFile() === '') {
+    //         return;
+    //     }
+    //     let openPath: vscode.Uri = vscode.Uri.file(node.getFile());
+    //     if (!openPath) {
+    //         return;
+    //     }
+    //     let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(openPath);
+    //     let textEditor: vscode.TextEditor | undefined = await vscode.window.showTextDocument(textDocument);
+    //     if (!textEditor) {
+    //         return;
+    //     }
+    //     const startPos: vscode.Position = new vscode.Position(
+    //         node.getNodeDetails()[index ?? 0].startLine - 1,
+    //         node.getNodeDetails()[index ?? 0].startColumn
+    //     );
+    //     const endPosition: vscode.Position = new vscode.Position(
+    //         node.getNodeDetails()[index ?? 0].endLine - 1,
+    //         node.getNodeDetails()[index ?? 0].endColumn
+    //     );
 
-        textEditor.selection = new vscode.Selection(startPos, endPosition);
-        textEditor.revealRange(new vscode.Range(startPos, endPosition), vscode.TextEditorRevealType.InCenter);
-    }
+    //     textEditor.selection = new vscode.Selection(startPos, endPosition);
+    //     textEditor.revealRange(new vscode.Range(startPos, endPosition), vscode.TextEditorRevealType.InCenter);
+    // }
 }

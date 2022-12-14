@@ -4,6 +4,7 @@ import { /*ICve,*/ ICve, IDependencyPage, IReference /*IResearch, ISeverity */ }
 import * as vscode from 'vscode';
 import { PackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
+import { Translators } from '../../../utils/translators';
 import { IssueTreeNode } from '../issueTreeNode';
 // import { IssueNode } from '../../issuesDataProvider';
 
@@ -13,24 +14,26 @@ export class CveTreeNode extends IssueTreeNode {
     private _id: string;
     private _edited: string;
     private _summary: string;
-    private _references: string[];
+    private _references: IReference[];
     private _researchInfo?: IResearch;
+    // TODO: private _applicableData?: FileContentIssue[]; // undefined = not scan, empty => not applicable, each entry is applicable issue in a file
 
     constructor(sourceVul: IVulnerability, private _severity: Severity, private _parent: DependencyIssuesTreeNode, private _cve?: IGraphCve) {
         super(_cve && _cve.cve ? _cve.cve : sourceVul.issue_id, vscode.TreeItemCollapsibleState.None);
         this._id = sourceVul.issue_id;
         this._edited = sourceVul.edited;
         this._summary = sourceVul.summary;
-        this._references = sourceVul.references;
+        
+        this._references = Translators.cleanReferencesLink(sourceVul.references);
         if (sourceVul.researchInfo) {
             this._researchInfo = sourceVul.researchInfo;
         }
     }
 
-    public get references(): string[] {
+    public get references(): IReference[] {
         return this._references;
     }
-    public set references(value: string[]) {
+    public set references(value: IReference[]) {
         this._references = value;
     }
 
@@ -48,7 +51,7 @@ export class CveTreeNode extends IssueTreeNode {
 
     public asDetailsPage(): IDependencyPage {
         return {
-            id: this._id, // tell or that the ID is not right, the CVE name appear as id and the XRAY is the title
+            id: this._id,
             cve: this._cve
                 ? ({
                       id: this._cve.cve,
@@ -56,9 +59,9 @@ export class CveTreeNode extends IssueTreeNode {
                       cvssV2Vector: this._cve.cvss_v2_vector,
                       cvssV3Score: this._cve.cvss_v3_score,
                       cvssV3Vector: this._cve.cvss_v3_vector,
-                      applicably: true // TODO: change when adding scan
+                      applicably: true // TODO: change when adding scan to: this._applicableData && this._applicableData.length > 0
                   } as ICve)
-                : ({ applicably: true } as ICve), //undefined,
+                : ({ applicably: true } as ICve), //undefined, TODO: return undefined when adding applicable data
             name: this._parent.name,
             type: PackageType[this._parent.type],
             version: this._parent.version,
@@ -68,7 +71,7 @@ export class CveTreeNode extends IssueTreeNode {
             summary: this._summary,
             fixedVersion: this._parent.fixVersion,
             license: this.parent.licenses.length >= 0 ? this.parent.licenses.map(l => l.name).join() : undefined, // TODO: tell or about only one when can be multiple
-            references: this._references.map(refrence => ({ url: refrence } as IReference)), // TODO: tell or that there are no text...
+            references: this._references, // TODO: tell or that there are no text...
             researchInfo: this._researchInfo,
             impactedPath: this._parent.impactedTree
         } as IDependencyPage;

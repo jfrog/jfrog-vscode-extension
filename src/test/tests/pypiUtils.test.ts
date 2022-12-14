@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { PypiTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -27,10 +27,9 @@ describe('Pypi Utils Tests', async () => {
         [],
         new ConnectionManager(logManager),
         dummyScanCacheManager,
-        {} as ScanLogicManager,
-        logManager,
         {} as ScanManager,
-        {} as CacheManager
+        {} as CacheManager,
+        logManager
     );
     let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements'];
     let workspaceFolders: vscode.WorkspaceFolder[] = [];

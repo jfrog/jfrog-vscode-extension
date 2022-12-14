@@ -37,7 +37,7 @@ export class YarnUtils {
      * @param dependenciesTreeNode - dependencies tree node
      */
     public static getDependencyPos(document: vscode.TextDocument, dependenciesTreeNode: DependenciesTreeNode): vscode.Position[] {
-        return this.getDependencyPosition(document,dependenciesTreeNode.generalInfo.artifactId);
+        return this.getDependencyPosition(document, dependenciesTreeNode.generalInfo.artifactId);
         // let res: vscode.Position[] = [];
         // let yarnLockContent: string = document.getText();
         // let dependencyMatch: RegExpMatchArray | null = yarnLockContent.match(`([\r\n"]+)(${dependenciesTreeNode.generalInfo.artifactId}@\\S*)[:, ]`);

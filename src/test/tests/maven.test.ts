@@ -4,12 +4,12 @@ import { before } from 'mocha';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
-import { MavenDependencyUpdate } from '../../main/dependencyUpdate/mavenDependencyUpdate';
-import { MavenExclusion } from '../../main/exclusions/mavenExclusion';
+// import { MavenDependencyUpdate } from '../../main/dependencyUpdate/mavenDependencyUpdate';
+// import { MavenExclusion } from '../../main/exclusions/mavenExclusion';
 import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
@@ -18,7 +18,7 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenUtils } from '../../main/utils/mavenUtils';
 import { PomTree } from '../../main/utils/pomTree';
 import { ScanUtils } from '../../main/utils/scanUtils';
-import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
+import { createScanCacheManager/*, getNodeByArtifactId*/ } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
 import { ProjectDetails } from '../../main/types/projectDetails';
 import { ComponentDetails } from 'jfrog-client-js';
@@ -35,13 +35,12 @@ describe('Maven Tests', async () => {
         [],
         new ConnectionManager(logManager),
         dummyScanCacheManager,
-        {} as ScanLogicManager,
-        logManager,
         {} as ScanManager,
-        {} as CacheManager
+        {} as CacheManager,
+        logManager
     );
-    let mavenExclusion: MavenExclusion = new MavenExclusion(treesManager);
-    let mavenDependencyUpdate: MavenDependencyUpdate = new MavenDependencyUpdate();
+    // let mavenExclusion: MavenExclusion = new MavenExclusion(treesManager);
+    // let mavenDependencyUpdate: MavenDependencyUpdate = new MavenDependencyUpdate();
     let projectDirs: string[] = ['dependency', 'empty', 'multiPomDependency'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
@@ -374,70 +373,70 @@ describe('Maven Tests', async () => {
         assert.deepEqual(res[0].children[1].children[5].parent, res[0].children[1]);
     });
 
-    it('Update fixed version', async () => {
-        // Create dependencies tree.
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: ProjectDetails[] = [];
-        let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
+    // it('Update fixed version', async () => {
+    //     // Create dependencies tree.
+    //     let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
+    //     let componentsToScan: ProjectDetails[] = [];
+    //     let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
 
-        // Get specific dependency node.
-        let node: DependenciesTreeNode | null = getNodeByArtifactId(res[0], 'commons-email');
-        assert.isNotNull(node);
-        let newNodeVersion: string = MavenUtils.getGavArray(node!)[2];
-        assert.equal(newNodeVersion, '1.1');
+    //     // Get specific dependency node.
+    //     let node: DependenciesTreeNode | null = getNodeByArtifactId(res[0], 'commons-email');
+    //     assert.isNotNull(node);
+    //     let newNodeVersion: string = MavenUtils.getGavArray(node!)[2];
+    //     assert.equal(newNodeVersion, '1.1');
 
-        // Create a new version different from the node.
-        mavenDependencyUpdate.updateDependencyVersion(node!, '1.5');
+    //     // Create a new version different from the node.
+    //     mavenDependencyUpdate.updateDependencyVersion(node!, '1.5');
 
-        // Recalculate the dependency tree.
-        res = await runCreateMavenDependenciesTrees(componentsToScan, parent);
+    //     // Recalculate the dependency tree.
+    //     res = await runCreateMavenDependenciesTrees(componentsToScan, parent);
 
-        // Verify the node's version was modified.
-        node = getNodeByArtifactId(res[0], 'commons-email');
-        assert.isNotNull(node);
-        newNodeVersion = MavenUtils.getGavArray(node!)[2];
-        assert.equal(newNodeVersion, '1.5');
+    //     // Verify the node's version was modified.
+    //     node = getNodeByArtifactId(res[0], 'commons-email');
+    //     assert.isNotNull(node);
+    //     newNodeVersion = MavenUtils.getGavArray(node!)[2];
+    //     assert.equal(newNodeVersion, '1.5');
 
-        // Revert back the changes.
-        mavenDependencyUpdate.updateDependencyVersion(node!, '1.1');
+    //     // Revert back the changes.
+    //     mavenDependencyUpdate.updateDependencyVersion(node!, '1.1');
 
-        // Recalculate the dependency tree.
-        res = await runCreateMavenDependenciesTrees(componentsToScan, parent);
+    //     // Recalculate the dependency tree.
+    //     res = await runCreateMavenDependenciesTrees(componentsToScan, parent);
 
-        node = getNodeByArtifactId(res[0], 'commons-email');
-        assert.isNotNull(node);
-        newNodeVersion = MavenUtils.getGavArray(node!)[2];
-        assert.equal(newNodeVersion, '1.1');
-    });
+    //     node = getNodeByArtifactId(res[0], 'commons-email');
+    //     assert.isNotNull(node);
+    //     newNodeVersion = MavenUtils.getGavArray(node!)[2];
+    //     assert.equal(newNodeVersion, '1.1');
+    // });
 
     /**
      * Test excludeDependency.
      */
-    it('Exclude dependency', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: ProjectDetails[] = [];
-        let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
+    // it('Exclude dependency', async () => {
+    //     let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
+    //     let componentsToScan: ProjectDetails[] = [];
+    //     let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(componentsToScan, parent);
 
-        // Read two nodes from tree
-        let node1: DependenciesTreeNode = res[0]?.children[1]?.children[0]?.children[0];
-        let node2: DependenciesTreeNode = res[0]?.children[1]?.children[0]?.children[1];
-        assert.isDefined(node1);
-        assert.isDefined(node2);
+    //     // Read two nodes from tree
+    //     let node1: DependenciesTreeNode = res[0]?.children[1]?.children[0]?.children[0];
+    //     let node2: DependenciesTreeNode = res[0]?.children[1]?.children[0]?.children[1];
+    //     assert.isDefined(node1);
+    //     assert.isDefined(node2);
 
-        // Exclude node 1 from tree
-        await mavenExclusion.excludeDependency(node1);
+    //     // Exclude node 1 from tree
+    //     await mavenExclusion.excludeDependency(node1);
 
-        // Assert that node 1 is removed from tree
-        let directParent: DependenciesTreeNode = res[0]?.children[1]?.children[0];
-        assert.equal(1, directParent.children.length);
-        assert.equal(directParent.children[0].generalInfo.artifactId, node2.generalInfo.artifactId);
+    //     // Assert that node 1 is removed from tree
+    //     let directParent: DependenciesTreeNode = res[0]?.children[1]?.children[0];
+    //     assert.equal(1, directParent.children.length);
+    //     assert.equal(directParent.children[0].generalInfo.artifactId, node2.generalInfo.artifactId);
 
-        // Run scan again to verify correctness of the tree
-        res = await runCreateMavenDependenciesTrees(componentsToScan, parent);
-        directParent = res[0]?.children[1]?.children[0];
-        assert.equal(1, directParent.children.length);
-        assert.equal(directParent.children[0].generalInfo.artifactId, node2.generalInfo.artifactId);
-    });
+    //     // Run scan again to verify correctness of the tree
+    //     res = await runCreateMavenDependenciesTrees(componentsToScan, parent);
+    //     directParent = res[0]?.children[1]?.children[0];
+    //     assert.equal(1, directParent.children.length);
+    //     assert.equal(directParent.children[0].generalInfo.artifactId, node2.generalInfo.artifactId);
+    // });
 
     async function runCreateMavenDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
         let pomXmlsArray: vscode.Uri[] | undefined = await locatePomXmls(workspaceFolders);

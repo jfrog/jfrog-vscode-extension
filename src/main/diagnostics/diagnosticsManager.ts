@@ -7,7 +7,7 @@ import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 // import { NpmCodeActionProvider } from './npmCodeActionProvider';
 // import { PypiCodeActionProvider } from './pypiCodeActionProvider';
 // import { YarnCodeActionProvider } from './yarnCodeActionProvider';
-import { ApplicabilityCodeActionProvider } from './applicabilityActionProvider';
+// import { ApplicabilityCodeActionProvider } from './applicabilityActionProvider';
 
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
 import { DescriptorActionProvider } from './descriptorActionProvider';
@@ -22,18 +22,19 @@ import { DescriptorActionProvider } from './descriptorActionProvider';
  * 2. Provide red, yellow, green or white line under a vulnerable line in the source code file.
  */
 export class DiagnosticsManager implements ExtensionComponent {
-    private _codeActionProviders: (AbstractCodeActionProvider | ApplicabilityCodeActionProvider  | AbstractFileActionProvider)[] = [];
+    private _codeActionProviders: (AbstractCodeActionProvider /*| ApplicabilityCodeActionProvider */ | AbstractFileActionProvider)[] = [];
 
     constructor(treesManager: TreesManager) {
         let diagnosticCollection: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection();
-        this._codeActionProviders.push(
+        this._codeActionProviders
+            .push
             // new NpmCodeActionProvider(diagnosticCollection, treesManager),
             // new YarnCodeActionProvider(diagnosticCollection, treesManager),
             // new PypiCodeActionProvider(diagnosticCollection, treesManager),
             // new GoCodeActionProvider(diagnosticCollection, treesManager),
             // new MavenCodeActionProvider(diagnosticCollection, treesManager),
             // new ApplicabilityCodeActionProvider(diagnosticCollection, treesManager)
-        );
+            ();
 
         this._codeActionProviders.push(new DescriptorActionProvider(diagnosticCollection, treesManager));
     }

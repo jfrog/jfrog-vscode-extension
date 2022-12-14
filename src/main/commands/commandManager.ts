@@ -1,23 +1,23 @@
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
-import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
-import { ExclusionsManager } from '../exclusions/exclusionsManager';
+// import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
+// import { ExclusionsManager } from '../exclusions/exclusionsManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { FilterManager } from '../filter/filterManager';
-import { FocusType } from '../focus/abstractFocus';
+// import { FocusType } from '../focus/abstractFocus';
 import { FocusManager } from '../focus/focusManager';
 import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { State, TreesManager } from '../treeDataProviders/treesManager';
 import { TreeDataHolder } from '../treeDataProviders/utils/treeDataHolder';
-import { ScanUtils } from '../utils/scanUtils';
+// import { ScanUtils } from '../utils/scanUtils';
 import { BuildsManager } from '../builds/buildsManager';
 import { Configuration } from '../utils/configuration';
-import { ExportManager } from '../export/exportManager';
-import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
-import { VulnerabilityNode } from '../treeDataProviders/issuesDataProvider';
+// import { ExportManager } from '../export/exportManager';
+// import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
+// import { VulnerabilityNode } from '../treeDataProviders/issuesDataProvider';
 import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
-import { IssuesFilterManager } from '../filter/issuesFilterManager';
+// import { IssuesFilterManager } from '../filter/issuesFilterManager';
 
 /**
  * Register and execute all commands in the extension.
@@ -29,27 +29,28 @@ export class CommandManager implements ExtensionComponent {
         private _treesManager: TreesManager,
         private _filterManager: FilterManager,
         private _focusManager: FocusManager,
-        private _exclusionManager: ExclusionsManager,
-        private _DependencyUpdateManager: DependencyUpdateManager,
+        // private _exclusionManager: ExclusionsManager,
+        // private _DependencyUpdateManager: DependencyUpdateManager,
         private _buildsManager: BuildsManager,
-        private _exportManager: ExportManager,
+        // private _exportManager: ExportManager,
 
-        private _issuesFilterManager: IssuesFilterManager
+        // private _issuesFilterManager: IssuesFilterManager
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
         this.registerCommand(context, 'jfrog.xray.file.open', file => this.openFile(file));
 
-        this.registerCommand(context, 'jfrog.source.code.scan.jumpToSource', (sourceCodeTreeNode, index) =>
-            this.jumpToSource(sourceCodeTreeNode, index)
-        );
-        this.registerCommand(context, 'jfrog.source.code.scan.showInSourceCodeTree', sourceCodeTreeNode =>
-            this.showInSourceCodeTree(sourceCodeTreeNode)
-        );
-        this.registerCommand(context, 'jfrog.xray.showInProjectDesc', dependenciesTreeNode => this.doShowInProjectDesc(dependenciesTreeNode));
-        this.registerCommand(context, 'jfrog.xray.excludeDependency', dependenciesTreeNode => this.doExcludeDependency(dependenciesTreeNode));
-        this.registerCommand(context, 'jfrog.xray.updateDependency', dependenciesTreeNode => this.doUpdateDependencyVersion(dependenciesTreeNode));
-        this.registerCommand(context, 'jfrog.xray.codeAction', dependenciesTreeNode => this.doCodeAction(dependenciesTreeNode));
+
+        // this.registerCommand(context, 'jfrog.source.code.scan.jumpToSource', (sourceCodeTreeNode, index) =>
+        //     this.jumpToSource(sourceCodeTreeNode, index)
+        // );
+        // this.registerCommand(context, 'jfrog.source.code.scan.showInSourceCodeTree', sourceCodeTreeNode =>
+        //     this.showInSourceCodeTree(sourceCodeTreeNode)
+        // );
+        // this.registerCommand(context, 'jfrog.xray.showInProjectDesc', dependenciesTreeNode => this.doShowInProjectDesc(dependenciesTreeNode));
+        // this.registerCommand(context, 'jfrog.xray.excludeDependency', dependenciesTreeNode => this.doExcludeDependency(dependenciesTreeNode));
+        // this.registerCommand(context, 'jfrog.xray.updateDependency', dependenciesTreeNode => this.doUpdateDependencyVersion(dependenciesTreeNode));
+        // this.registerCommand(context, 'jfrog.xray.codeAction', dependenciesTreeNode => this.doCodeAction(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
         this.registerCommand(context, 'jfrog.xray.openLink', url => this.doOpenLink(url));
@@ -58,23 +59,23 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.show.connectionStatus', () => this.showConnectionStatus());
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
-        this.registerCommand(context, 'jfrog.source.code.scan.refresh', () => this.doCodeScanRefresh());
+        // this.registerCommand(context, 'jfrog.source.code.scan.refresh', () => this.doCodeScanRefresh());
         this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
         this.registerCommand(context, 'jfrog.xray.reConnect', () => this.doReconnect());
         this.registerCommand(context, 'jfrog.xray.filter', () => this.doFilter());
         this.registerCommand(context, 'jfrog.xray.local', () => this.doLocal());
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
         this.registerCommand(context, 'jfrog.xray.builds', () => this.doBuildSelected());
-        this.registerCommand(context, 'jfrog.xray.export', () => this.doExport());
+        // this.registerCommand(context, 'jfrog.xray.export', () => this.doExport());
 
-        this.registerCommand(context, 'jfrog.xray.issues.filter', () => this.doIssuesFilter());
+        // this.registerCommand(context, 'jfrog.xray.issues.filter', () => this.doIssuesFilter());
         this.updateLocalCiIcons();
     }
 
     public doLocal() {
         this._treesManager.state = State.Local;
         this.updateLocalCiIcons();
-        this._treesManager.treeDataProviderManager.stateChange();
+        // this._treesManager.treeDataProviderManager.stateChange(); // delete, no need
     }
 
     public doCi() {
@@ -83,7 +84,7 @@ export class CommandManager implements ExtensionComponent {
         }
         this._treesManager.state = State.CI;
         this.updateLocalCiIcons();
-        this._treesManager.treeDataProviderManager.stateChange();
+        // this._treesManager.treeDataProviderManager.stateChange();
     }
 
     private areCiPreconditionsMet() {
@@ -117,65 +118,65 @@ export class CommandManager implements ExtensionComponent {
         vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ExtensionMode.Ci, this._treesManager.isCiState());
     }
 
-    /**
-     * Show the dependency in the project descriptor (e.g. package.json) file after right click on the components tree and a left click on "Show in project descriptor".
-     * @param dependenciesTreeNode - The dependency to show.
-     */
-    private doShowInProjectDesc(dependenciesTreeNode: DependenciesTreeNode) {
-        this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.Dependency);
-        this.onSelectNode(dependenciesTreeNode);
-    }
+    // /**
+    //  * Show the dependency in the project descriptor (e.g. package.json) file after right click on the components tree and a left click on "Show in project descriptor".
+    //  * @param dependenciesTreeNode - The dependency to show.
+    //  */
+    // private doShowInProjectDesc(dependenciesTreeNode: DependenciesTreeNode) {
+    //     this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.Dependency);
+    //     this.onSelectNode(dependenciesTreeNode);
+    // }
 
     private openFile(file: any) {
         return this._focusManager.openFile(file);
     }
 
-    /**
-     * Reveal the file and a specific line number that a CVE is found by the CVE applicability scan.
-     * This functionality is included in:
-     * 1. Click on the 'eye' button
-     * 2. Click on the actual CVE in the CVE applicability view
-     * 3. Click on the reference / actual CVE in the CVE applicability view
-     * 4. Click on the CVE node in the dependency details view
-     * @param node - CVE node
-     * @param index - index to jump in the CVE Node.
-     */
-    private jumpToSource(node: SourceCodeCveTreeNode | VulnerabilityNode | TreeDataHolder, index: number) {
-        if (node instanceof VulnerabilityNode) {
-            return this._focusManager.focusOnCve(node.sourceCodeCveTreeNode);
-        }
-        if (node instanceof TreeDataHolder) {
-            return this._focusManager.focusOnCve(node.command?.arguments?.[0], node.command?.arguments?.[1]);
-        }
-        return this._focusManager.focusOnCve(node, index);
-    }
+    // /**
+    //  * Reveal the file and a specific line number that a CVE is found by the CVE applicability scan.
+    //  * This functionality is included in:
+    //  * 1. Click on the 'eye' button
+    //  * 2. Click on the actual CVE in the CVE applicability view
+    //  * 3. Click on the reference / actual CVE in the CVE applicability view
+    //  * 4. Click on the CVE node in the dependency details view
+    //  * @param node - CVE node
+    //  * @param index - index to jump in the CVE Node.
+    //  */
+    // private jumpToSource(node: /*SourceCodeCveTreeNode |*/ VulnerabilityNode | TreeDataHolder, index: number) {
+    //     if (node instanceof VulnerabilityNode) {
+    //         return this._focusManager.focusOnCve(node.sourceCodeCveTreeNode);
+    //     }
+    //     if (node instanceof TreeDataHolder) {
+    //         return this._focusManager.focusOnCve(node.command?.arguments?.[0], node.command?.arguments?.[1]);
+    //     }
+    //     return this._focusManager.focusOnCve(node, index);
+    // }
 
-    /**
-     * Exclude dependency in the project descriptor (e.g. package.json).
-     * @param dependenciesTreeNode - The dependency to exclude
-     */
-    private doExcludeDependency(dependenciesTreeNode: DependenciesTreeNode) {
-        this._exclusionManager.excludeDependency(dependenciesTreeNode);
-    }
+    // /**
+    //  * Exclude dependency in the project descriptor (e.g. package.json).
+    //  * @param dependenciesTreeNode - The dependency to exclude
+    //  */
+    // private doExcludeDependency(dependenciesTreeNode: DependenciesTreeNode) {
+    //     this._exclusionManager.excludeDependency(dependenciesTreeNode);
+    // }
 
-    /**
-     * Update a dependency in the project descriptor (e.g. package.json) to a new version.
-     * @param dependenciesTreeNode - The dependency to update
-     */
-    private async doUpdateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
-        await ScanUtils.scanWithProgress(async (): Promise<void> => {
-            try {
-                if (!(await this._DependencyUpdateManager.updateDependencyVersion(dependenciesTreeNode))) {
-                    return;
-                }
-                this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.DependencyVersion);
-                this._treesManager.treeDataProviderManager.removeNode(dependenciesTreeNode);
-            } catch (error) {
-                vscode.window.showErrorMessage('Could not update dependency version.', <vscode.MessageOptions>{ modal: false });
-                this._treesManager.logManager.logMessage((<any>error).message, 'ERR', true);
-            }
-        }, 'Updating ' + dependenciesTreeNode.generalInfo.getComponentId());
-    }
+    // /**
+    //  * Update a dependency in the project descriptor (e.g. package.json) to a new version.
+    //  * @param dependenciesTreeNode - The dependency to update
+    //  */
+    // private async doUpdateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
+    //     await ScanUtils.scanWithProgress(async (): Promise<void> => {
+    //         try {
+    //             if (!(await this._DependencyUpdateManager.updateDependencyVersion(dependenciesTreeNode))) {
+    //                 return;
+    //             }
+    //             this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.DependencyVersion);
+    //             this._treesManager.treeDataProviderManager.removeNode(dependenciesTreeNode);
+    //         } catch (error) {
+    //             vscode.window.showErrorMessage('Could not update dependency version.', <vscode.MessageOptions>{ modal: false });
+    //             this._treesManager.logManager.logMessage((<any>error).message, 'ERR', true);
+    //         }
+    //     }, 'Updating ' + dependenciesTreeNode.generalInfo.getComponentId());
+    // }
 
     /**
      * Open a webpage with the desired url.
@@ -188,22 +189,22 @@ export class CommandManager implements ExtensionComponent {
         vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
     }
 
-    /**
-     * Select node in the components tree after a click on the yellow bulb. (The opposite action of @function doShowInProjectDesc ).
-     * @param dependenciesTreeNode - The dependency to show.
-     */
-    private doCodeAction(dependenciesTreeNode: DependenciesTreeNode) {
-        this._treesManager.dependenciesTreeView.reveal(dependenciesTreeNode, { focus: true });
-        this.onSelectNode(dependenciesTreeNode);
-    }
+    // /**
+    //  * Select node in the components tree after a click on the yellow bulb. (The opposite action of @function doShowInProjectDesc ).
+    //  * @param dependenciesTreeNode - The dependency to show.
+    //  */
+    // private doCodeAction(dependenciesTreeNode: DependenciesTreeNode) {
+    //     this._treesManager.dependenciesTreeView.reveal(dependenciesTreeNode, { focus: true });
+    //     this.onSelectNode(dependenciesTreeNode);
+    // }
 
-    /**
-     * Shows a specific node in the source code tree after clicking on the bulb icon in the source code.
-     * @param sourceCodeCveTreeNode
-     */
-    private showInSourceCodeTree(sourceCodeCveTreeNode: SourceCodeCveTreeNode) {
-        this._treesManager.sourceCodeTreeView.reveal(sourceCodeCveTreeNode, { focus: true, select: true, expand: true });
-    }
+    // /**
+    //  * Shows a specific node in the source code tree after clicking on the bulb icon in the source code.
+    //  * @param sourceCodeCveTreeNode
+    //  */
+    // private showInSourceCodeTree(sourceCodeCveTreeNode: SourceCodeCveTreeNode) {
+    //     this._treesManager.sourceCodeTreeView.reveal(sourceCodeCveTreeNode, { focus: true, select: true, expand: true });
+    // }
 
     /**
      * Focus on dependency after a click on a dependency in the components tree.
@@ -259,33 +260,33 @@ export class CommandManager implements ExtensionComponent {
         await this._treesManager.issuesTreeDataProvider.refresh(quickScan);
     }
 
-    private async doCodeScanRefresh(quickScan: boolean = false) {
-        await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
-            progress.report({ message: '📝 Code vulnerability scanning' });
-            checkCanceled();
-            await this._treesManager.sourceCodeTreeDataProvider.update();
-            checkCanceled();
-            await this._treesManager.sourceCodeTreeDataProvider.refresh();
-        }, 'Code vulnerability scanning');
+    // private async doCodeScanRefresh(quickScan: boolean = false) {
+    //     await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
+    //         progress.report({ message: '📝 Code vulnerability scanning' });
+    //         checkCanceled();
+    //         await this._treesManager.sourceCodeTreeDataProvider.update();
+    //         checkCanceled();
+    //         await this._treesManager.sourceCodeTreeDataProvider.refresh();
+    //     }, 'Code vulnerability scanning');
 
-        await vscode.window.withProgress(
-            <vscode.ProgressOptions>{
-                // Start progress in balloon only if the user initiated a full scan by clicking on the "Refresh" button.
-                // Otherwise - show the progress in the status bar.
-                location: quickScan ? vscode.ProgressLocation.Window : vscode.ProgressLocation.Notification,
-                title: 'Code vulnerability scanning',
-                cancellable: true
-            },
-            async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {
-                progress.report({ message: '📝 Code vulnerability scanning' });
-                token.onCancellationRequested(() => {
-                    console.log('Canceled CVE Applicability scan');
-                });
-                await this._treesManager.sourceCodeTreeDataProvider.update();
-                await this._treesManager.sourceCodeTreeDataProvider.refresh();
-            }
-        );
-    }
+    //     await vscode.window.withProgress(
+    //         <vscode.ProgressOptions>{
+    //             // Start progress in balloon only if the user initiated a full scan by clicking on the "Refresh" button.
+    //             // Otherwise - show the progress in the status bar.
+    //             location: quickScan ? vscode.ProgressLocation.Window : vscode.ProgressLocation.Notification,
+    //             title: 'Code vulnerability scanning',
+    //             cancellable: true
+    //         },
+    //         async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {
+    //             progress.report({ message: '📝 Code vulnerability scanning' });
+    //             token.onCancellationRequested(() => {
+    //                 console.log('Canceled CVE Applicability scan');
+    //             });
+    //             await this._treesManager.sourceCodeTreeDataProvider.update();
+    //             await this._treesManager.sourceCodeTreeDataProvider.refresh();
+    //         }
+    //     );
+    // }
 
     /**
      * Connect to JFrog Platform server. If the connection success, perform a quick scan.
@@ -365,12 +366,12 @@ export class CommandManager implements ExtensionComponent {
         this._filterManager.showFilterMenu();
     }
 
-    /**
-     * Show the filter menu.
-     */
-    private doIssuesFilter() {
-        this._issuesFilterManager.showFilterMenu();
-    }
+    // /**
+    //  * Show the filter menu.
+    //  */
+    // private doIssuesFilter() {
+    //     this._issuesFilterManager.showFilterMenu();
+    // }
 
     /**
      * Show the builds menu.
@@ -396,10 +397,10 @@ export class CommandManager implements ExtensionComponent {
         this._treesManager.dependencyDetailsProvider.selectNode(dependenciesTreeNode);
     }
 
-    /**
-     * Export vulnerabilities/violations to an external file.
-     */
-    private doExport() {
-        this._exportManager.showExportMenu();
-    }
+    // /**
+    //  * Export vulnerabilities/violations to an external file.
+    //  */
+    // private doExport() {
+    //     this._exportManager.showExportMenu();
+    // }
 }

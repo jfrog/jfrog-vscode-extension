@@ -59,7 +59,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     }
 
     public get componenetId(): string {
-        return this._name + ":" + this._version;
+        return this._name + ':' + this._version;
     }
 
     public get impactedTree(): IImpactedPath | undefined {
