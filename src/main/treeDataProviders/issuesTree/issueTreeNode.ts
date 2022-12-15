@@ -1,8 +1,13 @@
 import * as vscode from 'vscode';
+import { Severity } from '../../types/severity';
 
 // leaf of the tree
 export class IssueTreeNode extends vscode.TreeItem {
-    constructor(label: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
+    constructor(protected _severity: Severity, label: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
         super(label, collapsibleState);
+    }
+
+    public get severity(): Severity {
+        return this._severity;
     }
 }

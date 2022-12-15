@@ -94,8 +94,7 @@ export class GoUtils {
         goMods: vscode.Uri[] | undefined,
         projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
-        parent: DependenciesTreeNode,
-        quickScan: boolean
+        parent: DependenciesTreeNode
     ): Promise<void> {
         if (!goMods) {
             treesManager.logManager.logMessage('No go.mod files found in workspaces.', 'DEBUG');
@@ -103,7 +102,7 @@ export class GoUtils {
         }
         treesManager.logManager.logMessage('go.mod files to scan: [' + goMods.toString() + ']', 'DEBUG');
         if (!GoUtils.verifyGoInstalled()) {
-            treesManager.logManager.logError(new Error('Could not scan go project dependencies, because go CLI is not in the PATH.'), !quickScan);
+            treesManager.logManager.logError(new Error('Could not scan go project dependencies, because go CLI is not in the PATH.'), true);
             return;
         }
         for (let goMod of goMods) {
@@ -119,12 +118,12 @@ export class GoUtils {
                     `Failed to scan Go project. Hint: Please make sure the command 'go mod tidy' runs successfully in ` + goMod.fsPath,
                     'ERR',
                     true,
-                    !quickScan
+                    true
                 );
             }
 
             let root: GoTreeNode = new GoTreeNode(tmpWorkspace, treesManager, parent);
-            root.refreshDependencies(quickScan);
+            root.refreshDependencies();
             projectsToScan.push(root.projectDetails);
             // Set actual paths.
             root.fullPath = goMod.fsPath;

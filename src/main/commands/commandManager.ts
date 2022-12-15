@@ -31,15 +31,12 @@ export class CommandManager implements ExtensionComponent {
         private _focusManager: FocusManager,
         // private _exclusionManager: ExclusionsManager,
         // private _DependencyUpdateManager: DependencyUpdateManager,
-        private _buildsManager: BuildsManager,
-        // private _exportManager: ExportManager,
-
-        // private _issuesFilterManager: IssuesFilterManager
-    ) {}
+        private _buildsManager: BuildsManager // private _exportManager: ExportManager,
+    ) // private _issuesFilterManager: IssuesFilterManager
+    {}
 
     public activate(context: vscode.ExtensionContext) {
         this.registerCommand(context, 'jfrog.xray.file.open', file => this.openFile(file));
-
 
         // this.registerCommand(context, 'jfrog.source.code.scan.jumpToSource', (sourceCodeTreeNode, index) =>
         //     this.jumpToSource(sourceCodeTreeNode, index)

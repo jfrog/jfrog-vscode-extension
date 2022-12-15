@@ -19,27 +19,43 @@ export class DependenciesTreesFactory {
         workspaceFolders: vscode.WorkspaceFolder[],
         componentsToScan: ProjectDetails[],
         treesManager: TreesManager,
-        parent: DependenciesTreeNode,
-        quickScan: boolean
+        parent: DependenciesTreeNode
     ) {
         if (!treesManager.connectionManager.areXrayCredentialsSet()) {
             return;
         }
 
         this.sendUsageReport(projectDescriptors, treesManager.connectionManager);
-        await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Go), componentsToScan, treesManager, parent, quickScan);
-        await NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Npm), componentsToScan, treesManager, parent, quickScan);
-        await YarnUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Yarn), componentsToScan, treesManager, parent, quickScan);
+        // let tasks: Promise<void>[] = [];
+        // tasks.push(GoUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Go), componentsToScan, treesManager, parent, quickScan),
+        // NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Npm), componentsToScan, treesManager, parent, quickScan),
+        // YarnUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Yarn), componentsToScan, treesManager, parent, quickScan),
+        // PypiUtils.createDependenciesTrees(
+        //     projectDescriptors.get(PackageType.Python),
+        //     workspaceFolders,
+        //     componentsToScan,
+        //     treesManager,
+        //     parent,
+        //     quickScan
+        // ),
+        // MavenUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Maven), componentsToScan, treesManager, parent, quickScan),
+        // NugetUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Nuget), componentsToScan, treesManager, parent, quickScan)
+        // );
+        await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Go), componentsToScan, treesManager, parent);
+        await NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Npm), componentsToScan, treesManager, parent, false);
+        await YarnUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Yarn), componentsToScan, treesManager, parent, false);
         await PypiUtils.createDependenciesTrees(
             projectDescriptors.get(PackageType.Python),
             workspaceFolders,
             componentsToScan,
             treesManager,
             parent,
-            quickScan
+            false
         );
-        await MavenUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Maven), componentsToScan, treesManager, parent, quickScan);
-        await NugetUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Nuget), componentsToScan, treesManager, parent, quickScan);
+        await MavenUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Maven), componentsToScan, treesManager, parent, false);
+        await NugetUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Nuget), componentsToScan, treesManager, parent, false);
+
+        // await Promise.all(tasks);
     }
 
     /**

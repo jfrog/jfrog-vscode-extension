@@ -34,7 +34,7 @@ describe('Dependency Details Tests', () => {
     //     logManager
     // );
     // let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider([], treesManager);
-    let Components: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager);//, sourceCodeTreeDataProvider);
+    let Components: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager); //, sourceCodeTreeDataProvider);
     let dependenciesTreeNode: DependenciesTreeNode;
     before(() => {
         let generalInfo: GeneralInfo = new GeneralInfo('artifactId', '1.2.3', [], __dirname, 'testPkg');

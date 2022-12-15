@@ -16,7 +16,6 @@ import { BuildsNode } from './ciNodes/buildsTree';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
-
     private _onDidChangeTreeData: vscode.EventEmitter<DependenciesTreeNode | undefined> = new vscode.EventEmitter<DependenciesTreeNode | undefined>();
     readonly onDidChangeTreeData: vscode.Event<DependenciesTreeNode | undefined> = this._onDidChangeTreeData.event;
 
@@ -202,6 +201,4 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
     public get filterScopes(): Set<Scope> {
         return this._filterScopes;
     }
-
-    
 }

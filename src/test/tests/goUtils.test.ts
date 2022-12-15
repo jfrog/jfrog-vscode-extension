@@ -245,7 +245,7 @@ describe('Go Utils Tests', async () => {
     ) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Go);
-        await GoUtils.createDependenciesTrees(goMods, componentsToScan, treesManager, parent, false);
+        await GoUtils.createDependenciesTrees(goMods, componentsToScan, treesManager, parent);
         await dummyScanCacheManager.storeArtifacts(xrayScanResults, { componentIdToCve: new Map() } as ProjectComponents);
         // parent.children.forEach(child => {
         //     treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);

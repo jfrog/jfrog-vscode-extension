@@ -2,10 +2,10 @@ import { IImpactedPath, ILicense } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
 import { PackageType, toPackgeType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
-import { CveTreeNode } from './cveTreeNode';
 import { DescriptorTreeNode } from './descriptorTreeNode';
 
 import { IComponent /*, IImpactPath*/ } from 'jfrog-client-js';
+import { IssueTreeNode } from '../issueTreeNode';
 
 export class DependencyIssuesTreeNode extends vscode.TreeItem {
     // infer from data
@@ -14,7 +14,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     private _fixVersion: string[];
     private _type: PackageType;
     // added dynamicly
-    private _issues: CveTreeNode[] = [];
+    private _issues: IssueTreeNode[] = [];
     private _licenses: ILicense[] = [];
 
     constructor(
@@ -37,7 +37,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
 
     public apply() {
         this.tooltip =
-            'Severity: ' +
+            '\nTop severity: ' +
             SeverityUtils.getString(this.topSeverity) +
             '\nIssues count: ' +
             this._issues.length +
@@ -78,11 +78,11 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         return this._artifactId;
     }
 
-    public set issues(value: CveTreeNode[]) {
+    public set issues(value: IssueTreeNode[]) {
         this._issues = value;
     }
 
-    public get issues(): CveTreeNode[] {
+    public get issues(): IssueTreeNode[] {
         return this._issues;
     }
 

@@ -15,7 +15,7 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { PackageType } from '../../main/types/projectType';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { YarnUtils } from '../../main/utils/yarnUtils';
-import { createScanCacheManager/*, getNodeByArtifactId*/ } from './utils/utils.test';
+import { createScanCacheManager /*, getNodeByArtifactId*/ } from './utils/utils.test';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
 

@@ -18,7 +18,6 @@ export class DescriptorTreeNode extends FileTreeNode {
     private _dependenciesWithIssue: DependencyIssuesTreeNode[] = [];
 
     private _dependencyScanTimeStamp?: number;
-    private _applicableScanTimeStamp?: number;
 
     private _packageType: PackageType = PackageType.Unknown;
 
@@ -30,14 +29,6 @@ export class DescriptorTreeNode extends FileTreeNode {
     ) {
         super(fileFullPath, parent, collapsibleState);
         //this._details = descriptorDetails;
-    }
-
-    public get applicableScanTimeStamp(): number | undefined {
-        return this._applicableScanTimeStamp;
-    }
-
-    public set applicableScanTimeStamp(value: number | undefined) {
-        this._applicableScanTimeStamp = value;
     }
 
     public get dependencyScanTimeStamp(): number | undefined {
@@ -57,11 +48,11 @@ export class DescriptorTreeNode extends FileTreeNode {
             }
         }
 
-        if (this._applicableScanTimeStamp != undefined) {
-            if (oldest == undefined || this._applicableScanTimeStamp < oldest) {
-                oldest = this._applicableScanTimeStamp;
-            }
-        }
+        // if (this._applicableScanTimeStamp != undefined) {
+        //     if (oldest == undefined || this._applicableScanTimeStamp < oldest) {
+        //         oldest = this._applicableScanTimeStamp;
+        //     }
+        // }
         return oldest;
     }
 
@@ -124,12 +115,7 @@ export class DescriptorTreeNode extends FileTreeNode {
         });
 
         this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\nIssues count: ' + issueCount + '\n';
-        if (this._dependencyScanTimeStamp == this._applicableScanTimeStamp) {
-            this.tooltip += "Last scan completed at '" + Utils.toDate(this._dependencyScanTimeStamp) + "'\n";
-        } else {
-            this.tooltip += "Dependency scan completed at '" + Utils.toDate(this._dependencyScanTimeStamp) + "'\n";
-            this.tooltip += "Applicability scan completed at '" + Utils.toDate(this._applicableScanTimeStamp) + "'\n";
-        }
+        this.tooltip += "Last scan completed at '" + Utils.toDate(this._dependencyScanTimeStamp) + "'\n";
         this.tooltip += 'Full path: ' + this.fullPath;
 
         this._dependenciesWithIssue

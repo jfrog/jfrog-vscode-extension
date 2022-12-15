@@ -20,6 +20,7 @@ import { ScanManager } from '../scanLogic/scanManager';
 import { IssuesRootTreeNode } from './issuesTree/issuesRootTreeNode';
 import { CacheManager } from '../cache/cacheManager';
 import { IssueTreeNode } from './issuesTree/issueTreeNode';
+import { DependencyIssuesTreeNode } from './issuesTree/descriptorTree/dependencyIssueTreeNode';
 
 export enum State {
     Local = 0,
@@ -30,16 +31,15 @@ export enum State {
  * Manages all the trees in the extension: Builds (CI state), Issues (Local state).
  */
 export class TreesManager implements ExtensionComponent {
-    
     private _ciTreeView!: vscode.TreeView<DependenciesTreeNode>;
     private _buildsTreesProvider: BuildsDataProvider;
 
     // private _sourceCodeTreeView!: vscode.TreeView<SourceCodeRootTreeNode | SourceCodeFileTreeNode | SourceCodeCveTreeNode | CveApplicabilityRoot>;
-    private _issuesTreeView!: vscode.TreeView<IssuesRootTreeNode | FileTreeNode | IssueTreeNode>;
+    private _issuesTreeView!: vscode.TreeView<IssuesRootTreeNode | FileTreeNode | IssueTreeNode | DependencyIssuesTreeNode>;
     private _issuesTreeDataProvider: IssuesTreeDataProvider;
     // private _treeDataProviderManager: TreeDataProviderManager;
     // private _dependenciesTreeDataProvider: DependenciesTreeDataProvider;
-    
+
     private _dependencyDetailsProvider: DependencyDetailsProvider;
     // private _sourceCodeTreeDataProvider: SourceCodeTreeDataProvider;
     private _state: State;
@@ -64,7 +64,7 @@ export class TreesManager implements ExtensionComponent {
     }
 
     public async activate(context: vscode.ExtensionContext): Promise<TreesManager> {
-        this._ciTreeView = vscode.window.createTreeView('jfrog.xray.ci', {
+        this._ciTreeView = vscode.window.createTreeView('jfrog.xray.ci.issues', {
             treeDataProvider: this._buildsTreesProvider,
             showCollapseAll: true
         });
@@ -75,7 +75,7 @@ export class TreesManager implements ExtensionComponent {
         context.subscriptions.push(
             this._ciTreeView,
             this._issuesTreeView,
-            vscode.window.registerTreeDataProvider('jfrog.xray.dependency.details', this._dependencyDetailsProvider)
+            vscode.window.registerTreeDataProvider('jfrog.xray.ci.issues.details', this._dependencyDetailsProvider)
         );
         return Promise.resolve(this).finally(() => this.issuesTreeDataProvider.refresh(false));
     }
@@ -110,7 +110,7 @@ export class TreesManager implements ExtensionComponent {
         return this._state === State.CI;
     }
 
-    get issuesTreeView(): vscode.TreeView<IssuesRootTreeNode | FileTreeNode | IssueTreeNode> {
+    get issuesTreeView(): vscode.TreeView<IssuesRootTreeNode | FileTreeNode | IssueTreeNode | DependencyIssuesTreeNode> {
         return this._issuesTreeView;
     }
 
@@ -177,6 +177,4 @@ export class TreesManager implements ExtensionComponent {
     // public set treeDataProviderManager(value: TreeDataProviderManager) {
     //     this._treeDataProviderManager = value;
     // }
-
-    
 }

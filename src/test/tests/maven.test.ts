@@ -18,7 +18,7 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { MavenUtils } from '../../main/utils/mavenUtils';
 import { PomTree } from '../../main/utils/pomTree';
 import { ScanUtils } from '../../main/utils/scanUtils';
-import { createScanCacheManager/*, getNodeByArtifactId*/ } from './utils/utils.test';
+import { createScanCacheManager /*, getNodeByArtifactId*/ } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
 import { ProjectDetails } from '../../main/types/projectDetails';
 import { ComponentDetails } from 'jfrog-client-js';

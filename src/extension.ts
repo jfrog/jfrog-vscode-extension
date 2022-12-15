@@ -47,7 +47,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // let issueFilterManager: IssuesFilterManager = new IssuesFilterManager(/*treesManager*/).activate();
 
-    let filterManager: FilterManager = new FilterManager(treesManager,scanCacheManager).activate();
+    let filterManager: FilterManager = new FilterManager(treesManager, scanCacheManager).activate();
     let focusManager: FocusManager = new FocusManager().activate();
     // let exclusionManager: ExclusionsManager = new ExclusionsManager(treesManager).activate();
     // let dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager(scanCacheManager).activate();
@@ -68,7 +68,7 @@ export async function activate(context: vscode.ExtensionContext) {
         focusManager,
         // exclusionManager,
         // dependencyUpdateManager,
-        buildsManager,
+        buildsManager
         // exportManager,
         // issueFilterManager
     ).activate(context);

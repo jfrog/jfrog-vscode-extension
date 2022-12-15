@@ -40,7 +40,7 @@ describe('Issues Data Provider Tests', () => {
     // );
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
     // let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider(workspaceFolders, treesManager);
-    let dependencyDetailsProvider: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager);//, sourceCodeTreeDataProvider);
+    let dependencyDetailsProvider: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager); //, sourceCodeTreeDataProvider);
     let issuesDataProvider: IssuesDataProvider = dependencyDetailsProvider.issuesDataProvider;
     let dependenciesTreeNode: DependenciesTreeNode;
 

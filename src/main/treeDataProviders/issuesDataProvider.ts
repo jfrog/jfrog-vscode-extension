@@ -24,7 +24,8 @@ export abstract class IssueNode extends vscode.TreeItem {
 export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProvider<vscode.TreeItem> {
     private _selectedNode!: DependenciesTreeNode;
 
-    constructor(protected _scanCacheManager: ScanCacheManager){//, private _sourceCodeTreeDataProvider: SourceCodeTreeDataProvider) {
+    constructor(protected _scanCacheManager: ScanCacheManager) {
+        //, private _sourceCodeTreeDataProvider: SourceCodeTreeDataProvider) {
         // Open issue tab by default.
         super('Issues', vscode.TreeItemCollapsibleState.Expanded);
     }

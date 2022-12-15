@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
-import { IComponent, IGraphResponse, IVulnerability } from 'jfrog-client-js';
+import { IComponent, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
 import { IImpactedPath, ILicense } from 'jfrog-ide-webview';
 import { DescriptorIssuesData } from '../../cache/issuesCache';
 import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
@@ -14,6 +14,7 @@ import { DependencyIssuesTreeNode } from '../issuesTree/descriptorTree/dependenc
 import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
 import { PackageType } from '../../types/projectType';
 import { ProjectDetails } from '../../types/projectDetails';
+import { LicenseIssueTreeNode } from '../issuesTree/descriptorTree/licenseIssueTreeNode';
 
 export class DescriptorUtils {
     /**
@@ -70,21 +71,41 @@ export class DescriptorUtils {
 
     private static counter: number = 0;
 
+    private static populateDependencyData(
+        componentId: string,
+        component: IComponent,
+        severity: Severity,
+        descriptorNode: DescriptorTreeNode,
+        impactedPath: IImpactedPath | undefined
+    ): DependencyIssuesTreeNode {
+        let dependencyWithIssue: DependencyIssuesTreeNode | undefined = descriptorNode.getDependencyByID(componentId);
+
+        if (dependencyWithIssue == undefined) {
+            dependencyWithIssue = new DependencyIssuesTreeNode(componentId, component, severity, descriptorNode, impactedPath);
+            descriptorNode.dependenciesWithIssue.push(dependencyWithIssue);
+        } else if (severity > dependencyWithIssue.topSeverity) {
+            dependencyWithIssue.topSeverity = severity;
+        }
+
+        return dependencyWithIssue;
+    }
+
     // TODO: Move to ScanUtils
     public static populateDescriptorData(descriptorNode: DescriptorTreeNode, descriptorData: DescriptorIssuesData): number {
         let graphResponse: IGraphResponse = descriptorData.dependenciesGraphScan;
+        descriptorNode.dependencyScanTimeStamp = descriptorData.graphScanTimestamp;
+
         let impactedPaths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>(Object.entries(descriptorData.convertedImpact));
-        // this._treesManager.logManager.logMessage('impact: ' + impactedPaths, 'DEBUG');
-        impactedPaths;
 
         // TODO: remove saving files below
         let scanPath: string = '/Users/assafa/Documents/response-' + this.counter++ + '.json';
         fs.writeFileSync(scanPath, JSON.stringify(graphResponse));
 
-        let issues: IVulnerability[] = graphResponse.violations ? graphResponse.violations : graphResponse.vulnerabilities;
+        let issues: IVulnerability[] | IViolation[] = graphResponse.violations ? graphResponse.violations : graphResponse.vulnerabilities;
+
         let topSeverity: Severity = Severity.Unknown;
         for (let i: number = 0; i < issues.length; i++) {
-            let issue: IVulnerability = issues[i];
+            let issue: IVulnerability | IViolation = issues[i];
             let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id);
             // this._treesManager.logManager.logMessage("impacted path for '" + issue.issue_id + "':\n" + impactedPath, 'DEBUG');
             let severity: Severity = SeverityUtils.getSeverity(issue.severity);
@@ -93,36 +114,33 @@ export class DescriptorUtils {
             }
 
             for (let [componentId, component] of Object.entries(issue.components)) {
-                let dependencyWithIssue: DependencyIssuesTreeNode | undefined = descriptorNode.getDependencyByID(componentId);
-
-                if (dependencyWithIssue == undefined) {
-                    dependencyWithIssue = new DependencyIssuesTreeNode(componentId, component, severity, descriptorNode, impactedPath);
-                    descriptorNode.dependenciesWithIssue.push(dependencyWithIssue);
-                } else if (severity > dependencyWithIssue.topSeverity) {
-                    dependencyWithIssue.topSeverity = severity;
-                }
-
-                for (let cveIssue of issue.cves) {
-                    dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, cveIssue));
+                let dependencyWithIssue: DependencyIssuesTreeNode = this.populateDependencyData(
+                    componentId,
+                    component,
+                    severity,
+                    descriptorNode,
+                    impactedPath
+                );
+                let violationIssue: IViolation = <IViolation>issue;
+                if (violationIssue && violationIssue.license_key) {
+                    dependencyWithIssue.issues.push(new LicenseIssueTreeNode(violationIssue, severity, dependencyWithIssue));
+                } else {
+                    for (let cveIssue of issue.cves) {
+                        dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, cveIssue));
+                    }
                 }
             }
         }
-        descriptorNode.severity = topSeverity;
-        descriptorNode.dependencyScanTimeStamp = descriptorData.graphScanTimestamp;
 
         graphResponse.licenses.forEach(license => {
-            Object.values(license.components).forEach(component => {
-                let dependencyWithIssue: DependencyIssuesTreeNode | undefined = descriptorNode.searchDependency(
-                    component.package_type,
-                    component.package_name,
-                    component.package_version
-                );
-                if (dependencyWithIssue != undefined) {
-                    dependencyWithIssue.licenses.push({ name: license.license_name } as ILicense); // TODO: tell or, what is the plan about those
-                }
-            });
+            for (let [componentId, component] of Object.entries(license.components)) {
+                let dependencyWithIssue: DependencyIssuesTreeNode | undefined = descriptorNode.getDependencyByID(componentId);
+                component;
+                dependencyWithIssue?.licenses.push({ name: license.license_key } as ILicense); // TODO: tell or, what is the plan about those
+            }
         });
 
+        descriptorNode.severity = topSeverity;
         return descriptorNode.dependenciesWithIssue.length;
     }
 
