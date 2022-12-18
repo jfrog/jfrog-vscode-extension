@@ -90,96 +90,6 @@ export class CommandManager implements ExtensionComponent {
         vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ExtensionMode.Ci, this._treesManager.isCiState());
     }
 
-    // /**
-    //  * Show the dependency in the project descriptor (e.g. package.json) file after right click on the components tree and a left click on "Show in project descriptor".
-    //  * @param dependenciesTreeNode - The dependency to show.
-    //  */
-    // private doShowInProjectDesc(dependenciesTreeNode: DependenciesTreeNode) {
-    //     this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.Dependency);
-    //     this.onSelectNode(dependenciesTreeNode);
-    // }
-
-
-    
-    // private openFile(file: any) {
-    //     return this._focusManager.openFile(file);
-    // }
-
-    // /**
-    //  * Reveal the file and a specific line number that a CVE is found by the CVE applicability scan.
-    //  * This functionality is included in:
-    //  * 1. Click on the 'eye' button
-    //  * 2. Click on the actual CVE in the CVE applicability view
-    //  * 3. Click on the reference / actual CVE in the CVE applicability view
-    //  * 4. Click on the CVE node in the dependency details view
-    //  * @param node - CVE node
-    //  * @param index - index to jump in the CVE Node.
-    //  */
-    // private jumpToSource(node: /*SourceCodeCveTreeNode |*/ VulnerabilityNode | TreeDataHolder, index: number) {
-    //     if (node instanceof VulnerabilityNode) {
-    //         return this._focusManager.focusOnCve(node.sourceCodeCveTreeNode);
-    //     }
-    //     if (node instanceof TreeDataHolder) {
-    //         return this._focusManager.focusOnCve(node.command?.arguments?.[0], node.command?.arguments?.[1]);
-    //     }
-    //     return this._focusManager.focusOnCve(node, index);
-    // }
-
-    // /**
-    //  * Exclude dependency in the project descriptor (e.g. package.json).
-    //  * @param dependenciesTreeNode - The dependency to exclude
-    //  */
-    // private doExcludeDependency(dependenciesTreeNode: DependenciesTreeNode) {
-    //     this._exclusionManager.excludeDependency(dependenciesTreeNode);
-    // }
-
-    // /**
-    //  * Update a dependency in the project descriptor (e.g. package.json) to a new version.
-    //  * @param dependenciesTreeNode - The dependency to update
-    //  */
-    // private async doUpdateDependencyVersion(dependenciesTreeNode: DependenciesTreeNode) {
-    //     await ScanUtils.scanWithProgress(async (): Promise<void> => {
-    //         try {
-    //             if (!(await this._DependencyUpdateManager.updateDependencyVersion(dependenciesTreeNode))) {
-    //                 return;
-    //             }
-    //             this._focusManager.focusOnDependency(dependenciesTreeNode, FocusType.DependencyVersion);
-    //             this._treesManager.treeDataProviderManager.removeNode(dependenciesTreeNode);
-    //         } catch (error) {
-    //             vscode.window.showErrorMessage('Could not update dependency version.', <vscode.MessageOptions>{ modal: false });
-    //             this._treesManager.logManager.logMessage((<any>error).message, 'ERR', true);
-    //         }
-    //     }, 'Updating ' + dependenciesTreeNode.generalInfo.getComponentId());
-    // }
-
-    // /**
-    //  * Open a webpage with the desired url.
-    //  * @param url - The url to be opened.
-    //  */
-    // private doOpenLink(url: string) {
-    //     if (!url) {
-    //         return;
-    //     }
-    //     vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
-    // }
-
-    // /**
-    //  * Select node in the components tree after a click on the yellow bulb. (The opposite action of @function doShowInProjectDesc ).
-    //  * @param dependenciesTreeNode - The dependency to show.
-    //  */
-    // private doCodeAction(dependenciesTreeNode: DependenciesTreeNode) {
-    //     this._treesManager.dependenciesTreeView.reveal(dependenciesTreeNode, { focus: true });
-    //     this.onSelectNode(dependenciesTreeNode);
-    // }
-
-    // /**
-    //  * Shows a specific node in the source code tree after clicking on the bulb icon in the source code.
-    //  * @param sourceCodeCveTreeNode
-    //  */
-    // private showInSourceCodeTree(sourceCodeCveTreeNode: SourceCodeCveTreeNode) {
-    //     this._treesManager.sourceCodeTreeView.reveal(sourceCodeCveTreeNode, { focus: true, select: true, expand: true });
-    // }
-
     /**
      * Focus on dependency after a click on a dependency in the components tree.
      * @param dependenciesTreeNode - The chosen dependency.
@@ -222,45 +132,13 @@ export class CommandManager implements ExtensionComponent {
         this._logManager.showOutput();
     }
 
-    // private firstTime: boolean = true;
-
     /**
      * Refresh the components tree.
-     * @param quickScan - True to allow reading from scan cache.
+     * @param scan - True to scan the workspace, false will load from cache
      */
-    private async doRefresh(quickScan: boolean = true) {
-        // this._treesManager.vulnerabilitiesTreeDataProvider.onChangeFire();
-        // await this._treesManager.treeDataProviderManager.refresh(quickScan);
-        await this._treesManager.issuesTreeDataProvider.refresh(quickScan);
+    private async doRefresh(scan: boolean = true) {
+        await this._treesManager.refresh(scan);
     }
-
-    // private async doCodeScanRefresh(quickScan: boolean = false) {
-    //     await ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
-    //         progress.report({ message: '📝 Code vulnerability scanning' });
-    //         checkCanceled();
-    //         await this._treesManager.sourceCodeTreeDataProvider.update();
-    //         checkCanceled();
-    //         await this._treesManager.sourceCodeTreeDataProvider.refresh();
-    //     }, 'Code vulnerability scanning');
-
-    //     await vscode.window.withProgress(
-    //         <vscode.ProgressOptions>{
-    //             // Start progress in balloon only if the user initiated a full scan by clicking on the "Refresh" button.
-    //             // Otherwise - show the progress in the status bar.
-    //             location: quickScan ? vscode.ProgressLocation.Window : vscode.ProgressLocation.Notification,
-    //             title: 'Code vulnerability scanning',
-    //             cancellable: true
-    //         },
-    //         async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {
-    //             progress.report({ message: '📝 Code vulnerability scanning' });
-    //             token.onCancellationRequested(() => {
-    //                 console.log('Canceled CVE Applicability scan');
-    //             });
-    //             await this._treesManager.sourceCodeTreeDataProvider.update();
-    //             await this._treesManager.sourceCodeTreeDataProvider.refresh();
-    //         }
-    //     );
-    // }
 
     /**
      * Connect to JFrog Platform server. If the connection success, perform a quick scan.
@@ -340,13 +218,6 @@ export class CommandManager implements ExtensionComponent {
         this._filterManager.showFilterMenu();
     }
 
-    // /**
-    //  * Show the filter menu.
-    //  */
-    // private doIssuesFilter() {
-    //     this._issuesFilterManager.showFilterMenu();
-    // }
-
     /**
      * Show the builds menu.
      */
@@ -370,11 +241,4 @@ export class CommandManager implements ExtensionComponent {
     private onSelectNode(dependenciesTreeNode: DependenciesTreeNode) {
         this._treesManager.dependencyDetailsProvider.selectNode(dependenciesTreeNode);
     }
-
-    // /**
-    //  * Export vulnerabilities/violations to an external file.
-    //  */
-    // private doExport() {
-    //     this._exportManager.showExportMenu();
-    // }
 }

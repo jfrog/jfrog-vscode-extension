@@ -22,7 +22,6 @@ export class GraphScanLogic {
      * @returns the result of the scan
      */
     public async scan(graphRoot: RootNode, flatten: boolean, progress: XrayScanProgress, checkCanceled: () => void): Promise<IGraphResponse> {
-        // Convert DependenciesTreeNode to IGraphRequestModel
         let graphRequest: IGraphRequestModel = {
             component_id: graphRoot.generalInfo.artifactId,
             nodes: flatten ? this.getFlattenRequestModelNodes(graphRoot, new Set<string>) : this.getGraphRequestModelNodes(graphRoot)

@@ -3,17 +3,9 @@ import { ConnectionManager } from '../connect/connectionManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
 import { ScanCacheManager } from '../cache/scanCacheManager';
-// import { ScanLogicManager } from '../scanLogic/scanLogicManager';
 import { BuildsDataProvider } from './dependenciesTree/buildsDataProvider';
-// import { DependenciesTreeDataProvider } from './dependenciesTree/dependenciesDataProvider';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { DependencyDetailsProvider } from './dependencyDetailsProvider';
-// import { TreeDataProviderManager } from './dependenciesTree/treeDataProviderManager';
-// import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
-// import { SourceCodeCveTreeNode } from './sourceCodeTree/sourceCodeCveNode';
-// import { CveApplicabilityRoot } from './sourceCodeTree/cveApplicabilityRoot';
-// import { SourceCodeFileTreeNode } from './sourceCodeTree/sourceCodeFileTreeNode';
-// import { SourceCodeRootTreeNode } from './sourceCodeTree/sourceCodeRootTreeNode';
 import { IssuesTreeDataProvider } from './issuesTree/issuesTreeDataProvider';
 import { FileTreeNode } from './issuesTree/fileTreeNode';
 import { ScanManager } from '../scanLogic/scanManager';
@@ -34,29 +26,21 @@ export class TreesManager implements ExtensionComponent {
     private _ciTreeView!: vscode.TreeView<DependenciesTreeNode>;
     private _buildsTreesProvider: BuildsDataProvider;
 
-    // private _sourceCodeTreeView!: vscode.TreeView<SourceCodeRootTreeNode | SourceCodeFileTreeNode | SourceCodeCveTreeNode | CveApplicabilityRoot>;
     private _issuesTreeView!: vscode.TreeView<IssuesRootTreeNode | FileTreeNode | IssueTreeNode | DependencyIssuesTreeNode>;
     private _issuesTreeDataProvider: IssuesTreeDataProvider;
-    // private _treeDataProviderManager: TreeDataProviderManager;
-    // private _dependenciesTreeDataProvider: DependenciesTreeDataProvider;
 
     private _dependencyDetailsProvider: DependencyDetailsProvider;
-    // private _sourceCodeTreeDataProvider: SourceCodeTreeDataProvider;
     private _state: State;
 
     constructor(
-        /*private*/ workspaceFolders: vscode.WorkspaceFolder[],
+        workspaceFolders: vscode.WorkspaceFolder[],
         private _connectionManager: ConnectionManager,
-        private _scanCacheManager: ScanCacheManager, // tobe deleted when refactoring builds
-        // scanLogicManager: ScanLogicManager,
+        private _scanCacheManager: ScanCacheManager,
         private _scanManager: ScanManager,
         private _cacheManager: CacheManager,
         private _logManager: LogManager
     ) {
-        // this._dependenciesTreeDataProvider = new DependenciesTreeDataProvider(workspaceFolders, this, scanLogicManager);
         this._buildsTreesProvider = new BuildsDataProvider(this);
-        // this._sourceCodeTreeDataProvider = new SourceCodeTreeDataProvider(workspaceFolders, this);
-        // this._treeDataProviderManager = new TreeDataProviderManager(this);
         this._dependencyDetailsProvider = new DependencyDetailsProvider(_scanCacheManager);
 
         this._issuesTreeDataProvider = new IssuesTreeDataProvider(workspaceFolders, _logManager, _scanManager, _cacheManager, this);
@@ -92,7 +76,6 @@ export class TreesManager implements ExtensionComponent {
         this._state = value;
         if (this._state === State.Local) {
             this.issuesTreeDataProvider.refresh(false);
-            // this._treesManager.issuesTreeDataProvider.refresh()
         } else {
             this._buildsTreesProvider.stateChange();
         }
@@ -126,22 +109,6 @@ export class TreesManager implements ExtensionComponent {
         this._dependencyDetailsProvider = value;
     }
 
-    // public get sourceCodeTreeView(): vscode.TreeView<SourceCodeRootTreeNode | SourceCodeFileTreeNode | SourceCodeCveTreeNode | CveApplicabilityRoot> {
-    //     return this._sourceCodeTreeView;
-    // }
-
-    // public get dependenciesTreeView(): vscode.TreeView<DependenciesTreeNode> {
-    //     return this._ciTreeView;
-    // }
-
-    // get dependenciesTreeDataProvider(): DependenciesTreeDataProvider {
-    //     return this._dependenciesTreeDataProvider;
-    // }
-
-    // get sourceCodeTreeDataProvider(): SourceCodeTreeDataProvider {
-    //     return this._sourceCodeTreeDataProvider;
-    // }
-
     public get connectionManager(): ConnectionManager {
         return this._connectionManager;
     }
@@ -169,12 +136,4 @@ export class TreesManager implements ExtensionComponent {
     set buildsTreesProvider(value: BuildsDataProvider) {
         this._buildsTreesProvider = value;
     }
-
-    // public get treeDataProviderManager(): TreeDataProviderManager {
-    //     return this._treeDataProviderManager;
-    // }
-
-    // public set treeDataProviderManager(value: TreeDataProviderManager) {
-    //     this._treeDataProviderManager = value;
-    // }
 }
