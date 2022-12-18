@@ -7,7 +7,8 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { ProjectDetails } from '../types/projectDetails';
 import * as fs from 'fs';
 import { ScanUtils } from './scanUtils';
-import { FocusType } from '../focus/abstractFocus';
+import { FocusType } from '../constants/contextKeys';
+// import { FocusType } from '../focus/abstractFocus';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };

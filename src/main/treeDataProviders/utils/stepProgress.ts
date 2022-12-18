@@ -2,6 +2,9 @@ import { XrayScanProgress } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { LogManager } from '../../log/logManager';
 
+/**
+ * Manage the vscode.Progress with steps and substeps if needed
+ */
 export class StepProgress {
     private static readonly MAX_PROGRESS: number = 95;
 
@@ -20,6 +23,13 @@ export class StepProgress {
         return this._totalSteps;
     }
 
+    /**
+     * Call this method at the beggining of each step.
+     * Shows the title of the step and caclulate the needed progress information for the substeps.
+     * Calls onProgress method if provided
+     * @param msg
+     * @param subSteps
+     */
     public startStep(msg: string, subSteps?: number) {
         this.currentStepsDone++;
         this.currentStepMsg = msg + (this._totalSteps > 1 ? ' (' + this.currentStepsDone + '/' + this._totalSteps + ')' : '');
@@ -30,12 +40,19 @@ export class StepProgress {
         }
     }
 
-    public get getReportIncValue(): number {
+    /**
+     * Get the total amount of progress precentege (45% -> 45) allocated for each step or substep if substeps amount was given on starting the step
+     */
+    public get getStepIncValue(): number {
         let incPerStep: number = StepProgress.MAX_PROGRESS / this._totalSteps;
         return this.currentSubstepsCount ? incPerStep / this.currentSubstepsCount : incPerStep;
     }
 
-    public reportProgress(inc: number = this.getReportIncValue) {
+    /**
+     * Report progress amount, will update the progress and call onProgress method if provided
+     * @param inc - the total amount of progress to increase, default amonut is getStepIncValue
+     */
+    public reportProgress(inc: number = this.getStepIncValue) {
         if (this.currentStepMsg) {
             this._progress.report({ message: this.currentStepMsg, increment: inc });
             if (this.onProgress) {
@@ -43,16 +60,20 @@ export class StepProgress {
             }
         }
     }
+
+    /**
+     * Create an XrayScanProgress that is linked to this manager and will report progress
+     * @param scanName - the scan name that will be shown in the debug if logManager is provided
+     * @returns XrayScanProgress to use in a scan
+     */
     public createScanProgress(scanName: string): XrayScanProgress {
-        // let progressManager: StepProgress = this;
-        // let totalIncrement: number = this.currentSubstepsCount ? StepProgress.MAX_PROGRESS / this.currentSubstepsCount : StepProgress.MAX_PROGRESS;
         return new (class implements XrayScanProgress {
             private lastPercentage: number = 0;
             constructor(private _progressManager: StepProgress, private _log?: LogManager) {}
             /** @override */
             public setPercentage(percentage: number): void {
                 if (percentage != this.lastPercentage) {
-                    let inc: number = this._progressManager.getReportIncValue * ((percentage - this.lastPercentage) / 100);
+                    let inc: number = this._progressManager.getStepIncValue * ((percentage - this.lastPercentage) / 100);
                     this._log?.logMessage(
                         '[' +
                             scanName +

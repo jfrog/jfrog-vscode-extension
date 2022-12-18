@@ -5,7 +5,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 // import { GoDependencyUpdate } from '../../main/dependencyUpdate/goDependencyUpdate';
-import { FocusType } from '../../main/focus/abstractFocus';
+// import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 // import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
@@ -22,6 +22,7 @@ import { ProjectDetails } from '../../main/types/projectDetails';
 import { ProjectComponents } from '../../main/types/projectComponents';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
+import { FocusType } from '../../main/constants/contextKeys';
 
 /**
  * Test functionality of @class GoUtils.

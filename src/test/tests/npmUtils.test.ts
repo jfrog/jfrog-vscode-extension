@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 // import { NpmDependencyUpdate } from '../../main/dependencyUpdate/npmDependencyUpdate';
-import { FocusType } from '../../main/focus/abstractFocus';
+// import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 // import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
@@ -19,6 +19,7 @@ import { PackageType } from '../../main/types/projectType';
 import { ProjectDetails } from '../../main/types/projectDetails';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
+import { FocusType } from '../../main/constants/contextKeys';
 
 /**
  * Test functionality of @class NpmUtils.

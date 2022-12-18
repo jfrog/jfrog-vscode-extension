@@ -20,7 +20,7 @@ import { ScanManager } from '../scanLogic/scanManager';
 import { IssuesRootTreeNode } from './issuesTree/issuesRootTreeNode';
 import { CacheManager } from '../cache/cacheManager';
 import { IssueTreeNode } from './issuesTree/issueTreeNode';
-import { DependencyIssuesTreeNode } from './issuesTree/descriptorTree/dependencyIssueTreeNode';
+import { DependencyIssuesTreeNode } from './issuesTree/descriptorTree/dependencyIssuesTreeNode';
 
 export enum State {
     Local = 0,

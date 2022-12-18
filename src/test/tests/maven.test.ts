@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 // import { MavenDependencyUpdate } from '../../main/dependencyUpdate/mavenDependencyUpdate';
 // import { MavenExclusion } from '../../main/exclusions/mavenExclusion';
-import { FocusType } from '../../main/focus/abstractFocus';
+// import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 // import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
@@ -24,6 +24,7 @@ import { ProjectDetails } from '../../main/types/projectDetails';
 import { ComponentDetails } from 'jfrog-client-js';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
+import { FocusType } from '../../main/constants/contextKeys';
 
 /**
  * Test functionality of Maven.

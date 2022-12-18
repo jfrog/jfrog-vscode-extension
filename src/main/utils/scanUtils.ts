@@ -90,6 +90,21 @@ export class ScanUtils {
         return undefined;
     }
 
+    public static async openFile(filePath: string) {
+        if (filePath === undefined || filePath === '') {
+            return;
+        }
+        let openPath: vscode.Uri = vscode.Uri.file(filePath);
+        if (!openPath) {
+            return;
+        }
+        let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(openPath);
+        let textEditor: vscode.TextEditor | undefined = await vscode.window.showTextDocument(textDocument);
+        if (!textEditor) {
+            return;
+        }
+    }
+
     static async removeFolder(folderPath: string): Promise<void> {
         if (fse.pathExistsSync(folderPath)) {
             await fse.remove(folderPath);

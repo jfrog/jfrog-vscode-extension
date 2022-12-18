@@ -1,23 +1,15 @@
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
-// import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
-// import { ExclusionsManager } from '../exclusions/exclusionsManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { FilterManager } from '../filter/filterManager';
-// import { FocusType } from '../focus/abstractFocus';
-import { FocusManager } from '../focus/focusManager';
 import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { State, TreesManager } from '../treeDataProviders/treesManager';
 import { TreeDataHolder } from '../treeDataProviders/utils/treeDataHolder';
-// import { ScanUtils } from '../utils/scanUtils';
 import { BuildsManager } from '../builds/buildsManager';
 import { Configuration } from '../utils/configuration';
-// import { ExportManager } from '../export/exportManager';
-// import { SourceCodeCveTreeNode } from '../treeDataProviders/sourceCodeTree/sourceCodeCveNode';
-// import { VulnerabilityNode } from '../treeDataProviders/issuesDataProvider';
 import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
-// import { IssuesFilterManager } from '../filter/issuesFilterManager';
+import { ScanUtils } from '../utils/scanUtils';
 
 /**
  * Register and execute all commands in the extension.
@@ -28,51 +20,35 @@ export class CommandManager implements ExtensionComponent {
         private _connectionManager: ConnectionManager,
         private _treesManager: TreesManager,
         private _filterManager: FilterManager,
-        private _focusManager: FocusManager,
-        // private _exclusionManager: ExclusionsManager,
-        // private _DependencyUpdateManager: DependencyUpdateManager,
-        private _buildsManager: BuildsManager // private _exportManager: ExportManager,
-    ) // private _issuesFilterManager: IssuesFilterManager
-    {}
+        private _buildsManager: BuildsManager
+    ) {}
 
     public activate(context: vscode.ExtensionContext) {
-        this.registerCommand(context, 'jfrog.xray.file.open', file => this.openFile(file));
-
-        // this.registerCommand(context, 'jfrog.source.code.scan.jumpToSource', (sourceCodeTreeNode, index) =>
-        //     this.jumpToSource(sourceCodeTreeNode, index)
-        // );
-        // this.registerCommand(context, 'jfrog.source.code.scan.showInSourceCodeTree', sourceCodeTreeNode =>
-        //     this.showInSourceCodeTree(sourceCodeTreeNode)
-        // );
-        // this.registerCommand(context, 'jfrog.xray.showInProjectDesc', dependenciesTreeNode => this.doShowInProjectDesc(dependenciesTreeNode));
-        // this.registerCommand(context, 'jfrog.xray.excludeDependency', dependenciesTreeNode => this.doExcludeDependency(dependenciesTreeNode));
-        // this.registerCommand(context, 'jfrog.xray.updateDependency', dependenciesTreeNode => this.doUpdateDependencyVersion(dependenciesTreeNode));
-        // this.registerCommand(context, 'jfrog.xray.codeAction', dependenciesTreeNode => this.doCodeAction(dependenciesTreeNode));
-        this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
-        this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
-        this.registerCommand(context, 'jfrog.xray.openLink', url => this.doOpenLink(url));
+        // Connection
         this.registerCommand(context, 'jfrog.xray.disconnect', () => this.doDisconnect(true));
         this.registerCommand(context, 'jfrog.xray.resetConnection', () => this.doDisconnect(false));
         this.registerCommand(context, 'jfrog.show.connectionStatus', () => this.showConnectionStatus());
-        this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
-        this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
-        // this.registerCommand(context, 'jfrog.source.code.scan.refresh', () => this.doCodeScanRefresh());
         this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
         this.registerCommand(context, 'jfrog.xray.reConnect', () => this.doReconnect());
+        // General
+        this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
+        this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
+        this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
+        // Local state
+        this.registerCommand(context, 'jfrog.xray.file.open', file => ScanUtils.openFile(file));
+        this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
+        // CI state
+        this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.filter', () => this.doFilter());
         this.registerCommand(context, 'jfrog.xray.local', () => this.doLocal());
-        this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
         this.registerCommand(context, 'jfrog.xray.builds', () => this.doBuildSelected());
-        // this.registerCommand(context, 'jfrog.xray.export', () => this.doExport());
 
-        // this.registerCommand(context, 'jfrog.xray.issues.filter', () => this.doIssuesFilter());
         this.updateLocalCiIcons();
     }
 
     public doLocal() {
         this._treesManager.state = State.Local;
         this.updateLocalCiIcons();
-        // this._treesManager.treeDataProviderManager.stateChange(); // delete, no need
     }
 
     public doCi() {
@@ -81,7 +57,6 @@ export class CommandManager implements ExtensionComponent {
         }
         this._treesManager.state = State.CI;
         this.updateLocalCiIcons();
-        // this._treesManager.treeDataProviderManager.stateChange();
     }
 
     private areCiPreconditionsMet() {
@@ -124,9 +99,11 @@ export class CommandManager implements ExtensionComponent {
     //     this.onSelectNode(dependenciesTreeNode);
     // }
 
-    private openFile(file: any) {
-        return this._focusManager.openFile(file);
-    }
+
+    
+    // private openFile(file: any) {
+    //     return this._focusManager.openFile(file);
+    // }
 
     // /**
     //  * Reveal the file and a specific line number that a CVE is found by the CVE applicability scan.
@@ -175,16 +152,16 @@ export class CommandManager implements ExtensionComponent {
     //     }, 'Updating ' + dependenciesTreeNode.generalInfo.getComponentId());
     // }
 
-    /**
-     * Open a webpage with the desired url.
-     * @param url - The url to be opened.
-     */
-    private doOpenLink(url: string) {
-        if (!url) {
-            return;
-        }
-        vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
-    }
+    // /**
+    //  * Open a webpage with the desired url.
+    //  * @param url - The url to be opened.
+    //  */
+    // private doOpenLink(url: string) {
+    //     if (!url) {
+    //         return;
+    //     }
+    //     vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(url));
+    // }
 
     // /**
     //  * Select node in the components tree after a click on the yellow bulb. (The opposite action of @function doShowInProjectDesc ).

@@ -1,4 +1,4 @@
-import { IReference, IResearch } from 'jfrog-client-js';
+import { IReference, IExtendedInformation } from 'jfrog-client-js';
 import { Severity } from './severity';
 
 export interface IIssueCacheObject {
@@ -9,5 +9,5 @@ export interface IIssueCacheObject {
     summary: string;
     severity: Severity;
     fixedVersions: string[];
-    researchInfo?: IResearch;
+    researchInfo?: IExtendedInformation;
 }

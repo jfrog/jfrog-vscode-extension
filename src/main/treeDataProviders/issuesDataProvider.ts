@@ -11,7 +11,7 @@ import { TreeDataHolder } from './utils/treeDataHolder';
 // import { SourceCodeCveTreeNode } from './sourceCodeTree/sourceCodeCveNode';
 // import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
 import { Utils } from './utils/utils';
-import { IReference, IResearch } from 'jfrog-client-js';
+import { IExtendedInformation, IReference } from 'jfrog-client-js';
 
 export abstract class IssueNode extends vscode.TreeItem {
     constructor(label: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
@@ -274,7 +274,7 @@ export class VulnerabilityNode extends IssueNode {
         readonly fixedVersions?: string[],
         readonly applicable?: boolean, // If false, the given CVE is not applicable in the source code. If true, the given CVE is applicable in the source code.  If undefined, The CVE cannot be discovered.
         // readonly sourceCodeCveTreeNode?: SourceCodeCveTreeNode,
-        readonly researchInfo?: IResearch
+        readonly researchInfo?: IExtendedInformation
     ) {
         super(cve ? cve : xrayId, vscode.TreeItemCollapsibleState.Collapsed);
         // Enable eye button if we can jump to source code.

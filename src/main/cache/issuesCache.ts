@@ -1,91 +1,85 @@
-// import path from 'path';
+import * as vscode from 'vscode';
 import { IGraphResponse } from 'jfrog-client-js';
 import { IImpactedPath } from 'jfrog-ide-webview';
-import * as vscode from 'vscode';
-import * as fs from 'fs';
-// import { ScanUtils } from '../utils/scanUtils';
-// storage
-// issue cache saves per workspace the scans and the last time it was scanned completed
 
+/**
+ * Describes all the issue data for a specific workspace from Xray scan
+ */
 export interface WorkspaceIssuesData {
     path: string;
     descriptorsIssuesData: DescriptorIssuesData[];
     failedFiles: FileIssuesData[];
 }
-
+/**
+ * Describes all the issue data for a specific file from Xray scan
+ */
 export interface FileIssuesData {
     name: string;
     fullpath: string;
 }
-
+/**
+ * Describes all the issues data for a specific descriptor from Xray scan
+ */
 export interface DescriptorIssuesData extends FileIssuesData {
     graphScanTimestamp: number;
-    dependenciesGraphScan: IGraphResponse; // holds issue data and the dependecies with those issues.
-    convertedImpact: { [issue_id: string]: IImpactedPath }; // holds the impact path of each issue from descriptor to the dependecy with it entries of map: issue_id -> impact_path
+    dependenciesGraphScan: IGraphResponse;
+    impactTreeData: { [issue_id: string]: IImpactedPath };
 }
 
+/**
+ * Describes a cache that holds all the information from an Xray scan for a workspace
+ */
 export class IssuesCache {
-    // private static readonly CACHE_BASE_PATH: string = path.resolve(ScanUtils.getHomePath(), 'issues-cache');
     public static readonly CACHE_BASE_KEY: string = 'jfrog.xray.cache.issues.';
-    // private readonly cacheDir: string;
 
     constructor(public _cache: vscode.Memento) {}
 
-    static toKey(workSpace: vscode.WorkspaceFolder): string {
-        return IssuesCache.CACHE_BASE_KEY + workSpace.uri.fsPath;
+    /**
+     * Get the unique key for this workspace
+     * @param workspace - the workspace we want to get it's id
+     * @returns - the unique key for this workspace
+     */
+    public static toKey(workspace: vscode.WorkspaceFolder): string {
+        return IssuesCache.CACHE_BASE_KEY + workspace.uri.fsPath;
     }
 
-    static dataToJSON(val: WorkspaceIssuesData): string {
-        // val.descriptorsIssuesData.forEach(descriptor => {
-        //     descriptor.convertedImpact = Object.fromEntries(descriptor.impactedPaths.entries());
-        // });
-        return JSON.stringify(val);
-        // return JSON.stringify(val, (key, v) => {
-        //     if (key == "impactedPaths" && val !== null) {
-        //         return Array.from(v.entries());
-        //     } else {
-        //         return v;
-        //     }
-        // });
+    /**
+     * Check if the cache contains data for a given workspace
+     * @param workspace - the workspace to search in the cache
+     * @returns - true if exists in cache, false otherwise
+     */
+    public contains(workspace: vscode.WorkspaceFolder): boolean {
+        return !this._cache.keys().find(key => key == IssuesCache.toKey(workspace));
     }
 
-    static jsonToData(raw: string): WorkspaceIssuesData {
-        // let value: WorkspaceIssuesData = JSON.parse(raw);
-        // value.descriptorsIssuesData.forEach(descriptor => {
-        //     descriptor.impactedPaths = new Map<string, IImpactedPath>(Object.entries(descriptor.convertedImpact));
-        // });
-        return JSON.parse(raw);
-        // return JSON.parse(value, (key, val) => {
-        //     if (key == "impactedPaths" && val !== null) {
-        //         return new Map<string, IImpactedPath>(Object.entries(val.value));
-        //     }
-        //     return value;
-        // });
-    }
-
-    contains(workSpace: vscode.WorkspaceFolder): boolean {
-        return !this._cache.keys().find(key => key == IssuesCache.toKey(workSpace));
-    }
-
-    get(workSpace: vscode.WorkspaceFolder): WorkspaceIssuesData | undefined {
-        let rawData: string | undefined = this._cache.get(IssuesCache.toKey(workSpace));
+    /**
+     * Get the workspace issues data that is stored in the cache base on a given workspace
+     * @param workspace - the workspace to search it's data
+     * @returns WorkspaceIssuesData if exists in cache, false otherwise.
+     */
+    public get(workspace: vscode.WorkspaceFolder): WorkspaceIssuesData | undefined {
+        let rawData: string | undefined = this._cache.get(IssuesCache.toKey(workspace));
         if (rawData) {
-            return IssuesCache.jsonToData(rawData);
+            return JSON.parse(rawData);
         }
         return undefined;
     }
 
-    private static counter: number = 0;
-
-    store(workSpace: vscode.WorkspaceFolder, value: WorkspaceIssuesData) {
-        // TODO: remove saving files below
-        let scanPath: string = '/Users/assafa/Documents/data-' + IssuesCache.counter++ + '.json';
-        fs.writeFileSync(scanPath, JSON.stringify(value));
-
-        return this._cache.update(IssuesCache.toKey(workSpace), IssuesCache.dataToJSON(value));
+    /**
+     * Store a workspace issues data in the cache
+     * @param workspace - the workspace to store it's data
+     * @param value - the data we want to store
+     */
+    public store(workspace: vscode.WorkspaceFolder, value: WorkspaceIssuesData) {
+        return this._cache.update(IssuesCache.toKey(workspace), JSON.stringify(value));
     }
 
-    remove(workSpace: vscode.WorkspaceFolder) {
-        return this._cache.update(IssuesCache.toKey(workSpace), undefined);
+    /**
+     * Remove issues data of workspcae from cache
+     * @param workspace - the workspace to delete it's data
+     * @returns 
+     */
+    public remove(workspace: vscode.WorkspaceFolder) {
+        return this._cache.update(IssuesCache.toKey(workspace), undefined);
     }
 }

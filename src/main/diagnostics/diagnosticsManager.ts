@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
+// import { AbstractCodeActionProvider } from './abstractCodeActionProvider';
 // import { GoCodeActionProvider } from './goCodeActionProvider';
 // import { MavenCodeActionProvider } from './mavenCodeActionProvider';
 // import { NpmCodeActionProvider } from './npmCodeActionProvider';
@@ -22,7 +22,7 @@ import { DescriptorActionProvider } from './descriptorActionProvider';
  * 2. Provide red, yellow, green or white line under a vulnerable line in the source code file.
  */
 export class DiagnosticsManager implements ExtensionComponent {
-    private _codeActionProviders: (AbstractCodeActionProvider /*| ApplicabilityCodeActionProvider */ | AbstractFileActionProvider)[] = [];
+    private _codeActionProviders: /*AbstractCodeActionProvider| ApplicabilityCodeActionProvider */ AbstractFileActionProvider[] = [];
 
     constructor(treesManager: TreesManager) {
         let diagnosticCollection: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection();

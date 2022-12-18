@@ -4,9 +4,6 @@ import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { Configuration } from '../utils/configuration';
 
-import * as fs from 'fs';
-import { Utils } from '../treeDataProviders/utils/utils';
-
 /**
  * Used in Xray >= 3.29.0.
  * Run /scan/graph REST API and populate the cache with the results.
@@ -16,15 +13,21 @@ import { Utils } from '../treeDataProviders/utils/utils';
 export class GraphScanLogic {
     constructor(protected _connectionManager: ConnectionManager) {}
 
-    public async scan(projectRoot: RootNode, flatten: boolean, progress: XrayScanProgress, checkCanceled: () => void): Promise<IGraphResponse> {
+    /**
+     * Run async /scan/graph REST API and return the result
+     * @param graphRoot - the dependency graph to scan
+     * @param flatten - if true the graph will be faltten and reduce to unique entries only, otherwise grpah will be sent as is
+     * @param progress - the progress for this scan
+     * @param checkCanceled - method to check if the action was cancled
+     * @returns the result of the scan
+     */
+    public async scan(graphRoot: RootNode, flatten: boolean, progress: XrayScanProgress, checkCanceled: () => void): Promise<IGraphResponse> {
         // Convert DependenciesTreeNode to IGraphRequestModel
         let graphRequest: IGraphRequestModel = {
-            component_id: projectRoot.generalInfo.artifactId,
-            nodes: flatten ? this.getFlattenRequestModelNodes(projectRoot, new Set<string>) : this.getGraphRequestModelNodes(projectRoot)
+            component_id: graphRoot.generalInfo.artifactId,
+            nodes: flatten ? this.getFlattenRequestModelNodes(graphRoot, new Set<string>) : this.getGraphRequestModelNodes(graphRoot)
         } as IGraphRequestModel;
-        let scanPath: string = '/Users/assafa/Documents/request-' + (flatten ? "flatten-" : "") + Utils.getLastSegment(projectRoot.generalInfo.artifactId) + '.json';
-        fs.writeFileSync(scanPath, JSON.stringify(graphRequest));
-        // Run scan
+        
         return this._connectionManager.scanWithGraph(
             graphRequest,
             progress,
@@ -34,14 +37,19 @@ export class GraphScanLogic {
         );
     }
 
+    /**
+     * Flatten the dependency graph and remove duplications recursively.
+     * @param dependency - the dependency root to get its flatten children
+     * @param components - the componnets that are already discovered to remove duplication
+     * @returns - flatten unique dependency entries of the root children
+     */
     private getFlattenRequestModelNodes(dependency: DependenciesTreeNode, components: Set<string>): IGraphRequestModel[] {
         let nodes: IGraphRequestModel[] = [];
         for (let child of dependency.children) {
             if(child.dependencyId && !components.has(child.dependencyId)) {
                 components.add(child.dependencyId);
                 nodes.push({
-                    component_id: child.dependencyId,
-                    nodes: []
+                    component_id: child.dependencyId
                 } as IGraphRequestModel);
             }   
             nodes.push(...this.getFlattenRequestModelNodes(child,components));
@@ -49,7 +57,12 @@ export class GraphScanLogic {
         return nodes;
     }
 
-    private getGraphRequestModelNodes(dependency: DependenciesTreeNode): IGraphRequestModel[] {
+    /**
+     * Convert the dependnecies graph to the request model
+     * @param dependency - the graph we want to convert
+     * @returns IGraphRequestModel to send the scan
+     */
+    private getGraphRequestModelNodes(dependency: DependenciesTreeNode): IGraphRequestModel[] | undefined {
         let nodes: IGraphRequestModel[] = [];
         if (dependency.children.length > 0) {
             for (let child of dependency.children) {
@@ -59,6 +72,6 @@ export class GraphScanLogic {
                 } as IGraphRequestModel);
             }
         }
-        return nodes;
+        return nodes.length > 0 ? nodes : undefined;
     }
 }

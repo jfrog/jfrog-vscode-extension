@@ -1,12 +1,12 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-// import { VulnerabilityNode } from '../treeDataProviders/issuesDataProvider';
 import { IDependencyPage } from 'jfrog-ide-webview';
-// import { SeverityUtils } from '../types/severity';
 import { PageType } from 'jfrog-ide-webview';
-// import { CveTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 
-export class CveDetailsView {
+/**
+ * Show a webview panel with details about objects in the project
+ */
+export class DetailsWebView {
     public async activate(context: vscode.ExtensionContext) {
         let panel: vscode.WebviewPanel | undefined;
         context.subscriptions.push(

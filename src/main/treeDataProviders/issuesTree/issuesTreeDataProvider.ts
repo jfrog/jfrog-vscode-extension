@@ -1,34 +1,28 @@
 import * as vscode from 'vscode';
-
 import { ScanManager } from '../../scanLogic/scanManager';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { XrayScanProgress } from 'jfrog-client-js';
-
 import { IssuesRootTreeNode } from './issuesRootTreeNode';
 import { FileTreeNode } from './fileTreeNode';
 import { DescriptorTreeNode } from './descriptorTree/descriptorTreeNode';
-import { DependencyIssuesTreeNode } from './descriptorTree/dependencyIssueTreeNode';
+import { DependencyIssuesTreeNode } from './descriptorTree/dependencyIssuesTreeNode';
 import { CveTreeNode } from './descriptorTree/cveTreeNode';
-
 import { DependenciesTreesFactory } from '../dependenciesTree/dependenciesTreeFactory';
 import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
 import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
-
 import { CacheManager } from '../../cache/cacheManager';
 import { DescriptorIssuesData, FileIssuesData, WorkspaceIssuesData } from '../../cache/issuesCache';
-
 import { PackageType } from '../../types/projectType';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { StepProgress } from '../utils/stepProgress';
 import { Utils } from '../utils/utils';
 import { DescriptorUtils } from '../utils/descriptorUtils';
-
 import { TreesManager } from '../treesManager';
 import { IssueTreeNode } from './issueTreeNode';
 import { LogManager } from '../../log/logManager';
 import { LicenseIssueTreeNode } from './descriptorTree/licenseIssueTreeNode';
-import { IconsPaths } from '../../utils/iconsPaths';
+// import { IconsPaths } from '../../utils/iconsPaths';
 
 /**
  * Describes an error that occur during file scan.
@@ -126,8 +120,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                         .then(root => {
                             if (root) {
                                 this._workspaceToRoot.set(workspace, root);
-                                root.apply();
                                 root.title = Utils.getLastScanString(root.oldestScanTimestamp);
+                                root.apply();
                             } else {
                                 this._logManager.logMessage("WorkSpace '" + workspace.name + "' was never scanned", 'DEBUG');
                                 this._workspaceToRoot.set(workspace, undefined);
@@ -137,6 +131,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                             this._logManager.logMessage("Workspace '" + workspace.name + "' loading task ended with error:", 'DEBUG');
                             this._logManager.logError(error, true);
                             tempRoot.title = 'Loading error';
+                            tempRoot.apply();
                         })
                         .finally(() => this.onChangeFire())
                 );
@@ -201,7 +196,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                         .then(() => {
                             this._logManager.logMessage("Workspace '" + workspace.name + "' scan ended", 'INFO');
                             shouldDeleteRoot = workspaceData.descriptorsIssuesData.length == 0 && workspaceData.failedFiles.length == 0;
-                            root.apply();
                             root.title = Utils.getLastScanString(root.oldestScanTimestamp);
                         })
                         .catch(error => {
@@ -218,9 +212,12 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                         .finally(() => {
                             if (shouldDeleteRoot) {
                                 this._workspaceToRoot.set(workspace, undefined);
-                            } else if (this._cacheManager.issuesCache) {
-                                this._cacheManager.issuesCache.store(workspace, workspaceData);
-                            }
+                            } else {
+                                root.apply();
+                                if (this._cacheManager.issuesCache) {
+                                    this._cacheManager.issuesCache.store(workspace, workspaceData);
+                                }
+                            } 
                             this.onChangeFire();
                         });
                 }, "Refreshing workspace '" + workspace.name + "'")
@@ -362,20 +359,20 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         // Descriptor Not install - no need for scan
         if (descriptorGraph.label?.toString().includes('[Not installed]')) {
             stepProgress.reportProgress();
-            throw new FileScanError("Descriptor " + descriptorData.fullpath + " is not installed", '[Not installed]');
+            throw new FileScanError('Descriptor ' + descriptorData.fullpath + ' is not installed', '[Not installed]');
         }
         let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptorData.fullpath);
         // Scan descriptor
-        this._logManager.logMessage("Scanning descriptor " + descriptorData.fullpath + " for issues", 'INFO');
+        this._logManager.logMessage('Scanning descriptor ' + descriptorData.fullpath + ' for issues', 'INFO');
         let startGraphScan: number = Date.now();
         let issuesCount: number = await this.scanDescriptor(descriptorNode, descriptorData, descriptorGraph, stepProgress, checkCanceled);
         if (issuesCount > 0) {
             this._logManager.logMessage(
                 'Found ' +
                     issuesCount +
-                    " issues for descriptor " +
+                    ' issues for descriptor ' +
                     descriptorData.fullpath +
-                    " (elapsed=" +
+                    ' (elapsed=' +
                     (descriptorData.graphScanTimestamp - startGraphScan) / 1000 +
                     'sec)',
                 'INFO'
@@ -383,9 +380,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             return descriptorNode;
         } else {
             this._logManager.logMessage(
-                "No issues found for descriptor " +
+                'No issues found for descriptor ' +
                     descriptorData.fullpath +
-                    " (elapsed=" +
+                    ' (elapsed=' +
                     (descriptorData.graphScanTimestamp - startGraphScan) / 1000 +
                     'sec)',
                 'INFO'
@@ -421,7 +418,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         if (!descriptorData.dependenciesGraphScan.vulnerabilities && !descriptorData.dependenciesGraphScan.violations) {
             return 0;
         }
-        descriptorData.convertedImpact = Object.fromEntries(
+        descriptorData.impactTreeData = Object.fromEntries(
             DescriptorUtils.createImpactedPaths(descriptorGraph, descriptorData.dependenciesGraphScan).entries()
         );
         // TODO: applicability scan for the descriptor
@@ -488,20 +485,15 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     getTreeItem(element: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | IssueTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
         // Descriptor file type
         if (element instanceof FileTreeNode) {
-            element.command = Utils.createNodeCommand('jfrog.xray.file.open', 'Open File', [element]);
+            element.command = Utils.createNodeCommand('jfrog.xray.file.open', 'Open File', [element.fullPath]);
             element.iconPath = SeverityUtils.getIcon(element.severity !== undefined ? element.severity : Severity.Unknown);
         }
         if (element instanceof DependencyIssuesTreeNode) {
             element.iconPath = SeverityUtils.getIcon(element.topSeverity !== undefined ? element.topSeverity : Severity.Unknown);
             return element;
         }
-        if (element instanceof CveTreeNode) {
+        if (element instanceof CveTreeNode || element instanceof LicenseIssueTreeNode) {
             element.iconPath = SeverityUtils.getIcon(element.severity !== undefined ? element.severity : Severity.Unknown);
-            element.command = Utils.createNodeCommand('view.dependency.details.page', 'Show details', [element.getDetailsPage()]);
-            return element;
-        }
-        if (element instanceof LicenseIssueTreeNode) {
-            element.iconPath = IconsPaths.VIOLATED_LICENSE;
             element.command = Utils.createNodeCommand('view.dependency.details.page', 'Show details', [element.getDetailsPage()]);
             return element;
         }

@@ -1,4 +1,5 @@
-import { ICve, IGeneral, IIssue, ILicense, IVulnerableComponent, Severity as ClientSeverity, IReference } from 'jfrog-client-js';
+import { ICve, IGeneral, IIssue, ILicense, IVulnerableComponent, Severity as ClientSeverity, IReference, IExtendedInformation } from 'jfrog-client-js';
+import { IExtendedInformation as WebExtendedInformation, ISeverityReasons } from 'jfrog-ide-webview'
 import Set from 'typescript-collections/dist/lib/Set';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
 import { GeneralInfo } from '../types/generalInfo';
@@ -7,6 +8,7 @@ import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
 
 export class Translators {
+    
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
         let components: string[] = clientGeneral.component_id.split(':');
         return components.length === 2
@@ -107,5 +109,23 @@ export class Translators {
             results.push({ url: reference } as IReference);
         }
         return results;
+    }
+
+    static toWebViewExtendedInformation(extended_information: IExtendedInformation): WebExtendedInformation {
+        let extednedInfo: WebExtendedInformation = {
+            shortDescription: extended_information.short_description,
+            fullDescription: extended_information.full_description,
+            remediation: extended_information.remediation,
+            jfrogResearchSeverity: extended_information.jfrog_research_severity,
+            jfrogResearchSeverityReason: [],
+        } as WebExtendedInformation;
+
+        extended_information.jfrog_research_severity_reasons?.forEach(reason => extednedInfo.jfrogResearchSeverityReason?.push({
+            name: reason.name,
+            description: reason.description,
+            isPositive: reason.is_positive
+        } as ISeverityReasons))
+
+        return extednedInfo;
     }
 }

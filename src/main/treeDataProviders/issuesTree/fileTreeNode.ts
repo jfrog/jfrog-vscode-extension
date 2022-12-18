@@ -1,63 +1,78 @@
 import * as vscode from 'vscode';
-// import * as path from 'path';
 
 import { Severity, SeverityUtils } from '../../types/severity';
 import { Utils } from '../utils/utils';
 import { IssuesRootTreeNode } from './issuesRootTreeNode';
 import { IssueTreeNode } from './issueTreeNode';
-// import { ProjectRootTreeNode } from './projectRootTreeNode';
 
-export class FileTreeNode extends vscode.TreeItem {
-    // private _parent: IssuesRootTreeNode | undefined;
+/**
+ * Describes any type of file with Xray issues for the 'Issues' view.
+ * This base class should be extended to hold a specific/subset type/s of issues
+ */
+export abstract class FileTreeNode extends vscode.TreeItem {
+
     protected _severity: Severity = Severity.Unknown;
-    // private _timeStamp: number | undefined;
     private _name: string;
-    private _fullPath: string;
 
     constructor(
-        filePath: string,
+        private _fullPath: string,
         private _parent?: IssuesRootTreeNode,
-        private _timeStamp?: number // private _parent?: ProjectRootTreeNode,
+        private _timeStamp?: number
     ) {
-        // File node is named as its file name.
-        super('File');
-        this._name = Utils.getLastSegment(filePath);
-        this._fullPath = filePath;
-        // if (_parent) {
-        //     _parent.children.push(this);
-        // }
-        // this.parent = _parent;
-        // this.setDescription();
+        super(_fullPath);
+        this._name = Utils.getLastSegment(_fullPath);
+        this.label = this._name;
     }
 
-    public get issues(): IssueTreeNode[] {
-        return [];
+    /**
+     * Return all the issues in this file
+     */
+    public abstract get issues(): IssueTreeNode[] ;
+
+    /**
+     * Apply all the changes to this object and its children, This method should be called after evrey set of changes to this object or its children.
+     * Use to calculate accumulative statistics and view from all the children.
+     */
+    public apply() {
+        // If no description is set, show the full path of the file or the relative path base on the path of the parent workspace if exists
+        if (this.description == undefined) {
+            let description: string = this._fullPath;
+            if (this._parent && this._fullPath.startsWith(this._parent.workSpace.uri.fsPath)) {
+                description = '.' + this._fullPath.substring(this._parent.workSpace.uri.fsPath.length);
+            }
+            this.description = description;
+        }
+
+        // Caclulate the tooltip information
+        this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n'
+        this.tooltip += 'Issues count: ' + this.issues.length + '\n';
+        this.tooltip += 'Full path: ' + this.fullPath + "\n";
+        this.tooltip += "Last " + Utils.getLastScanString(this.timeStamp); 
     }
 
+    /**
+     * Create a file node to represent an error occur during the scanning of the file.
+     * @param fullPath - the path of the file that the error occur during its scan
+     * @param reason - the reason the file failed. Will we added to the title of the file to show the user
+     * @returns a new file node for the failed file
+     */
     public static createFailedScanNode(fullPath: string, reason?: string): FileTreeNode {
-        const node: FileTreeNode = new FileTreeNode(fullPath);
-        node._name += reason ? ' - ' + reason : '';
+        const node: FileTreeNode = new (class extends FileTreeNode {
+
+            constructor(fullPath: string,parent?: IssuesRootTreeNode,timeStamp?: number) {
+                super(fullPath,parent,timeStamp);
+            }
+            /** @override */
+            public get issues(): IssueTreeNode[] {
+                return [];
+            }
+})(fullPath);
+            
+        node.name += reason ? ' - ' + reason : '';
         node.description = 'Fail to scan file';
         node.tooltip = fullPath;
         node._severity = Severity.Unknown;
         return node;
-    }
-
-    protected applyDescription(forceChange: boolean = true) {
-        if (this.description == undefined || forceChange) {
-            let description: string = this._fullPath;
-            if (this._parent && this._fullPath.startsWith(this._parent.workSpace.uri.fsPath)) {
-                description = '.' + this._fullPath.substring(this._parent.workSpace.uri.fsPath.length);
-                this.tooltip = 'Severity: ' + SeverityUtils.getString(this._severity) + '\nPath: ' + this._fullPath;
-            }
-
-            this.description = description;
-        }
-    }
-
-    public apply() {
-        this.label = this._name;
-        this.applyDescription(false);
     }
 
     public get name(): string {
@@ -65,6 +80,7 @@ export class FileTreeNode extends vscode.TreeItem {
     }
     public set name(value: string) {
         this._name = value;
+        this.label = this._name;
     }
 
     public get timeStamp(): number | undefined {
@@ -79,7 +95,6 @@ export class FileTreeNode extends vscode.TreeItem {
     }
     public set parent(value: IssuesRootTreeNode | undefined) {
         this._parent = value;
-        // this.setDescription(false);
     }
 
     public get severity(): Severity {
@@ -96,6 +111,5 @@ export class FileTreeNode extends vscode.TreeItem {
 
     public set fullPath(value: string) {
         this._fullPath = value;
-        // this.setDescription(false);
     }
 }

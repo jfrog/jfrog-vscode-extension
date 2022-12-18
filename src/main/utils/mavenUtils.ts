@@ -1,8 +1,8 @@
 import * as exec from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { ContextKeys } from '../constants/contextKeys';
-import { FocusType } from '../focus/abstractFocus';
+import { ContextKeys, FocusType } from '../constants/contextKeys';
+// import { FocusType } from '../focus/abstractFocus';
 import { LogManager } from '../log/logManager';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';

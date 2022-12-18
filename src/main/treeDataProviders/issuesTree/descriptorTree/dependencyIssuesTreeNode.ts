@@ -1,50 +1,44 @@
-import { IImpactedPath, ILicense } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
+import { ILicense } from 'jfrog-ide-webview';
 import { PackageType, toPackgeType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { DescriptorTreeNode } from './descriptorTreeNode';
-
-import { IComponent /*, IImpactPath*/ } from 'jfrog-client-js';
+import { IComponent } from 'jfrog-client-js';
 import { IssueTreeNode } from '../issueTreeNode';
 
 export class DependencyIssuesTreeNode extends vscode.TreeItem {
-    // infer from data
+    // Infer from data
     private _name: string;
     private _version: string;
     private _fixVersion: string[];
     private _type: PackageType;
-    // added dynamicly
+    private _infectedVersions: string[];
+    
+    // Added dynamicly
     private _issues: IssueTreeNode[] = [];
     private _licenses: ILicense[] = [];
 
-    constructor(
-        private _artifactId: string,
-        component: IComponent,
-        private _topSeverity: Severity,
-        private _parent: DescriptorTreeNode,
-        private _impactedTreeRoot?: IImpactedPath
-    ) {
+    constructor(private _artifactId: string, component: IComponent, private _topSeverity: Severity, private _parent: DescriptorTreeNode) {
         super(component.package_name);
 
         this._name = component.package_name;
         this._version = component.package_version;
         this._fixVersion = component.fixed_versions;
+        this._infectedVersions = component.infected_versions;
         this._type = toPackgeType(component.package_type);
-        // this._impactedTreeRoot = this.toImpactedfTree(component.impact_paths);
 
         this.description = this._version;
     }
 
+    /**
+     * Apply all the changes to this object and its children, This method should be called after evrey set of changes to this object or its children.
+     * Use to calculate accumulative statistics and view from all the children.
+     */
     public apply() {
-        this.tooltip =
-            '\nTop severity: ' +
-            SeverityUtils.getString(this.topSeverity) +
-            '\nIssues count: ' +
-            this._issues.length +
-            '\nArtifact: ' +
-            this.artifactId +
-            '';
-
+        this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.topSeverity) + "\n";
+        this.tooltip += 'Issues count: ' + this._issues.length + "\n";
+        this.tooltip += 'Artifact: ' + this.artifactId;
+        
         if (this.issues.length == 1 && this.parent.dependenciesWithIssue.length == 1) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         } else {
@@ -58,12 +52,22 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
             .sort((lhs, rhs) => rhs.severity - lhs.severity);
     }
 
+    /**
+     * return a string that identify this dependency [type,name,version]
+     */
+    public get artifactId(): string {
+        return this._artifactId;
+    }
+
+    /**
+     * return a string that identify this dependency [name,version]
+     */
     public get componenetId(): string {
         return this._name + ':' + this._version;
     }
 
-    public get impactedTree(): IImpactedPath | undefined {
-        return this._impactedTreeRoot;
+    public get infectedVersions(): string[] {
+        return this._infectedVersions;
     }
 
     public get licenses(): ILicense[] {
@@ -72,10 +76,6 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
 
     public set licenses(value: ILicense[]) {
         this._licenses = value;
-    }
-
-    public get artifactId(): string {
-        return this._artifactId;
     }
 
     public set issues(value: IssueTreeNode[]) {

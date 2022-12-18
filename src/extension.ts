@@ -4,22 +4,14 @@ import { CommandManager } from './main/commands/commandManager';
 import { ConnectionManager } from './main/connect/connectionManager';
 import { DiagnosticsManager } from './main/diagnostics/diagnosticsManager';
 import { FilterManager } from './main/filter/filterManager';
-import { FocusManager } from './main/focus/focusManager';
-// import { ExclusionsManager } from './main/exclusions/exclusionsManager';
-// import { HoverManager } from './main/hover/hoverManager';
+// import { FocusManager } from './main/focus/focusManager';
 import { ScanCacheManager } from './main/cache/scanCacheManager';
 import { TreesManager } from './main/treeDataProviders/treesManager';
-// import { WatcherManager } from './main/watchers/watcherManager';
 import { LogManager } from './main/log/logManager';
-// import { DependencyUpdateManager } from './main/dependencyUpdate/dependencyUpdateManager';
 import { BuildsManager } from './main/builds/buildsManager';
-// import { ScanLogicManager } from './main/scanLogic/scanLogicManager';
-// import { ExportManager } from './main/export/exportManager';
 import { ScanManager } from './main/scanLogic/scanManager';
-// import { IssuesFilterManager } from './main/filter/issuesFilterManager';
 import { CacheManager } from './main/cache/cacheManager';
-import { CveDetailsView } from './main/webviews/cveDetailsView';
-// import { vulnerabilityDetails } from './main/webviews/vulnerabilityDetails';
+import { DetailsWebView } from './main/webviews/detailsWebView';
 
 /**
  * This method is called when the extension is activated.
@@ -48,13 +40,13 @@ export async function activate(context: vscode.ExtensionContext) {
     // let issueFilterManager: IssuesFilterManager = new IssuesFilterManager(/*treesManager*/).activate();
 
     let filterManager: FilterManager = new FilterManager(treesManager, scanCacheManager).activate();
-    let focusManager: FocusManager = new FocusManager().activate();
+    // let focusManager: FocusManager = new FocusManager().activate();
     // let exclusionManager: ExclusionsManager = new ExclusionsManager(treesManager).activate();
     // let dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager(scanCacheManager).activate();
     let buildsManager: BuildsManager = new BuildsManager(treesManager).activate();
     // let exportManager: ExportManager = new ExportManager(workspaceFolders, treesManager).activate();
 
-    new CveDetailsView().activate(context);
+    new DetailsWebView().activate(context);
     new DiagnosticsManager(treesManager).activate(context);
     // new WatcherManager(treesManager).activate(context);
     // new HoverManager(treesManager).activate(context);
@@ -65,7 +57,7 @@ export async function activate(context: vscode.ExtensionContext) {
         connectionManager,
         treesManager,
         filterManager,
-        focusManager,
+        // focusManager,
         // exclusionManager,
         // dependencyUpdateManager,
         buildsManager
