@@ -14,7 +14,7 @@ export class DiagnosticsManager implements ExtensionComponent {
 
     constructor(treesManager: TreesManager) {
         let diagnosticCollection: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection();
-       
+
         this._codeActionProviders.push(new DescriptorActionProvider(diagnosticCollection, treesManager));
     }
 

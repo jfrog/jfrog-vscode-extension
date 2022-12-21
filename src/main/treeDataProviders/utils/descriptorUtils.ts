@@ -16,7 +16,6 @@ import { MavenUtils } from '../../utils/mavenUtils';
 import { NpmUtils } from '../../utils/npmUtils';
 import { PypiUtils } from '../../utils/pypiUtils';
 import { YarnUtils } from '../../utils/yarnUtils';
-// import { FocusType } from '../../focus/abstractFocus';
 import { IImpactedPath, ILicense } from 'jfrog-ide-webview';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { FocusType } from '../../constants/contextKeys';
@@ -124,14 +123,16 @@ export class DescriptorUtils {
         }
         descriptorNode.severity = topSeverity;
         // Populate licenses
-        graphResponse.licenses.forEach(license => {
-            Object.entries(license.components)
-            .map(entry => entry[0])
-            .forEach(componentId => {
-                let dependencyWithIssue: DependencyIssuesTreeNode | undefined = descriptorNode.getDependencyByID(componentId);
-                dependencyWithIssue?.licenses.push({ name: license.license_key } as ILicense);
+        if (graphResponse.licenses) {
+            graphResponse.licenses.forEach(license => {
+                Object.entries(license.components)
+                    .map(entry => entry[0])
+                    .forEach(componentId => {
+                        let dependencyWithIssue: DependencyIssuesTreeNode | undefined = descriptorNode.getDependencyByID(componentId);
+                        dependencyWithIssue?.licenses.push({ name: license.license_key } as ILicense);
+                    });
             });
-        });
+        }
         return descriptorNode.dependenciesWithIssue.length;
     }
 
@@ -161,7 +162,6 @@ export class DescriptorUtils {
         return dependencyWithIssue;
     }
 
-    // TODO: Move to ScanUtils
     // returns the full path of the descriptor file if exsits in map or artifactId of the root otherwise
     /**
      * Get the full path of a given root base on a list of the full-path of the descriptors in the workspace
@@ -192,16 +192,12 @@ export class DescriptorUtils {
      * @param dependencyName - the dependency name we want to search
      * @returns the list of positions in the document this dependency appers in
      */
-    public static getDependencyPosition(
-        document: vscode.TextDocument,
-        packeType: PackageType,
-        dependencyName: string
-    ): vscode.Position[] {
+    public static getDependencyPosition(document: vscode.TextDocument, packeType: PackageType, dependencyName: string): vscode.Position[] {
         switch (packeType) {
             case PackageType.Go:
                 return GoUtils.getDependencyPosition(document, dependencyName, FocusType.Dependency);
             case PackageType.Maven:
-                return MavenUtils.getDependencyPos(document, undefined, FocusType.Dependency); // TODO: FIX Maven to work
+                return MavenUtils.getDependencyPosition(document, dependencyName, FocusType.Dependency);
             case PackageType.Npm:
                 return NpmUtils.getDependencyPosition(document, dependencyName, FocusType.Dependency);
             case PackageType.Python:

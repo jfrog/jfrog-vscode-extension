@@ -5,6 +5,7 @@ import { DescriptorTreeNode } from '../treeDataProviders/issuesTree/descriptorTr
 import { LicenseIssueTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/licenseIssueTreeNode';
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { DescriptorUtils } from '../treeDataProviders/utils/descriptorUtils';
+import { PackageType } from '../types/projectType';
 import { SeverityUtils } from '../types/severity';
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
 
@@ -14,7 +15,6 @@ import { AbstractFileActionProvider } from './abstractFileActionProvider';
  * 2. Adds severity icon to the descriptor file in the places were the infected dependency exists
  */
 export class DescriptorActionProvider extends AbstractFileActionProvider {
-    
     /** @Override */
     public async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
         // Search if the descriptor had issues in the scan
@@ -30,8 +30,11 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
                     if (issue instanceof CveTreeNode || issue instanceof LicenseIssueTreeNode) {
                         issue.impactedTree?.children
                             ?.map(impact => impact.name)
-                            .forEach(directDependencId => {
-                                let directDependencyName: string = directDependencId.substring(0, directDependencId.lastIndexOf(':'));
+                            .forEach(directDependencyId => {
+                                let directDependencyName: string = directDependencyId.substring(0, directDependencyId.lastIndexOf(':'));
+                                if (dependencyWithIssue.type == PackageType.Maven) {
+                                    directDependencyName = directDependencyId;
+                                }
                                 if (proceesedDependencies.has(directDependencyName)) {
                                     return;
                                 }
@@ -45,7 +48,8 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
                                     return;
                                 }
                                 this._treesManager.logManager.logMessage(
-                                    "Creating diagnostics for dependency '" + directDependencyName + "'", 'DEBUG'
+                                    "Creating diagnostics for dependency '" + directDependencyName + "'",
+                                    'DEBUG'
                                 );
                                 // Create diagnostics and gutter icon for the dependency
                                 diagnostics.push(
@@ -62,5 +66,5 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
             });
             this._diagnosticCollection.set(document.uri, diagnostics);
         }
-    }    
+    }
 }

@@ -10,15 +10,10 @@ import { IssueTreeNode } from './issueTreeNode';
  * This base class should be extended to hold a specific/subset type/s of issues
  */
 export abstract class FileTreeNode extends vscode.TreeItem {
-
     protected _severity: Severity = Severity.Unknown;
     private _name: string;
 
-    constructor(
-        private _fullPath: string,
-        private _parent?: IssuesRootTreeNode,
-        private _timeStamp?: number
-    ) {
+    constructor(private _fullPath: string, private _parent?: IssuesRootTreeNode, private _timeStamp?: number) {
         super(_fullPath);
         this._name = Utils.getLastSegment(_fullPath);
         this.label = this._name;
@@ -27,7 +22,7 @@ export abstract class FileTreeNode extends vscode.TreeItem {
     /**
      * Return all the issues in this file
      */
-    public abstract get issues(): IssueTreeNode[] ;
+    public abstract get issues(): IssueTreeNode[];
 
     /**
      * Apply all the changes to this object and its children, This method should be called after evrey set of changes to this object or its children.
@@ -44,10 +39,10 @@ export abstract class FileTreeNode extends vscode.TreeItem {
         }
 
         // Caclulate the tooltip information
-        this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n'
+        this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n';
         this.tooltip += 'Issues count: ' + this.issues.length + '\n';
-        this.tooltip += 'Full path: ' + this.fullPath + "\n";
-        this.tooltip += "Last " + Utils.getLastScanString(this.timeStamp); 
+        this.tooltip += 'Full path: ' + this.fullPath + '\n';
+        this.tooltip += 'Last ' + Utils.getLastScanString(this.timeStamp);
     }
 
     /**
@@ -58,16 +53,15 @@ export abstract class FileTreeNode extends vscode.TreeItem {
      */
     public static createFailedScanNode(fullPath: string, reason?: string): FileTreeNode {
         const node: FileTreeNode = new (class extends FileTreeNode {
-
-            constructor(fullPath: string,parent?: IssuesRootTreeNode,timeStamp?: number) {
-                super(fullPath,parent,timeStamp);
+            constructor(fullPath: string, parent?: IssuesRootTreeNode, timeStamp?: number) {
+                super(fullPath, parent, timeStamp);
             }
             /** @override */
             public get issues(): IssueTreeNode[] {
                 return [];
             }
-})(fullPath);
-            
+        })(fullPath);
+
         node.name += reason ? ' - ' + reason : '';
         node.description = 'Fail to scan file';
         node.tooltip = fullPath;

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { IGraphCve,  IViolation, IVulnerability } from 'jfrog-client-js';
+import { IGraphCve, IViolation, IVulnerability } from 'jfrog-client-js';
 import { ICve, IDependencyPage, IImpactedPath, IReference, IExtendedInformation } from 'jfrog-ide-webview';
 import { PackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
@@ -24,14 +24,16 @@ export class CveTreeNode extends IssueTreeNode {
         private _cve?: IGraphCve
     ) {
         super(sourceVul.issue_id, _severity, _cve && _cve.cve ? _cve.cve : sourceVul.issue_id, vscode.TreeItemCollapsibleState.None);
-        this._edited = sourceVul.edited;
         this._summary = sourceVul.summary;
         this._references = Translators.cleanReferencesLink(sourceVul.references);
-        if ((<IViolation>sourceVul).watch_name) {
-            this._watchNames = [(<IViolation>sourceVul).watch_name];
-        }
         if (sourceVul.extended_information) {
             this._researchInfo = Translators.toWebViewExtendedInformation(sourceVul.extended_information);
+        }
+
+        let violation: IViolation = <IViolation>sourceVul;
+        this._edited = sourceVul.edited ?? violation.updated;
+        if (violation) {
+            this._watchNames = [violation.watch_name];
         }
     }
 
@@ -53,7 +55,7 @@ export class CveTreeNode extends IssueTreeNode {
                   } as ICve)
                 : undefined,
             name: this._parent.name,
-            watchName: this.watchNames?.join(", "),
+            watchName: this.watchNames?.join(', '),
             type: PackageType[this._parent.type],
             version: this._parent.version,
             infectedVersion: this.parent.infectedVersions,
@@ -63,7 +65,7 @@ export class CveTreeNode extends IssueTreeNode {
             fixedVersion: this._parent.fixVersion,
             license: this.parent.licenses,
             references: this._references,
-            extendedInformation:  this._researchInfo,
+            extendedInformation: this._researchInfo,
             impactedPath: this.impactedTree
         } as IDependencyPage;
     }
@@ -76,7 +78,6 @@ export class CveTreeNode extends IssueTreeNode {
         return this._impactedTreeRoot;
     }
 
-    
     public get references(): IReference[] {
         return this._references;
     }

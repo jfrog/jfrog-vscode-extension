@@ -40,11 +40,5 @@ export async function activate(context: vscode.ExtensionContext) {
     new DiagnosticsManager(treesManager).activate(context);
     new CodeLensManager().activate(context);
 
-    new CommandManager(
-        logManager,
-        connectionManager,
-        treesManager,
-        filterManager,
-        buildsManager
-    ).activate(context);
+    new CommandManager(logManager, connectionManager, treesManager, filterManager, buildsManager).activate(context);
 }

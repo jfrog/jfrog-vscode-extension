@@ -21,6 +21,7 @@ export interface FileIssuesData {
  * Describes all the issues data for a specific descriptor from Xray scan
  */
 export interface DescriptorIssuesData extends FileIssuesData {
+    id?: string;
     graphScanTimestamp: number;
     dependenciesGraphScan: IGraphResponse;
     impactTreeData: { [issue_id: string]: IImpactedPath };
@@ -77,7 +78,7 @@ export class IssuesCache {
     /**
      * Remove issues data of workspcae from cache
      * @param workspace - the workspace to delete it's data
-     * @returns 
+     * @returns
      */
     public remove(workspace: vscode.WorkspaceFolder) {
         return this._cache.update(IssuesCache.toKey(workspace), undefined);

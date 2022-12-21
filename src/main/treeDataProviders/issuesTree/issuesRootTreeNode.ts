@@ -8,15 +8,11 @@ import { FileTreeNode } from './fileTreeNode';
  */
 export class IssuesRootTreeNode extends vscode.TreeItem {
     private _children: FileTreeNode[] = [];
-    private _title: string = "";
+    private _title: string = '';
 
-    constructor(
-        private readonly _workSpace: vscode.WorkspaceFolder,
-        title?: string,
-        collapsibleState?: vscode.TreeItemCollapsibleState
-    ) {
+    constructor(private readonly _workSpace: vscode.WorkspaceFolder, title?: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
         super(_workSpace.name, collapsibleState ?? vscode.TreeItemCollapsibleState.Expanded);
-        this.title = title ?? "";
+        this.title = title ?? '';
     }
 
     /**
@@ -34,14 +30,14 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
             issueCount += child.issues.length;
         }
 
-        this.tooltip = "Issue count: " + issueCount + "\n";
+        this.tooltip = 'Issue count: ' + issueCount + '\n';
         this.tooltip += "Full Path: '" + this._workSpace.uri.fsPath + "'\n";
-        if (this._title != "") {
-            this.tooltip += "Status: " + this._title;
+        if (this._title != '') {
+            this.tooltip += 'Status: ' + this._title;
         } else {
-            this.tooltip += "Last " + Utils.getLastScanString(this.oldestScanTimestamp);
+            this.tooltip += 'Last ' + Utils.getLastScanString(this.oldestScanTimestamp);
         }
-        
+
         this._children
             // 2nd priority - Sort by top issue count
             .sort((lhs, rhs) => rhs.issues.length - lhs.issues.length)

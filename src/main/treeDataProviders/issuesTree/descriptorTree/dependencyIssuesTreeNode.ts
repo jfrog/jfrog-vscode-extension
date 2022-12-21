@@ -13,7 +13,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     private _fixVersion: string[];
     private _type: PackageType;
     private _infectedVersions: string[];
-    
+
     // Added dynamicly
     private _issues: IssueTreeNode[] = [];
     private _licenses: ILicense[] = [];
@@ -35,10 +35,10 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
      * Use to calculate accumulative statistics and view from all the children.
      */
     public apply() {
-        this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.topSeverity) + "\n";
-        this.tooltip += 'Issues count: ' + this._issues.length + "\n";
+        this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.topSeverity) + '\n';
+        this.tooltip += 'Issues count: ' + this._issues.length + '\n';
         this.tooltip += 'Artifact: ' + this.artifactId;
-        
+
         if (this.issues.length == 1 && this.parent.dependenciesWithIssue.length == 1) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         } else {

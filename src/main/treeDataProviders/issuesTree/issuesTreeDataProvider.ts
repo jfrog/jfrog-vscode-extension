@@ -22,7 +22,6 @@ import { TreesManager } from '../treesManager';
 import { IssueTreeNode } from './issueTreeNode';
 import { LogManager } from '../../log/logManager';
 import { LicenseIssueTreeNode } from './descriptorTree/licenseIssueTreeNode';
-// import { IconsPaths } from '../../utils/iconsPaths';
 
 /**
  * Describes an error that occur during file scan.
@@ -114,7 +113,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 // Create dummy root to give input to the user while waiting for the workspace loading task or when error occur
                 const tempRoot: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, 'Loading...');
                 this._workspaceToRoot.set(workspace, tempRoot);
-                // Create a new async scan task for each workspace
+                // Create a new async load task for each workspace
                 workspaceLoads.push(
                     this.loadIssuesFromCache(workspace)
                         .then(root => {
@@ -126,14 +125,21 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                                 this._logManager.logMessage("WorkSpace '" + workspace.name + "' was never scanned", 'DEBUG');
                                 this._workspaceToRoot.set(workspace, undefined);
                             }
+                            this.onChangeFire();
                         })
-                        .catch(error => {
-                            this._logManager.logMessage("Workspace '" + workspace.name + "' loading task ended with error:", 'DEBUG');
+                        .catch(async error => {
                             this._logManager.logError(error, true);
                             tempRoot.title = 'Loading error';
                             tempRoot.apply();
+                            this.onChangeFire();
+                            const answer: string | undefined = await vscode.window.showInformationMessage(
+                                "Loading error occur on workspace '" + workspace.name + "', do you want to clear the old data?",
+                                ...['Yes', 'No']
+                            );
+                            if (answer === 'Yes') {
+                                this._workspaceToRoot.set(workspace, undefined);
+                            }
                         })
-                        .finally(() => this.onChangeFire())
                 );
             }
             await Promise.all(workspaceLoads);
@@ -191,6 +197,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, 'Scanning...');
                     this._workspaceToRoot.set(workspace, root);
                     let shouldDeleteRoot: boolean = false;
+                    let shouldCacheRoot: boolean = true;
                     // Exexute workspace scan task
                     await this.repopulateWorkspaceTree(workspaceData, root, progress, checkCanceled)
                         .then(() => {
@@ -204,8 +211,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                                 shouldDeleteRoot = workspaceData.descriptorsIssuesData.length == 0 && workspaceData.failedFiles.length == 0;
                                 root.title = 'Scan canceled';
                             } else {
-                                this._logManager.logMessage("Workspace '" + workspace.name + "' scan task ended with error:", 'DEBUG');
+                                this._logManager.logMessage("Workspace '" + workspace.name + "' scan task ended with error:", 'ERR');
                                 this._logManager.logError(error, true);
+                                shouldCacheRoot = false;
                                 root.title = 'Scan failed';
                             }
                         })
@@ -214,17 +222,42 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                                 this._workspaceToRoot.set(workspace, undefined);
                             } else {
                                 root.apply();
-                                if (this._cacheManager.issuesCache) {
-                                    this._cacheManager.issuesCache.store(workspace, workspaceData);
-                                }
-                            } 
+                            }
                             this.onChangeFire();
+                            if (shouldCacheRoot && this._cacheManager.issuesCache) {
+                                this._cacheManager.issuesCache.store(workspace, workspaceData);
+                            }
                         });
                 }, "Refreshing workspace '" + workspace.name + "'")
             );
         }
         await Promise.all(workspaceScans);
     }
+
+    // private async runApplic(workspace: string) {
+    //     this._logManager.logMessage("<ASSAF> Starting Applicable scan: workspace = '" + workspace + "'", 'DEBUG');
+    //     let startTime: number = Date.now();
+    //     return this._scanManager
+    //         .scanApplicability(workspace)
+    //         .then(issues =>
+    //             this._logManager.logMessage(
+    //                 '<ASSAF> Applicable Issues found: ' +
+    //                     (issues ? issues.length : 0) +
+    //                     ' (elapsed: ' +
+    //                     (Date.now() - startTime) / 1000 +
+    //                     "sec): workspace = '" +
+    //                     workspace +
+    //                     "'",
+    //                 'DEBUG'
+    //             )
+    //         );
+    // }
+
+    // private async runEos(workspace: string) {
+    //     this._logManager.logMessage("<ASSAF> Starting Applicable scan: workspace = '" + workspace + "'",'DEBUG');
+    //     let startTime:number = Date.now();
+    //     return this._scanManager.scanApplicability(workspace).then(issues => this._logManager.logMessage("<ASSAF> Applicable Issues found: " + (issues ? issues.length : 0) + " (elapsed: " + ((Date.now() - startTime) / 1000) + "sec): workspace = '" + workspace + "'",'DEBUG'));
+    // }
 
     /**
      * Execute async scan task for the given workspace and populate the issues from the scan to the data and to the tree
@@ -246,6 +279,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             this.onChangeFire();
             checkCanceled();
         });
+        let scansPromises: Promise<any>[] = [];
+
+        // scansPromises.push(this.runApplic(workspaceData.path).catch(err => this._logManager.logError(err, true)));
 
         progressManager.startStep('👷 Building dependency tree', 2);
         let workspaceDependenciesTree: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('', '', [], '', ''));
@@ -258,7 +294,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         });
 
         progressManager.startStep('🔎 Xray scanning', workspaceDependenciesTree.children.length);
-        let scansPromises: Promise<FileTreeNode | undefined>[] = [];
+
         // Descriptors scanning
         for (let descriptorGraph of workspaceDependenciesTree.children) {
             if (descriptorGraph instanceof RootNode) {
@@ -304,6 +340,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         let workspcaeDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([workSpace], this._logManager);
         progressManager.reportProgress();
         await DependenciesTreesFactory.createDependenciesTrees(workspcaeDescriptors, [workSpace], [], this._treesManager, root);
+        // TODO: for multi pom maven project, add (clone) all sub poms as descriptors (root children) as well
         progressManager.reportProgress();
 
         return workspcaeDescriptors;
@@ -419,6 +456,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             return 0;
         }
         descriptorData.impactTreeData = Object.fromEntries(
+            // TODO: fix impacted path for demo/package.json, CVE-2022-24999. should be 4 childs (3 qs with diff ver and express) but there are only 2 qs (6.7.0 not found)
             DescriptorUtils.createImpactedPaths(descriptorGraph, descriptorData.dependenciesGraphScan).entries()
         );
         // TODO: applicability scan for the descriptor

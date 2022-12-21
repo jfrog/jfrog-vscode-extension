@@ -11,16 +11,20 @@ import { IssueTreeNode } from '../issueTreeNode';
  * Holds a list of dependencies that has issues
  */
 export class DescriptorTreeNode extends FileTreeNode {
-
     private _dependenciesWithIssue: DependencyIssuesTreeNode[] = [];
     private _dependencyScanTimeStamp?: number;
     private _packageType: PackageType = PackageType.Unknown;
+    private _descriptorId?: string | undefined;
 
-    constructor(
-        fileFullPath: string,
-        parent?: IssuesRootTreeNode
-    ) {
+    constructor(fileFullPath: string, parent?: IssuesRootTreeNode) {
         super(fileFullPath, parent);
+    }
+
+    public get descriptorId(): string | undefined {
+        return this._descriptorId;
+    }
+    public set descriptorId(value: string | undefined) {
+        this._descriptorId = value;
     }
 
     /** @override */
@@ -47,8 +51,8 @@ export class DescriptorTreeNode extends FileTreeNode {
             // 1st priority - Sort by top severity
             .sort((lhs, rhs) => rhs.topSeverity - lhs.topSeverity);
 
-            // Base apply
-            super.apply();
+        // Base apply
+        super.apply();
     }
 
     /**

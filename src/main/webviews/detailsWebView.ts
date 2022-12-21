@@ -9,16 +9,19 @@ import { PageType } from 'jfrog-ide-webview';
 export class DetailsWebView {
     public async activate(context: vscode.ExtensionContext) {
         let panel: vscode.WebviewPanel | undefined;
+        let prevActiveTreeNode: IDependencyPage;
+
         context.subscriptions.push(
             vscode.commands.registerCommand('view.dependency.details.page', (page: IDependencyPage) => {
+                prevActiveTreeNode = page;
                 if (!panel) {
                     panel = createWebview(context);
+                    panel.onDidChangeViewState(e => {
+                        updateWebview(e.webviewPanel, prevActiveTreeNode);
+                    });
                 }
                 if (page) {
-                    panel.webview.postMessage({
-                        data: page,
-                        pageType: PageType.Dependency
-                    });
+                    updateWebview(panel, prevActiveTreeNode);
                 }
                 panel.onDidDispose(
                     () => {
@@ -30,6 +33,13 @@ export class DetailsWebView {
             })
         );
     }
+}
+
+function updateWebview(panel: vscode.WebviewPanel, page: IDependencyPage) {
+    panel.webview.postMessage({
+        data: page,
+        pageType: PageType.Dependency
+    });
 }
 
 function createWebview(context: vscode.ExtensionContext) {

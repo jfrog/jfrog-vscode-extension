@@ -69,6 +69,39 @@ export class MavenUtils {
         return [];
     }
 
+    /**
+     * Get pom.xml file and dependencies tree node. return the position of the dependency in the pom.xml file.
+     * @param document             - pom.xml file
+     * @param dependenciesTreeNode - dependencies tree node
+     */
+    public static getDependencyPosition(document: vscode.TextDocument, dependencyId: string | undefined, focusType: FocusType): vscode.Position[] {
+        if (!dependencyId) {
+            return [];
+        }
+        let res: vscode.Position[] = [];
+        let pomXmlContent: string = document.getText();
+        let [groupId, artifactId, version] = MavenUtils.getGavArrayFromId(dependencyId);
+        let dependencyTag: string = MavenUtils.getDependencyTag(pomXmlContent, groupId, artifactId);
+        // TODO: FIX Maven to work add sub-module region (tag) as well if not in dependency tag
+        if (dependencyTag) {
+            let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyTag));
+            let arr: string[] = dependencyTag.split(/\r?\n/).filter(line => line.trim() !== '');
+            for (let i: number = 0; i < arr.length; i++) {
+                let depInfo: string = arr[i].trim().toLowerCase();
+                if (this.isDependencyMatch(groupId, artifactId, version, depInfo, focusType)) {
+                    res.push(new vscode.Position(startIndex.line + i, arr[i].indexOf('<')));
+                    res.push(new vscode.Position(startIndex.line + i, arr[i].length));
+                }
+            }
+            return res;
+        }
+
+        // if (!(dependenciesTreeNode instanceof MavenTreeNode)) {
+        //     return MavenUtils.getDependencyPos(document, dependenciesTreeNode.parent, focusType);
+        // }
+        return [];
+    }
+
     public static isDependencyMatch(groupId: any, artifactId: any, version: any, depInfo: string, focusType: FocusType): boolean {
         switch (focusType) {
             case FocusType.Dependency:
@@ -98,6 +131,14 @@ export class MavenUtils {
             return dependencyMatch[0];
         }
         return '';
+    }
+
+    /**
+     * Get an array of [groupId, artifactId, version] from dependencies tree node.
+     * @param dependenciesTreeNode - The dependencies tree node
+     */
+    public static getGavArrayFromId(dependencyId: string): string[] {
+        return dependencyId.toLowerCase().split(':');
     }
 
     /**

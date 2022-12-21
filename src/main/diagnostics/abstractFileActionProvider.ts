@@ -6,14 +6,10 @@ import { TreesManager } from '../treeDataProviders/treesManager';
  * @see DiagnosticsManager
  */
 export abstract class AbstractFileActionProvider implements ExtensionComponent, vscode.Disposable {
-    
     static readonly XRAY_DIAGNOSTIC_SOURCE: string = 'JFrog Xray';
     private _gutterDecorations: vscode.TextEditorDecorationType[] = [];
 
-    constructor(
-        protected _diagnosticCollection: vscode.DiagnosticCollection,
-        protected _treesManager: TreesManager
-    ) {}
+    constructor(protected _diagnosticCollection: vscode.DiagnosticCollection, protected _treesManager: TreesManager) {}
 
     /**
      * Update diagnostics of the input project file.

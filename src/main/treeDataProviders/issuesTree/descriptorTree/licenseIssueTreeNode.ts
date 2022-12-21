@@ -31,7 +31,7 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
         return {
             id: this._issue_id,
             name: this._parent.name,
-            watchName: this.watchNames?.join(", "),
+            watchName: this.watchNames?.join(', '),
             type: PackageType[this._parent.type],
             version: this._parent.version,
             severity: SeverityUtils.toWebviewSeverity(this._severity),
