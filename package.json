@@ -242,6 +242,7 @@
         ]
     },
     "scripts": {
+        "postinstall": "npm i --no-save https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.1.5.tgz",
         "vscode:prepublish": "webpack --mode production",
         "webpack": "rm -rf dist && webpack --mode development",
         "webpack-dev": "rm -rf dist && webpack --mode development --watch",
