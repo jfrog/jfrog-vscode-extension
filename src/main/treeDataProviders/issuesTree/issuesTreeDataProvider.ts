@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { ScanManager } from '../../scanLogic/scanManager';
 import { FileScanError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { XrayScanProgress } from 'jfrog-client-js';
@@ -21,6 +22,10 @@ import { TreesManager } from '../treesManager';
 import { IssueTreeNode } from './issueTreeNode';
 import { LogManager } from '../../log/logManager';
 import { LicenseIssueTreeNode } from './descriptorTree/licenseIssueTreeNode';
+import { AnalyzerUtils } from '../utils/analyzerUtils';
+import { CodeIssueTreeNode } from './codeFileTree/codeIssueTreeNode';
+import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
+import { EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -160,8 +165,16 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     this._logManager.logMessage("Loading issues of descriptor '" + descriptor.fullpath + "'", 'DEBUG');
                     let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptor.fullpath, descriptor.type, root);
                     DescriptorUtils.populateDescriptorData(descriptorNode, descriptor);
+                    if (descriptor.applicableIssues) {
+                        this._logManager.logMessage("Loading cve appliable data for workSpace '" + workSpace.name + "'", 'DEBUG');
+                        AnalyzerUtils.populateApplicableIssues(root, descriptorNode, descriptor);
+                    }
                     root.children.push(descriptorNode);
                 });
+            }
+            if (workspaceData.eosScan) {
+                root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
+                AnalyzerUtils.populateEosIssues(root, workspaceData);
             }
             return root;
         }
@@ -343,6 +356,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                                 workspaceData.descriptorsIssuesData.push(descriptorData);
                                 root.addChildAndApply(descriptorWithIssues);
                                 progressManager.onProgress();
+                                await this.cveApplicableScanning(root, descriptorData, descriptorNode, progressManager).catch(err =>
+                                    this.onScanError(err)
+                                );
                             }
                         })
                         .catch(error => this.onFileScanError(workspaceData, root, error, descriptorData))
@@ -454,6 +470,110 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         return issuesCount > 0 ? descriptorNode : undefined;
     }
 
+    private async cveApplicableScanning(
+        root: IssuesRootTreeNode,
+        descriptorData: DescriptorIssuesData,
+        descriptorNode: DescriptorTreeNode,
+        progressManager: StepProgress
+    ): Promise<void> {
+        
+        let cveToScan: string[] = [];
+        descriptorNode.issues.forEach(issue => {
+            if (issue instanceof CveTreeNode && issue.cve) {
+                cveToScan.push(issue.cve.cve);
+            }
+        });
+
+        let startApplicableTime: number = Date.now();
+        descriptorData.applicableIssues = await this._scanManager
+            .scanApplicability(path.dirname(descriptorData.fullpath), cveToScan)
+            .finally(() => progressManager.reportProgress());
+        if (descriptorData.applicableIssues && descriptorData.applicableIssues.applicableCve) {
+            descriptorData.applicableScanTimestamp = Date.now();
+            let applicableIssuesCount: number = AnalyzerUtils.populateApplicableIssues(root, descriptorNode, descriptorData);
+            this._logManager.logMessage(
+                'Found ' +
+                    applicableIssuesCount +
+                    " applicable cve issues in workspace = '" +
+                    descriptorData.fullpath +
+                    "' (elapsed:" +
+                    (Date.now() - startApplicableTime) / 1000 +
+                    'sec)',
+                'DEBUG'
+            );
+            root.apply();
+            progressManager.onProgress();
+        }
+    }
+
+    private async runEos(
+        workspaceData: WorkspaceIssuesData,
+        root: IssuesRootTreeNode,
+        workspcaeDescriptors: Map<PackageType, vscode.Uri[]>,
+        progressManager: StepProgress
+    ): Promise<any> {
+        // Prepare
+        let requests: EosScanRequest[] = [];
+        for (const [type, descriptorPaths] of workspcaeDescriptors) {
+            let language: string | undefined;
+            switch (type) {
+                case PackageType.Python:
+                    language = 'python';
+                    break;
+                case PackageType.Maven:
+                    language = 'java';
+                    break;
+                case PackageType.Npm:
+                    language = 'js';
+                    break;
+            }
+            if (language) {
+                let roots: Set<string> = new Set<string>();
+                for (const descriptorPath of descriptorPaths) {
+                    let directory: string = path.dirname(descriptorPath.fsPath);
+                    if (!roots.has(directory)) {
+                        roots.add(directory);
+                        // TODO: removw when issue on eos is resolve
+                        requests.push({
+                            language: language,
+                            roots: [directory]
+                        } as EosScanRequest);
+                    }
+                }
+                // TODO: uncomment when issue on eos is resolve
+                // if (roots.size > 0) {
+                //     requests.push({
+                //         language: language,
+                //         roots: Array.from(roots)
+                //     } as EosScanRequest);
+                // }
+            }
+        }
+        if (requests.length == 0) {
+            progressManager.reportProgress();
+            return;
+        }
+        let startTime: number = Date.now();
+        workspaceData.eosScan = await this._scanManager.scanEos(...requests).finally(() => progressManager.reportProgress());
+        if (workspaceData.eosScan) {
+            workspaceData.eosScanTimestamp = Date.now();
+            let applicableIssuesCount: number = AnalyzerUtils.populateEosIssues(root, workspaceData);
+            this._logManager.logMessage(
+                'Found ' +
+                    applicableIssuesCount +
+                    " Eos issues in workspace = '" +
+                    workspaceData.path +
+                    "' (elapsed:" +
+                    (Date.now() - startTime) / 1000 +
+                    'sec)',
+                'DEBUG'
+            );
+
+            root.apply();
+            progressManager.onProgress();
+        }
+    }
+
     /**
      * Search for file with issues and return the tree node that matches the path.
      * Values return base on the last call to Refresh
@@ -507,6 +627,10 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         if (element instanceof DependencyIssuesTreeNode) {
             return Promise.resolve(element.issues);
         }
+        // Code file type
+        if (element instanceof CodeFileTreeNode) {
+            return Promise.resolve(element.issues);
+        }
     }
 
     getTreeItem(element: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | IssueTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
@@ -524,14 +648,24 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             }
             // Descriptor issues nodes
             if (element instanceof CveTreeNode || element instanceof LicenseIssueTreeNode) {
+                // if (element instanceof CveTreeNode) {
+                //     element.applicableDetails; // = this.getCveApplicableDetails(element);
+                // }
                 element.command = Utils.createNodeCommand('jfrog.view.dependency.details.page', 'Show details', [element.getDetailsPage()]);
+            }
+            // TODO: Source code issues nodes
+            if (element instanceof CodeIssueTreeNode) {
+                element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open file location', [
+                    element.parent.fullPath,
+                    element.regionWithIssue
+                ]);
             }
         }
         return element;
     }
 
     public getParent(
-        element: FileTreeNode | DependencyIssuesTreeNode | CveTreeNode | LicenseIssueTreeNode
+        element: FileTreeNode | DependencyIssuesTreeNode | CveTreeNode | LicenseIssueTreeNode | CodeIssueTreeNode
     ): Thenable<IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | undefined> {
         return Promise.resolve(element.parent);
     }

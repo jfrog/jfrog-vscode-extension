@@ -3,6 +3,7 @@ import { DependencyIssuesTreeNode } from './dependencyIssuesTreeNode';
 import { IssuesRootTreeNode } from '../issuesRootTreeNode';
 import { PackageType } from '../../../types/projectType';
 import { IssueTreeNode } from '../issueTreeNode';
+import { CveApplicableDetails } from '../../../scanLogic/scanRunners/applicabilityScan';
 import { CveTreeNode } from './cveTreeNode';
 
 /**
@@ -12,7 +13,12 @@ import { CveTreeNode } from './cveTreeNode';
 export class DescriptorTreeNode extends FileTreeNode {
     private _dependenciesWithIssue: DependencyIssuesTreeNode[] = [];
     private _dependencyScanTimeStamp?: number;
+    private _applicableScanTimeStamp?: number | undefined;
+
     private _packageType: PackageType;
+
+    private _scannedCve?: Set<string> | undefined; // not applicaible if key in here and not in the map below
+    private _applicableCve?: Map<string, CveApplicableDetails> | undefined; // is applicable if key in here
 
     constructor(fileFullPath: string, packageType?: PackageType, parent?: IssuesRootTreeNode) {
         super(fileFullPath, parent);
@@ -73,6 +79,13 @@ export class DescriptorTreeNode extends FileTreeNode {
         this._dependencyScanTimeStamp = value;
     }
 
+    public get applicableScanTimeStamp(): number | undefined {
+        return this._applicableScanTimeStamp;
+    }
+    public set applicableScanTimeStamp(value: number | undefined) {
+        this._applicableScanTimeStamp = value;
+    }
+
     public get timeStamp(): number | undefined {
         let oldest: number | undefined;
         if (this._dependencyScanTimeStamp != undefined) {
@@ -80,7 +93,25 @@ export class DescriptorTreeNode extends FileTreeNode {
                 oldest = this._dependencyScanTimeStamp;
             }
         }
+        if (this._applicableScanTimeStamp != undefined) {
+            if (oldest == undefined || this._applicableScanTimeStamp < oldest) {
+                oldest = this._applicableScanTimeStamp;
+            }
+        }
         return oldest;
+    }
+
+    public get scannedCve(): Set<string> | undefined {
+        return this._scannedCve;
+    }
+    public set scannedCve(value: Set<string> | undefined) {
+        this._scannedCve = value;
+    }
+    public get applicableCve(): Map<string, CveApplicableDetails> | undefined {
+        return this._applicableCve;
+    }
+    public set applicableCve(value: Map<string, CveApplicableDetails> | undefined) {
+        this._applicableCve = value;
     }
 
     public get dependenciesWithIssue(): DependencyIssuesTreeNode[] {

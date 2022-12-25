@@ -18,6 +18,7 @@ import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
 
 export class Translators {
+    
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
         let components: string[] = clientGeneral.component_id.split(':');
         return components.length === 2

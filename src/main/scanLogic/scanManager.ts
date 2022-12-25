@@ -7,6 +7,8 @@ import { ConnectionUtils } from '../connect/connectionUtils';
 import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { IGraphResponse, XrayScanProgress } from 'jfrog-client-js';
 import { GraphScanLogic } from './scanGraphLogic';
+import { ApplicabilityRunner, ApplicabilityScanResponse } from './scanRunners/applicabilityScan';
+import { EosRunner, EosScanRequest, EosScanResponse } from './scanRunners/eosScan';
 
 /**
  * Manage all the Xray scans
@@ -45,5 +47,36 @@ export class ScanManager implements ExtensionComponent {
     ): Promise<IGraphResponse> {
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
         return scanLogic.scan(graphRoot, flatten, progress, checkCanceled);
+    }
+
+    public async scanApplicability(
+        directory: string,
+        cveToRun: string[] = [],
+        skipFolders: string[] = []
+    ): Promise<ApplicabilityScanResponse | undefined> {
+        let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(this._logManager);
+        if (!applicableRunner.isSupported) {
+            return undefined;
+        }
+        this._logManager.logMessage("Starting Applicable scan: directory = '" + directory + "'", 'DEBUG');
+        return applicableRunner.scan(directory, cveToRun, skipFolders);
+    }
+
+    public async scanEos(...requests: EosScanRequest[]): Promise<EosScanResponse | undefined> {
+        let eosRunner: EosRunner = new EosRunner(this._logManager);
+        if (!eosRunner.isSupported) {
+            return undefined;
+        }
+        let eosRequests: EosScanRequest[] = [];
+        for (const request of requests) {
+            if (request.roots.length > 0) {
+                eosRequests.push({
+                    language: request.language,
+                    roots: request.roots
+                } as EosScanRequest);
+            }
+        }
+        this._logManager.logMessage("Starting Eos scan", 'DEBUG');
+        return eosRunner.scan(...eosRequests);
     }
 }
