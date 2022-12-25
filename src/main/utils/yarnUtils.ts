@@ -78,7 +78,7 @@ export class YarnUtils {
         projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
-        quickScan: boolean
+        checkCanceled: () => void
     ): Promise<void> {
         if (!yarnLocks) {
             treesManager.logManager.logMessage('No yarn.lock files found in workspaces.', 'DEBUG');
@@ -86,22 +86,24 @@ export class YarnUtils {
         }
         treesManager.logManager.logMessage('yarn.lock files to scan: [' + yarnLocks.toString() + ']', 'DEBUG');
         for (let yarnLock of yarnLocks) {
+            checkCanceled();
             // In yarn, the version may vary in different workspaces. Therefore we run 'yarn --version' for each workspace.
-            if (!YarnUtils.isVersionSupported(parent, treesManager.logManager, path.dirname(yarnLock.fsPath), quickScan)) {
+            if (!YarnUtils.isVersionSupported(parent, treesManager.logManager, path.dirname(yarnLock.fsPath))) {
                 return;
             }
+            checkCanceled();
             let root: YarnTreeNode = new YarnTreeNode(path.dirname(yarnLock.fsPath), treesManager, parent);
             projectsToScan.push(root.projectDetails);
-            root.refreshDependencies(quickScan);
+            root.refreshDependencies();
         }
     }
 
-    public static isVersionSupported(parent: DependenciesTreeNode, logManager: LogManager, workspaceFolder: string, quickScan: boolean): boolean {
+    public static isVersionSupported(parent: DependenciesTreeNode, logManager: LogManager, workspaceFolder: string): boolean {
         try {
             let version: string = ScanUtils.executeCmd('yarn --version', workspaceFolder).toString();
             let yarnSemver: semver.SemVer = new semver.SemVer(version);
             if (yarnSemver.compare('2.0.0') >= 0) {
-                logManager.logError(new Error('Could not scan Yarn project dependencies, because currently only Yarn 1 is supported.'), !quickScan);
+                logManager.logError(new Error('Could not scan Yarn project dependencies, because currently only Yarn 1 is supported.'), true);
                 let yarnProject: ScopedNpmProject = this.getYarnProjectDetails(workspaceFolder);
                 let generalInfo: GeneralInfo = new GeneralInfo(
                     (yarnProject.projectName || workspaceFolder) + ` [Not supported]`,
@@ -114,7 +116,7 @@ export class YarnUtils {
                 return false;
             }
         } catch (error) {
-            logManager.logError(new Error('Could not scan Yarn project dependencies, because Yarn is not installed.'), !quickScan);
+            logManager.logError(new Error('Could not scan Yarn project dependencies, because Yarn is not installed.'), true);
             return false;
         }
         return true;

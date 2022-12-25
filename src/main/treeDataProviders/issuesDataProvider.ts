@@ -7,9 +7,6 @@ import { Consts } from '../utils/consts';
 import { IconsPaths } from '../utils/iconsPaths';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from './utils/treeDataHolder';
-// import { ContextKeys } from '../constants/contextKeys';
-// import { SourceCodeCveTreeNode } from './sourceCodeTree/sourceCodeCveNode';
-// import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
 import { Utils } from './utils/utils';
 import { IExtendedInformation, IReference } from 'jfrog-client-js';
 
@@ -25,7 +22,6 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
     private _selectedNode!: DependenciesTreeNode;
 
     constructor(protected _scanCacheManager: ScanCacheManager) {
-        //, private _sourceCodeTreeDataProvider: SourceCodeTreeDataProvider) {
         // Open issue tab by default.
         super('Issues', vscode.TreeItemCollapsibleState.Expanded);
     }
@@ -40,10 +36,7 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
 
     getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
         if (element instanceof VulnerabilityNode) {
-            // if (element.sourceCodeCveTreeNode !== undefined) {
-            //     // Focus on vulnerable line on issue (CVE) left click.
-            // }
-            element.command = Utils.createNodeCommand('view.dependency.vulnerability', 'Show details', [element]);
+            element.command = Utils.createNodeCommand('jfrog.view.dependency.vulnerability', 'Show details', [element]);
         }
         if (!(element instanceof TreeDataHolder)) {
             // VulnerabilityNode, ViolatedLicenseNode, LicensesTitleNode, or VulnerabilitiesTitleNode
@@ -136,7 +129,6 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
                     xrayIssueId.component,
                     issue.fixedVersions,
                     undefined,
-                    // undefined,
                     issue.researchInfo
                 );
                 children.push(issueNode);
@@ -144,16 +136,6 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
                 // Include a CVE applicability note for components that are found to be affected by CVE applicability scanner.
                 for (let cve of issue.cves) {
                     let applicable: boolean | undefined = undefined;
-                    // let sourceCodeCveTreeNode: SourceCodeCveTreeNode | undefined;
-                    // if (this._sourceCodeTreeDataProvider.isCveNotApplicable(selectedNode.getWorkingDir(), cve)) {
-                    //     applicable = false;
-                    //     cve = cve + ' 🟢 ' + ' Not applicable';
-                    // }
-                    // if (this._sourceCodeTreeDataProvider.isCveApplicable(selectedNode.getWorkingDir(), cve)) {
-                    //     applicable = true;
-                    //     sourceCodeCveTreeNode = this._sourceCodeTreeDataProvider.getApplicableCve(selectedNode.getWorkingDir(), cve);
-                    //     cve = cve + ' 🔴 ' + ' Applicable';
-                    // }
                     let issueNode: VulnerabilityNode = new VulnerabilityNode(
                         xrayIssueId.issue_id,
                         issue.severity,
@@ -164,7 +146,6 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
                         xrayIssueId.component,
                         issue.fixedVersions,
                         applicable,
-                        // sourceCodeCveTreeNode,
                         issue.researchInfo
                     );
                     children.push(issueNode);
@@ -190,10 +171,6 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
         if (fixedVersions && fixedVersions.length > 0) {
             children.push(new TreeDataHolder('Fixed Versions', fixedVersions.join(', ')));
         }
-        // let references: IReference[] | undefined = node.references;
-        // if (references && references.length > 0) {
-        //     children.push(new ReferencesNode(references));
-        // }
         return children;
     }
 
@@ -273,14 +250,9 @@ export class VulnerabilityNode extends IssueNode {
         readonly component?: string,
         readonly fixedVersions?: string[],
         readonly applicable?: boolean, // If false, the given CVE is not applicable in the source code. If true, the given CVE is applicable in the source code.  If undefined, The CVE cannot be discovered.
-        // readonly sourceCodeCveTreeNode?: SourceCodeCveTreeNode,
         readonly researchInfo?: IExtendedInformation
     ) {
         super(cve ? cve : xrayId, vscode.TreeItemCollapsibleState.Collapsed);
-        // Enable eye button if we can jump to source code.
-        // if (sourceCodeCveTreeNode !== undefined) {
-        //     this.contextValue = ContextKeys.SHOW_IN_SOURCE_CODE_ENABLED;
-        // }
         this.iconPath = SeverityUtils.getIcon(severity ? severity : Severity.Normal);
     }
 

@@ -33,8 +33,6 @@ export class Utils {
         if (timeStamp == undefined) {
             return 'Never';
         }
-        let dateTimeStamp: Date = new Date(timeStamp);
-
-        return dateTimeStamp.toUTCString();
+        return new Date(timeStamp).toUTCString();
     }
 }

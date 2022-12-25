@@ -12,13 +12,15 @@ export class DetailsWebView {
         let prevActiveTreeNode: IDependencyPage;
 
         context.subscriptions.push(
-            vscode.commands.registerCommand('view.dependency.details.page', (page: IDependencyPage) => {
+            vscode.commands.registerCommand('jfrog.view.dependency.details.page', (page: IDependencyPage) => {
                 prevActiveTreeNode = page;
                 if (!panel) {
                     panel = createWebview(context);
                     panel.onDidChangeViewState(e => {
                         updateWebview(e.webviewPanel, prevActiveTreeNode);
                     });
+                } else {
+                    panel.reveal();
                 }
                 if (page) {
                     updateWebview(panel, prevActiveTreeNode);
@@ -45,7 +47,7 @@ function updateWebview(panel: vscode.WebviewPanel, page: IDependencyPage) {
 function createWebview(context: vscode.ExtensionContext) {
     // Create and show panel
     let panel: vscode.WebviewPanel = vscode.window.createWebviewPanel(
-        'vulnerability.details',
+        'jfrog.vulnerability.details',
         'Vulnerability Details',
         { viewColumn: vscode.ViewColumn.Beside, preserveFocus: false },
         {

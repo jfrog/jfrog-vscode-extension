@@ -4,7 +4,9 @@ import { PackageType, toPackgeType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { DescriptorTreeNode } from './descriptorTreeNode';
 import { IComponent } from 'jfrog-client-js';
-import { IssueTreeNode } from '../issueTreeNode';
+// import { IssueTreeNode } from '../issueTreeNode';
+import { CveTreeNode } from './cveTreeNode';
+import { LicenseIssueTreeNode } from './licenseIssueTreeNode';
 
 export class DependencyIssuesTreeNode extends vscode.TreeItem {
     // Infer from data
@@ -15,10 +17,10 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     private _infectedVersions: string[];
 
     // Added dynamicly
-    private _issues: IssueTreeNode[] = [];
+    private _issues: (CveTreeNode | LicenseIssueTreeNode)[] = [];
     private _licenses: ILicense[] = [];
 
-    constructor(private _artifactId: string, component: IComponent, private _topSeverity: Severity, private _parent: DescriptorTreeNode) {
+    constructor(private _artifactId: string, component: IComponent, private _severity: Severity, private _parent: DescriptorTreeNode) {
         super(component.package_name);
 
         this._name = component.package_name;
@@ -26,7 +28,6 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         this._fixVersion = component.fixed_versions;
         this._infectedVersions = component.infected_versions;
         this._type = toPackgeType(component.package_type);
-
         this.description = this._version;
     }
 
@@ -35,7 +36,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
      * Use to calculate accumulative statistics and view from all the children.
      */
     public apply() {
-        this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.topSeverity) + '\n';
+        this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n';
         this.tooltip += 'Issues count: ' + this._issues.length + '\n';
         this.tooltip += 'Artifact: ' + this.artifactId;
 
@@ -46,8 +47,6 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         }
 
         this._issues
-            // 2nd priority - Sort by name
-            .sort((lhs, rhs) => rhs.severity - lhs.severity)
             // 1st priority - Sort by severity
             .sort((lhs, rhs) => rhs.severity - lhs.severity);
     }
@@ -57,13 +56,6 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
      */
     public get artifactId(): string {
         return this._artifactId;
-    }
-
-    /**
-     * return a string that identify this dependency [name,version]
-     */
-    public get componenetId(): string {
-        return this._name + ':' + this._version;
     }
 
     public get infectedVersions(): string[] {
@@ -78,11 +70,11 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         this._licenses = value;
     }
 
-    public set issues(value: IssueTreeNode[]) {
+    public set issues(value: (CveTreeNode | LicenseIssueTreeNode)[]) {
         this._issues = value;
     }
 
-    public get issues(): IssueTreeNode[] {
+    public get issues(): (CveTreeNode | LicenseIssueTreeNode)[] {
         return this._issues;
     }
 
@@ -90,12 +82,12 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         return this._parent;
     }
 
-    public set topSeverity(value: Severity) {
-        this._topSeverity = value;
+    public set severity(value: Severity) {
+        this._severity = value;
     }
 
-    public get topSeverity(): Severity {
-        return this._topSeverity;
+    public get severity(): Severity {
+        return this._severity;
     }
 
     public get name(): string {

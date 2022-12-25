@@ -9,7 +9,6 @@ import { Severity, SeverityUtils } from '../../types/severity';
 import { DependencyIssuesTreeNode } from '../issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
 import { PackageType } from '../../types/projectType';
-import { ProjectDetails } from '../../types/projectDetails';
 import { LicenseIssueTreeNode } from '../issuesTree/descriptorTree/licenseIssueTreeNode';
 import { GoUtils } from '../../utils/goUtils';
 import { MavenUtils } from '../../utils/mavenUtils';
@@ -29,13 +28,13 @@ export class DescriptorUtils {
      */
     public static createImpactedPaths(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactedPath> {
         let paths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>();
-        let issues: IVulnerability[] = response.violations ? response.violations : response.vulnerabilities;
+        let issues: IVulnerability[] = response.violations || response.vulnerabilities;
 
         for (let i: number = 0; i < issues.length; i++) {
             let issue: IVulnerability = issues[i];
             paths.set(issue.issue_id, {
                 name: descriptorGraph.componentId,
-                children: this.getChildrenImapct(descriptorGraph, new Map<string, IComponent>(Object.entries(issue.components)))
+                children: this.getChildrenImpact(descriptorGraph, new Map<string, IComponent>(Object.entries(issue.components)))
             } as IImpactedPath);
         }
         return paths;
@@ -47,7 +46,7 @@ export class DescriptorUtils {
      * @param componentsWithIssue - map of artifactId -> component, if component exists in the map it has issue
      * @returns array of impact paths one for each child if exists
      */
-    public static getChildrenImapct(root: DependenciesTreeNode, componentsWithIssue: Map<string, IComponent>): IImpactedPath[] {
+    public static getChildrenImpact(root: DependenciesTreeNode, componentsWithIssue: Map<string, IComponent>): IImpactedPath[] {
         let impactPaths: IImpactedPath[] = [];
         for (let child of root.children) {
             let impactChild: IImpactedPath | undefined = impactPaths.find(p => p.name === child.componentId);
@@ -61,7 +60,7 @@ export class DescriptorUtils {
                     continue;
                 }
                 // indirect impact
-                let indirectImpact: IImpactedPath[] = this.getChildrenImapct(child, componentsWithIssue);
+                let indirectImpact: IImpactedPath[] = this.getChildrenImpact(child, componentsWithIssue);
                 if (indirectImpact.length > 0) {
                     impactPaths.push({
                         name: child.componentId,
@@ -84,18 +83,18 @@ export class DescriptorUtils {
         let graphResponse: IGraphResponse = descriptorData.dependenciesGraphScan;
         descriptorNode.dependencyScanTimeStamp = descriptorData.graphScanTimestamp;
         let impactedPaths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>(Object.entries(descriptorData.impactTreeData));
-        let issues: IVulnerability[] | IViolation[] = graphResponse.violations ? graphResponse.violations : graphResponse.vulnerabilities;
+        let issues: IVulnerability[] | IViolation[] = graphResponse.violations || graphResponse.vulnerabilities;
         let topSeverity: Severity = Severity.Unknown;
         // Populate issues
         for (let i: number = 0; i < issues.length; i++) {
             let issue: IVulnerability | IViolation = issues[i];
             let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id);
-            // Update severity for the top descriptor
+            // Update the top severity of the descriptor
             let severity: Severity = SeverityUtils.getSeverity(issue.severity);
             if (severity > topSeverity) {
                 topSeverity = severity;
             }
-            // Populate the issue for each dependency
+            // Populate the issue for each dependency component
             for (let [componentId, component] of Object.entries(issue.components)) {
                 let dependencyWithIssue: DependencyIssuesTreeNode = this.getOrCreateDependecyWithIssue(
                     descriptorNode,
@@ -108,14 +107,18 @@ export class DescriptorUtils {
                 let matchIssue: IssueTreeNode | undefined = dependencyWithIssue.issues.find(i => i.issueId == issue.issue_id);
                 if (violationIssue && matchIssue) {
                     // In case multiple watches are assigned and there are componenets that overlap between the watches
-                    // Xray will return componnet duplication (just watch_name different), combine those results
+                    // Xray will return component duplication (just watch_name different), combine those results
                     matchIssue.watchNames?.push(violationIssue.watch_name);
                 } else {
                     if (violationIssue && violationIssue.license_key) {
                         dependencyWithIssue.issues.push(new LicenseIssueTreeNode(violationIssue, severity, dependencyWithIssue, impactedPath));
                     } else {
-                        for (let cveIssue of issue.cves) {
-                            dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath, cveIssue));
+                        if (issue.cves) {
+                            for (let cveIssue of issue.cves) {
+                                dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath, cveIssue));
+                            }
+                        } else {
+                            dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath));
                         }
                     }
                 }
@@ -144,7 +147,7 @@ export class DescriptorUtils {
      * @param componentId - the id (type,name,version) of the dependency
      * @param component - the dependecy data to create
      * @param severity - the severity to create/update
-     * @returns
+     * @returns the dependency object if exists, else a newly created one base on the input
      */
     public static getOrCreateDependecyWithIssue(
         descriptorNode: DescriptorTreeNode,
@@ -153,46 +156,64 @@ export class DescriptorUtils {
         severity: Severity
     ): DependencyIssuesTreeNode {
         let dependencyWithIssue: DependencyIssuesTreeNode | undefined = descriptorNode.getDependencyByID(componentId);
-        if (dependencyWithIssue == undefined) {
+        if (!dependencyWithIssue) {
             dependencyWithIssue = new DependencyIssuesTreeNode(componentId, component, severity, descriptorNode);
             descriptorNode.dependenciesWithIssue.push(dependencyWithIssue);
-        } else if (severity > dependencyWithIssue.topSeverity) {
-            dependencyWithIssue.topSeverity = severity;
+        } else if (severity > dependencyWithIssue.severity) {
+            dependencyWithIssue.severity = severity;
         }
         return dependencyWithIssue;
     }
 
-    // returns the full path of the descriptor file if exsits in map or artifactId of the root otherwise
     /**
-     * Get the full path of a given root base on a list of the full-path of the descriptors in the workspace
-     * @param descriptorRoot - the root we want to search
-     * @param workspcaeDescriptors - map from package type to list of descriptor paths
-     * @returns - the full path of the given root if root exists, else root's artifactId
+     * Get the dependency graph of a descriptor base on a given path
+     * @param workspaceDependenciesTree - the dependencies graph for all the descriptors in the workspace
+     * @param descriptorPath - the descriptor we want to fetch its sub tree graph
+     * @returns the descriptor dependencies tree if exsits the provided workspace tree, undefined otherwise
      */
-    public static getDescriptorFullPath(descriptorRoot: RootNode, workspcaeDescriptors: Map<PackageType, vscode.Uri[]>): string {
-        let details: ProjectDetails = descriptorRoot.projectDetails;
-        let descriptorName: string = descriptorRoot.generalInfo.artifactId;
-        let typeDescriptors: vscode.Uri[] | undefined = workspcaeDescriptors.get(details.type);
-        if (typeDescriptors != undefined) {
-            for (let descriptor of typeDescriptors) {
-                let descriptorDir: string = path.dirname(descriptor.fsPath);
-                if (descriptorDir == details.path) {
-                    descriptorName = descriptor.fsPath;
-                    break;
+    public static getDependencyGraph(workspaceDependenciesTree: DependenciesTreeNode, descriptorPath: string): RootNode | undefined {
+        // Search for the dependecy graph of the descriptor
+        let descriptorDir: string = path.dirname(descriptorPath);
+        for (const child of workspaceDependenciesTree.children) {
+            if (child instanceof RootNode) {
+                let graph: RootNode | undefined = this.searchDependencyGraph(descriptorDir, child);
+                if (graph) {
+                    return graph;
                 }
             }
         }
-        return descriptorName;
+        return undefined;
+    }
+
+    public static searchDependencyGraph(descriptorDir: string, node: RootNode): RootNode | undefined {
+        if (node.fullPath == descriptorDir || node.projectDetails.path == descriptorDir) {
+            return node;
+        }
+        for (const child of node.children) {
+            if (child instanceof RootNode) {
+                let graph: RootNode | undefined = this.searchDependencyGraph(descriptorDir, child);
+                if (graph) {
+                    return graph;
+                }
+            }
+        }
+        return undefined;
+    }
+
+    public static getNumberOfSupportedPackgeTypes(): number {
+        return 5;
     }
 
     /**
      * Get the positions a specific depdndecy appers in a descriptor file
      * @param document - the descriptor document we want to search in
      * @param packeType - the type of packge this descriptor has
-     * @param dependencyName - the dependency name we want to search
+     * @param dependencyId - the dependency id we want to search
      * @returns the list of positions in the document this dependency appers in
      */
-    public static getDependencyPosition(document: vscode.TextDocument, packeType: PackageType, dependencyName: string): vscode.Position[] {
+    public static getDependencyPosition(document: vscode.TextDocument, packeType: PackageType, dependencyId: string): vscode.Position[] {
+        let dependencyName: string = packeType == PackageType.Maven ? dependencyId : dependencyId.substring(0, dependencyId.lastIndexOf(':'));
+
         switch (packeType) {
             case PackageType.Go:
                 return GoUtils.getDependencyPosition(document, dependencyName, FocusType.Dependency);

@@ -35,7 +35,8 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
         // Local state
-        this.registerCommand(context, 'jfrog.xray.file.open', file => ScanUtils.openFile(file));
+        this.registerCommand(context, 'jfrog.issues.file.open', file => ScanUtils.openFile(file));
+        this.registerCommand(context, 'jfrog.issues.file.open.location', (file, fileRegion) => ScanUtils.openFile(file, fileRegion));
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
         // CI state
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));

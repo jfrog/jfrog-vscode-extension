@@ -54,7 +54,7 @@ export class TreesManager implements ExtensionComponent {
         });
         this._issuesTreeView = vscode.window.createTreeView('jfrog.xray.issues', {
             treeDataProvider: this._issuesTreeDataProvider,
-            showCollapseAll: false
+            showCollapseAll: true
         });
         context.subscriptions.push(
             this._ciTreeView,

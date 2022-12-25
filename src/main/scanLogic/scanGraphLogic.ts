@@ -5,7 +5,7 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { Configuration } from '../utils/configuration';
 
 /**
- * Used in Xray >= 3.29.0.
+ * Supported in Xray >= 3.29.0.
  * Run /scan/graph REST API and populate the cache with the results.
  * When the project key is provided - only violated vulnerabilities should appear in the results. Licenses may mark as violated.
  * When the project key isn't provided - all vulnerabilities and licenses information should appear in the results.
@@ -39,21 +39,25 @@ export class GraphScanLogic {
     /**
      * Flatten the dependency graph and remove duplications recursively.
      * @param dependency - the dependency root to get its flatten children
-     * @param components - the componnets that are already discovered to remove duplication
+     * @param components - the components that are already discovered to remove duplication
      * @returns - flatten unique dependency entries of the root children
      */
-    private getFlattenRequestModelNodes(dependency: DependenciesTreeNode, components: Set<string>): IGraphRequestModel[] {
+    private getFlattenRequestModelNodes(dependency: DependenciesTreeNode, components: Set<string>): IGraphRequestModel[] | undefined {
         let nodes: IGraphRequestModel[] = [];
         for (let child of dependency.children) {
-            if(child.dependencyId && !components.has(child.dependencyId)) {
+            if (child.dependencyId && !components.has(child.dependencyId)) {
                 components.add(child.dependencyId);
                 nodes.push({
                     component_id: child.dependencyId
                 } as IGraphRequestModel);
-            }   
-            nodes.push(...this.getFlattenRequestModelNodes(child,components));
+            }
+            let childNodes: IGraphRequestModel[] | undefined = this.getFlattenRequestModelNodes(child,components);
+            if (childNodes) {
+                nodes.push(...childNodes);
+            }
         }
-        return nodes;
+        // To reduce the sent payload, we don't populate empty graph nodes with an empty array
+        return nodes.length > 0 ? nodes : undefined;
     }
 
     /**
@@ -71,6 +75,7 @@ export class GraphScanLogic {
                 } as IGraphRequestModel);
             }
         }
+        // To reduce the sent payload, we don't populate empty graph nodes with an empty array
         return nodes.length > 0 ? nodes : undefined;
     }
 }

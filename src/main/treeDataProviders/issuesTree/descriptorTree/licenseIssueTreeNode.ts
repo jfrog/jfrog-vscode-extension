@@ -21,6 +21,9 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
         this._watchNames = [issue.watch_name];
         this._references = Translators.cleanReferencesLink(issue.references);
         this._licenseissue = issue;
+
+        this.description = 'License violation';
+        this.tooltip = 'License violation issue';
     }
 
     /**
@@ -30,8 +33,8 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
     public getDetailsPage(): IDependencyPage {
         return {
             id: this._issue_id,
-            name: this._parent.name,
-            watchName: this.watchNames?.join(', '),
+            component: this._parent.name,
+            watchName: this.watchNames,
             type: PackageType[this._parent.type],
             version: this._parent.version,
             severity: SeverityUtils.toWebviewSeverity(this._severity),

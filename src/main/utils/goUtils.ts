@@ -4,7 +4,6 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import * as walkdir from 'walkdir';
 import { FocusType } from '../constants/contextKeys';
-// import { FocusType } from '../focus/abstractFocus';
 import { LogManager } from '../log/logManager';
 import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -38,33 +37,11 @@ export class GoUtils {
 
     /**
      * Get go.mod file and dependencies tree node. return the position of the dependency in the go.mod file.
-     * @param document             - go.mod file
-     * @param dependenciesTreeNode - dependencies tree node
+     * @param document - go.mod file
+     * @param artifactId - dependency id
+     * @param focusType - what position to return (dependency / version)
+     * @returns the position of the dependency / version in the go.mod file.
      */
-    public static getDependencyPos(
-        document: vscode.TextDocument,
-        dependenciesTreeNode: DependenciesTreeNode,
-        focusType: FocusType
-    ): vscode.Position[] {
-        return GoUtils.getDependencyPosition(document, dependenciesTreeNode.generalInfo.artifactId, focusType);
-        // let res: vscode.Position[] = [];
-        // let goModContent: string = document.getText();
-        // let dependencyMatch: RegExpMatchArray | null = goModContent.match('(' + dependenciesTreeNode.generalInfo.artifactId + 's* )vs*.*');
-        // if (!dependencyMatch) {
-        //     return res;
-        // }
-        // switch (focusType) {
-        //     case FocusType.Dependency:
-        //         res.push(document.positionAt(<number>dependencyMatch.index));
-        //         break;
-        //     case FocusType.DependencyVersion:
-        //         res.push(document.positionAt(<number>dependencyMatch.index + dependencyMatch[1].length));
-        //         break;
-        // }
-        // res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));
-        // return res;
-    }
-
     public static getDependencyPosition(document: vscode.TextDocument, artifactId: string, focusType: FocusType): vscode.Position[] {
         let res: vscode.Position[] = [];
         let goModContent: string = document.getText();
@@ -95,7 +72,8 @@ export class GoUtils {
         goMods: vscode.Uri[] | undefined,
         projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
-        parent: DependenciesTreeNode
+        parent: DependenciesTreeNode,
+        checkCanceled: () => void
     ): Promise<void> {
         if (!goMods) {
             treesManager.logManager.logMessage('No go.mod files found in workspaces.', 'DEBUG');
@@ -107,6 +85,7 @@ export class GoUtils {
             return;
         }
         for (let goMod of goMods) {
+            checkCanceled();
             treesManager.logManager.logMessage('Analyzing go.mod files', 'INFO');
             let projectDir: string = path.dirname(goMod.fsPath);
             let tmpWorkspace: string = '';

@@ -2,7 +2,6 @@ import * as exec from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ContextKeys, FocusType } from '../constants/contextKeys';
-// import { FocusType } from '../focus/abstractFocus';
 import { LogManager } from '../log/logManager';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -35,7 +34,7 @@ export class MavenUtils {
     }
 
     /**
-     * Get pom.xml file and dependencies tree node. return the position of the dependency in the pom.xml file.
+     * Get pom.xml file and dependencies tree node. Return the position of the dependency in the pom.xml file.
      * @param document             - pom.xml file
      * @param dependenciesTreeNode - dependencies tree node
      */
@@ -198,7 +197,7 @@ export class MavenUtils {
         projectDetails: ProjectDetails[],
         treesManager: TreesManager,
         root: DependenciesTreeNode,
-        quickScan: boolean
+        checkCanceled: () => void
     ): Promise<void> {
         if (!pomXmls) {
             treesManager.logManager.logMessage('No pom.xml files found in workspaces.', 'DEBUG');
@@ -206,17 +205,19 @@ export class MavenUtils {
         }
         treesManager.logManager.logMessage('pom.xml files to scan: [' + pomXmls.toString() + ']', 'DEBUG');
         if (!MavenUtils.verifyMavenInstalled()) {
-            treesManager.logManager.logError(new Error('Could not scan Maven project dependencies, because "mvn" is not in the PATH.'), !quickScan);
+            treesManager.logManager.logError(new Error('Could not scan Maven project dependencies, because "mvn" is not in the PATH.'), true);
             return;
         }
+        checkCanceled();
         treesManager.logManager.logMessage('Generating Maven Dependency Tree', 'INFO');
         let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, treesManager.logManager);
         for (let ProjectTree of prototypeTree) {
+            checkCanceled();
             try {
                 treesManager.logManager.logMessage('Analyzing pom.xml at ' + ProjectTree.pomPath, 'INFO');
                 ProjectTree.runMavenDependencyTree();
                 let mavenRoot: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, treesManager, root);
-                const mavenProjectsDetails: ProjectDetails[] = await mavenRoot.refreshDependencies(quickScan, ProjectTree);
+                const mavenProjectsDetails: ProjectDetails[] = await mavenRoot.refreshDependencies(ProjectTree);
                 if (mavenRoot.children.length === 0) {
                     root.children.splice(root.children.indexOf(mavenRoot), 1);
                 } else {
@@ -231,7 +232,7 @@ export class MavenUtils {
                         '.',
                     'ERR',
                     true,
-                    !quickScan
+                    true
                 );
                 treesManager.logManager.logMessage((<any>error).stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }

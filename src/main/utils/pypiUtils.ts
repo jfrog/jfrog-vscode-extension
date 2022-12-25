@@ -43,7 +43,6 @@ export class PypiUtils {
         requirementsContent: string,
         dependenciesTreeNode: DependenciesTreeNode
     ): vscode.Position[] {
-        // return this.getDependencyPosition(document,dependenciesTreeNode.generalInfo.artifactId);
         let res: vscode.Position[] = [];
         let dependencyMatch: RegExpMatchArray | null = requirementsContent.match(dependenciesTreeNode.generalInfo.artifactId);
         if (!dependencyMatch) {
@@ -103,7 +102,7 @@ export class PypiUtils {
         projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
-        quickScan: boolean
+        checkCanceled: () => void
     ): Promise<void> {
         if (!pythonFiles) {
             treesManager.logManager.logMessage('No setup.py and requirements files found in workspaces.', 'DEBUG');
@@ -111,6 +110,7 @@ export class PypiUtils {
         }
         let pythonExtension: vscode.Extension<any> | undefined;
         for (let workspaceFolder of workspaceFolders) {
+            checkCanceled();
             let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, treesManager.logManager);
             if (!pythonFilesExist) {
                 treesManager.logManager.logMessage('No setup.py and requirements files found in workspace ' + workspaceFolder.name + '.', 'DEBUG');
@@ -124,7 +124,7 @@ export class PypiUtils {
                             'Could not scan Pypi project dependencies, because python extension is not installed. ' +
                                 'Please install Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python'
                         ),
-                        !quickScan
+                        true
                     );
                     return;
                 }
@@ -134,7 +134,7 @@ export class PypiUtils {
             if (!pythonPath) {
                 treesManager.logManager.logError(
                     new Error('Could not scan Pypi project dependencies, because python interpreter is not set.'),
-                    !quickScan
+                    true
                 );
                 return;
             }
@@ -143,14 +143,15 @@ export class PypiUtils {
                     new Error(
                         'Please install and activate a virtual environment before running Xray scan. Then, install your Python project in that environment.'
                     ),
-                    !quickScan
+                    true
                 );
                 return;
             }
+            checkCanceled();
 
             treesManager.logManager.logMessage('Analyzing setup.py and requirements files of ' + workspaceFolder.name, 'INFO');
-            let root: PypiTreeNode = new PypiTreeNode(path.dirname(workspaceFolder.uri.fsPath), treesManager, pythonPath, parent);
-            root.refreshDependencies(quickScan);
+            let root: PypiTreeNode = new PypiTreeNode(workspaceFolder.uri.fsPath, treesManager, pythonPath, parent);
+            root.refreshDependencies();
             projectsToScan.push(root.projectDetails);
         }
     }

@@ -33,12 +33,10 @@ export class CveApplicabilityRunner {
                 if (process.arch === 'x64' || process.arch === 'arm64') {
                     downloadUrl += '/mac/' + binary;
                 } else {
-                    this._logManager.logMessage('<ASSAF> runner not supported in os darwin, arch ' + process.arch, 'DEBUG');
                     this._isOsSupported = false;
                 }
                 break;
             default:
-                this._logManager.logMessage('<ASSAF> runner not supported in os ' + os.platform(), 'DEBUG');
                 this._isOsSupported = false;
         }
         this._resource = new Resource(path.join(ScanUtils.getHomePath(), 'applicability-scan'), downloadUrl, binary, _logManager);

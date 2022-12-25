@@ -7,17 +7,21 @@ import { LogManager } from '../../log/logManager';
  */
 export class StepProgress {
     private static readonly MAX_PROGRESS: number = 95;
-
+    private _totalSteps: number;
     private currentStepMsg?: string;
     private currentStepsDone: number = 0;
     private currentSubstepsCount?: number;
 
     constructor(
-        private _totalSteps: number,
         private _progress: vscode.Progress<{ message?: string; increment?: number }>,
         private _log?: LogManager,
-        public onProgress?: () => void
-    ) {}
+        public onProgress: () => void = () => {
+            return;
+        },
+        totalSteps?: number
+    ) {
+        this._totalSteps = totalSteps ?? 1;
+    }
 
     public get totalSteps(): number | undefined {
         return this._totalSteps;
@@ -75,15 +79,7 @@ export class StepProgress {
                 if (percentage != this.lastPercentage) {
                     let inc: number = this._progressManager.getStepIncValue * ((percentage - this.lastPercentage) / 100);
                     this._log?.logMessage(
-                        '[' +
-                            scanName +
-                            '] reported change in progress ' +
-                            this.lastPercentage +
-                            '% -> ' +
-                            percentage +
-                            '% (increment = ' +
-                            inc +
-                            ')',
+                        '[' + scanName + '] reported change in progress ' + this.lastPercentage + '% -> ' + percentage + '%',
                         'DEBUG'
                     );
                     this._progressManager.reportProgress(inc);

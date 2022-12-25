@@ -16,7 +16,7 @@ export class YarnTreeNode extends RootNode {
         super(workspaceFolder, PackageType.Yarn, parent);
     }
 
-    public refreshDependencies(quickScan: boolean) {
+    public refreshDependencies() {
         let yarnListFailed: boolean = false;
         let listResults: any;
         try {
@@ -27,12 +27,12 @@ export class YarnTreeNode extends RootNode {
                 `Failed to scan Yarn project. Hint: Please make sure the command "yarn install" runs successfully in ` + this.workspaceFolder + '".',
                 'ERR',
                 true,
-                !quickScan
+                true
             );
             yarnListFailed = true;
         }
         if (!yarnListFailed) {
-            this.populateDependencyTree(this, listResults?.data?.trees, quickScan);
+            this.populateDependencyTree(this, listResults?.data?.trees);
         }
 
         const yarnProject: ScopedNpmProject = YarnUtils.getYarnProjectDetails(this.workspaceFolder);
@@ -47,7 +47,7 @@ export class YarnTreeNode extends RootNode {
         this.label = this.projectDetails.name;
     }
 
-    private populateDependencyTree(dependencyTreeNode: DependenciesTreeNode, nodes: any[], quickScan: boolean) {
+    private populateDependencyTree(dependencyTreeNode: DependenciesTreeNode, nodes: any[]) {
         if (!nodes) {
             return;
         }
@@ -67,14 +67,12 @@ export class YarnTreeNode extends RootNode {
                 ? vscode.TreeItemCollapsibleState.Collapsed
                 : vscode.TreeItemCollapsibleState.None;
             let componentId: string = dependencyName + ':' + dependencyVersion;
-            if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-                this.projectDetails.addDependency(YarnTreeNode.COMPONENT_PREFIX + componentId);
-            }
+            this.projectDetails.addDependency(YarnTreeNode.COMPONENT_PREFIX + componentId);
 
             let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependencyTreeNode);
             child.dependencyId = YarnTreeNode.COMPONENT_PREFIX + componentId;
             if (hasRealChildren) {
-                this.populateDependencyTree(child, node.children, quickScan);
+                this.populateDependencyTree(child, node.children);
             }
         }
     }

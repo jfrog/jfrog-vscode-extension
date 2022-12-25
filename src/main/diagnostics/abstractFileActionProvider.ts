@@ -38,7 +38,7 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
         if (textEditor) {
             for (let i: number = 0; i < position.length; i += 2) {
                 const decoration: vscode.TextEditorDecorationType = vscode.window.createTextEditorDecorationType({
-                    gutterIconPath: iconPath //SeverityUtils.getIcon(severity)
+                    gutterIconPath: iconPath
                 });
                 textEditor.setDecorations(decoration, [new vscode.Range(position[i], position[i + 1])]);
                 this._gutterDecorations.push(decoration);

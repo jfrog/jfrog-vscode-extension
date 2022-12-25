@@ -76,4 +76,4 @@ const reactConfig = (env, argv) => {
     }
 };
 
-    module.exports = [extensionConfig, reactConfig]
+module.exports = [extensionConfig, reactConfig]

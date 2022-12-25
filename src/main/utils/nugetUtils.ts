@@ -22,7 +22,7 @@ export class NugetUtils {
         projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
-        quickScan: boolean
+        checkCanceled: () => void
     ): Promise<void> {
         if (!solutions) {
             treesManager.logManager.logMessage('No *.sln files found in workspaces.', 'DEBUG');
@@ -31,14 +31,16 @@ export class NugetUtils {
 
         treesManager.logManager.logMessage('Solution files to scan: [' + solutions.toString() + ']', 'DEBUG');
         for (let solution of solutions) {
-            let tree: any = await NugetUtils.getProjects(solution.fsPath, treesManager.logManager, quickScan);
+            checkCanceled();
+            let tree: any = await NugetUtils.getProjects(solution.fsPath, treesManager.logManager);
             if (!tree) {
                 continue;
             }
             let solutionDir: string = path.dirname(solution.fsPath);
             for (let project of tree.projects) {
-                let root: NugetTreeNode = new NugetTreeNode(solutionDir, treesManager, parent);
-                root.refreshDependencies(quickScan, project);
+                checkCanceled();
+                let root: NugetTreeNode = new NugetTreeNode(solutionDir, parent);
+                root.refreshDependencies(project);
                 projectsToScan.push(root.projectDetails);
             }
         }
@@ -50,12 +52,12 @@ export class NugetUtils {
      * @param logManager  - Log manager
      * @param quickScan   - True to allow using the scan cache
      */
-    private static async getProjects(slnFilePath: string, logManager: LogManager, quickScan: boolean): Promise<any> {
+    private static async getProjects(slnFilePath: string, logManager: LogManager): Promise<any> {
         let nugetList: any;
         try {
             nugetList = NugetDepsTree.generate(slnFilePath);
         } catch (error) {
-            logManager.logError(<any>error, !quickScan);
+            logManager.logError(<any>error, true);
             logManager.logMessage(
                 'Failed building tree for solution "' + slnFilePath + '", due to the above error. Skipping to next solution... ',
                 'INFO'
@@ -64,13 +66,13 @@ export class NugetUtils {
         }
 
         if (!nugetList.projects) {
-            logManager.logError(new Error('No projects found for solution "' + slnFilePath + '".'), !quickScan);
+            logManager.logError(new Error('No projects found for solution "' + slnFilePath + '".'), true);
             logManager.logMessage(
                 'Possible cause: The solution needs to be restored. Restore it by running "nuget restore ' + path.resolve(slnFilePath) ||
                     slnFilePath + '".',
                 'INFO',
                 true,
-                !quickScan
+                true
             );
             return null;
         }

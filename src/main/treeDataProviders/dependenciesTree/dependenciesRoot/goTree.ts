@@ -72,7 +72,8 @@ export class GoTreeNode extends RootNode {
      */
     private runGoList(): string[] {
         // ScanUtils.executeCmd(`GOVCS=*:off`);
-        return ScanUtils.executeCmd(`go list -buildvcs=false -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all`, this.workspaceFolder)
+        // add -buildvcs=false
+        return ScanUtils.executeCmd(`go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all`, this.workspaceFolder)
             .toString()
             .split(/\n/);
     }

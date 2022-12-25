@@ -105,7 +105,7 @@ describe('Nuget Utils Tests', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Nuget);
         assert.isDefined(solutions);
-        await NugetUtils.createDependenciesTrees(solutions, componentsToScan, treesManager, parent, false);
+        await NugetUtils.createDependenciesTrees(solutions, componentsToScan, treesManager, parent, () => {assert});
         componentsToScan = componentsToScan.sort((l, r) => l.name.localeCompare(r.name));
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }

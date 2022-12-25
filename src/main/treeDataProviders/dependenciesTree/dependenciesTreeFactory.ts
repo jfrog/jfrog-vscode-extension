@@ -1,6 +1,7 @@
 import { IUsageFeature } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../connect/connectionManager';
+import { GeneralInfo } from '../../types/generalInfo';
 import { ProjectDetails } from '../../types/projectDetails';
 import { PackageType } from '../../types/projectType';
 import { GoUtils } from '../../utils/goUtils';
@@ -8,9 +9,10 @@ import { MavenUtils } from '../../utils/mavenUtils';
 import { NpmUtils } from '../../utils/npmUtils';
 import { NugetUtils } from '../../utils/nugetUtils';
 import { PypiUtils } from '../../utils/pypiUtils';
-// import { ScanUtils } from '../../utils/scanUtils';
 import { YarnUtils } from '../../utils/yarnUtils';
 import { TreesManager } from '../treesManager';
+import { DescriptorUtils } from '../utils/descriptorUtils';
+import { StepProgress } from '../utils/stepProgress';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 
 export class DependenciesTreesFactory {
@@ -19,43 +21,42 @@ export class DependenciesTreesFactory {
         workspaceFolders: vscode.WorkspaceFolder[],
         componentsToScan: ProjectDetails[],
         treesManager: TreesManager,
-        parent: DependenciesTreeNode
-    ) {
+        progressManager: StepProgress,
+        checkCanceled: () => void,
+        parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('', '', [], '', ''))
+    ): Promise<DependenciesTreeNode> {
         if (!treesManager.connectionManager.areXrayCredentialsSet()) {
-            return;
+            return parent;
         }
 
         this.sendUsageReport(projectDescriptors, treesManager.connectionManager);
-        // let tasks: Promise<void>[] = [];
-        // tasks.push(GoUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Go), componentsToScan, treesManager, parent, quickScan),
-        // NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Npm), componentsToScan, treesManager, parent, quickScan),
-        // YarnUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Yarn), componentsToScan, treesManager, parent, quickScan),
-        // PypiUtils.createDependenciesTrees(
-        //     projectDescriptors.get(PackageType.Python),
-        //     workspaceFolders,
-        //     componentsToScan,
-        //     treesManager,
-        //     parent,
-        //     quickScan
-        // ),
-        // MavenUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Maven), componentsToScan, treesManager, parent, quickScan),
-        // NugetUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Nuget), componentsToScan, treesManager, parent, quickScan)
-        // );
-        await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Go), componentsToScan, treesManager, parent);
-        await NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Npm), componentsToScan, treesManager, parent, false);
-        await YarnUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Yarn), componentsToScan, treesManager, parent, false);
-        await PypiUtils.createDependenciesTrees(
-            projectDescriptors.get(PackageType.Python),
-            workspaceFolders,
-            componentsToScan,
-            treesManager,
-            parent,
-            false
-        );
-        await MavenUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Maven), componentsToScan, treesManager, parent, false);
-        await NugetUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Nuget), componentsToScan, treesManager, parent, false);
-
-        // await Promise.all(tasks);
+        let typesDone: number = 0;
+        try {
+            await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Go), componentsToScan, treesManager, parent, checkCanceled);
+            progressManager.reportProgress();
+            await NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Npm), componentsToScan, treesManager, parent, checkCanceled);
+            progressManager.reportProgress();
+            await YarnUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Yarn), componentsToScan, treesManager, parent, checkCanceled);
+            progressManager.reportProgress();
+            await PypiUtils.createDependenciesTrees(
+                projectDescriptors.get(PackageType.Python),
+                workspaceFolders,
+                componentsToScan,
+                treesManager,
+                parent,
+                checkCanceled
+            );
+            progressManager.reportProgress();
+            await MavenUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Maven), componentsToScan, treesManager, parent, checkCanceled);
+            progressManager.reportProgress();
+            await NugetUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Nuget), componentsToScan, treesManager, parent, checkCanceled);
+            progressManager.reportProgress();
+        } catch (error) {
+            progressManager.reportProgress((DescriptorUtils.getNumberOfSupportedPackgeTypes() - typesDone) * progressManager.getStepIncValue);
+            throw error;
+        }
+        
+        return parent;
     }
 
     /**

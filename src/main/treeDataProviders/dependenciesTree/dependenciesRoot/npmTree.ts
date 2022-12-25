@@ -15,7 +15,7 @@ export class NpmTreeNode extends RootNode {
         super(workspaceFolder, PackageType.Npm, parent);
     }
 
-    public async refreshDependencies(quickScan: boolean) {
+    public async refreshDependencies() {
         const productionScope: ScopedNpmProject = new ScopedNpmProject(NpmGlobalScopes.PRODUCTION);
         const developmentScope: ScopedNpmProject = new ScopedNpmProject(NpmGlobalScopes.DEVELOPMENT);
         let npmLsFailed: boolean = false;
@@ -27,14 +27,14 @@ export class NpmTreeNode extends RootNode {
                 scopedProject.loadProjectDetailsFromFile(path.join(this.workspaceFolder, 'package.json'));
                 npmLsFailed = true;
             }
-            this.populateDependenciesTree(this, scopedProject.dependencies, quickScan, scopedProject.scope);
+            this.populateDependenciesTree(this, scopedProject.dependencies, scopedProject.scope);
         });
         if (npmLsFailed) {
             this._treesManager.logManager.logMessage(
                 `Failed to scan npm project. Hint: Please make sure the commands 'npm install' or 'npm ci' run successfully in '${this.workspaceFolder}'`,
                 'ERR',
                 true,
-                !quickScan
+                true
             );
         }
         this.generalInfo = new GeneralInfo(
@@ -51,7 +51,7 @@ export class NpmTreeNode extends RootNode {
         this.label = this.projectDetails.name;
     }
 
-    private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any, quickScan: boolean, globalScope: string) {
+    private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any, globalScope: string) {
         if (!dependencies) {
             return;
         }
@@ -68,11 +68,9 @@ export class NpmTreeNode extends RootNode {
                     : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
                 let componentId: string = key + ':' + version;
-                if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-                    this.projectDetails.addDependency(NpmTreeNode.COMPONENT_PREFIX + componentId);
-                }
+                this.projectDetails.addDependency(NpmTreeNode.COMPONENT_PREFIX + componentId);
                 child.dependencyId = NpmTreeNode.COMPONENT_PREFIX + componentId;
-                this.populateDependenciesTree(child, childDependencies, quickScan, globalScope);
+                this.populateDependenciesTree(child, childDependencies, globalScope);
             }
         }
     }

@@ -8,7 +8,6 @@ import { ProjectDetails } from '../types/projectDetails';
 import * as fs from 'fs';
 import { ScanUtils } from './scanUtils';
 import { FocusType } from '../constants/contextKeys';
-// import { FocusType } from '../focus/abstractFocus';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
@@ -41,24 +40,6 @@ export class NpmUtils {
         focusType: FocusType
     ): vscode.Position[] {
         return this.getDependencyPosition(document, dependenciesTreeNode.generalInfo.artifactId, focusType);
-        // let res: vscode.Position[] = [];
-        // let packageJsonContent: string = document.getText();
-        // let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match(
-        //     '("' + dependenciesTreeNode.generalInfo.artifactId + '"\\s*:\\s*).*"'
-        // );
-        // if (!dependencyMatch) {
-        //     return res;
-        // }
-        // switch (focusType) {
-        //     case FocusType.Dependency:
-        //         res.push(document.positionAt(<number>dependencyMatch.index));
-        //         break;
-        //     case FocusType.DependencyVersion:
-        //         res.push(document.positionAt(<number>dependencyMatch.index + dependencyMatch[1].length));
-        //         break;
-        // }
-        // res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));
-        // return res;
     }
 
     /**
@@ -97,20 +78,22 @@ export class NpmUtils {
         projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
-        quickScan: boolean
+        checkCanceled: () => void
+        // quickScan: boolean
     ): Promise<void> {
         if (!packageJsons) {
             treesManager.logManager.logMessage('No package.json files found in workspaces.', 'DEBUG');
             return;
         }
         if (!NpmUtils.verifyNpmInstalled()) {
-            treesManager.logManager.logError(new Error('Could not scan npm project dependencies, because npm CLI is not in the PATH.'), !quickScan);
+            treesManager.logManager.logError(new Error('Could not scan npm project dependencies, because npm CLI is not in the PATH.'), true);
             return;
         }
         treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
         for (let packageJson of packageJsons) {
+            checkCanceled();
             let root: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), treesManager, parent);
-            root.refreshDependencies(quickScan);
+            root.refreshDependencies();
             projectsToScan.push(root.projectDetails);
         }
     }

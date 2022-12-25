@@ -19,7 +19,7 @@ export class PypiTreeNode extends RootNode {
         super(workspaceFolder, PackageType.Python, parent);
     }
 
-    public async refreshDependencies(quickScan: boolean) {
+    public async refreshDependencies() {
         let pypiList: any;
         try {
             pypiList = JSON.parse(
@@ -27,14 +27,14 @@ export class PypiTreeNode extends RootNode {
             );
             this.generalInfo = new GeneralInfo(this.workspaceFolder.replace(/^.*[\\/]/, ''), '', ['None'], this.workspaceFolder, PypiUtils.PKG_TYPE);
         } catch (error) {
-            this._treesManager.logManager.logError(<any>error, !quickScan);
+            this._treesManager.logManager.logError(<any>error, true);
         }
         this.projectDetails.name = this.generalInfo.artifactId;
         this.label = this.projectDetails.name;
-        this.populateDependenciesTree(this, pypiList, quickScan);
+        this.populateDependenciesTree(this, pypiList);
     }
 
-    private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any, quickScan: boolean) {
+    private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any) {
         if (!dependencies) {
             return;
         }
@@ -50,11 +50,9 @@ export class PypiTreeNode extends RootNode {
                         : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
                 let componentId: string = dependency.key + ':' + version;
-                if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-                    this.projectDetails.addDependency(PypiTreeNode.COMPONENT_PREFIX + componentId);
-                }
+                this.projectDetails.addDependency(PypiTreeNode.COMPONENT_PREFIX + componentId);
                 child.dependencyId = PypiTreeNode.COMPONENT_PREFIX + componentId;
-                this.populateDependenciesTree(child, childDependencies, quickScan);
+                this.populateDependenciesTree(child, childDependencies);
             }
         }
     }

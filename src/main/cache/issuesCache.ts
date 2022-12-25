@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
 import { IGraphResponse } from 'jfrog-client-js';
 import { IImpactedPath } from 'jfrog-ide-webview';
+import { ApplicabilityScanResponse } from '../scanLogic/scanRunners/applicabilityScan';
+import { PackageType } from '../types/projectType';
+import { EosScanResponse } from '../scanLogic/scanRunners/eosScan';
 
 /**
  * Describes all the issue data for a specific workspace from Xray scan
@@ -9,6 +12,8 @@ export interface WorkspaceIssuesData {
     path: string;
     descriptorsIssuesData: DescriptorIssuesData[];
     failedFiles: FileIssuesData[];
+    eosScan?: EosScanResponse;
+    eosScanTimestamp?: number;
 }
 /**
  * Describes all the issue data for a specific file from Xray scan
@@ -21,19 +26,29 @@ export interface FileIssuesData {
  * Describes all the issues data for a specific descriptor from Xray scan
  */
 export interface DescriptorIssuesData extends FileIssuesData {
-    id?: string;
+    type: PackageType;
     graphScanTimestamp: number;
     dependenciesGraphScan: IGraphResponse;
     impactTreeData: { [issue_id: string]: IImpactedPath };
+    applicableIssues?: ApplicabilityScanResponse;
+    applicableScanTimestamp?: number;
 }
 
 /**
  * Describes a cache that holds all the information from an Xray scan for a workspace
  */
 export class IssuesCache {
-    public static readonly CACHE_BASE_KEY: string = 'jfrog.xray.cache.issues.';
+    public static readonly CACHE_BASE_KEY: string = 'jfrog.cache.issues.';
 
     constructor(public _cache: vscode.Memento) {}
+
+    public static hasIssues(data: WorkspaceIssuesData): boolean {
+        return data.descriptorsIssuesData.length > 0 || (!!data.eosScan && data.eosScan.filesWithIssues.length > 0);
+    }
+
+    public static hasInformation(data: WorkspaceIssuesData): boolean {
+        return IssuesCache.hasIssues(data) || data.failedFiles.length > 0;
+    }
 
     /**
      * Get the unique key for this workspace
@@ -78,7 +93,6 @@ export class IssuesCache {
     /**
      * Remove issues data of workspcae from cache
      * @param workspace - the workspace to delete it's data
-     * @returns
      */
     public remove(workspace: vscode.WorkspaceFolder) {
         return this._cache.update(IssuesCache.toKey(workspace), undefined);

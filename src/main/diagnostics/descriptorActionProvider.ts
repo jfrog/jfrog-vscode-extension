@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
 
-import { CveTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
+// import { CveTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 import { DescriptorTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
-import { LicenseIssueTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/licenseIssueTreeNode';
+// import { LicenseIssueTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/licenseIssueTreeNode';
+// import { LicenseIssueTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/licenseIssueTreeNode';
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { DescriptorUtils } from '../treeDataProviders/utils/descriptorUtils';
 import { PackageType } from '../types/projectType';
-import { SeverityUtils } from '../types/severity';
+import { Severity, SeverityUtils } from '../types/severity';
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
 
 /**
@@ -27,44 +28,45 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
             // Get the direct dependency of each issue in the descriptor from the impact tree
             fileIssues.dependenciesWithIssue.forEach(dependencyWithIssue => {
                 dependencyWithIssue.issues.forEach(issue => {
-                    if (issue instanceof CveTreeNode || issue instanceof LicenseIssueTreeNode) {
-                        issue.impactedTree?.children
-                            ?.map(impact => impact.name)
-                            .forEach(directDependencyId => {
-                                let directDependencyName: string = directDependencyId.substring(0, directDependencyId.lastIndexOf(':'));
-                                if (dependencyWithIssue.type == PackageType.Maven) {
-                                    directDependencyName = directDependencyId;
-                                }
-                                if (proceesedDependencies.has(directDependencyName)) {
-                                    return;
-                                }
-                                proceesedDependencies.add(directDependencyName);
-                                let position: vscode.Position[] = DescriptorUtils.getDependencyPosition(
-                                    document,
-                                    dependencyWithIssue.type,
-                                    directDependencyName
-                                );
-                                if (position.length === 0) {
-                                    return;
-                                }
-                                this._treesManager.logManager.logMessage(
-                                    "Creating diagnostics for dependency '" + directDependencyName + "'",
-                                    'DEBUG'
-                                );
-                                // Create diagnostics and gutter icon for the dependency
-                                diagnostics.push(
-                                    ...this.createDiagnostics(
-                                        directDependencyName,
-                                        'Top issue severity: ' + SeverityUtils.getString(dependencyWithIssue.topSeverity),
-                                        position
-                                    )
-                                );
-                                this.addGutter(textEditor, SeverityUtils.getIcon(dependencyWithIssue.topSeverity), position);
-                            });
-                    }
+                    issue.impactedTree?.children
+                        ?.map(impact => impact.name)
+                        .forEach(directDependencyId => {
+                            if (proceesedDependencies.has(directDependencyId)) {
+                                // Direct dependency already had a diffrent dependency with issue that generated information for it
+                                return;
+                            }
+                            // Create diagnostics for the dependency
+                            proceesedDependencies.add(directDependencyId);
+                            this.generateInformation(
+                                directDependencyId,
+                                dependencyWithIssue.type,
+                                dependencyWithIssue.severity,
+                                document,
+                                textEditor,
+                                diagnostics
+                            );
+                        });
                 });
             });
             this._diagnosticCollection.set(document.uri, diagnostics);
         }
+    }
+
+    private generateInformation(
+        directDependencyId: string,
+        packgeType: PackageType,
+        severity: Severity,
+        document: vscode.TextDocument,
+        textEditor: vscode.TextEditor,
+        diagnostics: vscode.Diagnostic[]
+    ) {
+        let position: vscode.Position[] = DescriptorUtils.getDependencyPosition(document, packgeType, directDependencyId);
+        if (position.length === 0) {
+            return;
+        }
+        this._treesManager.logManager.logMessage("Creating diagnostics for dependency '" + directDependencyId + "'", 'DEBUG');
+        // Create diagnostics and gutter icon for the dependency
+        diagnostics.push(...this.createDiagnostics(directDependencyId, 'Top issue severity: ' + SeverityUtils.getString(severity), position));
+        this.addGutter(textEditor, SeverityUtils.getIcon(severity), position);
     }
 }

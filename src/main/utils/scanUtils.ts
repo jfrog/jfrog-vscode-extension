@@ -10,7 +10,8 @@ import { LogManager } from '../log/logManager';
 import { PackageType } from '../types/projectType';
 import { Configuration } from './configuration';
 import { ContextKeys } from '../constants/contextKeys';
-
+import * as util from 'util';
+import { Region } from '../treeDataProviders/issuesTree/fileTreeNode';
 export class ScanUtils {
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
@@ -90,7 +91,13 @@ export class ScanUtils {
         return undefined;
     }
 
-    public static async openFile(filePath: string) {
+    /**
+     * Open text editor of a given file.
+     * If provided it will also reveal and select a specific region in the file
+     * @param filePath - the file to open
+     * @param fileRegion - optional region in file to reveal
+     */
+    public static async openFile(filePath: string, fileRegion?: Region) {
         if (filePath === undefined || filePath === '') {
             return;
         }
@@ -100,9 +107,11 @@ export class ScanUtils {
         }
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(openPath);
         let textEditor: vscode.TextEditor | undefined = await vscode.window.showTextDocument(textDocument);
-        if (!textEditor) {
+        if (!textEditor || !fileRegion) {
             return;
         }
+        textEditor.selection = new vscode.Selection(fileRegion.start, fileRegion.end);
+        textEditor.revealRange(new vscode.Range(fileRegion.start, fileRegion.end), vscode.TextEditorRevealType.InCenter);
     }
 
     static async removeFolder(folderPath: string): Promise<void> {
@@ -113,6 +122,10 @@ export class ScanUtils {
 
     public static executeCmd(command: string, cwd?: string): any {
         return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
+    }
+
+    public static executeCmdAsync(command: string, cwd?: string): Promise<any> {
+        return util.promisify(exec.exec)(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
     }
 
     public static setScanInProgress(state: boolean) {
@@ -171,6 +184,16 @@ export class ScanUtils {
             .createHash(algorithm)
             .update(data)
             .digest('hex');
+    }
+}
+
+/**
+ * Describes an error that occur during file scan.
+ * When thrown a new FileTreeNode will be created for the parent the label of the node will be at the given format: {file_name} - {error.reason}
+ */
+export class FileScanError extends Error {
+    constructor(msg: string, public reason: string) {
+        super(msg);
     }
 }
 

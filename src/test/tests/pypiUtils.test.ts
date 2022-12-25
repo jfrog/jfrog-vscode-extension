@@ -105,7 +105,7 @@ describe('Pypi Utils Tests', async () => {
             path.join(workspaceFolders[0].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
         );
-        dependenciesTreeNode.refreshDependencies(true);
+        dependenciesTreeNode.refreshDependencies();
         assert.deepEqual(dependenciesTreeNode.label, 'requirements');
         assert.deepEqual(dependenciesTreeNode.children.length, 5);
         checkFireDependency(dependenciesTreeNode);
@@ -117,7 +117,7 @@ describe('Pypi Utils Tests', async () => {
             path.join(workspaceFolders[1].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
         );
-        dependenciesTreeNode.refreshDependencies(true);
+        dependenciesTreeNode.refreshDependencies();
         assert.deepEqual(dependenciesTreeNode.label, 'setup');
         assert.deepEqual(dependenciesTreeNode.children.length, 3);
         let snake: PypiTreeNode | undefined = <PypiTreeNode | undefined>dependenciesTreeNode.children.filter(child => child.label === 'snake').pop();
@@ -132,7 +132,7 @@ describe('Pypi Utils Tests', async () => {
             path.join(workspaceFolders[2].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
         );
-        dependenciesTreeNode.refreshDependencies(true);
+        dependenciesTreeNode.refreshDependencies();
         assert.deepEqual(dependenciesTreeNode.label, 'setupAndRequirements');
         assert.deepEqual(dependenciesTreeNode.children.length, 3);
         snake = <PypiTreeNode | undefined>dependenciesTreeNode.children.filter(child => child.label === 'snake').pop();
