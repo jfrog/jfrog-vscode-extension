@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
 import { IGraphResponse } from 'jfrog-client-js';
 import { IImpactedPath } from 'jfrog-ide-webview';
-import { ApplicabilityScanResponse } from '../scanLogic/scanRunners/applicabilityScan';
 import { PackageType } from '../types/projectType';
-import { EosScanResponse } from '../scanLogic/scanRunners/eosScan';
 
 /**
  * Describes all the issue data for a specific workspace from Xray scan
@@ -12,8 +10,6 @@ export interface WorkspaceIssuesData {
     path: string;
     descriptorsIssuesData: DescriptorIssuesData[];
     failedFiles: FileIssuesData[];
-    eosScan?: EosScanResponse;
-    eosScanTimestamp?: number;
 }
 /**
  * Describes all the issue data for a specific file from Xray scan
@@ -30,7 +26,6 @@ export interface DescriptorIssuesData extends FileIssuesData {
     graphScanTimestamp: number;
     dependenciesGraphScan: IGraphResponse;
     impactTreeData: { [issue_id: string]: IImpactedPath };
-    applicableIssues?: ApplicabilityScanResponse;
     applicableScanTimestamp?: number;
 }
 
@@ -43,7 +38,7 @@ export class IssuesCache {
     constructor(public _cache: vscode.Memento) {}
 
     public static hasIssues(data: WorkspaceIssuesData): boolean {
-        return data.descriptorsIssuesData.length > 0 || (!!data.eosScan && data.eosScan.filesWithIssues.length > 0);
+        return data.descriptorsIssuesData.length > 0;
     }
 
     public static hasInformation(data: WorkspaceIssuesData): boolean {

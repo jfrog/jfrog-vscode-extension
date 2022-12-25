@@ -10,6 +10,7 @@ import {
 } from 'jfrog-client-js';
 import { IExtendedInformation as WebExtendedInformation, ISeverityReasons } from 'jfrog-ide-webview';
 import Set from 'typescript-collections/dist/lib/Set';
+import { CveTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
 import { GeneralInfo } from '../types/generalInfo';
 import { IIssueCacheObject } from '../types/issueCacheObject';
@@ -17,6 +18,7 @@ import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
 
 export class Translators {
+    
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
         let components: string[] = clientGeneral.component_id.split(':');
         return components.length === 2
@@ -119,7 +121,22 @@ export class Translators {
         return results;
     }
 
-    static toWebViewExtendedInformation(extended_information: IExtendedInformation): WebExtendedInformation {
+    static toWebViewICve(node: CveTreeNode): import("jfrog-ide-webview").ICve | undefined {
+        if (node.cve || node.applicableDetails) {
+            return {
+                id: node.cve?.cve,
+                cvssV2Score: node.cve?.cvss_v2_score,
+                cvssV2Vector: node.cve?.cvss_v2_vector,
+                cvssV3Score: node.cve?.cvss_v3_score,
+                cvssV3Vector: node.cve?.cvss_v3_vector,
+                applicableData: node.applicableDetails
+            } as import("jfrog-ide-webview").ICve;
+        }
+        return undefined;
+        
+    }
+
+    public static toWebViewExtendedInformation(extended_information: IExtendedInformation): WebExtendedInformation {
         let extednedInfo: WebExtendedInformation = {
             shortDescription: extended_information.short_description,
             fullDescription: extended_information.full_description,

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { IGraphCve, IViolation, IVulnerability } from 'jfrog-client-js';
-import { ICve, IDependencyPage, IImpactedPath, IReference, IExtendedInformation } from 'jfrog-ide-webview';
+import { IDependencyPage, IImpactedPath, IReference, IExtendedInformation, IApplicableDetails } from 'jfrog-ide-webview';
 import { PackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { Translators } from '../../../utils/translators';
@@ -16,14 +16,16 @@ export class CveTreeNode extends IssueTreeNode {
     private _references: IReference[];
     private _researchInfo?: IExtendedInformation;
 
+    private _applicableDetails?: IApplicableDetails;
+
     constructor(
         sourceVul: IVulnerability | IViolation,
-        _severity: Severity,
+        severity: Severity,
         private _parent: DependencyIssuesTreeNode,
         private _impactedTreeRoot?: IImpactedPath,
         private _cve?: IGraphCve
     ) {
-        super(sourceVul.issue_id, _severity, _cve && _cve.cve ? _cve.cve : sourceVul.issue_id, vscode.TreeItemCollapsibleState.None);
+        super(sourceVul.issue_id, severity, _cve && _cve.cve ? _cve.cve : sourceVul.issue_id, vscode.TreeItemCollapsibleState.None);
         this._summary = sourceVul.summary;
         this._references = Translators.cleanReferencesLink(sourceVul.references);
         if (sourceVul.extended_information) {
@@ -37,6 +39,14 @@ export class CveTreeNode extends IssueTreeNode {
         }
     }
 
+    public get applicableDetails(): IApplicableDetails | undefined {
+        return this._applicableDetails;
+    }
+
+    public set applicableDetails(value: IApplicableDetails | undefined) {
+        this._applicableDetails = value;
+    }
+
     /**
      * Get the dependency details page data for this issue
      * @returns IDependencyPage with the data of this issue
@@ -44,18 +54,9 @@ export class CveTreeNode extends IssueTreeNode {
     public getDetailsPage(): IDependencyPage {
         return {
             id: this._issue_id,
-            cve: this._cve
-                ? ({
-                      id: this._cve.cve,
-                      cvssV2Score: this._cve.cvss_v2_score,
-                      cvssV2Vector: this._cve.cvss_v2_vector,
-                      cvssV3Score: this._cve.cvss_v3_score,
-                      cvssV3Vector: this._cve.cvss_v3_vector,
-                      applicably: undefined
-                  } as ICve)
-                : undefined,
-            name: this._parent.name,
-            watchName: this.watchNames?.join(', '),
+            cve: Translators.toWebViewICve(this),
+            component: this._parent.name,
+            watchName: this._watchNames,
             type: PackageType[this._parent.type],
             version: this._parent.version,
             infectedVersion: this.parent.infectedVersions,

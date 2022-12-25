@@ -12,22 +12,27 @@ import { GraphScanLogic } from './scanGraphLogic';
  * Manage all the Xray scans
  */
 export class ScanManager implements ExtensionComponent {
-    constructor(protected _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
+
+    constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
     activate() {
         return this;
     }
 
+    public get connectionManager(): ConnectionManager {
+        return this._connectionManager;
+    }
+
     /**
      * Validate if the graph-scan is supported in the Xray version
      */
-    private async validateGraphSupported(): Promise<boolean> {
+    public async validateGraphSupported(): Promise<boolean> {
         let scanGraphSupported: boolean = await ConnectionUtils.testXrayVersionForScanGraph(
             this._connectionManager.createJfrogClient(),
             this._logManager
         );
         if (!scanGraphSupported) {
-            this._logManager.logError(new Error('scan with graph is not supported'), true);
+            this._logManager.logError(new Error('Dependencies scan with graph is supported only on Xray >= 3.29.0'), true);
         }
         return scanGraphSupported;
     }
@@ -46,10 +51,6 @@ export class ScanManager implements ExtensionComponent {
         checkCanceled: () => void,
         flatten: boolean = true
     ): Promise<IGraphResponse> {
-        let supported: boolean = await this.validateGraphSupported();
-        if (!supported) {
-            return {} as IGraphResponse;
-        }
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
         return scanLogic.scan(graphRoot, flatten, progress, checkCanceled);
     }

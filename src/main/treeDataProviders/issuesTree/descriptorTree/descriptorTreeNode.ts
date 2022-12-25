@@ -1,10 +1,9 @@
-import * as vscode from 'vscode';
-
 import { FileTreeNode } from '../fileTreeNode';
 import { DependencyIssuesTreeNode } from './dependencyIssuesTreeNode';
 import { IssuesRootTreeNode } from '../issuesRootTreeNode';
 import { PackageType } from '../../../types/projectType';
 import { IssueTreeNode } from '../issueTreeNode';
+import { CveTreeNode } from './cveTreeNode';
 
 /**
  * Describes a descriptor file type with Xray issues for the 'Issues' view.
@@ -13,43 +12,25 @@ import { IssueTreeNode } from '../issueTreeNode';
 export class DescriptorTreeNode extends FileTreeNode {
     private _dependenciesWithIssue: DependencyIssuesTreeNode[] = [];
     private _dependencyScanTimeStamp?: number;
-    private _packageType: PackageType = PackageType.Unknown;
-    private _descriptorId?: string | undefined;
+    private _packageType: PackageType;
 
-    constructor(fileFullPath: string, parent?: IssuesRootTreeNode) {
+    constructor(fileFullPath: string, packageType?: PackageType, parent?: IssuesRootTreeNode) {
         super(fileFullPath, parent);
-    }
-
-    public get descriptorId(): string | undefined {
-        return this._descriptorId;
-    }
-    public set descriptorId(value: string | undefined) {
-        this._descriptorId = value;
+        this._packageType = packageType ?? PackageType.Unknown;
     }
 
     /** @override */
     public apply() {
         // Apply the child issue nodes
         this._dependenciesWithIssue.forEach(dependency => {
-            this._packageType = dependency.type;
             dependency.apply();
         });
-        // Set collapsible state base on children count
-        if (this.dependenciesWithIssue.length == 0) {
-            this.collapsibleState = vscode.TreeItemCollapsibleState.None;
-        } else {
-            if (this.dependenciesWithIssue.length == 1 && this.parent?.children.length == 1) {
-                this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
-            } else {
-                this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
-            }
-        }
         // Sort children
         this._dependenciesWithIssue
             // 2nd priority - Sort by number of children
             .sort((lhs, rhs) => rhs.issues.length - lhs.issues.length)
             // 1st priority - Sort by top severity
-            .sort((lhs, rhs) => rhs.topSeverity - lhs.topSeverity);
+            .sort((lhs, rhs) => rhs.severity - lhs.severity);
 
         // Base apply
         super.apply();
@@ -65,6 +46,18 @@ export class DescriptorTreeNode extends FileTreeNode {
     }
 
     /** @override */
+    public getIssueById(id: string): IssueTreeNode | undefined {
+        for (const dependecy of this._dependenciesWithIssue) {
+            for (const issue of dependecy.issues) {
+                if (id == issue.issueId || (issue instanceof CveTreeNode && issue.cve && id == issue.cve.cve)) {
+                    return issue;
+                }
+            }
+        }
+        return undefined;
+    }
+
+    /** @override */
     public get issues(): IssueTreeNode[] {
         let issues: IssueTreeNode[] = [];
         this._dependenciesWithIssue.forEach(dependecy => {
@@ -76,7 +69,6 @@ export class DescriptorTreeNode extends FileTreeNode {
     public get dependencyScanTimeStamp(): number | undefined {
         return this._dependencyScanTimeStamp;
     }
-
     public set dependencyScanTimeStamp(value: number | undefined) {
         this._dependencyScanTimeStamp = value;
     }
