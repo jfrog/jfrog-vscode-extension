@@ -132,10 +132,7 @@ export class PypiUtils {
 
             let pythonPath: string | undefined = PypiUtils.getPythonPath(pythonExtension, workspaceFolder);
             if (!pythonPath) {
-                treesManager.logManager.logError(
-                    new Error('Could not scan Pypi project dependencies, because python interpreter is not set.'),
-                    true
-                );
+                treesManager.logManager.logError(new Error('Could not scan Pypi project dependencies, because python interpreter is not set.'), true);
                 return;
             }
             if (!PypiUtils.isInVirtualEnv(pythonPath, workspaceFolder.uri.fsPath, treesManager.logManager)) {

@@ -47,15 +47,27 @@ export class DependenciesTreesFactory {
                 checkCanceled
             );
             progressManager.reportProgress();
-            await MavenUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Maven), componentsToScan, treesManager, parent, checkCanceled);
+            await MavenUtils.createDependenciesTrees(
+                projectDescriptors.get(PackageType.Maven),
+                componentsToScan,
+                treesManager,
+                parent,
+                checkCanceled
+            );
             progressManager.reportProgress();
-            await NugetUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Nuget), componentsToScan, treesManager, parent, checkCanceled);
+            await NugetUtils.createDependenciesTrees(
+                projectDescriptors.get(PackageType.Nuget),
+                componentsToScan,
+                treesManager,
+                parent,
+                checkCanceled
+            );
             progressManager.reportProgress();
         } catch (error) {
             progressManager.reportProgress((DescriptorUtils.getNumberOfSupportedPackgeTypes() - typesDone) * progressManager.getStepIncValue);
             throw error;
         }
-        
+
         return parent;
     }
 

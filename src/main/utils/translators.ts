@@ -18,7 +18,6 @@ import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
 
 export class Translators {
-    
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
         let components: string[] = clientGeneral.component_id.split(':');
         return components.length === 2
@@ -121,7 +120,7 @@ export class Translators {
         return results;
     }
 
-    static toWebViewICve(node: CveTreeNode): import("jfrog-ide-webview").ICve | undefined {
+    static toWebViewICve(node: CveTreeNode): import('jfrog-ide-webview').ICve | undefined {
         if (node.cve || node.applicableDetails) {
             return {
                 id: node.cve?.cve,
@@ -130,10 +129,9 @@ export class Translators {
                 cvssV3Score: node.cve?.cvss_v3_score,
                 cvssV3Vector: node.cve?.cvss_v3_vector,
                 applicableData: node.applicableDetails
-            } as import("jfrog-ide-webview").ICve;
+            } as import('jfrog-ide-webview').ICve;
         }
         return undefined;
-        
     }
 
     public static toWebViewExtendedInformation(extended_information: IExtendedInformation): WebExtendedInformation {

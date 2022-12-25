@@ -244,7 +244,9 @@ describe('Npm Utils Tests', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let packageJsons: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Npm);
         assert.isDefined(packageJsons);
-        await NpmUtils.createDependenciesTrees(packageJsons, componentsToScan, treesManager, parent, () => {assert});
+        await NpmUtils.createDependenciesTrees(packageJsons, componentsToScan, treesManager, parent, () => {
+            assert;
+        });
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 });

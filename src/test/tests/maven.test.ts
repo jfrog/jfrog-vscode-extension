@@ -441,7 +441,9 @@ describe('Maven Tests', async () => {
 
     async function runCreateMavenDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
         let pomXmlsArray: vscode.Uri[] | undefined = await locatePomXmls(workspaceFolders);
-        await MavenUtils.createDependenciesTrees(pomXmlsArray, componentsToScan, treesManager, parent, () => {assert});
+        await MavenUtils.createDependenciesTrees(pomXmlsArray, componentsToScan, treesManager, parent, () => {
+            assert;
+        });
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 

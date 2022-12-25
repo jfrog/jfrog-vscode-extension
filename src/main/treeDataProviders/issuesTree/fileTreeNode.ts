@@ -121,7 +121,7 @@ export abstract class FileTreeNode extends vscode.TreeItem {
     public get parent(): IssuesRootTreeNode | undefined {
         return this._parent;
     }
-    
+
     public set parent(value: IssuesRootTreeNode | undefined) {
         this._parent = value;
     }

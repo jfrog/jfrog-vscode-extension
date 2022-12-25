@@ -55,11 +55,7 @@ export class MavenTreeNode extends RootNode {
      * @param rawDependenciesPtr - Pointer to current index in raw dependencies list
      * @param quickScan - True to allow reading from scan cache.
      */
-    private populateDependenciesTree(
-        parent: DependenciesTreeNode,
-        rawDependenciesList: string[],
-        rawDependenciesPtr: { index: number }
-    ) {
+    private populateDependenciesTree(parent: DependenciesTreeNode, rawDependenciesList: string[], rawDependenciesPtr: { index: number }) {
         for (; rawDependenciesPtr.index < rawDependenciesList.length; rawDependenciesPtr.index++) {
             let dependency: string = rawDependenciesList[rawDependenciesPtr.index];
             const [group, name, version, scope] = MavenUtils.getDependencyInfo(dependency);
@@ -71,7 +67,7 @@ export class MavenTreeNode extends RootNode {
             child.label = group + ':' + name;
             let componentId: string = gavGeneralInfo.getComponentId();
             this.projectDetails.addDependency(MavenTreeNode.COMPONENT_PREFIX + componentId);
-            
+
             child.dependencyId = MavenTreeNode.COMPONENT_PREFIX + componentId;
             if (rawDependenciesPtr.index + 1 < rawDependenciesList.length) {
                 while (

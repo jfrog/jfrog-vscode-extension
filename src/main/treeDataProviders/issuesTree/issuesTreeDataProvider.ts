@@ -262,13 +262,20 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         checkCanceled();
         let graphSupported: boolean = await this._scanManager.validateGraphSupported();
         checkCanceled();
-        let status: {eosDone: boolean, graphDone: boolean} = {eosDone: false, graphDone: !graphSupported};
+        let status: { eosDone: boolean; graphDone: boolean } = { eosDone: false, graphDone: !graphSupported };
 
-        progressManager.startStep('🔎 Scanning for issues', (graphSupported ? (DescriptorUtils.getNumberOfSupportedPackgeTypes() + descriptorsCount) : 0));
+        progressManager.startStep(
+            '🔎 Scanning for issues',
+            graphSupported ? DescriptorUtils.getNumberOfSupportedPackgeTypes() + descriptorsCount : 0
+        );
         let scansPromises: Promise<any>[] = [];
         // Building dependency tree + dependency graph scan for each descriptor
         if (graphSupported) {
-            scansPromises.push(this.descriptorsScanning(workspaceData, root, workspcaeDescriptors, progressManager, checkCanceled).finally(() => status.graphDone = true));
+            scansPromises.push(
+                this.descriptorsScanning(workspaceData, root, workspcaeDescriptors, progressManager, checkCanceled).finally(
+                    () => (status.graphDone = true)
+                )
+            );
         }
         await Promise.all(scansPromises);
         return root;

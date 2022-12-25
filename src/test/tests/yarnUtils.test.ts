@@ -242,7 +242,9 @@ describe('Yarn Utils Tests', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let yarnLocks: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Yarn);
         assert.isDefined(yarnLocks);
-        await YarnUtils.createDependenciesTrees(yarnLocks, componentsToScan, treesManager, parent,()=>{assert});
+        await YarnUtils.createDependenciesTrees(yarnLocks, componentsToScan, treesManager, parent, () => {
+            assert;
+        });
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 });

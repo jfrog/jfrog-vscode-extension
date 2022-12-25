@@ -12,7 +12,6 @@ import { GraphScanLogic } from './scanGraphLogic';
  * Manage all the Xray scans
  */
 export class ScanManager implements ExtensionComponent {
-
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
     activate() {
