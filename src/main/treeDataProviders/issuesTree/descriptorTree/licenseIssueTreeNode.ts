@@ -33,7 +33,7 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
     public getDetailsPage(): IDependencyPage {
         return {
             id: this._issue_id,
-            component: this._parent.name,
+            name: this._parent.name,
             watchName: this.watchNames,
             type: PackageType[this._parent.type],
             version: this._parent.version,

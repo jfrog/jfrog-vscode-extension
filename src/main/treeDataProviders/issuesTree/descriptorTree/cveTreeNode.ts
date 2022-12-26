@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { IGraphCve, IViolation, IVulnerability } from 'jfrog-client-js';
-import { IDependencyPage, IImpactedPath, IReference, IExtendedInformation, IApplicableDetails } from 'jfrog-ide-webview';
+import { IDependencyPage, IImpactedPath, IReference, IExtendedInformation, ApplicableDetails } from 'jfrog-ide-webview';
 import { PackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { Translators } from '../../../utils/translators';
@@ -16,7 +16,7 @@ export class CveTreeNode extends IssueTreeNode {
     private _references: IReference[];
     private _researchInfo?: IExtendedInformation;
 
-    private _applicableDetails?: IApplicableDetails;
+    private _applicableDetails?: ApplicableDetails;
 
     constructor(
         sourceVul: IVulnerability | IViolation,
@@ -39,11 +39,11 @@ export class CveTreeNode extends IssueTreeNode {
         }
     }
 
-    public get applicableDetails(): IApplicableDetails | undefined {
+    public get applicableDetails(): ApplicableDetails | undefined {
         return this._applicableDetails;
     }
 
-    public set applicableDetails(value: IApplicableDetails | undefined) {
+    public set applicableDetails(value: ApplicableDetails | undefined) {
         this._applicableDetails = value;
     }
 
@@ -55,7 +55,7 @@ export class CveTreeNode extends IssueTreeNode {
         return {
             id: this._issue_id,
             cve: Translators.toWebViewICve(this),
-            component: this._parent.name,
+            name: this._parent.name,
             watchName: this._watchNames,
             type: PackageType[this._parent.type],
             version: this._parent.version,
