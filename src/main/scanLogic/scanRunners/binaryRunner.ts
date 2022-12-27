@@ -3,9 +3,9 @@ import * as fs from 'fs';
 
 // import * as tmp from 'tmp';
 
-import * as path from 'path';
+import yaml from 'js-yaml';
 
-import yaml from 'yaml';
+import * as path from 'path';
 
 import { LogManager } from '../../log/logManager';
 import { Utils } from '../../treeDataProviders/utils/utils';
@@ -47,11 +47,9 @@ export abstract class BinaryRunner {
     }
 
     public asAnalzerRequestString(...requests: AnalyzeScanRequest[]): string {
-        const runRequest: yaml.Document = new yaml.Document();
-        runRequest.contents = {
+        return yaml.dump({
             scans: requests
-        } as AnalyzerRequest;
-        return runRequest.toString();
+        } as AnalyzerRequest);
     }
 
     public async run(split: boolean = true, ...requests: AnalyzeScanRequest[]): Promise<AnalyzerScanResponse | undefined> {
@@ -84,7 +82,8 @@ export abstract class BinaryRunner {
             });
         }
         if (actualRequests.length == 0) {
-            ScanUtils.removeFolder(runDir);
+            this.test(runDir);
+            // ScanUtils.removeFolder(runDir);
             return undefined;
         }
         // Run
@@ -106,25 +105,32 @@ export abstract class BinaryRunner {
                 aggResponse.runs.push(...response.runs);
             }
         }
-        ScanUtils.removeFolder(runDir);
+        this.test(runDir);
+        // ScanUtils.removeFolder(runDir);
         return aggResponse;
+    }
+
+    private test(dir: string) {
+        this._logManager.logMessage('removing folder ' + dir, 'DEBUG');
+        ScanUtils.removeFolder(dir);
     }
 
     private async runRequest(request: string, requestPath: string, ...responsePaths: string[]): Promise<AnalyzerScanResponse> {
         // TODO: remove when done debug
-        // let savePath: string = path.join(this._runDirectory, 'scans');
-        // fs.writeFileSync(
-        //     path.join(savePath, 'raw-request-' + Utils.getLastSegment(this._binaryPath) + '-' + Utils.getLastSegment(requestPath) + '.yaml'),
-        //     request
-        // );
+        let savePath: string = path.join(this._runDirectory, 'scans');
+        fs.writeFileSync(
+            path.join(savePath, 'raw-request-' + Utils.getLastSegment(this._binaryPath) + '-' + Utils.getLastSegment(requestPath) + '.yaml'),
+            request
+        );
         // Save requests as yaml file in folder
         fs.writeFileSync(requestPath, request);
         // Run the binary
         await this.runBinary(requestPath);
-
+        this._logManager.logMessage("Done running binary, responses paths:\n" + responsePaths, 'DEBUG');
         let aggResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (const responsePath of responsePaths) {
             if (!fs.existsSync(responsePath)) {
+                this._logManager.logMessage("can't find response at path: " + responsePath, 'DEBUG');
                 throw new Error("Running '" + Utils.getLastSegment(this._binaryPath) + "' binary didn't produce response, request:\n" + request);
             }
             // Load results from output and parse as response
@@ -133,10 +139,10 @@ export abstract class BinaryRunner {
                 aggResponse.runs.push(...result.runs);
             }
             // // TODO: remove when done debug
-            // fs.writeFileSync(
-            //     path.join(savePath, 'raw-response-' + Utils.getLastSegment(this._binaryPath) + '-' + Utils.getLastSegment(responsePath)) + '.json',
-            //     JSON.stringify(result)
-            // );
+            fs.writeFileSync(
+                path.join(savePath, 'raw-response-' + Utils.getLastSegment(this._binaryPath) + '-' + Utils.getLastSegment(responsePath)) + '.json',
+                JSON.stringify(result)
+            );
         }
         return aggResponse;
     }

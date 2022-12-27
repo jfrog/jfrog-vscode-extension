@@ -1,10 +1,9 @@
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
-import { DescriptorIssuesData, WorkspaceIssuesData } from '../../cache/issuesCache';
+import { DescriptorIssuesData } from '../../cache/issuesCache';
 import { CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
 import { Severity } from '../../types/severity';
 import { ApplicableTreeNode } from '../issuesTree/codeFileTree/applicableTreeNode';
 import { CodeFileTreeNode } from '../issuesTree/codeFileTree/codeFileTreeNode';
-import { CodeIssueTreeNode } from '../issuesTree/codeFileTree/codeIssueTreeNode';
 import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
 import { DescriptorTreeNode } from '../issuesTree/descriptorTree/descriptorTreeNode';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
@@ -31,23 +30,23 @@ export class AnalyzerUtils {
         return fileNode;
     }
 
-    public static populateEosIssues(root: IssuesRootTreeNode, workspaceData: WorkspaceIssuesData): number {
-        root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
-        let issuesCount: number = 0;
-        if (workspaceData.eosScan && workspaceData.eosScan.filesWithIssues) {
-            workspaceData.eosScan.filesWithIssues.forEach(fileWithIssues => {
-                let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
-                fileWithIssues.issues.forEach(issue => {
-                    issue.regions.forEach(region => {
-                        fileNode.issues.push(new CodeIssueTreeNode(issue.ruleId, fileNode, region));
-                        issuesCount++;
-                    });
-                });
-            });
-        }
+    // public static populateEosIssues(root: IssuesRootTreeNode, workspaceData: WorkspaceIssuesData): number {
+    //     root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
+    //     let issuesCount: number = 0;
+    //     if (workspaceData.eosScan && workspaceData.eosScan.filesWithIssues) {
+    //         workspaceData.eosScan.filesWithIssues.forEach(fileWithIssues => {
+    //             let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
+    //             fileWithIssues.issues.forEach(issue => {
+    //                 issue.regions.forEach(region => {
+    //                     fileNode.issues.push(new CodeIssueTreeNode(issue.ruleId, fileNode, region));
+    //                     issuesCount++;
+    //                 });
+    //             });
+    //         });
+    //     }
 
-        return issuesCount;
-    }
+    //     return issuesCount;
+    // }
 
     public static populateApplicableIssues(
         root: IssuesRootTreeNode,

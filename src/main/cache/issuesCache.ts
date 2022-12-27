@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { IGraphResponse } from 'jfrog-client-js';
 import { IImpactedPath } from 'jfrog-ide-webview';
 import { PackageType } from '../types/projectType';
+import { ApplicabilityScanResponse } from '../scanLogic/scanRunners/applicabilityScan';
 
 /**
  * Describes all the issue data for a specific workspace from Xray scan
@@ -26,6 +27,7 @@ export interface DescriptorIssuesData extends FileIssuesData {
     graphScanTimestamp: number;
     dependenciesGraphScan: IGraphResponse;
     impactTreeData: { [issue_id: string]: IImpactedPath };
+    applicableIssues?: ApplicabilityScanResponse;
     applicableScanTimestamp?: number;
 }
 
