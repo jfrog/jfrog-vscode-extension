@@ -1,6 +1,7 @@
 import { IUsageFeature } from 'jfrog-client-js';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
+import { ScanCacheManager } from '../../cache/scanCacheManager';
 import { BuildGeneralInfo, Status } from '../../types/buildGeneralinfo';
 import { GeneralInfo } from '../../types/generalInfo';
 import { ILicenseKey } from '../../types/licenseKey';
@@ -26,7 +27,7 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
     private _filterLicenses: Set<ILicenseKey> = new Set();
     private _filterScopes: Set<Scope> = new Set(scope => scope.label);
 
-    constructor(protected _treesManager: TreesManager) {}
+    constructor(protected _treesManager: TreesManager, private _scanCacheManager: ScanCacheManager) {}
 
     public get dependenciesTree() {
         return this._dependenciesTree;
@@ -200,5 +201,9 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
 
     public get filterScopes(): Set<Scope> {
         return this._filterScopes;
+    }
+
+    public get scanCacheManager(): ScanCacheManager {
+        return this._scanCacheManager;
     }
 }

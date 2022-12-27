@@ -26,14 +26,7 @@ export class ScanManager implements ExtensionComponent {
      * Validate if the graph-scan is supported in the Xray version
      */
     public async validateGraphSupported(): Promise<boolean> {
-        let scanGraphSupported: boolean = await ConnectionUtils.testXrayVersionForScanGraph(
-            this._connectionManager.createJfrogClient(),
-            this._logManager
-        );
-        if (!scanGraphSupported) {
-            this._logManager.logError(new Error('Dependencies scan with graph is supported only on Xray >= 3.29.0'), true);
-        }
-        return scanGraphSupported;
+        return await ConnectionUtils.testXrayVersionForScanGraph(this._connectionManager.createJfrogClient(), this._logManager);
     }
 
     /**

@@ -200,21 +200,17 @@ export class DescriptorUtils {
         return undefined;
     }
 
-    public static getNumberOfSupportedPackgeTypes(): number {
-        return 5;
-    }
-
     /**
      * Get the positions a specific depdndecy appers in a descriptor file
      * @param document - the descriptor document we want to search in
-     * @param packeType - the type of packge this descriptor has
+     * @param packageType - the type of packge this descriptor has
      * @param dependencyId - the dependency id we want to search
      * @returns the list of positions in the document this dependency appers in
      */
-    public static getDependencyPosition(document: vscode.TextDocument, packeType: PackageType, dependencyId: string): vscode.Position[] {
-        let dependencyName: string = packeType == PackageType.Maven ? dependencyId : dependencyId.substring(0, dependencyId.lastIndexOf(':'));
+    public static getDependencyPosition(document: vscode.TextDocument, packageType: PackageType, dependencyId: string): vscode.Position[] {
+        let dependencyName: string = packageType == PackageType.Maven ? dependencyId : dependencyId.substring(0, dependencyId.lastIndexOf(':'));
 
-        switch (packeType) {
+        switch (packageType) {
             case PackageType.Go:
                 return GoUtils.getDependencyPosition(document, dependencyName, FocusType.Dependency);
             case PackageType.Maven:

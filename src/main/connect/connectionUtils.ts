@@ -16,9 +16,8 @@ import { LogManager } from '../log/logManager';
 import { Configuration } from '../utils/configuration';
 
 export class ConnectionUtils {
-    private static readonly MINIMAL_XRAY_VERSION_SUPPORTED_FOR_GRAPH_SCAN: any = semver.coerce('3.29.0');
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI: any = semver.coerce('3.21.2');
-    private static readonly MINIMAL_XRAY_VERSION_SUPPORTED: any = semver.coerce('2.5.0');
+    private static readonly MINIMAL_XRAY_VERSION_SUPPORTED: any = semver.coerce('3.29.0');
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
 
@@ -168,15 +167,8 @@ export class ConnectionUtils {
 
     public static async testXrayVersionForScanGraph(jfrogClient: JfrogClient, logger: LogManager): Promise<boolean> {
         let xrayVersion: string = await this.getXrayVersion(jfrogClient);
-        if (!(await this.isXrayVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED_FOR_GRAPH_SCAN))) {
-            logger.logMessage(
-                'Unsupported Xray version for graph scan: ' +
-                    xrayVersion +
-                    ', version ' +
-                    ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED_FOR_GRAPH_SCAN +
-                    ' or above is required. Scanning dependencies without project support...',
-                'DEBUG'
-            );
+        if (!(await this.isXrayVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED))) {
+            logger.logError(new Error('Dependencies scan is supported only on Xray >= 3.29.0'), true);
             return false;
         }
         return true;

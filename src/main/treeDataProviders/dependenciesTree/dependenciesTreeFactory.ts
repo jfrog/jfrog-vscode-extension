@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { ProjectDetails } from '../../types/projectDetails';
-import { PackageType } from '../../types/projectType';
+import { getNumberOfSupportedPackgeTypes, PackageType } from '../../types/projectType';
 import { GoUtils } from '../../utils/goUtils';
 import { MavenUtils } from '../../utils/mavenUtils';
 import { NpmUtils } from '../../utils/npmUtils';
@@ -11,7 +11,6 @@ import { NugetUtils } from '../../utils/nugetUtils';
 import { PypiUtils } from '../../utils/pypiUtils';
 import { YarnUtils } from '../../utils/yarnUtils';
 import { TreesManager } from '../treesManager';
-import { DescriptorUtils } from '../utils/descriptorUtils';
 import { StepProgress } from '../utils/stepProgress';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 
@@ -33,10 +32,13 @@ export class DependenciesTreesFactory {
         let typesDone: number = 0;
         try {
             await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Go), componentsToScan, treesManager, parent, checkCanceled);
+            typesDone++;
             progressManager.reportProgress();
             await NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Npm), componentsToScan, treesManager, parent, checkCanceled);
+            typesDone++;
             progressManager.reportProgress();
             await YarnUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Yarn), componentsToScan, treesManager, parent, checkCanceled);
+            typesDone++;
             progressManager.reportProgress();
             await PypiUtils.createDependenciesTrees(
                 projectDescriptors.get(PackageType.Python),
@@ -46,6 +48,7 @@ export class DependenciesTreesFactory {
                 parent,
                 checkCanceled
             );
+            typesDone++;
             progressManager.reportProgress();
             await MavenUtils.createDependenciesTrees(
                 projectDescriptors.get(PackageType.Maven),
@@ -54,6 +57,7 @@ export class DependenciesTreesFactory {
                 parent,
                 checkCanceled
             );
+            typesDone++;
             progressManager.reportProgress();
             await NugetUtils.createDependenciesTrees(
                 projectDescriptors.get(PackageType.Nuget),
@@ -62,9 +66,10 @@ export class DependenciesTreesFactory {
                 parent,
                 checkCanceled
             );
+            typesDone++;
             progressManager.reportProgress();
         } catch (error) {
-            progressManager.reportProgress((DescriptorUtils.getNumberOfSupportedPackgeTypes() - typesDone) * progressManager.getStepIncValue);
+            progressManager.reportProgress((getNumberOfSupportedPackgeTypes() - typesDone) * progressManager.getStepIncValue);
             throw error;
         }
 

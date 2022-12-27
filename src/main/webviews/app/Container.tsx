@@ -9,7 +9,7 @@ function Container() {
         setPageType(event.data.pageType);
     });
     if (dependencyData?.id) {
-        return <App data={dependencyData} PanelType={pageType} />;
+        return <App dependencyPageData={dependencyData} PanelType={pageType} />;
     }
     return <App PanelType={PageType.Empty} />;
 }

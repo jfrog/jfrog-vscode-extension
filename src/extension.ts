@@ -36,7 +36,7 @@ export async function activate(context: vscode.ExtensionContext) {
     let filterManager: FilterManager = new FilterManager(treesManager, scanCacheManager).activate();
     let buildsManager: BuildsManager = new BuildsManager(treesManager).activate();
 
-    new DetailsWebView().activate(context);
+    new DetailsWebView(logManager).activate(context);
     new DiagnosticsManager(treesManager).activate(context);
     new CodeLensManager().activate(context);
 

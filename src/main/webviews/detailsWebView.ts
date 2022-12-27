@@ -2,11 +2,14 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { IDependencyPage } from 'jfrog-ide-webview';
 import { PageType } from 'jfrog-ide-webview';
+import { LogManager } from '../log/logManager';
 
 /**
  * Show a webview panel with details about objects in the project
  */
 export class DetailsWebView {
+    constructor(private _logManager: LogManager) {}
+
     public async activate(context: vscode.ExtensionContext) {
         let panel: vscode.WebviewPanel | undefined;
         let prevActiveTreeNode: IDependencyPage;
@@ -20,9 +23,11 @@ export class DetailsWebView {
                         updateWebview(e.webviewPanel, prevActiveTreeNode);
                     });
                 } else {
+                    // Focus on panel if aleady exists
                     panel.reveal();
                 }
                 if (page) {
+                    this._logManager.logMessage('Opening webview page with data:\n' + JSON.stringify(page), 'DEBUG');
                     updateWebview(panel, prevActiveTreeNode);
                 }
                 panel.onDidDispose(

@@ -120,8 +120,8 @@ export class ScanUtils {
         }
     }
 
-    public static executeCmd(command: string, cwd?: string): any {
-        return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
+    public static executeCmd(command: string, cwd?: string, env?: NodeJS.ProcessEnv | undefined): any {
+        return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
     }
 
     public static executeCmdAsync(command: string, cwd?: string): Promise<any> {

@@ -12,7 +12,7 @@ import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
 import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
 import { CacheManager } from '../../cache/cacheManager';
 import { DescriptorIssuesData, FileIssuesData, IssuesCache, WorkspaceIssuesData } from '../../cache/issuesCache';
-import { PackageType } from '../../types/projectType';
+import { getNumberOfSupportedPackgeTypes, PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { StepProgress } from '../utils/stepProgress';
 import { Utils } from '../utils/utils';
@@ -144,7 +144,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         // Check if data for the workspace exists in the cache
         let workspaceData: WorkspaceIssuesData | undefined = this._cacheManager.issuesCache?.get(workSpace);
         if (workspaceData != undefined) {
-            this._logManager.logMessage("Loading issues from last scan for workSpace '" + workSpace.name + "'", 'INFO');
+            this._logManager.logMessage("Loading issues from last scan for the workspace '" + workSpace.name + "'", 'INFO');
             let root: IssuesRootTreeNode = new IssuesRootTreeNode(workSpace);
             if (workspaceData.failedFiles) {
                 // Load files that had error on the last scan and create tree node in the root
@@ -187,7 +187,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     this._workspaceToRoot.set(workspace, root);
                     let shouldDeleteRoot: boolean = false;
                     let shouldCacheRoot: boolean = false;
-                    // Exexute workspace scan task
+                    // Execute workspace scan task
                     await this.repopulateWorkspaceTree(workspaceData, root, progress, checkCanceled)
                         .then(() => {
                             this._logManager.logMessage("Workspace '" + workspace.name + "' scan ended", 'INFO');
@@ -264,10 +264,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         checkCanceled();
         let status: { eosDone: boolean; graphDone: boolean } = { eosDone: false, graphDone: !graphSupported };
 
-        progressManager.startStep(
-            '🔎 Scanning for issues',
-            graphSupported ? DescriptorUtils.getNumberOfSupportedPackgeTypes() + descriptorsCount : 0
-        );
+        progressManager.startStep('🔎 Scanning for issues', graphSupported ? getNumberOfSupportedPackgeTypes() + descriptorsCount : 0);
         let scansPromises: Promise<any>[] = [];
         // Building dependency tree + dependency graph scan for each descriptor
         if (graphSupported) {
@@ -312,26 +309,27 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         let scansPromises: Promise<any>[] = [];
         for (const [type, descriptorsPaths] of workspcaeDescriptors) {
             for (const descriptorPath of descriptorsPaths) {
-                // Search for the dependecy graph of the descriptor
                 const descriptorData: DescriptorIssuesData = {
                     type: type,
                     name: Utils.getLastSegment(descriptorPath.fsPath),
                     fullpath: descriptorPath.fsPath
                 } as DescriptorIssuesData;
-                let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptorData.fullpath, descriptorData.type);
 
+                let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptorData.fullpath, descriptorData.type);
+                // Search for the dependecy graph of the descriptor
                 let descriptorGraph: RootNode | undefined = DescriptorUtils.getDependencyGraph(workspaceDependenciesTree, descriptorPath.fsPath);
                 if (!descriptorGraph) {
-                    progressManager.reportProgress(2 * progressManager.getStepIncValue);
+                    progressManager.reportProgress();
                     this._logManager.logMessage("Can't find descriptor graph for " + descriptorPath.fsPath, 'DEBUG');
                     continue;
                 }
+                // Project Not install
                 if (descriptorGraph?.label?.toString().includes('[Not installed]')) {
-                    progressManager.reportProgress(2 * progressManager.getStepIncValue);
+                    progressManager.reportProgress();
                     this.onFileScanError(
                         workspaceData,
                         root,
-                        new FileScanError('Descriptor ' + descriptorPath.fsPath + ' is not installed', '[Not installed]'),
+                        new FileScanError('Project with descriptor file ' + descriptorPath.fsPath + ' is not installed', '[Project not installed]'),
                         descriptorData
                     );
                     continue;
@@ -355,6 +353,12 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         await Promise.all(scansPromises);
     }
 
+    /**
+     * Handle errors that occur during workspace scan, checks if cancele was requested.
+     * @param error - the error that occur
+     * @param handle - if true the error will be logged and not thrown/returned.
+     * @returns -  undefined if error was handled or error otherwise
+     */
     private onScanError(error: Error, handle: boolean = true): Error | undefined {
         if (error instanceof ScanCancellationError) {
             throw error;
@@ -367,7 +371,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     }
 
     /**
-     * Handle errors that occur.
+     * Handle errors that occur when scanning a specific file.
      * 1.1 If error occur during file scan and failedFile provided a failed node will be created to notify the user.
      * 1.2 If the error is FileScanError the reason attribute will be added to the label
      * 2. If cancle is reported throw the error to handle on workspace level
@@ -404,7 +408,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     }
 
     /**
-     * Run Xray scanning for a single descriptor and populates the data and view
+     * Runs Xray scanning for a single descriptor and populates the data and view
      * @param descriptorData - the issues data for the given descriptor
      * @param descriptorNode - the node that represents the descriptor in view
      * @param descriptorGraph - the dependency graph of the descriptor
@@ -433,7 +437,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             return undefined;
         }
         // Populate response
-        // TODO: fix impacted path for demo/package.json, CVE-2022-24999. should be 4 childs (3 qs with diff ver and express) but there are only 2 qs (6.7.0 not found)
         descriptorData.impactTreeData = Object.fromEntries(
             DescriptorUtils.createImpactedPaths(descriptorGraph, descriptorData.dependenciesGraphScan).entries()
         );

@@ -8,7 +8,7 @@ import {
     IReference,
     IExtendedInformation
 } from 'jfrog-client-js';
-import { IExtendedInformation as WebExtendedInformation, ISeverityReasons } from 'jfrog-ide-webview';
+import { IExtendedInformation as WebExtendedInformation, ISeverityReasons, ICve as WebICve } from 'jfrog-ide-webview';
 import Set from 'typescript-collections/dist/lib/Set';
 import { CveTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
@@ -120,7 +120,7 @@ export class Translators {
         return results;
     }
 
-    static toWebViewICve(node: CveTreeNode): import('jfrog-ide-webview').ICve | undefined {
+    static toWebViewICve(node: CveTreeNode): WebICve | undefined {
         if (node.cve || node.applicableDetails) {
             return {
                 id: node.cve?.cve,
@@ -129,7 +129,7 @@ export class Translators {
                 cvssV3Score: node.cve?.cvss_v3_score,
                 cvssV3Vector: node.cve?.cvss_v3_vector,
                 applicableData: node.applicableDetails
-            } as import('jfrog-ide-webview').ICve;
+            } as WebICve;
         }
         return undefined;
     }

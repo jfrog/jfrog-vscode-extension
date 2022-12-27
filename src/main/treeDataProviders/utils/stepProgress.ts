@@ -6,7 +6,7 @@ import { LogManager } from '../../log/logManager';
  * Manage the vscode.Progress with steps and substeps if needed
  */
 export class StepProgress {
-    private static readonly MAX_PROGRESS: number = 95;
+    private static readonly MAX_PROGRESS: number = 99;
     private _totalSteps: number;
     private currentStepMsg?: string;
     private currentStepsDone: number = 0;

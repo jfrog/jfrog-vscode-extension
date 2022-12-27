@@ -33,7 +33,7 @@
             },
             {
                 "view": "jfrog.xray.issues",
-                "contents": "This view displays the security scan issues in the project.\n[Scan](command:jfrog.xray.refresh)",
+                "contents": "This view displays the security scan issues in the project. The results of applicability scanning of CVEs in the code currently support Python, npm and yarn.\n[Scan](command:jfrog.xray.refresh)",
                 "when": "jfrog.connection.status == signedIn"
             }
         ],
@@ -242,7 +242,7 @@
         ]
     },
     "scripts": {
-        "postinstall": "npm i --no-save https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.1.8.tgz",
+        "postinstall": "npm i --no-save https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.1.9.tgz",
         "vscode:prepublish": "webpack --mode production",
         "webpack": "rm -rf dist && webpack --mode development",
         "webpack-dev": "rm -rf dist && webpack --mode development --watch",
@@ -279,7 +279,6 @@
         "@types/glob": "^7.2.0",
         "@types/json2csv": "^5.0.3",
         "@types/mocha": "^9.1.1",
-        "@types/node": "^16.11.43",
         "@types/react": "^18.0.15",
         "@types/react-dom": "^18.0.6",
         "@types/semver": "^7.3.9",
@@ -291,16 +290,12 @@
         "eslint": "^8.16.0",
         "eslint-config-prettier": "^8.5.0",
         "glob": "^8.0.3",
-        "html-webpack-plugin": "^5.5.0",
-        "mini-css-extract-plugin": "^2.6.1",
         "mocha": "^10.0.0",
         "nock": "^13.2.7",
         "ovsx": "^0.5.0",
         "prettier": "^1.19.1",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
-        "react-scripts": "5.0.1",
-        "rewire": "^4.0.1",
         "tmp": "^0.2.1",
         "ts-loader": "^9.3.0",
         "typescript": "^4.7.2",

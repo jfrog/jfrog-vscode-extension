@@ -71,9 +71,11 @@ export class GoTreeNode extends RootNode {
      * @returns "go list" results.
      */
     private runGoList(): string[] {
-        // ScanUtils.executeCmd(`GOVCS=*:off`);
-        // add -buildvcs=false
-        return ScanUtils.executeCmd(`go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all`, this.workspaceFolder)
+        return ScanUtils.executeCmd(
+            `go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all`,
+            this.workspaceFolder,
+            GoUtils.getGoVersion().compare('1.18.0') >= 0 ? { ...process.env, GOFLAGS: '-buildvcs=false' } : undefined
+        )
             .toString()
             .split(/\n/);
     }

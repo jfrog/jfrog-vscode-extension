@@ -183,7 +183,7 @@ export class CiManager {
         // Component to Xray Artifact mapping
         let sha1ToComponent: Map<string, IArtifact> = new Map();
         // Get the scan cache manager to store issues and licenses
-        let scanCacheManager: ScanCacheManager = this._treesManager.scanCacheManager;
+        let scanCacheManager: ScanCacheManager = this._treesManager.buildsTreesProvider.scanCacheManager;
 
         // Populate the above mappings. We will use the information to populate the dependency tree efficiently.
         let components: IArtifact[] = response.components;

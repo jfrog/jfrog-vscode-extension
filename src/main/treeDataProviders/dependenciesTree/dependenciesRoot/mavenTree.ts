@@ -138,9 +138,9 @@ export class MavenTreeNode extends RootNode {
         this.children.forEach(child => {
             // In case of a multi module pom.
             if (child instanceof RootNode) {
-                child.children.forEach(c => this.upgradableDependencies(this._treesManager.scanCacheManager, c));
+                child.children.forEach(c => this.upgradableDependencies(this._treesManager.buildsTreesProvider.scanCacheManager, c));
             } else {
-                this.upgradableDependencies(this._treesManager.scanCacheManager, child);
+                this.upgradableDependencies(this._treesManager.buildsTreesProvider.scanCacheManager, child);
             }
         });
     }

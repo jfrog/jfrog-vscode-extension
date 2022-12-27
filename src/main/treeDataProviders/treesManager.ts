@@ -35,13 +35,13 @@ export class TreesManager implements ExtensionComponent {
     constructor(
         workspaceFolders: vscode.WorkspaceFolder[],
         private _connectionManager: ConnectionManager,
-        private _scanCacheManager: ScanCacheManager,
+        scanCacheManager: ScanCacheManager,
         private _scanManager: ScanManager,
         private _cacheManager: CacheManager,
         private _logManager: LogManager
     ) {
-        this._buildsTreesProvider = new BuildsDataProvider(this);
-        this._dependencyDetailsProvider = new DependencyDetailsProvider(_scanCacheManager);
+        this._buildsTreesProvider = new BuildsDataProvider(this, scanCacheManager);
+        this._dependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager);
 
         this._issuesTreeDataProvider = new IssuesTreeDataProvider(workspaceFolders, _logManager, _scanManager, _cacheManager, this);
         this._state = State.Local;
@@ -119,10 +119,6 @@ export class TreesManager implements ExtensionComponent {
 
     public get cacheManager(): CacheManager {
         return this._cacheManager;
-    }
-
-    public get scanCacheManager(): ScanCacheManager {
-        return this._scanCacheManager;
     }
 
     public get logManager(): LogManager {

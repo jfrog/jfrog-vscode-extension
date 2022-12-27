@@ -8,6 +8,10 @@ export enum PackageType {
     Python
 }
 
+export function getNumberOfSupportedPackgeTypes(): number {
+    return 6;
+}
+
 export function toPackgeType(str: string): PackageType {
     switch (str.toUpperCase()) {
         case 'GO':

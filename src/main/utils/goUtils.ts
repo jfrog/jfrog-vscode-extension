@@ -3,6 +3,7 @@ import fs from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as walkdir from 'walkdir';
+import { SemVer } from 'semver';
 import { FocusType } from '../constants/contextKeys';
 import { LogManager } from '../log/logManager';
 import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
@@ -18,6 +19,18 @@ export class GoUtils {
     // Required files of the gomod-absolutizer Go program.
     private static readonly GO_MOD_ABS_COMPONENTS: string[] = ['go.mod', 'go.sum', 'main.go', 'utils.go'];
     private static readonly GO_MOD_ABS_DIR_NAME: string = 'gomod-absolutizer';
+
+    /**
+     * Get the Go version if exists
+     * @returns Go version
+     */
+    public static getGoVersion(): SemVer {
+        let versionStr: string = ScanUtils.executeCmd('go version')
+            .toString()
+            .substring('go version go'.length);
+        let versionNumber: string = versionStr.substring(0, versionStr.indexOf(' '));
+        return new SemVer(versionNumber);
+    }
 
     /**
      * Get go.mod file and return the position of 'require' section.
@@ -86,7 +99,7 @@ export class GoUtils {
         }
         for (let goMod of goMods) {
             checkCanceled();
-            treesManager.logManager.logMessage('Analyzing go.mod files', 'INFO');
+            treesManager.logManager.logMessage('Analyzing go.mod file ' + goMod.fsPath, 'INFO');
             let projectDir: string = path.dirname(goMod.fsPath);
             let tmpWorkspace: string = '';
             try {
