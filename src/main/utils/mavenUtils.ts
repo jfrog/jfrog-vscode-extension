@@ -1,8 +1,7 @@
 import * as exec from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { ContextKeys } from '../constants/contextKeys';
-import { FocusType } from '../focus/abstractFocus';
+import { ContextKeys, FocusType } from '../constants/contextKeys';
 import { LogManager } from '../log/logManager';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -35,7 +34,7 @@ export class MavenUtils {
     }
 
     /**
-     * Get pom.xml file and dependencies tree node. return the position of the dependency in the pom.xml file.
+     * Get pom.xml file and dependencies tree node. Return the position of the dependency in the pom.xml file.
      * @param document             - pom.xml file
      * @param dependenciesTreeNode - dependencies tree node
      */
@@ -69,6 +68,39 @@ export class MavenUtils {
         return [];
     }
 
+    /**
+     * Get pom.xml file and dependencies tree node. return the position of the dependency in the pom.xml file.
+     * @param document             - pom.xml file
+     * @param dependenciesTreeNode - dependencies tree node
+     */
+    public static getDependencyPosition(document: vscode.TextDocument, dependencyId: string | undefined, focusType: FocusType): vscode.Position[] {
+        if (!dependencyId) {
+            return [];
+        }
+        let res: vscode.Position[] = [];
+        let pomXmlContent: string = document.getText();
+        let [groupId, artifactId, version] = MavenUtils.getGavArrayFromId(dependencyId);
+        let dependencyTag: string = MavenUtils.getDependencyTag(pomXmlContent, groupId, artifactId);
+        // TODO: FIX Maven to work add sub-module region (tag) as well if not in dependency tag
+        if (dependencyTag) {
+            let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyTag));
+            let arr: string[] = dependencyTag.split(/\r?\n/).filter(line => line.trim() !== '');
+            for (let i: number = 0; i < arr.length; i++) {
+                let depInfo: string = arr[i].trim().toLowerCase();
+                if (this.isDependencyMatch(groupId, artifactId, version, depInfo, focusType)) {
+                    res.push(new vscode.Position(startIndex.line + i, arr[i].indexOf('<')));
+                    res.push(new vscode.Position(startIndex.line + i, arr[i].length));
+                }
+            }
+            return res;
+        }
+
+        // if (!(dependenciesTreeNode instanceof MavenTreeNode)) {
+        //     return MavenUtils.getDependencyPos(document, dependenciesTreeNode.parent, focusType);
+        // }
+        return [];
+    }
+
     public static isDependencyMatch(groupId: any, artifactId: any, version: any, depInfo: string, focusType: FocusType): boolean {
         switch (focusType) {
             case FocusType.Dependency:
@@ -98,6 +130,14 @@ export class MavenUtils {
             return dependencyMatch[0];
         }
         return '';
+    }
+
+    /**
+     * Get an array of [groupId, artifactId, version] from dependencies tree node.
+     * @param dependenciesTreeNode - The dependencies tree node
+     */
+    public static getGavArrayFromId(dependencyId: string): string[] {
+        return dependencyId.toLowerCase().split(':');
     }
 
     /**
@@ -157,7 +197,7 @@ export class MavenUtils {
         projectDetails: ProjectDetails[],
         treesManager: TreesManager,
         root: DependenciesTreeNode,
-        quickScan: boolean
+        checkCanceled: () => void
     ): Promise<void> {
         if (!pomXmls) {
             treesManager.logManager.logMessage('No pom.xml files found in workspaces.', 'DEBUG');
@@ -165,17 +205,19 @@ export class MavenUtils {
         }
         treesManager.logManager.logMessage('pom.xml files to scan: [' + pomXmls.toString() + ']', 'DEBUG');
         if (!MavenUtils.verifyMavenInstalled()) {
-            treesManager.logManager.logError(new Error('Could not scan Maven project dependencies, because "mvn" is not in the PATH.'), !quickScan);
+            treesManager.logManager.logError(new Error('Could not scan Maven project dependencies, because "mvn" is not in the PATH.'), true);
             return;
         }
+        checkCanceled();
         treesManager.logManager.logMessage('Generating Maven Dependency Tree', 'INFO');
         let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, treesManager.logManager);
         for (let ProjectTree of prototypeTree) {
+            checkCanceled();
             try {
                 treesManager.logManager.logMessage('Analyzing pom.xml at ' + ProjectTree.pomPath, 'INFO');
                 ProjectTree.runMavenDependencyTree();
                 let mavenRoot: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, treesManager, root);
-                const mavenProjectsDetails: ProjectDetails[] = await mavenRoot.refreshDependencies(quickScan, ProjectTree);
+                const mavenProjectsDetails: ProjectDetails[] = await mavenRoot.refreshDependencies(ProjectTree);
                 if (mavenRoot.children.length === 0) {
                     root.children.splice(root.children.indexOf(mavenRoot), 1);
                 } else {
@@ -190,7 +232,7 @@ export class MavenUtils {
                         '.',
                     'ERR',
                     true,
-                    !quickScan
+                    true
                 );
                 treesManager.logManager.logMessage((<any>error).stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }

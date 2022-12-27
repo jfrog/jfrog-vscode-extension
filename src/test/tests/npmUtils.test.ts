@@ -3,20 +3,23 @@ import { before } from 'mocha';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
-import { NpmDependencyUpdate } from '../../main/dependencyUpdate/npmDependencyUpdate';
-import { FocusType } from '../../main/focus/abstractFocus';
+// import { NpmDependencyUpdate } from '../../main/dependencyUpdate/npmDependencyUpdate';
+// import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
-import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
-import { NpmTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
+// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+// import { NpmTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { NpmUtils } from '../../main/utils/npmUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
-import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
+import { createScanCacheManager /*, getNodeByArtifactId*/ } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
 import { ProjectDetails } from '../../main/types/projectDetails';
+import { ScanManager } from '../../main/scanLogic/scanManager';
+import { CacheManager } from '../../main/cache/cacheManager';
+import { FocusType } from '../../main/constants/contextKeys';
 
 /**
  * Test functionality of @class NpmUtils.
@@ -29,11 +32,12 @@ describe('Npm Utils Tests', async () => {
         [],
         new ConnectionManager(logManager),
         dummyScanCacheManager,
-        {} as ScanLogicManager,
+        {} as ScanManager,
+        {} as CacheManager,
         logManager
     );
     let projectDirs: string[] = ['project-1', 'project-2', 'project-3'];
-    let npmDependencyUpdate: NpmDependencyUpdate = new NpmDependencyUpdate();
+    // let npmDependencyUpdate: NpmDependencyUpdate = new NpmDependencyUpdate();
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'npm'));
 
@@ -52,7 +56,7 @@ describe('Npm Utils Tests', async () => {
      */
     it('Locate package jsons', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
-        let packageJsons: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.NPM);
+        let packageJsons: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Npm);
         assert.isDefined(packageJsons);
         assert.strictEqual(packageJsons?.length, projectDirs.length);
 
@@ -136,46 +140,46 @@ describe('Npm Utils Tests', async () => {
         assert.deepEqual(dependencyPos[1], new vscode.Position(12, 23));
     });
 
-    it('Update fixed version', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-        let componentsToScan: ProjectDetails = new ProjectDetails('', PackageType.UNKNOWN);
-        let res: DependenciesTreeNode[] = await runCreateNpmDependenciesTrees([componentsToScan], parent);
-        let dependencyProject: DependenciesTreeNode | undefined = res.find(
-            node => node instanceof NpmTreeNode && node.workspaceFolder.endsWith('project-3')
-        );
-        assert.isNotNull(dependencyProject);
+    // it('Update fixed version', async () => {
+    //     let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
+    //     let componentsToScan: ProjectDetails = new ProjectDetails('', PackageType.Unknown);
+    //     let res: DependenciesTreeNode[] = await runCreateNpmDependenciesTrees([componentsToScan], parent);
+    //     let dependencyProject: DependenciesTreeNode | undefined = res.find(
+    //         node => node instanceof NpmTreeNode && node.workspaceFolder.endsWith('project-3')
+    //     );
+    //     assert.isNotNull(dependencyProject);
 
-        // Get specific dependency node.
-        let node: DependenciesTreeNode | null = getNodeByArtifactId(dependencyProject!, 'progress');
-        assert.isNotNull(node);
-        assert.equal(node?.generalInfo.version, '2.0.3');
+    //     // Get specific dependency node.
+    //     let node: DependenciesTreeNode | null = getNodeByArtifactId(dependencyProject!, 'progress');
+    //     assert.isNotNull(node);
+    //     assert.equal(node?.generalInfo.version, '2.0.3');
 
-        // Create a new version different from the node.
-        npmDependencyUpdate.updateDependencyVersion(node!, '2.0.2');
+    //     // Create a new version different from the node.
+    //     npmDependencyUpdate.updateDependencyVersion(node!, '2.0.2');
 
-        // Recalculate the dependency tree.
-        res = await runCreateNpmDependenciesTrees([componentsToScan], parent);
-        dependencyProject = res.find(node => node instanceof NpmTreeNode && node.workspaceFolder.endsWith('project-3'));
-        assert.isNotNull(dependencyProject);
+    //     // Recalculate the dependency tree.
+    //     res = await runCreateNpmDependenciesTrees([componentsToScan], parent);
+    //     dependencyProject = res.find(node => node instanceof NpmTreeNode && node.workspaceFolder.endsWith('project-3'));
+    //     assert.isNotNull(dependencyProject);
 
-        // Verify the node's version was modified.
-        node = getNodeByArtifactId(dependencyProject!, 'progress');
-        assert.isNotNull(node);
-        assert.equal(node?.generalInfo.version, '2.0.2');
+    //     // Verify the node's version was modified.
+    //     node = getNodeByArtifactId(dependencyProject!, 'progress');
+    //     assert.isNotNull(node);
+    //     assert.equal(node?.generalInfo.version, '2.0.2');
 
-        // Revert back the changes.
-        npmDependencyUpdate.updateDependencyVersion(node!, '2.0.3');
+    //     // Revert back the changes.
+    //     npmDependencyUpdate.updateDependencyVersion(node!, '2.0.3');
 
-        // Recalculate the dependency tree.
-        res = await runCreateNpmDependenciesTrees([componentsToScan], parent);
+    //     // Recalculate the dependency tree.
+    //     res = await runCreateNpmDependenciesTrees([componentsToScan], parent);
 
-        dependencyProject = res.find(node => node instanceof NpmTreeNode && node.workspaceFolder.endsWith('project-3'));
-        assert.isNotNull(dependencyProject);
-        // Verify the node's version was modified.
-        node = getNodeByArtifactId(dependencyProject!, 'progress');
-        assert.isNotNull(node);
-        assert.equal(node?.generalInfo.version, '2.0.3');
-    });
+    //     dependencyProject = res.find(node => node instanceof NpmTreeNode && node.workspaceFolder.endsWith('project-3'));
+    //     assert.isNotNull(dependencyProject);
+    //     // Verify the node's version was modified.
+    //     node = getNodeByArtifactId(dependencyProject!, 'progress');
+    //     assert.isNotNull(node);
+    //     assert.equal(node?.generalInfo.version, '2.0.3');
+    // });
 
     /**
      * Test NpmUtils.createNpmDependenciesTrees.
@@ -238,9 +242,11 @@ describe('Npm Utils Tests', async () => {
 
     async function runCreateNpmDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
-        let packageJsons: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.NPM);
+        let packageJsons: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Npm);
         assert.isDefined(packageJsons);
-        await NpmUtils.createDependenciesTrees(packageJsons, componentsToScan, treesManager, parent, false);
+        await NpmUtils.createDependenciesTrees(packageJsons, componentsToScan, treesManager, parent, () => {
+            assert;
+        });
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 });

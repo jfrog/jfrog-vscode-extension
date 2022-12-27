@@ -1,11 +1,10 @@
-//@ts-check
 
 'use strict';
 
 const path = require('path');
 
 /**@type {import('webpack').Configuration}*/
-const config = {
+const extensionConfig = {
     target: 'node',
     entry: './src/extension.ts',
     output: {
@@ -36,4 +35,45 @@ const config = {
         __filename: false
     }
 };
-module.exports = config;
+
+const reactConfig = (env, argv) => {
+    return {
+        devtool: env.NODE_ENV == "production" ? "" : "source-map",
+        entry: path.join(__dirname, "src", "main", "webviews", "app", "index.tsx"),
+        output: {
+            path: path.resolve(__dirname, 'dist'),
+            filename: 'index.js',
+            devtoolModuleFilenameTemplate: "../[resource-path]",
+        },
+        externals: {
+            vscode: "commonjs vscode"
+        },
+        resolve: {
+            extensions: ['.ts', '.js', '.json', '.tsx', '.css', '.svg'],
+            fallback: {
+                "url": false,
+                "path": false,
+                "process": false,
+            }
+        },
+        module: {
+            rules: [
+                {
+                    test: /\.tsx?$/,
+                    loader: 'ts-loader'
+                },
+                {
+                    test: /\.css?$/,
+                    use: ['style-loader', 'css-loader', 'postcss-loader']
+                },
+                {
+                    test: /\.(png|svg|jpg|jpeg|gif)$/i,
+                    type: 'asset/resource',
+                }
+            ]
+        }
+
+    }
+};
+
+module.exports = [extensionConfig, reactConfig]

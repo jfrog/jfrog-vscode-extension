@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
-import { TreesManager } from '../../treesManager';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { NugetUtils } from '../../../utils/nugetUtils';
 import { RootNode } from './rootTree';
@@ -9,18 +8,18 @@ import { PackageType } from '../../../types/projectType';
 export class NugetTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'nuget://';
 
-    constructor(workspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, PackageType.NUGET, parent, '');
+    constructor(workspaceFolder: string, parent?: DependenciesTreeNode) {
+        super(workspaceFolder, PackageType.Nuget, parent, '');
     }
 
-    public refreshDependencies(quickScan: boolean, project: any) {
+    public refreshDependencies(project: any) {
         this.generalInfo = new GeneralInfo(project.name, '', ['None'], this.workspaceFolder, NugetUtils.PKG_TYPE);
         this.label = project.name;
         this.projectDetails.name = project.name;
-        this.populateDependenciesTree(this, project.dependencies, quickScan);
+        this.populateDependenciesTree(this, project.dependencies);
     }
 
-    private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any, quickScan: boolean) {
+    private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any) {
         if (!dependencies) {
             return;
         }
@@ -35,10 +34,9 @@ export class NugetTreeNode extends RootNode {
                     childDependencies.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode, '');
                 let combined: string = id + ':' + version;
-                if (!quickScan || !this._treesManager.scanCacheManager.isValid(combined)) {
-                    this.projectDetails.addDependency(NugetTreeNode.COMPONENT_PREFIX + combined);
-                }
-                this.populateDependenciesTree(child, childDependencies, quickScan);
+                this.projectDetails.addDependency(NugetTreeNode.COMPONENT_PREFIX + combined);
+                child.dependencyId = NugetTreeNode.COMPONENT_PREFIX + combined;
+                this.populateDependenciesTree(child, childDependencies);
             }
         }
     }

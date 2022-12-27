@@ -5,8 +5,9 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
-import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
+// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+import { ScanManager } from '../../main/scanLogic/scanManager';
 import { PypiTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
@@ -14,6 +15,7 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { PypiUtils } from '../../main/utils/pypiUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager } from './utils/utils.test';
+import { CacheManager } from '../../main/cache/cacheManager';
 
 /**
  * Test functionality of @class PypiUtils.
@@ -25,7 +27,8 @@ describe('Pypi Utils Tests', async () => {
         [],
         new ConnectionManager(logManager),
         dummyScanCacheManager,
-        {} as ScanLogicManager,
+        {} as ScanManager,
+        {} as CacheManager,
         logManager
     );
     let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements'];
@@ -102,7 +105,7 @@ describe('Pypi Utils Tests', async () => {
             path.join(workspaceFolders[0].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
         );
-        dependenciesTreeNode.refreshDependencies(true);
+        dependenciesTreeNode.refreshDependencies();
         assert.deepEqual(dependenciesTreeNode.label, 'requirements');
         assert.deepEqual(dependenciesTreeNode.children.length, 5);
         checkFireDependency(dependenciesTreeNode);
@@ -114,7 +117,7 @@ describe('Pypi Utils Tests', async () => {
             path.join(workspaceFolders[1].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
         );
-        dependenciesTreeNode.refreshDependencies(true);
+        dependenciesTreeNode.refreshDependencies();
         assert.deepEqual(dependenciesTreeNode.label, 'setup');
         assert.deepEqual(dependenciesTreeNode.children.length, 3);
         let snake: PypiTreeNode | undefined = <PypiTreeNode | undefined>dependenciesTreeNode.children.filter(child => child.label === 'snake').pop();
@@ -129,7 +132,7 @@ describe('Pypi Utils Tests', async () => {
             path.join(workspaceFolders[2].uri.fsPath, localPython),
             new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
         );
-        dependenciesTreeNode.refreshDependencies(true);
+        dependenciesTreeNode.refreshDependencies();
         assert.deepEqual(dependenciesTreeNode.label, 'setupAndRequirements');
         assert.deepEqual(dependenciesTreeNode.children.length, 3);
         snake = <PypiTreeNode | undefined>dependenciesTreeNode.children.filter(child => child.label === 'snake').pop();

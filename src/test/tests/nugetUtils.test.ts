@@ -5,8 +5,8 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
-import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
+// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
@@ -15,6 +15,8 @@ import { NugetUtils } from '../../main/utils/nugetUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, isWindows } from './utils/utils.test';
 import { ProjectDetails } from '../../main/types/projectDetails';
+import { ScanManager } from '../../main/scanLogic/scanManager';
+import { CacheManager } from '../../main/cache/cacheManager';
 
 /**
  * Test functionality of @class NugetUtils.
@@ -26,7 +28,8 @@ describe('Nuget Utils Tests', async () => {
         [],
         new ConnectionManager(logManager),
         dummyScanCacheManager,
-        {} as ScanLogicManager,
+        {} as ScanManager,
+        {} as CacheManager,
         logManager
     );
     let solutionsDirs: string[] = ['assets', 'empty'];
@@ -49,7 +52,7 @@ describe('Nuget Utils Tests', async () => {
      */
     it('Locate solutions', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
-        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.NUGET);
+        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Nuget);
         assert.isDefined(solutions);
         assert.strictEqual(solutions?.length, solutionsDirs.length);
 
@@ -100,9 +103,11 @@ describe('Nuget Utils Tests', async () => {
 
     async function runCreateNugetDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
-        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.NUGET);
+        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Nuget);
         assert.isDefined(solutions);
-        await NugetUtils.createDependenciesTrees(solutions, componentsToScan, treesManager, parent, false);
+        await NugetUtils.createDependenciesTrees(solutions, componentsToScan, treesManager, parent, () => {
+            assert;
+        });
         componentsToScan = componentsToScan.sort((l, r) => l.name.localeCompare(r.name));
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }

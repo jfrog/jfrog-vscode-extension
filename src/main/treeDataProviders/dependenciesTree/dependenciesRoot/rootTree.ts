@@ -1,16 +1,18 @@
 import * as vscode from 'vscode';
 import { ContextKeys } from '../../../constants/contextKeys';
-import { ScanCacheManager } from '../../../scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../../cache/scanCacheManager';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { ProjectDetails } from '../../../types/projectDetails';
 import { PackageType } from '../../../types/projectType';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 export class RootNode extends DependenciesTreeNode {
     private _projectDetails: ProjectDetails;
+    private _fullPath: string;
 
     constructor(private _workspaceFolder: string, packageType: PackageType, parent?: DependenciesTreeNode, contextValue?: string) {
         super(new GeneralInfo('', '', [], _workspaceFolder, ''), vscode.TreeItemCollapsibleState.Expanded, parent, contextValue);
         this._projectDetails = new ProjectDetails(_workspaceFolder, packageType);
+        this._fullPath = _workspaceFolder;
     }
 
     public get projectDetails(): ProjectDetails {
@@ -19,6 +21,14 @@ export class RootNode extends DependenciesTreeNode {
 
     public set projectDetails(value: ProjectDetails) {
         this._projectDetails = value;
+    }
+
+    public get fullPath() {
+        return this._fullPath;
+    }
+
+    public set fullPath(value: string) {
+        this._fullPath = value;
     }
 
     public get workspaceFolder() {

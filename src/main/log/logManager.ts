@@ -22,7 +22,13 @@ export class LogManager implements ExtensionComponent {
      * @param focusOutput - Open the extension output view
      * @param shouldToast - If true, display the message in a pop-up balloon
      */
-    public logMessage(message: string, level: LogLevel, focusOutput: boolean = false, shouldToast: boolean = false): void {
+    public logMessage(
+        message: string,
+        level: LogLevel,
+        focusOutput: boolean = false,
+        shouldToast: boolean = false,
+        shouldToastInformation: boolean = false
+    ): void {
         if (!message) {
             return;
         }
@@ -37,6 +43,8 @@ export class LogManager implements ExtensionComponent {
         }
         if (shouldToast) {
             vscode.window.showErrorMessage(message);
+        } else if (shouldToastInformation) {
+            vscode.window.showInformationMessage(message);
         }
     }
 

@@ -3,8 +3,8 @@ import PQueue from 'p-queue';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
 import { ConnectionUtils } from '../../connect/connectionUtils';
-import { BuildsScanCache, Type } from '../../scanCache/buildsScanCache';
-import { ScanCacheManager } from '../../scanCache/scanCacheManager';
+import { BuildsScanCache, Type } from '../../cache/buildsScanCache';
+import { ScanCacheManager } from '../../cache/scanCacheManager';
 import { BuildsNode } from '../../treeDataProviders/dependenciesTree/ciNodes/buildsTree';
 import { CiTitleNode } from '../../treeDataProviders/dependenciesTree/ciNodes/ciTitleNode';
 import { DependenciesTreeNode } from '../../treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -183,7 +183,7 @@ export class CiManager {
         // Component to Xray Artifact mapping
         let sha1ToComponent: Map<string, IArtifact> = new Map();
         // Get the scan cache manager to store issues and licenses
-        let scanCacheManager: ScanCacheManager = this._treesManager.scanCacheManager;
+        let scanCacheManager: ScanCacheManager = this._treesManager.buildsTreesProvider.scanCacheManager;
 
         // Populate the above mappings. We will use the information to populate the dependency tree efficiently.
         let components: IArtifact[] = response.components;

@@ -1,7 +1,7 @@
 import { assert } from 'chai';
 import { faker } from '@faker-js/faker';
 import * as vscode from 'vscode';
-import { ScanCacheManager } from '../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
@@ -10,28 +10,31 @@ import { createScanCacheManager } from './utils/utils.test';
 import { LicensesNode } from '../../main/treeDataProviders/generalDetailsDataProvider';
 import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependencyDetailsProvider';
 import { TreeDataHolder } from '../../main/treeDataProviders/utils/treeDataHolder';
-import { SourceCodeTreeDataProvider } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeTreeDataProvider';
-import { TreesManager } from '../../main/treeDataProviders/treesManager';
-import { LogManager } from '../../main/log/logManager';
-import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
-import { ConnectionManager } from '../../main/connect/connectionManager';
+// import { SourceCodeTreeDataProvider } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeTreeDataProvider';
+// import { TreesManager } from '../../main/treeDataProviders/treesManager';
+// import { LogManager } from '../../main/log/logManager';
+// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
+// import { ConnectionManager } from '../../main/connect/connectionManager';
+// import { ScanManager } from '../../main/scanLogic/scanManager';
+// import { CacheManager } from '../../main/cache/cacheManager';
 
 /**
  * Test functionality of @class DependencyDataProvider.
  */
 describe('Dependency Details Tests', () => {
     let scanCacheManager: ScanCacheManager = createScanCacheManager();
-    let logManager: LogManager = new LogManager().activate();
-    let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
-    let treesManager: TreesManager = new TreesManager(
-        [],
-        new ConnectionManager(logManager),
-        dummyScanCacheManager,
-        {} as ScanLogicManager,
-        logManager
-    );
-    let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider([], treesManager);
-    let Components: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager, sourceCodeTreeDataProvider);
+    // let logManager: LogManager = new LogManager().activate();
+    // let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
+    // let treesManager: TreesManager = new TreesManager(
+    //     [],
+    //     new ConnectionManager(logManager),
+    //     dummyScanCacheManager,
+    //     {} as ScanManager,
+    //     {} as CacheManager,
+    //     logManager
+    // );
+    // let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider([], treesManager);
+    let Components: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager); //, sourceCodeTreeDataProvider);
     let dependenciesTreeNode: DependenciesTreeNode;
     before(() => {
         let generalInfo: GeneralInfo = new GeneralInfo('artifactId', '1.2.3', [], __dirname, 'testPkg');

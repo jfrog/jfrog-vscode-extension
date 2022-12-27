@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { ScanCacheManager } from '../cache/scanCacheManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { BuildsNode } from '../treeDataProviders/dependenciesTree/ciNodes/buildsTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -22,8 +23,8 @@ export class FilterManager implements ExtensionComponent {
     private _licensesFilter: LicensesFilter;
     private _scopeFilter: ScopesFilter;
 
-    constructor(private _treesManager: TreesManager) {
-        this._severitiesFilter = new SeveritiesFilter(_treesManager.scanCacheManager);
+    constructor(private _treesManager: TreesManager, scanCacheManager: ScanCacheManager) {
+        this._severitiesFilter = new SeveritiesFilter(scanCacheManager);
         this._licensesFilter = new LicensesFilter(_treesManager);
         this._scopeFilter = new ScopesFilter(_treesManager);
     }
@@ -51,7 +52,7 @@ export class FilterManager implements ExtensionComponent {
                 this._severitiesFilter.clearFilters();
                 this._licensesFilter.clearFilters();
                 this._scopeFilter.clearFilters();
-                this._treesManager.treeDataProviderManager.applyFilters(undefined);
+                this._treesManager.buildsTreesProvider.applyFilters(undefined);
         }
     }
 
@@ -68,13 +69,13 @@ export class FilterManager implements ExtensionComponent {
     }
 
     public applyFilters() {
-        let unfilteredRoot: DependenciesTreeNode = this._treesManager.treeDataProviderManager.getDisplayedDependenciesTree();
+        let unfilteredRoot: DependenciesTreeNode = this._treesManager.buildsTreesProvider.dependenciesTree;
         if (!(unfilteredRoot instanceof DependenciesTreeNode)) {
             return;
         }
         let filteredRoot: DependenciesTreeNode = unfilteredRoot.shallowClone();
         this._applyFilters(unfilteredRoot, filteredRoot, { nodeSelected: true });
-        this._treesManager.treeDataProviderManager.applyFilters(filteredRoot);
+        this._treesManager.buildsTreesProvider.applyFilters(filteredRoot);
     }
 
     private _applyFilters(unfilteredNode: DependenciesTreeNode, filteredNode: DependenciesTreeNode, picked: { nodeSelected: boolean }): void {

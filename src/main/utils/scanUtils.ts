@@ -10,7 +10,8 @@ import { LogManager } from '../log/logManager';
 import { PackageType } from '../types/projectType';
 import { Configuration } from './configuration';
 import { ContextKeys } from '../constants/contextKeys';
-
+import * as util from 'util';
+import { Region } from '../treeDataProviders/issuesTree/fileTreeNode';
 export class ScanUtils {
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
@@ -90,14 +91,41 @@ export class ScanUtils {
         return undefined;
     }
 
+    /**
+     * Open text editor of a given file.
+     * If provided it will also reveal and select a specific region in the file
+     * @param filePath - the file to open
+     * @param fileRegion - optional region in file to reveal
+     */
+    public static async openFile(filePath: string, fileRegion?: Region) {
+        if (filePath === undefined || filePath === '') {
+            return;
+        }
+        let openPath: vscode.Uri = vscode.Uri.file(filePath);
+        if (!openPath) {
+            return;
+        }
+        let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(openPath);
+        let textEditor: vscode.TextEditor | undefined = await vscode.window.showTextDocument(textDocument);
+        if (!textEditor || !fileRegion) {
+            return;
+        }
+        textEditor.selection = new vscode.Selection(fileRegion.start, fileRegion.end);
+        textEditor.revealRange(new vscode.Range(fileRegion.start, fileRegion.end), vscode.TextEditorRevealType.InCenter);
+    }
+
     static async removeFolder(folderPath: string): Promise<void> {
         if (fse.pathExistsSync(folderPath)) {
             await fse.remove(folderPath);
         }
     }
 
-    public static executeCmd(command: string, cwd?: string): any {
-        return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
+    public static executeCmd(command: string, cwd?: string, env?: NodeJS.ProcessEnv | undefined): any {
+        return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
+    }
+
+    public static executeCmdAsync(command: string, cwd?: string): Promise<any> {
+        return util.promisify(exec.exec)(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
     }
 
     public static setScanInProgress(state: boolean) {
@@ -121,25 +149,25 @@ export class ScanUtils {
      */
     private static extractDescriptorTypeFromPath(fsPath: string): PackageType | undefined {
         if (fsPath.endsWith('go.mod')) {
-            return PackageType.GO;
+            return PackageType.Go;
         }
         if (fsPath.endsWith('pom.xml')) {
-            return PackageType.MAVEN;
+            return PackageType.Maven;
         }
         if (fsPath.endsWith('yarn.lock')) {
-            return PackageType.YARN;
+            return PackageType.Yarn;
         }
         if (fsPath.endsWith('package.json')) {
             if (fs.existsSync(path.join(path.dirname(fsPath), 'yarn.lock'))) {
                 // The package type is yarn, but we already saved the fsPath of yarn.lock as the project descriptor
                 return undefined;
             }
-            return PackageType.NPM;
+            return PackageType.Npm;
         }
         if (fsPath.endsWith('.sln')) {
-            return PackageType.NUGET;
+            return PackageType.Nuget;
         }
-        return PackageType.PYTHON;
+        return PackageType.Python;
     }
 
     static createTmpDir(): string {
@@ -156,6 +184,16 @@ export class ScanUtils {
             .createHash(algorithm)
             .update(data)
             .digest('hex');
+    }
+}
+
+/**
+ * Describes an error that occur during file scan.
+ * When thrown a new FileTreeNode will be created for the parent the label of the node will be at the given format: {file_name} - {error.reason}
+ */
+export class FileScanError extends Error {
+    constructor(msg: string, public reason: string) {
+        super(msg);
     }
 }
 

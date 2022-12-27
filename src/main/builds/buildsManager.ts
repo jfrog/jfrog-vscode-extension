@@ -27,9 +27,8 @@ export class BuildsManager implements ExtensionComponent {
                 this._treesManager.logManager.logError(new Error('Failed choosing build'), false);
                 return;
             }
-            this._treesManager.buildsTreesProvider.loadBuild(chosenBuild, () => {
-                this._treesManager.treeDataProviderManager.onChangeFire();
-            });
+            this._treesManager.buildsTreesProvider.loadBuild(chosenBuild);
+            this._treesManager.buildsTreesProvider.onChangeFire();
         }
     }
 

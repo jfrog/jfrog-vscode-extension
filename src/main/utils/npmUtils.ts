@@ -1,13 +1,13 @@
 import { execSync } from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { FocusType } from '../focus/abstractFocus';
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ProjectDetails } from '../types/projectDetails';
 import * as fs from 'fs';
 import { ScanUtils } from './scanUtils';
+import { FocusType } from '../constants/contextKeys';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
@@ -39,11 +39,18 @@ export class NpmUtils {
         dependenciesTreeNode: DependenciesTreeNode,
         focusType: FocusType
     ): vscode.Position[] {
+        return this.getDependencyPosition(document, dependenciesTreeNode.generalInfo.artifactId, focusType);
+    }
+
+    /**
+     * Get package.json file and dependencies tree node. return the position of the dependency in the package.json file.
+     * @param document             - package.json file
+     * @param dependenciesTreeNode - dependencies tree node
+     */
+    public static getDependencyPosition(document: vscode.TextDocument, artifactId: string, focusType: FocusType): vscode.Position[] {
         let res: vscode.Position[] = [];
         let packageJsonContent: string = document.getText();
-        let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match(
-            '("' + dependenciesTreeNode.generalInfo.artifactId + '"\\s*:\\s*).*"'
-        );
+        let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match('("' + artifactId + '"\\s*:\\s*).*"');
         if (!dependencyMatch) {
             return res;
         }
@@ -71,20 +78,22 @@ export class NpmUtils {
         projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
-        quickScan: boolean
+        checkCanceled: () => void
+        // quickScan: boolean
     ): Promise<void> {
         if (!packageJsons) {
             treesManager.logManager.logMessage('No package.json files found in workspaces.', 'DEBUG');
             return;
         }
         if (!NpmUtils.verifyNpmInstalled()) {
-            treesManager.logManager.logError(new Error('Could not scan npm project dependencies, because npm CLI is not in the PATH.'), !quickScan);
+            treesManager.logManager.logError(new Error('Could not scan npm project dependencies, because npm CLI is not in the PATH.'), true);
             return;
         }
         treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
         for (let packageJson of packageJsons) {
+            checkCanceled();
             let root: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), treesManager, parent);
-            root.refreshDependencies(quickScan);
+            root.refreshDependencies();
             projectsToScan.push(root.projectDetails);
         }
     }

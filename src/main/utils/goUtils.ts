@@ -3,7 +3,8 @@ import fs from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as walkdir from 'walkdir';
-import { FocusType } from '../focus/abstractFocus';
+import { SemVer } from 'semver';
+import { FocusType } from '../constants/contextKeys';
 import { LogManager } from '../log/logManager';
 import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -18,6 +19,18 @@ export class GoUtils {
     // Required files of the gomod-absolutizer Go program.
     private static readonly GO_MOD_ABS_COMPONENTS: string[] = ['go.mod', 'go.sum', 'main.go', 'utils.go'];
     private static readonly GO_MOD_ABS_DIR_NAME: string = 'gomod-absolutizer';
+
+    /**
+     * Get the Go version if exists
+     * @returns Go version
+     */
+    public static getGoVersion(): SemVer {
+        let versionStr: string = ScanUtils.executeCmd('go version')
+            .toString()
+            .substring('go version go'.length);
+        let versionNumber: string = versionStr.substring(0, versionStr.indexOf(' '));
+        return new SemVer(versionNumber);
+    }
 
     /**
      * Get go.mod file and return the position of 'require' section.
@@ -37,17 +50,15 @@ export class GoUtils {
 
     /**
      * Get go.mod file and dependencies tree node. return the position of the dependency in the go.mod file.
-     * @param document             - go.mod file
-     * @param dependenciesTreeNode - dependencies tree node
+     * @param document - go.mod file
+     * @param artifactId - dependency id
+     * @param focusType - what position to return (dependency / version)
+     * @returns the position of the dependency / version in the go.mod file.
      */
-    public static getDependencyPos(
-        document: vscode.TextDocument,
-        dependenciesTreeNode: DependenciesTreeNode,
-        focusType: FocusType
-    ): vscode.Position[] {
+    public static getDependencyPosition(document: vscode.TextDocument, artifactId: string, focusType: FocusType): vscode.Position[] {
         let res: vscode.Position[] = [];
         let goModContent: string = document.getText();
-        let dependencyMatch: RegExpMatchArray | null = goModContent.match('(' + dependenciesTreeNode.generalInfo.artifactId + 's* )vs*.*');
+        let dependencyMatch: RegExpMatchArray | null = goModContent.match('(' + artifactId + 's* )vs*.*');
         if (!dependencyMatch) {
             return res;
         }
@@ -75,7 +86,7 @@ export class GoUtils {
         projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
-        quickScan: boolean
+        checkCanceled: () => void
     ): Promise<void> {
         if (!goMods) {
             treesManager.logManager.logMessage('No go.mod files found in workspaces.', 'DEBUG');
@@ -83,11 +94,12 @@ export class GoUtils {
         }
         treesManager.logManager.logMessage('go.mod files to scan: [' + goMods.toString() + ']', 'DEBUG');
         if (!GoUtils.verifyGoInstalled()) {
-            treesManager.logManager.logError(new Error('Could not scan go project dependencies, because go CLI is not in the PATH.'), !quickScan);
+            treesManager.logManager.logError(new Error('Could not scan go project dependencies, because go CLI is not in the PATH.'), true);
             return;
         }
         for (let goMod of goMods) {
-            treesManager.logManager.logMessage('Analyzing go.mod files', 'INFO');
+            checkCanceled();
+            treesManager.logManager.logMessage('Analyzing go.mod file ' + goMod.fsPath, 'INFO');
             let projectDir: string = path.dirname(goMod.fsPath);
             let tmpWorkspace: string = '';
             try {
@@ -99,14 +111,16 @@ export class GoUtils {
                     `Failed to scan Go project. Hint: Please make sure the command 'go mod tidy' runs successfully in ` + goMod.fsPath,
                     'ERR',
                     true,
-                    !quickScan
+                    true
                 );
             }
 
             let root: GoTreeNode = new GoTreeNode(tmpWorkspace, treesManager, parent);
-            root.refreshDependencies(quickScan);
+            root.refreshDependencies();
             projectsToScan.push(root.projectDetails);
             // Set actual paths.
+            root.fullPath = goMod.fsPath;
+            root.projectDetails.path = projectDir;
             root.generalInfo.path = projectDir;
             root.workspaceFolder = projectDir;
 

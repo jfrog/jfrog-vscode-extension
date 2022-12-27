@@ -12,6 +12,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
     private _licenses: Set<ILicenseKey> = new Set(license => license.licenseName);
     private _issues: Set<IIssueKey> = new Set(issue => issue.issue_id);
     private _topSeverity: Severity;
+    private _dependencyId: string | undefined;
 
     constructor(
         protected _generalInfo: GeneralInfo,
@@ -30,6 +31,14 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         if (_parent) {
             _parent.children.push(this);
         }
+    }
+
+    public get dependencyId(): string | undefined {
+        return this._dependencyId;
+    }
+
+    public set dependencyId(value: string | undefined) {
+        this._dependencyId = value;
     }
 
     public get componentId(): string {

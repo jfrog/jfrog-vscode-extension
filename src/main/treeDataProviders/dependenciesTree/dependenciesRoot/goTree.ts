@@ -10,10 +10,10 @@ import { PackageType } from '../../../types/projectType';
 export class GoTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
     constructor(tmpWorkspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
-        super(tmpWorkspaceFolder, PackageType.GO, parent);
+        super(tmpWorkspaceFolder, PackageType.Go, parent);
     }
 
-    public refreshDependencies(quickScan: boolean) {
+    public refreshDependencies() {
         let goModGraph: PackageDependencyPair[] = [];
         let goList: string[] = [];
         let rootPackageName: string = '';
@@ -22,7 +22,7 @@ export class GoTreeNode extends RootNode {
             goModGraph = this.runGoModGraph();
             goList = this.runGoList();
         } catch (error) {
-            this._treesManager.logManager.logError(<any>error, !quickScan);
+            this._treesManager.logManager.logError(<any>error, true);
             this.label = this.workspaceFolder + ' [Not installed]';
             this.generalInfo = new GeneralInfo(this.label, '', [], this.workspaceFolder, GoUtils.PKG_TYPE);
             return;
@@ -34,7 +34,7 @@ export class GoTreeNode extends RootNode {
             return;
         }
         let dependenciesMap: Map<string, string[]> = this.buildDependenciesMapAndDirectDeps(goModGraph, goList);
-        this.children.forEach(child => this.populateDependenciesTree(dependenciesMap, child, quickScan));
+        this.children.forEach(child => this.populateDependenciesTree(dependenciesMap, child));
     }
 
     /**
@@ -71,7 +71,11 @@ export class GoTreeNode extends RootNode {
      * @returns "go list" results.
      */
     private runGoList(): string[] {
-        return ScanUtils.executeCmd(`go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all`, this.workspaceFolder)
+        return ScanUtils.executeCmd(
+            `go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all`,
+            this.workspaceFolder,
+            GoUtils.getGoVersion().compare('1.18.0') >= 0 ? { ...process.env, GOFLAGS: '-buildvcs=false' } : undefined
+        )
             .toString()
             .split(/\n/);
     }
@@ -112,11 +116,11 @@ export class GoTreeNode extends RootNode {
         return dependenciesMap;
     }
 
-    private populateDependenciesTree(dependenciesMap: Map<string, string[]>, dependenciesTreeNode: DependenciesTreeNode, quickScan: boolean) {
+    private populateDependenciesTree(dependenciesMap: Map<string, string[]>, dependenciesTreeNode: DependenciesTreeNode) {
         if (this.hasLoop(dependenciesTreeNode)) {
             return;
         }
-        this.addComponentToScan(dependenciesTreeNode, quickScan);
+        this.addComponentToScan(dependenciesTreeNode);
         let childDependencies: string[] =
             dependenciesMap.get(dependenciesTreeNode.generalInfo.artifactId + '@v' + dependenciesTreeNode.generalInfo.version) || [];
         childDependencies.forEach(childDependency => {
@@ -127,7 +131,7 @@ export class GoTreeNode extends RootNode {
                 this.getTreeCollapsibleState(dependenciesMap, generalInfo),
                 dependenciesTreeNode
             );
-            this.populateDependenciesTree(dependenciesMap, grandchild, quickScan);
+            this.populateDependenciesTree(dependenciesMap, grandchild);
         });
     }
 
@@ -143,11 +147,10 @@ export class GoTreeNode extends RootNode {
         return false;
     }
 
-    private addComponentToScan(dependenciesTreeNode: DependenciesTreeNode, quickScan: boolean) {
+    private addComponentToScan(dependenciesTreeNode: DependenciesTreeNode) {
         let componentId: string = dependenciesTreeNode.generalInfo.artifactId + ':' + dependenciesTreeNode.generalInfo.version;
-        if (!quickScan || !this._treesManager.scanCacheManager.isValid(componentId)) {
-            this.projectDetails.addDependency(GoTreeNode.COMPONENT_PREFIX + componentId);
-        }
+        this.projectDetails.addDependency(GoTreeNode.COMPONENT_PREFIX + componentId);
+        dependenciesTreeNode.dependencyId = GoTreeNode.COMPONENT_PREFIX + componentId;
     }
 
     private getNameVersionTuple(value: string): string[] {

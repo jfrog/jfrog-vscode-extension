@@ -54,6 +54,23 @@ export class PypiUtils {
     }
 
     /**
+     * Get requirements file and dependencies tree node. return the position of the dependency in the requirements file.
+     * @param document             - requirements file
+     * @param dependenciesTreeNode - dependencies tree node
+     */
+    public static getDependencyPosition(document: vscode.TextDocument, artifactId: string): vscode.Position[] {
+        let requirementsContent: string = document.getText().toLowerCase();
+        let res: vscode.Position[] = [];
+        let dependencyMatch: RegExpMatchArray | null = requirementsContent.match(artifactId);
+        if (!dependencyMatch) {
+            return res;
+        }
+        res.push(document.positionAt(<number>dependencyMatch.index));
+        res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));
+        return res;
+    }
+
+    /**
      * Find *.py files in workspaces.
      * @param workspaceFolders - Base workspace folders to search
      * @param logManager       - Log manager
@@ -85,7 +102,7 @@ export class PypiUtils {
         projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
-        quickScan: boolean
+        checkCanceled: () => void
     ): Promise<void> {
         if (!pythonFiles) {
             treesManager.logManager.logMessage('No setup.py and requirements files found in workspaces.', 'DEBUG');
@@ -93,6 +110,7 @@ export class PypiUtils {
         }
         let pythonExtension: vscode.Extension<any> | undefined;
         for (let workspaceFolder of workspaceFolders) {
+            checkCanceled();
             let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, treesManager.logManager);
             if (!pythonFilesExist) {
                 treesManager.logManager.logMessage('No setup.py and requirements files found in workspace ' + workspaceFolder.name + '.', 'DEBUG');
@@ -106,7 +124,7 @@ export class PypiUtils {
                             'Could not scan Pypi project dependencies, because python extension is not installed. ' +
                                 'Please install Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python'
                         ),
-                        !quickScan
+                        true
                     );
                     return;
                 }
@@ -114,10 +132,7 @@ export class PypiUtils {
 
             let pythonPath: string | undefined = PypiUtils.getPythonPath(pythonExtension, workspaceFolder);
             if (!pythonPath) {
-                treesManager.logManager.logError(
-                    new Error('Could not scan Pypi project dependencies, because python interpreter is not set.'),
-                    !quickScan
-                );
+                treesManager.logManager.logError(new Error('Could not scan Pypi project dependencies, because python interpreter is not set.'), true);
                 return;
             }
             if (!PypiUtils.isInVirtualEnv(pythonPath, workspaceFolder.uri.fsPath, treesManager.logManager)) {
@@ -125,14 +140,15 @@ export class PypiUtils {
                     new Error(
                         'Please install and activate a virtual environment before running Xray scan. Then, install your Python project in that environment.'
                     ),
-                    !quickScan
+                    true
                 );
                 return;
             }
+            checkCanceled();
 
             treesManager.logManager.logMessage('Analyzing setup.py and requirements files of ' + workspaceFolder.name, 'INFO');
-            let root: PypiTreeNode = new PypiTreeNode(path.dirname(workspaceFolder.uri.fsPath), treesManager, pythonPath, parent);
-            root.refreshDependencies(quickScan);
+            let root: PypiTreeNode = new PypiTreeNode(workspaceFolder.uri.fsPath, treesManager, pythonPath, parent);
+            root.refreshDependencies();
             projectsToScan.push(root.projectDetails);
         }
     }

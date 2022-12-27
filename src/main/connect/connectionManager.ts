@@ -1,23 +1,18 @@
 import { execSync } from 'child_process';
 import {
     IAqlSearchResult,
-    IArtifact,
     IDetailsResponse,
     IGraphRequestModel,
     IGraphResponse,
-    ISummaryRequestModel,
-    ISummaryResponse,
     IUsageFeature,
     JfrogClient,
-    XrayScanProgress,
-    ComponentDetails
+    XrayScanProgress
 } from 'jfrog-client-js';
 import * as keytar from 'keytar';
 import * as semver from 'semver';
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
-import Set from 'typescript-collections/dist/lib/Set';
 import { ConnectionUtils } from './connectionUtils';
 import { ScanUtils } from '../utils/scanUtils';
 import { ContextKeys, SessionStatus } from '../constants/contextKeys';
@@ -698,14 +693,14 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     /**
      * Do Xray's scan/graph REST API.
-     * @param componentsToScan - The components to scan
+     * @param graphRequest     - The component's graph to scan
      * @param checkCanceled    - A function that throws ScanCancellationError if the user chose to stop the scan
      * @param project          - JFrog project key
      * @returns graph of all requested components with vulnerabilities and licenses information.
      */
-    public async scanGraph(
-        componentsToScan: Set<ComponentDetails>,
-        progress: vscode.Progress<{ message?: string; increment?: number }>,
+    public async scanWithGraph(
+        graphRequest: IGraphRequestModel,
+        progress: XrayScanProgress,
         checkCanceled: () => void,
         project: string,
         watches: string[]
@@ -719,32 +714,11 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         } else if (project && project !== '') {
             policyMessage += ` Using Project key: ${project}`;
         }
-        this._logManager.logMessage('Sending dependency graph to Xray for analyzing.' + policyMessage, 'DEBUG');
-        let graphRequest: IGraphRequestModel = {
-            component_id: 'vscode-project',
-            nodes: <IGraphRequestModel[]>componentsToScan.toArray()
-        } as IGraphRequestModel;
+        this._logManager.logMessage('Sending dependency graph "' + graphRequest.component_id + '" to Xray for analyzing.' + policyMessage, 'DEBUG');
         return await this.createJfrogClient()
             .xray()
             .scan()
-            .graph(graphRequest, new XrayScanProgressImpl(progress), checkCanceled, project, watches);
-    }
-
-    /**
-     * Do Xray's summary/component REST API.
-     * @param Components - The components to scan
-     * @returns list of all requested components with vulnerabilities and licenses information.
-     */
-    public async summaryComponent(componentDetails: ComponentDetails[]): Promise<IArtifact[]> {
-        if (!this.areXrayCredentialsSet()) {
-            await this.populateCredentials(false);
-        }
-        let summaryRequest: ISummaryRequestModel = { component_details: componentDetails };
-        let summaryResponse: ISummaryResponse = await this.createJfrogClient()
-            .xray()
-            .summary()
-            .component(summaryRequest);
-        return Promise.resolve(summaryResponse.artifacts);
+            .graph(graphRequest, progress, checkCanceled, project, watches);
     }
 
     public async searchArtifactsByAql(aql: string): Promise<IAqlSearchResult> {
@@ -799,16 +773,5 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             return;
         }
         this._logManager.logMessage(usagePrefix + 'Usage report sent successfully.', 'DEBUG');
-    }
-}
-
-class XrayScanProgressImpl implements XrayScanProgress {
-    private lastPercentage: number = 0;
-    constructor(private _indicator: vscode.Progress<{ message?: string; increment?: number }>) {}
-
-    /** @override */
-    public setPercentage(percentage: number): void {
-        this._indicator.report({ message: '2/2:📦 Dependencies scanning', increment: percentage - this.lastPercentage });
-        this.lastPercentage = percentage;
     }
 }

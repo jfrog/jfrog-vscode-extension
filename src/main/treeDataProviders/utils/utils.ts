@@ -21,4 +21,18 @@ export class Utils {
             arguments: args
         };
     }
+
+    public static getLastScanString(timeStamp: number | undefined): string {
+        if (timeStamp) {
+            return "scan completed at '" + this.toDate(timeStamp) + "'";
+        }
+        return '';
+    }
+
+    public static toDate(timeStamp: number | undefined): string {
+        if (timeStamp == undefined) {
+            return 'Never';
+        }
+        return new Date(timeStamp).toUTCString();
+    }
 }

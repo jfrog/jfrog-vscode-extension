@@ -10,7 +10,7 @@ export class ScopesFilter extends AbstractFilter {
 
     /** @override */
     public getValues(): vscode.QuickPickItem[] {
-        let values: vscode.QuickPickItem[] = this._treesManager.treeDataProviderManager.filterScopes.toArray().map(scope => {
+        let values: vscode.QuickPickItem[] = this._treesManager.buildsTreesProvider.filterScopes.toArray().map(scope => {
             return <vscode.QuickPickItem>{
                 label: scope.label,
                 picked: true

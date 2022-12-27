@@ -5,13 +5,13 @@ import { ScanUtils } from './scanUtils';
 export class IconsPaths {
     // Icons severities
     static readonly NORMAL_SEVERITY: string = IconsPaths.getIconPath('normal');
-    static readonly PENDING_SEVERITY: string = IconsPaths.getIconPath('unknown');
-    static readonly UNKNOWN_SEVERITY: string = IconsPaths.getIconPath('unknown');
-    static readonly INFORMATION_SEVERITY: string = IconsPaths.getIconPath('low');
-    static readonly LOW_SEVERITY: string = IconsPaths.getIconPath('low');
-    static readonly MEDIUM_SEVERITY: string = IconsPaths.getIconPath('medium');
-    static readonly HIGH_SEVERITY: string = IconsPaths.getIconPath('high');
-    static readonly CRITICAL_SEVERITY: string = IconsPaths.getIconPath('critical');
+    static readonly PENDING_SEVERITY: string = IconsPaths.getSvgIconPath('Unknown');
+    static readonly UNKNOWN_SEVERITY: string = IconsPaths.getSvgIconPath('Unknown');
+    static readonly INFORMATION_SEVERITY: string = IconsPaths.getSvgIconPath('Low');
+    static readonly LOW_SEVERITY: string = IconsPaths.getSvgIconPath('Low');
+    static readonly MEDIUM_SEVERITY: string = IconsPaths.getSvgIconPath('Medium');
+    static readonly HIGH_SEVERITY: string = IconsPaths.getSvgIconPath('High');
+    static readonly CRITICAL_SEVERITY: string = IconsPaths.getSvgIconPath('Critical');
 
     // Hover severities
     static readonly UNKNOWN_HOVER_SEVERITY: string = IconsPaths.getIconPath('unknownHover');
@@ -35,14 +35,18 @@ export class IconsPaths {
     public static getIconPath(iconName: string) {
         return path.join(ScanUtils.RESOURCES_DIR, iconName + '.png');
     }
+
+    public static getSvgIconPath(iconName: string) {
+        return path.join(ScanUtils.RESOURCES_DIR, iconName + '.svg');
+    }
 }
 
 export class PackageDescriptorUtils {
     public static getIcon(packageType: PackageType): string | undefined {
         switch (packageType) {
-            case PackageType.PYTHON:
+            case PackageType.Python:
                 return IconsPaths.PYTHON;
-            case PackageType.NPM:
+            case PackageType.Npm:
                 return IconsPaths.NPM;
             default:
                 return undefined;

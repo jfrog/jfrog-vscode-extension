@@ -30,7 +30,7 @@ export class CveApplicabilityRunner {
                 downloadUrl += '/linux/' + binary;
                 break;
             case 'darwin':
-                if (process.arch === 'x64') {
+                if (process.arch === 'x64' || process.arch === 'arm64') {
                     downloadUrl += '/mac/' + binary;
                 } else {
                     this._isOsSupported = false;
@@ -48,8 +48,10 @@ export class CveApplicabilityRunner {
      */
     public async update(): Promise<void> {
         if (!this.shouldUpdate()) {
+            this._logManager.logMessage('<ASSAF> no update for runner', 'DEBUG');
             return;
         }
+        this._logManager.logMessage('<ASSAF> should update runner, starting', 'DEBUG');
         try {
             await this._resource.update();
             // Save time when the update accrued.
@@ -72,7 +74,7 @@ export class CveApplicabilityRunner {
                 return;
             }
             let cmdArgs: string = '';
-            if (packageType === PackageType.NPM) {
+            if (packageType === PackageType.Npm) {
                 cmdArgs = ' --skipped-folders=node_modules ';
             }
             if (cvesToScan != undefined && cvesToScan.length > 0) {
@@ -102,6 +104,7 @@ export class CveApplicabilityRunner {
 
     private shouldUpdate(): boolean {
         if (!this._isOsSupported) {
+            this._logManager.logMessage('<ASSAF> os not supported', 'DEBUG');
             return false;
         }
         // Ensure that the last update occurred more than two days ago..

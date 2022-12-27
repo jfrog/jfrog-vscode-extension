@@ -2,7 +2,7 @@ import * as os from 'os';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../../main/connect/connectionManager';
-import { ScanCacheManager } from '../../../main/scanCache/scanCacheManager';
+import { ScanCacheManager } from '../../../main/cache/scanCacheManager';
 import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TestMemento } from './testMemento.test';
 
@@ -44,3 +44,5 @@ export function getCliHomeDir(): string {
 export function setCliHomeDir(newHome: string): void {
     process.env['JFROG_CLI_HOME_DIR'] = newHome;
 }
+
+// export function create

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { ScanCacheManager } from '../cache/scanCacheManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { SeverityStrings, SeverityUtils } from '../types/severity';
 import { AbstractFilter } from './abstractFilter';

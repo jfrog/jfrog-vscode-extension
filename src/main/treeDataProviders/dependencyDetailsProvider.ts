@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
-import { ScanCacheManager } from '../scanCache/scanCacheManager';
+import { ScanCacheManager } from '../cache/scanCacheManager';
 import { GeneralDetailsDataProvider } from './generalDetailsDataProvider';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { IssueNode, IssuesDataProvider } from './issuesDataProvider';
-import { SourceCodeTreeDataProvider } from './sourceCodeTree/sourceCodeTreeDataProvider';
 
 /**
  * Dependency Details panel.
@@ -15,8 +14,8 @@ export class DependencyDetailsProvider implements vscode.TreeDataProvider<any> {
     private _generalDetailsProvider: GeneralDetailsDataProvider;
     private _selectedNode: DependenciesTreeNode | undefined;
 
-    constructor(protected _scanCacheManager: ScanCacheManager, sourceCodeTreeDataProvider: SourceCodeTreeDataProvider) {
-        this._issuesDataProvider = new IssuesDataProvider(_scanCacheManager, sourceCodeTreeDataProvider);
+    constructor(protected _scanCacheManager: ScanCacheManager) {
+        this._issuesDataProvider = new IssuesDataProvider(_scanCacheManager);
         this._generalDetailsProvider = new GeneralDetailsDataProvider(_scanCacheManager);
     }
 

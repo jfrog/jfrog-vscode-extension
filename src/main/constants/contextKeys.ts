@@ -18,3 +18,8 @@ export enum ExtensionMode {
     Local = 'isLocal',
     Ci = 'isCi'
 }
+
+export enum FocusType {
+    Dependency = 0,
+    DependencyVersion = 1
+}
