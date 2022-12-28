@@ -1,5 +1,3 @@
-// import * as vscode from 'vscode';
-
 import { FileTreeNode } from '../fileTreeNode';
 import { IssuesRootTreeNode } from '../issuesRootTreeNode';
 import { IssueTreeNode } from '../issueTreeNode';

@@ -54,10 +54,8 @@ export class DescriptorUtils {
                 if (child.dependencyId && componentsWithIssue.has(child.dependencyId)) {
                     // Direct impact
                     impactPaths.push({
-                        name: child.componentId,
-                        children: []
+                        name: child.componentId
                     } as IImpactedPath);
-                    continue;
                 }
                 // indirect impact
                 let indirectImpact: IImpactedPath[] = this.getChildrenImpact(child, componentsWithIssue);

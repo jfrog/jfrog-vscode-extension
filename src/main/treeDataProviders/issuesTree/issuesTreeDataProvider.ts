@@ -57,7 +57,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * Updates the workspace data with issues base on the given state of the workspace or load the last refresh from cache.
      * @param scan - If true (default), runs Xray scan, else get from cache the last old scan.
      */
-    public async refresh(scan: boolean = true) {
+    public async refresh(scan: boolean = true): Promise<void> {
         if (!(await this._treesManager.connectionManager.isSignedIn())) {
             this._logManager.logMessage('Refresh: user is not signed in', 'DEBUG');
             this.clearTree();
@@ -79,7 +79,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         ScanUtils.setScanInProgress(true);
         this._workspaceToRoot = new Map<vscode.WorkspaceFolder, IssuesRootTreeNode>();
         const startRefreshTimestamp: number = Date.now();
-        this.scanWorkspaces()
+        await this.scanWorkspaces()
             .catch(error => this._logManager.logError(error, true))
             .finally(() => {
                 this._scanInProgress = false;
@@ -200,6 +200,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     this._workspaceToRoot.set(workspace, root);
                     let shouldDeleteRoot: boolean = false;
                     let shouldCacheRoot: boolean = false;
+                    let abortController: AbortController = new AbortController();
+                    abortController.signal.throwIfAborted;
                     // Execute workspace scan task
                     await this.repopulateWorkspaceTree(workspaceData, root, progress, checkCanceled)
                         .then(() => {
@@ -476,10 +478,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         descriptorNode: DescriptorTreeNode,
         progressManager: StepProgress
     ): Promise<void> {
-        
         let cveToScan: string[] = [];
         descriptorNode.issues.forEach(issue => {
-            if (issue instanceof CveTreeNode && issue.cve && !cveToScan.find(i => issue.cve && issue.cve.cve && i == issue.cve.cve)) {
+            if (issue instanceof CveTreeNode && issue.cve && issue.cve.cve && !cveToScan.find(i => issue.cve && i == issue.cve.cve)) {
                 cveToScan.push(issue.cve.cve);
             }
         });
@@ -609,7 +610,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         return undefined;
     }
 
-    getChildren(element?: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode): vscode.ProviderResult<any> {
+    public getChildren(element?: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode): vscode.ProviderResult<any> {
         // Root
         if (!element) {
             let roots: IssuesRootTreeNode[] = [];
@@ -636,7 +637,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         }
     }
 
-    getTreeItem(element: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | IssueTreeNode): vscode.TreeItem | Thenable<vscode.TreeItem> {
+    public getTreeItem(
+        element: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | IssueTreeNode
+    ): vscode.TreeItem | Thenable<vscode.TreeItem> {
         if (
             element instanceof FileTreeNode ||
             element instanceof DependencyIssuesTreeNode ||
@@ -653,7 +656,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             if (element instanceof CveTreeNode || element instanceof LicenseIssueTreeNode) {
                 element.command = Utils.createNodeCommand('jfrog.view.dependency.details.page', 'Show details', [element.getDetailsPage()]);
             }
-            // TODO: Source code issues nodes
+            // Source code issues nodes
             if (element instanceof CodeIssueTreeNode) {
                 element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open file location', [
                     element.parent.fullPath,

@@ -76,7 +76,7 @@ export class ScanManager implements ExtensionComponent {
                 } as EosScanRequest);
             }
         }
-        this._logManager.logMessage("Starting Eos scan", 'DEBUG');
+        this._logManager.logMessage('Starting Eos scan', 'DEBUG');
         return eosRunner.scan(...eosRequests);
     }
 }

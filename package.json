@@ -33,7 +33,7 @@
             },
             {
                 "view": "jfrog.xray.issues",
-                "contents": "This view displays the security scan issues in the project. The results of applicability scanning of CVEs in the code currently support Python, npm and yarn.\n[Scan](command:jfrog.xray.refresh)",
+                "contents": "This view displays the security scan issues in the workspace. The results of applicability scanning of CVEs in the code currently support Python, npm and yarn.\n[Scan](command:jfrog.xray.refresh)",
                 "when": "jfrog.connection.status == signedIn"
             }
         ],
@@ -56,7 +56,7 @@
                 {
                     "id": "jfrog.xray.ci.issues.details",
                     "name": "Details",
-                    "when": "false"
+                    "when": "isCi"
                 },
                 {
                     "id": "jfrog.xray.issues",

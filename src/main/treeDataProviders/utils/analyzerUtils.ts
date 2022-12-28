@@ -1,3 +1,4 @@
+import * as vscode from 'vscode';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
 import { DescriptorIssuesData } from '../../cache/issuesCache';
 import { CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
@@ -30,24 +31,6 @@ export class AnalyzerUtils {
         return fileNode;
     }
 
-    // public static populateEosIssues(root: IssuesRootTreeNode, workspaceData: WorkspaceIssuesData): number {
-    //     root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
-    //     let issuesCount: number = 0;
-    //     if (workspaceData.eosScan && workspaceData.eosScan.filesWithIssues) {
-    //         workspaceData.eosScan.filesWithIssues.forEach(fileWithIssues => {
-    //             let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
-    //             fileWithIssues.issues.forEach(issue => {
-    //                 issue.regions.forEach(region => {
-    //                     fileNode.issues.push(new CodeIssueTreeNode(issue.ruleId, fileNode, region));
-    //                     issuesCount++;
-    //                 });
-    //             });
-    //         });
-    //     }
-
-    //     return issuesCount;
-    // }
-
     public static populateApplicableIssues(
         root: IssuesRootTreeNode,
         descriptorNode: DescriptorTreeNode,
@@ -77,7 +60,17 @@ export class AnalyzerUtils {
                                     filePathEvidence: this.parseLocationFilePath(fileEvidence.full_path),
                                     codeEvidence: location.snippet.text
                                 } as IEvidence);
-                                fileNode.issues.push(new ApplicableTreeNode(cve, fileNode, location, node?.severity));
+                                fileNode.issues.push(
+                                    new ApplicableTreeNode(
+                                        cve,
+                                        fileNode,
+                                        new vscode.Range(
+                                            new vscode.Position(location.startLine, location.startColumn),
+                                            new vscode.Position(location.endLine, location.endColumn)
+                                        ),
+                                        node?.severity
+                                    )
+                                );
                                 issuesCount++;
                             }
                         });
@@ -92,4 +85,22 @@ export class AnalyzerUtils {
         });
         return issuesCount;
     }
+
+    // public static populateEosIssues(root: IssuesRootTreeNode, workspaceData: WorkspaceIssuesData): number {
+    //     root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
+    //     let issuesCount: number = 0;
+    //     if (workspaceData.eosScan && workspaceData.eosScan.filesWithIssues) {
+    //         workspaceData.eosScan.filesWithIssues.forEach(fileWithIssues => {
+    //             let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
+    //             fileWithIssues.issues.forEach(issue => {
+    //                 issue.regions.forEach(region => {
+    //                     fileNode.issues.push(new CodeIssueTreeNode(issue.ruleId, fileNode, region));
+    //                     issuesCount++;
+    //                 });
+    //             });
+    //         });
+    //     }
+
+    //     return issuesCount;
+    // }
 }

@@ -55,7 +55,7 @@ export class ApplicabilityRunner extends BinaryRunner {
         if (!run) {
             return undefined;
         }
-        this._logManager.logMessage("Generating response from run " + run.tool.driver.name, 'DEBUG');
+        this._logManager.logMessage('Generating response from run ' + run.tool.driver.name, 'DEBUG');
         let response: ApplicabilityScanResponse = {
             scannedCve: run.tool.driver.rules?.map(rule => this.getCveFromRuleId(rule.id))
         } as ApplicabilityScanResponse;
@@ -109,7 +109,6 @@ export class ApplicabilityRunner extends BinaryRunner {
             fileEvidences: []
         } as CveApplicableDetails;
 
-        // TODO: in case of multiple, change to array
         applicable.set(cveId, details);
 
         return details;

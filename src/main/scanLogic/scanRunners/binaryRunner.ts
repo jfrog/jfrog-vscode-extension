@@ -126,7 +126,7 @@ export abstract class BinaryRunner {
         fs.writeFileSync(requestPath, request);
         // Run the binary
         await this.runBinary(requestPath);
-        this._logManager.logMessage("Done running binary, responses paths:\n" + responsePaths, 'DEBUG');
+        this._logManager.logMessage('Done running binary, responses paths:\n' + responsePaths, 'DEBUG');
         let aggResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (const responsePath of responsePaths) {
             if (!fs.existsSync(responsePath)) {

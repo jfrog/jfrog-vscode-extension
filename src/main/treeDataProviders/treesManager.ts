@@ -72,6 +72,14 @@ export class TreesManager implements ExtensionComponent {
         }
     }
 
+    /**
+     * Shows a specific node in the source code tree after clicking on the bulb icon in the source code.
+     * @param sourceCodeCveTreeNode
+     */
+    public selectItemOnIssuesTree(item: FileTreeNode | IssueTreeNode | DependencyIssuesTreeNode) {
+        this._issuesTreeView.reveal(item, { focus: true, select: true, expand: true });
+    }
+
     public set state(value: State) {
         this._state = value;
         if (this._state === State.Local) {

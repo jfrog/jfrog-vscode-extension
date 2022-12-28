@@ -5,11 +5,6 @@ import { Utils } from '../utils/utils';
 import { IssuesRootTreeNode } from './issuesRootTreeNode';
 import { IssueTreeNode } from './issueTreeNode';
 
-export interface Region {
-    start: vscode.Position;
-    end: vscode.Position;
-}
-
 /**
  * Describes any type of file with Xray issues for the 'Issues' view.
  * This base class should be extended to hold a specific/subset type/s of issues

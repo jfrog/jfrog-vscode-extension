@@ -10,6 +10,7 @@ import { BuildsManager } from '../builds/buildsManager';
 import { Configuration } from '../utils/configuration';
 import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
 import { ScanUtils } from '../utils/scanUtils';
+import { DiagnosticsManager } from '../diagnostics/diagnosticsManager';
 
 /**
  * Register and execute all commands in the extension.
@@ -20,7 +21,8 @@ export class CommandManager implements ExtensionComponent {
         private _connectionManager: ConnectionManager,
         private _treesManager: TreesManager,
         private _filterManager: FilterManager,
-        private _buildsManager: BuildsManager
+        private _buildsManager: BuildsManager,
+        private _diagnosticManager: DiagnosticsManager
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
@@ -37,6 +39,7 @@ export class CommandManager implements ExtensionComponent {
         // Local state
         this.registerCommand(context, 'jfrog.issues.file.open', file => ScanUtils.openFile(file));
         this.registerCommand(context, 'jfrog.issues.file.open.location', (file, fileRegion) => ScanUtils.openFile(file, fileRegion));
+        this.registerCommand(context, 'jfrog.issues.select.node', item => this._treesManager.selectItemOnIssuesTree(item));
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
         // CI state
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
@@ -92,14 +95,6 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Focus on dependency after a click on a dependency in the components tree.
-     * @param dependenciesTreeNode - The chosen dependency.
-     */
-    private doFocus(dependenciesTreeNode: DependenciesTreeNode) {
-        this.onSelectNode(dependenciesTreeNode);
-    }
-
-    /**
      * Copy the node content to clipboard.
      * @param node The tree node. Can be instance of DependenciesTreeNode or TreeDataHolder.
      */
@@ -138,7 +133,10 @@ export class CommandManager implements ExtensionComponent {
      * @param scan - True to scan the workspace, false will load from cache
      */
     private async doRefresh(scan: boolean = true) {
-        await this._treesManager.refresh(scan);
+        await this._treesManager.refresh(scan).then(() => {
+            this._logManager.logMessage('<ASSAF> scan is done, updating diagnostics', 'DEBUG');
+            this._diagnosticManager.updateDiagnostics();
+        });
     }
 
     /**
@@ -213,6 +211,23 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
+     * Register a command in the vscode platform.
+     * @param command - The command to register.
+     * @param callback - The function to execute.
+     */
+    private registerCommand(context: vscode.ExtensionContext, command: string, callback: (...args: any[]) => void) {
+        context.subscriptions.push(vscode.commands.registerCommand(command, callback));
+    }
+
+    /**
+     * Focus on dependency after a click on a dependency in the components tree.
+     * @param dependenciesTreeNode - The chosen dependency.
+     */
+    private doFocus(dependenciesTreeNode: DependenciesTreeNode) {
+        this.onSelectNode(dependenciesTreeNode);
+    }
+
+    /**
      * Show the filter menu.
      */
     private doFilter() {
@@ -224,15 +239,6 @@ export class CommandManager implements ExtensionComponent {
      */
     private doBuildSelected() {
         this._buildsManager.showBuildsMenu();
-    }
-
-    /**
-     * Register a command in the vscode platform.
-     * @param command - The command to register.
-     * @param callback - The function to execute.
-     */
-    private registerCommand(context: vscode.ExtensionContext, command: string, callback: (...args: any[]) => void) {
-        context.subscriptions.push(vscode.commands.registerCommand(command, callback));
     }
 
     /**
