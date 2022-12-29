@@ -12,10 +12,22 @@ import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 
 export class AnalyzerUtils {
+
+    /**
+     * Remove the prefix 'file://'
+     * @param filePath - path to remove prefix
+     */
     public static parseLocationFilePath(filePath: string): string {
         return filePath.includes('file://') ? filePath.substring('file://'.length) : filePath;
     }
 
+    /**
+     * Get or create CodeFileNode object if not exists in root and update its severity if provided
+     * @param root - the root to search the node inside
+     * @param filePath - the file path to search
+     * @param severity - the optional new severity of the file
+     * @returns file node
+     */
     public static getOrCreateCodeFileNode(root: IssuesRootTreeNode, filePath: string, severity?: Severity): CodeFileTreeNode {
         let actualPath: string = this.parseLocationFilePath(filePath);
         let node: FileTreeNode | undefined = root.children.find(child => actualPath == child.fullPath);
@@ -31,6 +43,13 @@ export class AnalyzerUtils {
         return fileNode;
     }
 
+    /**
+     * Populate the applicable data to the view (create file issue nodes)
+     * @param root - the root to populate the data inside
+     * @param descriptorNode - the node of the descriptor that the applicable data is related to
+     * @param descriptorData - the descriptor data with the applicable information inside
+     * @returns the number of issues that were populated from the data
+     */
     public static populateApplicableIssues(
         root: IssuesRootTreeNode,
         descriptorNode: DescriptorTreeNode,
@@ -63,6 +82,7 @@ export class AnalyzerUtils {
                                 fileNode.issues.push(
                                     new ApplicableTreeNode(
                                         cve,
+                                        <CveTreeNode>node,
                                         fileNode,
                                         new vscode.Range(
                                             new vscode.Position(location.startLine, location.startColumn),
@@ -85,6 +105,74 @@ export class AnalyzerUtils {
         });
         return issuesCount;
     }
+
+    // public static async runEos(
+    //     workspaceData: WorkspaceIssuesData,
+    //     root: IssuesRootTreeNode,
+    //     workspcaeDescriptors: Map<PackageType, vscode.Uri[]>,
+    //     progressManager: StepProgress
+    // ): Promise<any> {
+    //     // Prepare
+    //     let requests: EosScanRequest[] = [];
+    //     for (const [type, descriptorPaths] of workspcaeDescriptors) {
+    //         let language: string | undefined;
+    //         switch (type) {
+    //             case PackageType.Python:
+    //                 language = 'python';
+    //                 break;
+    //             case PackageType.Maven:
+    //                 language = 'java';
+    //                 break;
+    //             case PackageType.Npm:
+    //                 language = 'js';
+    //                 break;
+    //         }
+    //         if (language) {
+    //             let roots: Set<string> = new Set<string>();
+    //             for (const descriptorPath of descriptorPaths) {
+    //                 let directory: string = path.dirname(descriptorPath.fsPath);
+    //                 if (!roots.has(directory)) {
+    //                     roots.add(directory);
+    //                     // TODO: removw when issue on eos is resolve
+    //                     requests.push({
+    //                         language: language,
+    //                         roots: [directory]
+    //                     } as EosScanRequest);
+    //                 }
+    //             }
+    //             // TODO: uncomment when issue on eos is resolve
+    //             // if (roots.size > 0) {
+    //             //     requests.push({
+    //             //         language: language,
+    //             //         roots: Array.from(roots)
+    //             //     } as EosScanRequest);
+    //             // }
+    //         }
+    //     }
+    //     if (requests.length == 0) {
+    //         progressManager.reportProgress();
+    //         return;
+    //     }
+    //     let startTime: number = Date.now();
+    //     workspaceData.eosScan = await this._scanManager.scanEos(...requests).finally(() => progressManager.reportProgress());
+    //     if (workspaceData.eosScan) {
+    //         workspaceData.eosScanTimestamp = Date.now();
+    //         let applicableIssuesCount: number = AnalyzerUtils.populateEosIssues(root, workspaceData);
+    //         this._logManager.logMessage(
+    //             'Found ' +
+    //                 applicableIssuesCount +
+    //                 " Eos issues in workspace = '" +
+    //                 workspaceData.path +
+    //                 "' (elapsed:" +
+    //                 (Date.now() - startTime) / 1000 +
+    //                 'sec)',
+    //             'DEBUG'
+    //         );
+
+    //         root.apply();
+    //         progressManager.onProgress();
+    //     }
+    // }
 
     // public static populateEosIssues(root: IssuesRootTreeNode, workspaceData: WorkspaceIssuesData): number {
     //     root.eosScanTimeStamp = workspaceData.eosScanTimestamp;

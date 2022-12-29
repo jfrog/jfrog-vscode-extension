@@ -5,9 +5,12 @@ export interface AnalyzerRequest {
 type AnalyzerType = 'analyze-applicability' | 'analyze-codebase';
 
 export interface AnalyzeScanRequest {
-    type: AnalyzerType; // what type of scan
-    output: string; // the path that the response will be written to
-    roots: string[]; // list of path to root folder that scan all inside -> ["./"]
+    // What type of scan
+    type: AnalyzerType; 
+    // The path that the response will be written to
+    output: string; 
+    // List of path to folders that scan will run inside
+    roots: string[]; 
 }
 
 export interface AnalyzerScanResponse {
@@ -53,7 +56,7 @@ export interface FileUri {
 export interface FileRegion {
     startLine: number;
     endLine: number;
-    startColumn: number; // characters columns
+    startColumn: number;
     endColumn: number;
     snippet?: ResultContent;
 }

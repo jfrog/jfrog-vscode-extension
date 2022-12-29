@@ -7,7 +7,7 @@ import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeIssue, AnalyzerScanResponse, AnalyzeScanRequest, FileRegion } from './analyzerModels';
 
 export interface EosScanRequest extends AnalyzeScanRequest {
-    language: LanguageType; // for now 'python' but should be able in future for more types
+    language: LanguageType;
 }
 
 export type LanguageType = 'python' | 'java' | 'js';
@@ -31,8 +31,8 @@ export class EosRunner extends BinaryRunner {
     private static readonly RUNNER_FOLDER: string = 'eos';
     private static readonly BINARY_NAME: string = 'main_';
 
-    constructor(logManager: LogManager) {
-        super(path.join(ScanUtils.getHomePath(), EosRunner.RUNNER_FOLDER, EosRunner.getBinaryName()), logManager);
+    constructor(abortCheckInterval:number, logManager: LogManager) {
+        super(path.join(ScanUtils.getHomePath(), EosRunner.RUNNER_FOLDER, EosRunner.getBinaryName()), abortCheckInterval, logManager);
     }
 
     protected validateSupported(): boolean {
@@ -57,15 +57,17 @@ export class EosRunner extends BinaryRunner {
     }
 
     /** @override */
-    public async runBinary(yamlConfigPath: string) {
-        return this.executeBinary(['analyze', 'config', '"' + yamlConfigPath + '"'], this._runDirectory);
+    public async runBinary(abortSignal: AbortSignal, yamlConfigPath: string): Promise<void> {
+        await this.executeBinary(abortSignal, ['analyze', 'config', '"' + yamlConfigPath + '"']);
     }
 
     public async scan(...requests: EosScanRequest[]): Promise<EosScanResponse | undefined> {
         for (const request of requests) {
             request.type = 'analyze-codebase';
         }
-        let response: EosScanResponse | undefined = await this.run(true, ...requests).then(runResult => this.generateResponse(runResult));
+        let response: EosScanResponse | undefined = await this.run(new AbortController(), true, ...requests).then(runResult =>
+            this.generateResponse(runResult)
+        );
         return response;
     }
 

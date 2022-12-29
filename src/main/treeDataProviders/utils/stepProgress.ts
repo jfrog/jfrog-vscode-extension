@@ -11,6 +11,7 @@ export class StepProgress {
     private currentStepMsg?: string;
     private currentStepsDone: number = 0;
     private currentSubstepsCount?: number;
+    public abortController: AbortController;
 
     constructor(
         private _progress: vscode.Progress<{ message?: string; increment?: number }>,
@@ -21,6 +22,7 @@ export class StepProgress {
         totalSteps?: number
     ) {
         this._totalSteps = totalSteps ?? 1;
+        this.abortController = new AbortController();
     }
 
     public get totalSteps(): number | undefined {
@@ -39,9 +41,7 @@ export class StepProgress {
         this.currentStepMsg = msg + (this._totalSteps > 1 ? ' (' + this.currentStepsDone + '/' + this._totalSteps + ')' : '');
         this.currentSubstepsCount = subSteps && subSteps > 0 ? subSteps : undefined;
         this._progress.report({ message: msg });
-        if (this.onProgress) {
-            this.onProgress();
-        }
+        this.onProgress();
     }
 
     /**
@@ -59,9 +59,7 @@ export class StepProgress {
     public reportProgress(inc: number = this.getStepIncValue) {
         if (this.currentStepMsg) {
             this._progress.report({ message: this.currentStepMsg, increment: inc });
-            if (this.onProgress) {
-                this.onProgress();
-            }
+            this.onProgress();
         }
     }
 
@@ -76,7 +74,7 @@ export class StepProgress {
             constructor(private _progressManager: StepProgress, private _log?: LogManager) {}
             /** @override */
             public setPercentage(percentage: number): void {
-                if (percentage != this.lastPercentage) {
+                if (percentage != this.lastPercentage && !this._progressManager.abortController.signal.aborted) {
                     let inc: number = this._progressManager.getStepIncValue * ((percentage - this.lastPercentage) / 100);
                     this._log?.logMessage(
                         '[' + scanName + '] reported change in progress ' + this.lastPercentage + '% -> ' + percentage + '%',

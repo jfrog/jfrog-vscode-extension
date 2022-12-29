@@ -40,6 +40,10 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.issues.file.open', file => ScanUtils.openFile(file));
         this.registerCommand(context, 'jfrog.issues.file.open.location', (file, fileRegion) => ScanUtils.openFile(file, fileRegion));
         this.registerCommand(context, 'jfrog.issues.select.node', item => this._treesManager.selectItemOnIssuesTree(item));
+        this.registerCommand(context, 'jfrog.issues.file.open.applicable', async (file, fileRegion, details) => {
+            await ScanUtils.openFile(file, fileRegion);
+            vscode.commands.executeCommand('jfrog.view.dependency.details.page', details);
+        });
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
         // CI state
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
@@ -129,14 +133,11 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Refresh the components tree.
+     * Refresh the components tree and updates the currently open files with diagnositcs
      * @param scan - True to scan the workspace, false will load from cache
      */
     private async doRefresh(scan: boolean = true) {
-        await this._treesManager.refresh(scan).then(() => {
-            this._logManager.logMessage('<ASSAF> scan is done, updating diagnostics', 'DEBUG');
-            this._diagnosticManager.updateDiagnostics();
-        });
+        await this._treesManager.refresh(scan).then(() => this._diagnosticManager.updateDiagnostics());
     }
 
     /**

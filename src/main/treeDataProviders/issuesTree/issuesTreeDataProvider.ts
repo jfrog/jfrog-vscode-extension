@@ -25,7 +25,7 @@ import { LicenseIssueTreeNode } from './descriptorTree/licenseIssueTreeNode';
 import { AnalyzerUtils } from '../utils/analyzerUtils';
 import { CodeIssueTreeNode } from './codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
-// import { EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
+import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -59,7 +59,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      */
     public async refresh(scan: boolean = true): Promise<void> {
         if (!(await this._treesManager.connectionManager.isSignedIn())) {
-            this._logManager.logMessage('Refresh: user is not signed in', 'DEBUG');
+            this._logManager.logMessage('Refresh: user is not signed in', 'INFO');
             this.clearTree();
             return;
         }
@@ -72,12 +72,11 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             vscode.window.showInformationMessage('Previous scan still running...');
             return;
         }
-
-        this._logManager.logMessage('Refresh: starting Xray scans', 'INFO');
+        this.clearTree();
         this._logManager.showOutput();
+        this._logManager.logMessage('Refresh: starting workspace scans 🐸', 'INFO');
         this._scanInProgress = true;
         ScanUtils.setScanInProgress(true);
-        this._workspaceToRoot = new Map<vscode.WorkspaceFolder, IssuesRootTreeNode>();
         const startRefreshTimestamp: number = Date.now();
         await this.scanWorkspaces()
             .catch(error => this._logManager.logError(error, true))
@@ -85,8 +84,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 this._scanInProgress = false;
                 ScanUtils.setScanInProgress(false);
                 this.onChangeFire();
-                this._logManager.logMessage('Xray scans completed 🐸 (elapsed = ' + (Date.now() - startRefreshTimestamp) / 1000 + 'sec)', 'INFO');
             });
+        this._logManager.logMessage('Scans completed 🐸 (elapsed = ' + (Date.now() - startRefreshTimestamp) / 1000 + 'sec)', 'INFO');
     }
 
     /**
@@ -166,7 +165,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptor.fullpath, descriptor.type, root);
                     DescriptorUtils.populateDescriptorData(descriptorNode, descriptor);
                     if (descriptor.applicableIssues) {
-                        this._logManager.logMessage("Loading cve appliable data for workSpace '" + workSpace.name + "'", 'DEBUG');
                         AnalyzerUtils.populateApplicableIssues(root, descriptorNode, descriptor);
                     }
                     root.children.push(descriptorNode);
@@ -200,8 +198,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     this._workspaceToRoot.set(workspace, root);
                     let shouldDeleteRoot: boolean = false;
                     let shouldCacheRoot: boolean = false;
-                    let abortController: AbortController = new AbortController();
-                    abortController.signal.throwIfAborted;
                     // Execute workspace scan task
                     await this.repopulateWorkspaceTree(workspaceData, root, progress, checkCanceled)
                         .then(() => {
@@ -243,8 +239,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 }, "Refreshing workspace '" + workspace.name + "'")
             );
         }
-        this.onChangeFire();
         await Promise.all(workspaceScans);
+        this.onChangeFire();
     }
 
     /**
@@ -263,10 +259,22 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void
     ): Promise<IssuesRootTreeNode> {
-        let progressManager: StepProgress = new StepProgress(progress, this._logManager, () => {
-            this.onChangeFire();
-            checkCanceled();
-        });
+        let progressManager: StepProgress = new StepProgress(
+            progress,
+            this._logManager,
+            () => {
+                this.onChangeFire();
+                try {
+                    checkCanceled();
+                } catch (error) {
+                    if (error instanceof ScanCancellationError) {
+                        progressManager.abortController.abort();
+                        throw error;
+                    }
+                }
+            },
+            2
+        );
         // Scan workspace to prepare the needed information for the scans and progress
         progress.report({ message: '👷 Preparing workspace' });
         let workspcaeDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
@@ -277,16 +285,24 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         checkCanceled();
         let graphSupported: boolean = await this._scanManager.validateGraphSupported();
         checkCanceled();
-        let status: { eosDone: boolean; graphDone: boolean } = { eosDone: false, graphDone: !graphSupported };
 
-        progressManager.startStep('🔎 Scanning for issues', graphSupported ? getNumberOfSupportedPackgeTypes() + descriptorsCount : 0);
+        // 1. Build workspace dependecy tree for all the descriptors
+        progressManager.startStep('👷 Building workspace dependencies tree', getNumberOfSupportedPackgeTypes());
+        let workspaceDependenciesTree: DependenciesTreeNode = await DependenciesTreesFactory.createDependenciesTrees(
+            workspcaeDescriptors,
+            [root.workSpace],
+            [],
+            this._treesManager,
+            progressManager,
+            checkCanceled
+        );
+
+        progressManager.startStep('🔎 Scanning for issues', graphSupported ? 2 * descriptorsCount : 0);
         let scansPromises: Promise<any>[] = [];
         // Building dependency tree + dependency graph scan for each descriptor
         if (graphSupported) {
             scansPromises.push(
-                this.descriptorsScanning(workspaceData, root, workspcaeDescriptors, progressManager, checkCanceled).finally(
-                    () => (status.graphDone = true)
-                )
+                this.descriptorsScanning(workspaceData, root, workspcaeDescriptors, workspaceDependenciesTree, progressManager, checkCanceled)
             );
         }
         await Promise.all(scansPromises);
@@ -308,18 +324,10 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         workspaceData: WorkspaceIssuesData,
         root: IssuesRootTreeNode,
         workspcaeDescriptors: Map<PackageType, vscode.Uri[]>,
+        workspaceDependenciesTree: DependenciesTreeNode,
         progressManager: StepProgress,
         checkCanceled: () => void
     ): Promise<any> {
-        // 1. Build workspace dependecy tree for all the descriptors
-        let workspaceDependenciesTree: DependenciesTreeNode = await DependenciesTreesFactory.createDependenciesTrees(
-            workspcaeDescriptors,
-            [root.workSpace],
-            [],
-            this._treesManager,
-            progressManager,
-            checkCanceled
-        );
         // 2. Scan descriptors
         let scansPromises: Promise<any>[] = [];
         for (const [type, descriptorsPaths] of workspcaeDescriptors) {
@@ -334,13 +342,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 // Search for the dependecy graph of the descriptor
                 let descriptorGraph: RootNode | undefined = DescriptorUtils.getDependencyGraph(workspaceDependenciesTree, descriptorPath.fsPath);
                 if (!descriptorGraph) {
-                    progressManager.reportProgress();
+                    progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this._logManager.logMessage("Can't find descriptor graph for " + descriptorPath.fsPath, 'DEBUG');
                     continue;
                 }
                 // Project Not install
                 if (descriptorGraph?.label?.toString().includes('[Not installed]')) {
-                    progressManager.reportProgress();
+                    progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this.onFileScanError(
                         workspaceData,
                         root,
@@ -351,24 +359,53 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 }
                 // Scan the descriptor
                 scansPromises.push(
-                    this.scanDescriptorGraph(descriptorData, descriptorNode, descriptorGraph, progressManager, checkCanceled)
-                        .then(async descriptorWithIssues => {
-                            if (descriptorWithIssues) {
-                                // Add to data and update view
-                                workspaceData.descriptorsIssuesData.push(descriptorData);
-                                root.addChildAndApply(descriptorWithIssues);
-                                progressManager.onProgress();
-                                await this.cveApplicableScanning(root, descriptorData, descriptorNode, progressManager).catch(err =>
-                                    this.onScanError(err)
-                                );
-                            }
-                        })
-                        .catch(error => this.onFileScanError(workspaceData, root, error, descriptorData))
-                        .finally(() => progressManager.onProgress())
+                    this.createDescriptorTask(workspaceData, root, descriptorData, descriptorNode, descriptorGraph, progressManager, checkCanceled)
                 );
             }
         }
         await Promise.all(scansPromises);
+    }
+
+    /**
+     * Runs the descriptor scans async
+     * 1. dependency graph scan
+     * 2. applicable cve scan
+     * @param workspaceData - the issues data for the workspace
+     * @param root - the root node of the workspace
+     * @param descriptorData - the descriptor issues data
+     * @param descriptorNode - the descriptor node
+     * @param descriptorGraph - the descriptor dependencies graph
+     * @param progressManager - the progress manager for the process
+     * @param checkCanceled - the method to check if cancle was requested
+     */
+    private async createDescriptorTask(
+        workspaceData: WorkspaceIssuesData,
+        root: IssuesRootTreeNode,
+        descriptorData: DescriptorIssuesData,
+        descriptorNode: DescriptorTreeNode,
+        descriptorGraph: RootNode,
+        progressManager: StepProgress,
+        checkCanceled: () => void
+    ): Promise<void> {
+        let foundIssues: boolean = false;
+        await this.scanDescriptorGraph(descriptorData, descriptorNode, descriptorGraph, progressManager, checkCanceled)
+            .then(descriptorWithIssues => {
+                if (descriptorWithIssues) {
+                    // Add to data and update view
+                    workspaceData.descriptorsIssuesData.push(descriptorData);
+                    root.addChildAndApply(descriptorWithIssues);
+                    foundIssues = true;
+                }
+            })
+            .catch(error => this.onFileScanError(workspaceData, root, error, descriptorData))
+            .finally(() => progressManager.onProgress());
+        if (!foundIssues) {
+            progressManager.reportProgress();
+            return;
+        }
+        await this.cveApplicableScanning(root, descriptorData, descriptorNode, progressManager.abortController)
+            .catch(err => this.onScanError(err))
+            .finally(() => progressManager.reportProgress());
     }
 
     /**
@@ -377,15 +414,14 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * @param handle - if true the error will be logged and not thrown/returned.
      * @returns -  undefined if error was handled or error otherwise
      */
-    private onScanError(error: Error, handle: boolean = true): Error | undefined {
+    private onScanError(error: Error, handle: boolean = true, log: boolean = false): Error | undefined {
         if (error instanceof ScanCancellationError) {
             throw error;
         }
-        if (handle) {
+        if (log) {
             this._logManager.logError(error, true);
-            return undefined;
         }
-        return error;
+        return handle ? undefined : error;
     }
 
     /**
@@ -416,8 +452,10 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 let failReason: string | undefined;
                 if (error instanceof FileScanError) {
                     failReason = error.reason;
-                    failedFile.name = error.reason;
+                } else {
+                    failReason = "[Fail to scan]";
                 }
+                failedFile.name = failReason;
                 return root.addChildAndApply(FileTreeNode.createFailedScanNode(failedFile.fullpath, failReason));
             }
             throw err;
@@ -472,11 +510,18 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         return issuesCount > 0 ? descriptorNode : undefined;
     }
 
+    /**
+     * Run cve applicable scan async task
+     * @param root - the root node to generate the issues inside
+     * @param descriptorData - the descriptor data to store the reponse inside
+     * @param descriptorNode - the descriptor node with the cve to scan
+     * @param abortController - the controller to abort the operation
+     */
     private async cveApplicableScanning(
         root: IssuesRootTreeNode,
         descriptorData: DescriptorIssuesData,
         descriptorNode: DescriptorTreeNode,
-        progressManager: StepProgress
+        abortController: AbortController
     ): Promise<void> {
         let cveToScan: string[] = [];
         descriptorNode.issues.forEach(issue => {
@@ -490,8 +535,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
         let startApplicableTime: number = Date.now();
         descriptorData.applicableIssues = await this._scanManager
-            .scanApplicability(path.dirname(descriptorData.fullpath), cveToScan)
-            .finally(() => progressManager.reportProgress());
+            .scanApplicability(path.dirname(descriptorData.fullpath), abortController, cveToScan);
+
         if (descriptorData.applicableIssues && descriptorData.applicableIssues.applicableCve) {
             descriptorData.applicableScanTimestamp = Date.now();
             let applicableIssuesCount: number = AnalyzerUtils.populateApplicableIssues(root, descriptorNode, descriptorData);
@@ -506,77 +551,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 'DEBUG'
             );
             root.apply();
-            progressManager.onProgress();
         }
     }
-
-    // private async runEos(
-    //     workspaceData: WorkspaceIssuesData,
-    //     root: IssuesRootTreeNode,
-    //     workspcaeDescriptors: Map<PackageType, vscode.Uri[]>,
-    //     progressManager: StepProgress
-    // ): Promise<any> {
-    //     // Prepare
-    //     let requests: EosScanRequest[] = [];
-    //     for (const [type, descriptorPaths] of workspcaeDescriptors) {
-    //         let language: string | undefined;
-    //         switch (type) {
-    //             case PackageType.Python:
-    //                 language = 'python';
-    //                 break;
-    //             case PackageType.Maven:
-    //                 language = 'java';
-    //                 break;
-    //             case PackageType.Npm:
-    //                 language = 'js';
-    //                 break;
-    //         }
-    //         if (language) {
-    //             let roots: Set<string> = new Set<string>();
-    //             for (const descriptorPath of descriptorPaths) {
-    //                 let directory: string = path.dirname(descriptorPath.fsPath);
-    //                 if (!roots.has(directory)) {
-    //                     roots.add(directory);
-    //                     // TODO: removw when issue on eos is resolve
-    //                     requests.push({
-    //                         language: language,
-    //                         roots: [directory]
-    //                     } as EosScanRequest);
-    //                 }
-    //             }
-    //             // TODO: uncomment when issue on eos is resolve
-    //             // if (roots.size > 0) {
-    //             //     requests.push({
-    //             //         language: language,
-    //             //         roots: Array.from(roots)
-    //             //     } as EosScanRequest);
-    //             // }
-    //         }
-    //     }
-    //     if (requests.length == 0) {
-    //         progressManager.reportProgress();
-    //         return;
-    //     }
-    //     let startTime: number = Date.now();
-    //     workspaceData.eosScan = await this._scanManager.scanEos(...requests).finally(() => progressManager.reportProgress());
-    //     if (workspaceData.eosScan) {
-    //         workspaceData.eosScanTimestamp = Date.now();
-    //         let applicableIssuesCount: number = AnalyzerUtils.populateEosIssues(root, workspaceData);
-    //         this._logManager.logMessage(
-    //             'Found ' +
-    //                 applicableIssuesCount +
-    //                 " Eos issues in workspace = '" +
-    //                 workspaceData.path +
-    //                 "' (elapsed:" +
-    //                 (Date.now() - startTime) / 1000 +
-    //                 'sec)',
-    //             'DEBUG'
-    //         );
-
-    //         root.apply();
-    //         progressManager.onProgress();
-    //     }
-    // }
 
     /**
      * Search for file with issues and return the tree node that matches the path.
@@ -658,10 +634,18 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             }
             // Source code issues nodes
             if (element instanceof CodeIssueTreeNode) {
-                element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open file location', [
-                    element.parent.fullPath,
-                    element.regionWithIssue
-                ]);
+                if (element instanceof ApplicableTreeNode) {
+                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.applicable', 'Open file location', [
+                        element.parent.fullPath,
+                        element.regionWithIssue,
+                        element.getDetailsPage()
+                    ]);
+                } else {
+                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open file location', [
+                        element.parent.fullPath,
+                        element.regionWithIssue
+                    ]);
+                }
             }
         }
         return element;

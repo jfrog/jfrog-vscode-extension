@@ -123,8 +123,8 @@ export class ScanUtils {
         return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
     }
 
-    public static executeCmdAsync(command: string, cwd?: string): Promise<any> {
-        return util.promisify(exec.exec)(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
+    public static async executeCmdAsync(command: string, cwd?: string): Promise<any> {
+        return await util.promisify(exec.exec)(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
     }
 
     public static setScanInProgress(state: boolean) {
@@ -197,5 +197,5 @@ export class FileScanError extends Error {
 }
 
 export class ScanCancellationError extends Error {
-    message: string = 'Xray scan cancelled';
+    message: string = 'Scan cancelled';
 }

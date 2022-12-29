@@ -5,33 +5,46 @@ import { ScanUtils } from '../../utils/scanUtils';
 import { BinaryRunner } from './binaryRunner';
 import { AnalyzeIssue, AnalyzerScanRun, AnalyzeScanRequest, FileIssues } from './analyzerModels';
 
+/**
+ * The request that is sent to the binary to scan applicability
+ */
 export interface ApplicabilityScanRequest extends AnalyzeScanRequest {
     grep_disable: boolean; // alway false for now -> build option for it
     cve_whitelist: string[]; // can be always empty but should contain optional to reduce time
     skipped_folders: string[]; // empty but make sure there is option, for now its list of folder but should be pattern in future
 }
 
-export interface CveApplicableDetails {
-    fixReason: string;
-    fileEvidences: FileIssues[];
-}
-
+/**
+ * The response that is generated from the binary after scanning applicability
+ */
 export interface ApplicabilityScanResponse {
     scannedCve: string[]; // not applicaible if key in here but not in below
     applicableCve: { [cve_id: string]: CveApplicableDetails }; // is applicable if key in here
 }
 
+/**
+ * The details about cve applicability result
+ */
+export interface CveApplicableDetails {
+    fixReason: string;
+    fileEvidences: FileIssues[];
+}
+
+
+/**
+ * Describes a runner for the Applicability scan executable file.
+ */
 export class ApplicabilityRunner extends BinaryRunner {
     private static readonly RUNNER_FOLDER: string = 'applicability-scan';
     private static readonly BINARY_NAME: string = 'applicability_scanner';
 
-    constructor(logManager: LogManager) {
-        super(path.join(ScanUtils.getHomePath(), ApplicabilityRunner.RUNNER_FOLDER, ApplicabilityRunner.BINARY_NAME), logManager);
+    constructor(abortCheckInterval:number, logManager: LogManager) {
+        super(path.join(ScanUtils.getHomePath(), ApplicabilityRunner.RUNNER_FOLDER, ApplicabilityRunner.BINARY_NAME,),abortCheckInterval, logManager);
     }
 
     /** @override */
-    public async runBinary(yamlConfigPath: string) {
-        return this.executeBinary(['scan', '"' + yamlConfigPath + '"'], this._runDirectory);
+    public async runBinary(abortSignal: AbortSignal, yamlConfigPath: string): Promise<void> {
+        await this.executeBinary(abortSignal, ['scan', '"' + yamlConfigPath + '"']);
     }
 
     /** @override */
@@ -40,28 +53,44 @@ export class ApplicabilityRunner extends BinaryRunner {
         return str.replace('cve_whitelist', 'cve-whitelist').replace('skipped_folders', 'skipped-folders');
     }
 
-    public async scan(directory: string, cveToRun: string[] = [], skipFolders: string[] = []): Promise<ApplicabilityScanResponse | undefined> {
+    /**
+     * Scan for applicability issues
+     * @param directory - the directory the scan will preform on its files
+     * @param abortController - the controller that signals abort for the operation
+     * @param cveToRun - the cve to run the scan on
+     * @param skipFolders - the folders inside directory to exclude from the scan
+     * @returns the response generated from the scan
+     */
+    public async scan(
+        directory: string,
+        abortController: AbortController,
+        cveToRun: string[] = [],
+        skipFolders: string[] = []
+    ): Promise<ApplicabilityScanResponse | undefined> {
         let request: ApplicabilityScanRequest = {
             type: 'analyze-applicability',
             roots: [directory],
             cve_whitelist: cveToRun,
             skipped_folders: skipFolders
         } as ApplicabilityScanRequest;
-
-        return this.run(false, request).then(response => this.generateResponse(response?.runs[0]));
+        return this.run(abortController, false, request).then(response => this.generateResponse(response?.runs[0]));
     }
 
+    /**
+     * Generate response from the run results
+     * @param run - the run results generated from the binary
+     * @returns the response generated from the scan run
+     */
     public generateResponse(run: AnalyzerScanRun | undefined): ApplicabilityScanResponse | undefined {
         if (!run) {
             return undefined;
         }
-        this._logManager.logMessage('Generating response from run ' + run.tool.driver.name, 'DEBUG');
         let response: ApplicabilityScanResponse = {
             scannedCve: run.tool.driver.rules?.map(rule => this.getCveFromRuleId(rule.id))
         } as ApplicabilityScanResponse;
 
+        // Generate applicable data
         let applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
-
         let issues: AnalyzeIssue[] = run.results;
         if (issues) {
             issues.forEach(analyzeIssue => {
@@ -72,11 +101,16 @@ export class ApplicabilityRunner extends BinaryRunner {
                 });
             });
         }
-
         response.applicableCve = Object.fromEntries(applicable.entries());
         return response;
     }
 
+    /**
+     * Get or create if not exists file evidence from the cve applicable issues
+     * @param applicableDetails the cve applicable issues with the file list
+     * @param filePath - the file to search or create if not exist
+     * @returns the object that represent the issues in a file for the cve
+     */
     private getOrCreateFileIssues(applicableDetails: CveApplicableDetails, filePath: string): FileIssues {
         let fileIssues: FileIssues | undefined = applicableDetails.fileEvidences.find(file => file.full_path == filePath);
         if (fileIssues) return fileIssues;
@@ -91,6 +125,14 @@ export class ApplicabilityRunner extends BinaryRunner {
         return fileIssues;
     }
 
+    /**
+     * Get or create if not exists cve applicable issue from applicable list
+     * will add the cve from the analyzeIssue to the scannedCve and get/create and insert to the applicable
+     * @param scannedCve - all the scanned cve
+     * @param applicable - the list of all the applicable cve
+     * @param analyzeIssue - the applicable issue to genereate information from
+     * @returns 
+     */
     private getOrCreateApplicableDetails(
         scannedCve: string[],
         applicable: Map<string, CveApplicableDetails>,
@@ -114,6 +156,11 @@ export class ApplicabilityRunner extends BinaryRunner {
         return details;
     }
 
+    /**
+     * Translate the ruleId to the cve id (ruleId returns as 'applic_<cve id>')
+     * @param ruleId - the rule id to translate
+     * @returns cve id extracted from the rule
+     */
     private getCveFromRuleId(ruleId: string) {
         let startId: number = ruleId.indexOf('CVE');
         if (startId >= 0) {
