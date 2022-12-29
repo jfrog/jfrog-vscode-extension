@@ -3,3 +3,6 @@
       repoName: jfrog-vscode-extension
       branches:
         - master
+    scan:
+      projects:
+        - installCommand: npm i
