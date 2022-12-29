@@ -19,6 +19,7 @@ export class ApplicablityActionProvider extends AbstractFileActionProvider imple
         );
     }
 
+    /** @Override */
     provideCodeActions(
         document: vscode.TextDocument,
         range: vscode.Range | vscode.Selection,
@@ -27,11 +28,6 @@ export class ApplicablityActionProvider extends AbstractFileActionProvider imple
         // Search if the file had issues in the scan
         const fileNode: FileTreeNode | undefined = this._treesManager.issuesTreeDataProvider.getFileIssuesTree(document.uri.fsPath);
         if (fileNode instanceof CodeFileTreeNode) {
-            // let relevantDiagnostics: vscode.Diagnostic[] = [];
-            // this._diagnosticCollection.get(document.uri)
-            // this._diagnosticCollection.values().forEach(diagnostic => {
-            //     if (this.isJFrogSource(diagnostic))
-            // })
             let diagnostics: vscode.Diagnostic[] = context.diagnostics.filter(
                 diagnostic => this.isJFrogSource(diagnostic.source) && diagnostic.range.contains(range)
             );
@@ -70,6 +66,11 @@ export class ApplicablityActionProvider extends AbstractFileActionProvider imple
         }
     }
 
+    /**
+     * Genereate diagnostics information for an applicable issue
+     * @param issue - the applicable issue to generate diagnostics for
+     * @param diagnostics - list of all the diagnostics of the file
+     */
     generateInformation(issue: IssueTreeNode, diagnostics: vscode.Diagnostic[]): void {
         if (issue instanceof CodeIssueTreeNode) {
             let position: vscode.Position[] = [issue.regionWithIssue.start, issue.regionWithIssue.end];
