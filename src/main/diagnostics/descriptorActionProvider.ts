@@ -1,10 +1,6 @@
-// import { Dictionary } from 'typescript-collections';
 import * as vscode from 'vscode';
 
-// import { CveTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 import { DescriptorTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
-// import { LicenseIssueTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/licenseIssueTreeNode';
-// import { LicenseIssueTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/licenseIssueTreeNode';
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { IssueTreeNode } from '../treeDataProviders/issuesTree/issueTreeNode';
 import { DescriptorUtils } from '../treeDataProviders/utils/descriptorUtils';
@@ -56,6 +52,15 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
         }
     }
 
+    /**
+     * Create diagnostics for issue if not exists for a dependency
+     * @param issue - the issue to create diagnosics for
+     * @param directDependencyId  - the direct dependency id to create diagnosics for
+     * @param packgeType - the direct dependency packge type
+     * @param proceesedDependencies - the list of all the processed dependecies to search inside
+     * @param diagnostics - list of all the diagnostics of the document
+     * @param document - the document that holds the dependency
+     */
     private handleIssueInDirectDependencyDiagnostic(
         issue: IssueTreeNode,
         directDependencyId: string,
@@ -87,6 +92,14 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
         }
     }
 
+    /**
+     * Get or create if not eixsts the dependency information
+     * @param directDependencyId - the id of the dependency
+     * @param packgeType - the packge type of the dependency
+     * @param proceesedDependencies - the list of all the processed dependecies to search inside
+     * @param document - the document that holds the dependency
+     * @returns dependency information
+     */
     private getOrCreateDirectDependencyInfo(
         directDependencyId: string,
         packgeType: PackageType,
@@ -105,29 +118,4 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
         proceesedDependencies.set(directDependencyId, info);
         return info;
     }
-
-    // private generateInformation(
-    //     directDependencyId: string,
-    //     packgeType: PackageType,
-    //     severity: Severity,
-    //     document: vscode.TextDocument,
-    //     textEditor: vscode.TextEditor,
-    //     diagnostics: vscode.Diagnostic[]
-    // ) {
-    //     let position: vscode.Position[] = DescriptorUtils.getDependencyPosition(document, packgeType, directDependencyId);
-    //     if (position.length === 0) {
-    //         return;
-    //     }
-    //     this._treesManager.logManager.logMessage("Creating diagnostics for dependency '" + directDependencyId + "'", 'DEBUG');
-    //     // Create diagnostics and gutter icon for the dependency
-    //     diagnostics.push(
-    //         ...this.createDiagnostics(
-    //             directDependencyId,
-    //             'Top issue severity: ' + SeverityUtils.getString(severity),
-    //             vscode.DiagnosticSeverity.Hint,
-    //             position
-    //         )
-    //     );
-
-    // }
 }
