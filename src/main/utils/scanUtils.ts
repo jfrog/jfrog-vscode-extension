@@ -197,5 +197,5 @@ export class FileScanError extends Error {
 }
 
 export class ScanCancellationError extends Error {
-    message: string = 'Scan cancelled';
+    message: string = 'Scan was cancelled';
 }

@@ -74,6 +74,7 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
     public get eosScanTimeStamp(): number | undefined {
         return this._eosScanTimeStamp;
     }
+
     public set eosScanTimeStamp(value: number | undefined) {
         this._eosScanTimeStamp = value;
     }
@@ -89,7 +90,7 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
                 oldestTimeStamp = timeStamp;
             }
         }
-        if (this._eosScanTimeStamp != undefined) {
+        if (this._eosScanTimeStamp !== undefined) {
             if (oldestTimeStamp == undefined || this._eosScanTimeStamp < oldestTimeStamp) {
                 oldestTimeStamp = this._eosScanTimeStamp;
             }

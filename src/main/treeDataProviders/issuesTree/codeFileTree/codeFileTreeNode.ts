@@ -16,9 +16,8 @@ export class CodeFileTreeNode extends FileTreeNode {
 
     /** @override */
     public apply() {
-        // Sort children
         this._codeIssues
-            // 1st priority - Sort by top severity
+            // Sort by top severity
             .sort((lhs, rhs) => rhs.severity - lhs.severity);
 
         // Base apply

@@ -19,7 +19,6 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
 
     public activate(context: vscode.ExtensionContext) {
         this.registerListeners(context.subscriptions);
-        // vscode.workspace.textDocuments.forEach(this.updateDiagnostics, this);
     }
 
     private registerListeners(subscriptions: vscode.Disposable[]) {

@@ -15,7 +15,7 @@ export class ApplicablityActionProvider extends AbstractFileActionProvider imple
             this,
             vscode.languages.registerCodeActionsProvider({ scheme: 'file', pattern: '**/*.{py,js}' }, this, {
                 providedCodeActionKinds: [vscode.CodeActionKind.Empty]
-            })
+            } as vscode.CodeActionProviderMetadata)
         );
     }
 
@@ -29,6 +29,7 @@ export class ApplicablityActionProvider extends AbstractFileActionProvider imple
         const fileNode: FileTreeNode | undefined = this._treesManager.issuesTreeDataProvider.getFileIssuesTree(document.uri.fsPath);
         if (fileNode instanceof CodeFileTreeNode) {
             let diagnostics: vscode.Diagnostic[] = context.diagnostics.filter(
+                // Get the diagnostics we created in the specific range in the document
                 diagnostic => this.isJFrogSource(diagnostic.source) && diagnostic.range.contains(range)
             );
             if (diagnostics.length == 0) {
@@ -38,7 +39,7 @@ export class ApplicablityActionProvider extends AbstractFileActionProvider imple
             let commands: vscode.Command[] = [];
             for (let diagnostic of diagnostics) {
                 let issue: CodeIssueTreeNode | undefined = <CodeIssueTreeNode | undefined>(
-                    fileNode.issues.find(i => i instanceof CodeIssueTreeNode && i.issueId == diagnostic.code && i?.regionWithIssue.contains(range))
+                    fileNode.issues.find(issue => this.isCodeIssueInRange(issue, diagnostic, range))
                 );
                 if (issue) {
                     commands.push({
@@ -48,10 +49,24 @@ export class ApplicablityActionProvider extends AbstractFileActionProvider imple
                     });
                 }
             }
-            return commands.length > 0 ? commands : undefined;
+            return commands;
         }
 
         return undefined;
+    }
+
+    /**
+     * Check if the given issue is CodeIssueTreeNode and the given diagnostic and range is related to it.
+     * @param issue - the issue to check
+     * @param diagnostic - the diagnostic to check
+     * @param range - the range to check
+     * @returns - true if the issue is CodeIssueTreeNode and in the given range and the given diagnostic related to it.
+     */
+    private isCodeIssueInRange(issue: IssueTreeNode, diagnostic: vscode.Diagnostic, range: vscode.Range | vscode.Selection): boolean {
+        if (issue instanceof CodeIssueTreeNode) {
+            return issue.issueId == diagnostic.code && issue.regionWithIssue.contains(range);
+        }
+        return false;
     }
 
     /** @Override */

@@ -6,11 +6,11 @@ type AnalyzerType = 'analyze-applicability' | 'analyze-codebase';
 
 export interface AnalyzeScanRequest {
     // What type of scan
-    type: AnalyzerType; 
+    type: AnalyzerType;
     // The path that the response will be written to
-    output: string; 
+    output: string;
     // List of path to folders that scan will run inside
-    roots: string[]; 
+    roots: string[];
 }
 
 export interface AnalyzerScanResponse {

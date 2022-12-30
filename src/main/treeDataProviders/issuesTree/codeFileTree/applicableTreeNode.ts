@@ -9,8 +9,8 @@ import { CodeIssueTreeNode } from './codeIssueTreeNode';
  * Describe a cve applicable evidence issue
  */
 export class ApplicableTreeNode extends CodeIssueTreeNode {
-    constructor(issueId: string, private _node: CveTreeNode, parent: CodeFileTreeNode, regionWithIssue: vscode.Range, severity?: Severity) {
-        super(issueId, parent, regionWithIssue, severity);
+    constructor(private _node: CveTreeNode, parent: CodeFileTreeNode, regionWithIssue: vscode.Range, severity?: Severity) {
+        super(_node.labelId, parent, regionWithIssue, severity);
     }
 
     /**

@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
-import { DescriptorIssuesData } from '../../cache/issuesCache';
+import { DescriptorIssuesData, WorkspaceIssuesData } from '../../cache/issuesCache';
 import { CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
 import { Severity } from '../../types/severity';
 import { ApplicableTreeNode } from '../issuesTree/codeFileTree/applicableTreeNode';
@@ -10,9 +11,14 @@ import { DescriptorTreeNode } from '../issuesTree/descriptorTree/descriptorTreeN
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
+import { PackageType } from '../../types/projectType';
+import { StepProgress } from './stepProgress';
+import { EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
+import { ScanManager } from '../../scanLogic/scanManager';
+import { CodeIssueTreeNode } from '../issuesTree/codeFileTree/codeIssueTreeNode';
+import { FileIssues } from '../../scanLogic/scanRunners/analyzerModels';
 
 export class AnalyzerUtils {
-
     /**
      * Remove the prefix 'file://'
      * @param filePath - path to remove prefix
@@ -55,16 +61,17 @@ export class AnalyzerUtils {
         descriptorNode: DescriptorTreeNode,
         descriptorData: DescriptorIssuesData
     ): number {
+        // populate descriptor node with data
         descriptorNode.scannedCve = new Set<string>(descriptorData.applicableIssues?.scannedCve ?? []);
         descriptorNode.applicableCve = new Map<string, CveApplicableDetails>(
             descriptorData.applicableIssues ? Object.entries(descriptorData.applicableIssues.applicableCve) : []
         );
         descriptorNode.applicableScanTimeStamp = descriptorData.applicableScanTimestamp;
 
+        // populate related CodeFile nodes with issues and update the descriptor cve applicability details
         let issuesCount: number = 0;
-
         descriptorNode.scannedCve.forEach(cve => {
-            // Check if the descriptor discovered this cve
+            // Check if the descriptor has this cve issue
             let node: IssueTreeNode | undefined = descriptorNode.getIssueById(cve);
             if (node instanceof CveTreeNode && node.cve) {
                 let details: CveApplicableDetails | undefined = descriptorNode.applicableCve?.get(node.cve.cve);
@@ -73,27 +80,7 @@ export class AnalyzerUtils {
                     // Populate code file issues for workspace
                     details.fileEvidences.forEach(fileEvidence => {
                         let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileEvidence.full_path, node?.severity);
-                        fileEvidence.locations.forEach(location => {
-                            if (location.snippet) {
-                                evidences.push({
-                                    filePathEvidence: this.parseLocationFilePath(fileEvidence.full_path),
-                                    codeEvidence: location.snippet.text
-                                } as IEvidence);
-                                fileNode.issues.push(
-                                    new ApplicableTreeNode(
-                                        cve,
-                                        <CveTreeNode>node,
-                                        fileNode,
-                                        new vscode.Range(
-                                            new vscode.Position(location.startLine, location.startColumn),
-                                            new vscode.Position(location.endLine, location.endColumn)
-                                        ),
-                                        node?.severity
-                                    )
-                                );
-                                issuesCount++;
-                            }
-                        });
+                        issuesCount += this.populateEvidence(fileEvidence, <CveTreeNode>node, evidences, fileNode);
                     });
                     // Applicable
                     node.applicableDetails = { isApplicable: true, reason: details.fixReason, evidence: evidences } as IApplicableDetails;
@@ -106,89 +93,147 @@ export class AnalyzerUtils {
         return issuesCount;
     }
 
-    // public static async runEos(
-    //     workspaceData: WorkspaceIssuesData,
-    //     root: IssuesRootTreeNode,
-    //     workspcaeDescriptors: Map<PackageType, vscode.Uri[]>,
-    //     progressManager: StepProgress
-    // ): Promise<any> {
-    //     // Prepare
-    //     let requests: EosScanRequest[] = [];
-    //     for (const [type, descriptorPaths] of workspcaeDescriptors) {
-    //         let language: string | undefined;
-    //         switch (type) {
-    //             case PackageType.Python:
-    //                 language = 'python';
-    //                 break;
-    //             case PackageType.Maven:
-    //                 language = 'java';
-    //                 break;
-    //             case PackageType.Npm:
-    //                 language = 'js';
-    //                 break;
-    //         }
-    //         if (language) {
-    //             let roots: Set<string> = new Set<string>();
-    //             for (const descriptorPath of descriptorPaths) {
-    //                 let directory: string = path.dirname(descriptorPath.fsPath);
-    //                 if (!roots.has(directory)) {
-    //                     roots.add(directory);
-    //                     // TODO: removw when issue on eos is resolve
-    //                     requests.push({
-    //                         language: language,
-    //                         roots: [directory]
-    //                     } as EosScanRequest);
-    //                 }
-    //             }
-    //             // TODO: uncomment when issue on eos is resolve
-    //             // if (roots.size > 0) {
-    //             //     requests.push({
-    //             //         language: language,
-    //             //         roots: Array.from(roots)
-    //             //     } as EosScanRequest);
-    //             // }
-    //         }
-    //     }
-    //     if (requests.length == 0) {
-    //         progressManager.reportProgress();
-    //         return;
-    //     }
-    //     let startTime: number = Date.now();
-    //     workspaceData.eosScan = await this._scanManager.scanEos(...requests).finally(() => progressManager.reportProgress());
-    //     if (workspaceData.eosScan) {
-    //         workspaceData.eosScanTimestamp = Date.now();
-    //         let applicableIssuesCount: number = AnalyzerUtils.populateEosIssues(root, workspaceData);
-    //         this._logManager.logMessage(
-    //             'Found ' +
-    //                 applicableIssuesCount +
-    //                 " Eos issues in workspace = '" +
-    //                 workspaceData.path +
-    //                 "' (elapsed:" +
-    //                 (Date.now() - startTime) / 1000 +
-    //                 'sec)',
-    //             'DEBUG'
-    //         );
+    /**
+     * Populate the file evidence (ApplicableTreeNode) result in the file node and evidences list
+     * @param fileEvidence - the evidences in the file to populate
+     * @param issueNode - the cve node related to the issues
+     * @param evidences - the evidences list to populate data inside
+     * @param fileNode - the node to poupulate children inside
+     * @returns the number of Evidences for the issue that were populated
+     */
+    private static populateEvidence(fileEvidence: FileIssues, issueNode: CveTreeNode, evidences: IEvidence[], fileNode: CodeFileTreeNode): number {
+        let issuesCount: number = 0;
+        fileEvidence.locations.forEach(location => {
+            if (location.snippet) {
+                // add evedence for cve applicability details
+                evidences.push({
+                    filePathEvidence: AnalyzerUtils.parseLocationFilePath(fileEvidence.full_path),
+                    codeEvidence: location.snippet.text
+                } as IEvidence);
+                // Populate nodes
+                fileNode.issues.push(
+                    new ApplicableTreeNode(
+                        issueNode,
+                        fileNode,
+                        new vscode.Range(
+                            new vscode.Position(location.startLine, location.startColumn),
+                            new vscode.Position(location.endLine, location.endColumn)
+                        ),
+                        issueNode.severity
+                    )
+                );
+                issuesCount++;
+            }
+        });
+        return issuesCount;
+    }
 
-    //         root.apply();
-    //         progressManager.onProgress();
-    //     }
-    // }
+    /**
+     *  Run eos scan async task
+     * @param workspaceData - the issues data for the workspace
+     * @param root - the root node of the workspace
+     * @param workspcaeDescriptors - the descriptors of the workspace to get roots to scan from
+     * @param scanManager - the scan manager to use for scan
+     * @param progressManager - the progress manager of the process for abort conrtol
+     * @param splitRequests - if true each request will be preformed on a different run, false all at once
+     */
+    public static async runEos(
+        workspaceData: WorkspaceIssuesData,
+        root: IssuesRootTreeNode,
+        workspcaeDescriptors: Map<PackageType, vscode.Uri[]>,
+        scanManager: ScanManager,
+        progressManager: StepProgress,
+        splitRequests: boolean = true
+    ): Promise<any> {
+        // Prepare
+        let requests: EosScanRequest[] = [];
+        for (const [type, descriptorPaths] of workspcaeDescriptors) {
+            let language: string | undefined;
+            switch (type) {
+                case PackageType.Python:
+                    language = 'python';
+                    break;
+            }
+            if (language) {
+                let roots: Set<string> = new Set<string>();
+                for (const descriptorPath of descriptorPaths) {
+                    let directory: string = path.dirname(descriptorPath.fsPath);
+                    if (!roots.has(directory)) {
+                        roots.add(directory);
+                        if (splitRequests) {
+                            requests.push({
+                                language: language,
+                                roots: [directory]
+                            } as EosScanRequest);
+                        }
+                    }
+                }
+                if (!splitRequests && roots.size > 0) {
+                    requests.push({
+                        language: language,
+                        roots: Array.from(roots)
+                    } as EosScanRequest);
+                }
+            }
+        }
+        if (requests.length == 0) {
+            progressManager.reportProgress();
+            return;
+        }
+        // Run
+        let startTime: number = Date.now();
+        workspaceData.eosScan = await scanManager
+            .scanEos(progressManager.abortController, ...requests)
+            .finally(() => progressManager.reportProgress());
+        if (workspaceData.eosScan) {
+            workspaceData.eosScanTimestamp = Date.now();
+            let applicableIssuesCount: number = AnalyzerUtils.populateEosIssues(root, workspaceData);
+            scanManager.logManager.logMessage(
+                'Found ' +
+                    applicableIssuesCount +
+                    " Eos issues in workspace = '" +
+                    workspaceData.path +
+                    "' (elapsed:" +
+                    (Date.now() - startTime) / 1000 +
+                    'sec)',
+                'DEBUG'
+            );
 
-    // public static populateEosIssues(root: IssuesRootTreeNode, workspaceData: WorkspaceIssuesData): number {
-    //     root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
-    //     let issuesCount: number = 0;
-    //     if (workspaceData.eosScan && workspaceData.eosScan.filesWithIssues) {
-    //         workspaceData.eosScan.filesWithIssues.forEach(fileWithIssues => {
-    //             let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
-    //             fileWithIssues.issues.forEach(issue => {
-    //                 issue.regions.forEach(region => {
-    //                     fileNode.issues.push(new CodeIssueTreeNode(issue.ruleId, fileNode, region));
-    //                     issuesCount++;
-    //                 });
-    //             });
-    //         });
-    //     }
+            root.apply();
+            progressManager.onProgress();
+        }
+    }
 
-    //     return issuesCount;
-    // }
+    /**
+     * Populate eos information in
+     * @param root - root node to populate data inside
+     * @param workspaceData - data to populate on node
+     * @returns number of eos issues populated
+     */
+    public static populateEosIssues(root: IssuesRootTreeNode, workspaceData: WorkspaceIssuesData): number {
+        root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
+        let issuesCount: number = 0;
+        if (workspaceData.eosScan && workspaceData.eosScan.filesWithIssues) {
+            workspaceData.eosScan.filesWithIssues.forEach(fileWithIssues => {
+                let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
+                fileWithIssues.issues.forEach(issue => {
+                    issue.regions.forEach(region => {
+                        fileNode.issues.push(
+                            new CodeIssueTreeNode(
+                                issue.ruleId,
+                                fileNode,
+                                new vscode.Range(
+                                    new vscode.Position(region.startLine, region.startColumn),
+                                    new vscode.Position(region.endLine, region.endColumn)
+                                )
+                            )
+                        );
+                        issuesCount++;
+                    });
+                });
+            });
+        }
+
+        return issuesCount;
+    }
 }

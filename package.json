@@ -27,12 +27,12 @@
     "contributes": {
         "viewsWelcome": [
             {
-                "view": "jfrog.xray.issues",
+                "view": "jfrog.issues",
                 "contents": "Thank you for installing the JFrog extension 🐸\nIf you already have a JFrog Platform, please connect it to VS Code:\n[Connect to JFrog platform](command:jfrog.xray.connect)\nDon't have a JFrog Platform? [Get one for FREE](https://github.com/jfrog/jfrog-vscode-extension#set-up-a-free-jfrog-environment-in-the-cloud) ",
                 "when": "jfrog.connection.status == signedOut || !jfrog.connection.status"
             },
             {
-                "view": "jfrog.xray.issues",
+                "view": "jfrog.issues",
                 "contents": "This view displays the security scan issues in the workspace. The results of applicability scanning of CVEs in the code currently support Python, npm and yarn.\n[Scan](command:jfrog.xray.refresh)",
                 "when": "jfrog.connection.status == signedIn"
             }
@@ -59,7 +59,7 @@
                     "when": "isCi"
                 },
                 {
-                    "id": "jfrog.xray.issues",
+                    "id": "jfrog.issues",
                     "name": "Issues",
                     "when": "isLocal"
                 }
@@ -190,12 +190,12 @@
             "view/title": [
                 {
                     "command": "jfrog.xray.disconnect",
-                    "when": "jfrog.connection.status != signedOut && view == jfrog.xray.ci.issues || view == jfrog.xray.issues",
+                    "when": "jfrog.connection.status != signedOut && view == jfrog.xray.ci.issues || view == jfrog.issues",
                     "group": "navigation@0"
                 },
                 {
                     "command": "jfrog.xray.refresh",
-                    "when": "view == jfrog.xray.ci.issues || view == jfrog.xray.issues",
+                    "when": "view == jfrog.xray.ci.issues || view == jfrog.issues",
                     "group": "navigation@1"
                 },
                 {
@@ -210,7 +210,7 @@
                 },
                 {
                     "command": "jfrog.xray.ci",
-                    "when": "view == jfrog.xray.issues && isLocal",
+                    "when": "view == jfrog.issues && isLocal",
                     "group": "navigation@3"
                 },
                 {

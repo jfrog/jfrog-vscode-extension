@@ -26,6 +26,7 @@ import { AnalyzerUtils } from '../utils/analyzerUtils';
 import { CodeIssueTreeNode } from './codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
 import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
+import { EosScanResponse } from '../../scanLogic/scanRunners/eosScan';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -188,9 +189,10 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             workspaceScans.push(
                 ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
                     // Create workspace scan data that will be populated at the scan and will be saved to the cache
-                    let workspaceData: WorkspaceIssuesData = {
+                    const workspaceData: WorkspaceIssuesData = {
                         path: workspace.uri.fsPath,
                         descriptorsIssuesData: [],
+                        eosScan: {} as EosScanResponse,
                         failedFiles: []
                     } as WorkspaceIssuesData;
                     // Create workspace tree root node to give feedback and update the user on any change while handling the async scan task
@@ -388,6 +390,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         checkCanceled: () => void
     ): Promise<void> {
         let foundIssues: boolean = false;
+        // Dependency graph scan task
         await this.scanDescriptorGraph(descriptorData, descriptorNode, descriptorGraph, progressManager, checkCanceled)
             .then(descriptorWithIssues => {
                 if (descriptorWithIssues) {
@@ -399,7 +402,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             })
             .catch(error => this.onFileScanError(workspaceData, root, error, descriptorData))
             .finally(() => progressManager.onProgress());
-        if (!foundIssues) {
+        // Applicabile scan task
+        if (!this._scanManager.validateApplicableSupported() || !foundIssues) {
             progressManager.reportProgress();
             return;
         }
@@ -453,7 +457,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 if (error instanceof FileScanError) {
                     failReason = error.reason;
                 } else {
-                    failReason = "[Fail to scan]";
+                    failReason = '[Fail to scan]';
                 }
                 failedFile.name = failReason;
                 return root.addChildAndApply(FileTreeNode.createFailedScanNode(failedFile.fullpath, failReason));
@@ -479,7 +483,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         progressManager: StepProgress,
         checkCanceled: () => void
     ): Promise<DescriptorTreeNode | undefined> {
-        this._logManager.logMessage('Scanning descriptor ' + descriptorData.fullpath + ' for issues', 'INFO');
+        this._logManager.logMessage('Scanning descriptor ' + descriptorData.fullpath + ' for dependencies issues', 'INFO');
         let scanProgress: XrayScanProgress = progressManager.createScanProgress(descriptorData.fullpath);
         // Scan
         let startGraphScan: number = Date.now();
@@ -532,10 +536,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         if (cveToScan.length == 0) {
             return;
         }
-
+        this._logManager.logMessage('Scanning descriptor ' + descriptorData.fullpath + ' for cve applicability issues', 'INFO');
         let startApplicableTime: number = Date.now();
-        descriptorData.applicableIssues = await this._scanManager
-            .scanApplicability(path.dirname(descriptorData.fullpath), abortController, cveToScan);
+        descriptorData.applicableIssues = await this._scanManager.scanApplicability(
+            path.dirname(descriptorData.fullpath),
+            abortController,
+            cveToScan
+        );
 
         if (descriptorData.applicableIssues && descriptorData.applicableIssues.applicableCve) {
             descriptorData.applicableScanTimestamp = Date.now();
@@ -543,12 +550,12 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             this._logManager.logMessage(
                 'Found ' +
                     applicableIssuesCount +
-                    " applicable cve issues in workspace = '" +
+                    " applicable cve issues in descriptor = '" +
                     descriptorData.fullpath +
                     "' (elapsed:" +
                     (Date.now() - startApplicableTime) / 1000 +
                     'sec)',
-                'DEBUG'
+                'INFO'
             );
             root.apply();
         }

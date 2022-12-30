@@ -17,8 +17,10 @@ export class DescriptorTreeNode extends FileTreeNode {
 
     private _packageType: PackageType;
 
-    private _scannedCve?: Set<string> | undefined; // not applicaible if key in here and not in the map below
-    private _applicableCve?: Map<string, CveApplicableDetails> | undefined; // is applicable if key in here
+    // Not applicaible if key in here and not in the map below
+    private _scannedCve?: Set<string> | undefined;
+    // Is applicable if key in here
+    private _applicableCve?: Map<string, CveApplicableDetails> | undefined;
 
     constructor(fileFullPath: string, packageType?: PackageType, parent?: IssuesRootTreeNode) {
         super(fileFullPath, parent);
@@ -75,6 +77,7 @@ export class DescriptorTreeNode extends FileTreeNode {
     public get dependencyScanTimeStamp(): number | undefined {
         return this._dependencyScanTimeStamp;
     }
+
     public set dependencyScanTimeStamp(value: number | undefined) {
         this._dependencyScanTimeStamp = value;
     }
@@ -82,6 +85,7 @@ export class DescriptorTreeNode extends FileTreeNode {
     public get applicableScanTimeStamp(): number | undefined {
         return this._applicableScanTimeStamp;
     }
+
     public set applicableScanTimeStamp(value: number | undefined) {
         this._applicableScanTimeStamp = value;
     }
@@ -93,7 +97,7 @@ export class DescriptorTreeNode extends FileTreeNode {
                 oldest = this._dependencyScanTimeStamp;
             }
         }
-        if (this._applicableScanTimeStamp != undefined) {
+        if (this._applicableScanTimeStamp !== undefined) {
             if (oldest == undefined || this._applicableScanTimeStamp < oldest) {
                 oldest = this._applicableScanTimeStamp;
             }
@@ -104,12 +108,15 @@ export class DescriptorTreeNode extends FileTreeNode {
     public get scannedCve(): Set<string> | undefined {
         return this._scannedCve;
     }
+
     public set scannedCve(value: Set<string> | undefined) {
         this._scannedCve = value;
     }
+
     public get applicableCve(): Map<string, CveApplicableDetails> | undefined {
         return this._applicableCve;
     }
+
     public set applicableCve(value: Map<string, CveApplicableDetails> | undefined) {
         this._applicableCve = value;
     }

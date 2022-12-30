@@ -14,13 +14,16 @@ import { EosRunner, EosScanRequest, EosScanResponse } from './scanRunners/eosSca
  * Manage all the Xray scans
  */
 export class ScanManager implements ExtensionComponent {
-
     private static readonly BINARY_ABORT_CHECK_INVTERVAL: number = 1 * 1000; // every 1 sec
 
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
     activate() {
         return this;
+    }
+
+    public get logManager(): LogManager {
+        return this._logManager;
     }
 
     public get connectionManager(): ConnectionManager {
@@ -32,6 +35,20 @@ export class ScanManager implements ExtensionComponent {
      */
     public async validateGraphSupported(): Promise<boolean> {
         return await ConnectionUtils.testXrayVersionForScanGraph(this._connectionManager.createJfrogClient(), this._logManager);
+    }
+
+    /**
+     * Validate if the applicable-scan is supported
+     */
+    public validateApplicableSupported(): boolean {
+        return new ApplicabilityRunner(ScanManager.BINARY_ABORT_CHECK_INVTERVAL, this._logManager).isSupported;
+    }
+
+    /**
+     * Validate if the eos-scan is supported
+     */
+    public validateEosSupported(): boolean {
+        return new EosRunner(ScanManager.BINARY_ABORT_CHECK_INVTERVAL, this._logManager).isSupported;
     }
 
     /**
@@ -65,19 +82,20 @@ export class ScanManager implements ExtensionComponent {
         abortController: AbortController,
         cveToRun: string[] = [],
         skipFolders: string[] = []
-    ): Promise<ApplicabilityScanResponse | undefined> {
+    ): Promise<ApplicabilityScanResponse> {
         let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(ScanManager.BINARY_ABORT_CHECK_INVTERVAL, this._logManager);
         if (!applicableRunner.isSupported) {
-            return undefined;
+            this._logManager.logMessage('Applicability scan is not supported', 'DEBUG');
+            return {} as ApplicabilityScanResponse;
         }
         return applicableRunner.scan(directory, abortController, cveToRun, skipFolders);
     }
 
-    
-    public async scanEos(...requests: EosScanRequest[]): Promise<EosScanResponse | undefined> {
+    public async scanEos(abortController: AbortController, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
         let eosRunner: EosRunner = new EosRunner(ScanManager.BINARY_ABORT_CHECK_INVTERVAL, this._logManager);
         if (!eosRunner.isSupported) {
-            return undefined;
+            this._logManager.logMessage('Eos scan is not supported', 'DEBUG');
+            return {} as EosScanResponse;
         }
         let eosRequests: EosScanRequest[] = [];
         for (const request of requests) {
@@ -88,6 +106,6 @@ export class ScanManager implements ExtensionComponent {
                 } as EosScanRequest);
             }
         }
-        return eosRunner.scan(...eosRequests);
+        return eosRunner.scan(abortController, ...eosRequests);
     }
 }

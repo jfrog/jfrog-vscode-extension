@@ -30,7 +30,6 @@ export interface CveApplicableDetails {
     fileEvidences: FileIssues[];
 }
 
-
 /**
  * Describes a runner for the Applicability scan executable file.
  */
@@ -38,13 +37,13 @@ export class ApplicabilityRunner extends BinaryRunner {
     private static readonly RUNNER_FOLDER: string = 'applicability-scan';
     private static readonly BINARY_NAME: string = 'applicability_scanner';
 
-    constructor(abortCheckInterval:number, logManager: LogManager) {
-        super(path.join(ScanUtils.getHomePath(), ApplicabilityRunner.RUNNER_FOLDER, ApplicabilityRunner.BINARY_NAME,),abortCheckInterval, logManager);
+    constructor(abortCheckInterval: number, logManager: LogManager) {
+        super(path.join(ScanUtils.getHomePath(), ApplicabilityRunner.RUNNER_FOLDER, ApplicabilityRunner.BINARY_NAME), abortCheckInterval, logManager);
     }
 
     /** @override */
     public async runBinary(abortSignal: AbortSignal, yamlConfigPath: string): Promise<void> {
-        await this.executeBinary(abortSignal, ['scan', '"' + yamlConfigPath + '"']);
+        await this.executeBinary(abortSignal, ['scan', yamlConfigPath]);
     }
 
     /** @override */
@@ -55,22 +54,22 @@ export class ApplicabilityRunner extends BinaryRunner {
 
     /**
      * Scan for applicability issues
-     * @param directory - the directory the scan will preform on its files
+     * @param directory - the directory the scan will perform on its files
      * @param abortController - the controller that signals abort for the operation
-     * @param cveToRun - the cve to run the scan on
-     * @param skipFolders - the folders inside directory to exclude from the scan
+     * @param cvesToRun - the CVEs to run the scan on
+     * @param skipFolders - the subfolders inside the directory to exclude from the scan
      * @returns the response generated from the scan
      */
     public async scan(
         directory: string,
         abortController: AbortController,
-        cveToRun: string[] = [],
+        cvesToRun: string[] = [],
         skipFolders: string[] = []
-    ): Promise<ApplicabilityScanResponse | undefined> {
+    ): Promise<ApplicabilityScanResponse> {
         let request: ApplicabilityScanRequest = {
             type: 'analyze-applicability',
             roots: [directory],
-            cve_whitelist: cveToRun,
+            cve_whitelist: cvesToRun,
             skipped_folders: skipFolders
         } as ApplicabilityScanRequest;
         return this.run(abortController, false, request).then(response => this.generateResponse(response?.runs[0]));
@@ -81,10 +80,11 @@ export class ApplicabilityRunner extends BinaryRunner {
      * @param run - the run results generated from the binary
      * @returns the response generated from the scan run
      */
-    public generateResponse(run: AnalyzerScanRun | undefined): ApplicabilityScanResponse | undefined {
+    public generateResponse(run: AnalyzerScanRun | undefined): ApplicabilityScanResponse {
         if (!run) {
-            return undefined;
+            return {} as ApplicabilityScanResponse;
         }
+        // Store all the rules that the run checked
         let response: ApplicabilityScanResponse = {
             scannedCve: run.tool.driver.rules?.map(rule => this.getCveFromRuleId(rule.id))
         } as ApplicabilityScanResponse;
@@ -106,14 +106,16 @@ export class ApplicabilityRunner extends BinaryRunner {
     }
 
     /**
-     * Get or create if not exists file evidence from the cve applicable issues
-     * @param applicableDetails the cve applicable issues with the file list
+     * Get or create if not exists file evidence from the CVE applicable issues
+     * @param applicableDetails - the CVE applicable issues with the file list
      * @param filePath - the file to search or create if not exist
-     * @returns the object that represent the issues in a file for the cve
+     * @returns the object that represents the issues in a file for the CVE
      */
     private getOrCreateFileIssues(applicableDetails: CveApplicableDetails, filePath: string): FileIssues {
         let fileIssues: FileIssues | undefined = applicableDetails.fileEvidences.find(file => file.full_path == filePath);
-        if (fileIssues) return fileIssues;
+        if (fileIssues) {
+            return fileIssues;
+        }
 
         fileIssues = {
             full_path: filePath,
@@ -126,28 +128,30 @@ export class ApplicabilityRunner extends BinaryRunner {
     }
 
     /**
-     * Get or create if not exists cve applicable issue from applicable list
-     * will add the cve from the analyzeIssue to the scannedCve and get/create and insert to the applicable
-     * @param scannedCve - all the scanned cve
-     * @param applicable - the list of all the applicable cve
-     * @param analyzeIssue - the applicable issue to genereate information from
-     * @returns 
+     * Get or create if not exists CVE applicable issue from applicable list.
+     * Will add the CVE from the analyzedIssue to the scannedCve and get/create and insert to the applicable
+     * @param scannedCve - all the scanned CVEs
+     * @param applicable - the list of all the applicable CVEs
+     * @param analyzedIssue - the applicable issue to generate information from
+     * @returns the CveApplicableDetails object for the analyzedIssue CVE
      */
     private getOrCreateApplicableDetails(
         scannedCve: string[],
         applicable: Map<string, CveApplicableDetails>,
-        analyzeIssue: AnalyzeIssue
+        analyzedIssue: AnalyzeIssue
     ): CveApplicableDetails {
-        let cveId: string = this.getCveFromRuleId(analyzeIssue.ruleId);
+        let cveId: string = this.getCveFromRuleId(analyzedIssue.ruleId);
         if (!scannedCve.find(cve => cve == cveId)) {
             scannedCve.push(cveId);
         }
 
         let cveDetails: CveApplicableDetails | undefined = applicable.get(cveId);
-        if (cveDetails && cveDetails.fixReason == analyzeIssue.message.text) return cveDetails;
+        if (cveDetails && cveDetails.fixReason == analyzedIssue.message.text) {
+            return cveDetails;
+        }
 
         let details: CveApplicableDetails = {
-            fixReason: analyzeIssue.message.text,
+            fixReason: analyzedIssue.message.text,
             fileEvidences: []
         } as CveApplicableDetails;
 

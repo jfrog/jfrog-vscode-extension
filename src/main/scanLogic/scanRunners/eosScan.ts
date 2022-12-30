@@ -10,7 +10,7 @@ export interface EosScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
 }
 
-export type LanguageType = 'python' | 'java' | 'js';
+export type LanguageType = 'python';
 
 export interface EosScanResponse {
     filesWithIssues: EosFileIssues[];
@@ -31,7 +31,7 @@ export class EosRunner extends BinaryRunner {
     private static readonly RUNNER_FOLDER: string = 'eos';
     private static readonly BINARY_NAME: string = 'main_';
 
-    constructor(abortCheckInterval:number, logManager: LogManager) {
+    constructor(abortCheckInterval: number, logManager: LogManager) {
         super(path.join(ScanUtils.getHomePath(), EosRunner.RUNNER_FOLDER, EosRunner.getBinaryName()), abortCheckInterval, logManager);
     }
 
@@ -47,43 +47,37 @@ export class EosRunner extends BinaryRunner {
         let name: string = EosRunner.BINARY_NAME;
         switch (os.platform()) {
             case 'linux':
-                name += 'ubuntu';
-                break;
+                return name + 'ubuntu';
             case 'darwin':
-                name += 'macos';
-                break;
+                return name + 'macos';
         }
         return name;
     }
 
     /** @override */
     public async runBinary(abortSignal: AbortSignal, yamlConfigPath: string): Promise<void> {
-        await this.executeBinary(abortSignal, ['analyze', 'config', '"' + yamlConfigPath + '"']);
+        await this.executeBinary(abortSignal, ['analyze', 'config', yamlConfigPath]);
     }
 
-    public async scan(...requests: EosScanRequest[]): Promise<EosScanResponse | undefined> {
+    public async scan(abortController: AbortController, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
         for (const request of requests) {
             request.type = 'analyze-codebase';
         }
-        let response: EosScanResponse | undefined = await this.run(new AbortController(), true, ...requests).then(runResult =>
-            this.generateResponse(runResult)
-        );
+        let response: EosScanResponse = await this.run(abortController, true, ...requests).then(runResult => this.generateResponse(runResult));
         return response;
     }
 
-    public generateResponse(response?: AnalyzerScanResponse): EosScanResponse | undefined {
+    public generateResponse(response?: AnalyzerScanResponse): EosScanResponse {
         if (!response) {
-            return undefined;
+            return {} as EosScanResponse;
         }
         let eosResponse: EosScanResponse = {
             filesWithIssues: []
         } as EosScanResponse;
 
         for (const run of response.runs) {
-            this._logManager.logMessage('<ASSAF> generating response for eos run', 'DEBUG');
             let issues: AnalyzeIssue[] = run.results;
             if (issues) {
-                this._logManager.logMessage('<ASSAF> Found issues (len=' + issues.length + ')', 'DEBUG');
                 issues.forEach(analyzeIssue => {
                     analyzeIssue.locations.forEach(location => {
                         let fileWithIssues: EosFileIssues = this.getOrCreateEosFileIssues(

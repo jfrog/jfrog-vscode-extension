@@ -11,6 +11,7 @@ import { Configuration } from '../utils/configuration';
 import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
 import { ScanUtils } from '../utils/scanUtils';
 import { DiagnosticsManager } from '../diagnostics/diagnosticsManager';
+import { IDependencyPage } from 'jfrog-ide-webview';
 
 /**
  * Register and execute all commands in the extension.
@@ -41,8 +42,9 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.issues.file.open.location', (file, fileRegion) => ScanUtils.openFile(file, fileRegion));
         this.registerCommand(context, 'jfrog.issues.select.node', item => this._treesManager.selectItemOnIssuesTree(item));
         this.registerCommand(context, 'jfrog.issues.file.open.applicable', async (file, fileRegion, details) => {
+            // wait for the file to open on active column in order for the page to open besides it
             await ScanUtils.openFile(file, fileRegion);
-            vscode.commands.executeCommand('jfrog.view.dependency.details.page', details);
+            this.doShowDependencyDetailsPage(details);
         });
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
         // CI state
@@ -137,7 +139,16 @@ export class CommandManager implements ExtensionComponent {
      * @param scan - True to scan the workspace, false will load from cache
      */
     private async doRefresh(scan: boolean = true) {
-        await this._treesManager.refresh(scan).then(() => this._diagnosticManager.updateDiagnostics());
+        await this._treesManager.refresh(scan);
+        this._diagnosticManager.updateDiagnostics();
+    }
+
+    /**
+     * Open webpage with the given data
+     * @param page - data to show in webpage
+     */
+    public doShowDependencyDetailsPage(page: IDependencyPage) {
+        vscode.commands.executeCommand('jfrog.view.dependency.details.page', page);
     }
 
     /**

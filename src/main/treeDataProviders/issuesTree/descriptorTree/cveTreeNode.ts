@@ -39,6 +39,10 @@ export class CveTreeNode extends IssueTreeNode {
         }
     }
 
+    public get labelId(): string {
+        return this._cve && this._cve.cve ? this._cve.cve : this.issue_id;
+    }
+
     public get applicableDetails(): IApplicableDetails | undefined {
         return this._applicableDetails;
     }
