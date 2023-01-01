@@ -13,14 +13,14 @@ import { PackageType } from '../../../types/projectType';
  */
 export class LicenseIssueTreeNode extends IssueTreeNode {
     private _references: IReference[];
-    private _licenseissue: IGraphLicense;
+    private _licenseIssue: IGraphLicense;
 
-    constructor(issue: IViolation, _severity: Severity, private _parent: DependencyIssuesTreeNode, private _impactedTreeRoot?: IImpactedPath) {
+    constructor(issue: IViolation, _severity: Severity, private _parent: DependencyIssuesTreeNode, private _impactedTreeRoot: IImpactedPath) {
         super(issue.issue_id, _severity, issue.license_key, vscode.TreeItemCollapsibleState.None);
 
         this._watchNames = [issue.watch_name];
         this._references = Translators.cleanReferencesLink(issue.references);
-        this._licenseissue = issue;
+        this._licenseIssue = issue;
 
         this.description = 'License violation';
         this.tooltip = 'License violation issue';
@@ -48,7 +48,7 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
         return this._issue_id;
     }
 
-    public get impactedTree(): IImpactedPath | undefined {
+    public get impactedTree(): IImpactedPath {
         return this._impactedTreeRoot;
     }
 
@@ -57,6 +57,6 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
     }
 
     public get issue(): IGraphLicense {
-        return this._licenseissue;
+        return this._licenseIssue;
     }
 }

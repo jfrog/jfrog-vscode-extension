@@ -4,7 +4,6 @@ import { PackageType, toPackgeType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { DescriptorTreeNode } from './descriptorTreeNode';
 import { IComponent } from 'jfrog-client-js';
-// import { IssueTreeNode } from '../issueTreeNode';
 import { CveTreeNode } from './cveTreeNode';
 import { LicenseIssueTreeNode } from './licenseIssueTreeNode';
 
@@ -40,11 +39,19 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         this.tooltip += 'Issues count: ' + this._issues.length + '\n';
         this.tooltip += 'Artifact: ' + this.artifactId;
 
+        // Set collapsible state and severity base on children count
         if (this.issues.length == 1 && this.parent.dependenciesWithIssue.length == 1) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
         } else {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
         }
+        let topSeverity: Severity = this.issues.length > 0 ? Severity.NotApplicableUnknown : Severity.Unknown;
+        for (const issue of this.issues) {
+            if (topSeverity < issue.severity) {
+                topSeverity = issue.severity;
+            }
+        }
+        this._severity = topSeverity;
 
         this._issues
             // 1st priority - Sort by severity
@@ -56,6 +63,13 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
      */
     public get artifactId(): string {
         return this._artifactId;
+    }
+
+    /**
+     * return a string that identify this component in the format: name:version
+     */
+    public get componentId(): string {
+        return this._name + ':' + this._version;
     }
 
     public get infectedVersions(): string[] {
@@ -80,10 +94,6 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
 
     public get parent(): DescriptorTreeNode {
         return this._parent;
-    }
-
-    public set severity(value: Severity) {
-        this._severity = value;
     }
 
     public get severity(): Severity {

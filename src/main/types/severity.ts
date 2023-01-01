@@ -5,6 +5,11 @@ import { ISeverity } from 'jfrog-ide-webview';
 export enum Severity {
     Normal = 0,
     Pending,
+    NotApplicableUnknown,
+    NotApplicableLow,
+    NotApplicableMedium,
+    NotApplicableHigh,
+    NotApplicableCritical,
     Unknown,
     Information,
     Low,
@@ -16,6 +21,11 @@ export enum Severity {
 export enum SeverityStrings {
     Normal = 'Scanned - No Issues',
     Pending = 'Pending Scan',
+    NotApplicableUnknown = 'Unknown (Not Applicable)',
+    NotApplicableLow = 'Low (Not Applicable)',
+    NotApplicableMedium = 'Medium (Not Applicable)',
+    NotApplicableHigh = 'High (Not Applicable)',
+    NotApplicableCritical = 'Critical (Not Applicable)',
     Unknown = 'Unknown',
     Information = 'Information',
     Low = 'Low',
@@ -25,6 +35,27 @@ export enum SeverityStrings {
 }
 
 export class SeverityUtils {
+    public static notApplicable(severity: Severity): Severity {
+        switch (severity) {
+            case Severity.Unknown:
+            case Severity.NotApplicableUnknown:
+                return Severity.NotApplicableUnknown;
+            case Severity.Low:
+            case Severity.NotApplicableLow:
+                return Severity.NotApplicableLow;
+            case Severity.Medium:
+            case Severity.NotApplicableMedium:
+                return Severity.NotApplicableMedium;
+            case Severity.High:
+            case Severity.NotApplicableHigh:
+                return Severity.NotApplicableHigh;
+            case Severity.Critical:
+            case Severity.NotApplicableCritical:
+                return Severity.NotApplicableCritical;
+        }
+        return severity;
+    }
+
     public static getString(severity: Severity) {
         switch (severity) {
             case Severity.Normal:
@@ -43,17 +74,32 @@ export class SeverityUtils {
                 return SeverityStrings.High;
             case Severity.Critical:
                 return SeverityStrings.Critical;
+            case Severity.NotApplicableUnknown:
+                return SeverityStrings.NotApplicableUnknown;
+            case Severity.NotApplicableLow:
+                return SeverityStrings.NotApplicableLow;
+            case Severity.NotApplicableMedium:
+                return SeverityStrings.NotApplicableMedium;
+            case Severity.NotApplicableHigh:
+                return SeverityStrings.NotApplicableHigh;
+            case Severity.NotApplicableCritical:
+                return SeverityStrings.NotApplicableCritical;
         }
     }
+
     public static toWebviewSeverity(severity: Severity): ISeverity {
         switch (severity) {
             case Severity.Low:
+            case Severity.NotApplicableLow:
                 return ISeverity.Low;
             case Severity.Medium:
+            case Severity.NotApplicableMedium:
                 return ISeverity.Medium;
             case Severity.High:
+            case Severity.NotApplicableHigh:
                 return ISeverity.High;
             case Severity.Critical:
+            case Severity.NotApplicableCritical:
                 return ISeverity.Critical;
         }
         return ISeverity.Unknown;
@@ -63,6 +109,12 @@ export class SeverityUtils {
         switch (severity) {
             case Severity.Pending:
                 return IconsPaths.PENDING_SEVERITY;
+            case Severity.NotApplicableUnknown:
+            case Severity.NotApplicableLow:
+            case Severity.NotApplicableMedium:
+            case Severity.NotApplicableHigh:
+            case Severity.NotApplicableCritical:
+                return IconsPaths.NOT_APPLICABLE_SEVERITY;
             case Severity.Unknown:
                 return hover ? IconsPaths.UNKNOWN_HOVER_SEVERITY : IconsPaths.UNKNOWN_SEVERITY;
             case Severity.Information:

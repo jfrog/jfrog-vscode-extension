@@ -6,7 +6,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
  * @see DiagnosticsManager
  */
 export abstract class AbstractFileActionProvider implements ExtensionComponent, vscode.Disposable {
-    static readonly XRAY_DIAGNOSTIC_SOURCE: string = 'JFrog Xray';
+    static readonly JFROG_DIAGNOSTIC_SOURCE: string = 'JFrog';
     private _gutterDecorations: vscode.TextEditorDecorationType[] = [];
 
     constructor(protected _diagnosticCollection: vscode.DiagnosticCollection, protected _treesManager: TreesManager) {}
@@ -19,7 +19,6 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
 
     public activate(context: vscode.ExtensionContext) {
         this.registerListeners(context.subscriptions);
-        vscode.workspace.textDocuments.forEach(this.updateDiagnostics, this);
     }
 
     private registerListeners(subscriptions: vscode.Disposable[]) {
@@ -52,14 +51,15 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
      * @param msg The diagnostic msg to add
      * @param position The position of the diagnostics in the file
      */
-    createDiagnostics(diagnosticId: string, msg: string, position: vscode.Position[]): vscode.Diagnostic[] {
+    createDiagnostics(
+        diagnosticId: string,
+        msg: string,
+        position: vscode.Position[],
+        diagnosticSeverity: vscode.DiagnosticSeverity = vscode.DiagnosticSeverity.Warning
+    ): vscode.Diagnostic[] {
         let diagnostics: vscode.Diagnostic[] = [];
         for (let i: number = 0; i < position.length; i += 2) {
-            let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
-                new vscode.Range(position[i], position[i + 1]),
-                msg,
-                vscode.DiagnosticSeverity.Hint
-            );
+            let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(position[i], position[i + 1]), msg, diagnosticSeverity);
             diagnostic.source = this.getSource();
             diagnostic.code = diagnosticId;
             diagnostics.push(diagnostic);
@@ -68,7 +68,11 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
     }
 
     protected getSource(): string {
-        return AbstractFileActionProvider.XRAY_DIAGNOSTIC_SOURCE;
+        return AbstractFileActionProvider.JFROG_DIAGNOSTIC_SOURCE;
+    }
+
+    protected isJFrogSource(src?: string): boolean {
+        return src == AbstractFileActionProvider.JFROG_DIAGNOSTIC_SOURCE;
     }
 
     /**
@@ -79,6 +83,10 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
         if (document.uri.scheme === 'file') {
             this._diagnosticCollection.delete(document.uri);
         }
+    }
+
+    clearDiagnostics() {
+        this._diagnosticCollection.clear();
     }
 
     /** @override */

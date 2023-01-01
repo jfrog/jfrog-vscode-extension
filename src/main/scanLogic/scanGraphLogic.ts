@@ -11,20 +11,20 @@ import { Configuration } from '../utils/configuration';
  * When the project key isn't provided - all vulnerabilities and licenses information should appear in the results.
  */
 export class GraphScanLogic {
-    constructor(protected _connectionManager: ConnectionManager) {}
+    constructor(private _connectionManager: ConnectionManager) {}
 
     /**
      * Run async /scan/graph REST API and return the result
+     * The graph will be flatten and reduce to unique entries only
      * @param graphRoot - the dependency graph to scan
-     * @param flatten - if true the graph will be faltten and reduce to unique entries only, otherwise grpah will be sent as is
      * @param progress - the progress for this scan
-     * @param checkCanceled - method to check if the action was cancled
+     * @param checkCanceled - method to check if the action was canceled
      * @returns the result of the scan
      */
-    public async scan(graphRoot: RootNode, flatten: boolean, progress: XrayScanProgress, checkCanceled: () => void): Promise<IGraphResponse> {
+    public async scan(graphRoot: RootNode, progress: XrayScanProgress, checkCanceled: () => void): Promise<IGraphResponse> {
         let graphRequest: IGraphRequestModel = {
             component_id: graphRoot.generalInfo.artifactId,
-            nodes: flatten ? this.getFlattenRequestModelNodes(graphRoot, new Set<string>()) : this.getGraphRequestModelNodes(graphRoot)
+            nodes: this.getFlattenRequestModelNodes(graphRoot, new Set<string>())
         } as IGraphRequestModel;
 
         return this._connectionManager.scanWithGraph(
@@ -54,25 +54,6 @@ export class GraphScanLogic {
             let childNodes: IGraphRequestModel[] | undefined = this.getFlattenRequestModelNodes(child, components);
             if (childNodes) {
                 nodes.push(...childNodes);
-            }
-        }
-        // To reduce the sent payload, we don't populate empty graph nodes with an empty array
-        return nodes.length > 0 ? nodes : undefined;
-    }
-
-    /**
-     * Convert the dependnecies graph to the request model
-     * @param dependency - the graph we want to convert
-     * @returns IGraphRequestModel to send the scan
-     */
-    private getGraphRequestModelNodes(dependency: DependenciesTreeNode): IGraphRequestModel[] | undefined {
-        let nodes: IGraphRequestModel[] = [];
-        if (dependency.children.length > 0) {
-            for (let child of dependency.children) {
-                nodes.push({
-                    component_id: child.dependencyId,
-                    nodes: this.getGraphRequestModelNodes(child)
-                } as IGraphRequestModel);
             }
         }
         // To reduce the sent payload, we don't populate empty graph nodes with an empty array

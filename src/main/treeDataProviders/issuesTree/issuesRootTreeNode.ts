@@ -9,6 +9,7 @@ import { FileTreeNode } from './fileTreeNode';
 export class IssuesRootTreeNode extends vscode.TreeItem {
     private _children: FileTreeNode[] = [];
     private _title: string = '';
+    private _eosScanTimeStamp?: number | undefined;
 
     constructor(private readonly _workSpace: vscode.WorkspaceFolder, title?: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
         super(_workSpace.name, collapsibleState ?? vscode.TreeItemCollapsibleState.Expanded);
@@ -31,11 +32,11 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
         }
 
         this.tooltip = 'Issue count: ' + issueCount + '\n';
-        this.tooltip += "Full Path: '" + this._workSpace.uri.fsPath + "'\n";
+        this.tooltip += "Full Path: '" + this._workSpace.uri.fsPath + "'";
         if (this._title != '') {
-            this.tooltip += 'Status: ' + this._title;
-        } else {
-            this.tooltip += 'Last ' + Utils.getLastScanString(this.oldestScanTimestamp);
+            this.tooltip += '\nStatus: ' + this._title;
+        } else if (this.oldestScanTimestamp) {
+            this.tooltip += '\nLast ' + Utils.getLastScanString(this.oldestScanTimestamp);
         }
 
         this._children
@@ -70,6 +71,14 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
         return child;
     }
 
+    public get eosScanTimeStamp(): number | undefined {
+        return this._eosScanTimeStamp;
+    }
+
+    public set eosScanTimeStamp(value: number | undefined) {
+        this._eosScanTimeStamp = value;
+    }
+
     /**
      * Get the oldest timestamp from all its children
      */
@@ -79,6 +88,11 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
             let timeStamp: number | undefined = child.timeStamp;
             if (timeStamp && (!oldestTimeStamp || timeStamp < oldestTimeStamp)) {
                 oldestTimeStamp = timeStamp;
+            }
+        }
+        if (this._eosScanTimeStamp !== undefined) {
+            if (oldestTimeStamp == undefined || this._eosScanTimeStamp < oldestTimeStamp) {
+                oldestTimeStamp = this._eosScanTimeStamp;
             }
         }
         return oldestTimeStamp;

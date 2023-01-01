@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
+import { ApplicablityActionProvider } from './applicablityActionProvider';
 import { DescriptorActionProvider } from './descriptorActionProvider';
 
 /**
@@ -15,10 +16,29 @@ export class DiagnosticsManager implements ExtensionComponent {
     constructor(treesManager: TreesManager) {
         let diagnosticCollection: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection();
 
-        this._codeActionProviders.push(new DescriptorActionProvider(diagnosticCollection, treesManager));
+        this._codeActionProviders.push(
+            new DescriptorActionProvider(diagnosticCollection, treesManager),
+            new ApplicablityActionProvider(diagnosticCollection, treesManager)
+        );
     }
 
-    public activate(context: vscode.ExtensionContext) {
+    public activate(context: vscode.ExtensionContext): DiagnosticsManager {
         this._codeActionProviders.forEach(codeActionProvider => codeActionProvider.activate(context));
+        this.updateDiagnostics();
+        return this;
+    }
+
+    public clearDiagnostics() {
+        if (this._codeActionProviders && this._codeActionProviders.length > 0) {
+            this._codeActionProviders.forEach(codeActionProvider => codeActionProvider.clearDiagnostics());
+        }
+    }
+
+    public updateDiagnostics() {
+        if (this._codeActionProviders && this._codeActionProviders.length > 0) {
+            vscode.workspace.textDocuments.forEach(document => {
+                this._codeActionProviders.forEach(codeActionProvider => codeActionProvider.updateDiagnostics(document));
+            });
+        }
     }
 }

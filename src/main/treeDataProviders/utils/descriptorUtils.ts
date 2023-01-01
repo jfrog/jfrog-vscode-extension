@@ -54,10 +54,8 @@ export class DescriptorUtils {
                 if (child.dependencyId && componentsWithIssue.has(child.dependencyId)) {
                     // Direct impact
                     impactPaths.push({
-                        name: child.componentId,
-                        children: []
+                        name: child.componentId
                     } as IImpactedPath);
-                    continue;
                 }
                 // indirect impact
                 let indirectImpact: IImpactedPath[] = this.getChildrenImpact(child, componentsWithIssue);
@@ -72,6 +70,24 @@ export class DescriptorUtils {
         return impactPaths;
     }
 
+    private static populateDependencyIssue(issue: IVulnerability, dependencyWithIssue: DependencyIssuesTreeNode, severity: Severity, impactedPath?: IImpactedPath) {
+        let violationIssue: IViolation = <IViolation>issue;
+        if (violationIssue && violationIssue.license_key && impactedPath) {
+            // License violation
+            dependencyWithIssue.issues.push(new LicenseIssueTreeNode(violationIssue, severity, dependencyWithIssue, impactedPath));
+        } else {
+            if (issue.cves) {
+                // CVE issue
+                for (let cveIssue of issue.cves) {
+                    dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath, cveIssue));
+                }
+            } else {
+                // Xray issue
+                dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath));
+            }
+        }
+    }
+
     /**
      * Populate the provided issues data to the descriptor node (view element)
      * @param descriptorNode - the descriptor node that will be populated
@@ -84,47 +100,50 @@ export class DescriptorUtils {
         descriptorNode.dependencyScanTimeStamp = descriptorData.graphScanTimestamp;
         let impactedPaths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>(Object.entries(descriptorData.impactTreeData));
         let issues: IVulnerability[] | IViolation[] = graphResponse.violations || graphResponse.vulnerabilities;
-        let topSeverity: Severity = Severity.Unknown;
         // Populate issues
         for (let i: number = 0; i < issues.length; i++) {
             let issue: IVulnerability | IViolation = issues[i];
             let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id);
-            // Update the top severity of the descriptor
             let severity: Severity = SeverityUtils.getSeverity(issue.severity);
-            if (severity > topSeverity) {
-                topSeverity = severity;
-            }
             // Populate the issue for each dependency component
             for (let [componentId, component] of Object.entries(issue.components)) {
-                let dependencyWithIssue: DependencyIssuesTreeNode = this.getOrCreateDependecyWithIssue(
-                    descriptorNode,
+                let dependencyWithIssue: DependencyIssuesTreeNode = descriptorNode.addNode(
                     componentId,
                     component,
                     severity
                 );
 
+                let matchIssue: IssueTreeNode | undefined = dependencyWithIssue.issues.find(issueExists => issueExists.issueId === issue.issue_id);
                 let violationIssue: IViolation = <IViolation>issue;
-                let matchIssue: IssueTreeNode | undefined = dependencyWithIssue.issues.find(i => i.issueId == issue.issue_id);
-                if (violationIssue && matchIssue) {
+                if (matchIssue && violationIssue.watch_name && !matchIssue.watchNames.includes(violationIssue.watch_name)) {
                     // In case multiple watches are assigned and there are componenets that overlap between the watches
                     // Xray will return component duplication (just watch_name different), combine those results
-                    matchIssue.watchNames?.push(violationIssue.watch_name);
-                } else {
-                    if (violationIssue && violationIssue.license_key) {
-                        dependencyWithIssue.issues.push(new LicenseIssueTreeNode(violationIssue, severity, dependencyWithIssue, impactedPath));
-                    } else {
-                        if (issue.cves) {
-                            for (let cveIssue of issue.cves) {
-                                dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath, cveIssue));
-                            }
-                        } else {
-                            dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath));
-                        }
-                    }
+                    matchIssue.watchNames.push(violationIssue.watch_name);
+                } else if (!matchIssue) { 
+                    this.populateDependencyIssue(issue,dependencyWithIssue,severity,impactedPath);
                 }
+
+                // let violationIssue: IViolation = <IViolation>issue;
+                // let matchIssue: IssueTreeNode | undefined = dependencyWithIssue.issues.find(i => i.issueId == issue.issue_id);
+                // if (violationIssue && matchIssue) {
+                //     // In case multiple watches are assigned and there are componenets that overlap between the watches
+                //     // Xray will return component duplication (just watch_name different), combine those results
+                //     matchIssue.watchNames?.push(violationIssue.watch_name);
+                // } else {
+                //     if (violationIssue && violationIssue.license_key) {
+                //         dependencyWithIssue.issues.push(new LicenseIssueTreeNode(violationIssue, severity, dependencyWithIssue, impactedPath));
+                //     } else {
+                //         if (issue.cves) {
+                //             for (let cveIssue of issue.cves) {
+                //                 dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath, cveIssue));
+                //             }
+                //         } else {
+                //             dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath));
+                //         }
+                //     }
+                // }
             }
         }
-        descriptorNode.severity = topSeverity;
         // Populate licenses
         if (graphResponse.licenses) {
             graphResponse.licenses.forEach(license => {
@@ -137,32 +156,6 @@ export class DescriptorUtils {
             });
         }
         return descriptorNode.dependenciesWithIssue.length;
-    }
-
-    /**
-     * Search for the dependency in the descriptor base on componentId.
-     * If found will update the top severity of the node if the given sevirity is higher.
-     * If not found it will create a new one and add it to the descriptor node
-     * @param descriptorNode - the parent that we want to search its nodes
-     * @param componentId - the id (type,name,version) of the dependency
-     * @param component - the dependecy data to create
-     * @param severity - the severity to create/update
-     * @returns the dependency object if exists, else a newly created one base on the input
-     */
-    public static getOrCreateDependecyWithIssue(
-        descriptorNode: DescriptorTreeNode,
-        componentId: string,
-        component: IComponent,
-        severity: Severity
-    ): DependencyIssuesTreeNode {
-        let dependencyWithIssue: DependencyIssuesTreeNode | undefined = descriptorNode.getDependencyByID(componentId);
-        if (!dependencyWithIssue) {
-            dependencyWithIssue = new DependencyIssuesTreeNode(componentId, component, severity, descriptorNode);
-            descriptorNode.dependenciesWithIssue.push(dependencyWithIssue);
-        } else if (severity > dependencyWithIssue.severity) {
-            dependencyWithIssue.severity = severity;
-        }
-        return dependencyWithIssue;
     }
 
     /**

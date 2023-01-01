@@ -5,11 +5,6 @@ import { Utils } from '../utils/utils';
 import { IssuesRootTreeNode } from './issuesRootTreeNode';
 import { IssueTreeNode } from './issueTreeNode';
 
-export interface Region {
-    start: vscode.Position;
-    end: vscode.Position;
-}
-
 /**
  * Describes any type of file with Xray issues for the 'Issues' view.
  * This base class should be extended to hold a specific/subset type/s of issues
@@ -35,7 +30,7 @@ export abstract class FileTreeNode extends vscode.TreeItem {
      * @returns the issue node if exists in file, undefined otherwise
      */
     public getIssueById(id: string): IssueTreeNode | undefined {
-        return this.issues.find(issue => id == issue.issueId);
+        return this.issues.find(issue => id === issue.issueId);
     }
 
     /**
@@ -44,7 +39,7 @@ export abstract class FileTreeNode extends vscode.TreeItem {
      */
     public apply() {
         // If no description is set, show the full path of the file or the relative path base on the path of the parent workspace if exists
-        if (this.description == undefined) {
+        if (this.description === undefined) {
             let description: string | undefined = this._fullPath;
             if (this._parent && this._fullPath.startsWith(this._parent.workSpace.uri.fsPath)) {
                 let localPath: string = this._fullPath.substring(this._parent.workSpace.uri.fsPath.length + 1);
@@ -57,16 +52,23 @@ export abstract class FileTreeNode extends vscode.TreeItem {
             this.description = description;
         }
 
-        // Set collapsible state base on children count
-        if (this.issues.length == 0) {
+        // Set collapsible state and severity base on children count
+        let topSeverity: Severity = this.issues.length > 0 ? Severity.NotApplicableUnknown : Severity.Unknown;
+        if (this.issues.length === 0) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         } else {
-            if (this.issues.length == 1 && this.parent?.children.length == 1) {
+            if (this.issues.length === 1 && this.parent?.children.length === 1) {
                 this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
             } else {
                 this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
             }
+            for (const issue of this.issues) {
+                if (topSeverity < issue.severity) {
+                    topSeverity = issue.severity;
+                }
+            }
         }
+        this._severity = topSeverity;
 
         // Caclulate the tooltip information
         this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n';
@@ -94,8 +96,7 @@ export abstract class FileTreeNode extends vscode.TreeItem {
             }
         })(fullPath);
 
-        node.name += reason ? ' - ' + reason : '';
-        node.description = 'Fail to scan file';
+        node.name += ' - ' + (reason ?? '[Fail to scan]');
         node.tooltip = fullPath;
         node._severity = Severity.Unknown;
         return node;
@@ -128,10 +129,6 @@ export abstract class FileTreeNode extends vscode.TreeItem {
 
     public get severity(): Severity {
         return this._severity;
-    }
-
-    public set severity(value: Severity | undefined) {
-        this._severity = value ?? Severity.Unknown;
     }
 
     public get fullPath(): string {

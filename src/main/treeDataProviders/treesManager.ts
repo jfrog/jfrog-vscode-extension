@@ -52,7 +52,7 @@ export class TreesManager implements ExtensionComponent {
             treeDataProvider: this._buildsTreesProvider,
             showCollapseAll: true
         });
-        this._issuesTreeView = vscode.window.createTreeView('jfrog.xray.issues', {
+        this._issuesTreeView = vscode.window.createTreeView('jfrog.issues', {
             treeDataProvider: this._issuesTreeDataProvider,
             showCollapseAll: true
         });
@@ -70,6 +70,14 @@ export class TreesManager implements ExtensionComponent {
         } else {
             this.buildsTreesProvider.refresh(!scan);
         }
+    }
+
+    /**
+     * Shows a specific node in the source code tree after clicking on the bulb icon in the source code.
+     * @param sourceCodeCveTreeNode
+     */
+    public selectItemOnIssuesTree(item: FileTreeNode | IssueTreeNode | DependencyIssuesTreeNode) {
+        this._issuesTreeView.reveal(item, { focus: true, select: true, expand: true });
     }
 
     public set state(value: State) {

@@ -10,6 +10,8 @@ import { BuildsManager } from '../builds/buildsManager';
 import { Configuration } from '../utils/configuration';
 import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
 import { ScanUtils } from '../utils/scanUtils';
+import { DiagnosticsManager } from '../diagnostics/diagnosticsManager';
+import { IDependencyPage } from 'jfrog-ide-webview';
 
 /**
  * Register and execute all commands in the extension.
@@ -20,7 +22,8 @@ export class CommandManager implements ExtensionComponent {
         private _connectionManager: ConnectionManager,
         private _treesManager: TreesManager,
         private _filterManager: FilterManager,
-        private _buildsManager: BuildsManager
+        private _buildsManager: BuildsManager,
+        private _diagnosticManager: DiagnosticsManager
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
@@ -37,6 +40,10 @@ export class CommandManager implements ExtensionComponent {
         // Local state
         this.registerCommand(context, 'jfrog.issues.file.open', file => ScanUtils.openFile(file));
         this.registerCommand(context, 'jfrog.issues.file.open.location', (file, fileRegion) => ScanUtils.openFile(file, fileRegion));
+        this.registerCommand(context, 'jfrog.issues.select.node', item => this._treesManager.selectItemOnIssuesTree(item));
+        this.registerCommand(context, 'jfrog.issues.file.open.applicable', (file, fileRegion, details) =>
+            this.doOpenFileAndDetailsPage(file, fileRegion, details)
+        );
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
         // CI state
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
@@ -92,14 +99,6 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Focus on dependency after a click on a dependency in the components tree.
-     * @param dependenciesTreeNode - The chosen dependency.
-     */
-    private doFocus(dependenciesTreeNode: DependenciesTreeNode) {
-        this.onSelectNode(dependenciesTreeNode);
-    }
-
-    /**
      * Copy the node content to clipboard.
      * @param node The tree node. Can be instance of DependenciesTreeNode or TreeDataHolder.
      */
@@ -134,11 +133,31 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Refresh the components tree.
+     * Refresh the components tree and updates the currently open files with diagnositcs
      * @param scan - True to scan the workspace, false will load from cache
      */
     private async doRefresh(scan: boolean = true) {
         await this._treesManager.refresh(scan);
+        this._diagnosticManager.updateDiagnostics();
+    }
+
+    /**
+     * Open webpage with the given data
+     * @param page - data to show in webpage
+     */
+    public doShowDependencyDetailsPage(page: IDependencyPage) {
+        vscode.commands.executeCommand('jfrog.view.dependency.details.page', page);
+    }
+
+    /**
+     * Open a file with selected range and the webpage with the given data
+     * @param filePath - file to open in editor
+     * @param fileRegion - range inside the file to select
+     * @param page - the data to show in the open page
+     */
+    public async doOpenFileAndDetailsPage(filePath: string, fileRegion: vscode.Range, page: IDependencyPage) {
+        await ScanUtils.openFile(filePath, fileRegion);
+        this.doShowDependencyDetailsPage(page);
     }
 
     /**
@@ -213,6 +232,23 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
+     * Register a command in the vscode platform.
+     * @param command - The command to register.
+     * @param callback - The function to execute.
+     */
+    private registerCommand(context: vscode.ExtensionContext, command: string, callback: (...args: any[]) => void) {
+        context.subscriptions.push(vscode.commands.registerCommand(command, callback));
+    }
+
+    /**
+     * Focus on dependency after a click on a dependency in the components tree.
+     * @param dependenciesTreeNode - The chosen dependency.
+     */
+    private doFocus(dependenciesTreeNode: DependenciesTreeNode) {
+        this.onSelectNode(dependenciesTreeNode);
+    }
+
+    /**
      * Show the filter menu.
      */
     private doFilter() {
@@ -224,15 +260,6 @@ export class CommandManager implements ExtensionComponent {
      */
     private doBuildSelected() {
         this._buildsManager.showBuildsMenu();
-    }
-
-    /**
-     * Register a command in the vscode platform.
-     * @param command - The command to register.
-     * @param callback - The function to execute.
-     */
-    private registerCommand(context: vscode.ExtensionContext, command: string, callback: (...args: any[]) => void) {
-        context.subscriptions.push(vscode.commands.registerCommand(command, callback));
     }
 
     /**

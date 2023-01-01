@@ -11,7 +11,6 @@ import { PackageType } from '../types/projectType';
 import { Configuration } from './configuration';
 import { ContextKeys } from '../constants/contextKeys';
 import * as util from 'util';
-import { Region } from '../treeDataProviders/issuesTree/fileTreeNode';
 export class ScanUtils {
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
@@ -97,7 +96,7 @@ export class ScanUtils {
      * @param filePath - the file to open
      * @param fileRegion - optional region in file to reveal
      */
-    public static async openFile(filePath: string, fileRegion?: Region) {
+    public static async openFile(filePath: string, fileRegion?: vscode.Range) {
         if (filePath === undefined || filePath === '') {
             return;
         }
@@ -111,7 +110,7 @@ export class ScanUtils {
             return;
         }
         textEditor.selection = new vscode.Selection(fileRegion.start, fileRegion.end);
-        textEditor.revealRange(new vscode.Range(fileRegion.start, fileRegion.end), vscode.TextEditorRevealType.InCenter);
+        textEditor.revealRange(fileRegion, vscode.TextEditorRevealType.InCenter);
     }
 
     static async removeFolder(folderPath: string): Promise<void> {
@@ -124,8 +123,8 @@ export class ScanUtils {
         return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
     }
 
-    public static executeCmdAsync(command: string, cwd?: string): Promise<any> {
-        return util.promisify(exec.exec)(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
+    public static async executeCmdAsync(command: string, cwd?: string): Promise<any> {
+        return await util.promisify(exec.exec)(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
     }
 
     public static setScanInProgress(state: boolean) {
@@ -198,5 +197,5 @@ export class FileScanError extends Error {
 }
 
 export class ScanCancellationError extends Error {
-    message: string = 'Xray scan cancelled';
+    message: string = 'Scan was cancelled';
 }

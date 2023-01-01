@@ -66,11 +66,8 @@ export class DependenciesTreesFactory {
                 parent,
                 checkCanceled
             );
-            typesDone++;
-            progressManager.reportProgress();
-        } catch (error) {
+        } finally {
             progressManager.reportProgress((getNumberOfSupportedPackgeTypes() - typesDone) * progressManager.getStepIncValue);
-            throw error;
         }
 
         return parent;
