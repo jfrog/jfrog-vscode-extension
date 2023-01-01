@@ -263,12 +263,12 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     ): Promise<IssuesRootTreeNode> {
         let progressManager: StepProgress = new StepProgress(
             progress,
-            this._logManager,
             () => {
                 this.onChangeFire();
                 checkCanceled();
             },
-            2
+            2,
+            this._logManager
         );
         // Scan workspace to prepare the needed information for the scans and progress
         progress.report({ message: '👷 Preparing workspace' });

@@ -41,7 +41,9 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.issues.file.open', file => ScanUtils.openFile(file));
         this.registerCommand(context, 'jfrog.issues.file.open.location', (file, fileRegion) => ScanUtils.openFile(file, fileRegion));
         this.registerCommand(context, 'jfrog.issues.select.node', item => this._treesManager.selectItemOnIssuesTree(item));
-        this.registerCommand(context, 'jfrog.issues.file.open.applicable', (file, fileRegion, details) => this.doOpenFileAndDetailsPage(file,fileRegion,details));
+        this.registerCommand(context, 'jfrog.issues.file.open.applicable', (file, fileRegion, details) =>
+            this.doOpenFileAndDetailsPage(file, fileRegion, details)
+        );
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
         // CI state
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));

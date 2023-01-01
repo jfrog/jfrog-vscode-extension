@@ -79,7 +79,6 @@ export class NpmUtils {
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         checkCanceled: () => void
-        // quickScan: boolean
     ): Promise<void> {
         if (!packageJsons) {
             treesManager.logManager.logMessage('No package.json files found in workspaces.', 'DEBUG');

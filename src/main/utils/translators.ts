@@ -6,11 +6,12 @@ import {
     IVulnerableComponent,
     Severity as ClientSeverity,
     IReference,
-    IExtendedInformation
+    IExtendedInformation,
+    IGraphCve
 } from 'jfrog-client-js';
 import { IExtendedInformation as WebExtendedInformation, ISeverityReasons, ICve as WebICve } from 'jfrog-ide-webview';
 import Set from 'typescript-collections/dist/lib/Set';
-import { CveTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
+import { IApplicableDetails } from 'jfrog-ide-webview';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
 import { GeneralInfo } from '../types/generalInfo';
 import { IIssueCacheObject } from '../types/issueCacheObject';
@@ -120,15 +121,15 @@ export class Translators {
         return results;
     }
 
-    static toWebViewICve(node: CveTreeNode): WebICve | undefined {
-        if (node.cve || node.applicableDetails) {
+    static toWebViewICve(cve?: IGraphCve, applicableDetails?: IApplicableDetails): WebICve | undefined {
+        if (cve || applicableDetails) {
             return {
-                id: node.cve?.cve,
-                cvssV2Score: node.cve?.cvss_v2_score,
-                cvssV2Vector: node.cve?.cvss_v2_vector,
-                cvssV3Score: node.cve?.cvss_v3_score,
-                cvssV3Vector: node.cve?.cvss_v3_vector,
-                applicableData: node.applicableDetails
+                id: cve?.cve,
+                cvssV2Score: cve?.cvss_v2_score,
+                cvssV2Vector: cve?.cvss_v2_vector,
+                cvssV3Score: cve?.cvss_v3_score,
+                cvssV3Vector: cve?.cvss_v3_vector,
+                applicableData: applicableDetails
             } as WebICve;
         }
         return undefined;

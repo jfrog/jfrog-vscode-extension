@@ -53,6 +53,7 @@ export class ScanManager implements ExtensionComponent {
 
     /**
      * Scan dependecy graph async for Xray issues.
+     * The graph will be flatten and only distincts dependencies will be sent
      * @param progress - the progress for this scan
      * @param graphRoot - the dependency graph to scan
      * @param checkCanceled - method to check if the action was cancled
@@ -62,11 +63,10 @@ export class ScanManager implements ExtensionComponent {
     public async scanDependencyGraph(
         progress: XrayScanProgress,
         graphRoot: RootNode,
-        checkCanceled: () => void,
-        flatten: boolean = true
+        checkCanceled: () => void
     ): Promise<IGraphResponse> {
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
-        return scanLogic.scan(graphRoot, flatten, progress, checkCanceled);
+        return scanLogic.scan(graphRoot, progress, checkCanceled);
     }
 
     /**

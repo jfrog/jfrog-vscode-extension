@@ -34,7 +34,7 @@ export class CveTreeNode extends IssueTreeNode {
 
         let violation: IViolation = <IViolation>sourceVul;
         this._edited = sourceVul.edited ?? violation.updated;
-        if (violation) {
+        if (violation && violation.watch_name) {
             this._watchNames = [violation.watch_name];
         }
     }
@@ -58,9 +58,9 @@ export class CveTreeNode extends IssueTreeNode {
     public getDetailsPage(): IDependencyPage {
         return {
             id: this._issue_id,
-            cve: Translators.toWebViewICve(this),
+            cve: Translators.toWebViewICve(this.cve,this._applicableDetails),
             component: this._parent.name,
-            watchName: this._watchNames,
+            watchName: this._watchNames.length > 0 ? this.watchNames : undefined,
             type: PackageType[this._parent.type],
             version: this._parent.version,
             infectedVersion: this.parent.infectedVersions,

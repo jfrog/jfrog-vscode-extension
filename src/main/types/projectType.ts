@@ -9,7 +9,7 @@ export enum PackageType {
 }
 
 export function getNumberOfSupportedPackgeTypes(): number {
-    return 6;
+    return Object.keys(PackageType).length - 1;
 }
 
 export function toPackgeType(str: string): PackageType {

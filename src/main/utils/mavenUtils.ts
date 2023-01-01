@@ -94,10 +94,6 @@ export class MavenUtils {
             }
             return res;
         }
-
-        // if (!(dependenciesTreeNode instanceof MavenTreeNode)) {
-        //     return MavenUtils.getDependencyPos(document, dependenciesTreeNode.parent, focusType);
-        // }
         return [];
     }
 

@@ -5,7 +5,7 @@ import { Severity } from '../../types/severity';
  * Describes an Xray issue node, the leaf of the issues tree for the 'Issues' view.
  */
 export class IssueTreeNode extends vscode.TreeItem {
-    protected _watchNames: string[] | undefined;
+    protected _watchNames: string[] = [];
 
     constructor(protected _issue_id: string, protected _severity: Severity, label: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
         super(label, collapsibleState ?? vscode.TreeItemCollapsibleState.None);
@@ -23,7 +23,7 @@ export class IssueTreeNode extends vscode.TreeItem {
         this._severity = value;
     }
 
-    public get watchNames(): string[] | undefined {
+    public get watchNames(): string[] {
         return this._watchNames;
     }
 }
