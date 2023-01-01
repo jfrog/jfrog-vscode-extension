@@ -22,6 +22,7 @@ export interface FileIssuesData {
     name: string;
     fullpath: string;
 }
+
 /**
  * Describes all the issues data for a specific descriptor from Xray scan
  */

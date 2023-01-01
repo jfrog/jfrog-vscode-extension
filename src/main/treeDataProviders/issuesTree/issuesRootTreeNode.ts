@@ -32,11 +32,11 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
         }
 
         this.tooltip = 'Issue count: ' + issueCount + '\n';
-        this.tooltip += "Full Path: '" + this._workSpace.uri.fsPath + "'\n";
+        this.tooltip += "Full Path: '" + this._workSpace.uri.fsPath + "'";
         if (this._title != '') {
-            this.tooltip += 'Status: ' + this._title;
+            this.tooltip += '\nStatus: ' + this._title;
         } else if (this.oldestScanTimestamp) {
-            this.tooltip += 'Last ' + Utils.getLastScanString(this.oldestScanTimestamp);
+            this.tooltip += '\nLast ' + Utils.getLastScanString(this.oldestScanTimestamp);
         }
 
         this._children
