@@ -8,7 +8,7 @@ import { IssueTreeNode } from '../issueTreeNode';
 import { DependencyIssuesTreeNode } from './dependencyIssuesTreeNode';
 
 /**
- * Describes an Xray cve vulnerability/violation issue
+ * Describes an Xray CVE vulnerability/violation issue
  */
 export class CveTreeNode extends IssueTreeNode {
     private _edited: string;

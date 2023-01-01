@@ -68,7 +68,7 @@ export class AnalyzerUtils {
         );
         descriptorNode.applicableScanTimeStamp = descriptorData.applicableScanTimestamp;
 
-        // populate related CodeFile nodes with issues and update the descriptor cve applicability details
+        // populate related CodeFile nodes with issues and update the descriptor CVE applicability details
         let issuesCount: number = 0;
         descriptorNode.scannedCve.forEach(cve => {
             // Check if the descriptor has this cve issue
@@ -96,7 +96,7 @@ export class AnalyzerUtils {
     /**
      * Populate the file evidence (ApplicableTreeNode) result in the file node and evidences list
      * @param fileEvidence - the evidences in the file to populate
-     * @param issueNode - the cve node related to the issues
+     * @param issueNode - the CVE node related to the issues
      * @param evidences - the evidences list to populate data inside
      * @param fileNode - the node to poupulate children inside
      * @returns the number of Evidences for the issue that were populated
@@ -105,7 +105,7 @@ export class AnalyzerUtils {
         let issuesCount: number = 0;
         fileEvidence.locations.forEach(location => {
             if (location.snippet) {
-                // add evedence for cve applicability details
+                // add evedence for CVE applicability details
                 evidences.push({
                     filePathEvidence: AnalyzerUtils.parseLocationFilePath(fileEvidence.full_path),
                     codeEvidence: location.snippet.text

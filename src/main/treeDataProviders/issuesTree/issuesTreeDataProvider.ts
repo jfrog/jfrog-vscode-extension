@@ -371,7 +371,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     /**
      * Runs the descriptor scans async
      * 1. dependency graph scan
-     * 2. applicable cve scan
+     * 2. applicable CVE scan
      * @param workspaceData - the issues data for the workspace
      * @param root - the root node of the workspace
      * @param descriptorData - the descriptor issues data
@@ -506,19 +506,19 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 issuesCount +
                 ' issues for descriptor ' +
                 descriptorData.fullpath +
-                ' (elapsed=' +
+                ' (elapsed: ' +
                 (descriptorData.graphScanTimestamp - startGraphScan) / 1000 +
-                'sec)',
+                ' seconds)',
             'INFO'
         );
         return issuesCount > 0 ? descriptorNode : undefined;
     }
 
     /**
-     * Run cve applicable scan async task
+     * Run CVE applicable scan async task
      * @param root - the root node to generate the issues inside
      * @param descriptorData - the descriptor data to store the reponse inside
-     * @param descriptorNode - the descriptor node with the cve to scan
+     * @param descriptorNode - the descriptor node with the CVE to scan
      * @param abortController - the controller to abort the operation
      */
     private async cveApplicableScanning(
@@ -550,11 +550,11 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             this._logManager.logMessage(
                 'Found ' +
                     applicableIssuesCount +
-                    " applicable cve issues in descriptor = '" +
+                    " applicable CVE issues in descriptor = '" +
                     descriptorData.fullpath +
-                    "' (elapsed:" +
+                    "' (elapsed: " +
                     (Date.now() - startApplicableTime) / 1000 +
-                    'sec)',
+                    ' seconds)',
                 'INFO'
             );
             root.apply();
