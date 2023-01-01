@@ -19,6 +19,10 @@ export class IssueTreeNode extends vscode.TreeItem {
         return this._severity;
     }
 
+    public set severity(value: Severity) {
+        this._severity = value;
+    }
+
     public get watchNames(): string[] | undefined {
         return this._watchNames;
     }

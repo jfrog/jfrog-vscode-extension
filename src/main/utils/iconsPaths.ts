@@ -7,6 +7,7 @@ export class IconsPaths {
     static readonly NORMAL_SEVERITY: string = IconsPaths.getIconPath('normal');
     static readonly PENDING_SEVERITY: string = IconsPaths.getSvgIconPath('Unknown');
     static readonly UNKNOWN_SEVERITY: string = IconsPaths.getSvgIconPath('Unknown');
+    static readonly NOT_APPLICABLE_SEVERITY: string = IconsPaths.getSvgIconPath('Not_Applicable');
     static readonly INFORMATION_SEVERITY: string = IconsPaths.getSvgIconPath('Low');
     static readonly LOW_SEVERITY: string = IconsPaths.getSvgIconPath('Low');
     static readonly MEDIUM_SEVERITY: string = IconsPaths.getSvgIconPath('Medium');
@@ -22,8 +23,8 @@ export class IconsPaths {
 
     // Icons builds status
     static readonly BUILD_SUCCESS: string = IconsPaths.getIconPath('normal');
-    static readonly BUILD_FAILED: string = IconsPaths.getIconPath('critical');
-    static readonly BUILD_UNKNOWN: string = IconsPaths.getIconPath('unknown');
+    static readonly BUILD_FAILED: string = IconsPaths.getSvgIconPath('Critical');
+    static readonly BUILD_UNKNOWN: string = IconsPaths.getSvgIconPath('Unknown');
 
     // License
     static readonly VIOLATED_LICENSE: string = IconsPaths.getIconPath('violatedLicense');

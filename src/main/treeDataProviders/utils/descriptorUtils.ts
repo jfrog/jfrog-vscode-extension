@@ -82,16 +82,11 @@ export class DescriptorUtils {
         descriptorNode.dependencyScanTimeStamp = descriptorData.graphScanTimestamp;
         let impactedPaths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>(Object.entries(descriptorData.impactTreeData));
         let issues: IVulnerability[] | IViolation[] = graphResponse.violations || graphResponse.vulnerabilities;
-        let topSeverity: Severity = Severity.Unknown;
         // Populate issues
         for (let i: number = 0; i < issues.length; i++) {
             let issue: IVulnerability | IViolation = issues[i];
             let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id);
-            // Update the top severity of the descriptor
             let severity: Severity = SeverityUtils.getSeverity(issue.severity);
-            if (severity > topSeverity) {
-                topSeverity = severity;
-            }
             // Populate the issue for each dependency component
             for (let [componentId, component] of Object.entries(issue.components)) {
                 let dependencyWithIssue: DependencyIssuesTreeNode = this.getOrCreateDependecyWithIssue(
@@ -122,7 +117,6 @@ export class DescriptorUtils {
                 }
             }
         }
-        descriptorNode.severity = topSeverity;
         // Populate licenses
         if (graphResponse.licenses) {
             graphResponse.licenses.forEach(license => {
@@ -157,8 +151,6 @@ export class DescriptorUtils {
         if (!dependencyWithIssue) {
             dependencyWithIssue = new DependencyIssuesTreeNode(componentId, component, severity, descriptorNode);
             descriptorNode.dependenciesWithIssue.push(dependencyWithIssue);
-        } else if (severity > dependencyWithIssue.severity) {
-            dependencyWithIssue.severity = severity;
         }
         return dependencyWithIssue;
     }

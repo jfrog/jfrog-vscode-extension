@@ -52,7 +52,8 @@ export abstract class FileTreeNode extends vscode.TreeItem {
             this.description = description;
         }
 
-        // Set collapsible state base on children count
+        // Set collapsible state and severity base on children count
+        let topSeverity: Severity = this.issues.length > 0 ? Severity.NotApplicableUnknown : Severity.Unknown;
         if (this.issues.length == 0) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.None;
         } else {
@@ -61,7 +62,13 @@ export abstract class FileTreeNode extends vscode.TreeItem {
             } else {
                 this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
             }
+            for (const issue of this.issues) {
+                if (topSeverity < issue.severity) {
+                    topSeverity = issue.severity;
+                }
+            }
         }
+        this._severity = topSeverity;
 
         // Caclulate the tooltip information
         this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n';
@@ -122,10 +129,6 @@ export abstract class FileTreeNode extends vscode.TreeItem {
 
     public get severity(): Severity {
         return this._severity;
-    }
-
-    public set severity(value: Severity | undefined) {
-        this._severity = value ?? Severity.Unknown;
     }
 
     public get fullPath(): string {

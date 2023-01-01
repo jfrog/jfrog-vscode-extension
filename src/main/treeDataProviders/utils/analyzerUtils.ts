@@ -3,7 +3,7 @@ import * as path from 'path';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
 import { DescriptorIssuesData, WorkspaceIssuesData } from '../../cache/issuesCache';
 import { CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
-import { Severity } from '../../types/severity';
+import { SeverityUtils } from '../../types/severity';
 import { ApplicableTreeNode } from '../issuesTree/codeFileTree/applicableTreeNode';
 import { CodeFileTreeNode } from '../issuesTree/codeFileTree/codeFileTreeNode';
 import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
@@ -34,17 +34,13 @@ export class AnalyzerUtils {
      * @param severity - the optional new severity of the file
      * @returns file node
      */
-    public static getOrCreateCodeFileNode(root: IssuesRootTreeNode, filePath: string, severity?: Severity): CodeFileTreeNode {
+    public static getOrCreateCodeFileNode(root: IssuesRootTreeNode, filePath: string): CodeFileTreeNode {
         let actualPath: string = this.parseLocationFilePath(filePath);
         let node: FileTreeNode | undefined = root.children.find(child => actualPath == child.fullPath);
         if (node instanceof CodeFileTreeNode) {
-            if (severity && severity > node.severity) {
-                node.severity = severity;
-            }
             return node;
         }
         let fileNode: CodeFileTreeNode = new CodeFileTreeNode(actualPath);
-        fileNode.severity = severity;
         root.addChild(fileNode);
         return fileNode;
     }
@@ -79,13 +75,14 @@ export class AnalyzerUtils {
                     let evidences: IEvidence[] = [];
                     // Populate code file issues for workspace
                     details.fileEvidences.forEach(fileEvidence => {
-                        let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileEvidence.full_path, node?.severity);
+                        let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileEvidence.full_path);
                         issuesCount += this.populateEvidence(fileEvidence, <CveTreeNode>node, evidences, fileNode);
                     });
                     // Applicable
                     node.applicableDetails = { isApplicable: true, reason: details.fixReason, evidence: evidences } as IApplicableDetails;
                 } else {
                     // Not applicable
+                    node.severity = SeverityUtils.notApplicable(node.severity);
                     node.applicableDetails = { isApplicable: false } as IApplicableDetails;
                 }
             }
