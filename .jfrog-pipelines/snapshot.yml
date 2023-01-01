@@ -1,0 +1,56 @@
+pipelines:
+  - name: build_jfrog_vscode_extension_snapshot
+    configuration:
+      runtime:
+        type: image
+        image:
+          auto:
+            language: node
+            versions:
+              - "16"
+      environmentVariables:
+        readOnly:
+          NEXT_VERSION: 0.0.0
+
+    steps:
+      - name: Snapshot
+        type: Bash
+        configuration:
+          inputResources:
+            - name: jfrogVscodeExtensionSnapshotGit
+          integrations:
+            - name: entplus_deployer
+        execution:
+          onExecute:
+            - cd $res_jfrogVscodeExtensionSnapshotGit_resourcePath
+
+            # Set env
+            - export CI=true
+            - export JFROG_BUILD_STATUS=PASS
+            - export JFROG_CLI_BUILD_NAME=ecosystem-jfrog-vscode-extension-dev
+            - export JFROG_CLI_BUILD_NUMBER=$run_number
+            - export JFROG_CLI_BUILD_PROJECT=ecosys
+            - export SNAPSHOT_VERSION=`npm pkg get version | sed 's/"//g'`-`git rev-parse --short HEAD`
+
+            # Configure JFrog CLI
+            - curl -fL https://install-cli.jfrog.io | sh
+            - jf c rm --quiet
+            - jf c add internal --url=$int_entplus_deployer_url --user=$int_entplus_deployer_user --password=$int_entplus_deployer_apikey
+            - jf npmc --repo-resolve ecosys-npm-remote
+
+            # Install and audit
+            - jf npm install
+            - jf audit --fail=false
+
+            # Set version
+            - npm version $SNAPSHOT_VERSION --no-git-tag-version
+
+            # Build and publish
+            - npm run package
+            - jf rt u "*.vsix" ecosys-jfrog-vscode-extension/snapshots/
+            - jf rt bag && jf rt bce
+            - jf rt bp
+
+          onComplete:
+            # Clean up
+            - jf c rm --quiet

@@ -1,0 +1,10 @@
+resources:
+  - name: jfrogVscodeExtensionSnapshotGit
+    type: GitRepo
+    configuration:
+      path: jfrog/jfrog-vscode-extension
+      gitProvider: il_automation
+      branches:
+        include: master
+      cancelPendingRunsOn:
+        pullRequestUpdate: true
