@@ -266,14 +266,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             this._logManager,
             () => {
                 this.onChangeFire();
-                try {
-                    checkCanceled();
-                } catch (error) {
-                    if (error instanceof ScanCancellationError) {
-                        progressManager.abortController.abort();
-                        throw error;
-                    }
-                }
+                checkCanceled();
             },
             2
         );
@@ -288,7 +281,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         let graphSupported: boolean = await this._scanManager.validateGraphSupported();
         checkCanceled();
 
-        // 1. Build workspace dependecy tree for all the descriptors
+        // Build workspace dependecy tree for all the descriptors
         progressManager.startStep('👷 Building workspace dependencies tree', getNumberOfSupportedPackgeTypes());
         let workspaceDependenciesTree: DependenciesTreeNode = await DependenciesTreesFactory.createDependenciesTrees(
             workspcaeDescriptors,
@@ -301,7 +294,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
         progressManager.startStep('🔎 Scanning for issues', graphSupported ? 2 * descriptorsCount : 0);
         let scansPromises: Promise<any>[] = [];
-        // Building dependency tree + dependency graph scan for each descriptor
+        // Dependency graph scan and applicability scan for each descriptor
         if (graphSupported) {
             scansPromises.push(
                 this.descriptorsScanning(workspaceData, root, workspcaeDescriptors, workspaceDependenciesTree, progressManager, checkCanceled)
@@ -313,13 +306,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
     /**
      * Preform security scanning for all the descriptors in the workspace in two substeps:
-     * 1. Build the dependency tree for all the workspace
-     * 2. For each descriptor in the workspace and preporm Xray dependency grpah scanning.
+     * 1. Dependency graph scan to discover CVE issues
+     * 2. Applicability scan of the CVE in the workspace
      * @param workspaceData - the given object that holds all the issues data for the workspace and will be populated at the task
      * @param root - the dependenciesTreeRoot that will be populated and will hold the final tree
      * @param workspcaeDescriptors - map of all the descriptors in the workspace with the packeType of the descriptor as key and the file paths as values
+     * @param workspaceDependenciesTree - the dependencies graph of all the descriptors in the workspace (each child of root is a descriptor graph)
      * @param progressManager - the progress manager for the workspace scanning process
-     * @param scansPromises - the array of all the scans that will be preformed async
      * @param checkCanceled - the method to check if the task was canceled by the user from the notification window, will throw ScanCancellationError.
      */
     private async descriptorsScanning(
@@ -369,9 +362,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     }
 
     /**
-     * Runs the descriptor scans async
-     * 1. dependency graph scan
-     * 2. applicable CVE scan
+     * Runs the descriptor scans asyncronously.
+     * 1. Dependency graph scanning
+     * 2. CVE Applicablity scanning
      * @param workspaceData - the issues data for the workspace
      * @param root - the root node of the workspace
      * @param descriptorData - the descriptor issues data
@@ -413,10 +406,10 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     }
 
     /**
-     * Handle errors that occur during workspace scan, checks if cancele was requested.
-     * @param error - the error that occur
+     * Handle errors that occur during workspace scan, and checks if cancellation was requested.
+     * @param error - the error occurred
      * @param handle - if true the error will be logged and not thrown/returned.
-     * @returns -  undefined if error was handled or error otherwise
+     * @returns -  undefined if the error was handled or an error otherwise
      */
     private onScanError(error: Error, handle: boolean = true, log: boolean = false): Error | undefined {
         if (error instanceof ScanCancellationError) {
@@ -515,7 +508,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     }
 
     /**
-     * Run CVE applicable scan async task
+     * Run CVE applicable scan async task.
      * @param root - the root node to generate the issues inside
      * @param descriptorData - the descriptor data to store the reponse inside
      * @param descriptorNode - the descriptor node with the CVE to scan

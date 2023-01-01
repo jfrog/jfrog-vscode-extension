@@ -1,6 +1,7 @@
 import { XrayScanProgress } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { LogManager } from '../../log/logManager';
+import { ScanCancellationError } from '../../utils/scanUtils';
 
 /**
  * Manage the vscode.Progress with steps and substeps if needed
@@ -41,7 +42,14 @@ export class StepProgress {
         this.currentStepMsg = msg + (this._totalSteps > 1 ? ' (' + this.currentStepsDone + '/' + this._totalSteps + ')' : '');
         this.currentSubstepsCount = subSteps && subSteps > 0 ? subSteps : undefined;
         this._progress.report({ message: msg });
-        this.onProgress();
+        try {
+            this.onProgress();
+        } catch (error) {
+            if (error instanceof ScanCancellationError) {
+                this.abortController.abort();
+                throw error;
+            }
+        }
     }
 
     /**
@@ -59,7 +67,14 @@ export class StepProgress {
     public reportProgress(inc: number = this.getStepIncValue) {
         if (this.currentStepMsg) {
             this._progress.report({ message: this.currentStepMsg, increment: inc });
-            this.onProgress();
+            try {
+                this.onProgress();
+            } catch (error) {
+                if (error instanceof ScanCancellationError) {
+                    this.abortController.abort();
+                    throw error;
+                }
+            }
         }
     }
 
