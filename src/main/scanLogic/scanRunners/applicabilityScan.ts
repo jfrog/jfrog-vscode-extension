@@ -47,7 +47,7 @@ export class ApplicabilityRunner extends BinaryRunner {
     }
 
     private static getBinaryName(): string {
-      let name: string = ApplicabilityRunner.BINARY_NAME;
+        let name: string = ApplicabilityRunner.BINARY_NAME;
         if (os.platform() === 'win32') {
             return name + '.exe';
         }
