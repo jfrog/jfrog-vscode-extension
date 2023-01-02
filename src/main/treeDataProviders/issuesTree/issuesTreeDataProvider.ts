@@ -346,7 +346,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     );
                     continue;
                 }
-                // Project Not supported - YARN v2+
+                // Project is not supported - Yarn v2+
                 if (descriptorGraph?.label?.toString().includes('[Not supported]')) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this.onFileScanError(
