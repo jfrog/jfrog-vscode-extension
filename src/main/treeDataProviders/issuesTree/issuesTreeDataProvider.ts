@@ -335,7 +335,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     this._logManager.logMessage("Can't find descriptor graph for " + descriptorPath.fsPath, 'DEBUG');
                     continue;
                 }
-                // Project Not install - GO, NPM, YARN, Python
+                // Project is not installed - Go, npm, Yarn v1, or Python
                 if (descriptorGraph?.label?.toString().includes('[Not installed]')) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this.onFileScanError(
