@@ -107,11 +107,9 @@ export class GoUtils {
                 ScanUtils.executeCmd(GoUtils.GO_MOD_TIDY_CMD, tmpWorkspace);
             } catch (error) {
                 treesManager.logManager.logMessage('Failed creating go temporary workspace: ' + error, 'ERR');
-                treesManager.logManager.logMessage(
+                treesManager.logManager.logMessageAndToastErr(
                     `Failed to scan Go project. Hint: Please make sure the command 'go mod tidy' runs successfully in ` + goMod.fsPath,
-                    'ERR',
-                    true,
-                    true
+                    'ERR'
                 );
             }
 

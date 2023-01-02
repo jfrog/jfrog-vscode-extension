@@ -22,7 +22,7 @@ class DirectDependencyInfo {
 
 interface DirectDependencyIssue {
     label: string;
-    severity: Severity
+    severity: Severity;
     infectedDependencies: string[];
 }
 
@@ -60,7 +60,9 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
             });
             for (let directDependncyInfo of processedDependencies.values()) {
                 // Add diagnostics to the direct dependency by the order of their severity
-                for (const [issueId, info] of Array.from(directDependncyInfo.diagnosticIssues.entries()).sort((lhs, rhs) => rhs[1].severity - lhs[1].severity)) {
+                for (const [issueId, info] of Array.from(directDependncyInfo.diagnosticIssues.entries()).sort(
+                    (lhs, rhs) => rhs[1].severity - lhs[1].severity
+                )) {
                     diagnostics.push(
                         ...this.createDiagnostics(
                             issueId,

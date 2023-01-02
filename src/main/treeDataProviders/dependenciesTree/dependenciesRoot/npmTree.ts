@@ -30,11 +30,9 @@ export class NpmTreeNode extends RootNode {
             this.populateDependenciesTree(this, scopedProject.dependencies, scopedProject.scope);
         });
         if (npmLsFailed) {
-            this._treesManager.logManager.logMessage(
+            this._treesManager.logManager.logMessageAndToastErr(
                 `Failed to scan npm project. Hint: Please make sure the commands 'npm install' or 'npm ci' run successfully in '${this.workspaceFolder}'`,
-                'ERR',
-                true,
-                true
+                'ERR'
             );
         }
         this.generalInfo = new GeneralInfo(

@@ -12,7 +12,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
     private _licenses: Set<ILicenseKey> = new Set(license => license.licenseName);
     private _issues: Set<IIssueKey> = new Set(issue => issue.issue_id);
     private _topSeverity: Severity;
-    private _dependencyId: string | undefined;
+    private _dependencyId: string = this._generalInfo.artifactId;
 
     constructor(
         protected _generalInfo: GeneralInfo,
@@ -28,16 +28,16 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         if (contextValue === undefined) {
             this.contextValue = ContextKeys.SHOW_IN_PROJECT_DESC_ENABLED;
         }
-        if (_parent) {
+        if (_parent && !_parent.children.find(child => child.componentId == this.componentId)) {
             _parent.children.push(this);
         }
     }
 
-    public get dependencyId(): string | undefined {
+    public get dependencyId(): string {
         return this._dependencyId;
     }
 
-    public set dependencyId(value: string | undefined) {
+    public set dependencyId(value: string) {
         this._dependencyId = value;
     }
 

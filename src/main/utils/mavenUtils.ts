@@ -221,14 +221,12 @@ export class MavenUtils {
                     this.updateContextValue(mavenRoot);
                 }
             } catch (error) {
-                treesManager.logManager.logMessage(
+                treesManager.logManager.logMessageAndToastErr(
                     'Could not get dependencies tree from pom.xml.\n' +
                         'Try to install it by running "mvn clean install" from ' +
                         ProjectTree.pomPath +
                         '.',
-                    'ERR',
-                    true,
-                    true
+                    'ERR'
                 );
                 treesManager.logManager.logMessage((<any>error).stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }

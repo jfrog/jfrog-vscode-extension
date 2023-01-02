@@ -76,11 +76,7 @@ export class DescriptorTreeNode extends FileTreeNode {
      * @param severity - the severity to create/update
      * @returns the dependency object if exists, else a newly created one base on the input
      */
-    public addNode(
-        componentId: string,
-        component: IComponent,
-        severity: Severity
-    ): DependencyIssuesTreeNode {
+    public addNode(componentId: string, component: IComponent, severity: Severity): DependencyIssuesTreeNode {
         let dependencyWithIssue: DependencyIssuesTreeNode | undefined = this.getDependencyByID(componentId);
         if (!dependencyWithIssue) {
             dependencyWithIssue = new DependencyIssuesTreeNode(componentId, component, severity, this);
