@@ -12,7 +12,6 @@ import { DependenciesTreesFactory } from '../dependenciesTree/dependenciesTreeFa
 import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
 import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
 import { CacheManager } from '../../cache/cacheManager';
-import { DescriptorIssuesData, FileIssuesData, IssuesCache, WorkspaceIssuesData } from '../../cache/issuesCache';
 import { getNumberOfSupportedPackgeTypes, PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { StepProgress } from '../utils/stepProgress';
@@ -26,7 +25,7 @@ import { AnalyzerUtils } from '../utils/analyzerUtils';
 import { CodeIssueTreeNode } from './codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
 import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
-import { EosScanResponse } from '../../scanLogic/scanRunners/eosScan';
+import { DescriptorIssuesData, FileIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -189,12 +188,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             workspaceScans.push(
                 ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
                     // Create workspace scan data that will be populated at the scan and will be saved to the cache
-                    const workspaceData: WorkspaceIssuesData = {
-                        path: workspace.uri.fsPath,
-                        descriptorsIssuesData: [],
-                        eosScan: {} as EosScanResponse,
-                        failedFiles: []
-                    } as WorkspaceIssuesData;
+                    const workspaceData: WorkspaceIssuesData = new WorkspaceIssuesData(workspace.uri.fsPath);
                     // Create workspace tree root node to give feedback and update the user on any change while handling the async scan task
                     let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, '🔎 Scanning...');
                     this._workspaceToRoot.set(workspace, root);
@@ -204,10 +198,10 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     await this.repopulateWorkspaceTree(workspaceData, root, progress, checkCanceled)
                         .then(() => {
                             this._logManager.logMessage("Workspace '" + workspace.name + "' scan ended", 'INFO');
-                            shouldDeleteRoot = !IssuesCache.hasInformation(workspaceData);
-                            shouldCacheRoot = IssuesCache.hasIssues(workspaceData);
+                            shouldDeleteRoot = !workspaceData.hasInformation();
+                            shouldCacheRoot = workspaceData.hasIssues();
                             if (shouldDeleteRoot) {
-                                this._logManager.logMessage("🐸 Workspace '" + workspace.name + "' has no issues", 'INFO', false, false, true);
+                                this._logManager.logMessageAndToastInfo("🐸 Workspace '" + workspace.name + "' has no issues", 'INFO');
                             }
                             if (workspaceData.failedFiles.length > 0) {
                                 root.title = 'Scan failed';
@@ -218,8 +212,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                         .catch(error => {
                             if (error instanceof ScanCancellationError) {
                                 this._logManager.logMessage("Workspace '" + workspace.name + "' scan task was canceled", 'INFO');
-                                shouldDeleteRoot = !IssuesCache.hasInformation(workspaceData);
-                                shouldCacheRoot = IssuesCache.hasIssues(workspaceData);
+                                shouldDeleteRoot = !workspaceData.hasInformation();
+                                shouldCacheRoot = workspaceData.hasIssues();
                                 root.title = 'Scan canceled';
                             } else {
                                 this._logManager.logMessage("Workspace '" + workspace.name + "' scan task ended with error:", 'ERR');
@@ -341,13 +335,24 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     this._logManager.logMessage("Can't find descriptor graph for " + descriptorPath.fsPath, 'DEBUG');
                     continue;
                 }
-                // Project Not install
+                // Project Not install - GO, NPM, YARN, Python
                 if (descriptorGraph?.label?.toString().includes('[Not installed]')) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this.onFileScanError(
                         workspaceData,
                         root,
                         new FileScanError('Project with descriptor file ' + descriptorPath.fsPath + ' is not installed', '[Project not installed]'),
+                        descriptorData
+                    );
+                    continue;
+                }
+                // Project Not supported - YARN v2+
+                if (descriptorGraph?.label?.toString().includes('[Not supported]')) {
+                    progressManager.reportProgress(2 * progressManager.getStepIncValue);
+                    this.onFileScanError(
+                        workspaceData,
+                        root,
+                        new FileScanError('Project with descriptor file ' + descriptorPath.fsPath + ' is not supported', '[Not supported]'),
                         descriptorData
                     );
                     continue;

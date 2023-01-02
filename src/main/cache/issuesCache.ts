@@ -1,39 +1,5 @@
 import * as vscode from 'vscode';
-import { IGraphResponse } from 'jfrog-client-js';
-import { IImpactedPath } from 'jfrog-ide-webview';
-import { PackageType } from '../types/projectType';
-import { ApplicabilityScanResponse } from '../scanLogic/scanRunners/applicabilityScan';
-import { EosScanResponse } from '../scanLogic/scanRunners/eosScan';
-
-/**
- * Describes all the issue data for a specific workspace from Xray scan
- */
-export interface WorkspaceIssuesData {
-    path: string;
-    descriptorsIssuesData: DescriptorIssuesData[];
-    eosScan: EosScanResponse;
-    eosScanTimestamp?: number;
-    failedFiles: FileIssuesData[];
-}
-/**
- * Describes all the issue data for a specific file from Xray scan
- */
-export interface FileIssuesData {
-    name: string;
-    fullpath: string;
-}
-
-/**
- * Describes all the issues data for a specific descriptor from Xray scan
- */
-export interface DescriptorIssuesData extends FileIssuesData {
-    type: PackageType;
-    graphScanTimestamp: number;
-    dependenciesGraphScan: IGraphResponse;
-    impactTreeData: { [issue_id: string]: IImpactedPath };
-    applicableIssues: ApplicabilityScanResponse;
-    applicableScanTimestamp?: number;
-}
+import { WorkspaceIssuesData } from '../types/issuesData';
 
 /**
  * Describes a cache that holds all the information from an Xray scan for a workspace
@@ -42,14 +8,6 @@ export class IssuesCache {
     public static readonly CACHE_BASE_KEY: string = 'jfrog.cache.issues.';
 
     constructor(public _cache: vscode.Memento) {}
-
-    public static hasIssues(data: WorkspaceIssuesData): boolean {
-        return data.descriptorsIssuesData.length > 0;
-    }
-
-    public static hasInformation(data: WorkspaceIssuesData): boolean {
-        return IssuesCache.hasIssues(data) || data.failedFiles.length > 0;
-    }
 
     /**
      * Get the unique key for this workspace

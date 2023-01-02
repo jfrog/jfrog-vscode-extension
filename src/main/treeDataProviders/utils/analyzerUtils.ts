@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
-import { DescriptorIssuesData, WorkspaceIssuesData } from '../../cache/issuesCache';
 import { CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
 import { SeverityUtils } from '../../types/severity';
 import { ApplicableTreeNode } from '../issuesTree/codeFileTree/applicableTreeNode';
@@ -17,6 +16,7 @@ import { EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
 import { ScanManager } from '../../scanLogic/scanManager';
 import { CodeIssueTreeNode } from '../issuesTree/codeFileTree/codeIssueTreeNode';
 import { FileIssues } from '../../scanLogic/scanRunners/analyzerModels';
+import { DescriptorIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
 
 export class AnalyzerUtils {
     /**

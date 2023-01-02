@@ -20,15 +20,8 @@ export class LogManager implements ExtensionComponent {
      * @param message - The message to log
      * @param level - The log level
      * @param focusOutput - Open the extension output view
-     * @param shouldToast - If true, display the message in a pop-up balloon
      */
-    public logMessage(
-        message: string,
-        level: LogLevel,
-        focusOutput: boolean = false,
-        shouldToast: boolean = false,
-        shouldToastInformation: boolean = false
-    ): void {
+    public logMessage(message: string, level: LogLevel, focusOutput: boolean = false): void {
         if (!message) {
             return;
         }
@@ -41,11 +34,28 @@ export class LogManager implements ExtensionComponent {
         if (focusOutput) {
             this.showOutput();
         }
-        if (shouldToast) {
-            vscode.window.showErrorMessage(message);
-        } else if (shouldToastInformation) {
-            vscode.window.showInformationMessage(message);
-        }
+    }
+
+    /**
+     * Log message and show information message to the user
+     * @param message - The message to log
+     * @param level - The log level
+     * @param focusOutput - Open the extension output view
+     */
+    public logMessageAndToastInfo(message: string, level: LogLevel, focusOutput: boolean = false): void {
+        this.logMessage(message, level, focusOutput);
+        vscode.window.showInformationMessage(message);
+    }
+
+    /**
+     * Log message and error information message to the user
+     * @param message - The message to log
+     * @param level - The log level
+     * @param focusOutput - Open the extension output view
+     */
+    public logMessageAndToastErr(message: string, level: LogLevel, focusOutput: boolean = true): void {
+        this.logMessage(message, level, focusOutput);
+        vscode.window.showErrorMessage(message);
     }
 
     /**

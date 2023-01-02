@@ -23,11 +23,9 @@ export class YarnTreeNode extends RootNode {
             listResults = this.runYarnList();
         } catch (error) {
             this._treesManager.logManager.logError(<any>error, false);
-            this._treesManager.logManager.logMessage(
+            this._treesManager.logManager.logMessageAndToastErr(
                 `Failed to scan Yarn project. Hint: Please make sure the command "yarn install" runs successfully in ` + this.workspaceFolder + '".',
-                'ERR',
-                true,
-                true
+                'ERR'
             );
             yarnListFailed = true;
         }

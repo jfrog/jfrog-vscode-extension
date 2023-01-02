@@ -58,7 +58,7 @@ export class CveTreeNode extends IssueTreeNode {
     public getDetailsPage(): IDependencyPage {
         return {
             id: this._issue_id,
-            cve: Translators.toWebViewICve(this.cve,this._applicableDetails),
+            cve: Translators.toWebViewICve(this.cve, this._applicableDetails),
             component: this._parent.name,
             watchName: this._watchNames.length > 0 ? this.watchNames : undefined,
             type: PackageType[this._parent.type],

@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as os from 'os';
 
 import { LogManager } from '../../log/logManager';
 import { ScanUtils } from '../../utils/scanUtils';
@@ -38,7 +39,20 @@ export class ApplicabilityRunner extends BinaryRunner {
     private static readonly BINARY_NAME: string = 'applicability_scanner';
 
     constructor(abortCheckInterval: number, logManager: LogManager) {
-        super(path.join(ScanUtils.getHomePath(), ApplicabilityRunner.RUNNER_FOLDER, ApplicabilityRunner.BINARY_NAME), abortCheckInterval, logManager);
+        super(
+            path.join(ScanUtils.getHomePath(), ApplicabilityRunner.RUNNER_FOLDER, ApplicabilityRunner.getBinaryName()),
+            abortCheckInterval,
+            logManager
+        );
+    }
+
+    private static getBinaryName(): string {
+        let name: string = ApplicabilityRunner.BINARY_NAME;
+        switch (os.platform()) {
+            case 'win32':
+                return name + '.exe';
+        }
+        return name;
     }
 
     /** @override */

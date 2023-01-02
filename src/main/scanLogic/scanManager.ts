@@ -60,11 +60,7 @@ export class ScanManager implements ExtensionComponent {
      * @param flatten - if true will flatten the graph and send only distincts dependencies, other wise will keep the graph as is
      * @returns the result of the scan
      */
-    public async scanDependencyGraph(
-        progress: XrayScanProgress,
-        graphRoot: RootNode,
-        checkCanceled: () => void
-    ): Promise<IGraphResponse> {
+    public async scanDependencyGraph(progress: XrayScanProgress, graphRoot: RootNode, checkCanceled: () => void): Promise<IGraphResponse> {
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
         return scanLogic.scan(graphRoot, progress, checkCanceled);
     }

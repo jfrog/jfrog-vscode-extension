@@ -67,12 +67,10 @@ export class NugetUtils {
 
         if (!nugetList.projects) {
             logManager.logError(new Error('No projects found for solution "' + slnFilePath + '".'), true);
-            logManager.logMessage(
+            logManager.logMessageAndToastErr(
                 'Possible cause: The solution needs to be restored. Restore it by running "nuget restore ' + path.resolve(slnFilePath) ||
                     slnFilePath + '".',
-                'INFO',
-                true,
-                true
+                'INFO'
             );
             return null;
         }

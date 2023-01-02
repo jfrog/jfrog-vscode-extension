@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { IComponent, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
-import { DescriptorIssuesData } from '../../cache/issuesCache';
 import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
 import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
 import { DescriptorTreeNode } from '../issuesTree/descriptorTree/descriptorTreeNode';
@@ -18,6 +17,7 @@ import { YarnUtils } from '../../utils/yarnUtils';
 import { IImpactedPath, ILicense } from 'jfrog-ide-webview';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { FocusType } from '../../constants/contextKeys';
+import { DescriptorIssuesData } from '../../types/issuesData';
 
 export class DescriptorUtils {
     /**
@@ -70,7 +70,19 @@ export class DescriptorUtils {
         return impactPaths;
     }
 
-    private static populateDependencyIssue(issue: IVulnerability, dependencyWithIssue: DependencyIssuesTreeNode, severity: Severity, impactedPath?: IImpactedPath) {
+    /**
+     * Create an Issue node child for a dependency issues node base on a given IVulnerability
+     * @param issue - the issue to create the child node from
+     * @param dependencyWithIssue - the parent of this issue
+     * @param severity - the severity of this issue
+     * @param impactedPath - the impacted path graph of this issue
+     */
+    private static populateDependencyIssue(
+        issue: IVulnerability,
+        dependencyWithIssue: DependencyIssuesTreeNode,
+        severity: Severity,
+        impactedPath?: IImpactedPath
+    ) {
         let violationIssue: IViolation = <IViolation>issue;
         if (violationIssue && violationIssue.license_key && impactedPath) {
             // License violation
@@ -107,11 +119,7 @@ export class DescriptorUtils {
             let severity: Severity = SeverityUtils.getSeverity(issue.severity);
             // Populate the issue for each dependency component
             for (let [componentId, component] of Object.entries(issue.components)) {
-                let dependencyWithIssue: DependencyIssuesTreeNode = descriptorNode.addNode(
-                    componentId,
-                    component,
-                    severity
-                );
+                let dependencyWithIssue: DependencyIssuesTreeNode = descriptorNode.addNode(componentId, component, severity);
 
                 let matchIssue: IssueTreeNode | undefined = dependencyWithIssue.issues.find(issueExists => issueExists.issueId === issue.issue_id);
                 let violationIssue: IViolation = <IViolation>issue;
@@ -119,29 +127,9 @@ export class DescriptorUtils {
                     // In case multiple watches are assigned and there are componenets that overlap between the watches
                     // Xray will return component duplication (just watch_name different), combine those results
                     matchIssue.watchNames.push(violationIssue.watch_name);
-                } else if (!matchIssue) { 
-                    this.populateDependencyIssue(issue,dependencyWithIssue,severity,impactedPath);
+                } else if (!matchIssue) {
+                    this.populateDependencyIssue(issue, dependencyWithIssue, severity, impactedPath);
                 }
-
-                // let violationIssue: IViolation = <IViolation>issue;
-                // let matchIssue: IssueTreeNode | undefined = dependencyWithIssue.issues.find(i => i.issueId == issue.issue_id);
-                // if (violationIssue && matchIssue) {
-                //     // In case multiple watches are assigned and there are componenets that overlap between the watches
-                //     // Xray will return component duplication (just watch_name different), combine those results
-                //     matchIssue.watchNames?.push(violationIssue.watch_name);
-                // } else {
-                //     if (violationIssue && violationIssue.license_key) {
-                //         dependencyWithIssue.issues.push(new LicenseIssueTreeNode(violationIssue, severity, dependencyWithIssue, impactedPath));
-                //     } else {
-                //         if (issue.cves) {
-                //             for (let cveIssue of issue.cves) {
-                //                 dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath, cveIssue));
-                //             }
-                //         } else {
-                //             dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath));
-                //         }
-                //     }
-                // }
             }
         }
         // Populate licenses
@@ -178,7 +166,7 @@ export class DescriptorUtils {
         return undefined;
     }
 
-    public static searchDependencyGraph(descriptorDir: string, node: RootNode): RootNode | undefined {
+    private static searchDependencyGraph(descriptorDir: string, node: RootNode): RootNode | undefined {
         if (node.fullPath == descriptorDir || node.projectDetails.path == descriptorDir) {
             return node;
         }
