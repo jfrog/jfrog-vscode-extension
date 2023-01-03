@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as os from 'os';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
 import { CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
 import { SeverityUtils } from '../../types/severity';
@@ -20,11 +21,15 @@ import { DescriptorIssuesData, WorkspaceIssuesData } from '../../types/issuesDat
 
 export class AnalyzerUtils {
     /**
-     * Remove the prefix 'file://'
-     * @param filePath - path to remove prefix
+     * Remove the prefix 'file://' and decode the encoded path from binary result
+     * @param filePath - path to remove prefix and decode
      */
     public static parseLocationFilePath(filePath: string): string {
-        return decodeURI(filePath.includes('file://') ? filePath.substring('file://'.length) : filePath);
+        if (os.platform() === 'win32') {
+            return decodeURI((filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath).replace(/['/']/g,'\\'));
+        } else{
+            return decodeURI(filePath.includes('file://') ? filePath.substring('file://'.length) : filePath);
+        }
     }
 
     /**
