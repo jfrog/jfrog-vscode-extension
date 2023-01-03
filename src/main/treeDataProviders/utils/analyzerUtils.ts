@@ -57,26 +57,27 @@ export class AnalyzerUtils {
         descriptorNode: DescriptorTreeNode,
         descriptorData: DescriptorIssuesData
     ): number {
-        // populate descriptor node with data
+        // Populate descriptor node with data
         descriptorNode.scannedCve = new Set<string>(descriptorData.applicableIssues?.scannedCve ?? []);
         descriptorNode.applicableCve = new Map<string, CveApplicableDetails>(
             descriptorData.applicableIssues ? Object.entries(descriptorData.applicableIssues.applicableCve) : []
         );
         descriptorNode.applicableScanTimeStamp = descriptorData.applicableScanTimestamp;
 
-        // populate related CodeFile nodes with issues and update the descriptor CVE applicability details
+        // Populate related CodeFile nodes with issues and update the descriptor CVE applicability details
         let issuesCount: number = 0;
         descriptorNode.scannedCve.forEach(cve => {
             // Check if the descriptor has this cve issue
             let node: IssueTreeNode | undefined = descriptorNode.getIssueById(cve);
             if (node instanceof CveTreeNode && node.cve) {
-                let details: CveApplicableDetails | undefined = descriptorNode.applicableCve?.get(node.cve.cve);
-                if (details) {
+                let potential: CveApplicableDetails | undefined = descriptorNode.applicableCve?.get(node.cve.cve);
+                if (potential) {
+                    let details: CveApplicableDetails = potential;
                     let evidences: IEvidence[] = [];
                     // Populate code file issues for workspace
                     details.fileEvidences.forEach(fileEvidence => {
                         let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileEvidence.full_path);
-                        issuesCount += this.populateEvidence(fileEvidence, <CveTreeNode>node, evidences, fileNode);
+                        issuesCount += this.populateEvidence(fileEvidence, details.fixReason, <CveTreeNode>node, evidences, fileNode);
                     });
                     // Applicable
                     node.applicableDetails = { isApplicable: true, reason: details.fixReason, evidence: evidences } as IApplicableDetails;
@@ -93,17 +94,19 @@ export class AnalyzerUtils {
     /**
      * Populate the file evidence (ApplicableTreeNode) result in the file node and evidences list
      * @param fileEvidence - the evidences in the file to populate
+     * @param reason - the reason this evidence is an issue
      * @param issueNode - the CVE node related to the issues
      * @param evidences - the evidences list to populate data inside
      * @param fileNode - the node to poupulate children inside
      * @returns the number of Evidences for the issue that were populated
      */
-    private static populateEvidence(fileEvidence: FileIssues, issueNode: CveTreeNode, evidences: IEvidence[], fileNode: CodeFileTreeNode): number {
+    private static populateEvidence(fileEvidence: FileIssues, reason: string, issueNode: CveTreeNode, evidences: IEvidence[], fileNode: CodeFileTreeNode): number {
         let issuesCount: number = 0;
         fileEvidence.locations.forEach(location => {
             if (location.snippet) {
                 // add evedence for CVE applicability details
                 evidences.push({
+                    reason: reason,
                     filePathEvidence: AnalyzerUtils.parseLocationFilePath(fileEvidence.full_path),
                     codeEvidence: location.snippet.text
                 } as IEvidence);
