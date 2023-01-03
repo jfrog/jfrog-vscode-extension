@@ -24,7 +24,7 @@ export class AnalyzerUtils {
      * @param filePath - path to remove prefix
      */
     public static parseLocationFilePath(filePath: string): string {
-        return filePath.includes('file://') ? filePath.substring('file://'.length) : filePath;
+        return decodeURI(filePath.includes('file://') ? filePath.substring('file://'.length) : filePath);
     }
 
     /**
