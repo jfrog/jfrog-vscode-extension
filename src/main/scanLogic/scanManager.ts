@@ -84,6 +84,10 @@ export class ScanManager implements ExtensionComponent {
             this._logManager.logMessage('Applicability scan is not supported', 'DEBUG');
             return {} as ApplicabilityScanResponse;
         }
+        this._logManager.logMessage(
+            'scanning directory ' + directory + ', for CVE issues: ' + cveToRun + ', skipping folders: ' + skipFolders,
+            'DEBUG'
+        );
         return applicableRunner.scan(directory, abortController, cveToRun, skipFolders);
     }
 

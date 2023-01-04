@@ -26,6 +26,7 @@ import { CodeIssueTreeNode } from './codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
 import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
 import { DescriptorIssuesData, FileIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
+import { Configuration } from '../../utils/configuration';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -85,7 +86,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 ScanUtils.setScanInProgress(false);
                 this.onChangeFire();
             });
-        this._logManager.logMessage('Scans completed 🐸 (elapsed = ' + (Date.now() - startRefreshTimestamp) / 1000 + 'sec)', 'INFO');
+        this._logManager.logMessage('Scans completed 🐸 (elapsed = ' + (Date.now() - startRefreshTimestamp) / 1000 + ' seconds)', 'INFO');
     }
 
     /**
@@ -164,7 +165,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     this._logManager.logMessage("Loading issues of descriptor '" + descriptor.fullpath + "'", 'DEBUG');
                     let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptor.fullpath, descriptor.type, root);
                     DescriptorUtils.populateDescriptorData(descriptorNode, descriptor);
-                    if (descriptor.applicableIssues) {
+                    if (descriptor.applicableIssues && descriptor.applicableIssues.scannedCve) {
                         AnalyzerUtils.populateApplicableIssues(root, descriptorNode, descriptor);
                     }
                     root.children.push(descriptorNode);
@@ -535,11 +536,14 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             return;
         }
         this._logManager.logMessage('Scanning descriptor ' + descriptorData.fullpath + ' for cve applicability issues', 'INFO');
+        let excludePattern: string | undefined = Configuration.getScanExcludePattern();
+
         let startApplicableTime: number = Date.now();
         descriptorData.applicableIssues = await this._scanManager.scanApplicability(
             path.dirname(descriptorData.fullpath),
             abortController,
-            cveToScan
+            cveToScan,
+            excludePattern ? [excludePattern] : []
         );
 
         if (descriptorData.applicableIssues && descriptorData.applicableIssues.applicableCve) {

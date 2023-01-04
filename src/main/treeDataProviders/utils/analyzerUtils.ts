@@ -26,8 +26,8 @@ export class AnalyzerUtils {
      */
     public static parseLocationFilePath(filePath: string): string {
         if (os.platform() === 'win32') {
-            return decodeURI((filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath).replace(/['/']/g,'\\'));
-        } else{
+            return decodeURI((filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath).replace(/['/']/g, '\\'));
+        } else {
             return decodeURI(filePath.includes('file://') ? filePath.substring('file://'.length) : filePath);
         }
     }
@@ -105,7 +105,13 @@ export class AnalyzerUtils {
      * @param fileNode - the node to poupulate children inside
      * @returns the number of Evidences for the issue that were populated
      */
-    private static populateEvidence(fileEvidence: FileIssues, reason: string, issueNode: CveTreeNode, evidences: IEvidence[], fileNode: CodeFileTreeNode): number {
+    private static populateEvidence(
+        fileEvidence: FileIssues,
+        reason: string,
+        issueNode: CveTreeNode,
+        evidences: IEvidence[],
+        fileNode: CodeFileTreeNode
+    ): number {
         let issuesCount: number = 0;
         fileEvidence.locations.forEach(location => {
             if (location.snippet) {
