@@ -76,6 +76,5 @@ function getHtmlForWebview(context: vscode.ExtensionContext, webview: vscode.Web
     const webviewDataPath: vscode.Uri = webview.asWebviewUri(
         vscode.Uri.file(path.join(context.extensionPath, 'node_modules', 'jfrog-ide-webview', 'build'))
     );
-    let html: string = data.replace(/\/static/g, `${webviewDataPath}/static`);
-    return html;
+    return data.replace(/\/static/g, `${webviewDataPath}/static`);
 }
