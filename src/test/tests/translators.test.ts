@@ -48,15 +48,8 @@ describe('Translators Tests', () => {
         assert.lengthOf(issues.cves || [], 0);
     });
 
-    it('CVEs - Empty CVEs', async () => {
-        let clientCves: ICve[] = [];
-        let issues: IIssueCacheObject = Translators.toCacheIssue({ cves: clientCves } as IIssue);
-        assert.isDefined(issues.cves);
-        assert.lengthOf(issues.cves || [], 0);
-    });
-
     it('CVEs - One CVE', async () => {
-        let clientCves: ICve[] = [];
+        let clientCves: ICve[] = [{ cve: 'CVE-2020-1', cvss_v2: '4.3/CVSS:2.0/AV:N/AC:M/Au:N/C:N/I:P/A:N' }];
         let issues: IIssueCacheObject = Translators.toCacheIssue({ cves: clientCves } as IIssue);
         assert.isDefined(issues.cves);
         if (!issues.cves) {
@@ -68,7 +61,8 @@ describe('Translators Tests', () => {
 
     it('CVEs - Two CVEs', async () => {
         let clientCves: ICve[] = [
-            // { cve: 'CVE-2020-1', cvss_v2_vector: '4.3/CVSS:2.0/AV:N/AC:M/Au:N/C:N/I:P/A:N' },
+            { cve: 'CVE-2020-1', cvss_v2: '4.3/CVSS:2.0/AV:N/AC:M/Au:N/C:N/I:P/A:N' },
+            { cve: 'CVE-2020-2', cvss_v2: '4.3/CVSS:2.0/AV:N/AC:M/Au:N/C:N/I:P/A:N' }
         ];
         let issues: IIssueCacheObject = Translators.toCacheIssue({ cves: clientCves } as IIssue);
         assert.isDefined(issues.cves);
