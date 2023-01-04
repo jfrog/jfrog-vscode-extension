@@ -17,7 +17,7 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
     }
 
     /**
-     * Apply all the changes to this object and its children, This method should be called after evrey set of changes to this object or its children.
+     * Apply all the changes to this object and its children, This method should be called after every set of changes to this object or its children.
      * Use to calculate accumulative statistics and view from all the children.
      * 1. Calls apply to each child to ensure data is calculated and not dirty.
      * 2. Calculate the oldest scan timestamp from all the files.

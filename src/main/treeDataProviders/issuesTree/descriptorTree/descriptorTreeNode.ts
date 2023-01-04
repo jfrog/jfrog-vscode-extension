@@ -19,7 +19,7 @@ export class DescriptorTreeNode extends FileTreeNode {
 
     private _packageType: PackageType;
 
-    // Not applicaible if key in here and not in the map below
+    // Not applicable if key in here and not in the map below
     private _scannedCve?: Set<string> | undefined;
     // Is applicable if key in here
     private _applicableCve?: Map<string, CveApplicableDetails> | undefined;
@@ -52,13 +52,13 @@ export class DescriptorTreeNode extends FileTreeNode {
      * @returns - DependencyIssuesTreeNode with the artifactId if exists or undefined otherwise
      */
     public getDependencyByID(artifactId: string): DependencyIssuesTreeNode | undefined {
-        return this._dependenciesWithIssue.find(dependncy => dependncy.artifactId === artifactId);
+        return this._dependenciesWithIssue.find(dependency => dependency.artifactId === artifactId);
     }
 
     /** @override */
     public getIssueById(id: string): IssueTreeNode | undefined {
-        for (const dependecy of this._dependenciesWithIssue) {
-            for (const issue of dependecy.issues) {
+        for (const dependency of this._dependenciesWithIssue) {
+            for (const issue of dependency.issues) {
                 if (id === issue.issueId || (issue instanceof CveTreeNode && issue.cve && id === issue.cve.cve)) {
                     return issue;
                 }
@@ -69,10 +69,10 @@ export class DescriptorTreeNode extends FileTreeNode {
 
     /**
      * Search for the dependency in the descriptor base on componentId.
-     * If found will update the top severity of the node if the given sevirity is higher.
+     * If found will update the top severity of the node if the given severity is higher.
      * If not found it will create a new one and add it to the descriptor node
      * @param componentId - the id (type,name,version) of the dependency
-     * @param component - the dependecy data to create
+     * @param component - the dependency data to create
      * @param severity - the severity to create/update
      * @returns the dependency object if exists, else a newly created one base on the input
      */
@@ -88,8 +88,8 @@ export class DescriptorTreeNode extends FileTreeNode {
     /** @override */
     public get issues(): IssueTreeNode[] {
         let issues: IssueTreeNode[] = [];
-        this._dependenciesWithIssue.forEach(dependecy => {
-            issues.push(...dependecy.issues);
+        this._dependenciesWithIssue.forEach(dependency => {
+            issues.push(...dependency.issues);
         });
         return issues;
     }

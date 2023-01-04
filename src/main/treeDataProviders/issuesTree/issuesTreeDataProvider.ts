@@ -12,7 +12,7 @@ import { DependenciesTreesFactory } from '../dependenciesTree/dependenciesTreeFa
 import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
 import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
 import { CacheManager } from '../../cache/cacheManager';
-import { getNumberOfSupportedPackgeTypes, PackageType } from '../../types/projectType';
+import { getNumberOfSupportedPackageTypes, PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { StepProgress } from '../utils/stepProgress';
 import { Utils } from '../utils/utils';
@@ -143,7 +143,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     /**
      * Async task to load the issues from the last scan of a given workspace
      * @param workSpace - the workspace to load it's issues
-     * @returns - the workspcae issues if the exists, undefined otherwise
+     * @returns - the workspace issues if the exists, undefined otherwise
      */
     private async loadIssuesFromCache(workSpace: vscode.WorkspaceFolder): Promise<IssuesRootTreeNode | undefined> {
         // Check if data for the workspace exists in the cache
@@ -267,19 +267,19 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         );
         // Scan workspace to prepare the needed information for the scans and progress
         progress.report({ message: '👷 Preparing workspace' });
-        let workspcaeDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
+        let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
         let descriptorsCount: number = 0;
-        for (let despcriptorPaths of workspcaeDescriptors.values()) {
-            descriptorsCount += despcriptorPaths.length;
+        for (let descriptorPaths of workspaceDescriptors.values()) {
+            descriptorsCount += descriptorPaths.length;
         }
         checkCanceled();
         let graphSupported: boolean = await this._scanManager.validateGraphSupported();
         checkCanceled();
 
-        // Build workspace dependecy tree for all the descriptors
-        progressManager.startStep('👷 Building workspace dependencies tree', getNumberOfSupportedPackgeTypes());
+        // Build workspace dependency tree for all the descriptors
+        progressManager.startStep('👷 Building workspace dependencies tree', getNumberOfSupportedPackageTypes());
         let workspaceDependenciesTree: DependenciesTreeNode = await DependenciesTreesFactory.createDependenciesTrees(
-            workspcaeDescriptors,
+            workspaceDescriptors,
             [root.workSpace],
             [],
             this._treesManager,
@@ -292,7 +292,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         // Dependency graph scan and applicability scan for each descriptor
         if (graphSupported) {
             scansPromises.push(
-                this.descriptorsScanning(workspaceData, root, workspcaeDescriptors, workspaceDependenciesTree, progressManager, checkCanceled)
+                this.descriptorsScanning(workspaceData, root, workspaceDescriptors, workspaceDependenciesTree, progressManager, checkCanceled)
             );
         }
         await Promise.all(scansPromises);
@@ -305,7 +305,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * 2. Applicability scan of the CVE in the workspace
      * @param workspaceData - the given object that holds all the issues data for the workspace and will be populated at the task
      * @param root - the dependenciesTreeRoot that will be populated and will hold the final tree
-     * @param workspcaeDescriptors - map of all the descriptors in the workspace with the packeType of the descriptor as key and the file paths as values
+     * @param workspaceDescriptors - map of all the descriptors in the workspace with the packageType of the descriptor as key and the file paths as values
      * @param workspaceDependenciesTree - the dependencies graph of all the descriptors in the workspace (each child of root is a descriptor graph)
      * @param progressManager - the progress manager for the workspace scanning process
      * @param checkCanceled - the method to check if the task was canceled by the user from the notification window, will throw ScanCancellationError.
@@ -313,14 +313,14 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     private async descriptorsScanning(
         workspaceData: WorkspaceIssuesData,
         root: IssuesRootTreeNode,
-        workspcaeDescriptors: Map<PackageType, vscode.Uri[]>,
+        workspaceDescriptors: Map<PackageType, vscode.Uri[]>,
         workspaceDependenciesTree: DependenciesTreeNode,
         progressManager: StepProgress,
         checkCanceled: () => void
     ): Promise<any> {
         // 2. Scan descriptors
         let scansPromises: Promise<any>[] = [];
-        for (const [type, descriptorsPaths] of workspcaeDescriptors) {
+        for (const [type, descriptorsPaths] of workspaceDescriptors) {
             for (const descriptorPath of descriptorsPaths) {
                 const descriptorData: DescriptorIssuesData = {
                     type: type,
@@ -329,7 +329,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 } as DescriptorIssuesData;
 
                 let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptorData.fullpath, descriptorData.type);
-                // Search for the dependecy graph of the descriptor
+                // Search for the dependency graph of the descriptor
                 let descriptorGraph: RootNode | undefined = DescriptorUtils.getDependencyGraph(workspaceDependenciesTree, descriptorPath.fsPath);
                 if (!descriptorGraph) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
@@ -368,16 +368,16 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     }
 
     /**
-     * Runs the descriptor scans asyncronously.
+     * Runs the descriptor scans asynchronously.
      * 1. Dependency graph scanning
-     * 2. CVE Applicablity scanning
+     * 2. CVE Applicability scanning
      * @param workspaceData - the issues data for the workspace
      * @param root - the root node of the workspace
      * @param descriptorData - the descriptor issues data
      * @param descriptorNode - the descriptor node
      * @param descriptorGraph - the descriptor dependencies graph
      * @param progressManager - the progress manager for the process
-     * @param checkCanceled - the method to check if cancle was requested
+     * @param checkCanceled - the method to check if cancel was requested
      */
     private async createDescriptorTask(
         workspaceData: WorkspaceIssuesData,
@@ -401,7 +401,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             })
             .catch(error => this.onFileScanError(workspaceData, root, error, descriptorData))
             .finally(() => progressManager.onProgress());
-        // Applicabile scan task
+        // Applicable scan task
         if (!this._scanManager.validateApplicableSupported() || !foundIssues) {
             progressManager.reportProgress();
             return;
@@ -431,7 +431,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * Handle errors that occur when scanning a specific file.
      * 1.1 If error occur during file scan and failedFile provided a failed node will be created to notify the user.
      * 1.2 If the error is FileScanError the reason attribute will be added to the label
-     * 2. If cancle is reported throw the error to handle on workspace level
+     * 2. If cancel is reported throw the error to handle on workspace level
      * @param workspaceData - the workspace that the file belongs to
      * @param root - the root that represents the workspace
      * @param error - the error that occur
@@ -516,7 +516,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     /**
      * Run CVE applicable scan async task.
      * @param root - the root node to generate the issues inside
-     * @param descriptorData - the descriptor data to store the reponse inside
+     * @param descriptorData - the descriptor data to store the response inside
      * @param descriptorNode - the descriptor node with the CVE to scan
      * @param abortController - the controller to abort the operation
      */

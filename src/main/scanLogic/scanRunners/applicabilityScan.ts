@@ -19,7 +19,7 @@ export interface ApplicabilityScanRequest extends AnalyzeScanRequest {
  * The response that is generated from the binary after scanning applicability
  */
 export interface ApplicabilityScanResponse {
-    scannedCve: string[]; // not applicaible if key in here but not in below
+    scannedCve: string[]; // not applicable if key in here but not in below
     applicableCve: { [cve_id: string]: CveApplicableDetails }; // is applicable if key in here
 }
 
@@ -60,8 +60,8 @@ export class ApplicabilityRunner extends BinaryRunner {
     }
 
     /** @override */
-    public asAnalzerRequestString(...requests: AnalyzeScanRequest[]): string {
-        let str: string = super.asAnalzerRequestString(...requests);
+    public asAnalyzerRequestString(...requests: AnalyzeScanRequest[]): string {
+        let str: string = super.asAnalyzerRequestString(...requests);
         return str.replace('cve_whitelist', 'cve-whitelist').replace('skipped_folders', 'skipped-folders');
     }
 

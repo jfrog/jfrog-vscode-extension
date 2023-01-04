@@ -41,7 +41,7 @@ export class DescriptorUtils {
     }
 
     /**
-     *  Get the impact path of all the children of a given root, recusevly, if exists at least one component that has issue in the path
+     *  Get the impact path of all the children of a given root, recursively, if exists at least one component that has issue in the path
      * @param root - the root to get it's children impact
      * @param componentsWithIssue - map of artifactId -> component, if component exists in the map it has issue
      * @returns array of impact paths one for each child if exists
@@ -124,7 +124,7 @@ export class DescriptorUtils {
                 let matchIssue: IssueTreeNode | undefined = dependencyWithIssue.issues.find(issueExists => issueExists.issueId === issue.issue_id);
                 let violationIssue: IViolation = <IViolation>issue;
                 if (matchIssue && violationIssue.watch_name && !matchIssue.watchNames.includes(violationIssue.watch_name)) {
-                    // In case multiple watches are assigned and there are componenets that overlap between the watches
+                    // In case multiple watches are assigned and there are components that overlap between the watches
                     // Xray will return component duplication (just watch_name different), combine those results
                     matchIssue.watchNames.push(violationIssue.watch_name);
                 } else if (!matchIssue) {
@@ -150,10 +150,10 @@ export class DescriptorUtils {
      * Get the dependency graph of a descriptor base on a given path
      * @param workspaceDependenciesTree - the dependencies graph for all the descriptors in the workspace
      * @param descriptorPath - the descriptor we want to fetch its sub tree graph
-     * @returns the descriptor dependencies tree if exsits the provided workspace tree, undefined otherwise
+     * @returns the descriptor dependencies tree if exists the provided workspace tree, undefined otherwise
      */
     public static getDependencyGraph(workspaceDependenciesTree: DependenciesTreeNode, descriptorPath: string): RootNode | undefined {
-        // Search for the dependecy graph of the descriptor
+        // Search for the dependency graph of the descriptor
         let descriptorDir: string = path.dirname(descriptorPath);
         for (const child of workspaceDependenciesTree.children) {
             if (child instanceof RootNode) {
@@ -182,11 +182,11 @@ export class DescriptorUtils {
     }
 
     /**
-     * Get the positions a specific depdndecy appers in a descriptor file
+     * Get the positions a specific dependency appears in a descriptor file
      * @param document - the descriptor document we want to search in
-     * @param packageType - the type of packge this descriptor has
+     * @param packageType - the type of package this descriptor has
      * @param dependencyId - the dependency id we want to search
-     * @returns the list of positions in the document this dependency appers in
+     * @returns the list of positions in the document this dependency appears in
      */
     public static getDependencyPosition(document: vscode.TextDocument, packageType: PackageType, dependencyId: string): vscode.Position[] {
         let dependencyName: string = packageType == PackageType.Maven ? dependencyId : dependencyId.substring(0, dependencyId.lastIndexOf(':'));

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ILicense } from 'jfrog-ide-webview';
-import { PackageType, toPackgeType } from '../../../types/projectType';
+import { PackageType, toPackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { DescriptorTreeNode } from './descriptorTreeNode';
 import { IComponent } from 'jfrog-client-js';
@@ -15,7 +15,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     private _type: PackageType;
     private _infectedVersions: string[];
 
-    // Added dynamicly
+    // Added dynamically
     private _issues: (CveTreeNode | LicenseIssueTreeNode)[] = [];
     private _licenses: ILicense[] = [];
 
@@ -26,12 +26,12 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         this._version = component.package_version;
         this._fixVersion = component.fixed_versions;
         this._infectedVersions = component.infected_versions;
-        this._type = toPackgeType(component.package_type);
+        this._type = toPackageType(component.package_type);
         this.description = this._version;
     }
 
     /**
-     * Apply all the changes to this object and its children, This method should be called after evrey set of changes to this object or its children.
+     * Apply all the changes to this object and its children, This method should be called after every set of changes to this object or its children.
      * Use to calculate accumulative statistics and view from all the children.
      */
     public apply() {
