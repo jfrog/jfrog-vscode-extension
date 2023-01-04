@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { ProjectDetails } from '../../types/projectDetails';
-import { getNumberOfSupportedPackgeTypes, PackageType } from '../../types/projectType';
+import { getNumberOfSupportedPackageTypes, PackageType } from '../../types/projectType';
 import { GoUtils } from '../../utils/goUtils';
 import { MavenUtils } from '../../utils/mavenUtils';
 import { NpmUtils } from '../../utils/npmUtils';
@@ -67,7 +67,7 @@ export class DependenciesTreesFactory {
                 checkCanceled
             );
         } finally {
-            progressManager.reportProgress((getNumberOfSupportedPackgeTypes() - typesDone) * progressManager.getStepIncValue);
+            progressManager.reportProgress((getNumberOfSupportedPackageTypes() - typesDone) * progressManager.getStepIncValue);
         }
 
         return parent;

@@ -14,7 +14,7 @@ import { AnalyzerRequest, AnalyzerScanResponse, AnalyzeScanRequest } from './ana
 interface RunArgs {
     // Should split the requests to multiple runs
     split: boolean;
-    // The directory that the requests/resposnses are expected
+    // The directory that the requests/responses are expected
     directory: string;
     // The requests for the run
     requests: RunRequest[];
@@ -63,7 +63,7 @@ export abstract class BinaryRunner {
     /**
      * Execute the cmd command to run the binary with given arguments and an option to abort the operation.
      * Checks every this._abortCheckInterval to see if the abort signal was given
-     * @param abortSignal - the signal to abort the opreation
+     * @param abortSignal - the signal to abort the operation
      * @param args - the arguments for the command
      */
     protected async executeBinary(abortSignal: AbortSignal, args: string[]): Promise<void> {
@@ -97,7 +97,7 @@ export abstract class BinaryRunner {
      * @param requests - run requests
      * @returns analyze request in YAML format
      */
-    public asAnalzerRequestString(...requests: AnalyzeScanRequest[]): string {
+    public asAnalyzerRequestString(...requests: AnalyzeScanRequest[]): string {
         return yaml.dump({
             scans: requests
         } as AnalyzerRequest);
@@ -119,7 +119,7 @@ export abstract class BinaryRunner {
                 if (args.split) {
                     // Insert as actual request to args request
                     args.requests.push({
-                        request: this.asAnalzerRequestString(request),
+                        request: this.asAnalyzerRequestString(request),
                         requestPath: requestPath,
                         responsePaths: [responsePath]
                     } as RunRequest);
@@ -130,10 +130,10 @@ export abstract class BinaryRunner {
                 }
             }
         }
-        // In case the split parameter is false instert the actual requsets as a single request to the args
+        // In case the split parameter is false insert the actual requests as a single request to the args
         if (!args.split && actualRequest.requests.length > 0) {
             args.requests.push({
-                request: this.asAnalzerRequestString(...actualRequest.requests),
+                request: this.asAnalyzerRequestString(...actualRequest.requests),
                 requestPath: path.join(args.directory, 'request'),
                 responsePaths: actualRequest.responsePaths
             } as RunRequest);
@@ -156,7 +156,7 @@ export abstract class BinaryRunner {
 
     /**
      * Sleep and delay task for sleepIntervalMilliseconds
-     * @param sleepIntervalMilliseconds - the amount of time in miliseconds to wait
+     * @param sleepIntervalMilliseconds - the amount of time in milliseconds to wait
      */
     private async delay(sleepIntervalMilliseconds: number): Promise<void> {
         return new Promise(resolve => setTimeout(resolve, sleepIntervalMilliseconds));

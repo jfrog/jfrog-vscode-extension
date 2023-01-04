@@ -96,16 +96,12 @@ export class ScanUtils {
      * @param filePath - the file to open
      * @param fileRegion - optional region in file to reveal
      */
-    public static async openFile(filePath: string, fileRegion?: vscode.Range) {
-        if (filePath === undefined || filePath === '') {
+    public static async openFile(filePath: string, fileRegion?: vscode.Range, viewColumn: vscode.ViewColumn = vscode.ViewColumn.One) {
+        if (!filePath) {
             return;
         }
-        let openPath: vscode.Uri = vscode.Uri.file(filePath);
-        if (!openPath) {
-            return;
-        }
-        let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(openPath);
-        let textEditor: vscode.TextEditor | undefined = await vscode.window.showTextDocument(textDocument);
+        let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(filePath);
+        let textEditor: vscode.TextEditor = await vscode.window.showTextDocument(textDocument, viewColumn);
         if (!textEditor || !fileRegion) {
             return;
         }

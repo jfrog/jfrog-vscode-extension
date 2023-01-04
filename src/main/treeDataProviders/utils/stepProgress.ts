@@ -29,8 +29,8 @@ export class StepProgress {
     }
 
     /**
-     * Call this method at the beggining of each step.
-     * Shows the title of the step and caclulate the needed progress information for the substeps.
+     * Call this method when starting each step.
+     * Shows the title of the step and calculate the needed progress information for the substeps.
      * Calls onProgress method if provided
      * @param msg
      * @param subSteps
@@ -51,7 +51,7 @@ export class StepProgress {
     }
 
     /**
-     * Get the total amount of progress precentege (45% -> 45) allocated for each step or substep if substeps amount was given on starting the step
+     * Get the total amount of progress percentage (45% -> 45) allocated for each step or substep if substeps amount was given on starting the step
      */
     public get getStepIncValue(): number {
         let incPerStep: number = StepProgress.MAX_PROGRESS / this._totalSteps;
@@ -60,7 +60,7 @@ export class StepProgress {
 
     /**
      * Report progress amount, will update the progress and call onProgress method if provided
-     * @param inc - the total amount of progress to increase, default amonut is getStepIncValue
+     * @param inc - the total amount of progress to increase, default amount is getStepIncValue
      */
     public reportProgress(inc: number = this.getStepIncValue) {
         if (this.currentStepMsg) {

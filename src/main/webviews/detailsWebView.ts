@@ -16,27 +16,27 @@ export class DetailsWebView {
 
         context.subscriptions.push(
             vscode.commands.registerCommand('jfrog.view.dependency.details.page', (page: IDependencyPage) => {
-                prevActiveTreeNode = page;
                 if (!panel) {
                     panel = createWebview(context);
                     panel.onDidChangeViewState(e => {
                         updateWebview(e.webviewPanel, prevActiveTreeNode);
                     });
+                    panel.onDidDispose(
+                        () => {
+                            panel = undefined;
+                        },
+                        undefined,
+                        context.subscriptions
+                    );
                 } else {
-                    // Focus on panel if aleady exists
                     panel.reveal();
                 }
-                if (page) {
+
+                if (page && prevActiveTreeNode !== page) {
                     this._logManager.logMessage('Opening webview page with data:\n' + JSON.stringify(page), 'DEBUG');
-                    updateWebview(panel, prevActiveTreeNode);
+                    updateWebview(panel, page);
                 }
-                panel.onDidDispose(
-                    () => {
-                        panel = undefined;
-                    },
-                    undefined,
-                    context.subscriptions
-                );
+                prevActiveTreeNode = page;
             })
         );
     }

@@ -14,7 +14,7 @@ import { EosRunner, EosScanRequest, EosScanResponse } from './scanRunners/eosSca
  * Manage all the Xray scans
  */
 export class ScanManager implements ExtensionComponent {
-    private static readonly BINARY_ABORT_CHECK_INVTERVAL: number = 1 * 1000; // every 1 sec
+    private static readonly BINARY_ABORT_CHECK_INTERVAL: number = 1 * 1000; // every 1 sec
 
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
@@ -41,23 +41,23 @@ export class ScanManager implements ExtensionComponent {
      * Validate if the applicable-scan is supported
      */
     public validateApplicableSupported(): boolean {
-        return new ApplicabilityRunner(ScanManager.BINARY_ABORT_CHECK_INVTERVAL, this._logManager).isSupported;
+        return new ApplicabilityRunner(ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).isSupported;
     }
 
     /**
      * Validate if the eos-scan is supported
      */
     public validateEosSupported(): boolean {
-        return new EosRunner(ScanManager.BINARY_ABORT_CHECK_INVTERVAL, this._logManager).isSupported;
+        return new EosRunner(ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).isSupported;
     }
 
     /**
-     * Scan dependecy graph async for Xray issues.
-     * The graph will be flatten and only distincts dependencies will be sent
+     * Scan dependency graph async for Xray issues.
+     * The graph will be flatten and only distinct dependencies will be sent
      * @param progress - the progress for this scan
      * @param graphRoot - the dependency graph to scan
-     * @param checkCanceled - method to check if the action was cancled
-     * @param flatten - if true will flatten the graph and send only distincts dependencies, other wise will keep the graph as is
+     * @param checkCanceled - method to check if the action was canceled
+     * @param flatten - if true will flatten the graph and send only distinct dependencies, other wise will keep the graph as is
      * @returns the result of the scan
      */
     public async scanDependencyGraph(progress: XrayScanProgress, graphRoot: RootNode, checkCanceled: () => void): Promise<IGraphResponse> {
@@ -68,7 +68,7 @@ export class ScanManager implements ExtensionComponent {
     /**
      * Scan CVE in files for applicability issues.
      * @param directory - the directory that will be scan
-     * @param abortController - the abort controller for cancele request
+     * @param abortController - the abort controller for cancel request
      * @param cveToRun - the CVE list we want to run applicability scan on
      * @param skipFolders - the folders inside directory we want to skip scanning
      * @returns the applicability scan response
@@ -79,16 +79,20 @@ export class ScanManager implements ExtensionComponent {
         cveToRun: string[] = [],
         skipFolders: string[] = []
     ): Promise<ApplicabilityScanResponse> {
-        let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(ScanManager.BINARY_ABORT_CHECK_INVTERVAL, this._logManager);
+        let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager);
         if (!applicableRunner.isSupported) {
             this._logManager.logMessage('Applicability scan is not supported', 'DEBUG');
             return {} as ApplicabilityScanResponse;
         }
+        this._logManager.logMessage(
+            'Scanning directory ' + directory + ', for CVE issues: ' + cveToRun + ', skipping folders: ' + skipFolders,
+            'DEBUG'
+        );
         return applicableRunner.scan(directory, abortController, cveToRun, skipFolders);
     }
 
     public async scanEos(abortController: AbortController, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
-        let eosRunner: EosRunner = new EosRunner(ScanManager.BINARY_ABORT_CHECK_INVTERVAL, this._logManager);
+        let eosRunner: EosRunner = new EosRunner(ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager);
         if (!eosRunner.isSupported) {
             this._logManager.logMessage('Eos scan is not supported', 'DEBUG');
             return {} as EosScanResponse;

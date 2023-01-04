@@ -8,11 +8,11 @@ export enum PackageType {
     Python
 }
 
-export function getNumberOfSupportedPackgeTypes(): number {
+export function getNumberOfSupportedPackageTypes(): number {
     return Object.keys(PackageType).length - 1;
 }
 
-export function toPackgeType(str: string): PackageType {
+export function toPackageType(str: string): PackageType {
     switch (str.toUpperCase()) {
         case 'GO':
             return PackageType.Go;

@@ -34,7 +34,7 @@ export abstract class FileTreeNode extends vscode.TreeItem {
     }
 
     /**
-     * Apply all the changes to this object and its children, This method should be called after evrey set of changes to this object or its children.
+     * Apply all the changes to this object and its children, This method should be called after every set of changes to this object or its children.
      * Use to calculate accumulative statistics and view from all the children.
      */
     public apply() {
@@ -70,7 +70,7 @@ export abstract class FileTreeNode extends vscode.TreeItem {
         }
         this._severity = topSeverity;
 
-        // Caclulate the tooltip information
+        // Calculate the tooltip information
         this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n';
         this.tooltip += 'Issues count: ' + this.issues.length + '\n';
         this.tooltip += 'Full path: ' + this.fullPath;
