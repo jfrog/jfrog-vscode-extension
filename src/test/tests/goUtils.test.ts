@@ -33,7 +33,7 @@ describe('Go Utils Tests', async () => {
         {} as CacheManager,
         logManager
     );
-    
+
     let tmpDir: string = path.join(__dirname, '..', 'resources', 'go');
     let commonProjDir: vscode.Uri = vscode.Uri.file(path.join(tmpDir, 'common'));
     let commonWorkspaceFolders: vscode.WorkspaceFolder[];
