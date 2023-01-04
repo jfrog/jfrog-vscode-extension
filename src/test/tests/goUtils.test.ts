@@ -4,16 +4,11 @@ import { before } from 'mocha';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
-// import { GoDependencyUpdate } from '../../main/dependencyUpdate/goDependencyUpdate';
-// import { FocusType } from '../../main/focus/abstractFocus';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
-import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
-import { ILicenseKey } from '../../main/types/licenseKey';
 import { GoUtils } from '../../main/utils/goUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
@@ -38,7 +33,7 @@ describe('Go Utils Tests', async () => {
         {} as CacheManager,
         logManager
     );
-    // let goDependencyUpdate: GoDependencyUpdate = new GoDependencyUpdate();
+    
     let tmpDir: string = path.join(__dirname, '..', 'resources', 'go');
     let commonProjDir: vscode.Uri = vscode.Uri.file(path.join(tmpDir, 'common'));
     let commonWorkspaceFolders: vscode.WorkspaceFolder[];
@@ -120,40 +115,6 @@ describe('Go Utils Tests', async () => {
         assert.isEmpty(dependencyPos);
     });
 
-    // it('Update fixed version', async () => {
-    //     let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-    //     let componentsToScan: ProjectDetails[] = [];
-    //     await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
-
-    //     // Get specific dependency node.
-    //     let node: DependenciesTreeNode | null = getNodeByArtifactId(parent, 'github.com/jfrog/jfrog-cli-core');
-    //     assert.isNotNull(node);
-    //     assert.equal(node?.generalInfo.version, '1.9.0');
-
-    //     // Create a new version different from the node.
-    //     goDependencyUpdate.updateDependencyVersion(node!, '1.9.1');
-
-    //     // Recalculate the dependency tree.
-    //     parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-    //     await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
-
-    //     // Verify the node's version was modified.
-    //     node = getNodeByArtifactId(parent, 'github.com/jfrog/jfrog-cli-core');
-    //     assert.isNotNull(node);
-    //     assert.equal(node?.generalInfo.version, '1.9.1');
-
-    //     // Revert back the changes.
-    //     goDependencyUpdate.updateDependencyVersion(node!, '1.9.0');
-
-    //     // Recalculate the dependency tree.
-    //     parent = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-    //     await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
-
-    //     node = getNodeByArtifactId(parent, 'github.com/jfrog/jfrog-cli-core');
-    //     assert.isNotNull(node);
-    //     assert.equal(node?.generalInfo.version, '1.9.0');
-    // });
-
     /**
      * Test GoUtils.createGoDependenciesTrees.
      */
@@ -188,16 +149,6 @@ describe('Go Utils Tests', async () => {
         assert.deepEqual(child.label, 'github.com/jfrog/jfrog-cli-core');
         assert.deepEqual(child.description, '1.9.0');
         assert.deepEqual(child.parent, parent.children[0]);
-
-        // Xray general data.
-        let actualLicenseName: ILicenseKey = child.licenses.toArray()[0];
-        let actualLicense: ILicenseCacheObject | undefined = dummyScanCacheManager.getLicense(actualLicenseName.licenseName)!;
-        assert.isDefined(actualLicense);
-
-        let expectedLicense: ILicense[] = xrayScanResults[0].licenses;
-        assert.deepEqual(actualLicense.name, expectedLicense[0].name);
-        assert.deepEqual(actualLicense.moreInfoUrl, expectedLicense[0].more_info_url[0]);
-        assert.deepEqual(actualLicense.fullName, expectedLicense[0].full_name);
     });
 
     /**

@@ -119,9 +119,9 @@ describe('Connection Manager Tests', () => {
         process.env[ConnectionManager.PASSWORD_ENV] = pass;
         process.env[ConnectionManager.ACCESS_TOKEN_ENV] = token;
 
-        await connectionManager.getCredentialsFromEnv();
+        assert.isTrue(await connectionManager.getCredentialsFromEnv());
         assert.isTrue(connectionManager.areXrayCredentialsSet());
-        assert.equal(connectionManager.url, testCase.expectedPlatformUrl);
+        assert.equal(connectionManager.url, testCase.expectedPlatformUrl, `populate with token: ${!user}`);
         assert.equal(connectionManager.xrayUrl, testCase.expectedXrayUrl);
         assert.equal(connectionManager.username, user);
         assert.equal(connectionManager.password, pass);
