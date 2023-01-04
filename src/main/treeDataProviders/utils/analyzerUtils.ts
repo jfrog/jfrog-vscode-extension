@@ -27,9 +27,8 @@ export class AnalyzerUtils {
     public static parseLocationFilePath(filePath: string): string {
         if (os.platform() === 'win32') {
             return decodeURI((filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath).replace(/['/']/g, '\\'));
-        } else {
-            return decodeURI(filePath.includes('file://') ? filePath.substring('file://'.length) : filePath);
         }
+        return decodeURI(filePath.includes('file://') ? filePath.substring('file://'.length) : filePath);
     }
 
     /**
@@ -102,7 +101,7 @@ export class AnalyzerUtils {
      * @param reason - the reason this evidence is an issue
      * @param issueNode - the CVE node related to the issues
      * @param evidences - the evidences list to populate data inside
-     * @param fileNode - the node to poupulate children inside
+     * @param fileNode - the node to populate children inside
      * @returns the number of Evidences for the issue that were populated
      */
     private static populateEvidence(
@@ -115,7 +114,7 @@ export class AnalyzerUtils {
         let issuesCount: number = 0;
         fileEvidence.locations.forEach(location => {
             if (location.snippet) {
-                // add evedence for CVE applicability details
+                // add evidence for CVE applicability details
                 evidences.push({
                     reason: reason,
                     filePathEvidence: AnalyzerUtils.parseLocationFilePath(fileEvidence.full_path),
@@ -143,22 +142,22 @@ export class AnalyzerUtils {
      *  Run eos scan async task
      * @param workspaceData - the issues data for the workspace
      * @param root - the root node of the workspace
-     * @param workspcaeDescriptors - the descriptors of the workspace to get roots to scan from
+     * @param workspaceDescriptors - the descriptors of the workspace to get roots to scan from
      * @param scanManager - the scan manager to use for scan
-     * @param progressManager - the progress manager of the process for abort conrtol
+     * @param progressManager - the progress manager of the process for abort control
      * @param splitRequests - if true each request will be preformed on a different run, false all at once
      */
     public static async runEos(
         workspaceData: WorkspaceIssuesData,
         root: IssuesRootTreeNode,
-        workspcaeDescriptors: Map<PackageType, vscode.Uri[]>,
+        workspaceDescriptors: Map<PackageType, vscode.Uri[]>,
         scanManager: ScanManager,
         progressManager: StepProgress,
         splitRequests: boolean = true
     ): Promise<any> {
         // Prepare
         let requests: EosScanRequest[] = [];
-        for (const [type, descriptorPaths] of workspcaeDescriptors) {
+        for (const [type, descriptorPaths] of workspaceDescriptors) {
             let language: string | undefined;
             switch (type) {
                 case PackageType.Python:

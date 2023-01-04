@@ -97,7 +97,7 @@ export class ScanUtils {
      * @param fileRegion - optional region in file to reveal
      */
     public static async openFile(filePath: string, fileRegion?: vscode.Range, viewColumn: vscode.ViewColumn = vscode.ViewColumn.One) {
-        if (filePath === undefined || filePath === '') {
+        if (!filePath) {
             return;
         }
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(filePath);
