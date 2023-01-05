@@ -22,7 +22,7 @@ export class GoTreeNode extends RootNode {
             goModGraph = this.runGoModGraph();
             goList = this.runGoList();
         } catch (error) {
-            this._treesManager.logManager.logError(<any>error, true);
+            this._treesManager.logManager.logError(<any>error);
             this.label = this.workspaceFolder + ' [Not installed]';
             this.generalInfo = new GeneralInfo(this.label, '', [], this.workspaceFolder, GoUtils.PKG_TYPE);
             return;
