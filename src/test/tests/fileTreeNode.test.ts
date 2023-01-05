@@ -1,30 +1,32 @@
+import * as vscode from 'vscode';
 import { assert } from 'chai';
 import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
-import { Severity } from '../../main/types/severity';
+import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
+import { Severity, SeverityUtils } from '../../main/types/severity';
 import { createTestNode, FileNodeTestCase, FileNodeTestData } from './utils/treeNodeUtils.test';
 
 /**
  * Test functionality of @class FileTreeNode.
  */
 describe('File Node Tests', () => {
-    let testCases: FileNodeTestCase[] = [
+    let testCases: any[] = [
         {
             test: 'No issues',
-            data: { path: 'path', issues: [] },
+            data: { path: 'folder/path', issues: [] },
             expectedSeverity: Severity.Unknown,
             expectedDescription: ''
         } as FileNodeTestCase,
         {
             test: 'One issue',
-            data: { path: 'path', issues: [Severity.Medium] } as FileNodeTestData,
+            data: { path: 'folder/path', issues: [Severity.Medium] } as FileNodeTestData,
             expectedSeverity: Severity.Medium,
             expectedDescription: ''
         } as FileNodeTestCase,
         {
             test: 'Multiple issues',
             data: {
-                path: 'path',
-                issues: [Severity.Low, Severity.Low, Severity.NotApplicableCritical, Severity.High]
+                path: 'folder/path',
+                issues: [Severity.Low, Severity.Low, Severity.NotApplicableCritical, Severity.NotApplicableHigh, Severity.High]
             } as FileNodeTestData,
             expectedSeverity: Severity.High,
             expectedDescription: ''
@@ -35,6 +37,7 @@ describe('File Node Tests', () => {
         it('Top severity test - ' + testCase.test, () => {
             let testNode: FileTreeNode = createTestNode(testCase);
             assert.deepEqual(testNode.severity, testCase.expectedSeverity);
+            assert.include(testNode.tooltip, "Top severity: " + SeverityUtils.getString(testCase.expectedSeverity));
         });
     });
 
@@ -52,7 +55,17 @@ describe('File Node Tests', () => {
 
     testCases.forEach(testCase => {
         it('Description test - ' + testCase.test, () => {
-            //
+            let testNode: FileTreeNode = createTestNode(testCase);
+            // Before parent
+            assert.equal(testNode.description,testNode.fullPath);
+            // Parent not in path
+            testNode.parent = new IssuesRootTreeNode({} as vscode.WorkspaceFolder);
+            testNode.apply();
+            assert.equal(testNode.description,testNode.fullPath);
+            // Parent in path
+            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: "folder" } as vscode.Uri } as vscode.WorkspaceFolder);
+            testNode.apply();
+            assert.equal(testNode.description,"./path");
         });
     });
 

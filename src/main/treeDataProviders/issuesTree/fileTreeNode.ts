@@ -39,7 +39,7 @@ export abstract class FileTreeNode extends vscode.TreeItem {
      */
     public apply() {
         // If no description is set, show the full path of the file or the relative path base on the path of the parent workspace if exists
-        if (this.description === undefined) {
+        // if (this.description === undefined) {
             let description: string | undefined = this._fullPath;
             if (this._parent && this._fullPath.startsWith(this._parent.workSpace.uri.fsPath)) {
                 let localPath: string = this._fullPath.substring(this._parent.workSpace.uri.fsPath.length + 1);
@@ -50,7 +50,7 @@ export abstract class FileTreeNode extends vscode.TreeItem {
                 }
             }
             this.description = description;
-        }
+        // }
 
         // Set collapsible state and severity base on children count
         let topSeverity: Severity = this.issues.length > 0 ? Severity.NotApplicableUnknown : Severity.Unknown;

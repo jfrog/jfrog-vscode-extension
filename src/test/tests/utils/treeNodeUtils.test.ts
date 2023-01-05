@@ -6,8 +6,8 @@ import { Severity } from '../../../main/types/severity';
 export interface FileNodeTestCase {
     test: string;
     data: FileNodeTestData;
-    expectedSeverity: Severity;
-    expectedDescription: string;
+    // expectedSeverity: Severity;
+    // expectedDescription: string;
 }
 
 export interface FileNodeTestData {
