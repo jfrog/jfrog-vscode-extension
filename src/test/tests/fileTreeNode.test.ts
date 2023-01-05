@@ -17,7 +17,7 @@ describe('File Node Tests', () => {
         {
             test: 'One issue',
             data: { path: 'path', issues: [Severity.Medium] } as FileNodeTestData,
-            expectedSeverity: Severity.Low,
+            expectedSeverity: Severity.Medium,
             expectedDescription: ''
         } as FileNodeTestCase,
         {
