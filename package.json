@@ -242,8 +242,8 @@
         ]
     },
     "scripts": {
-        "vscode:prepublish": "rm -rf dist && webpack --mode production && cp -r node_modules/jfrog-ide-webview/build dist",
-        "webpack": "rm -rf dist && webpack --mode development && cp -r node_modules/jfrog-ide-webview/build dist",
+        "vscode:prepublish": "rm -rf dist && webpack --mode production && cp -r node_modules/jfrog-ide-webview/build dist/jfrog-ide-webview",
+        "webpack": "rm -rf dist && webpack --mode development && cp -r node_modules/jfrog-ide-webview/build dist/jfrog-ide-webview",
         "format": "prettier --write \"src/**/*.ts\" \"package.json\" \"tsconfig.json\" \".eslintrc.js\"",
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
