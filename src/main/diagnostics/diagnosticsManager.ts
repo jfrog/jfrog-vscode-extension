@@ -37,7 +37,9 @@ export class DiagnosticsManager implements ExtensionComponent {
     public updateDiagnostics() {
         if (this._codeActionProviders && this._codeActionProviders.length > 0) {
             vscode.workspace.textDocuments.forEach(document => {
-                this._codeActionProviders.forEach(codeActionProvider => codeActionProvider.updateDiagnostics(document));
+                if (!document.isClosed) {
+                    this._codeActionProviders.forEach(codeActionProvider => codeActionProvider.updateDiagnostics(document));
+                }
             });
         }
     }
