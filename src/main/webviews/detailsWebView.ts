@@ -70,11 +70,11 @@ function createWebview(context: vscode.ExtensionContext) {
 }
 
 function getHtmlForWebview(context: vscode.ExtensionContext, webview: vscode.Webview) {
-    const data: string = fs.readFileSync(context.asAbsolutePath(path.join('node_modules', 'jfrog-ide-webview', 'build', 'index.html')), {
+    const data: string = fs.readFileSync(context.asAbsolutePath(path.join('dist', 'jfrog-ide-webview', 'build', 'index.html')), {
         encoding: 'utf8'
     });
     const webviewDataPath: vscode.Uri = webview.asWebviewUri(
-        vscode.Uri.file(path.join(context.extensionPath, 'node_modules', 'jfrog-ide-webview', 'build'))
+        vscode.Uri.file(path.join(context.extensionPath, 'dist', 'jfrog-ide-webview', 'build'))
     );
     return data.replace(/\/static/g, `${webviewDataPath}/static`);
 }
