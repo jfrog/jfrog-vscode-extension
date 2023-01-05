@@ -1,49 +1,40 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
-import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { assert } from 'chai';
 import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { Severity } from '../../main/types/severity';
+import { createTestNode, FileNodeTestCase, FileNodeTestData } from './utils/treeNodeUtils.test';
 
 /**
  * Test functionality of @class FileTreeNode.
  */
 describe('File Node Tests', () => {
-    let testWorkspace: vscode.WorkspaceFolder = {
-        uri: vscode.Uri.file(path.join(__dirname, '..', 'resources')),
-        name: 'pom.xml-test',
-        index: 0
-    } as vscode.WorkspaceFolder;
-    let root: IssuesRootTreeNode;
-
-    let testCases: any[] = [
+    let testCases: FileNodeTestCase[] = [
         {
             test: 'No issues',
             data: { path: 'path', issues: [] },
             expectedSeverity: Severity.Unknown,
-            expectedDescription: ""
-        },
+            expectedDescription: ''
+        } as FileNodeTestCase,
         {
             test: 'One issue',
-            data: { path: 'path', issues: [Severity.Low] },
+            data: { path: 'path', issues: [Severity.Medium] } as FileNodeTestData,
             expectedSeverity: Severity.Low,
-            expectedDescription: ""
-        },
+            expectedDescription: ''
+        } as FileNodeTestCase,
         {
             test: 'Multiple issues',
-            data: { path: 'path', issues: [Severity.Low, Severity.Low, Severity.NotApplicableCritical, Severity.High] },
+            data: {
+                path: 'path',
+                issues: [Severity.Low, Severity.Low, Severity.NotApplicableCritical, Severity.High]
+            } as FileNodeTestData,
             expectedSeverity: Severity.High,
-            expectedDescription: ""
-        }
+            expectedDescription: ''
+        } as FileNodeTestCase
     ];
-    
-    beforeEach(() => {
-        root = new IssuesRootTreeNode(testWorkspace);
-    });
 
     testCases.forEach(testCase => {
         it('Top severity test - ' + testCase.test, () => {
-            //
+            let testNode: FileTreeNode = createTestNode(testCase);
+            assert.deepEqual(testNode.severity, testCase.expectedSeverity);
         });
     });
 
@@ -55,13 +46,13 @@ describe('File Node Tests', () => {
 
     testCases.forEach(testCase => {
         it('label test - ' + testCase.test, () => {
-            // include test on tooltip (full path)
+            //
         });
     });
 
     testCases.forEach(testCase => {
         it('Description test - ' + testCase.test, () => {
-            // include test on tooltip (full path)
+            //
         });
     });
 
@@ -92,14 +83,13 @@ describe('File Node Tests', () => {
         }
     ].forEach(testCase => {
         it(testCase.test, () => {
+            // Before apply
             assert.exists(testCase.data);
             assert.deepEqual(testCase.data.severity, Severity.Unknown);
-
             assert.equal(testCase.data.name, testCase.expectedName);
-            root.addChild(testCase.data);
-            root.apply();
+            // After apply
+            testCase.data.apply();
             assert.equal(testCase.data.name, testCase.expectedName);
         });
     });
-
 });
