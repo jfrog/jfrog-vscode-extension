@@ -63,7 +63,7 @@ export class LogManager implements ExtensionComponent {
      * @param error - The error
      * @param shouldToast - True iff toast should be shown
      */
-    public logError(error: Error, shouldToast: boolean) {
+    public logError(error: Error, shouldToast: boolean = false) {
         let logMessage: string = error.name;
         if (error.message) {
             logMessage += ': ' + error.message;

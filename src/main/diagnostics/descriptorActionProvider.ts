@@ -10,7 +10,7 @@ import { Severity, SeverityUtils } from '../types/severity';
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
 
 /**
- * Describes the information caclulated for a direct dependency with issues in a descriptor
+ * Describes the information calculated for a direct dependency with issues in a descriptor
  */
 class DirectDependencyInfo {
     constructor(
@@ -38,7 +38,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
         const fileIssues: FileTreeNode | undefined = this._treesManager.issuesTreeDataProvider.getFileIssuesTree(document.uri.fsPath);
         if (fileIssues instanceof DescriptorTreeNode) {
             this._treesManager.logManager.logMessage("Creating diagnostics for descriptor '" + document.uri.fsPath + "'", 'DEBUG');
-            const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document);
+            const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
             let diagnostics: vscode.Diagnostic[] = [];
             let processedDependencies: Map<string, DirectDependencyInfo> = new Map<string, DirectDependencyInfo>();
             // Calculate the direct dependency information of each issue in the descriptor from the impact tree
@@ -58,9 +58,9 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
                         );
                 });
             });
-            for (let directDependncyInfo of processedDependencies.values()) {
+            for (let directDependencyInfo of processedDependencies.values()) {
                 // Add diagnostics to the direct dependency by the order of their severity
-                for (const [issueId, info] of Array.from(directDependncyInfo.diagnosticIssues.entries()).sort(
+                for (const [issueId, info] of Array.from(directDependencyInfo.diagnosticIssues.entries()).sort(
                     (lhs, rhs) => rhs[1].severity - lhs[1].severity
                 )) {
                     diagnostics.push(
@@ -69,24 +69,24 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
                             `${info.label} - Severity: ${SeverityUtils.getString(
                                 info.severity
                             )}\nImpacted Components: ${info.infectedDependencies.join()}`,
-                            directDependncyInfo.positions
+                            directDependencyInfo.positions
                         )
                     );
                 }
                 // Add gutter icons for top severity of the direct dependency
-                this.addGutter(textEditor, SeverityUtils.getIcon(directDependncyInfo.severity), directDependncyInfo.positions);
+                this.addGutter(textEditor, SeverityUtils.getIcon(directDependencyInfo.severity), directDependencyInfo.positions);
             }
             this._diagnosticCollection.set(document.uri, diagnostics);
         }
     }
 
     /**
-     * Calculate and update the direct dependency infromation base on a given issue
+     * Calculate and update the direct dependency information base on a given issue
      * @param issue - the issue to add to the direct dependency
      * @param directDependencyId - the direct dependency id
      * @param dependencyWithIssue - the dependency with the issue
      * @param packageType  - the direct dependency package type
-     * @param processedDependencies - the list of all the processed dependecies to search inside
+     * @param processedDependencies - the list of all the processed dependencies to search inside
      * @param document - the document that holds the dependency
      * @returns
      */
@@ -112,7 +112,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
         if (info.severity < issue.severity) {
             info.severity = issue.severity;
         }
-        // Add diagnostic for the issue if not exists already from diffrent transetive dependency
+        // Add diagnostic for the issue if not exists already from different transitive dependency
         let issueLabel: string = issue.label ? issue.label.toString() : issue.issueId;
         let directDependencyIssue: DirectDependencyIssue | undefined = info.diagnosticIssues.get(issue.issueId);
         if (!directDependencyIssue) {
