@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import fs from 'fs-extra';
 import { IDependencyPage } from 'jfrog-ide-webview';
 import { PageType } from 'jfrog-ide-webview';
 import { LogManager } from '../log/logManager';
@@ -69,32 +70,9 @@ function createWebview(context: vscode.ExtensionContext) {
 }
 
 function getHtmlForWebview(context: vscode.ExtensionContext, webview: vscode.Webview) {
-    const scriptPathOnDisk: vscode.Uri = vscode.Uri.file(context.asAbsolutePath(path.join('dist', 'index.js')));
-    const scriptUri: vscode.Uri = webview.asWebviewUri(scriptPathOnDisk);
-    const nonce: string = getNonce();
-    return `<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no">
-            <meta name="theme-color" content="#000000">
-            <base href="${vscode.Uri.file(context.asAbsolutePath('dist')).with({ scheme: 'vscode-resource' })}/">
-        </head>
-
-        <body style="padding:0;">
-            <noscript>You need to enable JavaScript to run this app.</noscript>
-            <div id="root"></div>
-
-            <script nonce="${nonce}" src="${scriptUri}"></script>
-        </body>
-        </html>`;
-}
-
-function getNonce(): string {
-    let text: string = '';
-    const possible: string = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i: number = 0; i < 32; i++) {
-        text += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return text;
+    const data: string = fs.readFileSync(context.asAbsolutePath(path.join('dist', 'jfrog-ide-webview', 'index.html')), {
+        encoding: 'utf8'
+    });
+    const webviewDataPath: vscode.Uri = webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'dist', 'jfrog-ide-webview')));
+    return data.replace(/\/static/g, `${webviewDataPath}/static`);
 }
