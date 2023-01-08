@@ -3,8 +3,9 @@ import { assert } from 'chai';
 import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { Severity, SeverityUtils } from '../../main/types/severity';
-import { createTestNode, FileNodeTestCase, FileNodeTestData } from './utils/treeNodeUtils.test';
+import { createAndPopulateTestNode, createDummyIssue, createTestNode, FileNodeTestCase, FileNodeTestData } from './utils/treeNodeUtils.test';
 import { Utils } from '../../main/treeDataProviders/utils/utils';
+import { IssueTreeNode } from '../../main/treeDataProviders/issuesTree/issueTreeNode';
 
 /**
  * Test functionality of @class FileTreeNode.
@@ -14,14 +15,12 @@ describe('File Node Tests', () => {
         {
             test: 'No issues',
             data: { path: '/root/folder/path', issues: [] },
-            expectedSeverity: Severity.Unknown,
-            expectedDescription: ''
+            expectedSeverity: Severity.Unknown
         } as FileNodeTestCase,
         {
             test: 'One issue',
             data: { path: '/root/folder/path', issues: [Severity.Medium] } as FileNodeTestData,
-            expectedSeverity: Severity.Medium,
-            expectedDescription: ''
+            expectedSeverity: Severity.Medium
         } as FileNodeTestCase,
         {
             test: 'Multiple issues',
@@ -29,28 +28,34 @@ describe('File Node Tests', () => {
                 path: '/root/folder/path',
                 issues: [Severity.Low, Severity.Low, Severity.NotApplicableCritical, Severity.NotApplicableHigh, Severity.High]
             } as FileNodeTestData,
-            expectedSeverity: Severity.High,
-            expectedDescription: ''
+            expectedSeverity: Severity.High
         } as FileNodeTestCase
     ];
 
     testCases.forEach(testCase => {
         it('Top severity test - ' + testCase.test, () => {
-            let testNode: FileTreeNode = createTestNode(testCase);
+            let testNode: FileTreeNode = createAndPopulateTestNode(testCase);
             assert.deepEqual(testNode.severity, testCase.expectedSeverity);
-            assert.include(testNode.tooltip, "Top severity: " + SeverityUtils.getString(testCase.expectedSeverity));
+            assert.include(testNode.tooltip, 'Top severity: ' + SeverityUtils.getString(testCase.expectedSeverity));
         });
     });
 
     testCases.forEach(testCase => {
-        it('Get issue by id test - ' + testCase.test, () => {
-            //
+        it('Get issue by id test', () => {
+            let testNode: FileTreeNode = createAndPopulateTestNode(testCase);
+            let toSearchIssue: IssueTreeNode = createDummyIssue(Severity.Unknown);
+            // Search non existed
+            assert.notExists(testNode.getIssueById(toSearchIssue.issueId));
+            // Add and search
+            testNode.issues.push(toSearchIssue);
+            testNode.apply();
+            assert.deepEqual(testNode.getIssueById(toSearchIssue.issueId), toSearchIssue);
         });
     });
 
     testCases.forEach(testCase => {
         it('label/name test - ' + testCase.test, () => {
-            let testNode: FileTreeNode = createTestNode(testCase);
+            let testNode: FileTreeNode = createAndPopulateTestNode(testCase);
             assert.equal(testNode.name, Utils.getLastSegment(testCase.data.path));
             assert.equal(testNode.label, Utils.getLastSegment(testCase.data.path));
         });
@@ -58,42 +63,54 @@ describe('File Node Tests', () => {
 
     testCases.forEach(testCase => {
         it('Description test - ' + testCase.test, () => {
-            let testNode: FileTreeNode = createTestNode(testCase);
+            let testNode: FileTreeNode = createAndPopulateTestNode(testCase);
             // No parent
-            assert.equal(testNode.description,testNode.fullPath);
+            assert.equal(testNode.description, testNode.fullPath);
             // Local path not in parent path
-            testNode.parent = new IssuesRootTreeNode({uri: { fsPath: "nowhere"} as vscode.Uri } as vscode.WorkspaceFolder);
+            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: 'nowhere' } as vscode.Uri } as vscode.WorkspaceFolder);
             testNode.apply();
-            assert.equal(testNode.description,testNode.fullPath);
-            // file in root
-            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: "/root/folder"} as vscode.Uri } as vscode.WorkspaceFolder);
+            assert.equal(testNode.description, testNode.fullPath);
+            // Parent in path, parent is root
+            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: '/root/folder' } as vscode.Uri } as vscode.WorkspaceFolder);
             testNode.apply();
-            assert.equal(testNode.description,undefined);
-            // Parent in path and file not in root
-            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: "/root"} as vscode.Uri } as vscode.WorkspaceFolder);
+            assert.equal(testNode.description, undefined);
+            // Parent in path and parent is not root
+            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: '/root' } as vscode.Uri } as vscode.WorkspaceFolder);
             testNode.apply();
-            assert.equal(testNode.description,"./folder/path");
+            assert.equal(testNode.description, './folder/path');
         });
     });
 
-    testCases.forEach(testCase => {
-        it('Collapsible state test - ' + testCase.test, () => {
-            //
-        });
+    it('Collapsible state test', () => {
+        let testNode: FileTreeNode = createTestNode('path');
+        // No issues, no parent
+        testNode.apply();
+        assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.None);
+        // One issue, no parent
+        testNode.issues.push(createDummyIssue(Severity.Critical));
+        testNode.apply();
+        assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
+        // One issue, with parent
+        new IssuesRootTreeNode({ uri: { fsPath: 'nowhere' } as vscode.Uri } as vscode.WorkspaceFolder).addChildAndApply(testNode);
+        assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.Expanded);
+        // Multiple issues, with parent
+        testNode.issues.push(createDummyIssue(Severity.NotApplicableCritical));
+        testNode.apply();
+        assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
     });
 
     testCases.forEach(testCase => {
         it('Tooltip test - ' + testCase.test, () => {
-            let testNode: FileTreeNode = createTestNode(testCase);
-            assert.equal(testNode.fullPath,testCase.data.path);
-            assert.include(testNode.tooltip, "Full path: " + testNode.fullPath);
-            assert.equal(testNode.issues.length,testCase.data.issues.length);
-            assert.include(testNode.tooltip, "Issues count: " + testNode.issues.length);
+            let testNode: FileTreeNode = createAndPopulateTestNode(testCase);
+            assert.equal(testNode.fullPath, testCase.data.path);
+            assert.include(testNode.tooltip, 'Full path: ' + testNode.fullPath);
+            assert.equal(testNode.issues.length, testCase.data.issues.length);
+            assert.include(testNode.tooltip, 'Issues count: ' + testNode.issues.length);
             // timestamp - not set
-            assert.notInclude(testNode.tooltip, "Last scan completed at");
+            assert.notInclude(testNode.tooltip, 'Last scan completed at');
             testNode.timeStamp = Date.now();
             testNode.apply();
-            assert.include(testNode.tooltip, "Last scan completed at");
+            assert.include(testNode.tooltip, 'Last scan completed at');
         });
     });
 
