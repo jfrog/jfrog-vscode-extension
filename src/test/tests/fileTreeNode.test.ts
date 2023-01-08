@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
+
 import { assert } from 'chai';
 import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
@@ -14,18 +16,18 @@ describe('File Node Tests', () => {
     let testCases: any[] = [
         {
             test: 'No issues',
-            data: { path: '/root/folder/path', issues: [] },
+            data: { path: path.join("root","folder","path"), issues: [] },
             expectedSeverity: Severity.Unknown
         } as FileNodeTestCase,
         {
             test: 'One issue',
-            data: { path: '/root/folder/path', issues: [Severity.Medium] } as FileNodeTestData,
+            data: { path: path.join("root","folder","path"), issues: [Severity.Medium] } as FileNodeTestData,
             expectedSeverity: Severity.Medium
         } as FileNodeTestCase,
         {
             test: 'Multiple issues',
             data: {
-                path: '/root/folder/path',
+                path: path.join("root","folder","path"),
                 issues: [Severity.Low, Severity.Low, Severity.NotApplicableCritical, Severity.NotApplicableHigh, Severity.High]
             } as FileNodeTestData,
             expectedSeverity: Severity.High
@@ -71,13 +73,13 @@ describe('File Node Tests', () => {
             testNode.apply();
             assert.equal(testNode.description, testNode.fullPath);
             // Parent in path, parent is root
-            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: '/root/folder' } as vscode.Uri } as vscode.WorkspaceFolder);
+            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: path.join("root","folder") } as vscode.Uri } as vscode.WorkspaceFolder);
             testNode.apply();
             assert.equal(testNode.description, undefined);
             // Parent in path and parent is not root
-            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: '/root' } as vscode.Uri } as vscode.WorkspaceFolder);
+            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: path.join("root") } as vscode.Uri } as vscode.WorkspaceFolder);
             testNode.apply();
-            assert.equal(testNode.description, './folder/path');
+            assert.equal(testNode.description, './' + path.join("folder", "path"));
         });
     });
 
