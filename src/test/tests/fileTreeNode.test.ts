@@ -119,7 +119,7 @@ describe('File Node Tests', () => {
     [
         {
             test: 'Failed node without reason',
-            data: FileTreeNode.createFailedScanNode('folder/path'),
+            data: FileTreeNode.createFailedScanNode(path.join("folder","path")),
             expectedName: 'path - [Fail to scan]'
         },
         {
