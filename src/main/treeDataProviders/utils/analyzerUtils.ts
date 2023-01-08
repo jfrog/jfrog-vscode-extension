@@ -18,6 +18,8 @@ import { ScanManager } from '../../scanLogic/scanManager';
 import { CodeIssueTreeNode } from '../issuesTree/codeFileTree/codeIssueTreeNode';
 import { FileIssues } from '../../scanLogic/scanRunners/analyzerModels';
 import { DescriptorIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
+import { Configuration } from '../../utils/configuration';
+import { LogManager } from '../../log/logManager';
 
 export class AnalyzerUtils {
     /**
@@ -47,6 +49,38 @@ export class AnalyzerUtils {
         let fileNode: CodeFileTreeNode = new CodeFileTreeNode(actualPath);
         root.addChild(fileNode);
         return fileNode;
+    }
+
+    /**
+     * Get the exclude patterns for the applicable scan base on the exclude pattern for the extension.
+     * The following actions will be preformed to the pattern:
+     * 1. If validation for the exclude pattern fails no exclude will be returned.
+     * 2. If pattern contains {}, it will be splitted to multiple patterns, one for each option
+     * 3. '/**' will be add at the suffix to convert the pattern to match files and not folders
+     * @param log - if log is passed the method will log the error that occur during conversion
+     * @returns the applicable pattern array
+     */
+    public static getApplicableExcludePattern(log?: LogManager): string[] {
+        let patterns: string[] = [];
+        let excludePattern: string | undefined = Configuration.getScanExcludePattern();
+        if (excludePattern) {
+            try {
+                Configuration.validateExcludeString(excludePattern);
+
+                if (excludePattern.includes('{') && excludePattern.includes('}')) {
+                    // Convert <PREFIX>{option1,option2...}<SUFFIX> to [<PREFIX>option1<SUFFIX>/** ,<PREFIX>option2<SUFFIX>/**,...]
+                    let prefix: string = excludePattern.substring(0, excludePattern.indexOf('{'));
+                    let suffix: string = excludePattern.substring(excludePattern.indexOf('}') + 1);
+                    let options: string[] = excludePattern.substring(excludePattern.indexOf('{') + 1, excludePattern.indexOf('}')).split(',');
+                    options.forEach(option => patterns.push(prefix + option + suffix + (suffix.endsWith('/**') ? '' : '/**')));
+                } else {
+                    patterns.push(excludePattern + (excludePattern.endsWith('/**') ? '' : '/**'));
+                }
+            } catch (err) {
+                log?.logError(<Error>err);
+            }
+        }
+        return patterns;
     }
 
     /**

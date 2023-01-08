@@ -1,6 +1,36 @@
 import * as vscode from 'vscode';
+import { ExtensionComponent } from '../extensionComponent';
 
-export class Configuration {
+export class Configuration implements ExtensionComponent {
+    activate(): Configuration {
+        vscode.workspace.onDidChangeConfiguration(changeEvent => {
+            if (changeEvent.affectsConfiguration('jfrog')) {
+                // Validate
+                try {
+                    Configuration.validateExcludeString(vscode.workspace.getConfiguration('jfrog').get('xray.exclusions'));
+                } catch (err) {
+                    vscode.window.showErrorMessage((<Error>err).message);
+                }
+            }
+        });
+        return this;
+    }
+
+    /**
+     * Validate if the exclude pattern is legal:
+     * 1. contains up to one pair of {}
+     * Or throw error if not legal.
+     * @param excludePattern - the pattern to validate
+     */
+    public static validateExcludeString(excludePattern?: string) {
+        if (excludePattern) {
+            if ((excludePattern.split('{') || []).length > 2 && (excludePattern.split('}') || []).length > 2) {
+                let errMsg: string = "Exclude pattern can't contain more than one curly brackets pair";
+                throw new Error(errMsg);
+            }
+        }
+    }
+
     /**
      * Get scan exclude pattern. This pattern is used to exclude specific file descriptors (go.mod, package.json, etc.) from being scanned by Xray.
      * Descriptor files which are under a directory which matches the pattern will not be scanned.
