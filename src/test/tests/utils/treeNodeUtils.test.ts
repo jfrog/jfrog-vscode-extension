@@ -6,8 +6,6 @@ import { Severity } from '../../../main/types/severity';
 export interface FileNodeTestCase {
     test: string;
     data: FileNodeTestData;
-    // expectedSeverity: Severity;
-    // expectedDescription: string;
 }
 
 export interface FileNodeTestData {
@@ -20,7 +18,7 @@ export interface FileNodeTestData {
  * @param testCase - the test we want to prepare
  * @returns node prepared base on test case
  */
-export function createTestNode(testCase: FileNodeTestCase): FileTreeNode {
+export function createTestNode(pathOfFile: string): FileTreeNode {
     let fileNode: FileTreeNode = new (class extends FileTreeNode {
         _issues: IssueTreeNode[] = [];
         constructor(fullPath: string, parent?: IssuesRootTreeNode, timeStamp?: number) {
@@ -30,9 +28,21 @@ export function createTestNode(testCase: FileNodeTestCase): FileTreeNode {
         public get issues(): IssueTreeNode[] {
             return this._issues;
         }
-    })(testCase.data.path);
-    testCase.data.issues.forEach(issue => fileNode.issues.push(createDummyIssue(issue)));
-    // After changes apply must be called
+    })(pathOfFile);
+    return fileNode;
+}
+
+/**
+ * Create file node and populate it with issues base on test case
+ * @param testCase - the test we want to prepare
+ * @returns node prepared base on test case
+ */
+export function createAndPopulateTestNode(testCase: FileNodeTestCase): FileTreeNode {
+    let fileNode: FileTreeNode = createTestNode(testCase.data.path);
+    testCase.data.issues.forEach(issueSeverity => {
+        let issue: IssueTreeNode = createDummyIssue(issueSeverity);
+        fileNode.issues.push(issue);
+    });
     fileNode.apply();
     return fileNode;
 }
