@@ -81,6 +81,7 @@ export class DescriptorUtils {
         issue: IVulnerability,
         dependencyWithIssue: DependencyIssuesTreeNode,
         severity: Severity,
+        component: IComponent,
         impactedPath?: IImpactedPath
     ) {
         let violationIssue: IViolation = <IViolation>issue;
@@ -91,11 +92,11 @@ export class DescriptorUtils {
             if (issue.cves) {
                 // CVE issue
                 for (let cveIssue of issue.cves) {
-                    dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath, cveIssue));
+                    dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, component, impactedPath, cveIssue));
                 }
             } else {
                 // Xray issue
-                dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath));
+                dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, component, impactedPath));
             }
         }
     }
@@ -128,7 +129,7 @@ export class DescriptorUtils {
                     // Xray will return component duplication (just watch_name different), combine those results
                     matchIssue.watchNames.push(violationIssue.watch_name);
                 } else if (!matchIssue) {
-                    this.populateDependencyIssue(issue, dependencyWithIssue, severity, impactedPath);
+                    this.populateDependencyIssue(issue, dependencyWithIssue, severity, component, impactedPath);
                 }
             }
         }
