@@ -37,8 +37,10 @@ export class DescriptorTreeNode extends FileTreeNode {
         });
         // Sort children
         this._dependenciesWithIssue
-            // 2nd priority - Sort by number of children
+            // 3rd priority - Sort by number of children
             .sort((lhs, rhs) => rhs.issues.length - lhs.issues.length)
+            // 2nd priority - indirect / direct
+            .sort((lhs, rhs) => (rhs.indirect ? 0 : 1) - (lhs.indirect ? 0 : 1))
             // 1st priority - Sort by top severity
             .sort((lhs, rhs) => rhs.severity - lhs.severity);
 
@@ -74,12 +76,13 @@ export class DescriptorTreeNode extends FileTreeNode {
      * @param componentId - the id (type,name,version) of the dependency
      * @param component - the dependency data to create
      * @param severity - the severity to create/update
+     * @param indirect - default to false, true if the dependency is indirect
      * @returns the dependency object if exists, else a newly created one base on the input
      */
-    public addNode(componentId: string, component: IComponent, severity: Severity): DependencyIssuesTreeNode {
+    public addNode(componentId: string, component: IComponent, severity: Severity, indirect: boolean = false): DependencyIssuesTreeNode {
         let dependencyWithIssue: DependencyIssuesTreeNode | undefined = this.getDependencyByID(componentId);
         if (!dependencyWithIssue) {
-            dependencyWithIssue = new DependencyIssuesTreeNode(componentId, component, severity, this);
+            dependencyWithIssue = new DependencyIssuesTreeNode(componentId, component, severity, indirect, this);
             this.dependenciesWithIssue.push(dependencyWithIssue);
         }
         return dependencyWithIssue;
