@@ -171,10 +171,10 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     root.children.push(descriptorNode);
                 });
             }
-            // if (workspaceData.eosScan) {
-            //     root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
-            //     AnalyzerUtils.populateEosIssues(root, workspaceData);
-            // }
+            if (workspaceData.eosScan) {
+                root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
+                AnalyzerUtils.populateEosIssues(root, workspaceData);
+            }
             return root;
         }
         return undefined;
@@ -275,6 +275,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         checkCanceled();
         let graphSupported: boolean = await this._scanManager.validateGraphSupported();
         checkCanceled();
+        let scansPromises: Promise<any>[] = [];
+        scansPromises.push(AnalyzerUtils.runEos(workspaceData,root,workspaceDescriptors,this._scanManager,progressManager));
 
         // Build workspace dependency tree for all the descriptors
         progressManager.startStep('👷 Building workspace dependencies tree', getNumberOfSupportedPackageTypes());
@@ -288,7 +290,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         );
 
         progressManager.startStep('🔎 Scanning for issues', graphSupported ? 2 * descriptorsCount : 0);
-        let scansPromises: Promise<any>[] = [];
         // Dependency graph scan and applicability scan for each descriptor
         if (graphSupported) {
             scansPromises.push(
