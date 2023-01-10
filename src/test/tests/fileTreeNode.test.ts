@@ -5,7 +5,7 @@ import { assert } from 'chai';
 import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { Severity, SeverityUtils } from '../../main/types/severity';
-import { createAndPopulateTestNode, createDummyIssue, createTestNode, FileNodeTestCase, FileNodeTestData } from './utils/treeNodeUtils.test';
+import { createAndPopulateFileTestNode, createDummyIssue, createFileTestNode, FileNodeTestCase, FileNodeTestData } from './utils/treeNodeUtils.test';
 import { Utils } from '../../main/treeDataProviders/utils/utils';
 import { IssueTreeNode } from '../../main/treeDataProviders/issuesTree/issueTreeNode';
 
@@ -36,15 +36,15 @@ describe('File Node Tests', () => {
 
     testCases.forEach(testCase => {
         it('Top severity test - ' + testCase.test, () => {
-            let testNode: FileTreeNode = createAndPopulateTestNode(testCase);
+            let testNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data);
             assert.deepEqual(testNode.severity, testCase.expectedSeverity);
             assert.include(testNode.tooltip, 'Top severity: ' + SeverityUtils.getString(testCase.expectedSeverity));
         });
     });
 
     testCases.forEach(testCase => {
-        it('Get issue by id test', () => {
-            let testNode: FileTreeNode = createAndPopulateTestNode(testCase);
+        it('Get issue by id test - ' + testCase.test, () => {
+            let testNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data);
             let toSearchIssue: IssueTreeNode = createDummyIssue(Severity.Unknown);
             // Search issue not exist as child
             assert.notExists(testNode.getIssueById(toSearchIssue.issueId));
@@ -57,7 +57,7 @@ describe('File Node Tests', () => {
 
     testCases.forEach(testCase => {
         it('label/name test - ' + testCase.test, () => {
-            let testNode: FileTreeNode = createAndPopulateTestNode(testCase);
+            let testNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data);
             assert.equal(testNode.name, Utils.getLastSegment(testCase.data.path));
             assert.equal(testNode.label, Utils.getLastSegment(testCase.data.path));
         });
@@ -65,7 +65,7 @@ describe('File Node Tests', () => {
 
     testCases.forEach(testCase => {
         it('Description test - ' + testCase.test, () => {
-            let testNode: FileTreeNode = createAndPopulateTestNode(testCase);
+            let testNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data);
             // No parent
             assert.equal(testNode.description, testNode.fullPath);
             // Local path not in parent path
@@ -84,7 +84,7 @@ describe('File Node Tests', () => {
     });
 
     it('Collapsible state test', () => {
-        let testNode: FileTreeNode = createTestNode('path');
+        let testNode: FileTreeNode = createFileTestNode('path');
         // No issues, no parent
         testNode.apply();
         assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.None);
@@ -103,7 +103,7 @@ describe('File Node Tests', () => {
 
     testCases.forEach(testCase => {
         it('Tooltip test - ' + testCase.test, () => {
-            let testNode: FileTreeNode = createAndPopulateTestNode(testCase);
+            let testNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data);
             assert.equal(testNode.fullPath, testCase.data.path);
             assert.include(testNode.tooltip, 'Full path: ' + testNode.fullPath);
             assert.equal(testNode.issues.length, testCase.data.issues.length);
