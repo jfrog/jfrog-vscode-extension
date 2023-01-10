@@ -124,6 +124,11 @@
                 "category": "jfrog.view.dependency.vulnerability"
             },
             {
+                "command": "jfrog.view.eos.page",
+                "title": "jfrog.view.eos.page",
+                "category": "jfrog.view.eos.page"
+            },
+            {
                 "command": "jfrog.xray.refresh",
                 "title": "Refresh",
                 "icon": {

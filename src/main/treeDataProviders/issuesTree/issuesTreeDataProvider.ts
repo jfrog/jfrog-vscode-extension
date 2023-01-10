@@ -27,6 +27,7 @@ import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
 import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
 import { DescriptorIssuesData, FileIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
 import { Configuration } from '../../utils/configuration';
+import { EosTreeNode } from './codeFileTree/eosTreeNode';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -275,8 +276,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         checkCanceled();
         let graphSupported: boolean = await this._scanManager.validateGraphSupported();
         checkCanceled();
-        let scansPromises: Promise<any>[] = [];
-        scansPromises.push(AnalyzerUtils.runEos(workspaceData,root,workspaceDescriptors,this._scanManager,progressManager));
 
         // Build workspace dependency tree for all the descriptors
         progressManager.startStep('👷 Building workspace dependencies tree', getNumberOfSupportedPackageTypes());
@@ -289,7 +288,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             checkCanceled
         );
 
-        progressManager.startStep('🔎 Scanning for issues', graphSupported ? 2 * descriptorsCount : 0);
+        progressManager.startStep('🔎 Scanning for issues', graphSupported ? 2 * descriptorsCount + 1 : 1);
+        let scansPromises: Promise<any>[] = [];
+        scansPromises.push(AnalyzerUtils.runEos(workspaceData,root,workspaceDescriptors,this._scanManager,progressManager));
         // Dependency graph scan and applicability scan for each descriptor
         if (graphSupported) {
             scansPromises.push(
@@ -645,7 +646,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             // Source code issues nodes
             if (element instanceof CodeIssueTreeNode) {
                 if (element instanceof ApplicableTreeNode) {
-                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.applicable', 'Open file location', [
+                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.applicable', 'Open file location and CVE details', [
+                        element.parent.fullPath,
+                        element.regionWithIssue,
+                        element.getDetailsPage()
+                    ]);
+                } else if (element instanceof EosTreeNode) {
+                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.eos', 'Open file location and Eos details', [
                         element.parent.fullPath,
                         element.regionWithIssue,
                         element.getDetailsPage()

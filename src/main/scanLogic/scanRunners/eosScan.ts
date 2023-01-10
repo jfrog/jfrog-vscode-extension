@@ -1,10 +1,12 @@
 import * as path from 'path';
 import * as os from 'os';
+import * as fs from 'fs';
 
 import { LogManager } from '../../log/logManager';
 import { BinaryRunner } from './binaryRunner';
 import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeIssue, AnalyzerScanResponse, AnalyzeScanRequest, FileRegion } from './analyzerModels';
+import { Utils } from '../../treeDataProviders/utils/utils';
 
 export interface EosScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
@@ -29,14 +31,14 @@ export interface EosFileIssue {
 
 export class EosRunner extends BinaryRunner {
     private static readonly RUNNER_FOLDER: string = 'eos';
-    private static readonly BINARY_NAME: string = 'main_';
+    private static readonly BINARY_NAME: string = 'eos_scanner';
 
     constructor(abortCheckInterval: number, logManager: LogManager) {
         super(path.join(ScanUtils.getHomePath(), EosRunner.RUNNER_FOLDER, EosRunner.getBinaryName()), abortCheckInterval, logManager);
     }
 
     protected validateSupported(): boolean {
-        if (os.platform() != 'linux' && os.platform() != 'darwin') {
+        if (os.platform() !== 'linux' && os.platform() !== 'darwin' && os.platform() !== 'win32') {
             this._logManager.logMessage("Eos scan is not supported on '" + os.platform() + "' os", 'DEBUG');
             return false;
         }
@@ -47,9 +49,11 @@ export class EosRunner extends BinaryRunner {
         let name: string = EosRunner.BINARY_NAME;
         switch (os.platform()) {
             case 'linux':
-                return name + 'ubuntu';
+                return name + '_ubuntu';
             case 'darwin':
-                return name + 'macos';
+                return name + '_macos';
+            case 'win32':
+                return name + ".exe";
         }
         return name;
     }
@@ -67,15 +71,27 @@ export class EosRunner extends BinaryRunner {
         return response;
     }
 
+    private static counter: number = 0;
+
     public generateResponse(response?: AnalyzerScanResponse): EosScanResponse {
         if (!response) {
             return {} as EosScanResponse;
         }
+        
         let eosResponse: EosScanResponse = {
             filesWithIssues: []
         } as EosScanResponse;
 
         for (const run of response.runs) {
+            fs.writeFileSync(
+                path.join(
+                    this._runDirectory,
+                    'scans',
+                    'raw-run-' + Utils.getLastSegment(run.tool.driver.name) + '-' + EosRunner.counter++ + '.json'
+                ),
+                JSON.stringify(run)
+            );
+            
             let issues: AnalyzeIssue[] = run.results;
             if (issues) {
                 issues.forEach(analyzeIssue => {

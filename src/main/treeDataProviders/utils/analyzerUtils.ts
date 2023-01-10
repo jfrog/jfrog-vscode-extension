@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
+import * as fs from 'fs';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
 import { CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
 import { SeverityUtils } from '../../types/severity';
@@ -15,9 +16,9 @@ import { PackageType } from '../../types/projectType';
 import { StepProgress } from './stepProgress';
 import { EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
 import { ScanManager } from '../../scanLogic/scanManager';
-import { CodeIssueTreeNode } from '../issuesTree/codeFileTree/codeIssueTreeNode';
 import { FileIssues } from '../../scanLogic/scanRunners/analyzerModels';
 import { DescriptorIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
+import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
 
 export class AnalyzerUtils {
     /**
@@ -214,6 +215,8 @@ export class AnalyzerUtils {
         }
     }
 
+    static counter: number = 0;
+
     /**
      * Populate eos information in
      * @param root - root node to populate data inside
@@ -221,6 +224,10 @@ export class AnalyzerUtils {
      * @returns number of eos issues populated
      */
     public static populateEosIssues(root: IssuesRootTreeNode, workspaceData: WorkspaceIssuesData): number {
+        fs.writeFileSync(
+            '/Users/assafa/.jfrog-vscode-extension/data-eos-' + AnalyzerUtils.counter++ + '.json',
+            JSON.stringify(workspaceData)
+        );
         root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
         let issuesCount: number = 0;
         if (workspaceData.eosScan && workspaceData.eosScan.filesWithIssues) {
@@ -229,7 +236,7 @@ export class AnalyzerUtils {
                 fileWithIssues.issues.forEach(issue => {
                     issue.regions.forEach(region => {
                         fileNode.issues.push(
-                            new CodeIssueTreeNode(
+                            new EosTreeNode(
                                 issue.ruleId,
                                 fileNode,
                                 new vscode.Range(

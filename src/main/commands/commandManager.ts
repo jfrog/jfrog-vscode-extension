@@ -11,7 +11,7 @@ import { Configuration } from '../utils/configuration';
 import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
 import { ScanUtils } from '../utils/scanUtils';
 import { DiagnosticsManager } from '../diagnostics/diagnosticsManager';
-import { IDependencyPage } from 'jfrog-ide-webview';
+import { IDependencyPage, IZeroDayPage } from 'jfrog-ide-webview';
 
 /**
  * Register and execute all commands in the extension.
@@ -43,6 +43,9 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.issues.select.node', item => this._treesManager.selectItemOnIssuesTree(item));
         this.registerCommand(context, 'jfrog.issues.file.open.applicable', (file, fileRegion, details) =>
             this.doOpenFileAndDetailsPage(file, fileRegion, details)
+        );
+        this.registerCommand(context, 'jfrog.issues.file.open.eos', (file, fileRegion, details) =>
+            this.doOpenFileAndEosDetailsPage(file, fileRegion, details)
         );
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
         // CI state
@@ -133,7 +136,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Refresh the components tree and updates the currently open files with diagnositcs
+     * Refresh the components tree and updates the currently open files with diagnostics
      * @param scan - True to scan the workspace, false will load from cache
      */
     private async doRefresh(scan: boolean = true) {
@@ -158,6 +161,25 @@ export class CommandManager implements ExtensionComponent {
     public async doOpenFileAndDetailsPage(filePath: string, fileRegion: vscode.Range, page: IDependencyPage) {
         await ScanUtils.openFile(filePath, fileRegion);
         this.doShowDependencyDetailsPage(page);
+    }
+
+    /**
+     * Open webpage with the given data
+     * @param page - data to show in webpage
+     */
+    public doShowEosDetailsPage(page: IZeroDayPage) {
+        vscode.commands.executeCommand('jfrog.view.eos.page', page);
+    }
+
+    /**
+     * Open a file with selected range and the webpage with the given data
+     * @param filePath - file to open in editor
+     * @param fileRegion - range inside the file to select
+     * @param page - the data to show in the open page
+     */
+    public async doOpenFileAndEosDetailsPage(filePath: string, fileRegion: vscode.Range, page: IZeroDayPage) {
+        await ScanUtils.openFile(filePath, fileRegion);
+        this.doShowEosDetailsPage(page);
     }
 
     /**

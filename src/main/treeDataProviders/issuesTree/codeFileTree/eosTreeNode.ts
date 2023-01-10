@@ -1,11 +1,8 @@
-import { IZeroDayPage } from 'jfrog-ide-webview';
+import { IAnalysisStep, IZeroDayPage } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
 import { Severity } from '../../../types/severity';
 import { CodeFileTreeNode } from './codeFileTreeNode';
 import { CodeIssueTreeNode } from "./codeIssueTreeNode";
-
-
-
 
 
 /**
@@ -22,17 +19,21 @@ export class EosTreeNode extends CodeIssueTreeNode {
      */
     public getDetailsPage(): IZeroDayPage {
         return {
-            header: string;
-            location: string;
-            description?: string;
-            remediation?: string[];
-            foundText?: string;
+            header: "header",
+            location: "location",
+            description: "description", // can be undefined
+            remediation: ["remediation1","remediation2"], // can be undefined
+            foundText: "foundText", // can be undefined
             analysisStep: [
                 {
-                file: string;
-                line: string;
+                file: "file1",
+                line: "line1"
+            } as IAnalysisStep,
+            {
+                file: "file2",
+                line: "line2"
             } as IAnalysisStep
-        ]IAnalysisStep[];
+        ]
         } as IZeroDayPage;
     }
 }
