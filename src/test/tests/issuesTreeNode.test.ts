@@ -1,8 +1,9 @@
 import { assert } from 'chai';
 import * as path from 'path';
+import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { Severity } from '../../main/types/severity';
-import { createRootTestNode, RootNodeTestCase } from './utils/treeNodeUtils.test';
+import { createAndPopulateFileTestNode, createRootTestNode, RootNodeTestCase } from './utils/treeNodeUtils.test';
 
 /**
  * Test functionality of @class IssuesRootTreeNode.
@@ -37,7 +38,14 @@ describe('Issues Root Node Tests', () => {
     testCases.forEach(testCase => {
         it('Add child test - ' + testCase.test, () => {
             let testNode: IssuesRootTreeNode = createRootTestNode(testCase.path);
-            
+            for (let i: number = 0; i < testCase.data.length; i++) {
+                let fileNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data[i]);
+                assert.lengthOf(testNode.children,i);
+                testNode.addChild(fileNode);
+                assert.lengthOf(testNode.children,i + 1);
+                assert.include(testNode.children,fileNode);
+                assert.deepEqual(fileNode.parent,testNode);
+            }
         });
     });
 

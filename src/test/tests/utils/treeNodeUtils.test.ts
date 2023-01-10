@@ -20,12 +20,32 @@ export interface FileNodeTestData {
     issues: Severity[];
 }
 
+/**
+ * Create a dummy issues root node base on a given path
+ * @param pathOfWorkspace - path of the workspace for the root node
+ * @returns a dummy root node
+ */
 export function createRootTestNode(pathOfWorkspace: string): IssuesRootTreeNode {
     let root: IssuesRootTreeNode = new IssuesRootTreeNode({
         uri: {
             fsPath: pathOfWorkspace
         } as vscode.Uri
     } as vscode.WorkspaceFolder);
+    return root;
+}
+
+/**
+ * Create file node and populate it with issues base on test case
+ * @param testCase - the test we want to prepare
+ * @returns node prepared base on test case
+ */
+export function createAndPopulateRootTestNode(rootPath: string, ...data: FileNodeTestData[]): IssuesRootTreeNode {
+    let root: IssuesRootTreeNode = createRootTestNode(rootPath);
+    for (const fileData of data) {
+        let fileNode: FileTreeNode = createAndPopulateFileTestNode(fileData);
+        root.addChild(fileNode);
+    }
+    root.apply();
     return root;
 }
 
