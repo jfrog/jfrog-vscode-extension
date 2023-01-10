@@ -39,11 +39,13 @@ export function createRootTestNode(pathOfWorkspace: string): IssuesRootTreeNode 
  * @param testCase - the test we want to prepare
  * @returns node prepared base on test case
  */
-export function createAndPopulateRootTestNode(rootPath: string, ...data: FileNodeTestData[]): IssuesRootTreeNode {
+export function createAndPopulateRootTestNode(rootPath: string, data: FileNodeTestData[]): IssuesRootTreeNode {
     let root: IssuesRootTreeNode = createRootTestNode(rootPath);
-    for (const fileData of data) {
-        let fileNode: FileTreeNode = createAndPopulateFileTestNode(fileData);
-        root.addChild(fileNode);
+    if (data) {
+        for (const fileData of data) {
+            let fileNode: FileTreeNode = createAndPopulateFileTestNode(fileData);
+            root.addChild(fileNode);
+        }
     }
     root.apply();
     return root;

@@ -69,7 +69,7 @@ describe('File Node Tests', () => {
             // No parent
             assert.equal(testNode.description, testNode.fullPath);
             // Local path not in parent path
-            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: 'nowhere' } as vscode.Uri } as vscode.WorkspaceFolder);
+            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: path.join('nowhere') } as vscode.Uri } as vscode.WorkspaceFolder);
             testNode.apply();
             assert.equal(testNode.description, testNode.fullPath);
             // Parent in path, parent is root
@@ -104,8 +104,10 @@ describe('File Node Tests', () => {
     testCases.forEach(testCase => {
         it('Tooltip test - ' + testCase.test, () => {
             let testNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data);
+            // Path
             assert.equal(testNode.fullPath, testCase.data.path);
             assert.include(testNode.tooltip, 'Full path: ' + testNode.fullPath);
+            // Issue count
             assert.equal(testNode.issues.length, testCase.data.issues.length);
             assert.include(testNode.tooltip, 'Issues count: ' + testNode.issues.length);
             // timestamp - not set
