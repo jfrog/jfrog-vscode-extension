@@ -1,5 +1,6 @@
 import { assert } from 'chai';
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { Severity } from '../../main/types/severity';
@@ -13,25 +14,34 @@ describe('Issues Root Node Tests', () => {
         {
             test: 'No files',
             path: path.join('root'),
-            data: [{ path: path.join('root', 'folder', 'path'), issues: [] }],
-            expectedSeverity: Severity.Unknown
+            data: []
         } as RootNodeTestCase,
         {
             test: 'One file',
             path: path.join('root'),
-            data: [{ path: path.join('root', 'folder', 'path'), issues: [Severity.Medium] }],
-            expectedSeverity: Severity.Medium
+            data: [{ path: path.join('root', 'path'), issues: [Severity.Medium] }]
         } as RootNodeTestCase,
         {
             test: 'Multiple files',
             path: path.join('root'),
             data: [
                 {
-                    path: path.join('root', 'folder', 'path'),
-                    issues: [Severity.Low, Severity.Low, Severity.NotApplicableCritical, Severity.NotApplicableHigh, Severity.High]
+                    path: path.join('root', 'folder', 'path1'),
+                    issues: []
+                },
+                {
+                    path: path.join('root', 'folder', 'path2'),
+                    issues: [Severity.Critical]
+                },
+                {
+                    path: path.join('root', 'path3'),
+                    issues: [Severity.Medium,Severity.Medium]
+                },
+                {
+                    path: path.join('root', 'folder', 'path4'),
+                    issues: [Severity.Low, Severity.NotApplicableCritical, Severity.NotApplicableHigh, Severity.High]
                 }
-            ],
-            expectedSeverity: Severity.High
+            ]
         } as RootNodeTestCase
     ];
 
@@ -49,10 +59,14 @@ describe('Issues Root Node Tests', () => {
         });
     });
 
-    testCases.forEach(testCase => {
-        it('title/description test - ' + testCase.test, () => {
-            //
-        });
+    it('title/description test', () => {
+        // No title
+        assert.equal(new IssuesRootTreeNode({ uri: {fsPath: path.join("root")} as vscode.Uri} as vscode.WorkspaceFolder).description,'');
+        // With title
+        let testNode: IssuesRootTreeNode = new IssuesRootTreeNode({ uri: {fsPath: path.join("root")} as vscode.Uri} as vscode.WorkspaceFolder, 'title');
+        assert.equal(testNode.description,'title');
+        testNode.title = 'other title';
+        assert.equal(testNode.description,'other title');
     });
 
     testCases.forEach(testCase => {
