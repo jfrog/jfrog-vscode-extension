@@ -64,7 +64,23 @@ describe('Issues Root Node Tests', () => {
 
     testCases.forEach(testCase => {
         it('oldest timestamp test - ' + testCase.test, () => {
-            //
+            let testNode: IssuesRootTreeNode = createAndPopulateRootTestNode(testCase.path, testCase.data);
+            // No timestamp
+            assert.isUndefined(testNode.oldestScanTimestamp);
+            assert.notInclude(testNode.tooltip,'Last scan completed at');
+            if (testNode.children.length > 0) {
+                // With timestamp
+                for (let i: number = 0; i < testNode.children.length; i++) {
+                    testNode.children[i].timeStamp = i + 1;
+                }
+                testNode.apply();
+                assert.equal(testNode.oldestScanTimestamp,1);
+                assert.include(testNode.tooltip,'Last scan completed at');
+                // Override with status
+                testNode.title = 'title';
+                testNode.apply();
+                assert.notInclude(testNode.tooltip,'Last scan completed at');
+            }
         });
     });
 
