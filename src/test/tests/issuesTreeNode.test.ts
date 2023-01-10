@@ -54,10 +54,24 @@ describe('Issues Root Node Tests', () => {
             for (let i: number = 0; i < testCase.data.length; i++) {
                 let fileNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data[i]);
                 assert.lengthOf(testNode.children, i);
-                testNode.addChild(fileNode);
+                // Add new child
+                testNode.addChildAndApply(fileNode);
                 assert.lengthOf(testNode.children, i + 1);
                 assert.include(testNode.children, fileNode);
                 assert.deepEqual(fileNode.parent, testNode);
+                // Make sure files are ordered
+                let prev: FileTreeNode | undefined;
+                for (let i: number = 0; i < testNode.children.length; i++) {
+                    if (prev) {
+                        // Severity at least the same or less from prev
+                        assert.isTrue(prev.severity >= testNode.children[i].severity);
+                        if (prev.severity === testNode.children[i].severity) {
+                            // Number of issues at least the same or less from prev
+                            assert.isTrue(prev.issues.length >= testNode.children[i].issues.length);
+                        }
+                    }
+                    prev = testNode.children[i];
+                }
             }
         });
     });
@@ -67,19 +81,19 @@ describe('Issues Root Node Tests', () => {
             let testNode: IssuesRootTreeNode = createAndPopulateRootTestNode(testCase.path, testCase.data);
             // No timestamp
             assert.isUndefined(testNode.oldestScanTimestamp);
-            assert.notInclude(testNode.tooltip,'Last scan completed at');
+            assert.notInclude(testNode.tooltip, 'Last scan completed at');
             if (testNode.children.length > 0) {
                 // With timestamp
                 for (let i: number = 0; i < testNode.children.length; i++) {
                     testNode.children[i].timeStamp = i + 1;
                 }
                 testNode.apply();
-                assert.equal(testNode.oldestScanTimestamp,1);
-                assert.include(testNode.tooltip,'Last scan completed at');
+                assert.equal(testNode.oldestScanTimestamp, 1);
+                assert.include(testNode.tooltip, 'Last scan completed at');
                 // Override with status
                 testNode.title = 'title';
                 testNode.apply();
-                assert.notInclude(testNode.tooltip,'Last scan completed at');
+                assert.notInclude(testNode.tooltip, 'Last scan completed at');
             }
         });
     });
