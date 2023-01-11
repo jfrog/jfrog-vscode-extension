@@ -16,7 +16,7 @@ export class CveTreeNode extends IssueTreeNode {
     private _references: IReference[];
     private _researchInfo?: IExtendedInformation;
 
-    private _fixVersions: string[];
+    private _fixedVersions: string[];
     private _infectedVersions: string[];
 
     private _applicableDetails?: IApplicableDetails;
@@ -36,7 +36,7 @@ export class CveTreeNode extends IssueTreeNode {
             this._researchInfo = Translators.toWebViewExtendedInformation(sourceVul.extended_information);
         }
 
-        this._fixVersions = component.fixed_versions;
+        this._fixedVersions = component.fixed_versions;
         this._infectedVersions = component.infected_versions;
 
         let violation: IViolation = <IViolation>sourceVul;
@@ -74,7 +74,7 @@ export class CveTreeNode extends IssueTreeNode {
             severity: SeverityUtils.toWebviewSeverity(this._severity),
             edited: this._edited,
             summary: this._summary,
-            fixedVersion: this._fixVersions,
+            fixedVersion: this._fixedVersions,
             license: this.parent.licenses,
             references: this._references,
             extendedInformation: this._researchInfo,
@@ -86,8 +86,8 @@ export class CveTreeNode extends IssueTreeNode {
         return this._issue_id;
     }
 
-    public get fixVersions(): string[] {
-        return this._fixVersions;
+    public get fixedVersions(): string[] {
+        return this._fixedVersions;
     }
 
     public get infectedVersions(): string[] {
