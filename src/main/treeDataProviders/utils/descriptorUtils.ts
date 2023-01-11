@@ -21,10 +21,10 @@ import { DescriptorIssuesData } from '../../types/issuesData';
 
 export class DescriptorUtils {
     /**
-     *  Creates a map for each Xray issue in the response to the impact path in the given dependency graph.
+     *  Creates a map for each Xray issue in a component (key= issue_id+componentId) in the response to the impact path in the given dependency graph.
      * @param descriptorGraph - the descriptor full dependency graph
      * @param response - the scan result issues and the dependency components for each of them
-     * @returns map from issue_id to IImpactedPath for the given tree root
+     * @returns map from (issue_id+componentId) to IImpactedPath for the given tree root
      */
     public static createImpactedPaths(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactedPath> {
         let paths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>();
@@ -43,9 +43,9 @@ export class DescriptorUtils {
     }
 
     /**
-     *  Get the impact path of all the children of a given root, recursively, if exists at least one component that has issue in the path
+     * Get the impact path of all the children of a given root, recursively, if exists a component that has issue in the path
      * @param root - the root to get it's children impact
-     * @param componentsWithIssue - map of artifactId -> component, if component exists in the map it has issue
+     * @param componentWithIssue - the component to generate the impact path for it
      * @returns array of impact paths one for each child if exists
      */
     public static getChildrenImpact(root: DependenciesTreeNode, componentWithIssue: IComponent): IImpactedPath[] {
