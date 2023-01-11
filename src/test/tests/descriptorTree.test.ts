@@ -2,10 +2,10 @@ import * as path from 'path';
 import { Severity } from '../../main/types/severity';
 import { FileNodeTestCase } from './utils/treeNodeUtils.test';
 
-/**
- * Test functionality of @class DescriptorTreeNode.
- */
 describe('Descriptor Tree Tests', () => {
+    /**
+     * Test functionality of @class DescriptorTreeNode.
+     */
     describe('Descriptor Node Tests', () => {
         let descriptorTestCases: any[] = [
             {
@@ -60,10 +60,11 @@ describe('Descriptor Tree Tests', () => {
         });
     });
 
+    /**
+     * Test functionality of @class DependencyIssuesTreeNode.
+     */
     describe('Dependency With Issues Node Tests', () => {
-        let dependencyTestCases: any[] = [
-          
-        ];
+        let dependencyTestCases: any[] = [];
 
         dependencyTestCases.forEach(testCase => {
             it('componentId test - ' + testCase.test, () => {
@@ -76,7 +77,6 @@ describe('Descriptor Tree Tests', () => {
                 // let testNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data);
                 // assert.deepEqual(testNode.severity, testCase.expectedSeverity);
                 // assert.include(testNode.tooltip, 'Top severity: ' + SeverityUtils.getString(testCase.expectedSeverity));
-
                 // todo: check order of issues
             });
         });
@@ -94,10 +94,11 @@ describe('Descriptor Tree Tests', () => {
         });
     });
 
+    /**
+     * Test functionality of @class CveTreeNode.
+     */
     describe('CVE Issue Node Tests', () => {
-        let cveTestCases: any[] = [
-          
-        ];
+        let cveTestCases: any[] = [];
 
         cveTestCases.forEach(testCase => {
             it('labelId test - ' + testCase.test, () => {
@@ -112,10 +113,11 @@ describe('Descriptor Tree Tests', () => {
         });
     });
 
+    /**
+     * Test functionality of @class LicenseIssueTreeNode.
+     */
     describe('License Issue Node Tests', () => {
-        let licenseTestCases: any[] = [
-          
-        ];
+        let licenseTestCases: any[] = [];
 
         licenseTestCases.forEach(testCase => {
             it('Get details page test - ' + testCase.test, () => {
