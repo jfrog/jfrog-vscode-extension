@@ -32,10 +32,12 @@ export class DescriptorUtils {
 
         for (let i: number = 0; i < issues.length; i++) {
             let issue: IVulnerability = issues[i];
-            paths.set(issue.issue_id, {
-                name: descriptorGraph.componentId,
-                children: this.getChildrenImpact(descriptorGraph, new Map<string, IComponent>(Object.entries(issue.components)))
-            } as IImpactedPath);
+            for (let [componentId, component] of Object.entries(issue.components)) {
+                paths.set(issue.issue_id + componentId, {
+                    name: descriptorGraph.componentId,
+                    children: this.getChildrenImpact(descriptorGraph, component)
+                } as IImpactedPath);
+            }
         }
         return paths;
     }
@@ -46,19 +48,19 @@ export class DescriptorUtils {
      * @param componentsWithIssue - map of artifactId -> component, if component exists in the map it has issue
      * @returns array of impact paths one for each child if exists
      */
-    public static getChildrenImpact(root: DependenciesTreeNode, componentsWithIssue: Map<string, IComponent>): IImpactedPath[] {
+    public static getChildrenImpact(root: DependenciesTreeNode, componentWithIssue: IComponent): IImpactedPath[] {
         let impactPaths: IImpactedPath[] = [];
         for (let child of root.children) {
             let impactChild: IImpactedPath | undefined = impactPaths.find(p => p.name === child.componentId);
             if (!impactChild) {
-                if (child.dependencyId && componentsWithIssue.has(child.dependencyId)) {
+                if (child.componentId === componentWithIssue.package_name + ':' + componentWithIssue.package_version) {
                     // Direct impact
                     impactPaths.push({
                         name: child.componentId
                     } as IImpactedPath);
                 }
                 // indirect impact
-                let indirectImpact: IImpactedPath[] = this.getChildrenImpact(child, componentsWithIssue);
+                let indirectImpact: IImpactedPath[] = this.getChildrenImpact(child, componentWithIssue);
                 if (indirectImpact.length > 0) {
                     impactPaths.push({
                         name: child.componentId,
@@ -116,10 +118,11 @@ export class DescriptorUtils {
         // Populate issues
         for (let i: number = 0; i < issues.length; i++) {
             let issue: IVulnerability | IViolation = issues[i];
-            let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id);
             let severity: Severity = SeverityUtils.getSeverity(issue.severity);
             // Populate the issue for each dependency component
             for (let [componentId, component] of Object.entries(issue.components)) {
+                let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id + componentId);
+
                 let dependencyWithIssue: DependencyIssuesTreeNode = descriptorNode.addNode(componentId, component, severity);
 
                 let matchIssue: IssueTreeNode | undefined = dependencyWithIssue.issues.find(issueExists => issueExists.issueId === issue.issue_id);
