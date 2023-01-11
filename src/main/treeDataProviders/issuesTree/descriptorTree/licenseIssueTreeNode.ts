@@ -7,6 +7,7 @@ import { Translators } from '../../../utils/translators';
 
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { PackageType } from '../../../types/projectType';
+import { ContextKeys } from '../../../constants/contextKeys';
 
 /**
  * Describes an Xray license violation issue
@@ -14,6 +15,7 @@ import { PackageType } from '../../../types/projectType';
 export class LicenseIssueTreeNode extends IssueTreeNode {
     private _references: IReference[];
     private _licenseIssue: IGraphLicense;
+    private _ignore_url: string;
 
     constructor(issue: IViolation, _severity: Severity, private _parent: DependencyIssuesTreeNode, private _impactedTreeRoot: IImpactedPath) {
         super(issue.issue_id, _severity, issue.license_key, vscode.TreeItemCollapsibleState.None);
@@ -24,6 +26,9 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
 
         this.description = 'License violation';
         this.tooltip = 'License violation issue';
+
+        this.contextValue += ContextKeys.SHOW_IGNORE_RULE_ENABLED;
+        this._ignore_url = issue.ignore_url;
     }
 
     /**
@@ -46,6 +51,10 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
 
     public get issue_id(): string {
         return this._issue_id;
+    }
+
+    public get ignore_url(): string {
+        return this._ignore_url;
     }
 
     public get impactedTree(): IImpactedPath {
