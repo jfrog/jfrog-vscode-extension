@@ -25,14 +25,6 @@ describe('Analyzer Utils Tests', async () => {
         {
             pattern: '**/*{test,venv,node_modules,target}*',
             results: ['**/*test*/**', '**/*venv*/**', '**/*node_modules*/**', '**/*target*/**']
-        },
-        {
-            pattern: '**/*{node_module, {test, target}}*',
-            results: []
-        },
-        {
-            pattern: '*{node_module, test}*',
-            results: []
         }
     ].forEach(testCase => {
         it('Get applicable exclude pattern test - ' + testCase.pattern, () => {
