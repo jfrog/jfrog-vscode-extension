@@ -15,7 +15,7 @@ import { ContextKeys } from '../../../constants/contextKeys';
 export class LicenseIssueTreeNode extends IssueTreeNode {
     private _references: IReference[];
     private _licenseIssue: IGraphLicense;
-    private _ignore_url: string;
+    private _ignoreUrl: string;
 
     constructor(issue: IViolation, _severity: Severity, private _parent: DependencyIssuesTreeNode, private _impactedTreeRoot: IImpactedPath) {
         super(issue.issue_id, _severity, issue.license_key, vscode.TreeItemCollapsibleState.None);
@@ -28,7 +28,7 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
         this.tooltip = 'License violation issue';
 
         this.contextValue += ContextKeys.SHOW_IGNORE_RULE_ENABLED;
-        this._ignore_url = issue.ignore_url;
+        this._ignoreUrl = issue.ignore_url;
     }
 
     /**
@@ -53,8 +53,8 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
         return this._issue_id;
     }
 
-    public get ignore_url(): string {
-        return this._ignore_url;
+    public get ignoreUrl(): string {
+        return this._ignoreUrl;
     }
 
     public get impactedTree(): IImpactedPath {

@@ -20,7 +20,7 @@ export class CveTreeNode extends IssueTreeNode {
     private _fixedVersions: string[];
     private _infectedVersions: string[];
 
-    private _ignore_url?: string | undefined;
+    private _ignoreUrl?: string | undefined;
 
     private _applicableDetails?: IApplicableDetails;
 
@@ -49,12 +49,12 @@ export class CveTreeNode extends IssueTreeNode {
         }
         if (violation && violation.ignore_url) {
             this.contextValue += ContextKeys.SHOW_IGNORE_RULE_ENABLED;
-            this._ignore_url = violation.ignore_url;
+            this._ignoreUrl = violation.ignore_url;
         }
     }
 
-    public get ignore_url(): string | undefined {
-        return this._ignore_url;
+    public get ignoreUrl(): string | undefined {
+        return this._ignoreUrl;
     }
 
     public get labelId(): string {
