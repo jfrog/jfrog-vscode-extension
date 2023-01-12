@@ -64,17 +64,17 @@ export class AnalyzerUtils {
             return patterns;
         }
         let bracketOpeningIndex: number = excludePattern.indexOf('{');
-            let bracketClosingIndex: number = excludePattern.indexOf('}');
+        let bracketClosingIndex: number = excludePattern.indexOf('}');
 
-            if (bracketOpeningIndex >= 0 && bracketClosingIndex > bracketOpeningIndex) {
-                // Convert <PREFIX>{option1,option2,...}<SUFFIX> to [<PREFIX>option1<SUFFIX>/** ,<PREFIX>option2<SUFFIX>/**, ...]
-                let prefix: string = excludePattern.substring(0, bracketOpeningIndex);
-                let suffix: string = excludePattern.substring(bracketClosingIndex + 1);
-                let options: string[] = excludePattern.substring(bracketOpeningIndex + 1, bracketClosingIndex).split(',');
-                options.forEach(option => patterns.push(prefix + option + suffix + (suffix.endsWith('/**') ? '' : '/**')));
-            } else {
-                patterns.push(excludePattern + (excludePattern.endsWith('/**') ? '' : '/**'));
-            }
+        if (bracketOpeningIndex >= 0 && bracketClosingIndex > bracketOpeningIndex) {
+            // Convert <PREFIX>{option1,option2,...}<SUFFIX> to [<PREFIX>option1<SUFFIX>/** ,<PREFIX>option2<SUFFIX>/**, ...]
+            let prefix: string = excludePattern.substring(0, bracketOpeningIndex);
+            let suffix: string = excludePattern.substring(bracketClosingIndex + 1);
+            let options: string[] = excludePattern.substring(bracketOpeningIndex + 1, bracketClosingIndex).split(',');
+            options.forEach(option => patterns.push(prefix + option + suffix + (suffix.endsWith('/**') ? '' : '/**')));
+        } else {
+            patterns.push(excludePattern + (excludePattern.endsWith('/**') ? '' : '/**'));
+        }
         return patterns;
     }
 

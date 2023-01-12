@@ -26,12 +26,11 @@ export interface FileNodeTestData {
  * @returns a dummy root node
  */
 export function createRootTestNode(pathOfWorkspace: string): IssuesRootTreeNode {
-    let root: IssuesRootTreeNode = new IssuesRootTreeNode({
+    return new IssuesRootTreeNode({
         uri: {
             fsPath: pathOfWorkspace
         } as vscode.Uri
     } as vscode.WorkspaceFolder);
-    return root;
 }
 
 /**

@@ -104,13 +104,13 @@ describe('File Node Tests', () => {
     testCases.forEach(testCase => {
         it('Tooltip test - ' + testCase.test, () => {
             let testNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data);
-            // Path
+            // Check path
             assert.equal(testNode.fullPath, testCase.data.path);
             assert.include(testNode.tooltip, 'Full path: ' + testNode.fullPath);
-            // Issue count
+            // Check issue count
             assert.equal(testNode.issues.length, testCase.data.issues.length);
             assert.include(testNode.tooltip, 'Issues count: ' + testNode.issues.length);
-            // timestamp - not set
+            // Check timestamp
             assert.notInclude(testNode.tooltip, 'Last scan completed at');
             testNode.timeStamp = Date.now();
             testNode.apply();
