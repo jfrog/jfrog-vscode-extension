@@ -21,7 +21,7 @@ import { DescriptorIssuesData } from '../../types/issuesData';
 
 export class DescriptorUtils {
     /**
-     *  Creates a map for each Xray issue in a component (key= issue_id+componentId) in the response to the impact path in the given dependency graph.
+     * Creates a map for each Xray issue in a component (key= issue_id+componentId) in the response to the impact path in the given dependency graph.
      * @param descriptorGraph - the descriptor full dependency graph
      * @param response - the scan result issues and the dependency components for each of them
      * @returns map from (issue_id+componentId) to IImpactedPath for the given tree root
