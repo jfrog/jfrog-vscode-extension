@@ -23,7 +23,7 @@ export class Configuration implements ExtensionComponent {
     /**
      * Validate if the exclude pattern is legal:
      * 1. contains up to one pair of {}
-     * 2. matches the following pattern: ^(.*\/\*({.*,?})\*|.*\/\*(.*)\*)$
+     * 2. matches the following pattern: ^(\*\*\/\*({.*,?})\*|\*\*\/\*(.+)\*)$
      * Or throw error if not legal.
      * @param excludePattern - the pattern to validate
      */
