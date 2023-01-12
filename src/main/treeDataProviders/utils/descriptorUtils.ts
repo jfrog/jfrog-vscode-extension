@@ -21,10 +21,10 @@ import { DescriptorIssuesData } from '../../types/issuesData';
 
 export class DescriptorUtils {
     /**
-     *  Creates a map for each Xray issue in the response to the impact path in the given dependency graph.
+     * Creates a map for each Xray issue in a component (key= issue_id+componentId) in the response to the impact path in the given dependency graph.
      * @param descriptorGraph - the descriptor full dependency graph
      * @param response - the scan result issues and the dependency components for each of them
-     * @returns map from issue_id to IImpactedPath for the given tree root
+     * @returns map from (issue_id+componentId) to IImpactedPath for the given tree root
      */
     public static createImpactedPaths(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactedPath> {
         let paths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>();
@@ -32,33 +32,35 @@ export class DescriptorUtils {
 
         for (let i: number = 0; i < issues.length; i++) {
             let issue: IVulnerability = issues[i];
-            paths.set(issue.issue_id, {
-                name: descriptorGraph.componentId,
-                children: this.getChildrenImpact(descriptorGraph, new Map<string, IComponent>(Object.entries(issue.components)))
-            } as IImpactedPath);
+            for (let [componentId, component] of Object.entries(issue.components)) {
+                paths.set(issue.issue_id + componentId, {
+                    name: descriptorGraph.componentId,
+                    children: this.getChildrenImpact(descriptorGraph, component)
+                } as IImpactedPath);
+            }
         }
         return paths;
     }
 
     /**
-     *  Get the impact path of all the children of a given root, recursively, if exists at least one component that has issue in the path
+     * Get the impact path of all the children of a given root, recursively, if exists a component that has issue in the path
      * @param root - the root to get it's children impact
-     * @param componentsWithIssue - map of artifactId -> component, if component exists in the map it has issue
+     * @param componentWithIssue - the component to generate the impact path for it
      * @returns array of impact paths one for each child if exists
      */
-    public static getChildrenImpact(root: DependenciesTreeNode, componentsWithIssue: Map<string, IComponent>): IImpactedPath[] {
+    public static getChildrenImpact(root: DependenciesTreeNode, componentWithIssue: IComponent): IImpactedPath[] {
         let impactPaths: IImpactedPath[] = [];
         for (let child of root.children) {
             let impactChild: IImpactedPath | undefined = impactPaths.find(p => p.name === child.componentId);
             if (!impactChild) {
-                if (child.dependencyId && componentsWithIssue.has(child.dependencyId)) {
+                if (child.componentId === componentWithIssue.package_name + ':' + componentWithIssue.package_version) {
                     // Direct impact
                     impactPaths.push({
                         name: child.componentId
                     } as IImpactedPath);
                 }
                 // indirect impact
-                let indirectImpact: IImpactedPath[] = this.getChildrenImpact(child, componentsWithIssue);
+                let indirectImpact: IImpactedPath[] = this.getChildrenImpact(child, componentWithIssue);
                 if (indirectImpact.length > 0) {
                     impactPaths.push({
                         name: child.componentId,
@@ -81,6 +83,7 @@ export class DescriptorUtils {
         issue: IVulnerability,
         dependencyWithIssue: DependencyIssuesTreeNode,
         severity: Severity,
+        component: IComponent,
         impactedPath?: IImpactedPath
     ) {
         let violationIssue: IViolation = <IViolation>issue;
@@ -91,11 +94,11 @@ export class DescriptorUtils {
             if (issue.cves) {
                 // CVE issue
                 for (let cveIssue of issue.cves) {
-                    dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath, cveIssue));
+                    dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, component, impactedPath, cveIssue));
                 }
             } else {
                 // Xray issue
-                dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, impactedPath));
+                dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, component, impactedPath));
             }
         }
     }
@@ -115,10 +118,11 @@ export class DescriptorUtils {
         // Populate issues
         for (let i: number = 0; i < issues.length; i++) {
             let issue: IVulnerability | IViolation = issues[i];
-            let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id);
             let severity: Severity = SeverityUtils.getSeverity(issue.severity);
             // Populate the issue for each dependency component
             for (let [componentId, component] of Object.entries(issue.components)) {
+                let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id + componentId);
+
                 let dependencyWithIssue: DependencyIssuesTreeNode = descriptorNode.addNode(componentId, component, severity);
 
                 let matchIssue: IssueTreeNode | undefined = dependencyWithIssue.issues.find(issueExists => issueExists.issueId === issue.issue_id);
@@ -128,7 +132,7 @@ export class DescriptorUtils {
                     // Xray will return component duplication (just watch_name different), combine those results
                     matchIssue.watchNames.push(violationIssue.watch_name);
                 } else if (!matchIssue) {
-                    this.populateDependencyIssue(issue, dependencyWithIssue, severity, impactedPath);
+                    this.populateDependencyIssue(issue, dependencyWithIssue, severity, component, impactedPath);
                 }
             }
         }
