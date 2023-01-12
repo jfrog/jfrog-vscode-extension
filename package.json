@@ -154,7 +154,7 @@
             },
             {
                 "command": "jfrog.issues.open.ignore",
-                "title": "Open File",
+                "title": "Add ignore rule",
                 "icon": "$(eye-closed)"
             },
             {
