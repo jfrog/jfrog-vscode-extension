@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import fs from 'fs-extra';
 import { IDependencyPage } from 'jfrog-ide-webview';
-import { PageType } from 'jfrog-ide-webview';
 import { LogManager } from '../log/logManager';
 
 /**
@@ -46,7 +45,6 @@ export class DetailsWebView {
 function updateWebview(panel: vscode.WebviewPanel, page: IDependencyPage) {
     panel.webview.postMessage({
         data: page,
-        pageType: PageType.Dependency
     });
 }
 
@@ -74,5 +72,5 @@ function getHtmlForWebview(context: vscode.ExtensionContext, webview: vscode.Web
         encoding: 'utf8'
     });
     const webviewDataPath: vscode.Uri = webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'dist', 'jfrog-ide-webview')));
-    return data.replace(/\/static/g, `${webviewDataPath}/static`);
+    return data.replace(/\.\/static/g, `${webviewDataPath}/static`);
 }
