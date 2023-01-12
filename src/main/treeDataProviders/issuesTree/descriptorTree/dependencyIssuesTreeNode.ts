@@ -11,9 +11,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     // Infer from data
     private _name: string;
     private _version: string;
-    private _fixVersion: string[];
     private _type: PackageType;
-    private _infectedVersions: string[];
 
     // Added dynamically
     private _issues: (CveTreeNode | LicenseIssueTreeNode)[] = [];
@@ -30,8 +28,6 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
 
         this._name = component.package_name;
         this._version = component.package_version;
-        this._fixVersion = component.fixed_versions;
-        this._infectedVersions = component.infected_versions;
         this._type = toPackageType(component.package_type);
         this.description = this._version + (_indirect ? ' (indirect)' : '');
     }
@@ -82,10 +78,6 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         return this._indirect;
     }
 
-    public get infectedVersions(): string[] {
-        return this._infectedVersions;
-    }
-
     public get licenses(): ILicense[] {
         return this._licenses;
     }
@@ -112,10 +104,6 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
 
     public get name(): string {
         return this._name;
-    }
-
-    public get fixVersion(): string[] {
-        return this._fixVersion;
     }
 
     public get version(): string {
