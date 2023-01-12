@@ -72,7 +72,7 @@
                     "type": "string",
                     "default": "**/*{test,venv,node_modules,target}*",
                     "scope": "resource",
-                    "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) used to exclude specific paths from being scanned by JFrog Xray. For example, go.mod files under directories named testdata will not be scanned."
+                    "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) used to exclude specific paths from being scanned by JFrog Xray. For example, go.mod files under directories named testdata will not be scanned.\nExclude pattern must be in the following pattern: **/\\*{option-1,option-2,...option-10}\\* and can't contain more than one curly brackets pair."
                 },
                 "jfrog.xray.ciIntegration.buildNamePattern": {
                     "type": "string",

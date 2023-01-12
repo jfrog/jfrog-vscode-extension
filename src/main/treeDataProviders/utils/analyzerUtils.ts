@@ -52,33 +52,36 @@ export class AnalyzerUtils {
     }
 
     /**
-     * Get the exclude patterns for the applicable scan base on the exclude pattern for the extension.
+     * Transform the exclude pattern to patterns for the applicable scan.
      * The following actions will be preformed to the pattern:
      * 1. If validation for the exclude pattern fails no exclude will be returned.
      * 2. If pattern contains {}, it will be splitted to multiple patterns, one for each option
      * 3. '/**' will be add at the suffix to convert the pattern to match files and not folders
+     * @param excludePattern - the pattern to transform
      * @param log - if log is passed the method will log the error that occur during conversion
      * @returns the applicable pattern array
      */
-    public static getApplicableExcludePattern(log?: LogManager): string[] {
+    public static getApplicableExcludePattern(excludePattern?: string, log?: LogManager): string[] {
         let patterns: string[] = [];
-        let excludePattern: string | undefined = Configuration.getScanExcludePattern();
-        if (excludePattern) {
-            try {
-                Configuration.validateExcludeString(excludePattern);
+        if (!excludePattern) {
+            return patterns;
+        }
+        try {
+            Configuration.validateExcludeString(excludePattern);
+            let bracketOpeningIndex: number = excludePattern.indexOf('{');
+            let bracketClosingIndex: number = excludePattern.indexOf('}');
 
-                if (excludePattern.includes('{') && excludePattern.includes('}')) {
-                    // Convert <PREFIX>{option1,option2...}<SUFFIX> to [<PREFIX>option1<SUFFIX>/** ,<PREFIX>option2<SUFFIX>/**,...]
-                    let prefix: string = excludePattern.substring(0, excludePattern.indexOf('{'));
-                    let suffix: string = excludePattern.substring(excludePattern.indexOf('}') + 1);
-                    let options: string[] = excludePattern.substring(excludePattern.indexOf('{') + 1, excludePattern.indexOf('}')).split(',');
-                    options.forEach(option => patterns.push(prefix + option + suffix + (suffix.endsWith('/**') ? '' : '/**')));
-                } else {
-                    patterns.push(excludePattern + (excludePattern.endsWith('/**') ? '' : '/**'));
-                }
-            } catch (err) {
-                log?.logError(<Error>err);
+            if (bracketOpeningIndex >= 0 && bracketClosingIndex > bracketOpeningIndex) {
+                // Convert <PREFIX>{option1,option2,...}<SUFFIX> to [<PREFIX>option1<SUFFIX>/** ,<PREFIX>option2<SUFFIX>/**, ...]
+                let prefix: string = excludePattern.substring(0, bracketOpeningIndex);
+                let suffix: string = excludePattern.substring(bracketClosingIndex + 1);
+                let options: string[] = excludePattern.substring(bracketOpeningIndex + 1, bracketClosingIndex).split(',');
+                options.forEach(option => patterns.push(prefix + option + suffix + (suffix.endsWith('/**') ? '' : '/**')));
+            } else {
+                patterns.push(excludePattern + (excludePattern.endsWith('/**') ? '' : '/**'));
             }
+        } catch (err) {
+            log?.logError(<Error>err);
         }
         return patterns;
     }

@@ -26,6 +26,7 @@ import { CodeIssueTreeNode } from './codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
 import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
 import { DescriptorIssuesData, FileIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
+import { Configuration } from '../../utils/configuration';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -541,7 +542,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             path.dirname(descriptorData.fullpath),
             abortController,
             cveToScan,
-            AnalyzerUtils.getApplicableExcludePattern(this._logManager)
+            AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern(), this._logManager)
         );
 
         if (descriptorData.applicableIssues && descriptorData.applicableIssues.applicableCve) {
