@@ -542,7 +542,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             path.dirname(descriptorData.fullpath),
             abortController,
             cveToScan,
-            AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern(), this._logManager)
+            AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern())
         );
 
         if (descriptorData.applicableIssues && descriptorData.applicableIssues.applicableCve) {

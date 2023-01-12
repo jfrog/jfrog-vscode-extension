@@ -11,7 +11,6 @@ import { BuildsManager } from './main/builds/buildsManager';
 import { ScanManager } from './main/scanLogic/scanManager';
 import { CacheManager } from './main/cache/cacheManager';
 import { DetailsWebView } from './main/webviews/detailsWebView';
-import { Configuration } from './main/utils/configuration';
 
 /**
  * This method is called when the extension is activated.
@@ -40,7 +39,6 @@ export async function activate(context: vscode.ExtensionContext) {
     let diagnosticManager: DiagnosticsManager = new DiagnosticsManager(treesManager).activate(context);
     new DetailsWebView(logManager).activate(context);
     new CodeLensManager().activate(context);
-    new Configuration().activate();
 
     new CommandManager(logManager, connectionManager, treesManager, filterManager, buildsManager, diagnosticManager).activate(context);
 }

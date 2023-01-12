@@ -18,8 +18,6 @@ import { ScanManager } from '../../scanLogic/scanManager';
 import { CodeIssueTreeNode } from '../issuesTree/codeFileTree/codeIssueTreeNode';
 import { FileIssues } from '../../scanLogic/scanRunners/analyzerModels';
 import { DescriptorIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
-import { Configuration } from '../../utils/configuration';
-import { LogManager } from '../../log/logManager';
 
 export class AnalyzerUtils {
     /**
@@ -58,17 +56,14 @@ export class AnalyzerUtils {
      * 2. If pattern contains {}, it will be splitted to multiple patterns, one for each option
      * 3. '/**' will be add at the suffix to convert the pattern to match files and not folders
      * @param excludePattern - the pattern to transform
-     * @param log - if log is passed the method will log the error that occur during conversion
      * @returns the applicable pattern array
      */
-    public static getApplicableExcludePattern(excludePattern?: string, log?: LogManager): string[] {
+    public static getApplicableExcludePattern(excludePattern?: string): string[] {
         let patterns: string[] = [];
         if (!excludePattern) {
             return patterns;
         }
-        try {
-            Configuration.validateExcludeString(excludePattern);
-            let bracketOpeningIndex: number = excludePattern.indexOf('{');
+        let bracketOpeningIndex: number = excludePattern.indexOf('{');
             let bracketClosingIndex: number = excludePattern.indexOf('}');
 
             if (bracketOpeningIndex >= 0 && bracketClosingIndex > bracketOpeningIndex) {
@@ -80,9 +75,6 @@ export class AnalyzerUtils {
             } else {
                 patterns.push(excludePattern + (excludePattern.endsWith('/**') ? '' : '/**'));
             }
-        } catch (err) {
-            log?.logError(<Error>err);
-        }
         return patterns;
     }
 
