@@ -154,6 +154,11 @@
                 "icon": "$(eye)"
             },
             {
+                "command": "jfrog.issues.open.ignore",
+                "title": "Add ignore rule",
+                "icon": "$(eye-closed)"
+            },
+            {
                 "command": "jfrog.xray.copyToClipboard",
                 "title": "Copy"
             },
@@ -224,6 +229,11 @@
                 {
                     "command": "jfrog.xray.file.open",
                     "when": "viewItem =~ /jfrog.source.code.scan.jumpToSource.enabled/",
+                    "group": "inline"
+                },
+                {
+                    "command": "jfrog.issues.open.ignore",
+                    "when": "viewItem =~ /jfrog.issues.open.ignore.enabled/",
                     "group": "inline"
                 },
                 {
