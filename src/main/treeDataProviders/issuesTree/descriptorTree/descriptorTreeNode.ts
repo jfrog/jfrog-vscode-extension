@@ -39,7 +39,7 @@ export class DescriptorTreeNode extends FileTreeNode {
         this._dependenciesWithIssue
             // 3rd priority - Sort by number of children
             .sort((lhs, rhs) => rhs.issues.length - lhs.issues.length)
-            // 2nd priority - indirect / direct
+            // 2nd priority - Sort by direct dependencies
             .sort((lhs, rhs) => (rhs.indirect ? 0 : 1) - (lhs.indirect ? 0 : 1))
             // 1st priority - Sort by top severity
             .sort((lhs, rhs) => rhs.severity - lhs.severity);

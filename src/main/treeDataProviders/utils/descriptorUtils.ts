@@ -169,9 +169,7 @@ export class DescriptorUtils {
         for (const impactedPath of impactedPaths.values()) {
             if (impactedPath.children) {
                 for (const directPath of impactedPath.children) {
-                    if (!result.has(directPath.name)) {
-                        result.add(directPath.name);
-                    }
+                    result.add(directPath.name);
                 }
             }
         }
