@@ -8,6 +8,7 @@ import { Translators } from '../../../utils/translators';
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { PackageType } from '../../../types/projectType';
 import { ContextKeys } from '../../../constants/contextKeys';
+import { PageType } from 'jfrog-ide-webview';
 
 /**
  * Describes an Xray license violation issue
@@ -38,9 +39,10 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
     public getDetailsPage(): IDependencyPage {
         return {
             id: this._issue_id,
+            pageType: PageType.Dependency,
             component: this._parent.name,
             watchName: this.watchNames,
-            type: PackageType[this._parent.type],
+            componentType: PackageType[this._parent.type],
             version: this._parent.version,
             severity: SeverityUtils.toWebviewSeverity(this._severity),
             license: this.parent.licenses,

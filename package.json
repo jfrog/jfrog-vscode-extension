@@ -266,7 +266,7 @@
         "adm-zip": "~0.5.9",
         "fs-extra": "~10.1.0",
         "jfrog-client-js": "github:jfrog/jfrog-client-js#master",
-        "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.1.14.tgz",
+        "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.1.16.tgz",
         "js-yaml": "^4.1.0",
         "json2csv": "~5.0.7",
         "keytar": "~7.9.0",
