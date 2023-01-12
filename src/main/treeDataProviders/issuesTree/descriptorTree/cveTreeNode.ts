@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { IComponent, IGraphCve, IViolation, IVulnerability } from 'jfrog-client-js';
-import { IDependencyPage, IImpactedPath, IReference, IExtendedInformation, IApplicableDetails } from 'jfrog-ide-webview';
+import { IDependencyPage, IImpactedPath, IReference, IExtendedInformation, IApplicableDetails, PageType } from 'jfrog-ide-webview';
 import { PackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { Translators } from '../../../utils/translators';
@@ -65,10 +65,11 @@ export class CveTreeNode extends IssueTreeNode {
     public getDetailsPage(): IDependencyPage {
         return {
             id: this._issue_id,
+            pageType: PageType.Dependency,
             cve: Translators.toWebViewICve(this.cve, this._applicableDetails),
             component: this._parent.name,
             watchName: this._watchNames.length > 0 ? this.watchNames : undefined,
-            type: PackageType[this._parent.type],
+            componentType: PackageType[this._parent.type],
             version: this._parent.version,
             infectedVersion: this._infectedVersions,
             severity: SeverityUtils.toWebviewSeverity(this._severity),
