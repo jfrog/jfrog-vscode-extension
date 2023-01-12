@@ -50,6 +50,35 @@ export class AnalyzerUtils {
     }
 
     /**
+     * Transform the exclude pattern to patterns for the applicable scan.
+     * The following actions will be preformed to the pattern:
+     * 1. If validation for the exclude pattern fails no exclude will be returned.
+     * 2. If pattern contains {}, it will be splitted to multiple patterns, one for each option
+     * 3. '/**' will be add at the suffix to convert the pattern to match files and not folders
+     * @param excludePattern - the pattern to transform
+     * @returns the applicable pattern array
+     */
+    public static getApplicableExcludePattern(excludePattern?: string): string[] {
+        let patterns: string[] = [];
+        if (!excludePattern) {
+            return patterns;
+        }
+        let bracketOpeningIndex: number = excludePattern.indexOf('{');
+            let bracketClosingIndex: number = excludePattern.indexOf('}');
+
+            if (bracketOpeningIndex >= 0 && bracketClosingIndex > bracketOpeningIndex) {
+                // Convert <PREFIX>{option1,option2,...}<SUFFIX> to [<PREFIX>option1<SUFFIX>/** ,<PREFIX>option2<SUFFIX>/**, ...]
+                let prefix: string = excludePattern.substring(0, bracketOpeningIndex);
+                let suffix: string = excludePattern.substring(bracketClosingIndex + 1);
+                let options: string[] = excludePattern.substring(bracketOpeningIndex + 1, bracketClosingIndex).split(',');
+                options.forEach(option => patterns.push(prefix + option + suffix + (suffix.endsWith('/**') ? '' : '/**')));
+            } else {
+                patterns.push(excludePattern + (excludePattern.endsWith('/**') ? '' : '/**'));
+            }
+        return patterns;
+    }
+
+    /**
      * Populate the applicable data to the view (create file issue nodes)
      * @param root - the root to populate the data inside
      * @param descriptorNode - the node of the descriptor that the applicable data is related to
