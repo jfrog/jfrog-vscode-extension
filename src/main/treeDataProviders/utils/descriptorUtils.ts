@@ -114,6 +114,7 @@ export class DescriptorUtils {
         let graphResponse: IGraphResponse = descriptorData.dependenciesGraphScan;
         descriptorNode.dependencyScanTimeStamp = descriptorData.graphScanTimestamp;
         let impactedPaths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>(Object.entries(descriptorData.impactTreeData));
+        let directComponents: Set<string> = this.getDirectComponents(impactedPaths);
         let issues: IVulnerability[] | IViolation[] = graphResponse.violations || graphResponse.vulnerabilities;
         // Populate issues
         for (let i: number = 0; i < issues.length; i++) {
@@ -123,7 +124,13 @@ export class DescriptorUtils {
             for (let [componentId, component] of Object.entries(issue.components)) {
                 let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id + componentId);
 
-                let dependencyWithIssue: DependencyIssuesTreeNode = descriptorNode.addNode(componentId, component, severity);
+                let dependencyWithIssue: DependencyIssuesTreeNode = descriptorNode.addNode(
+                    componentId,
+                    component,
+                    severity,
+                    // Search if the dependency is indirect
+                    !directComponents.has(component.package_name + ':' + component.package_version)
+                );
 
                 let matchIssue: IssueTreeNode | undefined = dependencyWithIssue.issues.find(issueExists => issueExists.issueId === issue.issue_id);
                 let violationIssue: IViolation = <IViolation>issue;
@@ -148,6 +155,26 @@ export class DescriptorUtils {
             });
         }
         return descriptorNode.dependenciesWithIssue.length;
+    }
+
+    /**
+     * Convert descriptor impacted paths to a set of direct components that are impacted.
+     * The first children are the direct components.
+     * @param impactedPaths - the impacted path to convert
+     * @returns set of direct components in the impacted path
+     */
+    public static getDirectComponents(impactedPaths: Map<string, IImpactedPath>): Set<string> {
+        let result: Set<string> = new Set<string>();
+
+        for (const impactedPath of impactedPaths.values()) {
+            if (impactedPath.children) {
+                for (const directPath of impactedPath.children) {
+                    result.add(directPath.name);
+                }
+            }
+        }
+
+        return result;
     }
 
     /**
