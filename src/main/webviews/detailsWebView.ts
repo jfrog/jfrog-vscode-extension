@@ -44,7 +44,7 @@ export class DetailsWebView {
 
 function updateWebview(panel: vscode.WebviewPanel, page: IDependencyPage) {
     panel.webview.postMessage({
-        data: page,
+        data: page
     });
 }
 

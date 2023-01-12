@@ -6,6 +6,7 @@ import { Severity, SeverityUtils } from '../../../types/severity';
 import { Translators } from '../../../utils/translators';
 import { IssueTreeNode } from '../issueTreeNode';
 import { DependencyIssuesTreeNode } from './dependencyIssuesTreeNode';
+import { ContextKeys } from '../../../constants/contextKeys';
 
 /**
  * Describes an Xray CVE vulnerability/violation issue
@@ -18,6 +19,8 @@ export class CveTreeNode extends IssueTreeNode {
 
     private _fixedVersions: string[];
     private _infectedVersions: string[];
+
+    private _ignoreUrl?: string | undefined;
 
     private _applicableDetails?: IApplicableDetails;
 
@@ -44,6 +47,14 @@ export class CveTreeNode extends IssueTreeNode {
         if (violation && violation.watch_name) {
             this._watchNames = [violation.watch_name];
         }
+        if (violation && violation.ignore_url) {
+            this.contextValue += ContextKeys.SHOW_IGNORE_RULE_ENABLED;
+            this._ignoreUrl = violation.ignore_url;
+        }
+    }
+
+    public get ignoreUrl(): string | undefined {
+        return this._ignoreUrl;
     }
 
     public get labelId(): string {

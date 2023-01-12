@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
-import { ApplicablityActionProvider } from './applicablityActionProvider';
+import { ApplicabilityActionProvider } from './applicabilityActionProvider';
 import { DescriptorActionProvider } from './descriptorActionProvider';
 
 /**
@@ -18,7 +18,7 @@ export class DiagnosticsManager implements ExtensionComponent {
 
         this._codeActionProviders.push(
             new DescriptorActionProvider(diagnosticCollection, treesManager),
-            new ApplicablityActionProvider(diagnosticCollection, treesManager)
+            new ApplicabilityActionProvider(diagnosticCollection, treesManager)
         );
     }
 

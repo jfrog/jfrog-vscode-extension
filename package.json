@@ -72,6 +72,7 @@
                     "type": "string",
                     "default": "**/*{test,venv,node_modules,target}*",
                     "scope": "resource",
+                    "pattern": "^\\*\\*\/\\*\\{([^{},]+,?)+\\}\\*$",
                     "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) used to exclude specific paths from being scanned by JFrog Xray. For example, go.mod files under directories named testdata will not be scanned."
                 },
                 "jfrog.xray.ciIntegration.buildNamePattern": {
@@ -153,6 +154,11 @@
                 "icon": "$(eye)"
             },
             {
+                "command": "jfrog.issues.open.ignore",
+                "title": "Add ignore rule",
+                "icon": "$(eye-closed)"
+            },
+            {
                 "command": "jfrog.xray.copyToClipboard",
                 "title": "Copy"
             },
@@ -223,6 +229,11 @@
                 {
                     "command": "jfrog.xray.file.open",
                     "when": "viewItem =~ /jfrog.source.code.scan.jumpToSource.enabled/",
+                    "group": "inline"
+                },
+                {
+                    "command": "jfrog.issues.open.ignore",
+                    "when": "viewItem =~ /jfrog.issues.open.ignore.enabled/",
                     "group": "inline"
                 },
                 {
