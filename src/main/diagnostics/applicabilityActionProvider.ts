@@ -7,7 +7,7 @@ import { SeverityUtils } from '../types/severity';
 
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
 
-export class ApplicablityActionProvider extends AbstractFileActionProvider implements vscode.CodeActionProvider {
+export class ApplicabilityActionProvider extends AbstractFileActionProvider implements vscode.CodeActionProvider {
     /** @Override */
     public activate(context: vscode.ExtensionContext) {
         super.activate(context);

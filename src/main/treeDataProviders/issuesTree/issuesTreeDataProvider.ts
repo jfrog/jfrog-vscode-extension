@@ -536,14 +536,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             return;
         }
         this._logManager.logMessage('Scanning descriptor ' + descriptorData.fullpath + ' for cve applicability issues', 'INFO');
-        let excludePattern: string | undefined = Configuration.getScanExcludePattern();
 
         let startApplicableTime: number = Date.now();
         descriptorData.applicableIssues = await this._scanManager.scanApplicability(
             path.dirname(descriptorData.fullpath),
             abortController,
             cveToScan,
-            excludePattern ? [excludePattern] : []
+            AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern())
         );
 
         if (descriptorData.applicableIssues && descriptorData.applicableIssues.applicableCve) {
