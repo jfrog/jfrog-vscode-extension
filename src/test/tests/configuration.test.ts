@@ -45,6 +45,10 @@ describe('Configuration Tests', () => {
             errMsg: Configuration.PATTERN_NOT_MATCH
         },
         {
+            pattern: '***/*{test,venv,node_modules,target}*',
+            errMsg: Configuration.PATTERN_NOT_MATCH
+        },
+        {
             pattern: '**/*{node_module, {test, target}}*',
             errMsg: Configuration.BRACKET_ERROR
         },

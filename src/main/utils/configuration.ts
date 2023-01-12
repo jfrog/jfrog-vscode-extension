@@ -16,7 +16,7 @@ export class Configuration implements ExtensionComponent {
         return this;
     }
 
-    private static EXCLUDE_PATTERN: RegExp = /^(.*\/\*({.*,?})\*|.*\/\*(.*)\*)$/;
+    private static EXCLUDE_PATTERN: RegExp = /^(\*\*\/\*({.*,?})\*|\*\*\/\*(.+)\*)$/;
     public static PATTERN_NOT_MATCH: string = 'Exclude pattern must be in the following pattern: **/*{option-1,option-2,...option-10}*';
     public static BRACKET_ERROR: string = "Exclude pattern can't contain more than one curly brackets pair";
 
