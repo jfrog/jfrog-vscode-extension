@@ -72,6 +72,7 @@
                     "type": "string",
                     "default": "**/*{test,venv,node_modules,target}*",
                     "scope": "resource",
+                    "pattern": "^\\*\\*/\\*\\{([^{},]+,?)+\\}\\*$",
                     "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) used to exclude specific paths from being scanned by JFrog Xray. For example, go.mod files under directories named testdata will not be scanned."
                 },
                 "jfrog.xray.ciIntegration.buildNamePattern": {
@@ -153,6 +154,11 @@
                 "icon": "$(eye)"
             },
             {
+                "command": "jfrog.issues.open.ignore",
+                "title": "Add ignore rule",
+                "icon": "$(eye-closed)"
+            },
+            {
                 "command": "jfrog.xray.copyToClipboard",
                 "title": "Copy"
             },
@@ -226,6 +232,11 @@
                     "group": "inline"
                 },
                 {
+                    "command": "jfrog.issues.open.ignore",
+                    "when": "viewItem =~ /jfrog.issues.open.ignore.enabled/",
+                    "group": "inline"
+                },
+                {
                     "command": "jfrog.xray.copyToClipboard"
                 }
             ]
@@ -256,7 +267,7 @@
         "adm-zip": "~0.5.9",
         "fs-extra": "~10.1.0",
         "jfrog-client-js": "github:jfrog/jfrog-client-js#master",
-        "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.1.14.tgz",
+        "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.1.16.tgz",
         "js-yaml": "^4.1.0",
         "json2csv": "~5.0.7",
         "keytar": "~7.9.0",

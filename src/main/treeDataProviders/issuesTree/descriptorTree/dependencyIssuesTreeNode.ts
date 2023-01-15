@@ -11,23 +11,25 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     // Infer from data
     private _name: string;
     private _version: string;
-    private _fixVersion: string[];
     private _type: PackageType;
-    private _infectedVersions: string[];
 
     // Added dynamically
     private _issues: (CveTreeNode | LicenseIssueTreeNode)[] = [];
     private _licenses: ILicense[] = [];
 
-    constructor(private _artifactId: string, component: IComponent, private _severity: Severity, private _parent: DescriptorTreeNode) {
+    constructor(
+        private _artifactId: string,
+        component: IComponent,
+        private _severity: Severity,
+        private _indirect: boolean,
+        private _parent: DescriptorTreeNode
+    ) {
         super(component.package_name);
 
         this._name = component.package_name;
         this._version = component.package_version;
-        this._fixVersion = component.fixed_versions;
-        this._infectedVersions = component.infected_versions;
         this._type = toPackageType(component.package_type);
-        this.description = this._version;
+        this.description = this._version + (_indirect ? ' (indirect)' : '');
     }
 
     /**
@@ -37,7 +39,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     public apply() {
         this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n';
         this.tooltip += 'Issues count: ' + this._issues.length + '\n';
-        this.tooltip += 'Artifact: ' + this.artifactId;
+        this.tooltip += 'Artifact' + (this._indirect ? ' (indirect):' : ':') + '\n' + this.artifactId;
 
         // Set collapsible state and severity base on children count
         if (this.issues.length == 1 && this.parent.dependenciesWithIssue.length == 1) {
@@ -72,8 +74,8 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         return this._name + ':' + this._version;
     }
 
-    public get infectedVersions(): string[] {
-        return this._infectedVersions;
+    public get indirect(): boolean {
+        return this._indirect;
     }
 
     public get licenses(): ILicense[] {
@@ -102,10 +104,6 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
 
     public get name(): string {
         return this._name;
-    }
-
-    public get fixVersion(): string[] {
-        return this._fixVersion;
     }
 
     public get version(): string {

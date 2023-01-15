@@ -7,6 +7,8 @@ import { Translators } from '../../../utils/translators';
 
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { PackageType } from '../../../types/projectType';
+import { ContextKeys } from '../../../constants/contextKeys';
+import { PageType } from 'jfrog-ide-webview';
 
 /**
  * Describes an Xray license violation issue
@@ -14,6 +16,7 @@ import { PackageType } from '../../../types/projectType';
 export class LicenseIssueTreeNode extends IssueTreeNode {
     private _references: IReference[];
     private _licenseIssue: IGraphLicense;
+    private _ignoreUrl: string;
 
     constructor(issue: IViolation, _severity: Severity, private _parent: DependencyIssuesTreeNode, private _impactedTreeRoot: IImpactedPath) {
         super(issue.issue_id, _severity, issue.license_key, vscode.TreeItemCollapsibleState.None);
@@ -24,6 +27,9 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
 
         this.description = 'License violation';
         this.tooltip = 'License violation issue';
+
+        this.contextValue += ContextKeys.SHOW_IGNORE_RULE_ENABLED;
+        this._ignoreUrl = issue.ignore_url;
     }
 
     /**
@@ -33,9 +39,10 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
     public getDetailsPage(): IDependencyPage {
         return {
             id: this._issue_id,
+            pageType: PageType.Dependency,
             component: this._parent.name,
             watchName: this.watchNames,
-            type: PackageType[this._parent.type],
+            componentType: PackageType[this._parent.type],
             version: this._parent.version,
             severity: SeverityUtils.toWebviewSeverity(this._severity),
             license: this.parent.licenses,
@@ -46,6 +53,10 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
 
     public get issue_id(): string {
         return this._issue_id;
+    }
+
+    public get ignoreUrl(): string {
+        return this._ignoreUrl;
     }
 
     public get impactedTree(): IImpactedPath {

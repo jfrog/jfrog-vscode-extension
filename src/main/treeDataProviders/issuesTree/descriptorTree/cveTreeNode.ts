@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
-import { IGraphCve, IViolation, IVulnerability } from 'jfrog-client-js';
-import { IDependencyPage, IImpactedPath, IReference, IExtendedInformation, IApplicableDetails } from 'jfrog-ide-webview';
+import { IComponent, IGraphCve, IViolation, IVulnerability } from 'jfrog-client-js';
+import { IDependencyPage, IImpactedPath, IReference, IExtendedInformation, IApplicableDetails, PageType } from 'jfrog-ide-webview';
 import { PackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { Translators } from '../../../utils/translators';
 import { IssueTreeNode } from '../issueTreeNode';
 import { DependencyIssuesTreeNode } from './dependencyIssuesTreeNode';
+import { ContextKeys } from '../../../constants/contextKeys';
 
 /**
  * Describes an Xray CVE vulnerability/violation issue
@@ -16,12 +17,18 @@ export class CveTreeNode extends IssueTreeNode {
     private _references: IReference[];
     private _researchInfo?: IExtendedInformation;
 
+    private _fixedVersions: string[];
+    private _infectedVersions: string[];
+
+    private _ignoreUrl?: string | undefined;
+
     private _applicableDetails?: IApplicableDetails;
 
     constructor(
         sourceVul: IVulnerability | IViolation,
         severity: Severity,
         private _parent: DependencyIssuesTreeNode,
+        component: IComponent,
         private _impactedTreeRoot?: IImpactedPath,
         private _cve?: IGraphCve
     ) {
@@ -32,11 +39,22 @@ export class CveTreeNode extends IssueTreeNode {
             this._researchInfo = Translators.toWebViewExtendedInformation(sourceVul.extended_information);
         }
 
+        this._fixedVersions = component.fixed_versions;
+        this._infectedVersions = component.infected_versions;
+
         let violation: IViolation = <IViolation>sourceVul;
         this._edited = sourceVul.edited ?? violation.updated;
         if (violation && violation.watch_name) {
             this._watchNames = [violation.watch_name];
         }
+        if (violation && violation.ignore_url) {
+            this.contextValue += ContextKeys.SHOW_IGNORE_RULE_ENABLED;
+            this._ignoreUrl = violation.ignore_url;
+        }
+    }
+
+    public get ignoreUrl(): string | undefined {
+        return this._ignoreUrl;
     }
 
     public get labelId(): string {
@@ -58,16 +76,17 @@ export class CveTreeNode extends IssueTreeNode {
     public getDetailsPage(): IDependencyPage {
         return {
             id: this._issue_id,
+            pageType: PageType.Dependency,
             cve: Translators.toWebViewICve(this.cve, this._applicableDetails),
             component: this._parent.name,
             watchName: this._watchNames.length > 0 ? this.watchNames : undefined,
-            type: PackageType[this._parent.type],
+            componentType: PackageType[this._parent.type],
             version: this._parent.version,
-            infectedVersion: this.parent.infectedVersions,
+            infectedVersion: this._infectedVersions,
             severity: SeverityUtils.toWebviewSeverity(this._severity),
             edited: this._edited,
             summary: this._summary,
-            fixedVersion: this._parent.fixVersion,
+            fixedVersion: this._fixedVersions,
             license: this.parent.licenses,
             references: this._references,
             extendedInformation: this._researchInfo,
@@ -77,6 +96,14 @@ export class CveTreeNode extends IssueTreeNode {
 
     public get issue_id(): string {
         return this._issue_id;
+    }
+
+    public get fixedVersions(): string[] {
+        return this._fixedVersions;
+    }
+
+    public get infectedVersions(): string[] {
+        return this._infectedVersions;
     }
 
     public get impactedTree(): IImpactedPath | undefined {

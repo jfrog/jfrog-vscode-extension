@@ -4,7 +4,13 @@ import * as vscode from 'vscode';
 import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { Severity } from '../../main/types/severity';
-import { createAndPopulateFileTestNode, createAndPopulateRootTestNode, createRootTestNode, RootNodeTestCase } from './utils/treeNodeUtils.test';
+import {
+    createAndPopulateFileTestNode,
+    createAndPopulateRootTestNode,
+    createRootTestNode,
+    FileNodeTestData,
+    RootNodeTestCase
+} from './utils/treeNodeUtils.test';
 
 /**
  * Test functionality of @class IssuesRootTreeNode.
@@ -13,19 +19,19 @@ describe('Issues Root Node Tests', () => {
     let testCases: any[] = [
         {
             test: 'No files',
-            path: path.join('root'),
+            path: 'root',
             data: [],
             expectedIssueCount: 0
         } as RootNodeTestCase,
         {
             test: 'One file',
-            path: path.join('root'),
+            path: 'root',
             data: [{ path: path.join('root', 'path'), issues: [Severity.Medium] }],
             expectedIssueCount: 1
         } as RootNodeTestCase,
         {
             test: 'Multiple files',
-            path: path.join('root'),
+            path: 'root',
             data: [
                 {
                     path: path.join('root', 'folder', 'path1'),
@@ -43,7 +49,7 @@ describe('Issues Root Node Tests', () => {
                     path: path.join('root', 'folder', 'path4'),
                     issues: [Severity.Low, Severity.NotApplicableCritical, Severity.NotApplicableHigh, Severity.High]
                 }
-            ],
+            ] as FileNodeTestData[],
             expectedIssueCount: 7
         } as RootNodeTestCase
     ];
@@ -77,7 +83,7 @@ describe('Issues Root Node Tests', () => {
     });
 
     testCases.forEach(testCase => {
-        it('oldest timestamp test - ' + testCase.test, () => {
+        it('Oldest timestamp test - ' + testCase.test, () => {
             let testNode: IssuesRootTreeNode = createAndPopulateRootTestNode(testCase.path, testCase.data);
             // No timestamp
             assert.isUndefined(testNode.oldestScanTimestamp);
@@ -109,7 +115,7 @@ describe('Issues Root Node Tests', () => {
         });
     });
 
-    it('title/description test', () => {
+    it('Title and description test', () => {
         // No title
         let testNode: IssuesRootTreeNode = new IssuesRootTreeNode({ uri: { fsPath: path.join('root') } as vscode.Uri } as vscode.WorkspaceFolder);
         testNode.apply();
