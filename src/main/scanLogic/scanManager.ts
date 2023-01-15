@@ -9,6 +9,8 @@ import { IGraphResponse, XrayScanProgress } from 'jfrog-client-js';
 import { GraphScanLogic } from './scanGraphLogic';
 import { ApplicabilityRunner, ApplicabilityScanResponse } from './scanRunners/applicabilityScan';
 import { EosRunner, EosScanRequest, EosScanResponse } from './scanRunners/eosScan';
+import { AnalyzerUtils } from '../treeDataProviders/utils/analyzerUtils';
+import { Configuration } from '../utils/configuration';
 
 /**
  * Manage all the Xray scans
@@ -70,25 +72,17 @@ export class ScanManager implements ExtensionComponent {
      * @param directory - the directory that will be scan
      * @param abortController - the abort controller for cancel request
      * @param cveToRun - the CVE list we want to run applicability scan on
-     * @param skipFolders - the folders inside directory we want to skip scanning
      * @returns the applicability scan response
      */
-    public async scanApplicability(
-        directory: string,
-        abortController: AbortController,
-        cveToRun: string[] = [],
-        skipFolders: string[] = []
-    ): Promise<ApplicabilityScanResponse> {
+    public async scanApplicability(directory: string, abortController: AbortController, cveToRun: string[] = []): Promise<ApplicabilityScanResponse> {
         let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager);
         if (!applicableRunner.isSupported) {
             this._logManager.logMessage('Applicability scan is not supported', 'DEBUG');
             return {} as ApplicabilityScanResponse;
         }
-        this._logManager.logMessage(
-            'Scanning directory ' + directory + ', for CVE issues: ' + cveToRun + ', skipping folders: ' + skipFolders,
-            'DEBUG'
-        );
-        return applicableRunner.scan(directory, abortController, cveToRun, skipFolders);
+        let skipFiles: string[] = AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern());
+        this._logManager.logMessage('Scanning directory ' + directory + ', for CVE issues: ' + cveToRun + ', skipping files: ' + skipFiles, 'DEBUG');
+        return applicableRunner.scan(directory, abortController, cveToRun, skipFiles);
     }
 
     public async scanEos(abortController: AbortController, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
