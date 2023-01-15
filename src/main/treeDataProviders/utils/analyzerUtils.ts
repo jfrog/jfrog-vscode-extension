@@ -113,7 +113,7 @@ export class AnalyzerUtils {
                         issuesCount += this.populateEvidence(fileEvidence, details.fixReason, <CveTreeNode>node, evidences, fileNode);
                     });
                     // Applicable
-                    node.applicableDetails = { isApplicable: true, reason: details.fixReason, evidence: evidences } as IApplicableDetails;
+                    node.applicableDetails = { isApplicable: true, searchTarget: details.fullDescription, evidence: evidences } as IApplicableDetails;
                 } else {
                     // Not applicable
                     node.severity = SeverityUtils.notApplicable(node.severity);
