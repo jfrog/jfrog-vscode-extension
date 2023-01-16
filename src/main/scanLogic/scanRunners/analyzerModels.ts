@@ -26,9 +26,12 @@ export interface AnalyzerScanRun {
 
 export interface AnalyzerDriver {
     name: string;
-    rules?: {
-        id: string;
-    }[];
+    rules: AnalyzerRule[];
+}
+
+export interface AnalyzerRule {
+    id: string;
+    fullDescription: ResultContent;
 }
 
 export interface AnalyzeIssue {
