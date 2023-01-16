@@ -185,8 +185,8 @@ export function createAndPopulateDescriptor(testData: DescriptorNodeTestData): D
  */
 export function createDummyCveIssue(
     severity: Severity,
-    cveId?: string,
-    parent: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '1.0.0')
+    parent: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '1.0.0'),
+    cveId?: string
 ): CveTreeNode {
     let issueID: string = '' + issueCounter++;
     let component: IComponent = {

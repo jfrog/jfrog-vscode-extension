@@ -117,7 +117,7 @@ describe('Descriptor Tree Tests', () => {
                 toSearchDependency.issues.push(issueNoCVE);
                 assert.deepEqual(testNode.getIssueById(issueNoCVE.issueId), issueNoCVE);
                 // Add and search by both CVE id and issue id
-                let issueCVE: CveTreeNode = createDummyCveIssue(Severity.Unknown, 'test_cve_id', toSearchDependency);
+                let issueCVE: CveTreeNode = createDummyCveIssue(Severity.Unknown, toSearchDependency, 'test_cve_id');
                 assert.deepEqual(testNode.getIssueById(issueCVE.issueId), issueCVE);
                 assert.deepEqual(testNode.getIssueById('test_cve_id'), issueCVE);
             });
@@ -213,35 +213,11 @@ describe('Descriptor Tree Tests', () => {
         });
     });
 
-    /**
-     * Test functionality of @class CveTreeNode.
-     */
-    describe('CVE Issue Node Tests', () => {
-        let cveTestCases: any[] = [];
-
-        cveTestCases.forEach(testCase => {
-            it('labelId test - ' + testCase.test, () => {
-                //
-            });
-        });
-
-        cveTestCases.forEach(testCase => {
-            it('Get details page test - ' + testCase.test, () => {
-                //
-            });
-        });
-    });
-
-    /**
-     * Test functionality of @class LicenseIssueTreeNode.
-     */
-    describe('License Issue Node Tests', () => {
-        let licenseTestCases: any[] = [];
-
-        licenseTestCases.forEach(testCase => {
-            it('Get details page test - ' + testCase.test, () => {
-                //
-            });
-        });
+    it('CVE issue node, test labelId', () => {
+        let toSearchDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '9.9.9');
+        let issueNoCVE: CveTreeNode = createDummyCveIssue(Severity.Unknown, toSearchDependency);
+        assert.equal(issueNoCVE.labelId, issueNoCVE.issueId);
+        let issueCVE: CveTreeNode = createDummyCveIssue(Severity.Unknown, toSearchDependency, 'test_cve_id');
+        assert.equal(issueCVE.labelId, issueCVE.cve?.cve);
     });
 });
