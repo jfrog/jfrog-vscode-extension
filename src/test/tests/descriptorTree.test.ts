@@ -123,7 +123,7 @@ describe('Descriptor Tree Tests', () => {
             });
         });
 
-        it('timestamp test', () => {
+        it('Timestamp test', () => {
             let testNode: DescriptorTreeNode = new DescriptorTreeNode('dummy');
             // No timestamp
             assert.isUndefined(testNode.timeStamp);
@@ -141,7 +141,7 @@ describe('Descriptor Tree Tests', () => {
         });
 
         descriptorTestCases.forEach(testCase => {
-            it('get all issues test - ' + testCase.test, () => {
+            it('Get all issues test - ' + testCase.test, () => {
                 let testNode: DescriptorTreeNode = createAndPopulateDescriptor(testCase.data);
                 assert.lengthOf(testNode.issues, testCase.expectedIssueCount);
             });
