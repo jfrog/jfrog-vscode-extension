@@ -11,11 +11,13 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ProjectDetails } from '../types/projectDetails';
 import { ScanUtils } from './scanUtils';
+import { GeneralInfo } from '../types/generalInfo';
 
 export class GoUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/go.mod' };
     public static readonly PKG_TYPE: string = 'go';
     private static readonly GO_MOD_TIDY_CMD: string = 'go mod tidy';
+    private static readonly GO_VERSION: string = 'go version';
     // Required files of the gomod-absolutizer Go program.
     private static readonly GO_MOD_ABS_COMPONENTS: string[] = ['go.mod', 'go.sum', 'main.go', 'utils.go'];
     private static readonly GO_MOD_ABS_DIR_NAME: string = 'gomod-absolutizer';
@@ -25,7 +27,7 @@ export class GoUtils {
      * @returns Go version
      */
     public static getGoVersion(): SemVer {
-        let versionStr: string = ScanUtils.executeCmd('go version')
+        let versionStr: string = ScanUtils.executeCmd(GoUtils.GO_VERSION)
             .toString()
             .substring('go version go'.length);
         let versionNumber: string = versionStr.substring(0, versionStr.indexOf(' '));
@@ -132,11 +134,16 @@ export class GoUtils {
 
     public static verifyGoInstalled(): boolean {
         try {
-            execSync('go version');
+            execSync(GoUtils.GO_VERSION);
         } catch (error) {
             return false;
         }
         return true;
+    }
+
+    public static getGoVersionAsDependency(): DependenciesTreeNode {
+        let goVersion: SemVer = this.getGoVersion();
+        return new DependenciesTreeNode(new GeneralInfo('github.com/golang/go', goVersion.format(), ['None'], '', GoUtils.PKG_TYPE));
     }
 
     /**
@@ -180,7 +187,7 @@ export class GoUtils {
                 fs.copySync(orgFile, path.join(goModAbsDir, fileName));
             } catch (error) {
                 logManager.logMessage(
-                    'Failed while building the Go tree - an error occured while copying the gomod-absolutizer tool files: ' + (<any>error).message,
+                    'Failed while building the Go tree - an error occurred while copying the gomod-absolutizer tool files: ' + (<any>error).message,
                     'ERR'
                 );
             }

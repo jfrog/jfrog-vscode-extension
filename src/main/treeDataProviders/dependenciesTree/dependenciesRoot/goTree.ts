@@ -113,6 +113,9 @@ export class GoTreeNode extends RootNode {
         directDependenciesGeneralInfos.forEach(generalInfo => {
             this.addChild(new DependenciesTreeNode(generalInfo, this.getTreeCollapsibleState(dependenciesMap, generalInfo)));
         });
+        // Add go version as a dependency to scan it as well
+        this.addChild(GoUtils.getGoVersionAsDependency());
+
         return dependenciesMap;
     }
 
