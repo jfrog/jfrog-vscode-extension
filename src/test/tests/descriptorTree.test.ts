@@ -3,37 +3,90 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { CveTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
+import { DescriptorTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
 import { IssueTreeNode } from '../../main/treeDataProviders/issuesTree/issueTreeNode';
 import { Severity, SeverityUtils } from '../../main/types/severity';
 import { createAndPopulateDependencyIssues, createDummyDependencyIssues, createDummyIssue, FileNodeTestCase } from './utils/treeNodeUtils.test';
 
 describe('Descriptor Tree Tests', () => {
+    let dependencyTestCases: any[] = [
+        {
+            test: 'No issues',
+            data: { name: 'componentA', version: '1.0.0', issues: [] },
+            expectedSeverity: Severity.Unknown
+        },
+        {
+            test: 'One issue',
+            data: { name: 'componentB', version: '2.0.0', indirect: true, issues: [Severity.Low] },
+            expectedSeverity: Severity.Low
+        },
+        {
+            test: 'Multiple issues',
+            data: {
+                name: 'componentC',
+                version: '4.2.1',
+                issues: [Severity.High, Severity.Low, Severity.NotApplicableMedium, Severity.NotApplicableLow, Severity.NotApplicableCritical]
+            },
+            expectedSeverity: Severity.High
+        }
+    ];
+
     /**
      * Test functionality of @class DescriptorTreeNode.
      */
     describe('Descriptor Node Tests', () => {
         let descriptorTestCases: any[] = [
             {
-                test: 'No issues',
+                test: 'No dependencies',
                 data: { path: path.join('root', 'folder', 'path'), issues: [] }
             } as FileNodeTestCase,
             {
-                test: 'One issue',
-                data: { path: path.join('root', 'folder', 'path'), issues: [Severity.Medium] }
+                test: 'One dependency',
+                data: { path: path.join('root', 'folder', 'path'), issues: [dependencyTestCases[1]] }
             } as FileNodeTestCase,
             {
-                test: 'Multiple issues',
+                test: 'Multiple dependencies',
                 data: {
                     path: path.join('root', 'folder', 'path'),
-                    issues: [Severity.Low, Severity.Low, Severity.NotApplicableCritical, Severity.NotApplicableHigh, Severity.High]
+                    issues: dependencyTestCases
                 }
             } as FileNodeTestCase
         ];
 
         descriptorTestCases.forEach(testCase => {
             it('Add node test - ' + testCase.test, () => {
-                //let testNode: DescriptorTreeNode = new DescriptorTreeNode(testCase.data.path);
-                // check order
+                let testNode: DescriptorTreeNode = new DescriptorTreeNode(testCase.data.path);
+                for (let dependencyTestCase of testCase.data.issues) {
+                    let newSize: number = testNode.dependenciesWithIssue.length + 1;
+                    // Check trying to add new dependency (success) and dependency that exists already (no changes)
+                    for (let i: number = 0; i < 2; i++) {
+                        createDummyDependencyIssues(
+                            dependencyTestCase.data.name,
+                            dependencyTestCase.data.version,
+                            testNode,
+                            dependencyTestCase.data.indirect
+                        );
+                        testNode.apply();
+                        assert.lengthOf(testNode.dependenciesWithIssue, newSize);
+                    }
+                    // Check order
+                    let prev: DependencyIssuesTreeNode | undefined;
+                    for (let i: number = 0; i < testNode.dependenciesWithIssue.length; i++) {
+                        if (prev) {
+                            // Severity at least the same or less from prev
+                            assert.isTrue(prev.severity >= testNode.dependenciesWithIssue[i].severity);
+                            if (prev.severity === testNode.dependenciesWithIssue[i].severity) {
+                                // Indirect/direct inner order
+                                assert.isTrue((prev.indirect ? 0 : 1) >= (testNode.dependenciesWithIssue[i].indirect ? 0 : 1));
+                                if ((prev.indirect ? 0 : 1) === (testNode.dependenciesWithIssue[i].indirect ? 0 : 1)) {
+                                    // Number of issues at least the same or less from prev
+                                    assert.isTrue(prev.issues.length >= testNode.dependenciesWithIssue[i].issues.length);
+                                }
+                            }
+                        }
+                        prev = testNode.dependenciesWithIssue[i];
+                    }
+                }
             });
         });
 
@@ -66,28 +119,6 @@ describe('Descriptor Tree Tests', () => {
      * Test functionality of @class DependencyIssuesTreeNode.
      */
     describe('Dependency With Issues Node Tests', () => {
-        let dependencyTestCases: any[] = [
-            {
-                test: 'No issues',
-                data: { name: 'component', version: '1.0.0', issues: [] },
-                expectedSeverity: Severity.Unknown
-            },
-            {
-                test: 'One issue',
-                data: { name: 'component', version: '2.0.0', indirect: true, issues: [Severity.Low] },
-                expectedSeverity: Severity.Low
-            },
-            {
-                test: 'Multiple issues',
-                data: {
-                    name: 'component',
-                    version: '4.2.1',
-                    issues: [Severity.High, Severity.Low, Severity.NotApplicableMedium, Severity.NotApplicableLow, Severity.NotApplicableCritical]
-                },
-                expectedSeverity: Severity.High
-            }
-        ];
-
         dependencyTestCases.forEach(testCase => {
             it('componentId test - ' + testCase.test, () => {
                 let testNode: DependencyIssuesTreeNode = createAndPopulateDependencyIssues(testCase.data);

@@ -130,13 +130,11 @@ export function createDummyDependencyIssues(
     );
 }
 
-export function createAndPopulateDependencyIssues(testData: DependencyIssuesNodeTestData): DependencyIssuesTreeNode {
-    let node: DependencyIssuesTreeNode = createDummyDependencyIssues(
-        testData.name,
-        testData.version,
-        new DescriptorTreeNode('dummy'),
-        testData.indirect
-    );
+export function createAndPopulateDependencyIssues(
+    testData: DependencyIssuesNodeTestData,
+    parent: DescriptorTreeNode = new DescriptorTreeNode('dummy')
+): DependencyIssuesTreeNode {
+    let node: DependencyIssuesTreeNode = createDummyDependencyIssues(testData.name, testData.version, parent, testData.indirect);
     testData.issues.forEach(issueSeverity => {
         let issue: IssueTreeNode = createDummyIssue(issueSeverity);
         node.issues.push(<CveTreeNode>issue);
