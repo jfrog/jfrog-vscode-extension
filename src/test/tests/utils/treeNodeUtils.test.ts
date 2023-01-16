@@ -1,4 +1,4 @@
-import { IComponent } from 'jfrog-client-js';
+import { IComponent, IGraphCve, IVulnerability } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { CveTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 import { DependencyIssuesTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
@@ -6,7 +6,7 @@ import { DescriptorTreeNode } from '../../../main/treeDataProviders/issuesTree/d
 import { FileTreeNode } from '../../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../../../main/treeDataProviders/issuesTree/issueTreeNode';
-import { Severity } from '../../../main/types/severity';
+import { Severity, SeverityUtils } from '../../../main/types/severity';
 
 export interface FileNodeTestCase {
     test: string;
@@ -146,7 +146,7 @@ export function createDummyDependencyIssues(
 /**
  * Create dummy dependency with issues base on a given test data
  * @param testData - the test data to generate dummy objects
- * @param parent - the parent of the dummy (optional or default created) 
+ * @param parent - the parent of the dummy (optional or default created)
  * @returns dummy dependency with issues
  */
 export function createAndPopulateDependencyIssues(
@@ -167,14 +167,52 @@ export function createAndPopulateDependencyIssues(
  * @param testData - the test data to generate dummy objects
  * @returns dummy descriptor
  */
-export function createAndPopulateDescriptor(testData: DescriptorNodeTestData) : DescriptorTreeNode {
+export function createAndPopulateDescriptor(testData: DescriptorNodeTestData): DescriptorTreeNode {
     let node: DescriptorTreeNode = new DescriptorTreeNode(testData.path);
     for (let dependencyTestCase of testData.issues) {
-        createAndPopulateDependencyIssues(
-            dependencyTestCase,
-            node,
-        );
+        createAndPopulateDependencyIssues(dependencyTestCase, node);
     }
     node.apply();
+    return node;
+}
+
+/**
+ * Create a dummy CVE issue node
+ * @param severity - the severity of the dummy node
+ * @param cve - optional cve id for CVE issues (without the id used is issue_id)
+ * @param parent - optional parent for this issue, generated default if not provided
+ * @returns - dummy CVE issue node
+ */
+export function createDummyCveIssue(
+    severity: Severity,
+    cveId?: string,
+    parent: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '1.0.0')
+): CveTreeNode {
+    let issueID: string = '' + issueCounter++;
+    let component: IComponent = {
+        package_name: parent.name,
+        package_version: parent.version,
+        package_type: '',
+        fixed_versions: [],
+        infected_versions: [],
+        impact_paths: []
+    } as IComponent;
+    let cveNode: IGraphCve = { cve: cveId } as IGraphCve;
+    let node: CveTreeNode = new CveTreeNode(
+        {
+            issue_id: issueID,
+            cves: cveId ? [cveNode] : [],
+            severity: SeverityUtils.getString(severity),
+            summary: '',
+            references: [],
+            components: new Map<string, IComponent>()
+        } as IVulnerability,
+        severity,
+        parent,
+        component,
+        undefined,
+        cveNode
+    );
+    parent.issues.push(node);
     return node;
 }

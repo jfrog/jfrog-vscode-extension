@@ -6,7 +6,14 @@ import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTre
 import { DescriptorTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
 import { IssueTreeNode } from '../../main/treeDataProviders/issuesTree/issueTreeNode';
 import { Severity, SeverityUtils } from '../../main/types/severity';
-import { createAndPopulateDependencyIssues, createAndPopulateDescriptor, createDummyDependencyIssues, createDummyIssue, FileNodeTestCase } from './utils/treeNodeUtils.test';
+import {
+    createAndPopulateDependencyIssues,
+    createAndPopulateDescriptor,
+    createDummyCveIssue,
+    createDummyDependencyIssues,
+    createDummyIssue,
+    FileNodeTestCase
+} from './utils/treeNodeUtils.test';
 
 describe('Descriptor Tree Tests', () => {
     let dependencyTestCases: any[] = [
@@ -63,12 +70,7 @@ describe('Descriptor Tree Tests', () => {
                     let newSize: number = testNode.dependenciesWithIssue.length + 1;
                     // Check trying to add new dependency (success) and dependency that exists already (no changes)
                     for (let i: number = 0; i < 2; i++) {
-                        createDummyDependencyIssues(
-                            dependencyTestCase.name,
-                            dependencyTestCase.version,
-                            testNode,
-                            dependencyTestCase.indirect
-                        );
+                        createDummyDependencyIssues(dependencyTestCase.name, dependencyTestCase.version, testNode, dependencyTestCase.indirect);
                         testNode.apply();
                         assert.lengthOf(testNode.dependenciesWithIssue, newSize);
                     }
@@ -95,37 +97,53 @@ describe('Descriptor Tree Tests', () => {
 
         descriptorTestCases.forEach(testCase => {
             it('Get dependency by id test - ' + testCase.test, () => {
-                //
+                let testNode: DescriptorTreeNode = createAndPopulateDescriptor(testCase.data);
+                // Search dependency not exist as child
+                assert.notExists(testNode.getDependencyByID('dummy' + '9.9.9'));
+                // Add and search again
+                createDummyDependencyIssues('dummy', '9.9.9', testNode);
+                assert.exists(testNode.getDependencyByID('dummy' + '9.9.9'));
             });
         });
 
         descriptorTestCases.forEach(testCase => {
             it('Get issue by id test - ' + testCase.test, () => {
-                //
+                let testNode: DescriptorTreeNode = createAndPopulateDescriptor(testCase.data);
+                let toSearchDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '9.9.9', testNode);
+                // Search issue not exist as child
+                let issueNoCVE: CveTreeNode = <CveTreeNode>createDummyIssue(Severity.Unknown);
+                assert.notExists(testNode.getIssueById(issueNoCVE.issueId));
+                // Add and search by issueId
+                toSearchDependency.issues.push(issueNoCVE);
+                assert.deepEqual(testNode.getIssueById(issueNoCVE.issueId), issueNoCVE);
+                // Add and search by both CVE id and issue id
+                let issueCVE: CveTreeNode = createDummyCveIssue(Severity.Unknown, 'test_cve_id', toSearchDependency);
+                assert.deepEqual(testNode.getIssueById(issueCVE.issueId), issueCVE);
+                assert.deepEqual(testNode.getIssueById('test_cve_id'), issueCVE);
             });
         });
 
         it('timestamp test', () => {
-            let testNode: DescriptorTreeNode = new DescriptorTreeNode("dummy");
+            let testNode: DescriptorTreeNode = new DescriptorTreeNode('dummy');
             // No timestamp
             assert.isUndefined(testNode.timeStamp);
             // With dependencyScanTimeStamp
-            testNode.dependencyScanTimeStamp = 3;
-            assert.equal(testNode.timeStamp, 3);
+            testNode.dependencyScanTimeStamp = 2;
+            assert.equal(testNode.timeStamp, 2);
             // With both timestamps, get lower
-            testNode.applicableScanTimeStamp = 4;
-            assert.equal(testNode.timeStamp, 3);
+            testNode.applicableScanTimeStamp = 3;
+            assert.equal(testNode.timeStamp, 2);
             testNode.dependencyScanTimeStamp = 1;
             assert.equal(testNode.timeStamp, 1);
             // With applicableScanTimeStamp
             testNode.dependencyScanTimeStamp = undefined;
-            assert.equal(testNode.timeStamp, 4);
+            assert.equal(testNode.timeStamp, 3);
         });
 
         descriptorTestCases.forEach(testCase => {
             it('get all issues test - ' + testCase.test, () => {
                 let testNode: DescriptorTreeNode = createAndPopulateDescriptor(testCase.data);
-                assert.lengthOf(testNode.issues,testCase.expectedIssueCount);
+                assert.lengthOf(testNode.issues, testCase.expectedIssueCount);
             });
         });
     });
