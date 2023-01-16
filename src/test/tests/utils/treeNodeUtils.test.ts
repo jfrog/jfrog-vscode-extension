@@ -1,4 +1,7 @@
+import { IComponent } from 'jfrog-client-js';
 import * as vscode from 'vscode';
+import { DependencyIssuesTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
+import { DescriptorTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
 import { FileTreeNode } from '../../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../../../main/treeDataProviders/issuesTree/issueTreeNode';
@@ -76,12 +79,16 @@ export function createFileTestNode(pathOfFile: string): FileTreeNode {
  */
 export function createAndPopulateFileTestNode(testData: FileNodeTestData): FileTreeNode {
     let fileNode: FileTreeNode = createFileTestNode(testData.path);
-    testData.issues.forEach(issueSeverity => {
-        let issue: IssueTreeNode = createDummyIssue(issueSeverity);
-        fileNode.issues.push(issue);
-    });
-    fileNode.apply();
+    populateFileTestNode(fileNode,testData.issues);
     return fileNode;
+}
+
+export function populateFileTestNode(node: FileTreeNode, issues: Severity[]) {
+    issues.forEach(issueSeverity => {
+        let issue: IssueTreeNode = createDummyIssue(issueSeverity);
+        node.issues.push(issue);
+    });
+    node.apply();
 }
 
 let issueCounter: number = 0;
@@ -93,4 +100,16 @@ let issueCounter: number = 0;
 export function createDummyIssue(severity: Severity): IssueTreeNode {
     let issueID: string = '' + issueCounter++;
     return new IssueTreeNode(issueID, severity, issueID);
+}
+
+export function createDummyDependencyIssues(id: string, indirect: boolean = false, parent: DescriptorTreeNode = new DescriptorTreeNode("dummy")): DependencyIssuesTreeNode {
+    let component: IComponent = {
+        package_name: id,
+        package_version: "1.0.0",
+        package_type: "",
+        fixed_versions: [],
+        infected_versions: [],
+        impact_paths: []
+    } as IComponent;
+    return new DependencyIssuesTreeNode(id,component,indirect, parent);
 }

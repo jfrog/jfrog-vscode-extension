@@ -12,6 +12,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     private _name: string;
     private _version: string;
     private _type: PackageType;
+    private _severity: Severity = Severity.Unknown;
 
     // Added dynamically
     private _issues: (CveTreeNode | LicenseIssueTreeNode)[] = [];
@@ -20,7 +21,6 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     constructor(
         private _artifactId: string,
         component: IComponent,
-        private _severity: Severity,
         private _indirect: boolean,
         private _parent: DescriptorTreeNode
     ) {

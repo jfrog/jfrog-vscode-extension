@@ -1,6 +1,10 @@
+import { assert } from 'chai';
 import * as path from 'path';
+import * as vscode from 'vscode';
+import { CveTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
+import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { Severity } from '../../main/types/severity';
-import { FileNodeTestCase } from './utils/treeNodeUtils.test';
+import { createDummyDependencyIssues, createDummyIssue, FileNodeTestCase } from './utils/treeNodeUtils.test';
 
 describe('Descriptor Tree Tests', () => {
     /**
@@ -10,27 +14,25 @@ describe('Descriptor Tree Tests', () => {
         let descriptorTestCases: any[] = [
             {
                 test: 'No issues',
-                data: { path: path.join('root', 'folder', 'path'), issues: [] },
-                expectedSeverity: Severity.Unknown
+                data: { path: path.join('root', 'folder', 'path'), issues: [] }
             } as FileNodeTestCase,
             {
                 test: 'One issue',
-                data: { path: path.join('root', 'folder', 'path'), issues: [Severity.Medium] },
-                expectedSeverity: Severity.Medium
+                data: { path: path.join('root', 'folder', 'path'), issues: [Severity.Medium] }
             } as FileNodeTestCase,
             {
                 test: 'Multiple issues',
                 data: {
                     path: path.join('root', 'folder', 'path'),
                     issues: [Severity.Low, Severity.Low, Severity.NotApplicableCritical, Severity.NotApplicableHigh, Severity.High]
-                },
-                expectedSeverity: Severity.High
+                }
             } as FileNodeTestCase
         ];
 
         descriptorTestCases.forEach(testCase => {
             it('Add node test - ' + testCase.test, () => {
-                //
+                //let testNode: DescriptorTreeNode = new DescriptorTreeNode(testCase.data.path);
+                
                 // check order
             });
         });
@@ -64,7 +66,23 @@ describe('Descriptor Tree Tests', () => {
      * Test functionality of @class DependencyIssuesTreeNode.
      */
     describe('Dependency With Issues Node Tests', () => {
-        let dependencyTestCases: any[] = [];
+        let dependencyTestCases: any[] = [
+            {
+                test: 'No issues',
+                data: { id: path.join('root', 'folder', 'path'), issues: [] }
+            },
+            {
+                test: 'One issue',
+                data: { path: path.join('root', 'folder', 'path'), issues: [Severity.Medium] }
+            },
+            {
+                test: 'Multiple issues',
+                data: {
+                    path: path.join('root', 'folder', 'path'),
+                    issues: [Severity.Low, Severity.Low, Severity.NotApplicableCritical, Severity.NotApplicableHigh, Severity.High]
+                }
+            }
+        ];
 
         dependencyTestCases.forEach(testCase => {
             it('componentId test - ' + testCase.test, () => {
@@ -81,10 +99,25 @@ describe('Descriptor Tree Tests', () => {
             });
         });
 
-        dependencyTestCases.forEach(testCase => {
-            it('Collapsible state test - ' + testCase.test, () => {
-                //
-            });
+        it('Collapsible state test', () => {
+            let testNode: DependencyIssuesTreeNode = createDummyDependencyIssues('id');
+            // No issues, parent has only one child
+            testNode.apply();
+            assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
+            // One issue, parent has only one child
+            testNode.issues.push(<CveTreeNode>createDummyIssue(Severity.Critical));
+            testNode.apply();
+            assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.Expanded);
+            // One issue, parent has multiple children
+            createDummyDependencyIssues('id2',false,testNode.parent);
+            testNode.apply();
+            assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
+            // Multiple issues, parent has only one child
+            let secondNode: DependencyIssuesTreeNode = createDummyDependencyIssues('id3');
+            secondNode.issues.push(<CveTreeNode>createDummyIssue(Severity.NotApplicableCritical));
+            secondNode.issues.push(<CveTreeNode>createDummyIssue(Severity.NotApplicableCritical));
+            secondNode.apply();
+            assert.deepEqual(secondNode.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
         });
 
         dependencyTestCases.forEach(testCase => {
