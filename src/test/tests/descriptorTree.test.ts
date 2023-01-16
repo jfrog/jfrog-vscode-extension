@@ -3,8 +3,9 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { CveTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
-import { Severity } from '../../main/types/severity';
-import { createDummyDependencyIssues, createDummyIssue, FileNodeTestCase } from './utils/treeNodeUtils.test';
+import { IssueTreeNode } from '../../main/treeDataProviders/issuesTree/issueTreeNode';
+import { Severity, SeverityUtils } from '../../main/types/severity';
+import { createAndPopulateDependencyIssues, createDummyDependencyIssues, createDummyIssue, FileNodeTestCase } from './utils/treeNodeUtils.test';
 
 describe('Descriptor Tree Tests', () => {
     /**
@@ -32,7 +33,6 @@ describe('Descriptor Tree Tests', () => {
         descriptorTestCases.forEach(testCase => {
             it('Add node test - ' + testCase.test, () => {
                 //let testNode: DescriptorTreeNode = new DescriptorTreeNode(testCase.data.path);
-                
                 // check order
             });
         });
@@ -69,38 +69,51 @@ describe('Descriptor Tree Tests', () => {
         let dependencyTestCases: any[] = [
             {
                 test: 'No issues',
-                data: { id: path.join('root', 'folder', 'path'), issues: [] }
+                data: { name: 'component', version: '1.0.0', issues: [] },
+                expectedSeverity: Severity.Unknown
             },
             {
                 test: 'One issue',
-                data: { path: path.join('root', 'folder', 'path'), issues: [Severity.Medium] }
+                data: { name: 'component', version: '2.0.0', indirect: true, issues: [Severity.Low] },
+                expectedSeverity: Severity.Low
             },
             {
                 test: 'Multiple issues',
                 data: {
-                    path: path.join('root', 'folder', 'path'),
-                    issues: [Severity.Low, Severity.Low, Severity.NotApplicableCritical, Severity.NotApplicableHigh, Severity.High]
-                }
+                    name: 'component',
+                    version: '4.2.1',
+                    issues: [Severity.High, Severity.Low, Severity.NotApplicableMedium, Severity.NotApplicableLow, Severity.NotApplicableCritical]
+                },
+                expectedSeverity: Severity.High
             }
         ];
 
         dependencyTestCases.forEach(testCase => {
             it('componentId test - ' + testCase.test, () => {
-                //
+                let testNode: DependencyIssuesTreeNode = createAndPopulateDependencyIssues(testCase.data);
+                assert.equal(testNode.componentId, testCase.data.name + ':' + testCase.data.version);
             });
         });
 
         dependencyTestCases.forEach(testCase => {
             it('Top severity test - ' + testCase.test, () => {
-                // let testNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data);
-                // assert.deepEqual(testNode.severity, testCase.expectedSeverity);
-                // assert.include(testNode.tooltip, 'Top severity: ' + SeverityUtils.getString(testCase.expectedSeverity));
-                // todo: check order of issues
+                let testNode: DependencyIssuesTreeNode = createAndPopulateDependencyIssues(testCase.data);
+                assert.deepEqual(testNode.severity, testCase.expectedSeverity);
+                assert.include(testNode.tooltip, 'Top severity: ' + SeverityUtils.getString(testCase.expectedSeverity));
+                // Check order of issues
+                let prev: IssueTreeNode | undefined;
+                for (let i: number = 0; i < testNode.issues.length; i++) {
+                    if (prev) {
+                        // Severity at least the same or less from prev
+                        assert.isTrue(prev.severity >= testNode.issues[i].severity);
+                    }
+                    prev = testNode.issues[i];
+                }
             });
         });
 
         it('Collapsible state test', () => {
-            let testNode: DependencyIssuesTreeNode = createDummyDependencyIssues('id');
+            let testNode: DependencyIssuesTreeNode = createDummyDependencyIssues('name', '1.0.0');
             // No issues, parent has only one child
             testNode.apply();
             assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
@@ -109,11 +122,11 @@ describe('Descriptor Tree Tests', () => {
             testNode.apply();
             assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.Expanded);
             // One issue, parent has multiple children
-            createDummyDependencyIssues('id2',false,testNode.parent);
+            createDummyDependencyIssues('name', '1.0.1', testNode.parent);
             testNode.apply();
             assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
             // Multiple issues, parent has only one child
-            let secondNode: DependencyIssuesTreeNode = createDummyDependencyIssues('id3');
+            let secondNode: DependencyIssuesTreeNode = createDummyDependencyIssues('name2', '1.0.0');
             secondNode.issues.push(<CveTreeNode>createDummyIssue(Severity.NotApplicableCritical));
             secondNode.issues.push(<CveTreeNode>createDummyIssue(Severity.NotApplicableCritical));
             secondNode.apply();
@@ -122,7 +135,16 @@ describe('Descriptor Tree Tests', () => {
 
         dependencyTestCases.forEach(testCase => {
             it('Tooltip test - ' + testCase.test, () => {
-                //
+                let testNode: DependencyIssuesTreeNode = createAndPopulateDependencyIssues(testCase.data);
+                // Check issue count
+                assert.equal(testNode.issues.length, testCase.data.issues.length);
+                assert.include(testNode.tooltip, 'Issues count: ' + testNode.issues.length);
+                // Check artifact information
+                if (testNode.indirect) {
+                    assert.include(testNode.tooltip, 'Artifact (indirect):\n' + testNode.artifactId);
+                } else {
+                    assert.include(testNode.tooltip, 'Artifact:\n' + testNode.artifactId);
+                }
             });
         });
     });
