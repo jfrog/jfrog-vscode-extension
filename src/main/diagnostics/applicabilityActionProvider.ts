@@ -91,7 +91,7 @@ export class ApplicabilityActionProvider extends AbstractFileActionProvider impl
      * Generate diagnostics information for an applicable issue
      * @param issue - the applicable issue to generate diagnostics for
      * @param diagnostics - list of all the diagnostics of the file
-     * @param topSeverityMap - map of region in the file to the top severity it
+     * @param topSeverityMap - a map from regions in the file to their top severity
      */
     generateInformation(issue: IssueTreeNode, diagnostics: vscode.Diagnostic[], topSeverityMap: Map<vscode.Range, Severity>): void {
         if (issue instanceof CodeIssueTreeNode) {
