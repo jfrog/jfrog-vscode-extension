@@ -6,7 +6,7 @@ import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTre
 import { DescriptorTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
 import { IssueTreeNode } from '../../main/treeDataProviders/issuesTree/issueTreeNode';
 import { Severity, SeverityUtils } from '../../main/types/severity';
-import { createAndPopulateDependencyIssues, createDummyDependencyIssues, createDummyIssue, FileNodeTestCase } from './utils/treeNodeUtils.test';
+import { createAndPopulateDependencyIssues, createAndPopulateDescriptor, createDummyDependencyIssues, createDummyIssue, FileNodeTestCase } from './utils/treeNodeUtils.test';
 
 describe('Descriptor Tree Tests', () => {
     let dependencyTestCases: any[] = [
@@ -38,18 +38,21 @@ describe('Descriptor Tree Tests', () => {
         let descriptorTestCases: any[] = [
             {
                 test: 'No dependencies',
-                data: { path: path.join('root', 'folder', 'path'), issues: [] }
+                data: { path: path.join('root', 'folder', 'path'), issues: [] },
+                expectedIssueCount: 0
             } as FileNodeTestCase,
             {
                 test: 'One dependency',
-                data: { path: path.join('root', 'folder', 'path'), issues: [dependencyTestCases[1]] }
+                data: { path: path.join('root', 'folder', 'path'), issues: [dependencyTestCases[1].data] },
+                expectedIssueCount: 1
             } as FileNodeTestCase,
             {
                 test: 'Multiple dependencies',
                 data: {
                     path: path.join('root', 'folder', 'path'),
-                    issues: dependencyTestCases
-                }
+                    issues: dependencyTestCases.map(testCase => testCase.data)
+                },
+                expectedIssueCount: 6
             } as FileNodeTestCase
         ];
 
@@ -61,10 +64,10 @@ describe('Descriptor Tree Tests', () => {
                     // Check trying to add new dependency (success) and dependency that exists already (no changes)
                     for (let i: number = 0; i < 2; i++) {
                         createDummyDependencyIssues(
-                            dependencyTestCase.data.name,
-                            dependencyTestCase.data.version,
+                            dependencyTestCase.name,
+                            dependencyTestCase.version,
                             testNode,
-                            dependencyTestCase.data.indirect
+                            dependencyTestCase.indirect
                         );
                         testNode.apply();
                         assert.lengthOf(testNode.dependenciesWithIssue, newSize);
@@ -102,15 +105,27 @@ describe('Descriptor Tree Tests', () => {
             });
         });
 
-        descriptorTestCases.forEach(testCase => {
-            it('timestamp test - ' + testCase.test, () => {
-                //
-            });
+        it('timestamp test', () => {
+            let testNode: DescriptorTreeNode = new DescriptorTreeNode("dummy");
+            // No timestamp
+            assert.isUndefined(testNode.timeStamp);
+            // With dependencyScanTimeStamp
+            testNode.dependencyScanTimeStamp = 3;
+            assert.equal(testNode.timeStamp, 3);
+            // With both timestamps, get lower
+            testNode.applicableScanTimeStamp = 4;
+            assert.equal(testNode.timeStamp, 3);
+            testNode.dependencyScanTimeStamp = 1;
+            assert.equal(testNode.timeStamp, 1);
+            // With applicableScanTimeStamp
+            testNode.dependencyScanTimeStamp = undefined;
+            assert.equal(testNode.timeStamp, 4);
         });
 
         descriptorTestCases.forEach(testCase => {
             it('get all issues test - ' + testCase.test, () => {
-                //
+                let testNode: DescriptorTreeNode = createAndPopulateDescriptor(testCase.data);
+                assert.lengthOf(testNode.issues,testCase.expectedIssueCount);
             });
         });
     });

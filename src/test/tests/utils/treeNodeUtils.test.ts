@@ -24,6 +24,11 @@ export interface FileNodeTestData {
     issues: Severity[];
 }
 
+export interface DescriptorNodeTestData {
+    path: string;
+    issues: DependencyIssuesNodeTestData[];
+}
+
 export interface DependencyIssuesNodeTestData {
     name: string;
     version: string;
@@ -110,6 +115,14 @@ export function createDummyIssue(severity: Severity): IssueTreeNode {
     return new IssueTreeNode(issueID, severity, issueID);
 }
 
+/**
+ * Create dummy dependency with issues given name and version
+ * @param name - the name of the dummy component
+ * @param version - the version of the dummy component
+ * @param parent - the parent of the dummy (optional or default created)
+ * @param indirect - is the dummy dependency direct/indirect
+ * @returns dummy dependency with issues
+ */
 export function createDummyDependencyIssues(
     name: string,
     version: string,
@@ -130,6 +143,12 @@ export function createDummyDependencyIssues(
     );
 }
 
+/**
+ * Create dummy dependency with issues base on a given test data
+ * @param testData - the test data to generate dummy objects
+ * @param parent - the parent of the dummy (optional or default created) 
+ * @returns dummy dependency with issues
+ */
 export function createAndPopulateDependencyIssues(
     testData: DependencyIssuesNodeTestData,
     parent: DescriptorTreeNode = new DescriptorTreeNode('dummy')
@@ -139,6 +158,23 @@ export function createAndPopulateDependencyIssues(
         let issue: IssueTreeNode = createDummyIssue(issueSeverity);
         node.issues.push(<CveTreeNode>issue);
     });
+    node.apply();
+    return node;
+}
+
+/**
+ * Create dummy descriptor with issues base on a given test data
+ * @param testData - the test data to generate dummy objects
+ * @returns dummy descriptor
+ */
+export function createAndPopulateDescriptor(testData: DescriptorNodeTestData) : DescriptorTreeNode {
+    let node: DescriptorTreeNode = new DescriptorTreeNode(testData.path);
+    for (let dependencyTestCase of testData.issues) {
+        createAndPopulateDependencyIssues(
+            dependencyTestCase,
+            node,
+        );
+    }
     node.apply();
     return node;
 }
