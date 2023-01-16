@@ -4,7 +4,7 @@ import * as os from 'os';
 import { LogManager } from '../../log/logManager';
 import { ScanUtils } from '../../utils/scanUtils';
 import { BinaryRunner } from './binaryRunner';
-import { AnalyzeIssue, AnalyzerRule, AnalyzerScanRun, AnalyzeScanRequest, FileIssues } from './analyzerModels';
+import { AnalyzeIssue, AnalyzerScanRun, AnalyzeScanRequest, FileIssues } from './analyzerModels';
 
 /**
  * The request that is sent to the binary to scan applicability
@@ -98,8 +98,12 @@ export class ApplicabilityRunner extends BinaryRunner {
         if (!run) {
             return {} as ApplicabilityScanResponse;
         }
+        // Prepare
         let applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
-        let rules: AnalyzerRule[] = run.tool.driver.rules;
+        let rulesFullDescription: Map<string, string> = new Map<string, string>();
+        for (const rule of run.tool.driver.rules) {
+            rulesFullDescription.set(rule.id, rule.fullDescription.text);
+        }
         let issues: AnalyzeIssue[] = run.results;
         if (issues) {
             // Generate applicable data for all the issues
@@ -107,7 +111,7 @@ export class ApplicabilityRunner extends BinaryRunner {
                 let applicableDetails: CveApplicableDetails = this.getOrCreateApplicableDetails(
                     analyzeIssue,
                     applicable,
-                    rules.find(rule => rule.id === analyzeIssue.ruleId)?.fullDescription.text
+                    rulesFullDescription.get(analyzeIssue.ruleId)
                 );
                 analyzeIssue.locations.forEach(location => {
                     let fileIssues: FileIssues = this.getOrCreateFileIssues(applicableDetails, location.physicalLocation.artifactLocation.uri);
@@ -115,8 +119,9 @@ export class ApplicabilityRunner extends BinaryRunner {
                 });
             });
         }
+        // Convert data to a response
         return {
-            scannedCve: rules.map(rule => this.getCveFromRuleId(rule.id)),
+            scannedCve: run.tool.driver.rules.map(rule => this.getCveFromRuleId(rule.id)),
             applicableCve: Object.fromEntries(applicable.entries())
         } as ApplicabilityScanResponse;
     }
