@@ -81,7 +81,7 @@ export class ApplicabilityActionProvider extends AbstractFileActionProvider impl
             const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
             for (const [region, severity] of topSeverityMap) {
                 // Add gutter icons of top severity for the region with the issue
-                this.addGutter(textEditor, SeverityUtils.getIcon(severity), [region.start, region.end]);
+                this.addGutter(textEditor, SeverityUtils.getIcon(severity), region);
             }
             this._diagnosticCollection.set(document.uri, diagnostics);
         }
@@ -101,13 +101,13 @@ export class ApplicabilityActionProvider extends AbstractFileActionProvider impl
                 topSeverityMap.set(issue.regionWithIssue, issue.severity);
             }
             // Add diagnostics
-            let position: vscode.Position[] = [issue.regionWithIssue.start, issue.regionWithIssue.end];
             this._treesManager.logManager.logMessage("Creating applicable diagnostics for issue '" + issue.issueId + "'", 'DEBUG');
             // Create diagnostics and gutter icon for the dependency
             let created: vscode.Diagnostic[] = this.createDiagnostics(
                 issue.issueId,
                 'Severity: ' + SeverityUtils.getString(issue.severity),
-                position
+                vscode.DiagnosticSeverity.Warning,
+                issue.regionWithIssue
             );
             diagnostics.push(...created);
         }

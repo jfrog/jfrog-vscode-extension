@@ -15,7 +15,7 @@ import { AbstractFileActionProvider } from './abstractFileActionProvider';
 class DirectDependencyInfo {
     constructor(
         public severity: Severity,
-        public positions: vscode.Position[],
+        public range: vscode.Range[],
         public diagnosticIssues: Map<string, DirectDependencyIssue> = new Map<string, DirectDependencyIssue>()
     ) {}
 }
@@ -31,7 +31,60 @@ interface DirectDependencyIssue {
  * 1. Adds diagnostics to the file if it contains issues that was discovered in the scan
  * 2. Adds severity icon to the descriptor file in the places were the infected dependency exists
  */
-export class DescriptorActionProvider extends AbstractFileActionProvider {
+export class DescriptorActionProvider extends AbstractFileActionProvider implements vscode.CodeActionProvider {
+    private _processedMap: Map<vscode.Uri, Map<string, DirectDependencyInfo>> = new Map<vscode.Uri, Map<string, DirectDependencyInfo>>();
+
+    /** @Override */
+    public activate(context: vscode.ExtensionContext) {
+        super.activate(context);
+        context.subscriptions.push(
+            this,
+            vscode.languages.registerCodeActionsProvider(DescriptorUtils.DESCRIPTOR_SELECTOR, this, {
+                providedCodeActionKinds: [vscode.CodeActionKind.Empty]
+            } as vscode.CodeActionProviderMetadata)
+        );
+    }
+
+    /** @Override */
+    provideCodeActions(document: vscode.TextDocument, range: vscode.Range | vscode.Selection): vscode.Command[] | undefined {
+        // Search if the file had issues in the scan
+        const fileNode: FileTreeNode | undefined = this._treesManager.issuesTreeDataProvider.getFileIssuesTree(document.uri.fsPath);
+        if (fileNode instanceof DescriptorTreeNode) {
+            // Get the dependency information we created in the specific range in the document
+            let processedDependencies: Map<string, DirectDependencyInfo> | undefined = this._processedMap.get(document.uri);
+            if (!processedDependencies) {
+                return undefined;
+            }
+            let rangeDependencies: DirectDependencyInfo[] = Array.from(processedDependencies.values()).filter(dependency =>
+                dependency.range.some(pos => range.intersection(pos))
+            );
+            let infectedDependencies: Set<DependencyIssuesTreeNode> = new Set<DependencyIssuesTreeNode>();
+            // Get all the infected dependencies for a direct dependency as a set
+            for (const directDependencyInfo of rangeDependencies) {
+                for (const issueInfo of directDependencyInfo.diagnosticIssues.values()) {
+                    for (const infectedDependencyId of issueInfo.infectedDependencies) {
+                        let infectedDependency: DependencyIssuesTreeNode | undefined = fileNode.getDependencyByID(infectedDependencyId);
+                        if (infectedDependency) {
+                            infectedDependencies.add(infectedDependency);
+                        }
+                    }
+                }
+            }
+            let commands: vscode.Command[] = [];
+            // Add jump to tree commands for each infected dependency
+            for (const infectedDependency of infectedDependencies) {
+                commands.push({
+                    command: 'jfrog.issues.select.node',
+                    title: 'Show infected dependency ' + infectedDependency.componentId + ' in issues tree',
+                    arguments: [infectedDependency]
+                });
+            }
+            return commands;
+        }
+
+        return undefined;
+    }
+
     /** @Override */
     public async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
         // Search if the descriptor had issues in the scan
@@ -69,14 +122,16 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
                             `${info.label} - Severity: ${SeverityUtils.getString(
                                 info.severity
                             )}\nImpacted Components: ${info.infectedDependencies.join()}`,
-                            directDependencyInfo.positions
+                            vscode.DiagnosticSeverity.Warning,
+                            ...directDependencyInfo.range
                         )
                     );
                 }
                 // Add gutter icons for top severity of the direct dependency
-                this.addGutter(textEditor, SeverityUtils.getIcon(directDependencyInfo.severity), directDependencyInfo.positions);
+                this.addGutter(textEditor, SeverityUtils.getIcon(directDependencyInfo.severity), ...directDependencyInfo.range);
             }
             this._diagnosticCollection.set(document.uri, diagnostics);
+            this._processedMap.set(document.uri, processedDependencies);
         }
     }
 
@@ -144,11 +199,11 @@ export class DescriptorActionProvider extends AbstractFileActionProvider {
         if (potential) {
             return potential;
         }
-        let position: vscode.Position[] = DescriptorUtils.getDependencyPosition(document, packageType, directDependencyId);
-        if (position.length === 0) {
+        let range: vscode.Range[] = DescriptorUtils.getDependencyPosition(document, packageType, directDependencyId);
+        if (range.length === 0) {
             return undefined;
         }
-        let info: DirectDependencyInfo = new DirectDependencyInfo(Severity.Unknown, position);
+        let info: DirectDependencyInfo = new DirectDependencyInfo(Severity.Unknown, range);
         processedDependencies.set(directDependencyId, info);
         return info;
     }
