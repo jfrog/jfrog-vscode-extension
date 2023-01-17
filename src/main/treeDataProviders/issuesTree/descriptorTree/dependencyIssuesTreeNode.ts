@@ -12,18 +12,13 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     private _name: string;
     private _version: string;
     private _type: PackageType;
+    private _severity: Severity = Severity.Unknown;
 
     // Added dynamically
     private _issues: (CveTreeNode | LicenseIssueTreeNode)[] = [];
     private _licenses: ILicense[] = [];
 
-    constructor(
-        private _artifactId: string,
-        component: IComponent,
-        private _severity: Severity,
-        private _indirect: boolean,
-        private _parent: DescriptorTreeNode
-    ) {
+    constructor(private _artifactId: string, component: IComponent, private _indirect: boolean, private _parent: DescriptorTreeNode) {
         super(component.package_name);
 
         this._name = component.package_name;
@@ -37,10 +32,6 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
      * Use to calculate accumulative statistics and view from all the children.
      */
     public apply() {
-        this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n';
-        this.tooltip += 'Issues count: ' + this._issues.length + '\n';
-        this.tooltip += 'Artifact' + (this._indirect ? ' (indirect):' : ':') + '\n' + this.artifactId;
-
         // Set collapsible state and severity base on children count
         if (this.issues.length == 1 && this.parent.dependenciesWithIssue.length == 1) {
             this.collapsibleState = vscode.TreeItemCollapsibleState.Expanded;
@@ -54,6 +45,10 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
             }
         }
         this._severity = topSeverity;
+
+        this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n';
+        this.tooltip += 'Issues count: ' + this._issues.length + '\n';
+        this.tooltip += 'Artifact' + (this._indirect ? ' (indirect):' : ':') + '\n' + this.artifactId;
 
         this._issues
             // 1st priority - Sort by severity

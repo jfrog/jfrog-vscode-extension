@@ -121,13 +121,12 @@ export class DescriptorUtils {
             let issue: IVulnerability | IViolation = issues[i];
             let severity: Severity = SeverityUtils.getSeverity(issue.severity);
             // Populate the issue for each dependency component
-            for (let [componentId, component] of Object.entries(issue.components)) {
-                let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id + componentId);
+            for (let [artifactId, component] of Object.entries(issue.components)) {
+                let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id + artifactId);
 
                 let dependencyWithIssue: DependencyIssuesTreeNode = descriptorNode.addNode(
-                    componentId,
+                    artifactId,
                     component,
-                    severity,
                     // Search if the dependency is indirect
                     !directComponents.has(component.package_name + ':' + component.package_version)
                 );
