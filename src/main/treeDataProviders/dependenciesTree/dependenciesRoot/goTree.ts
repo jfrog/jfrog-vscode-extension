@@ -21,7 +21,7 @@ export class GoTreeNode extends RootNode {
         try {
             rootPackageName = this.getRootPackageName();
             goModGraph = this.runGoModGraph();
-            goList = this.runGoList();
+            goList = this.runGoList(goVersion);
         } catch (error) {
             this._treesManager.logManager.logError(<any>error);
             this.label = this.workspaceFolder + ' [Not installed]';
@@ -71,11 +71,11 @@ export class GoTreeNode extends RootNode {
      * Run "go list" to retrieve a list of dependencies which are actually in use in the project.
      * @returns "go list" results.
      */
-    private runGoList(): string[] {
+    private runGoList(goVersion: SemVer): string[] {
         return ScanUtils.executeCmd(
             `go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all`,
             this.workspaceFolder,
-            GoUtils.getGoVersion().compare('1.18.0') >= 0 ? { ...process.env, GOFLAGS: '-buildvcs=false' } : undefined
+            goVersion.compare('1.18.0') >= 0 ? { ...process.env, GOFLAGS: '-buildvcs=false' } : undefined
         )
             .toString()
             .split(/\n/);
