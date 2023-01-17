@@ -143,7 +143,7 @@ describe('Go Utils Tests', async () => {
         assert.deepEqual(parent.children[1].parent, parent);
 
         // Check children.
-        assert.lengthOf(parent.children[0].children, 2);
+        assert.lengthOf(parent.children[0].children, 3);
         let child: DependenciesTreeNode = parent.children[0].children[0];
         assert.deepEqual(child.componentId, 'github.com/jfrog/jfrog-cli-core:1.9.0');
         assert.deepEqual(child.label, 'github.com/jfrog/jfrog-cli-core');
