@@ -35,38 +35,17 @@ export class PypiUtils {
     /**
      * Get requirements file and dependencies tree node. return the position of the dependency in the requirements file.
      * @param document             - requirements file
-     * @param requirementsContent  - requirements file content - For optimization
-     * @param dependenciesTreeNode - dependencies tree node
+     * @param artifactId           - dependencies tree node id
      */
-    public static getDependencyPos(
-        document: vscode.TextDocument,
-        requirementsContent: string,
-        dependenciesTreeNode: DependenciesTreeNode
-    ): vscode.Position[] {
-        let res: vscode.Position[] = [];
-        let dependencyMatch: RegExpMatchArray | null = requirementsContent.match(dependenciesTreeNode.generalInfo.artifactId);
-        if (!dependencyMatch) {
-            return res;
-        }
-        res.push(document.positionAt(<number>dependencyMatch.index));
-        res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));
-        return res;
-    }
-
-    /**
-     * Get requirements file and dependencies tree node. return the position of the dependency in the requirements file.
-     * @param document             - requirements file
-     * @param dependenciesTreeNode - dependencies tree node
-     */
-    public static getDependencyPosition(document: vscode.TextDocument, artifactId: string): vscode.Position[] {
+    public static getDependencyPosition(document: vscode.TextDocument, artifactId: string): vscode.Range[] {
         let requirementsContent: string = document.getText().toLowerCase();
-        let res: vscode.Position[] = [];
+        let res: vscode.Range[] = [];
         let dependencyMatch: RegExpMatchArray | null = requirementsContent.match(artifactId);
         if (!dependencyMatch) {
             return res;
         }
-        res.push(document.positionAt(<number>dependencyMatch.index));
-        res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));
+        let startPos: vscode.Position = document.positionAt(<number>dependencyMatch.index);
+        res.push(new vscode.Range(startPos, new vscode.Position(startPos.line, startPos.character + dependencyMatch[0].length)));
         return res;
     }
 

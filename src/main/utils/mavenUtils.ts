@@ -34,62 +34,30 @@ export class MavenUtils {
     }
 
     /**
-     * Get pom.xml file and dependencies tree node. Return the position of the dependency in the pom.xml file.
-     * @param document             - pom.xml file
-     * @param dependenciesTreeNode - dependencies tree node
-     */
-    public static getDependencyPos(
-        document: vscode.TextDocument,
-        dependenciesTreeNode: DependenciesTreeNode | undefined,
-        focusType: FocusType
-    ): vscode.Position[] {
-        if (!dependenciesTreeNode) {
-            return [];
-        }
-        let res: vscode.Position[] = [];
-        let pomXmlContent: string = document.getText();
-        let [groupId, artifactId, version] = MavenUtils.getGavArray(dependenciesTreeNode);
-        let dependencyTag: string = MavenUtils.getDependencyTag(pomXmlContent, groupId, artifactId);
-        if (dependencyTag) {
-            let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyTag));
-            let arr: string[] = dependencyTag.split(/\r?\n/).filter(line => line.trim() !== '');
-            for (let i: number = 0; i < arr.length; i++) {
-                let depInfo: string = arr[i].trim().toLowerCase();
-                if (this.isDependencyMatch(groupId, artifactId, version, depInfo, focusType)) {
-                    res.push(new vscode.Position(startIndex.line + i, arr[i].indexOf('<')));
-                    res.push(new vscode.Position(startIndex.line + i, arr[i].length));
-                }
-            }
-            return res;
-        }
-        if (!(dependenciesTreeNode instanceof MavenTreeNode)) {
-            return MavenUtils.getDependencyPos(document, dependenciesTreeNode.parent, focusType);
-        }
-        return [];
-    }
-
-    /**
      * Get pom.xml file and dependencies tree node. return the position of the dependency in the pom.xml file.
      * @param document             - pom.xml file
      * @param dependenciesTreeNode - dependencies tree node
      */
-    public static getDependencyPosition(document: vscode.TextDocument, dependencyId: string | undefined, focusType: FocusType): vscode.Position[] {
+    public static getDependencyPosition(document: vscode.TextDocument, dependencyId: string | undefined, focusType: FocusType): vscode.Range[] {
         if (!dependencyId) {
             return [];
         }
-        let res: vscode.Position[] = [];
+        let res: vscode.Range[] = [];
         let pomXmlContent: string = document.getText();
         let [groupId, artifactId, version] = MavenUtils.getGavArrayFromId(dependencyId);
         let dependencyTag: string = MavenUtils.getDependencyTag(pomXmlContent, groupId, artifactId);
-        // TODO: FIX Maven to work add sub-module region (tag) as well if not in dependency tag
         if (dependencyTag) {
             let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyTag));
             let arr: string[] = dependencyTag.split(/\r?\n/).filter(line => line.trim() !== '');
             for (let i: number = 0; i < arr.length; i++) {
                 let depInfo: string = arr[i].trim().toLowerCase();
                 if (this.isDependencyMatch(groupId, artifactId, version, depInfo, focusType)) {
-                    res.push(new vscode.Position(startIndex.line + i, arr[i].indexOf('<')));
-                    res.push(new vscode.Position(startIndex.line + i, arr[i].length));
+                    res.push(
+                        new vscode.Range(
+                            new vscode.Position(startIndex.line + i, arr[i].indexOf('<')),
+                            new vscode.Position(startIndex.line + i, arr[i].length)
+                        )
+                    );
                 }
             }
             return res;
