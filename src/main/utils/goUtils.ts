@@ -11,7 +11,6 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ProjectDetails } from '../types/projectDetails';
 import { ScanUtils } from './scanUtils';
-import { GeneralInfo } from '../types/generalInfo';
 
 export class GoUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/go.mod' };
@@ -99,6 +98,7 @@ export class GoUtils {
             treesManager.logManager.logError(new Error('Could not scan go project dependencies, because go CLI is not in the PATH.'), true);
             return;
         }
+        let goVersion: SemVer = this.getGoVersion();
         for (let goMod of goMods) {
             checkCanceled();
             treesManager.logManager.logMessage('Analyzing go.mod file ' + goMod.fsPath, 'INFO');
@@ -116,7 +116,7 @@ export class GoUtils {
             }
 
             let root: GoTreeNode = new GoTreeNode(tmpWorkspace, treesManager, parent);
-            root.refreshDependencies();
+            root.refreshDependencies(goVersion);
             projectsToScan.push(root.projectDetails);
             // Set actual paths.
             root.fullPath = goMod.fsPath;
@@ -139,11 +139,6 @@ export class GoUtils {
             return false;
         }
         return true;
-    }
-
-    public static getGoVersionAsDependency(): DependenciesTreeNode {
-        let goVersion: SemVer = this.getGoVersion();
-        return new DependenciesTreeNode(new GeneralInfo('github.com/golang/go', goVersion.format(), ['None'], '', GoUtils.PKG_TYPE));
     }
 
     /**

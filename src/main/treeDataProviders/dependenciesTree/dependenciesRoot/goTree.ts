@@ -6,6 +6,7 @@ import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
+import { SemVer } from 'semver';
 
 export class GoTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
@@ -13,7 +14,7 @@ export class GoTreeNode extends RootNode {
         super(tmpWorkspaceFolder, PackageType.Go, parent);
     }
 
-    public refreshDependencies() {
+    public refreshDependencies(goVersion: SemVer) {
         let goModGraph: PackageDependencyPair[] = [];
         let goList: string[] = [];
         let rootPackageName: string = '';
@@ -33,7 +34,7 @@ export class GoTreeNode extends RootNode {
         if (goModGraph.length === 0) {
             return;
         }
-        let dependenciesMap: Map<string, string[]> = this.buildDependenciesMapAndDirectDeps(goModGraph, goList);
+        let dependenciesMap: Map<string, string[]> = this.buildDependenciesMapAndDirectDeps(goModGraph, goList, goVersion);
         this.children.forEach(child => this.populateDependenciesTree(dependenciesMap, child));
     }
 
@@ -80,7 +81,7 @@ export class GoTreeNode extends RootNode {
             .split(/\n/);
     }
 
-    private buildDependenciesMapAndDirectDeps(goModGraph: PackageDependencyPair[], goList: string[]): Map<string, string[]> {
+    private buildDependenciesMapAndDirectDeps(goModGraph: PackageDependencyPair[], goList: string[], goVersion: SemVer): Map<string, string[]> {
         let goModGraphIndex: number = 0;
 
         // Populate direct dependencies
@@ -113,8 +114,8 @@ export class GoTreeNode extends RootNode {
         directDependenciesGeneralInfos.forEach(generalInfo => {
             this.addChild(new DependenciesTreeNode(generalInfo, this.getTreeCollapsibleState(dependenciesMap, generalInfo)));
         });
-        // Add go version as a dependency to scan it as well
-        this.addChild(GoUtils.getGoVersionAsDependency());
+        // Add go version as a direct dependency to scan it as well
+        this.addChild(new DependenciesTreeNode(new GeneralInfo('github.com/golang/go', goVersion.format(), ['None'], '', GoUtils.PKG_TYPE)));
 
         return dependenciesMap;
     }
