@@ -6,6 +6,7 @@ import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
+import { SemVer } from 'semver';
 
 export class GoTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
@@ -13,14 +14,14 @@ export class GoTreeNode extends RootNode {
         super(tmpWorkspaceFolder, PackageType.Go, parent);
     }
 
-    public refreshDependencies() {
+    public refreshDependencies(goVersion: SemVer) {
         let goModGraph: PackageDependencyPair[] = [];
         let goList: string[] = [];
         let rootPackageName: string = '';
         try {
             rootPackageName = this.getRootPackageName();
             goModGraph = this.runGoModGraph();
-            goList = this.runGoList();
+            goList = this.runGoList(goVersion);
         } catch (error) {
             this._treesManager.logManager.logError(<any>error);
             this.label = this.workspaceFolder + ' [Not installed]';
@@ -33,7 +34,7 @@ export class GoTreeNode extends RootNode {
         if (goModGraph.length === 0) {
             return;
         }
-        let dependenciesMap: Map<string, string[]> = this.buildDependenciesMapAndDirectDeps(goModGraph, goList);
+        let dependenciesMap: Map<string, string[]> = this.buildDependenciesMapAndDirectDeps(goModGraph, goList, goVersion);
         this.children.forEach(child => this.populateDependenciesTree(dependenciesMap, child));
     }
 
@@ -70,17 +71,17 @@ export class GoTreeNode extends RootNode {
      * Run "go list" to retrieve a list of dependencies which are actually in use in the project.
      * @returns "go list" results.
      */
-    private runGoList(): string[] {
+    private runGoList(goVersion: SemVer): string[] {
         return ScanUtils.executeCmd(
             `go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all`,
             this.workspaceFolder,
-            GoUtils.getGoVersion().compare('1.18.0') >= 0 ? { ...process.env, GOFLAGS: '-buildvcs=false' } : undefined
+            goVersion.compare('1.18.0') >= 0 ? { ...process.env, GOFLAGS: '-buildvcs=false' } : undefined
         )
             .toString()
             .split(/\n/);
     }
 
-    private buildDependenciesMapAndDirectDeps(goModGraph: PackageDependencyPair[], goList: string[]): Map<string, string[]> {
+    private buildDependenciesMapAndDirectDeps(goModGraph: PackageDependencyPair[], goList: string[], goVersion: SemVer): Map<string, string[]> {
         let goModGraphIndex: number = 0;
 
         // Populate direct dependencies
@@ -113,6 +114,9 @@ export class GoTreeNode extends RootNode {
         directDependenciesGeneralInfos.forEach(generalInfo => {
             this.addChild(new DependenciesTreeNode(generalInfo, this.getTreeCollapsibleState(dependenciesMap, generalInfo)));
         });
+        // Add go version as a direct dependency to scan it as well
+        this.addChild(new DependenciesTreeNode(new GeneralInfo('github.com/golang/go', goVersion.format(), ['None'], '', GoUtils.PKG_TYPE)));
+
         return dependenciesMap;
     }
 
