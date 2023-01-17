@@ -98,11 +98,13 @@ describe('Descriptor Tree Tests', () => {
         descriptorTestCases.forEach(testCase => {
             it('Get dependency by id test - ' + testCase.test, () => {
                 let testNode: DescriptorTreeNode = createAndPopulateDescriptor(testCase.data);
-                // Search dependency not exist as child
+                // Search dependency not exist as child by artifactId and componentId
                 assert.notExists(testNode.getDependencyByID('dummy' + '9.9.9'));
+                assert.notExists(testNode.getDependencyByID('dummy:9.9.9'));
                 // Add and search again
-                createDummyDependencyIssues('dummy', '9.9.9', testNode);
-                assert.exists(testNode.getDependencyByID('dummy' + '9.9.9'));
+                let testDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '9.9.9', testNode);
+                assert.deepEqual(testNode.getDependencyByID('dummy' + '9.9.9'), testDependency);
+                assert.deepEqual(testNode.getDependencyByID('dummy:9.9.9'), testDependency);
             });
         });
 
