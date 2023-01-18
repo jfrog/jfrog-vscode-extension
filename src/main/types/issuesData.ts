@@ -1,8 +1,8 @@
 import { IGraphResponse } from 'jfrog-client-js';
+import { IImpactGraph } from 'jfrog-ide-webview';
 import { ApplicabilityScanResponse } from '../scanLogic/scanRunners/applicabilityScan';
 import { EosScanResponse } from '../scanLogic/scanRunners/eosScan';
 import { PackageType } from './projectType';
-import { IImpactedPath } from 'jfrog-ide-webview';
 
 /**
  * Describes all the issue data for a specific workspace from Xray scan
@@ -47,7 +47,7 @@ export interface DescriptorIssuesData extends FileIssuesData {
     type: PackageType;
     graphScanTimestamp: number;
     dependenciesGraphScan: IGraphResponse;
-    impactTreeData: { [issue_id: string]: IImpactedPath };
+    impactTreeData: { [issue_id: string]: IImpactGraph };
     applicableIssues: ApplicabilityScanResponse;
     applicableScanTimestamp?: number;
 }
