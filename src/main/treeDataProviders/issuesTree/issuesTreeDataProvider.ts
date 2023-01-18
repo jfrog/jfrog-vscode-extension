@@ -619,9 +619,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         }
     }
 
-    public getTreeItem(
-        element: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | IssueTreeNode
-    ): vscode.TreeItem | Thenable<vscode.TreeItem> {
+    public async getTreeItem(element: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | IssueTreeNode): Promise<vscode.TreeItem> {
         if (
             element instanceof FileTreeNode ||
             element instanceof DependencyIssuesTreeNode ||
@@ -634,6 +632,15 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             if (element instanceof FileTreeNode) {
                 element.command = Utils.createNodeCommand('jfrog.issues.file.open', 'Open file', [element.fullPath]);
             }
+            if (element instanceof DependencyIssuesTreeNode) {
+                let directOptions: vscode.Range[] = await DescriptorUtils.getDirectDependenciesLocations(element);
+                if (directOptions && directOptions.length > 0) {
+                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open location in file', [
+                        element.parent.fullPath,
+                        new vscode.Range(directOptions[0])
+                    ]);
+                }
+            }
             // Descriptor issues nodes
             if (element instanceof CveTreeNode || element instanceof LicenseIssueTreeNode) {
                 element.command = Utils.createNodeCommand('jfrog.view.dependency.details.page', 'Show details', [element.getDetailsPage()]);
@@ -641,7 +648,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             // Source code issues nodes
             if (element instanceof CodeIssueTreeNode) {
                 if (element instanceof ApplicableTreeNode) {
-                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.applicable', 'Open file location', [
+                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.applicable', 'Open location in file', [
                         element.parent.fullPath,
                         element.regionWithIssue,
                         element.getDetailsPage()

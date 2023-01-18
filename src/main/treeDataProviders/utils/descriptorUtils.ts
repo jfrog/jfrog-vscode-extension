@@ -84,10 +84,10 @@ export class DescriptorUtils {
         dependencyWithIssue: DependencyIssuesTreeNode,
         severity: Severity,
         component: IComponent,
-        impactedPath?: IImpactedPath
+        impactedPath: IImpactedPath
     ) {
         let violationIssue: IViolation = <IViolation>issue;
-        if (violationIssue && violationIssue.license_key && impactedPath) {
+        if (violationIssue && violationIssue.license_key) {
             // License violation
             dependencyWithIssue.issues.push(new LicenseIssueTreeNode(violationIssue, severity, dependencyWithIssue, impactedPath));
         } else {
@@ -123,7 +123,9 @@ export class DescriptorUtils {
             // Populate the issue for each dependency component
             for (let [artifactId, component] of Object.entries(issue.components)) {
                 let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id + artifactId);
-
+                if (!impactedPath) {
+                    continue;
+                }
                 let dependencyWithIssue: DependencyIssuesTreeNode = descriptorNode.addNode(
                     artifactId,
                     component,
@@ -209,6 +211,35 @@ export class DescriptorUtils {
             }
         }
         return undefined;
+    }
+
+    /**
+     * Find all the direct dependencies that the given dependency relates to and return their range in the code.
+     * If the given dependency is direct return it's location. If it's indirect, finds the direct dependencies.
+     * @param dependency - the dependency we want to get it's direct locations
+     * @returns - list of ranges, one for each direct dependency
+     */
+    public static async getDirectDependenciesLocations(dependency: DependencyIssuesTreeNode): Promise<vscode.Range[]> {
+        let document: vscode.TextDocument = await vscode.workspace.openTextDocument(dependency.parent.fullPath);
+        if (dependency.indirect) {
+            // Collect direct dependencies from all the issues impact tree first children
+            let ranges: vscode.Range[] = [];
+            let processed: Set<string> = new Set<string>();
+            for (const issue of dependency.issues) {
+                let directDependencies: string[] | undefined = issue.impactedTree.children?.map(child => child.name);
+                if (directDependencies) {
+                    for (const directDependency of directDependencies) {
+                        if (!processed.has(directDependency)) {
+                            processed.add(directDependency);
+                            ranges.push(...this.getDependencyPosition(document, dependency.type, directDependency));
+                        }
+                    }
+                }
+            }
+            return ranges;
+        } else {
+            return this.getDependencyPosition(document, dependency.type, dependency.componentId);
+        }
     }
 
     /**

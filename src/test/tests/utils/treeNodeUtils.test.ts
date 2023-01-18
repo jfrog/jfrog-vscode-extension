@@ -1,4 +1,5 @@
 import { IComponent, IGraphCve, IVulnerability } from 'jfrog-client-js';
+import { IImpactedPath } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
 import { CveTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 import { DependencyIssuesTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
@@ -210,7 +211,7 @@ export function createDummyCveIssue(
         severity,
         parent,
         component,
-        undefined,
+        {} as IImpactedPath,
         cveNode
     );
     parent.issues.push(node);
