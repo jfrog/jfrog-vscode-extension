@@ -8,6 +8,11 @@ export class IconsPaths {
     static readonly PENDING_SEVERITY: string = IconsPaths.getSvgIconPath('Unknown');
     static readonly UNKNOWN_SEVERITY: string = IconsPaths.getSvgIconPath('Unknown');
     static readonly NOT_APPLICABLE_SEVERITY: string = IconsPaths.getSvgIconPath('Not_Applicable');
+    static readonly NOT_APPLICABLE_UNKNOWN_SEVERITY: string = IconsPaths.getSvgIconPath('NotApplicableUnknown');
+    static readonly NOT_APPLICABLE_LOW_SEVERITY: string = IconsPaths.getSvgIconPath('NotApplicableLow');
+    static readonly NOT_APPLICABLE_MEDIUM_SEVERITY: string = IconsPaths.getSvgIconPath('NotApplicableMedium');
+    static readonly NOT_APPLICABLE_HIGH_SEVERITY: string = IconsPaths.getSvgIconPath('NotApplicableHigh');
+    static readonly NOT_APPLICABLE_CRITICAL_SEVERITY: string = IconsPaths.getSvgIconPath('NotApplicableCritical');
     static readonly INFORMATION_SEVERITY: string = IconsPaths.getSvgIconPath('Low');
     static readonly LOW_SEVERITY: string = IconsPaths.getSvgIconPath('Low');
     static readonly MEDIUM_SEVERITY: string = IconsPaths.getSvgIconPath('Medium');
