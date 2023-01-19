@@ -14,18 +14,17 @@ export class DetailsWebView {
     private _currentData: any;
 
     public async activate(context: vscode.ExtensionContext) {
-
         context.subscriptions.push(
-            vscode.commands.registerCommand('jfrog.view.dependency.details.page', (page: IDependencyPage) => this.updateWebview(page,updateDependencyPageWebview, createDependencyWebview,context)),
-            vscode.commands.registerCommand('jfrog.view.eos.page', (page: IZeroDayPage) => this.updateWebview(page,updateEosWebview,createEosWebview,context))
+            vscode.commands.registerCommand('jfrog.view.dependency.details.page', (page: IDependencyPage) => this.updateWebview(page,'Vulnerability Details',context)),
+            vscode.commands.registerCommand('jfrog.view.eos.page', (page: IZeroDayPage) => this.updateWebview(page,'Eos Details',context))
         );
     }
 
-    public updateWebview(data: any, updateFunc: (panel: vscode.WebviewPanel, data: any) => void, createFunc: (context: vscode.ExtensionContext) => vscode.WebviewPanel, context: vscode.ExtensionContext) {
+    public updateWebview(data: any, title: string, context: vscode.ExtensionContext) {
         if (!this._panel) {
-            this._panel = createFunc(context);
+            this._panel = createWebview(title,context);
             this._panel.onDidChangeViewState(e => {
-                updateFunc(e.webviewPanel, this._currentData);
+                updateWebview(e.webviewPanel, this._currentData);
             });
             this._panel.onDidDispose(
                 () => {
@@ -35,45 +34,28 @@ export class DetailsWebView {
                 context.subscriptions
             );
         } else {
+            this._panel.title = title;
             this._panel.reveal();
         }
     
         if (data && this._currentData !== data) {
             this._logManager.logMessage('Opening webview with data:\n' + JSON.stringify(data), 'DEBUG');
-            updateFunc(this._panel, data);
+            updateWebview(this._panel, data);
         }
         this._currentData = data;
     }
 }
 
-function createDependencyWebview(context: vscode.ExtensionContext) : vscode.WebviewPanel {
-    return createWebview('jfrog.vulnerability.details',
-    'Vulnerability Details',context);
-}
-
-function updateDependencyPageWebview(panel: vscode.WebviewPanel, page: IDependencyPage) {
+function updateWebview(panel: vscode.WebviewPanel, page: any) {
     panel.webview.postMessage({
-        data: page,
-        pageType: PageType.Dependency
+        data: page
     });
 }
 
-function createEosWebview(context: vscode.ExtensionContext) : vscode.WebviewPanel{
-    return createWebview('jfrog.eos.details',
-    'Eos Details',context);
-}
-
-function updateEosWebview(panel: vscode.WebviewPanel, page: IZeroDayPage) {
-    panel.webview.postMessage({
-        data: page,
-        pageType: PageType.ZeroDays
-    });
-}
-
-function createWebview(id:string, title: string, context: vscode.ExtensionContext) {
+function createWebview(title: string, context: vscode.ExtensionContext) {
     // Create and show panel
     let panel: vscode.WebviewPanel = vscode.window.createWebviewPanel(
-        id,
+        'jfrog.issues.details',
         title,
         { viewColumn: vscode.ViewColumn.Beside, preserveFocus: false },
         {
