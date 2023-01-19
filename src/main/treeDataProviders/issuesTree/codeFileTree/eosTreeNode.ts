@@ -1,4 +1,4 @@
-import { IAnalysisStep, IZeroDayPage, PageType } from 'jfrog-ide-webview';
+import { IAnalysisStep, IEosPage, PageType } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
 import { EosIssue, EosIssueLocation } from '../../../scanLogic/scanRunners/eosScan';
 import { Severity } from '../../../types/severity';
@@ -36,10 +36,10 @@ export class EosTreeNode extends CodeIssueTreeNode {
     /**
      * Get the CVE details page of the issue
      */
-    public getDetailsPage(): IZeroDayPage {
+    public getDetailsPage(): IEosPage {
         return {
             header: this.label,
-            pageType: PageType.ZeroDays,
+            pageType: PageType.Eos,
             location: {
                 file: this.parent.fullPath,
                 row: this.regionWithIssue.start.line + 1,
@@ -47,6 +47,6 @@ export class EosTreeNode extends CodeIssueTreeNode {
             } as IAnalysisStep,
             description: this._fullDescription,
             analysisStep: this._codeFlows.length > 0 ? this._codeFlows[0] : undefined
-        } as IZeroDayPage;
+        } as IEosPage;
     }
 }
