@@ -16,6 +16,7 @@ export class GoUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/go.mod' };
     public static readonly PKG_TYPE: string = 'go';
     private static readonly GO_MOD_TIDY_CMD: string = 'go mod tidy';
+    private static readonly GO_VERSION: string = 'go version';
     // Required files of the gomod-absolutizer Go program.
     private static readonly GO_MOD_ABS_COMPONENTS: string[] = ['go.mod', 'go.sum', 'main.go', 'utils.go'];
     private static readonly GO_MOD_ABS_DIR_NAME: string = 'gomod-absolutizer';
@@ -25,7 +26,7 @@ export class GoUtils {
      * @returns Go version
      */
     public static getGoVersion(): SemVer {
-        let versionStr: string = ScanUtils.executeCmd('go version')
+        let versionStr: string = ScanUtils.executeCmd(GoUtils.GO_VERSION)
             .toString()
             .substring('go version go'.length);
         let versionNumber: string = versionStr.substring(0, versionStr.indexOf(' '));
@@ -97,6 +98,7 @@ export class GoUtils {
             treesManager.logManager.logError(new Error('Could not scan go project dependencies, because go CLI is not in the PATH.'), true);
             return;
         }
+        let goVersion: SemVer = this.getGoVersion();
         for (let goMod of goMods) {
             checkCanceled();
             treesManager.logManager.logMessage('Analyzing go.mod file ' + goMod.fsPath, 'INFO');
@@ -114,7 +116,7 @@ export class GoUtils {
             }
 
             let root: GoTreeNode = new GoTreeNode(tmpWorkspace, treesManager, parent);
-            root.refreshDependencies();
+            root.refreshDependencies(goVersion);
             projectsToScan.push(root.projectDetails);
             // Set actual paths.
             root.fullPath = goMod.fsPath;
@@ -132,7 +134,7 @@ export class GoUtils {
 
     public static verifyGoInstalled(): boolean {
         try {
-            execSync('go version');
+            execSync(GoUtils.GO_VERSION);
         } catch (error) {
             return false;
         }
@@ -180,7 +182,7 @@ export class GoUtils {
                 fs.copySync(orgFile, path.join(goModAbsDir, fileName));
             } catch (error) {
                 logManager.logMessage(
-                    'Failed while building the Go tree - an error occured while copying the gomod-absolutizer tool files: ' + (<any>error).message,
+                    'Failed while building the Go tree - an error occurred while copying the gomod-absolutizer tool files: ' + (<any>error).message,
                     'ERR'
                 );
             }

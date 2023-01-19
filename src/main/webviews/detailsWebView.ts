@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import fs from 'fs-extra';
 import { IDependencyPage, IZeroDayPage } from 'jfrog-ide-webview';
-import { PageType } from 'jfrog-ide-webview';
 import { LogManager } from '../log/logManager';
 
 /**

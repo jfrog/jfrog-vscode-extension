@@ -29,6 +29,7 @@ export interface ApplicabilityScanResponse {
 export interface CveApplicableDetails {
     fixReason: string;
     fileEvidences: FileIssues[];
+    fullDescription?: string;
 }
 
 /**
@@ -97,25 +98,32 @@ export class ApplicabilityRunner extends BinaryRunner {
         if (!run) {
             return {} as ApplicabilityScanResponse;
         }
-        // Store all the rules that the run checked
-        let response: ApplicabilityScanResponse = {
-            scannedCve: run.tool.driver.rules?.map(rule => this.getCveFromRuleId(rule.id))
-        } as ApplicabilityScanResponse;
-
-        // Generate applicable data
+        // Prepare
         let applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
+        let rulesFullDescription: Map<string, string> = new Map<string, string>();
+        for (const rule of run.tool.driver.rules) {
+            rulesFullDescription.set(rule.id, rule.fullDescription.text);
+        }
         let issues: AnalyzeIssue[] = run.results;
         if (issues) {
+            // Generate applicable data for all the issues
             issues.forEach(analyzeIssue => {
-                let applicableDetails: CveApplicableDetails = this.getOrCreateApplicableDetails(response.scannedCve, applicable, analyzeIssue);
+                let applicableDetails: CveApplicableDetails = this.getOrCreateApplicableDetails(
+                    analyzeIssue,
+                    applicable,
+                    rulesFullDescription.get(analyzeIssue.ruleId)
+                );
                 analyzeIssue.locations.forEach(location => {
                     let fileIssues: FileIssues = this.getOrCreateFileIssues(applicableDetails, location.physicalLocation.artifactLocation.uri);
                     fileIssues.locations.push(location.physicalLocation.region);
                 });
             });
         }
-        response.applicableCve = Object.fromEntries(applicable.entries());
-        return response;
+        // Convert data to a response
+        return {
+            scannedCve: run.tool.driver.rules.map(rule => this.getCveFromRuleId(rule.id)),
+            applicableCve: Object.fromEntries(applicable.entries())
+        } as ApplicabilityScanResponse;
     }
 
     /**
@@ -141,34 +149,30 @@ export class ApplicabilityRunner extends BinaryRunner {
     }
 
     /**
-     * Get or create if not exists CVE applicable issue from applicable list.
-     * Will add the CVE from the analyzedIssue to the scannedCve and get/create and insert to the applicable
-     * @param scannedCve - all the scanned CVEs
-     * @param applicable - the list of all the applicable CVEs
+     * Get or create CVE applicable issue if not exists from the applicable list.
      * @param analyzedIssue - the applicable issue to generate information from
+     * @param applicable - the list of all the applicable CVEs
+     * @param fullDescription - the full description of the applicable issue
      * @returns the CveApplicableDetails object for the analyzedIssue CVE
      */
     private getOrCreateApplicableDetails(
-        scannedCve: string[],
+        analyzedIssue: AnalyzeIssue,
         applicable: Map<string, CveApplicableDetails>,
-        analyzedIssue: AnalyzeIssue
+        fullDescription?: string
     ): CveApplicableDetails {
-        let cveId: string = this.getCveFromRuleId(analyzedIssue.ruleId);
-        if (!scannedCve.find(cve => cve == cveId)) {
-            scannedCve.push(cveId);
-        }
-
-        let cveDetails: CveApplicableDetails | undefined = applicable.get(cveId);
-        if (cveDetails && cveDetails.fixReason == analyzedIssue.message.text) {
+        let ruleId: string = this.getCveFromRuleId(analyzedIssue.ruleId);
+        let cveDetails: CveApplicableDetails | undefined = applicable.get(ruleId);
+        if (cveDetails) {
             return cveDetails;
         }
 
         let details: CveApplicableDetails = {
             fixReason: analyzedIssue.message.text,
-            fileEvidences: []
+            fileEvidences: [],
+            fullDescription: fullDescription
         } as CveApplicableDetails;
 
-        applicable.set(cveId, details);
+        applicable.set(ruleId, details);
 
         return details;
     }

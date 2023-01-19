@@ -3,11 +3,11 @@ import { CodeFileTreeNode } from '../treeDataProviders/issuesTree/codeFileTree/c
 import { CodeIssueTreeNode } from '../treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { IssueTreeNode } from '../treeDataProviders/issuesTree/issueTreeNode';
-import { SeverityUtils } from '../types/severity';
+import { Severity, SeverityUtils } from '../types/severity';
 
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
 
-export class ApplicablityActionProvider extends AbstractFileActionProvider implements vscode.CodeActionProvider {
+export class ApplicabilityActionProvider extends AbstractFileActionProvider implements vscode.CodeActionProvider {
     /** @Override */
     public activate(context: vscode.ExtensionContext) {
         super.activate(context);
@@ -76,18 +76,31 @@ export class ApplicablityActionProvider extends AbstractFileActionProvider imple
         if (fileIssues instanceof CodeFileTreeNode) {
             this._treesManager.logManager.logMessage("Creating diagnostics for CodeFileTreeNode '" + document.uri.fsPath + "'", 'DEBUG');
             let diagnostics: vscode.Diagnostic[] = [];
-            fileIssues.issues.forEach(issue => this.generateInformation(issue, diagnostics));
+            let topSeverityMap: Map<vscode.Range, Severity> = new Map<vscode.Range, Severity>();
+            fileIssues.issues.forEach(issue => this.generateInformation(issue, diagnostics, topSeverityMap));
+            const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
+            for (const [region, severity] of topSeverityMap) {
+                // Add gutter icons of top severity for the region with the issue
+                this.addGutter(textEditor, SeverityUtils.getIcon(severity), [region.start, region.end]);
+            }
             this._diagnosticCollection.set(document.uri, diagnostics);
         }
     }
 
     /**
-     * Genereate diagnostics information for an applicable issue
+     * Generate diagnostics information for an applicable issue
      * @param issue - the applicable issue to generate diagnostics for
      * @param diagnostics - list of all the diagnostics of the file
+     * @param topSeverityMap - a map from regions in the file to their top severity
      */
-    generateInformation(issue: IssueTreeNode, diagnostics: vscode.Diagnostic[]): void {
+    generateInformation(issue: IssueTreeNode, diagnostics: vscode.Diagnostic[], topSeverityMap: Map<vscode.Range, Severity>): void {
         if (issue instanceof CodeIssueTreeNode) {
+            // Calculate top severity for region
+            let rangeSeverity: Severity | undefined = topSeverityMap.get(issue.regionWithIssue);
+            if (!rangeSeverity || rangeSeverity < issue.severity) {
+                topSeverityMap.set(issue.regionWithIssue, issue.severity);
+            }
+            // Add diagnostics
             let position: vscode.Position[] = [issue.regionWithIssue.start, issue.regionWithIssue.end];
             this._treesManager.logManager.logMessage("Creating applicable diagnostics for issue '" + issue.issueId + "'", 'DEBUG');
             // Create diagnostics and gutter icon for the dependency

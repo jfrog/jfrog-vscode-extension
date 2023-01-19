@@ -6,7 +6,6 @@ import { IssueTreeNode } from '../issueTreeNode';
 import { CveApplicableDetails } from '../../../scanLogic/scanRunners/applicabilityScan';
 import { CveTreeNode } from './cveTreeNode';
 import { IComponent } from 'jfrog-client-js';
-import { Severity } from '../../../types/severity';
 
 /**
  * Describes a descriptor file type with Xray issues for the 'Issues' view.
@@ -37,8 +36,10 @@ export class DescriptorTreeNode extends FileTreeNode {
         });
         // Sort children
         this._dependenciesWithIssue
-            // 2nd priority - Sort by number of children
+            // 3rd priority - Sort by number of children
             .sort((lhs, rhs) => rhs.issues.length - lhs.issues.length)
+            // 2nd priority - Sort by direct dependencies
+            .sort((lhs, rhs) => (rhs.indirect ? 0 : 1) - (lhs.indirect ? 0 : 1))
             // 1st priority - Sort by top severity
             .sort((lhs, rhs) => rhs.severity - lhs.severity);
 
@@ -48,7 +49,7 @@ export class DescriptorTreeNode extends FileTreeNode {
 
     /**
      * Search for registered dependency with issue in this descriptor base on a given artifactId.
-     * @param artifactId - the id of the dependency to search
+     * @param artifactId - the id (type,name,version) of the dependency to search
      * @returns - DependencyIssuesTreeNode with the artifactId if exists or undefined otherwise
      */
     public getDependencyByID(artifactId: string): DependencyIssuesTreeNode | undefined {
@@ -71,15 +72,15 @@ export class DescriptorTreeNode extends FileTreeNode {
      * Search for the dependency in the descriptor base on componentId.
      * If found will update the top severity of the node if the given severity is higher.
      * If not found it will create a new one and add it to the descriptor node
-     * @param componentId - the id (type,name,version) of the dependency
+     * @param artifactId - the id (type,name,version) of the dependency
      * @param component - the dependency data to create
-     * @param severity - the severity to create/update
+     * @param indirect - default to false, true if the dependency is indirect
      * @returns the dependency object if exists, else a newly created one base on the input
      */
-    public addNode(componentId: string, component: IComponent, severity: Severity): DependencyIssuesTreeNode {
-        let dependencyWithIssue: DependencyIssuesTreeNode | undefined = this.getDependencyByID(componentId);
+    public addNode(artifactId: string, component: IComponent, indirect: boolean = false): DependencyIssuesTreeNode {
+        let dependencyWithIssue: DependencyIssuesTreeNode | undefined = this.getDependencyByID(artifactId);
         if (!dependencyWithIssue) {
-            dependencyWithIssue = new DependencyIssuesTreeNode(componentId, component, severity, this);
+            dependencyWithIssue = new DependencyIssuesTreeNode(artifactId, component, indirect, this);
             this.dependenciesWithIssue.push(dependencyWithIssue);
         }
         return dependencyWithIssue;
