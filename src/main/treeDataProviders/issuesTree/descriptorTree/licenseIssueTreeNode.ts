@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { IGraphLicense, IViolation } from 'jfrog-client-js';
 import { IssueTreeNode } from '../issueTreeNode';
 import { DependencyIssuesTreeNode } from './dependencyIssuesTreeNode';
-import { IDependencyPage, IImpactedPath, IReference } from 'jfrog-ide-webview';
+import { IDependencyPage, IImpactGraph, IReference } from 'jfrog-ide-webview';
 import { Translators } from '../../../utils/translators';
 
 import { Severity, SeverityUtils } from '../../../types/severity';
@@ -18,7 +18,7 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
     private _licenseIssue: IGraphLicense;
     private _ignoreUrl: string;
 
-    constructor(issue: IViolation, _severity: Severity, private _parent: DependencyIssuesTreeNode, private _impactedTreeRoot: IImpactedPath) {
+    constructor(issue: IViolation, _severity: Severity, private _parent: DependencyIssuesTreeNode, private _impactedTreeRoot: IImpactGraph) {
         super(issue.issue_id, _severity, issue.license_key, vscode.TreeItemCollapsibleState.None);
 
         this._watchNames = [issue.watch_name];
@@ -47,7 +47,7 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
             severity: SeverityUtils.toWebviewSeverity(this._severity),
             license: this.parent.licenses,
             references: this._references,
-            impactedPath: this.impactedTree
+            impactGraph: this.impactedTree
         } as IDependencyPage;
     }
 
@@ -59,7 +59,7 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
         return this._ignoreUrl;
     }
 
-    public get impactedTree(): IImpactedPath {
+    public get impactedTree(): IImpactGraph {
         return this._impactedTreeRoot;
     }
 

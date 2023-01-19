@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { IComponent, IGraphCve, IViolation, IVulnerability } from 'jfrog-client-js';
-import { IDependencyPage, IImpactedPath, IReference, IExtendedInformation, IApplicableDetails, PageType } from 'jfrog-ide-webview';
+import { IDependencyPage, IImpactGraph, IReference, IExtendedInformation, IApplicableDetails, PageType } from 'jfrog-ide-webview';
 import { PackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { Translators } from '../../../utils/translators';
@@ -29,7 +29,7 @@ export class CveTreeNode extends IssueTreeNode {
         severity: Severity,
         private _parent: DependencyIssuesTreeNode,
         component: IComponent,
-        private _impactedTreeRoot?: IImpactedPath,
+        private _impactedTreeRoot?: IImpactGraph,
         private _cve?: IGraphCve
     ) {
         super(sourceVul.issue_id, severity, _cve && _cve.cve ? _cve.cve : sourceVul.issue_id, vscode.TreeItemCollapsibleState.None);
@@ -90,7 +90,7 @@ export class CveTreeNode extends IssueTreeNode {
             license: this.parent.licenses,
             references: this._references,
             extendedInformation: this._researchInfo,
-            impactedPath: this.impactedTree
+            impactGraph: this.impactedTree
         } as IDependencyPage;
     }
 
@@ -106,7 +106,7 @@ export class CveTreeNode extends IssueTreeNode {
         return this._infectedVersions;
     }
 
-    public get impactedTree(): IImpactedPath | undefined {
+    public get impactedTree(): IImpactGraph | undefined {
         return this._impactedTreeRoot;
     }
 
