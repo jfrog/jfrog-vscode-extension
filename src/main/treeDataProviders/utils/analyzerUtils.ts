@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
-import * as fs from 'fs';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
 import { CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
 import { SeverityUtils } from '../../types/severity';
@@ -16,7 +15,7 @@ import { PackageType } from '../../types/projectType';
 import { StepProgress } from './stepProgress';
 import { EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
 import { ScanManager } from '../../scanLogic/scanManager';
-import { FileIssues } from '../../scanLogic/scanRunners/analyzerModels';
+import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
 import { DescriptorIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
 import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
 
@@ -30,6 +29,21 @@ export class AnalyzerUtils {
             return decodeURI((filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath).replace(/['/']/g, '\\'));
         }
         return decodeURI(filePath.includes('file://') ? filePath.substring('file://'.length) : filePath);
+    }
+
+    /**
+     * Check if two regions are equals
+     * @param region - first region
+     * @param other - second region
+     * @returns true if the regions match false otherwise
+     */
+    public static isSameRegion(region: FileRegion, other: FileRegion): boolean {
+        return (
+            region.startLine === other.startLine &&
+            region.endLine === other.endLine &&
+            region.startColumn === other.startColumn &&
+            region.endColumn === other.endColumn
+        );
     }
 
     /**
@@ -244,8 +258,6 @@ export class AnalyzerUtils {
         }
     }
 
-    static counter: number = 0;
-
     /**
      * Populate eos information in
      * @param root - root node to populate data inside
@@ -253,27 +265,14 @@ export class AnalyzerUtils {
      * @returns number of eos issues populated
      */
     public static populateEosIssues(root: IssuesRootTreeNode, workspaceData: WorkspaceIssuesData): number {
-        fs.writeFileSync(
-            '/Users/assafa/.jfrog-vscode-extension/data-eos-' + AnalyzerUtils.counter++ + '.json',
-            JSON.stringify(workspaceData)
-        );
         root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
         let issuesCount: number = 0;
         if (workspaceData.eosScan && workspaceData.eosScan.filesWithIssues) {
             workspaceData.eosScan.filesWithIssues.forEach(fileWithIssues => {
                 let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
                 fileWithIssues.issues.forEach(issue => {
-                    issue.regions.forEach(region => {
-                        fileNode.issues.push(
-                            new EosTreeNode(
-                                issue.ruleId,
-                                fileNode,
-                                new vscode.Range(
-                                    new vscode.Position(region.startLine, region.startColumn),
-                                    new vscode.Position(region.endLine, region.endColumn)
-                                )
-                            )
-                        );
+                    issue.locations.forEach(location => {
+                        fileNode.issues.push(new EosTreeNode(issue, location, fileNode));
                         issuesCount++;
                     });
                 });

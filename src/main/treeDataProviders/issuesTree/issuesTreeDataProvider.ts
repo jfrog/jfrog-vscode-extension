@@ -289,7 +289,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
         progressManager.startStep('🔎 Scanning for issues', graphSupported ? 2 * descriptorsCount + 1 : 1);
         let scansPromises: Promise<any>[] = [];
-        scansPromises.push(AnalyzerUtils.runEos(workspaceData,root,workspaceDescriptors,this._scanManager,progressManager));
+        scansPromises.push(AnalyzerUtils.runEos(workspaceData, root, workspaceDescriptors, this._scanManager, progressManager));
         // Dependency graph scan and applicability scan for each descriptor
         if (graphSupported) {
             scansPromises.push(
@@ -638,18 +638,12 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             }
             // Descriptor issues nodes
             if (element instanceof CveTreeNode || element instanceof LicenseIssueTreeNode) {
-                element.command = Utils.createNodeCommand('jfrog.view.dependency.details.page', 'Show details', [element.getDetailsPage()]);
+                element.command = Utils.createNodeCommand('jfrog.view.details.page', 'Show details', [element.getDetailsPage()]);
             }
             // Source code issues nodes
             if (element instanceof CodeIssueTreeNode) {
-                if (element instanceof ApplicableTreeNode) {
-                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.applicable', 'Open file location and CVE details', [
-                        element.parent.fullPath,
-                        element.regionWithIssue,
-                        element.getDetailsPage()
-                    ]);
-                } else if (element instanceof EosTreeNode) {
-                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.eos', 'Open file location and Eos details', [
+                if (element instanceof ApplicableTreeNode || element instanceof EosTreeNode) {
+                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.details', 'Open file location and show details', [
                         element.parent.fullPath,
                         element.regionWithIssue,
                         element.getDetailsPage()

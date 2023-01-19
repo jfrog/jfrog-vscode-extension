@@ -21,7 +21,7 @@ export class WorkspaceIssuesData {
      * @returns true if at least one issue exists
      */
     public hasIssues(): boolean {
-        return this.descriptorsIssuesData.length > 0;
+        return this.descriptorsIssuesData.length > 0 || (this.eosScan && this.eosScan.filesWithIssues && this.eosScan.filesWithIssues.length > 0);
     }
 
     /**

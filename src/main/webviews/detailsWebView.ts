@@ -10,19 +10,18 @@ import { LogManager } from '../log/logManager';
 export class DetailsWebView {
     constructor(private _logManager: LogManager) {}
 
-    private _panel: vscode.WebviewPanel | undefined; 
+    private _panel: vscode.WebviewPanel | undefined;
     private _currentData: any;
 
     public async activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(
-            vscode.commands.registerCommand('jfrog.view.dependency.details.page', (page: IDependencyPage) => this.updateWebview(page,'Vulnerability Details',context)),
-            vscode.commands.registerCommand('jfrog.view.eos.page', (page: IZeroDayPage) => this.updateWebview(page,'Eos Details',context))
+            vscode.commands.registerCommand('jfrog.view.details.page', (page: IDependencyPage | IZeroDayPage) => this.updateWebview(page, context))
         );
     }
 
-    public updateWebview(data: any, title: string, context: vscode.ExtensionContext) {
+    public updateWebview(data: any, context: vscode.ExtensionContext) {
         if (!this._panel) {
-            this._panel = createWebview(title,context);
+            this._panel = createWebview(context);
             this._panel.onDidChangeViewState(e => {
                 updateWebview(e.webviewPanel, this._currentData);
             });
@@ -34,10 +33,9 @@ export class DetailsWebView {
                 context.subscriptions
             );
         } else {
-            this._panel.title = title;
             this._panel.reveal();
         }
-    
+
         if (data && this._currentData !== data) {
             this._logManager.logMessage('Opening webview with data:\n' + JSON.stringify(data), 'DEBUG');
             updateWebview(this._panel, data);
@@ -52,11 +50,11 @@ function updateWebview(panel: vscode.WebviewPanel, page: any) {
     });
 }
 
-function createWebview(title: string, context: vscode.ExtensionContext) {
+function createWebview(context: vscode.ExtensionContext) {
     // Create and show panel
     let panel: vscode.WebviewPanel = vscode.window.createWebviewPanel(
         'jfrog.issues.details',
-        title,
+        'Vulnerability Details',
         { viewColumn: vscode.ViewColumn.Beside, preserveFocus: false },
         {
             // Enable scripts in the webview

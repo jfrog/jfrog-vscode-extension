@@ -120,14 +120,9 @@
                 "category": "jfrog.view.dependency.vulnerability"
             },
             {
-                "command": "jfrog.view.dependency.details.page",
-                "title": "jfrog.view.dependency.details.page",
-                "category": "jfrog.view.dependency.vulnerability"
-            },
-            {
-                "command": "jfrog.view.eos.page",
-                "title": "jfrog.view.eos.page",
-                "category": "jfrog.view.eos.page"
+                "command": "jfrog.view.details.page",
+                "title": "jfrog.view.details.page",
+                "category": "jfrog.view.details.page"
             },
             {
                 "command": "jfrog.xray.refresh",

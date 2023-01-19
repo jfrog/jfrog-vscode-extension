@@ -14,6 +14,14 @@ export class Utils {
         return path.substring(path.lastIndexOf(pathUtils.sep) + 1);
     }
 
+    public static tryRelativePath(full: string, potentialParent?: string): string {
+        if (potentialParent && full.startsWith(potentialParent)) {
+            let localPath: string = full.substring(potentialParent.length + 1);
+            return './' + localPath;
+        }
+        return full;
+    }
+
     public static createNodeCommand(name: string, title: string, args: any[]): vscode.Command {
         return {
             command: name,

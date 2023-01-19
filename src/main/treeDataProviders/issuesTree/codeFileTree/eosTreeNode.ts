@@ -1,17 +1,36 @@
-import { IAnalysisStep, IZeroDayPage } from 'jfrog-ide-webview';
+import { IAnalysisStep, IZeroDayPage, PageType } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
+import { EosIssue, EosIssueLocation } from '../../../scanLogic/scanRunners/eosScan';
 import { Severity } from '../../../types/severity';
+import { Translators } from '../../../utils/translators';
 import { CodeFileTreeNode } from './codeFileTreeNode';
-import { CodeIssueTreeNode } from "./codeIssueTreeNode";
-
+import { CodeIssueTreeNode } from './codeIssueTreeNode';
 
 /**
  * Describe a Eos issue
  */
 export class EosTreeNode extends CodeIssueTreeNode {
-    
-    constructor(issueId: string, parent: CodeFileTreeNode, regionWithIssue: vscode.Range, severity?: Severity) {
-        super(issueId, parent, regionWithIssue, severity);
+    private _codeFlows: IAnalysisStep[][];
+
+    private _fullDescription?: string;
+
+    constructor(issue: EosIssue, location: EosIssueLocation, parent: CodeFileTreeNode, severity?: Severity) {
+        super(
+            issue.ruleId,
+            parent,
+            new vscode.Range(
+                new vscode.Position(location.region.startLine, location.region.startColumn),
+                new vscode.Position(location.region.endLine, location.region.endColumn)
+            ),
+            severity,
+            issue.ruleName
+        );
+        this._fullDescription = issue.fullDescription;
+        this._codeFlows = Translators.toAnalysisSteps(location.threadFlows, parent.parent?.workSpace.uri.fsPath);
+    }
+
+    public get codeFlows(): IAnalysisStep[][] {
+        return this._codeFlows;
     }
 
     /**
@@ -19,21 +38,15 @@ export class EosTreeNode extends CodeIssueTreeNode {
      */
     public getDetailsPage(): IZeroDayPage {
         return {
-            header: "header",
-            location: "location",
-            description: "description", // can be undefined
-            remediation: ["remediation1","remediation2"], // can be undefined
-            foundText: "foundText", // can be undefined
-            analysisStep: [
-                {
-                file: "file1",
-                line: "line1"
+            header: this.label,
+            pageType: PageType.ZeroDays,
+            location: {
+                file: this.parent.fullPath,
+                row: this.regionWithIssue.start.line + 1,
+                colum: this.regionWithIssue.start.character
             } as IAnalysisStep,
-            {
-                file: "file2",
-                line: "line2"
-            } as IAnalysisStep
-        ]
+            description: this._fullDescription,
+            analysisStep: this._codeFlows.length > 0 ? this._codeFlows[0] : undefined
         } as IZeroDayPage;
     }
 }
