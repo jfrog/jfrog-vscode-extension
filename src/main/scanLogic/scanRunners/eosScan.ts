@@ -5,6 +5,7 @@ import { LogManager } from '../../log/logManager';
 import { BinaryRunner } from './binaryRunner';
 import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeIssue, AnalyzerScanResponse, AnalyzeScanRequest, FileRegion } from './analyzerModels';
+import { ConnectionManager } from '../../connect/connectionManager';
 
 export interface EosScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
@@ -28,11 +29,16 @@ export interface EosFileIssue {
 }
 
 export class EosRunner extends BinaryRunner {
-    private static readonly RUNNER_FOLDER: string = 'eos';
+    private static readonly BINARY_FOLDER: string = 'eos';
     private static readonly BINARY_NAME: string = 'main_';
 
-    constructor(abortCheckInterval: number, logManager: LogManager) {
-        super(path.join(ScanUtils.getHomePath(), EosRunner.RUNNER_FOLDER, EosRunner.getBinaryName()), abortCheckInterval, logManager);
+    constructor(connectionManager: ConnectionManager, abortCheckInterval: number, logManager: LogManager) {
+        super(
+            connectionManager,
+            abortCheckInterval,
+            logManager,
+            path.join(ScanUtils.getHomePath(), EosRunner.BINARY_FOLDER, EosRunner.getBinaryName())
+        );
     }
 
     protected validateSupported(): boolean {
@@ -43,7 +49,8 @@ export class EosRunner extends BinaryRunner {
         return super.validateSupported();
     }
 
-    private static getBinaryName(): string {
+    /** @override */
+    protected static getBinaryName(): string {
         let name: string = EosRunner.BINARY_NAME;
         switch (os.platform()) {
             case 'linux':

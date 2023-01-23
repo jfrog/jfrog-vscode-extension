@@ -1,10 +1,7 @@
-import * as path from 'path';
-import * as os from 'os';
-
 import { LogManager } from '../../log/logManager';
-import { ScanUtils } from '../../utils/scanUtils';
 import { BinaryRunner } from './binaryRunner';
 import { AnalyzeIssue, AnalyzerScanRun, AnalyzeScanRequest, FileIssues } from './analyzerModels';
+import { ConnectionManager } from '../../connect/connectionManager';
 
 /**
  * The request that is sent to the binary to scan applicability
@@ -36,28 +33,13 @@ export interface CveApplicableDetails {
  * Describes a runner for the Applicability scan executable file.
  */
 export class ApplicabilityRunner extends BinaryRunner {
-    private static readonly RUNNER_FOLDER: string = 'applicability-scan';
-    private static readonly BINARY_NAME: string = 'applicability_scanner';
-
-    constructor(abortCheckInterval: number, logManager: LogManager) {
-        super(
-            path.join(ScanUtils.getHomePath(), ApplicabilityRunner.RUNNER_FOLDER, ApplicabilityRunner.getBinaryName()),
-            abortCheckInterval,
-            logManager
-        );
-    }
-
-    private static getBinaryName(): string {
-        let name: string = ApplicabilityRunner.BINARY_NAME;
-        if (os.platform() === 'win32') {
-            return name + '.exe';
-        }
-        return name;
+    constructor(connectionManager: ConnectionManager, abortCheckInterval: number, logManager: LogManager) {
+        super(connectionManager, abortCheckInterval, logManager);
     }
 
     /** @override */
     public async runBinary(abortSignal: AbortSignal, yamlConfigPath: string): Promise<void> {
-        await this.executeBinary(abortSignal, ['scan', yamlConfigPath]);
+        await this.executeBinary(abortSignal, ['ca', yamlConfigPath]);
     }
 
     /** @override */

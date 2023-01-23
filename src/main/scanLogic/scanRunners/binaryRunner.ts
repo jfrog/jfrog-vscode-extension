@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-
+import * as os from 'os';
 import yaml from 'js-yaml';
 import * as path from 'path';
 
@@ -7,6 +7,7 @@ import { LogManager } from '../../log/logManager';
 import { Utils } from '../../treeDataProviders/utils/utils';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { AnalyzerRequest, AnalyzerScanResponse, AnalyzeScanRequest } from './analyzerModels';
+import { ConnectionManager } from '../../connect/connectionManager';
 
 /**
  * Arguments for running binary async
@@ -36,13 +37,43 @@ export abstract class BinaryRunner {
     protected _runDirectory: string;
     private _isSupported: boolean = true;
 
-    constructor(protected _binaryPath: string, protected _abortCheckInterval: number, protected _logManager: LogManager) {
+    protected static readonly RUNNER_FOLDER: string = 'analyzer-manager';
+    private static readonly RUNNER_NAME: string = 'analyzerManager';
+
+    constructor(
+        protected _connectionManager: ConnectionManager,
+        protected _abortCheckInterval: number,
+        protected _logManager: LogManager,
+        protected _binaryPath: string = path.join(ScanUtils.getHomePath(), BinaryRunner.RUNNER_FOLDER, BinaryRunner.getBinaryName())
+    ) {
         this._runDirectory = path.dirname(_binaryPath);
         this._isSupported = this.validateSupported();
         if (this._abortCheckInterval <= 0) {
             // Default check in 1 sec intervals
             this._abortCheckInterval = 1 * 1000;
         }
+    }
+
+    /**
+     * Get the binary name for the runner base on the running os
+     * @returns the name of the expected binary file to run
+     */
+    protected static getBinaryName(): string {
+        let name: string = BinaryRunner.RUNNER_NAME;
+        switch (os.platform()) {
+            case 'win32':
+                return name + '_windows.exe';
+            case 'linux':
+                return name + '_linux';
+            case 'darwin':
+                name += '_mac';
+                if (os.arch() === 'arm' || os.arch() === 'arm64') {
+                    return name + '_arm';
+                } else {
+                    return name + '_amd';
+                }
+        }
+        return name;
     }
 
     /**
@@ -70,7 +101,7 @@ export abstract class BinaryRunner {
         let tasksInfo: { activeTasks: number; signal: AbortSignal; tasks: Promise<any>[] } = { activeTasks: 1, signal: abortSignal, tasks: [] };
         // Add execute cmd task
         tasksInfo.tasks.push(
-            ScanUtils.executeCmdAsync('"' + this._binaryPath + '" ' + args.join(' '), this._runDirectory)
+            ScanUtils.executeCmdAsync('"' + this._binaryPath + '" ' + args.join(' '), this._runDirectory, this.createEnvForRun())
                 .then(std => {
                     if (std.stdout && std.stdout.length > 0) {
                         this._logManager.logMessage(
@@ -90,6 +121,29 @@ export abstract class BinaryRunner {
         // Add check abort task
         tasksInfo.tasks.push(this.checkIfAbortedTask(tasksInfo));
         await Promise.all(tasksInfo.tasks);
+    }
+
+    /**
+     * Create the needed environment variables for the runner to run
+     * @returns list of environment variables to use while executing the runner or unidentified if credential not set 
+     */
+    private createEnvForRun(): NodeJS.ProcessEnv | undefined {
+        if (this._connectionManager.areXrayCredentialsSet()) {
+            let binaryVars: NodeJS.ProcessEnv = {
+                JF_PLATFORM_URL: this._connectionManager.url
+            };
+            if (this._connectionManager.accessToken) {
+                binaryVars.JF_TOKEN = this._connectionManager.accessToken;
+            } else {
+                binaryVars.JF_USER = this._connectionManager.username;
+                binaryVars.JF_PASS = this._connectionManager.password;
+            }
+            return {
+                ...process.env,
+                ...binaryVars
+            };
+        }
+        return undefined;
     }
 
     /**
