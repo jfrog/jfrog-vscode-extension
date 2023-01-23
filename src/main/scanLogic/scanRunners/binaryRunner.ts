@@ -125,7 +125,7 @@ export abstract class BinaryRunner {
 
     /**
      * Create the needed environment variables for the runner to run
-     * @returns list of environment variables to use while executing the runner or unidentified if credential not set 
+     * @returns list of environment variables to use while executing the runner or unidentified if credential not set
      */
     private createEnvForRun(): NodeJS.ProcessEnv | undefined {
         if (this._connectionManager.areXrayCredentialsSet()) {
