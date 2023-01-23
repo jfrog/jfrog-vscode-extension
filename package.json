@@ -158,7 +158,9 @@
                 "icon": {
                     "light": "resources/light/build.png",
                     "dark": "resources/dark/build.png"
-                }
+                },
+                "category": "JFrog",
+                "enablement": "isCi"
             },
             {
                 "command": "jfrog.xray.local",
