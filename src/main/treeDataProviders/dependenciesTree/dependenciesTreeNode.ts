@@ -28,6 +28,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         if (contextValue === undefined) {
             this.contextValue = ContextKeys.SHOW_IN_PROJECT_DESC_ENABLED;
         }
+        this.contextValue += ContextKeys.COPY_TO_CLIPBOARD_ENABLED;
         if (_parent && !_parent.children.find(child => child.componentId == this.componentId)) {
             _parent.children.push(this);
         }
