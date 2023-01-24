@@ -633,11 +633,12 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 element.command = Utils.createNodeCommand('jfrog.issues.file.open', 'Open file', [element.fullPath]);
             }
             if (element instanceof DependencyIssuesTreeNode) {
-                let directOptions: vscode.Range[] = await DescriptorUtils.getDirectDependenciesLocations(element);
-                if (directOptions && directOptions.length > 0) {
+                let directDependenciesLocations: vscode.Range[] = await DescriptorUtils.getDirectDependenciesLocations(element);
+                if (directDependenciesLocations?.length > 0) {
                     element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open location in file', [
                         element.parent.fullPath,
-                        directOptions[0]
+                        // If there are more than one direct dependency with this indirect jump to the first one
+                        directDependenciesLocations[0]
                     ]);
                 }
             }
