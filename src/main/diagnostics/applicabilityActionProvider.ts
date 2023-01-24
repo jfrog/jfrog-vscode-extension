@@ -83,19 +83,26 @@ export class ApplicabilityActionProvider extends AbstractFileActionProvider impl
     private addUnderlineToIssues(document: vscode.TextDocument, issues: CodeIssueTreeNode[]) {
         this._diagnosticCollection.set(
             document.uri,
-            issues.map(issue => super.issueToDiagnostic(issue))
+            issues.map(issue => this.createDiagnosticIssue(issue))
         );
     }
-
+    createDiagnosticIssue(issue: CodeIssueTreeNode): vscode.Diagnostic {
+        return this.createDiagnostic(
+            issue.issueId,
+            'Severity: ' + SeverityUtils.getString(issue.severity),
+            vscode.DiagnosticSeverity.Warning,
+            issue.regionWithIssue
+        );
+    }
     private async addGutterToIssues(document: vscode.TextDocument, issues: CodeIssueTreeNode[]) {
-        let gutters: Map<vscode.Range, Severity> = this.issuesToGutters(issues);
+        let topSeverities: Map<vscode.Range, Severity> = this.filterByTopSeverity(issues);
         const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
-        for (const [region, severity] of gutters) {
+        for (const [region, severity] of topSeverities) {
             this.addGutter(textEditor, SeverityUtils.getIcon(severity), region);
         }
     }
 
-    private issuesToGutters(issues: CodeIssueTreeNode[]): Map<vscode.Range, Severity> {
+    private filterByTopSeverity(issues: CodeIssueTreeNode[]): Map<vscode.Range, Severity> {
         let gutterSeverity: Map<vscode.Range, Severity> = new Map<vscode.Range, Severity>();
         issues.forEach(issue => {
             let topSeverity: Severity | undefined = gutterSeverity.get(issue.regionWithIssue);

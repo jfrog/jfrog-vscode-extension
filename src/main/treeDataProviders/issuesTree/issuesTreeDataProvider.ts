@@ -577,7 +577,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
     public getCodeIssueTree(filePath: string): CodeFileTreeNode | undefined {
         const tree: FileTreeNode | undefined = this.getFileIssuesTree(filePath);
-        return tree instanceof CodeIssueTreeNode ? tree : undefined;
+        return tree instanceof CodeFileTreeNode ? tree : undefined;
     }
 
     private isWorkspaceContainsFile(workspace: string, file: string): boolean {
