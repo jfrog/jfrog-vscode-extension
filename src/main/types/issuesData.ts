@@ -8,7 +8,6 @@ import { PackageType } from './projectType';
  * Describes all the issue data for a specific workspace from Xray scan
  */
 export class WorkspaceIssuesData {
-    // public readonly path: string;
     public readonly descriptorsIssuesData: DescriptorIssuesData[] = [];
     eosScan: EosScanResponse = {} as EosScanResponse;
     eosScanTimestamp?: number;
@@ -21,7 +20,7 @@ export class WorkspaceIssuesData {
      * @returns true if at least one issue exists
      */
     public hasIssues(): boolean {
-        return this.descriptorsIssuesData.length > 0;
+        return this.descriptorsIssuesData.length > 0 || this.eosScan?.filesWithIssues?.length > 0;
     }
 
     /**
