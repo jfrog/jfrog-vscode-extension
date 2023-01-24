@@ -116,23 +116,32 @@ export class AnalyzerUtils {
         let issuesCount: number = 0;
         descriptorNode.scannedCve.forEach(cve => {
             // Check if the descriptor has this cve issue
-            let node: IssueTreeNode | undefined = descriptorNode.getIssueById(cve);
-            if (node instanceof CveTreeNode && node.cve) {
-                let potential: CveApplicableDetails | undefined = descriptorNode.applicableCve?.get(node.cve.cve);
-                if (potential) {
-                    let details: CveApplicableDetails = potential;
-                    let evidences: IEvidence[] = [];
-                    // Populate code file issues for workspace
-                    details.fileEvidences.forEach(fileEvidence => {
-                        let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileEvidence.full_path);
-                        issuesCount += this.populateEvidence(fileEvidence, details.fixReason, <CveTreeNode>node, evidences, fileNode);
-                    });
-                    // Applicable
-                    node.applicableDetails = { isApplicable: true, searchTarget: details.fullDescription, evidence: evidences } as IApplicableDetails;
-                } else {
-                    // Not applicable
-                    node.severity = SeverityUtils.notApplicable(node.severity);
-                    node.applicableDetails = { isApplicable: false } as IApplicableDetails;
+            let nodes: IssueTreeNode[] | undefined = descriptorNode.getIssueById(cve);
+            if (!nodes) {
+                return;
+            }
+            for (const node of nodes) {
+                if (node instanceof CveTreeNode) {
+                    let potential: CveApplicableDetails | undefined = descriptorNode.applicableCve?.get(node.labelId);
+                    if (potential) {
+                        let details: CveApplicableDetails = potential;
+                        let evidences: IEvidence[] = [];
+                        // Populate code file issues for workspace
+                        details.fileEvidences.forEach((fileEvidence: FileIssues) => {
+                            let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileEvidence.full_path);
+                            issuesCount += this.populateEvidence(fileEvidence, details.fixReason, <CveTreeNode>node, evidences, fileNode);
+                        });
+                        // Applicable
+                        node.applicableDetails = {
+                            isApplicable: true,
+                            searchTarget: details.fullDescription,
+                            evidence: evidences
+                        } as IApplicableDetails;
+                    } else if (!node.parent.indirect) {
+                        // Not applicable
+                        node.severity = SeverityUtils.notApplicable(node.severity);
+                        node.applicableDetails = { isApplicable: false } as IApplicableDetails;
+                    }
                 }
             }
         });

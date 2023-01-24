@@ -112,16 +112,23 @@ describe('Descriptor Tree Tests', () => {
             it('Get issue by id test - ' + testCase.test, () => {
                 let testNode: DescriptorTreeNode = createAndPopulateDescriptor(testCase.data);
                 let toSearchDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '9.9.9', testNode);
+                let toSearchSecondDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy2', '2.2.2', testNode);
                 // Search issue not exist as child
                 let issueNoCVE: CveTreeNode = <CveTreeNode>createDummyIssue(Severity.Unknown);
-                assert.notExists(testNode.getIssueById(issueNoCVE.issueId));
+                assert.deepEqual(testNode.getIssueById(issueNoCVE.issueId), []);
                 // Add and search by issueId
                 toSearchDependency.issues.push(issueNoCVE);
-                assert.deepEqual(testNode.getIssueById(issueNoCVE.issueId), issueNoCVE);
+                assert.sameDeepMembers(<CveTreeNode[]>testNode.getIssueById(issueNoCVE.issueId), [issueNoCVE]);
                 // Add and search by both CVE id and issue id
                 let issueCVE: CveTreeNode = createDummyCveIssue(Severity.Unknown, toSearchDependency, 'test_cve_id');
-                assert.deepEqual(testNode.getIssueById(issueCVE.issueId), issueCVE);
-                assert.deepEqual(testNode.getIssueById('test_cve_id'), issueCVE);
+                let issueCVEInSecondDependency: CveTreeNode = createDummyCveIssue(
+                    Severity.Unknown,
+                    toSearchSecondDependency,
+                    'test_cve_id',
+                    issueCVE.issueId
+                );
+                assert.sameDeepMembers(<CveTreeNode[]>testNode.getIssueById(issueCVE.issueId), [issueCVE, issueCVEInSecondDependency]);
+                assert.sameDeepMembers(<CveTreeNode[]>testNode.getIssueById('test_cve_id'), [issueCVE, issueCVEInSecondDependency]);
             });
         });
 

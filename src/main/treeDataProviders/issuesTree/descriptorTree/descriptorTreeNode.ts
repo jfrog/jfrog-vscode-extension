@@ -57,15 +57,16 @@ export class DescriptorTreeNode extends FileTreeNode {
     }
 
     /** @override */
-    public getIssueById(id: string): IssueTreeNode | undefined {
+    public getIssueById(id: string): IssueTreeNode[] {
+        let results: IssueTreeNode[] = [];
         for (const dependency of this._dependenciesWithIssue) {
             for (const issue of dependency.issues) {
                 if (id === issue.issueId || (issue instanceof CveTreeNode && issue.cve && id === issue.cve.cve)) {
-                    return issue;
+                    results.push(issue);
                 }
             }
         }
-        return undefined;
+        return results;
     }
 
     /**

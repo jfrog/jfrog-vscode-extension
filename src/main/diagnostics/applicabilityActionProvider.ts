@@ -95,7 +95,7 @@ export class ApplicabilityActionProvider extends AbstractFileActionProvider impl
             issue.regionWithIssue
         );
     }
-    
+
     private async addGutterToIssues(document: vscode.TextDocument, issues: CodeIssueTreeNode[]) {
         let topSeverities: Map<vscode.Range, Severity> = this.filterByTopSeverity(issues);
         const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One);

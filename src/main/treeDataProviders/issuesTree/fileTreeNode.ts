@@ -29,8 +29,8 @@ export abstract class FileTreeNode extends vscode.TreeItem {
      * @param id - id of an issue
      * @returns the issue node if exists in file, undefined otherwise
      */
-    public getIssueById(id: string): IssueTreeNode | undefined {
-        return this.issues.find(issue => id === issue.issueId);
+    public getIssueById(id: string): IssueTreeNode[] {
+        return this.issues.filter(issue => id === issue.issueId);
     }
 
     /**
