@@ -56,22 +56,23 @@ export class GoUtils {
      * @param focusType - what position to return (dependency / version)
      * @returns the position of the dependency / version in the go.mod file.
      */
-    public static getDependencyPosition(document: vscode.TextDocument, artifactId: string, focusType: FocusType): vscode.Position[] {
-        let res: vscode.Position[] = [];
+    public static getDependencyPosition(document: vscode.TextDocument, artifactId: string, focusType: FocusType): vscode.Range[] {
+        let res: vscode.Range[] = [];
         let goModContent: string = document.getText();
         let dependencyMatch: RegExpMatchArray | null = goModContent.match('(' + artifactId + 's* )vs*.*');
         if (!dependencyMatch) {
-            return res;
+            return [];
         }
+        let startPos: vscode.Position;
         switch (focusType) {
             case FocusType.Dependency:
-                res.push(document.positionAt(<number>dependencyMatch.index));
+                startPos = document.positionAt(<number>dependencyMatch.index);
                 break;
             case FocusType.DependencyVersion:
-                res.push(document.positionAt(<number>dependencyMatch.index + dependencyMatch[1].length));
+                startPos = document.positionAt(<number>dependencyMatch.index + dependencyMatch[1].length);
                 break;
         }
-        res.push(new vscode.Position(res[0].line, res[0].character + dependencyMatch[0].length));
+        res.push(new vscode.Range(startPos, new vscode.Position(startPos.line, startPos.character + dependencyMatch[0].length)));
         return res;
     }
 

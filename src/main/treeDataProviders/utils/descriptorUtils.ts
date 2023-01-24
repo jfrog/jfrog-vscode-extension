@@ -14,20 +14,25 @@ import { MavenUtils } from '../../utils/mavenUtils';
 import { NpmUtils } from '../../utils/npmUtils';
 import { PypiUtils } from '../../utils/pypiUtils';
 import { YarnUtils } from '../../utils/yarnUtils';
-import { IImpactedPath, ILicense } from 'jfrog-ide-webview';
+import { IImpactGraph, ILicense } from 'jfrog-ide-webview';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { FocusType } from '../../constants/contextKeys';
 import { DescriptorIssuesData } from '../../types/issuesData';
 
 export class DescriptorUtils {
+    public static readonly DESCRIPTOR_SELECTOR: vscode.DocumentSelector = {
+        scheme: 'file',
+        pattern: '**/{go.mod,package.json,pom.xml,*requirements*.txt,yarn.lock}'
+    };
+
     /**
      * Creates a map for each Xray issue in a component (key= issue_id+componentId) in the response to the impact path in the given dependency graph.
      * @param descriptorGraph - the descriptor full dependency graph
      * @param response - the scan result issues and the dependency components for each of them
      * @returns map from (issue_id+componentId) to IImpactedPath for the given tree root
      */
-    public static createImpactedPaths(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactedPath> {
-        let paths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>();
+    public static createImpactedPaths(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactGraph> {
+        let paths: Map<string, IImpactGraph> = new Map<string, IImpactGraph>();
         let issues: IVulnerability[] = response.violations || response.vulnerabilities;
 
         for (let i: number = 0; i < issues.length; i++) {
@@ -36,7 +41,7 @@ export class DescriptorUtils {
                 paths.set(issue.issue_id + componentId, {
                     name: descriptorGraph.componentId,
                     children: this.getChildrenImpact(descriptorGraph, component)
-                } as IImpactedPath);
+                } as IImpactGraph);
             }
         }
         return paths;
@@ -48,24 +53,24 @@ export class DescriptorUtils {
      * @param componentWithIssue - the component to generate the impact path for it
      * @returns array of impact paths one for each child if exists
      */
-    public static getChildrenImpact(root: DependenciesTreeNode, componentWithIssue: IComponent): IImpactedPath[] {
-        let impactPaths: IImpactedPath[] = [];
+    public static getChildrenImpact(root: DependenciesTreeNode, componentWithIssue: IComponent): IImpactGraph[] {
+        let impactPaths: IImpactGraph[] = [];
         for (let child of root.children) {
-            let impactChild: IImpactedPath | undefined = impactPaths.find(p => p.name === child.componentId);
+            let impactChild: IImpactGraph | undefined = impactPaths.find(p => p.name === child.componentId);
             if (!impactChild) {
                 if (child.componentId === componentWithIssue.package_name + ':' + componentWithIssue.package_version) {
                     // Direct impact
                     impactPaths.push({
                         name: child.componentId
-                    } as IImpactedPath);
+                    } as IImpactGraph);
                 }
                 // indirect impact
-                let indirectImpact: IImpactedPath[] = this.getChildrenImpact(child, componentWithIssue);
+                let indirectImpact: IImpactGraph[] = this.getChildrenImpact(child, componentWithIssue);
                 if (indirectImpact.length > 0) {
                     impactPaths.push({
                         name: child.componentId,
                         children: indirectImpact
-                    } as IImpactedPath);
+                    } as IImpactGraph);
                 }
             }
         }
@@ -84,7 +89,7 @@ export class DescriptorUtils {
         dependencyWithIssue: DependencyIssuesTreeNode,
         severity: Severity,
         component: IComponent,
-        impactedPath: IImpactedPath
+        impactedPath: IImpactGraph
     ) {
         let violationIssue: IViolation = <IViolation>issue;
         if (violationIssue && violationIssue.license_key) {
@@ -113,7 +118,7 @@ export class DescriptorUtils {
         // Get the information from data
         let graphResponse: IGraphResponse = descriptorData.dependenciesGraphScan;
         descriptorNode.dependencyScanTimeStamp = descriptorData.graphScanTimestamp;
-        let impactedPaths: Map<string, IImpactedPath> = new Map<string, IImpactedPath>(Object.entries(descriptorData.impactTreeData));
+        let impactedPaths: Map<string, IImpactGraph> = new Map<string, IImpactGraph>(Object.entries(descriptorData.impactTreeData));
         let directComponents: Set<string> = this.getDirectComponents(impactedPaths);
         let issues: IVulnerability[] | IViolation[] = graphResponse.violations || graphResponse.vulnerabilities;
         // Populate issues
@@ -122,7 +127,7 @@ export class DescriptorUtils {
             let severity: Severity = SeverityUtils.getSeverity(issue.severity);
             // Populate the issue for each dependency component
             for (let [artifactId, component] of Object.entries(issue.components)) {
-                let impactedPath: IImpactedPath | undefined = impactedPaths.get(issue.issue_id + artifactId);
+                let impactedPath: IImpactGraph | undefined = impactedPaths.get(issue.issue_id + artifactId);
                 if (!impactedPath) {
                     continue;
                 }
@@ -164,7 +169,7 @@ export class DescriptorUtils {
      * @param impactedPaths - the impacted path to convert
      * @returns set of direct components in the impacted path
      */
-    public static getDirectComponents(impactedPaths: Map<string, IImpactedPath>): Set<string> {
+    public static getDirectComponents(impactedPaths: Map<string, IImpactGraph>): Set<string> {
         let result: Set<string> = new Set<string>();
 
         for (const impactedPath of impactedPaths.values()) {
@@ -249,7 +254,7 @@ export class DescriptorUtils {
      * @param dependencyId - the dependency id we want to search
      * @returns the list of positions in the document this dependency appears in
      */
-    public static getDependencyPosition(document: vscode.TextDocument, packageType: PackageType, dependencyId: string): vscode.Position[] {
+    public static getDependencyPosition(document: vscode.TextDocument, packageType: PackageType, dependencyId: string): vscode.Range[] {
         let dependencyName: string = packageType == PackageType.Maven ? dependencyId : dependencyId.substring(0, dependencyId.lastIndexOf(':'));
 
         switch (packageType) {
