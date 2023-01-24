@@ -112,7 +112,7 @@ export class AnalyzerUtils {
                         let details: CveApplicableDetails = potential;
                         let evidences: IEvidence[] = [];
                         // Populate code file issues for workspace
-                        details.fileEvidences.forEach(fileEvidence => {
+                        details.fileEvidences.forEach((fileEvidence: FileIssues) => {
                             let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileEvidence.full_path);
                             issuesCount += this.populateEvidence(fileEvidence, details.fixReason, <CveTreeNode>node, evidences, fileNode);
                         });
