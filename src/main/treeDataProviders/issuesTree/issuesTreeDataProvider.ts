@@ -621,9 +621,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         }
     }
 
-    public getTreeItem(
-        element: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | IssueTreeNode
-    ): vscode.TreeItem | Thenable<vscode.TreeItem> {
+    public async getTreeItem(element: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | IssueTreeNode): Promise<vscode.TreeItem> {
         if (
             element instanceof FileTreeNode ||
             element instanceof DependencyIssuesTreeNode ||
@@ -635,6 +633,16 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             // File nodes
             if (element instanceof FileTreeNode) {
                 element.command = Utils.createNodeCommand('jfrog.issues.file.open', 'Open file', [element.fullPath]);
+            }
+            if (element instanceof DependencyIssuesTreeNode) {
+                let directDependenciesLocations: vscode.Range[] = await DescriptorUtils.getDirectDependenciesLocations(element);
+                if (directDependenciesLocations?.length > 0) {
+                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open location in file', [
+                        element.parent.fullPath,
+                        // If there are more than one direct dependency with this indirect jump to the first one
+                        directDependenciesLocations[0]
+                    ]);
+                }
             }
             // Descriptor issues nodes
             if (element instanceof CveTreeNode || element instanceof LicenseIssueTreeNode) {
