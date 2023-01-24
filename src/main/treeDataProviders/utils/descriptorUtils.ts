@@ -20,6 +20,11 @@ import { FocusType } from '../../constants/contextKeys';
 import { DescriptorIssuesData } from '../../types/issuesData';
 
 export class DescriptorUtils {
+    public static readonly DESCRIPTOR_SELECTOR: vscode.DocumentSelector = {
+        scheme: 'file',
+        pattern: '**/{go.mod,package.json,pom.xml,*requirements*.txt,yarn.lock}'
+    };
+
     /**
      * Creates a map for each Xray issue in a component (key= issue_id+componentId) in the response to the impact path in the given dependency graph.
      * @param descriptorGraph - the descriptor full dependency graph
@@ -218,7 +223,7 @@ export class DescriptorUtils {
      * @param dependencyId - the dependency id we want to search
      * @returns the list of positions in the document this dependency appears in
      */
-    public static getDependencyPosition(document: vscode.TextDocument, packageType: PackageType, dependencyId: string): vscode.Position[] {
+    public static getDependencyPosition(document: vscode.TextDocument, packageType: PackageType, dependencyId: string): vscode.Range[] {
         let dependencyName: string = packageType == PackageType.Maven ? dependencyId : dependencyId.substring(0, dependencyId.lastIndexOf(':'));
 
         switch (packageType) {
