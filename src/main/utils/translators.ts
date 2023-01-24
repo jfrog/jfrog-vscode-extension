@@ -9,7 +9,7 @@ import {
     IExtendedInformation,
     IGraphCve
 } from 'jfrog-client-js';
-import { IExtendedInformation as WebExtendedInformation, ISeverityReasons, ICve as WebICve } from 'jfrog-ide-webview';
+import { IExtendedInformation as WebExtendedInformation, ISeverityReasons, ICve as WebICve, IAnalysisStep } from 'jfrog-ide-webview';
 import Set from 'typescript-collections/dist/lib/Set';
 import { IApplicableDetails } from 'jfrog-ide-webview';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
@@ -17,6 +17,7 @@ import { GeneralInfo } from '../types/generalInfo';
 import { IIssueCacheObject } from '../types/issueCacheObject';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
+import { FileLocation } from '../scanLogic/scanRunners/analyzerModels';
 
 export class Translators {
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
@@ -135,8 +136,27 @@ export class Translators {
         return undefined;
     }
 
+    static toAnalysisSteps(threadFlows: FileLocation[][]): IAnalysisStep[][] {
+        if (!threadFlows || threadFlows.length === 0) {
+            return [];
+        }
+        let result: IAnalysisStep[][] = [];
+        for (let locations of threadFlows) {
+            let codeFlow: IAnalysisStep[] = [];
+            for (let location of locations) {
+                codeFlow.push({
+                    file: location.artifactLocation.uri,
+                    row: location.region.startLine,
+                    colum: location.region.startColumn
+                } as IAnalysisStep);
+            }
+            result.push(codeFlow);
+        }
+        return result;
+    }
+
     public static toWebViewExtendedInformation(extended_information: IExtendedInformation): WebExtendedInformation {
-        let extednedInfo: WebExtendedInformation = {
+        let extendedInfo: WebExtendedInformation = {
             shortDescription: extended_information.short_description,
             fullDescription: extended_information.full_description,
             remediation: extended_information.remediation,
@@ -145,13 +165,13 @@ export class Translators {
         } as WebExtendedInformation;
 
         extended_information.jfrog_research_severity_reasons?.forEach(reason =>
-            extednedInfo.jfrogResearchSeverityReason?.push({
+            extendedInfo.jfrogResearchSeverityReason?.push({
                 name: reason.name,
                 description: reason.description,
                 isPositive: reason.is_positive
             } as ISeverityReasons)
         );
 
-        return extednedInfo;
+        return extendedInfo;
     }
 }

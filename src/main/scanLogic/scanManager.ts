@@ -104,6 +104,7 @@ export class ScanManager implements ExtensionComponent {
                 } as EosScanRequest);
             }
         }
+        this._logManager.logMessage('Scanning for Eos issues, roots: ' + eosRequests.map(request => request.roots.join()).join(), 'DEBUG');
         return eosRunner.scan(abortController, ...eosRequests);
     }
 }

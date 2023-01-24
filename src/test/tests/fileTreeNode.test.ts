@@ -47,11 +47,19 @@ describe('File Node Tests', () => {
             let testNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data);
             let toSearchIssue: IssueTreeNode = createDummyIssue(Severity.Unknown);
             // Search issue not exist as child
-            assert.notExists(testNode.getIssueById(toSearchIssue.issueId));
+            assert.deepEqual(testNode.getIssueById(toSearchIssue.issueId), []);
             // Add and search
-            testNode.issues.push(toSearchIssue);
-            testNode.apply();
-            assert.deepEqual(testNode.getIssueById(toSearchIssue.issueId), toSearchIssue);
+            for (let i: number = 1; i < 3; i++) {
+                testNode.issues.push(toSearchIssue);
+                testNode.apply();
+                let found: IssueTreeNode[] | undefined = testNode.getIssueById(toSearchIssue.issueId);
+                assert.exists(found);
+                let issues: IssueTreeNode[] = <IssueTreeNode[]>found;
+                assert.lengthOf(issues, i);
+                for (let issue of issues) {
+                    assert.deepEqual(issue, toSearchIssue);
+                }
+            }
         });
     });
 

@@ -3,11 +3,8 @@ import { before } from 'mocha';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
-// import { YarnDependencyUpdate } from '../../main/dependencyUpdate/yarnDependencyUpdate';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
-// import { YarnTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/yarnTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { ProjectDetails } from '../../main/types/projectDetails';
@@ -15,7 +12,7 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { PackageType } from '../../main/types/projectType';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { YarnUtils } from '../../main/utils/yarnUtils';
-import { createScanCacheManager /*, getNodeByArtifactId*/ } from './utils/utils.test';
+import { createScanCacheManager } from './utils/utils.test';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
 
@@ -99,7 +96,7 @@ describe('Yarn Utils Tests', async () => {
         let yarnLock: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'project-1', 'yarn.lock'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(yarnLock);
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@types/node', '14.14.10', [], '', ''));
-        let dependencyPos: vscode.Position[] = YarnUtils.getDependencyPos(textDocument, dependenciesTreeNode);
+        let dependencyPos: vscode.Range[] = YarnUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
         assert.isEmpty(dependencyPos);
     });
 
@@ -108,9 +105,9 @@ describe('Yarn Utils Tests', async () => {
         let yarnLock: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'project-2', 'yarn.lock'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(yarnLock);
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('progress', '"2.0.3', [], '', ''));
-        let dependencyPos: vscode.Position[] = YarnUtils.getDependencyPos(textDocument, dependenciesTreeNode);
-        assert.deepEqual(dependencyPos[0], new vscode.Position(4, 0));
-        assert.deepEqual(dependencyPos[1], new vscode.Position(4, 14));
+        let dependencyPos: vscode.Range[] = YarnUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
+        assert.deepEqual(dependencyPos[0].start, new vscode.Position(4, 0));
+        assert.deepEqual(dependencyPos[0].end, new vscode.Position(4, 14));
     });
 
     it('Get dependency position 3', async () => {
@@ -118,66 +115,25 @@ describe('Yarn Utils Tests', async () => {
         let yarnLock: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'project-3', 'yarn.lock'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(yarnLock);
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@types/node', '14.14.10', [], '', ''));
-        let dependencyPos: vscode.Position[] = YarnUtils.getDependencyPos(textDocument, dependenciesTreeNode);
-        assert.deepEqual(dependencyPos[0], new vscode.Position(4, 1));
-        assert.deepEqual(dependencyPos[1], new vscode.Position(4, 21));
+        let dependencyPos: vscode.Range[] = YarnUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
+        assert.deepEqual(dependencyPos[0].start, new vscode.Position(4, 1));
+        assert.deepEqual(dependencyPos[0].end, new vscode.Position(4, 21));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@ungap/promise-all-settled', '1.1.2', [], '', ''));
-        dependencyPos = YarnUtils.getDependencyPos(textDocument, dependenciesTreeNode);
-        assert.deepEqual(dependencyPos[0], new vscode.Position(9, 1));
-        assert.deepEqual(dependencyPos[1], new vscode.Position(9, 33));
+        dependencyPos = YarnUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
+        assert.deepEqual(dependencyPos[0].start, new vscode.Position(9, 1));
+        assert.deepEqual(dependencyPos[0].end, new vscode.Position(9, 33));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('has-flag', '3.0.0', [], '', ''));
-        dependencyPos = YarnUtils.getDependencyPos(textDocument, dependenciesTreeNode);
-        assert.deepEqual(dependencyPos[0], new vscode.Position(14, 0));
-        assert.deepEqual(dependencyPos[1], new vscode.Position(14, 14));
+        dependencyPos = YarnUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
+        assert.deepEqual(dependencyPos[0].start, new vscode.Position(14, 0));
+        assert.deepEqual(dependencyPos[0].end, new vscode.Position(14, 14));
 
         dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('progress', '2.0.3', [], '', ''));
-        dependencyPos = YarnUtils.getDependencyPos(textDocument, dependenciesTreeNode);
-        assert.deepEqual(dependencyPos[0], new vscode.Position(19, 0));
-        assert.deepEqual(dependencyPos[1], new vscode.Position(19, 14));
+        dependencyPos = YarnUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
+        assert.deepEqual(dependencyPos[0].start, new vscode.Position(19, 0));
+        assert.deepEqual(dependencyPos[0].end, new vscode.Position(19, 14));
     });
-
-    // it('Update fixed version', async () => {
-    //     let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
-    //     let componentsToScan: ProjectDetails = new ProjectDetails('', PackageType.Unknown);
-    //     let res: DependenciesTreeNode[] = await runCreateYarnDependencyTrees([componentsToScan], parent);
-    //     let dependencyProject: DependenciesTreeNode | undefined = res.find(
-    //         node => node instanceof YarnTreeNode && node.workspaceFolder.endsWith('project-3')
-    //     );
-    //     assert.isNotNull(dependencyProject);
-
-    //     // Get specific dependency node.
-    //     let node: DependenciesTreeNode | null = getNodeByArtifactId(dependencyProject!, 'progress');
-    //     assert.isNotNull(node);
-    //     assert.equal(node?.generalInfo.version, '2.0.3');
-
-    //     // Create a new version different from the node.
-    //     yarnDependencyUpdate.updateDependencyVersion(node!, '2.0.2');
-
-    //     // Recalculate the dependency tree.
-    //     res = await runCreateYarnDependencyTrees([componentsToScan], parent);
-    //     dependencyProject = res.find(node => node instanceof YarnTreeNode && node.workspaceFolder.endsWith('project-3'));
-    //     assert.isNotNull(dependencyProject);
-
-    //     // Verify the node's version was modified.
-    //     node = getNodeByArtifactId(dependencyProject!, 'progress');
-    //     assert.isNotNull(node);
-    //     assert.equal(node?.generalInfo.version, '2.0.2');
-
-    //     // Revert back the changes.
-    //     yarnDependencyUpdate.updateDependencyVersion(node!, '2.0.3');
-
-    //     // Recalculate the dependency tree.
-    //     res = await runCreateYarnDependencyTrees([componentsToScan], parent);
-
-    //     dependencyProject = res.find(node => node instanceof YarnTreeNode && node.workspaceFolder.endsWith('project-3'));
-    //     assert.isNotNull(dependencyProject);
-    //     // Verify the node's version was modified.
-    //     node = getNodeByArtifactId(dependencyProject!, 'progress');
-    //     assert.isNotNull(node);
-    //     assert.equal(node?.generalInfo.version, '2.0.3');
-    // });
 
     /**
      * Test YarnUtils.createYarnDependencyTrees.

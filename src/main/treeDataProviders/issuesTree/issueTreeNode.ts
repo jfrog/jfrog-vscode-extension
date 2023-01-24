@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { ContextKeys } from '../../constants/contextKeys';
 import { Severity } from '../../types/severity';
 
 /**
@@ -9,6 +10,7 @@ export class IssueTreeNode extends vscode.TreeItem {
 
     constructor(protected _issue_id: string, protected _severity: Severity, label: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
         super(label, collapsibleState ?? vscode.TreeItemCollapsibleState.None);
+        this.contextValue += ContextKeys.COPY_TO_CLIPBOARD_ENABLED;
     }
 
     public get issueId(): string {

@@ -20,6 +20,11 @@ import { FocusType } from '../../constants/contextKeys';
 import { DescriptorIssuesData } from '../../types/issuesData';
 
 export class DescriptorUtils {
+    public static readonly DESCRIPTOR_SELECTOR: vscode.DocumentSelector = {
+        scheme: 'file',
+        pattern: '**/{go.mod,package.json,pom.xml,*requirements*.txt,yarn.lock}'
+    };
+
     /**
      * Creates a map for each Xray issue in a component (key= issue_id+componentId) in the response to the impact path in the given dependency graph.
      * @param descriptorGraph - the descriptor full dependency graph
@@ -84,10 +89,10 @@ export class DescriptorUtils {
         dependencyWithIssue: DependencyIssuesTreeNode,
         severity: Severity,
         component: IComponent,
-        impactedPath?: IImpactGraph
+        impactedPath: IImpactGraph
     ) {
         let violationIssue: IViolation = <IViolation>issue;
-        if (violationIssue && violationIssue.license_key && impactedPath) {
+        if (violationIssue && violationIssue.license_key) {
             // License violation
             dependencyWithIssue.issues.push(new LicenseIssueTreeNode(violationIssue, severity, dependencyWithIssue, impactedPath));
         } else {
@@ -123,7 +128,9 @@ export class DescriptorUtils {
             // Populate the issue for each dependency component
             for (let [artifactId, component] of Object.entries(issue.components)) {
                 let impactedPath: IImpactGraph | undefined = impactedPaths.get(issue.issue_id + artifactId);
-
+                if (!impactedPath) {
+                    continue;
+                }
                 let dependencyWithIssue: DependencyIssuesTreeNode = descriptorNode.addNode(
                     artifactId,
                     component,
@@ -212,13 +219,42 @@ export class DescriptorUtils {
     }
 
     /**
+     * Find all the direct dependencies that the given dependency relates to and return their range in the code.
+     * If the given dependency is direct return it's location. If it's indirect, finds the direct dependencies.
+     * @param dependency - the dependency we want to get it's direct locations
+     * @returns - list of ranges, one for each direct dependency
+     */
+    public static async getDirectDependenciesLocations(dependency: DependencyIssuesTreeNode): Promise<vscode.Range[]> {
+        let document: vscode.TextDocument = await vscode.workspace.openTextDocument(dependency.parent.fullPath);
+        if (dependency.indirect) {
+            // Collect direct dependencies from all the issues impact tree first children
+            let ranges: vscode.Range[] = [];
+            let processed: Set<string> = new Set<string>();
+            for (const issue of dependency.issues) {
+                let directDependencies: string[] | undefined = issue.impactedTree.children?.map(child => child.name);
+                if (directDependencies) {
+                    for (const directDependency of directDependencies) {
+                        if (!processed.has(directDependency)) {
+                            processed.add(directDependency);
+                            ranges.push(...this.getDependencyPosition(document, dependency.type, directDependency));
+                        }
+                    }
+                }
+            }
+            return ranges;
+        } else {
+            return this.getDependencyPosition(document, dependency.type, dependency.componentId);
+        }
+    }
+
+    /**
      * Get the positions a specific dependency appears in a descriptor file
      * @param document - the descriptor document we want to search in
      * @param packageType - the type of package this descriptor has
      * @param dependencyId - the dependency id we want to search
      * @returns the list of positions in the document this dependency appears in
      */
-    public static getDependencyPosition(document: vscode.TextDocument, packageType: PackageType, dependencyId: string): vscode.Position[] {
+    public static getDependencyPosition(document: vscode.TextDocument, packageType: PackageType, dependencyId: string): vscode.Range[] {
         let dependencyName: string = packageType == PackageType.Maven ? dependencyId : dependencyId.substring(0, dependencyId.lastIndexOf(':'));
 
         switch (packageType) {
