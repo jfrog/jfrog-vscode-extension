@@ -8,6 +8,8 @@ import { Utils } from '../../treeDataProviders/utils/utils';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { AnalyzerRequest, AnalyzerScanResponse, AnalyzeScanRequest } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
+import { ConnectionUtils } from '../../connect/connectionUtils';
+import { IProxyConfig } from 'jfrog-client-js';
 
 /**
  * Arguments for running binary async
@@ -138,6 +140,15 @@ export abstract class BinaryRunner {
                 binaryVars.JF_USER = this._connectionManager.username;
                 binaryVars.JF_PASS = this._connectionManager.password;
             }
+
+            let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
+            if (optional) {
+                let proxyConfig: IProxyConfig = <IProxyConfig>optional;
+                let proxyUrl: string = proxyConfig.host + ":" + proxyConfig.port;
+                binaryVars.HTTP_PROXY = "http://" + proxyUrl;
+                binaryVars.HTTPS_PROXY = "https://" + proxyUrl;
+            }
+
             return {
                 ...process.env,
                 ...binaryVars
