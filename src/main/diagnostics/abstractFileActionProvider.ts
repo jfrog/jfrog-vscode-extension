@@ -55,14 +55,14 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
         diagnosticSeverity: vscode.DiagnosticSeverity,
         ...locations: vscode.Range[]
     ): vscode.Diagnostic[] {
-        let diagnostics: vscode.Diagnostic[] = [];
-        for (let i: number = 0; i < locations.length; i++) {
-            let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(locations[i], msg, diagnosticSeverity);
-            diagnostic.source = this.getSource();
-            diagnostic.code = diagnosticId;
-            diagnostics.push(diagnostic);
-        }
-        return diagnostics;
+        return locations.map(location => this.createDiagnostic(diagnosticId, msg, diagnosticSeverity, location));
+    }
+
+    createDiagnostic(diagnosticId: string, msg: string, diagnosticSeverity: vscode.DiagnosticSeverity, location: vscode.Range): vscode.Diagnostic {
+        let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(location, msg, diagnosticSeverity);
+        diagnostic.source = this.getSource();
+        diagnostic.code = diagnosticId;
+        return diagnostic;
     }
 
     protected getSource(): string {

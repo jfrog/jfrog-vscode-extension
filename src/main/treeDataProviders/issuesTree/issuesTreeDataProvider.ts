@@ -568,11 +568,20 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      */
     public getFileIssuesTree(filePath: string): FileTreeNode | undefined {
         for (let [workspace, issuesRoot] of this._workspaceToRoot) {
-            if (filePath.includes(workspace.uri.fsPath)) {
-                return issuesRoot?.children.find(file => file.fullPath == filePath);
+            if (this.isWorkspaceContainsFile(workspace.uri.fsPath, filePath)) {
+                return issuesRoot?.getFileTreeNode(filePath);
             }
         }
         return undefined;
+    }
+
+    public getCodeIssueTree(filePath: string): CodeFileTreeNode | undefined {
+        const tree: FileTreeNode | undefined = this.getFileIssuesTree(filePath);
+        return tree instanceof CodeFileTreeNode ? tree : undefined;
+    }
+
+    private isWorkspaceContainsFile(workspace: string, file: string): boolean {
+        return file.startsWith(workspace);
     }
 
     /**

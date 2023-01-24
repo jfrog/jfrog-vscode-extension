@@ -71,45 +71,47 @@ export class ApplicabilityActionProvider extends AbstractFileActionProvider impl
 
     /** @Override */
     public async updateDiagnostics(document: vscode.TextDocument): Promise<void> {
-        // Search if the file had issues in the scan
-        const fileIssues: FileTreeNode | undefined = this._treesManager.issuesTreeDataProvider.getFileIssuesTree(document.uri.fsPath);
-        if (fileIssues instanceof CodeFileTreeNode) {
-            this._treesManager.logManager.logMessage("Creating diagnostics for CodeFileTreeNode '" + document.uri.fsPath + "'", 'DEBUG');
-            let diagnostics: vscode.Diagnostic[] = [];
-            let topSeverityMap: Map<vscode.Range, Severity> = new Map<vscode.Range, Severity>();
-            fileIssues.issues.forEach(issue => this.generateInformation(issue, diagnostics, topSeverityMap));
-            const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
-            for (const [region, severity] of topSeverityMap) {
-                // Add gutter icons of top severity for the region with the issue
-                this.addGutter(textEditor, SeverityUtils.getIcon(severity), region);
-            }
-            this._diagnosticCollection.set(document.uri, diagnostics);
+        const tree: CodeFileTreeNode | undefined = this._treesManager.issuesTreeDataProvider.getCodeIssueTree(document.uri.fsPath);
+        if (!tree) {
+            return;
+        }
+        this._treesManager.logManager.logMessage("Creating applicable diagnostics for issue '" + tree.fullPath + "'", 'DEBUG');
+        this.addUnderlineToIssues(document, tree.issues);
+        this.addGutterToIssues(document, tree.issues);
+    }
+
+    private addUnderlineToIssues(document: vscode.TextDocument, issues: CodeIssueTreeNode[]) {
+        this._diagnosticCollection.set(
+            document.uri,
+            issues.map(issue => this.createDiagnosticIssue(issue))
+        );
+    }
+
+    createDiagnosticIssue(issue: CodeIssueTreeNode): vscode.Diagnostic {
+        return this.createDiagnostic(
+            issue.issueId,
+            'Severity: ' + SeverityUtils.getString(issue.severity),
+            vscode.DiagnosticSeverity.Warning,
+            issue.regionWithIssue
+        );
+    }
+    
+    private async addGutterToIssues(document: vscode.TextDocument, issues: CodeIssueTreeNode[]) {
+        let topSeverities: Map<vscode.Range, Severity> = this.filterByTopSeverity(issues);
+        const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
+        for (const [region, severity] of topSeverities) {
+            this.addGutter(textEditor, SeverityUtils.getIcon(severity), region);
         }
     }
 
-    /**
-     * Generate diagnostics information for an applicable issue
-     * @param issue - the applicable issue to generate diagnostics for
-     * @param diagnostics - list of all the diagnostics of the file
-     * @param topSeverityMap - a map from regions in the file to their top severity
-     */
-    generateInformation(issue: IssueTreeNode, diagnostics: vscode.Diagnostic[], topSeverityMap: Map<vscode.Range, Severity>): void {
-        if (issue instanceof CodeIssueTreeNode) {
-            // Calculate top severity for region
-            let rangeSeverity: Severity | undefined = topSeverityMap.get(issue.regionWithIssue);
-            if (!rangeSeverity || rangeSeverity < issue.severity) {
-                topSeverityMap.set(issue.regionWithIssue, issue.severity);
+    private filterByTopSeverity(issues: CodeIssueTreeNode[]): Map<vscode.Range, Severity> {
+        let gutterSeverity: Map<vscode.Range, Severity> = new Map<vscode.Range, Severity>();
+        issues.forEach(issue => {
+            let topSeverity: Severity | undefined = gutterSeverity.get(issue.regionWithIssue);
+            if (!topSeverity || topSeverity < issue.severity) {
+                gutterSeverity.set(issue.regionWithIssue, issue.severity);
             }
-            // Add diagnostics
-            this._treesManager.logManager.logMessage("Creating applicable diagnostics for issue '" + issue.issueId + "'", 'DEBUG');
-            // Create diagnostics and gutter icon for the dependency
-            let created: vscode.Diagnostic[] = this.createDiagnostics(
-                issue.issueId,
-                'Severity: ' + SeverityUtils.getString(issue.severity),
-                vscode.DiagnosticSeverity.Warning,
-                issue.regionWithIssue
-            );
-            diagnostics.push(...created);
-        }
+        });
+        return gutterSeverity;
     }
 }
