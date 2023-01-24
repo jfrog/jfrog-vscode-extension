@@ -10,6 +10,7 @@ import { AnalyzerRequest, AnalyzerScanResponse, AnalyzeScanRequest } from './ana
 import { ConnectionManager } from '../../connect/connectionManager';
 import { ConnectionUtils } from '../../connect/connectionUtils';
 import { IProxyConfig } from 'jfrog-client-js';
+import { Configuration } from '../../utils/configuration';
 
 /**
  * Arguments for running binary async
@@ -145,6 +146,10 @@ export abstract class BinaryRunner {
             if (optional) {
                 let proxyConfig: IProxyConfig = <IProxyConfig>optional;
                 let proxyUrl: string = proxyConfig.host + ':' + proxyConfig.port;
+                let authOptional: string | undefined = Configuration.getProxyAuth();
+                if (authOptional) {
+                    proxyUrl = (authOptional.startsWith('Basic ') ? authOptional.substring('Basic '.length) : authOptional) + '@' + proxyUrl;
+                }
                 binaryVars.HTTP_PROXY = 'http://' + proxyUrl;
                 binaryVars.HTTPS_PROXY = 'https://' + proxyUrl;
             }

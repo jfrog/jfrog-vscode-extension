@@ -51,4 +51,11 @@ export class Configuration {
     public static getConnectionRetries(): number {
         return vscode.workspace.getConfiguration('jfrog').get('connectionRetries', 3);
     }
+
+    /**
+     * @returns the encoded proxy authorization if exists
+     */
+    public static getProxyAuth(): string | undefined {
+        return vscode.workspace.getConfiguration().get('http.proxyAuthorization');
+    }
 }

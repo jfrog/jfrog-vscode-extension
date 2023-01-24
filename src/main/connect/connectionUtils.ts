@@ -273,8 +273,9 @@ export class ConnectionUtils {
 
     public static addProxyAuthHeader(clientConfig: IJfrogClientConfig) {
         if (clientConfig.proxy) {
-            let proxyAuthHeader: string | undefined = vscode.workspace.getConfiguration().get('http.proxyAuthorization');
+            let proxyAuthHeader: string | undefined = Configuration.getProxyAuth();
             if (proxyAuthHeader && clientConfig.headers) {
+                clientConfig.proxy.proxyAuthorizationHeader = proxyAuthHeader;
                 clientConfig.headers['Proxy-Authorization'] = proxyAuthHeader;
             }
         }
