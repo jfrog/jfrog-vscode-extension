@@ -37,14 +37,29 @@ export interface AnalyzerRule {
 export interface AnalyzeIssue {
     ruleId: string;
     message: ResultContent;
-    locations: FileLocation[];
+    locations: AnalyzeLocation[];
+    codeFlows?: CodeFlow[];
+}
+
+export interface CodeFlow {
+    threadFlows: threadFlow[];
+}
+
+export interface threadFlow {
+    locations: threadFlowLocation[];
+}
+
+export interface threadFlowLocation {
+    location: AnalyzeLocation;
+}
+
+export interface AnalyzeLocation {
+    physicalLocation: FileLocation;
 }
 
 export interface FileLocation {
-    physicalLocation: {
-        artifactLocation: FileUri;
-        region: FileRegion;
-    };
+    artifactLocation: FileUri;
+    region: FileRegion;
 }
 
 export interface FileIssues {

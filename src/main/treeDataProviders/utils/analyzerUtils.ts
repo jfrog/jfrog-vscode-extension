@@ -13,11 +13,11 @@ import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { PackageType } from '../../types/projectType';
 import { StepProgress } from './stepProgress';
-import { EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
+import { EosIssue, EosIssueLocation, EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
 import { ScanManager } from '../../scanLogic/scanManager';
-import { CodeIssueTreeNode } from '../issuesTree/codeFileTree/codeIssueTreeNode';
-import { FileIssues } from '../../scanLogic/scanRunners/analyzerModels';
+import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
 import { DescriptorIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
+import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
 
 export class AnalyzerUtils {
     /**
@@ -29,6 +29,21 @@ export class AnalyzerUtils {
             return decodeURI((filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath).replace(/['/']/g, '\\'));
         }
         return decodeURI(filePath.includes('file://') ? filePath.substring('file://'.length) : filePath);
+    }
+
+    /**
+     * Check if two regions are equals
+     * @param region - first region
+     * @param other - second region
+     * @returns true if the regions match false otherwise
+     */
+    public static isSameRegion(region: FileRegion, other: FileRegion): boolean {
+        return (
+            region.startLine === other.startLine &&
+            region.endLine === other.endLine &&
+            region.startColumn === other.startColumn &&
+            region.endColumn === other.endColumn
+        );
     }
 
     /**
@@ -193,6 +208,10 @@ export class AnalyzerUtils {
         progressManager: StepProgress,
         splitRequests: boolean = true
     ): Promise<any> {
+        if (!scanManager.validateEosSupported()) {
+            progressManager.reportProgress();
+            return;
+        }
         // Prepare
         let requests: EosScanRequest[] = [];
         for (const [type, descriptorPaths] of workspaceDescriptors) {
@@ -241,10 +260,10 @@ export class AnalyzerUtils {
                     applicableIssuesCount +
                     " Eos issues in workspace = '" +
                     workspaceData.path +
-                    "' (elapsed:" +
+                    "' (elapsed " +
                     (Date.now() - startTime) / 1000 +
-                    'sec)',
-                'DEBUG'
+                    ' seconds)',
+                'INFO'
             );
 
             root.apply();
@@ -264,18 +283,9 @@ export class AnalyzerUtils {
         if (workspaceData.eosScan && workspaceData.eosScan.filesWithIssues) {
             workspaceData.eosScan.filesWithIssues.forEach(fileWithIssues => {
                 let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
-                fileWithIssues.issues.forEach(issue => {
-                    issue.regions.forEach(region => {
-                        fileNode.issues.push(
-                            new CodeIssueTreeNode(
-                                issue.ruleId,
-                                fileNode,
-                                new vscode.Range(
-                                    new vscode.Position(region.startLine, region.startColumn),
-                                    new vscode.Position(region.endLine, region.endColumn)
-                                )
-                            )
-                        );
+                fileWithIssues.issues.forEach((issue: EosIssue) => {
+                    issue.locations.forEach((location: EosIssueLocation) => {
+                        fileNode.issues.push(new EosTreeNode(issue, location, fileNode));
                         issuesCount++;
                     });
                 });
