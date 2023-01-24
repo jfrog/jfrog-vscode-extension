@@ -144,9 +144,9 @@ export abstract class BinaryRunner {
             let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
             if (optional) {
                 let proxyConfig: IProxyConfig = <IProxyConfig>optional;
-                let proxyUrl: string = proxyConfig.host + ":" + proxyConfig.port;
-                binaryVars.HTTP_PROXY = "http://" + proxyUrl;
-                binaryVars.HTTPS_PROXY = "https://" + proxyUrl;
+                let proxyUrl: string = proxyConfig.host + ':' + proxyConfig.port;
+                binaryVars.HTTP_PROXY = 'http://' + proxyUrl;
+                binaryVars.HTTPS_PROXY = 'https://' + proxyUrl;
             }
 
             return {
