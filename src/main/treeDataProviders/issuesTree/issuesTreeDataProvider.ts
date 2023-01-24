@@ -637,7 +637,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 if (directOptions && directOptions.length > 0) {
                     element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open location in file', [
                         element.parent.fullPath,
-                        new vscode.Range(directOptions[0])
+                        directOptions[0]
                     ]);
                 }
             }

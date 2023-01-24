@@ -29,7 +29,7 @@ export class CveTreeNode extends IssueTreeNode {
         severity: Severity,
         private _parent: DependencyIssuesTreeNode,
         component: IComponent,
-        private _impactedTreeRoot?: IImpactGraph,
+        private _impactedTreeRoot: IImpactGraph,
         private _cve?: IGraphCve
     ) {
         super(sourceVul.issue_id, severity, _cve && _cve.cve ? _cve.cve : sourceVul.issue_id, vscode.TreeItemCollapsibleState.None);
