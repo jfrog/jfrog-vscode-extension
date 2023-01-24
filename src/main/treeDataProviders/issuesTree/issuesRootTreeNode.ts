@@ -71,6 +71,10 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
         return child;
     }
 
+    public getFileTreeNode(file: string): FileTreeNode | undefined {
+        return this._children.find(child => child.fullPath === file);
+    }
+
     public get eosScanTimeStamp(): number | undefined {
         return this._eosScanTimeStamp;
     }

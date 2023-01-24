@@ -1,6 +1,5 @@
 import { FileTreeNode } from '../fileTreeNode';
 import { IssuesRootTreeNode } from '../issuesRootTreeNode';
-import { IssueTreeNode } from '../issueTreeNode';
 import { CodeIssueTreeNode } from './codeIssueTreeNode';
 
 export class CodeFileTreeNode extends FileTreeNode {
@@ -10,7 +9,7 @@ export class CodeFileTreeNode extends FileTreeNode {
         super(fileFullPath, parent);
     }
 
-    public get issues(): IssueTreeNode[] {
+    public get issues(): CodeIssueTreeNode[] {
         return this._codeIssues;
     }
 
