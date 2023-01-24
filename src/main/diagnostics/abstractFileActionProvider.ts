@@ -1,6 +1,8 @@
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { TreesManager } from '../treeDataProviders/treesManager';
+import { CodeIssueTreeNode } from '../treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
+import { SeverityUtils } from '../types/severity';
 
 /**
  * @see DiagnosticsManager
@@ -63,6 +65,17 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
             diagnostics.push(diagnostic);
         }
         return diagnostics;
+    }
+
+    issueToDiagnostic(issue: CodeIssueTreeNode): vscode.Diagnostic {
+        let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(
+            new vscode.Range(issue.regionWithIssue.start, issue.regionWithIssue.end),
+            issue.issueId,
+            vscode.DiagnosticSeverity.Warning
+        );
+        diagnostic.source = this.getSource();
+        diagnostic.code = 'Severity: ' + SeverityUtils.getString(issue.severity);
+        return diagnostic;
     }
 
     protected getSource(): string {
