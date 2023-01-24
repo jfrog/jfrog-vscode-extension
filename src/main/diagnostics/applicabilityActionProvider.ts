@@ -76,18 +76,18 @@ export class ApplicabilityActionProvider extends AbstractFileActionProvider impl
             return;
         }
         this._treesManager.logManager.logMessage("Creating applicable diagnostics for issue '" + tree.fullPath + "'", 'DEBUG');
-        this.addUnderlineToSeverities(document, tree.issues);
-        this.addGutterToSeverities(document, tree.issues);
+        this.addUnderlineToIssues(document, tree.issues);
+        this.addGutterToIssues(document, tree.issues);
     }
 
-    private addUnderlineToSeverities(document: vscode.TextDocument, issues: CodeIssueTreeNode[]) {
+    private addUnderlineToIssues(document: vscode.TextDocument, issues: CodeIssueTreeNode[]) {
         this._diagnosticCollection.set(
             document.uri,
             issues.map(issue => super.issueToDiagnostic(issue))
         );
     }
 
-    private async addGutterToSeverities(document: vscode.TextDocument, issues: CodeIssueTreeNode[]) {
+    private async addGutterToIssues(document: vscode.TextDocument, issues: CodeIssueTreeNode[]) {
         let gutters: Map<vscode.Range, Severity> = this.issuesToGutters(issues);
         const textEditor: vscode.TextEditor = await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
         for (const [region, severity] of gutters) {
