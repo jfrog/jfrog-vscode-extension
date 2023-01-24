@@ -26,7 +26,7 @@ export class EosTreeNode extends CodeIssueTreeNode {
             issue.ruleName
         );
         this._fullDescription = issue.fullDescription;
-        this._codeFlows = Translators.toAnalysisSteps(location.threadFlows, parent.parent?.workSpace.uri.fsPath);
+        this._codeFlows = Translators.toAnalysisSteps(location.threadFlows);
     }
 
     public get codeFlows(): IAnalysisStep[][] {

@@ -18,7 +18,6 @@ import { IIssueCacheObject } from '../types/issueCacheObject';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
 import { FileLocation } from '../scanLogic/scanRunners/analyzerModels';
-import { Utils } from '../treeDataProviders/utils/utils';
 
 export class Translators {
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
@@ -137,7 +136,7 @@ export class Translators {
         return undefined;
     }
 
-    static toAnalysisSteps(threadFlows: FileLocation[][], workspace?: string): IAnalysisStep[][] {
+    static toAnalysisSteps(threadFlows: FileLocation[][]): IAnalysisStep[][] {
         if (!threadFlows || threadFlows.length === 0) {
             return [];
         }
@@ -146,7 +145,7 @@ export class Translators {
             let codeFlow: IAnalysisStep[] = [];
             for (let location of locations) {
                 codeFlow.push({
-                    file: workspace ? Utils.tryRelativePath(location.artifactLocation.uri, workspace) : location.artifactLocation.uri,
+                    file: location.artifactLocation.uri,
                     row: location.region.startLine,
                     colum: location.region.startColumn
                 } as IAnalysisStep);

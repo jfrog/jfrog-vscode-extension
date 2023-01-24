@@ -4,7 +4,7 @@ import * as os from 'os';
 import { LogManager } from '../../log/logManager';
 import { BinaryRunner } from './binaryRunner';
 import { ScanUtils } from '../../utils/scanUtils';
-import { AnalyzeIssue, AnalyzerScanResponse, AnalyzeScanRequest, AnalyzeLocation, FileRegion, FileLocation } from './analyzerModels';
+import { AnalyzeIssue, AnalyzerScanResponse, AnalyzeScanRequest, AnalyzeLocation, FileRegion, FileLocation, CodeFlow } from './analyzerModels';
 import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
 
 export interface EosScanRequest extends AnalyzeScanRequest {
@@ -78,8 +78,7 @@ export class EosRunner extends BinaryRunner {
         for (const request of requests) {
             request.type = 'analyze-codebase';
         }
-        let response: EosScanResponse = await this.run(abortController, true, ...requests).then(runResult => this.generateResponse(runResult));
-        return response;
+        return await this.run(abortController, true, ...requests).then(runResult => this.generateScanResponse(runResult));
     }
 
     /**
@@ -87,7 +86,7 @@ export class EosRunner extends BinaryRunner {
      * @param run - the run results generated from the binary
      * @returns the response generated from the scan run
      */
-    public generateResponse(response?: AnalyzerScanResponse): EosScanResponse {
+    public generateScanResponse(response?: AnalyzerScanResponse): EosScanResponse {
         if (!response) {
             return {} as EosScanResponse;
         }
@@ -102,47 +101,55 @@ export class EosRunner extends BinaryRunner {
             for (const rule of run.tool.driver.rules) {
                 rulesFullDescription.set(rule.id, rule.fullDescription.text);
             }
-            let issues: AnalyzeIssue[] = run.results;
-            if (issues) {
-                // Generate response data
-                issues.forEach(analyzeIssue => {
-                    analyzeIssue.locations.forEach(location => {
-                        let fileWithIssues: EosFileIssues = this.getOrCreateEosFileIssues(
-                            eosResponse,
-                            location.physicalLocation.artifactLocation.uri
-                        );
-                        let fileIssue: EosIssue = this.getOrCreateEosIssue(
-                            fileWithIssues,
-                            analyzeIssue,
-                            rulesFullDescription.get(analyzeIssue.ruleId)
-                        );
-                        let issueLocation: EosIssueLocation = this.getOrCreateIssueLocation(fileIssue, location.physicalLocation);
-                        if (analyzeIssue.codeFlows) {
-                            // Check if exists flows for the current location in this issue
-                            for (const codeFlow of analyzeIssue.codeFlows) {
-                                for (const threadFlow of codeFlow.threadFlows) {
-                                    // The last location in the threadFlow should match the location of the issue
-                                    let potential: AnalyzeLocation = threadFlow.locations[threadFlow.locations.length - 1].location;
-                                    if (
-                                        potential.physicalLocation.artifactLocation.uri === fileWithIssues.full_path &&
-                                        AnalyzerUtils.isSameRegion(potential.physicalLocation.region, issueLocation.region)
-                                    ) {
-                                        let locations: FileLocation[] = threadFlow.locations.map(location => location.location.physicalLocation);
-                                        for (let fileLocation of locations) {
-                                            fileLocation.artifactLocation.uri = AnalyzerUtils.parseLocationFilePath(
-                                                fileLocation.artifactLocation.uri
-                                            );
-                                        }
-                                        issueLocation.threadFlows.push(locations);
-                                    }
-                                }
-                            }
-                        }
-                    });
-                });
-            }
+            // Generate response data
+            run.results?.forEach(analyzeIssue => this.generateIssueData(eosResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId)));
         }
         return eosResponse;
+    }
+
+    /**
+     * Generate the data for a specific analyze issue (the file object, the issue in the file object and all the location objects of this issue).
+     * If the issue also contains codeFlow generate the needed information for it as well
+     * @param eosResponse - the response of the scan that holds all the file objects
+     * @param analyzeIssue - the issue to handle and generate information base on it
+     * @param fullDescription - the description of the analyzeIssue
+     */
+    public generateIssueData(eosResponse: EosScanResponse, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
+        analyzeIssue.locations.forEach(location => {
+            let fileWithIssues: EosFileIssues = this.getOrCreateEosFileIssues(eosResponse, location.physicalLocation.artifactLocation.uri);
+            let fileIssue: EosIssue = this.getOrCreateEosIssue(fileWithIssues, analyzeIssue, fullDescription);
+            let issueLocation: EosIssueLocation = this.getOrCreateIssueLocation(fileIssue, location.physicalLocation);
+            if (analyzeIssue.codeFlows) {
+                this.generateCodeFlowData(fileWithIssues.full_path, issueLocation, analyzeIssue.codeFlows);
+            }
+        });
+    }
+
+    /**
+     * Generate the code flow data.
+     * Search the code flows for the given location (in a given file), the code flow belong to a location if the last location in the flow matches the given location.
+     * @param filePath - the path to the file the issue location belongs to
+     * @param issueLocation - the issue in a location to search code flows that belongs to it
+     * @param codeFlows - all the code flows for this issue
+     */
+    public generateCodeFlowData(filePath: string, issueLocation: EosIssueLocation, codeFlows: CodeFlow[]) {
+        // Check if exists flows for the current location in this issue
+        for (const codeFlow of codeFlows) {
+            for (const threadFlow of codeFlow.threadFlows) {
+                // The last location in the threadFlow should match the location of the issue
+                let potential: AnalyzeLocation = threadFlow.locations[threadFlow.locations.length - 1].location;
+                if (
+                    potential.physicalLocation.artifactLocation.uri === filePath &&
+                    AnalyzerUtils.isSameRegion(potential.physicalLocation.region, issueLocation.region)
+                ) {
+                    let locations: FileLocation[] = threadFlow.locations.map(location => location.location.physicalLocation);
+                    for (let fileLocation of locations) {
+                        fileLocation.artifactLocation.uri = AnalyzerUtils.parseLocationFilePath(fileLocation.artifactLocation.uri);
+                    }
+                    issueLocation.threadFlows.push(locations);
+                }
+            }
+        }
     }
 
     /**

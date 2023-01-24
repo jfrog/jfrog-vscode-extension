@@ -13,7 +13,7 @@ import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { PackageType } from '../../types/projectType';
 import { StepProgress } from './stepProgress';
-import { EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
+import { EosIssue, EosIssueLocation, EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
 import { ScanManager } from '../../scanLogic/scanManager';
 import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
 import { DescriptorIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
@@ -199,6 +199,10 @@ export class AnalyzerUtils {
         progressManager: StepProgress,
         splitRequests: boolean = true
     ): Promise<any> {
+        if (!scanManager.validateEosSupported()) {
+            progressManager.reportProgress();
+            return;
+        }
         // Prepare
         let requests: EosScanRequest[] = [];
         for (const [type, descriptorPaths] of workspaceDescriptors) {
@@ -247,10 +251,10 @@ export class AnalyzerUtils {
                     applicableIssuesCount +
                     " Eos issues in workspace = '" +
                     workspaceData.path +
-                    "' (elapsed:" +
+                    "' (elapsed " +
                     (Date.now() - startTime) / 1000 +
-                    'sec)',
-                'DEBUG'
+                    ' seconds)',
+                'INFO'
             );
 
             root.apply();
@@ -270,8 +274,8 @@ export class AnalyzerUtils {
         if (workspaceData.eosScan && workspaceData.eosScan.filesWithIssues) {
             workspaceData.eosScan.filesWithIssues.forEach(fileWithIssues => {
                 let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
-                fileWithIssues.issues.forEach(issue => {
-                    issue.locations.forEach(location => {
+                fileWithIssues.issues.forEach((issue: EosIssue) => {
+                    issue.locations.forEach((location: EosIssueLocation) => {
                         fileNode.issues.push(new EosTreeNode(issue, location, fileNode));
                         issuesCount++;
                     });

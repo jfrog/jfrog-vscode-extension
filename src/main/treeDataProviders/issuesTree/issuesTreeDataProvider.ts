@@ -86,7 +86,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 ScanUtils.setScanInProgress(false);
                 this.onChangeFire();
             });
-        this._logManager.logMessage('Scans completed 🐸 (elapsed = ' + (Date.now() - startRefreshTimestamp) / 1000 + ' seconds)', 'INFO');
+        this._logManager.logMessage('Scans completed 🐸 (elapsed ' + (Date.now() - startRefreshTimestamp) / 1000 + ' seconds)', 'INFO');
     }
 
     /**
@@ -506,7 +506,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 issuesCount +
                 ' issues for descriptor ' +
                 descriptorData.fullpath +
-                ' (elapsed: ' +
+                ' (elapsed ' +
                 (descriptorData.graphScanTimestamp - startGraphScan) / 1000 +
                 ' seconds)',
             'INFO'
@@ -553,7 +553,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     applicableIssuesCount +
                     " applicable CVE issues in descriptor = '" +
                     descriptorData.fullpath +
-                    "' (elapsed: " +
+                    "' (elapsed " +
                     (Date.now() - startApplicableTime) / 1000 +
                     ' seconds)',
                 'INFO'
@@ -649,19 +649,12 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 element.command = Utils.createNodeCommand('jfrog.view.details.page', 'Show details', [element.getDetailsPage()]);
             }
             // Source code issues nodes
-            if (element instanceof CodeIssueTreeNode) {
-                if (element instanceof ApplicableTreeNode || element instanceof EosTreeNode) {
-                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.details', 'Open file location and show details', [
-                        element.parent.fullPath,
-                        element.regionWithIssue,
-                        element.getDetailsPage()
-                    ]);
-                } else {
-                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open file location', [
-                        element.parent.fullPath,
-                        element.regionWithIssue
-                    ]);
-                }
+            if (element instanceof ApplicableTreeNode || element instanceof EosTreeNode) {
+                element.command = Utils.createNodeCommand('jfrog.issues.file.open.details', 'Open file location and show details', [
+                    element.parent.fullPath,
+                    element.regionWithIssue,
+                    element.getDetailsPage()
+                ]);
             }
         }
         return element;

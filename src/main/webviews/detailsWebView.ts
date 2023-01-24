@@ -19,11 +19,16 @@ export class DetailsWebView {
         );
     }
 
+    /**
+     * Create if not exists or update the webview panel with the given page data and show it in the editor
+     * @param data - the data of the page to be update and show in the webpage
+     * @param context - context of the extension
+     */
     public updateWebview(data: any, context: vscode.ExtensionContext) {
         if (!this._panel) {
             this._panel = createWebview(context);
-            this._panel.onDidChangeViewState(e => {
-                updateWebview(e.webviewPanel, this._currentData);
+            this._panel.onDidChangeViewState((webviewChanged: vscode.WebviewPanelOnDidChangeViewStateEvent) => {
+                postPageToWebview(webviewChanged.webviewPanel, this._currentData);
             });
             this._panel.onDidDispose(
                 () => {
@@ -38,13 +43,18 @@ export class DetailsWebView {
 
         if (data && this._currentData !== data) {
             this._logManager.logMessage('Opening webview with data:\n' + JSON.stringify(data), 'DEBUG');
-            updateWebview(this._panel, data);
+            postPageToWebview(this._panel, data);
         }
         this._currentData = data;
     }
 }
 
-function updateWebview(panel: vscode.WebviewPanel, page: any) {
+/**
+ * Update the given panel to show the given page
+ * @param panel - the webview panel that holds the pages
+ * @param page - the page to show
+ */
+function postPageToWebview(panel: vscode.WebviewPanel, page: any) {
     panel.webview.postMessage({
         data: page
     });
