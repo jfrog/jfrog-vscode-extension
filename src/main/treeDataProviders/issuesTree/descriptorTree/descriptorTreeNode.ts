@@ -49,7 +49,7 @@ export class DescriptorTreeNode extends FileTreeNode {
 
     /**
      * Search for registered dependency with issue in this descriptor base on a given artifactId.
-     * @param artifactId - the artifactId (type,name,version)/ componentId (name,version) of the dependency to search
+     * @param artifactId - the artifactId (type,name,version) or the componentId (name,version) of the dependency to search
      * @returns - DependencyIssuesTreeNode with the artifactId if exists or undefined otherwise
      */
     public getDependencyByID(artifactId: string): DependencyIssuesTreeNode | undefined {

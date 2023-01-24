@@ -171,7 +171,11 @@ describe('Maven Tests', async () => {
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
             new GavGeneralInfo('javax.servlet.jsp', 'jsp-api', '2.1', [], '', '')
         );
-        let dependencyPos: vscode.Range[] = MavenUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.getComponentId(), FocusType.Dependency);
+        let dependencyPos: vscode.Range[] = MavenUtils.getDependencyPosition(
+            textDocument,
+            dependenciesTreeNode.generalInfo.getComponentId(),
+            FocusType.Dependency
+        );
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(9, 12));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(9, 48));
         assert.deepEqual(dependencyPos[1].start, new vscode.Position(10, 12));

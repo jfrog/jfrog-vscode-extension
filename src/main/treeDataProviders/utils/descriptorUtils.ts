@@ -22,7 +22,7 @@ import { DescriptorIssuesData } from '../../types/issuesData';
 export class DescriptorUtils {
     public static readonly DESCRIPTOR_SELECTOR: vscode.DocumentSelector = {
         scheme: 'file',
-        pattern: '**/{go.mod,package.json,pom.xml,*requirements*.txt,*.sln,yarn.lock}'
+        pattern: '**/{go.mod,package.json,pom.xml,*requirements*.txt,yarn.lock}'
     };
 
     /**

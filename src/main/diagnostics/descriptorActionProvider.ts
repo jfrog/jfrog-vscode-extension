@@ -75,7 +75,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
             for (const infectedDependency of infectedDependencies) {
                 commands.push({
                     command: 'jfrog.issues.select.node',
-                    title: 'Show infected dependency ' + infectedDependency.componentId + ' in issues tree',
+                    title: "Show infected dependency '" + infectedDependency.componentId + "' in issues tree",
                     arguments: [infectedDependency]
                 });
             }
