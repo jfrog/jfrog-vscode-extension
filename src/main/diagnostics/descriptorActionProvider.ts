@@ -203,7 +203,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
         if (range.length === 0) {
             return undefined;
         }
-        let info: DirectDependencyInfo = new DirectDependencyInfo(Severity.Unknown, range);
+        let info: DirectDependencyInfo = new DirectDependencyInfo(Severity.NotApplicableUnknown, range);
         processedDependencies.set(directDependencyId, info);
         return info;
     }
