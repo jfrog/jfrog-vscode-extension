@@ -169,10 +169,10 @@ export abstract class BinaryRunner {
                     'base64'
                 ).toString('binary');
                 // We expect the decoded auth string to be in the format: <proxy-user>:<proxy-password>
-                if (binaryVars.HTTP_PROXY) {
+                if (proxyHttpUrl) {
                     proxyHttpUrl = authDecoded + '@' + proxyHttpUrl;
                 }
-                if (binaryVars.HTTPS_PROXY) {
+                if (proxyHttpsUrl) {
                     proxyHttpsUrl = authDecoded + '@' + proxyHttpsUrl;
                 }
             }
