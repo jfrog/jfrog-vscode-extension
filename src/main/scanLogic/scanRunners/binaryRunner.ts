@@ -132,6 +132,7 @@ export abstract class BinaryRunner {
      */
     private createEnvForRun(): NodeJS.ProcessEnv | undefined {
         if (this._connectionManager.areXrayCredentialsSet()) {
+            // Platform information
             let binaryVars: NodeJS.ProcessEnv = {
                 JF_PLATFORM_URL: this._connectionManager.url
             };
@@ -141,17 +142,45 @@ export abstract class BinaryRunner {
                 binaryVars.JF_USER = this._connectionManager.username;
                 binaryVars.JF_PASS = this._connectionManager.password;
             }
-
+            let proxyHttpUrl: string | undefined;
+            let proxyHttpsUrl: string | undefined;
+            // Proxy information - environment variable
+            let proxy_env_http: string | undefined = process.env['HTTP_PROXY'];
+            if (proxy_env_http) {
+                proxyHttpUrl = proxy_env_http;
+            }
+            let proxy_env_https: string | undefined = process.env['HTTPS_PROXY'];
+            if (proxy_env_https) {
+                proxyHttpsUrl = proxy_env_https;
+            }
+            // Proxy information - vscode configuration override
             let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
             if (optional) {
                 let proxyConfig: IProxyConfig = <IProxyConfig>optional;
                 let proxyUrl: string = proxyConfig.host + ':' + proxyConfig.port;
-                let authOptional: string | undefined = Configuration.getProxyAuth();
-                if (authOptional) {
-                    proxyUrl = (authOptional.startsWith('Basic ') ? authOptional.substring('Basic '.length) : authOptional) + '@' + proxyUrl;
+                proxyHttpUrl = proxyUrl;
+                proxyHttpsUrl = proxyUrl;
+            }
+            // Proxy auth
+            let authOptional: string | undefined = Configuration.getProxyAuth();
+            if (authOptional) {
+                let authDecoded: string = Buffer.from(
+                    authOptional.startsWith('Basic ') ? authOptional.substring('Basic '.length) : authOptional,
+                    'base64'
+                ).toString('binary');
+                // We expect the decoded auth string to be in the format: <proxy-user>:<proxy-password>
+                if (binaryVars.HTTP_PROXY) {
+                    proxyHttpUrl = authDecoded + '@' + proxyHttpUrl;
                 }
-                binaryVars.HTTP_PROXY = 'http://' + proxyUrl;
-                binaryVars.HTTPS_PROXY = 'https://' + proxyUrl;
+                if (binaryVars.HTTPS_PROXY) {
+                    proxyHttpsUrl = authDecoded + '@' + proxyHttpsUrl;
+                }
+            }
+            if (proxyHttpUrl) {
+                binaryVars.HTTP_PROXY = 'http://' + proxyHttpUrl;
+            }
+            if (proxyHttpsUrl) {
+                binaryVars.HTTPS_PROXY = 'https://' + proxyHttpsUrl;
             }
 
             return {
