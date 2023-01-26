@@ -7,6 +7,7 @@ import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeIssue, AnalyzerScanResponse, AnalyzeScanRequest, AnalyzeLocation, FileRegion, FileLocation, CodeFlow } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
+import { Resource } from '../../utils/resource';
 
 export interface EosScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
@@ -44,7 +45,7 @@ export class EosRunner extends BinaryRunner {
             connectionManager,
             abortCheckInterval,
             logManager,
-            path.join(ScanUtils.getHomePath(), EosRunner.BINARY_FOLDER, EosRunner.getBinaryName())
+            new Resource('', path.join(ScanUtils.getHomePath(), EosRunner.BINARY_FOLDER, EosRunner.getBinaryName()), logManager)
         );
     }
 

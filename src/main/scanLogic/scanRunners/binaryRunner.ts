@@ -8,6 +8,7 @@ import { Utils } from '../../treeDataProviders/utils/utils';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { AnalyzerRequest, AnalyzerScanResponse, AnalyzeScanRequest } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
+import { Resource } from '../../utils/resource';
 
 /**
  * Arguments for running binary async
@@ -40,13 +41,19 @@ export abstract class BinaryRunner {
     protected static readonly RUNNER_FOLDER: string = 'analyzer-manager';
     private static readonly RUNNER_NAME: string = 'analyzerManager';
 
+    private static readonly DOWNLOAD_URL: string = '';
+
     constructor(
         protected _connectionManager: ConnectionManager,
         protected _abortCheckInterval: number,
         protected _logManager: LogManager,
-        protected _binaryPath: string = path.join(ScanUtils.getHomePath(), BinaryRunner.RUNNER_FOLDER, BinaryRunner.getBinaryName())
+        protected _binary: Resource = new Resource(
+            BinaryRunner.DOWNLOAD_URL,
+            path.join(ScanUtils.getHomePath(), BinaryRunner.RUNNER_FOLDER, BinaryRunner.getBinaryName()),
+            _logManager
+        )
     ) {
-        this._runDirectory = path.dirname(_binaryPath);
+        this._runDirectory = path.dirname(this._binary.fullPath);
         this._isSupported = this.validateSupported();
         if (this._abortCheckInterval <= 0) {
             // Default check in 1 sec intervals
@@ -88,7 +95,7 @@ export abstract class BinaryRunner {
      * @returns true if supported false otherwise
      */
     protected validateSupported(): boolean {
-        return fs.existsSync(this._binaryPath);
+        return this._binary.isExists();
     }
 
     /**
@@ -101,17 +108,17 @@ export abstract class BinaryRunner {
         let tasksInfo: { activeTasks: number; signal: AbortSignal; tasks: Promise<any>[] } = { activeTasks: 1, signal: abortSignal, tasks: [] };
         // Add execute cmd task
         tasksInfo.tasks.push(
-            ScanUtils.executeCmdAsync('"' + this._binaryPath + '" ' + args.join(' '), this._runDirectory, this.createEnvForRun())
+            ScanUtils.executeCmdAsync('"' + this._binary.fullPath + '" ' + args.join(' '), this._runDirectory, this.createEnvForRun())
                 .then(std => {
                     if (std.stdout && std.stdout.length > 0) {
                         this._logManager.logMessage(
-                            "Done executing with log '" + Utils.getLastSegment(this._binaryPath) + "', log:\n" + std.stdout,
+                            "Done executing with log '" + Utils.getLastSegment(this._binary.fullPath) + "', log:\n" + std.stdout,
                             'DEBUG'
                         );
                     }
                     if (std.stderr && std.stderr.length > 0) {
                         this._logManager.logMessage(
-                            "Done executing with error '" + Utils.getLastSegment(this._binaryPath) + "', error log:\n" + std.stderr,
+                            "Done executing with error '" + Utils.getLastSegment(this._binary.fullPath) + "', error log:\n" + std.stderr,
                             'ERR'
                         );
                     }
@@ -288,7 +295,7 @@ export abstract class BinaryRunner {
         let analyzerScanResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (const responsePath of responsePaths) {
             if (!fs.existsSync(responsePath)) {
-                throw new Error("Running '" + Utils.getLastSegment(this._binaryPath) + "' binary didn't produce response.\nRequest: " + request);
+                throw new Error("Running '" + Utils.getLastSegment(this._binary.fullPath) + "' binary didn't produce response.\nRequest: " + request);
             }
             // Load result and parse as response
             let result: AnalyzerScanResponse = JSON.parse(fs.readFileSync(responsePath, 'utf8').toString());
