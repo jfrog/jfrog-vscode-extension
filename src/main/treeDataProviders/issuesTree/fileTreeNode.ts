@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { ContextKeys } from '../../constants/contextKeys';
 
 import { Severity, SeverityUtils } from '../../types/severity';
 import { Utils } from '../utils/utils';
@@ -17,6 +18,8 @@ export abstract class FileTreeNode extends vscode.TreeItem {
         super(_fullPath);
         this._name = Utils.getLastSegment(_fullPath);
         this.label = this._name;
+
+        this.contextValue += ContextKeys.COPY_TO_CLIPBOARD_ENABLED;
     }
 
     /**
@@ -29,8 +32,8 @@ export abstract class FileTreeNode extends vscode.TreeItem {
      * @param id - id of an issue
      * @returns the issue node if exists in file, undefined otherwise
      */
-    public getIssueById(id: string): IssueTreeNode | undefined {
-        return this.issues.find(issue => id === issue.issueId);
+    public getIssueById(id: string): IssueTreeNode[] {
+        return this.issues.filter(issue => id === issue.issueId);
     }
 
     /**

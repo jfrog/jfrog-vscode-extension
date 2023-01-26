@@ -6,7 +6,6 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { PypiTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -83,14 +82,14 @@ describe('Pypi Utils Tests', async () => {
         let requirements: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'requirements', 'requirements.txt'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(requirements);
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('newrelic', '2.0.0.1', [], '', ''));
-        let dependencyPos: vscode.Position[] = PypiUtils.getDependencyPos(textDocument, textDocument.getText().toLowerCase(), dependenciesTreeNode);
-        assert.deepEqual(dependencyPos[0], new vscode.Position(2, 0));
+        let dependencyPos: vscode.Range[] = PypiUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
+        assert.deepEqual(dependencyPos[0].start, new vscode.Position(2, 0));
 
         // Test 'resources/python/setupAndRequirements'
         requirements = vscode.Uri.file(path.join(tmpDir.fsPath, 'setupAndRequirements', 'requirements.txt'));
         textDocument = await vscode.workspace.openTextDocument(requirements);
-        dependencyPos = PypiUtils.getDependencyPos(textDocument, textDocument.getText().toLowerCase(), dependenciesTreeNode);
-        assert.deepEqual(dependencyPos[0], new vscode.Position(2, 0));
+        dependencyPos = PypiUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
+        assert.deepEqual(dependencyPos[0].start, new vscode.Position(2, 0));
     });
 
     /**

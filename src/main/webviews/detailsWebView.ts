@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import fs from 'fs-extra';
-import { IDependencyPage } from 'jfrog-ide-webview';
+import { IDependencyPage, IEosPage } from 'jfrog-ide-webview';
 import { LogManager } from '../log/logManager';
 
 /**
@@ -10,39 +10,51 @@ import { LogManager } from '../log/logManager';
 export class DetailsWebView {
     constructor(private _logManager: LogManager) {}
 
+    private _panel: vscode.WebviewPanel | undefined;
+    private _currentData: any;
+
     public async activate(context: vscode.ExtensionContext) {
-        let panel: vscode.WebviewPanel | undefined;
-        let prevActiveTreeNode: IDependencyPage;
-
         context.subscriptions.push(
-            vscode.commands.registerCommand('jfrog.view.dependency.details.page', (page: IDependencyPage) => {
-                if (!panel) {
-                    panel = createWebview(context);
-                    panel.onDidChangeViewState(e => {
-                        updateWebview(e.webviewPanel, prevActiveTreeNode);
-                    });
-                    panel.onDidDispose(
-                        () => {
-                            panel = undefined;
-                        },
-                        undefined,
-                        context.subscriptions
-                    );
-                } else {
-                    panel.reveal();
-                }
-
-                if (page && prevActiveTreeNode !== page) {
-                    this._logManager.logMessage('Opening webview page with data:\n' + JSON.stringify(page), 'DEBUG');
-                    updateWebview(panel, page);
-                }
-                prevActiveTreeNode = page;
-            })
+            vscode.commands.registerCommand('jfrog.view.details.page', (page: IDependencyPage | IEosPage) => this.updateWebview(page, context))
         );
+    }
+
+    /**
+     * Create if not exists or update the webview panel with the given page data and show it in the editor
+     * @param data - the data of the page to be update and show in the webpage
+     * @param context - context of the extension
+     */
+    public updateWebview(data: any, context: vscode.ExtensionContext) {
+        if (!this._panel) {
+            this._panel = createWebview(context);
+            this._panel.onDidChangeViewState((webviewChanged: vscode.WebviewPanelOnDidChangeViewStateEvent) => {
+                postPageToWebview(webviewChanged.webviewPanel, this._currentData);
+            });
+            this._panel.onDidDispose(
+                () => {
+                    this._panel = undefined;
+                },
+                undefined,
+                context.subscriptions
+            );
+        } else {
+            this._panel.reveal();
+        }
+
+        if (data && this._currentData !== data) {
+            this._logManager.logMessage('Opening webview with data:\n' + JSON.stringify(data), 'DEBUG');
+            postPageToWebview(this._panel, data);
+        }
+        this._currentData = data;
     }
 }
 
-function updateWebview(panel: vscode.WebviewPanel, page: IDependencyPage) {
+/**
+ * Update the given panel to show the given page
+ * @param panel - the webview panel that holds the pages
+ * @param page - the page to show
+ */
+function postPageToWebview(panel: vscode.WebviewPanel, page: any) {
     panel.webview.postMessage({
         data: page
     });
@@ -51,7 +63,7 @@ function updateWebview(panel: vscode.WebviewPanel, page: IDependencyPage) {
 function createWebview(context: vscode.ExtensionContext) {
     // Create and show panel
     let panel: vscode.WebviewPanel = vscode.window.createWebviewPanel(
-        'jfrog.vulnerability.details',
+        'jfrog.issues.details',
         'Vulnerability Details',
         { viewColumn: vscode.ViewColumn.Beside, preserveFocus: false },
         {

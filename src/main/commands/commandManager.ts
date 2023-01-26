@@ -11,7 +11,7 @@ import { Configuration } from '../utils/configuration';
 import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
 import { ScanUtils } from '../utils/scanUtils';
 import { DiagnosticsManager } from '../diagnostics/diagnosticsManager';
-import { IDependencyPage } from 'jfrog-ide-webview';
+import { IDependencyPage, IEosPage } from 'jfrog-ide-webview';
 
 /**
  * Register and execute all commands in the extension.
@@ -42,7 +42,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.issues.file.open', file => ScanUtils.openFile(file));
         this.registerCommand(context, 'jfrog.issues.file.open.location', (file, fileRegion) => ScanUtils.openFile(file, fileRegion));
         this.registerCommand(context, 'jfrog.issues.select.node', item => this._treesManager.selectItemOnIssuesTree(item));
-        this.registerCommand(context, 'jfrog.issues.file.open.applicable', (file, fileRegion, details) =>
+        this.registerCommand(context, 'jfrog.issues.file.open.details', (file, fileRegion, details) =>
             this.doOpenFileAndDetailsPage(file, fileRegion, details)
         );
         this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
@@ -134,7 +134,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
-     * Refresh the components tree and updates the currently open files with diagnositcs
+     * Refresh the components tree and updates the currently open files with diagnostics
      * @param scan - True to scan the workspace, false will load from cache
      */
     private async doRefresh(scan: boolean = true) {
@@ -154,8 +154,8 @@ export class CommandManager implements ExtensionComponent {
      * Open webpage with the given data
      * @param page - data to show in webpage
      */
-    public doShowDependencyDetailsPage(page: IDependencyPage) {
-        vscode.commands.executeCommand('jfrog.view.dependency.details.page', page);
+    public doShowDetailsPage(page: IDependencyPage | IEosPage) {
+        vscode.commands.executeCommand('jfrog.view.details.page', page);
     }
 
     /**
@@ -164,9 +164,8 @@ export class CommandManager implements ExtensionComponent {
      * @param fileRegion - range inside the file to select
      * @param page - the data to show in the open page
      */
-    public async doOpenFileAndDetailsPage(filePath: string, fileRegion: vscode.Range, page: IDependencyPage) {
-        await ScanUtils.openFile(filePath, fileRegion);
-        this.doShowDependencyDetailsPage(page);
+    public async doOpenFileAndDetailsPage(filePath: string, fileRegion: vscode.Range, page: IDependencyPage | IEosPage) {
+        ScanUtils.openFile(filePath, fileRegion).then(() => this.doShowDetailsPage(page));
     }
 
     /**

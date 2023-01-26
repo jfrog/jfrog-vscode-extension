@@ -129,4 +129,11 @@ describe('Issues Root Node Tests', () => {
         testNode.apply();
         assert.include(testNode.tooltip, 'Status: other title');
     });
+
+    it('Get file tree node test', () => {
+        const testNode: IssuesRootTreeNode = createAndPopulateRootTestNode(testCases[1].path, testCases[1].data);
+        testNode.apply();
+        const expectedTree: FileTreeNode | undefined = testNode.getFileTreeNode(path.join('root', 'path'));
+        assert.equal(expectedTree?.name, 'path');
+    });
 });
