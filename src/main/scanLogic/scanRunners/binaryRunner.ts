@@ -32,6 +32,10 @@ interface RunRequest {
     responsePaths: string[];
 }
 
+export class NotEntitledError extends Error {
+    message: string = 'User is not entitled to run the binary';
+}
+
 /**
  * Describes a runner for binary executable files.
  * The executable expected to be provided with a path to request file (yaml format) and produce a response file with a result
@@ -43,6 +47,8 @@ export abstract class BinaryRunner {
     protected static readonly RUNNER_FOLDER: string = 'analyzer-manager';
     private static readonly RUNNER_NAME: string = 'analyzerManager';
 
+    private static readonly NOT_ENTITLED: number = 31;
+
     constructor(
         protected _connectionManager: ConnectionManager,
         protected _abortCheckInterval: number,
@@ -51,6 +57,7 @@ export abstract class BinaryRunner {
     ) {
         this._runDirectory = path.dirname(_binaryPath);
         this._isSupported = this.validateSupported();
+
         if (this._abortCheckInterval <= 0) {
             // Default check in 1 sec intervals
             this._abortCheckInterval = 1 * 1000;
@@ -107,14 +114,11 @@ export abstract class BinaryRunner {
             ScanUtils.executeCmdAsync('"' + this._binaryPath + '" ' + args.join(' '), this._runDirectory, this.createEnvForRun())
                 .then(std => {
                     if (std.stdout && std.stdout.length > 0) {
-                        this._logManager.logMessage(
-                            "Done executing with log '" + Utils.getLastSegment(this._binaryPath) + "', log:\n" + std.stdout,
-                            'DEBUG'
-                        );
+                        this._logManager.logMessage("Done executing '" + Utils.getLastSegment(this._binaryPath) + "', log:\n" + std.stdout, 'DEBUG');
                     }
                     if (std.stderr && std.stderr.length > 0) {
                         this._logManager.logMessage(
-                            "Done executing with error '" + Utils.getLastSegment(this._binaryPath) + "', error log:\n" + std.stderr,
+                            "Done executing '" + Utils.getLastSegment(this._binaryPath) + "' with error, error log:\n" + std.stderr,
                             'ERR'
                         );
                     }
@@ -297,10 +301,10 @@ export abstract class BinaryRunner {
                         }
                     })
                     .catch(err => {
-                        if (err instanceof ScanCancellationError) {
+                        if (err instanceof ScanCancellationError || err instanceof NotEntitledError) {
                             throw err;
                         }
-                        this._logManager.logError(err, true);
+                        this._logManager.logError(err);
                     })
             );
         }
@@ -328,7 +332,19 @@ export abstract class BinaryRunner {
         // 1. Save requests as yaml file in folder
         fs.writeFileSync(requestPath, request);
         // 2. Run the binary
-        await this.runBinary(abortSignal, requestPath);
+        await this.runBinary(abortSignal, requestPath).catch(error => {
+            if (error.code) {
+                // Not entitled to run binary
+                if (error.code === BinaryRunner.NOT_ENTITLED) {
+                    throw new NotEntitledError();
+                }
+                this._logManager.logMessage(
+                    "Binary '" + Utils.getLastSegment(this._binaryPath) + "' task ended with status code: " + error.code,
+                    'ERR'
+                );
+            }
+            throw error;
+        });
         // 3. Collect responses
         let analyzerScanResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (const responsePath of responsePaths) {
