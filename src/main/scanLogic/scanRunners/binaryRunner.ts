@@ -146,45 +146,23 @@ export abstract class BinaryRunner {
                 binaryVars.JF_USER = this._connectionManager.username;
                 binaryVars.JF_PASS = this._connectionManager.password;
             }
-            let proxyHttpUrl: string | undefined;
-            let proxyHttpsUrl: string | undefined;
             // Proxy information - environment variable
-            let proxy_env_http: string | undefined = process.env['HTTP_PROXY'];
-            if (proxy_env_http) {
-                proxyHttpUrl = proxy_env_http;
-            }
-            let proxy_env_https: string | undefined = process.env['HTTPS_PROXY'];
-            if (proxy_env_https) {
-                proxyHttpsUrl = proxy_env_https;
-            }
+            let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
+            let proxyHttpsUrl: string | undefined = process.env['HTTPS_PROXY'];
             // Proxy information - vscode configuration override
             let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
             if (optional) {
                 let proxyConfig: IProxyConfig = <IProxyConfig>optional;
-                let proxyUrl: string = proxyConfig.host + ':' + proxyConfig.port;
+                let proxyUrl: string = proxyConfig.host + (proxyConfig.port !== 0 ? ':' + proxyConfig.port : '');
                 proxyHttpUrl = proxyUrl;
                 proxyHttpsUrl = proxyUrl;
             }
-            // Proxy auth
-            let authOptional: string | undefined = Configuration.getProxyAuth();
-            if (authOptional) {
-                let authDecoded: string = Buffer.from(
-                    authOptional.startsWith('Basic ') ? authOptional.substring('Basic '.length) : authOptional,
-                    'base64'
-                ).toString('binary');
-                // We expect the decoded auth string to be in the format: <proxy-user>:<proxy-password>
-                if (proxyHttpUrl) {
-                    proxyHttpUrl = authDecoded + '@' + proxyHttpUrl;
-                }
-                if (proxyHttpsUrl) {
-                    proxyHttpsUrl = authDecoded + '@' + proxyHttpsUrl;
-                }
-            }
+            // Proxy url
             if (proxyHttpUrl) {
-                binaryVars.HTTP_PROXY = 'http://' + proxyHttpUrl;
+                binaryVars.HTTP_PROXY = 'http://' + this.addOptionalProxyAuthInformation(proxyHttpUrl);
             }
             if (proxyHttpsUrl) {
-                binaryVars.HTTPS_PROXY = 'https://' + proxyHttpsUrl;
+                binaryVars.HTTPS_PROXY = 'https://' + this.addOptionalProxyAuthInformation(proxyHttpsUrl);
             }
 
             return {
@@ -193,6 +171,25 @@ export abstract class BinaryRunner {
             };
         }
         return undefined;
+    }
+
+    /**
+     * Add optional proxy auth information to the base url if exists
+     * @param url - the base url to add information on
+     * @returns the url with the auth information if exists or the given url if not
+     */
+    private addOptionalProxyAuthInformation(url: string): string {
+        let authOptional: string | undefined = Configuration.getProxyAuth();
+        if (authOptional) {
+            if (authOptional.startsWith('Basic ')) {
+                // We expect the decoded auth string to be in the format: <proxy-user>:<proxy-password>
+                return Buffer.from(authOptional.substring('Basic '.length), 'base64').toString('binary') + '@' + url;
+            } else if (authOptional.startsWith('Bearer ')) {
+                // Access token
+                return url + '?access_token=' + authOptional.substring('Bearer '.length);
+            }
+        }
+        return url;
     }
 
     /**
