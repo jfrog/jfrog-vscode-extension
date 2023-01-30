@@ -5,6 +5,7 @@ import { GeneralInfo } from '../../types/generalInfo';
 import { Vcs } from '../../types/vcs';
 import { IconsPaths } from '../iconsPaths';
 import { CiTitleNode } from '../../treeDataProviders/dependenciesTree/ciNodes/ciTitleNode';
+import { PackageType } from '../../types/projectType';
 
 export class BuildsUtils {
     public static readonly BUILD_STATUS_PROP: string = 'buildInfo.env.JFROG_BUILD_STATUS';
@@ -19,7 +20,16 @@ export class BuildsUtils {
         }
         const status: string = build?.properties?.[BuildsUtils.BUILD_STATUS_PROP] || '';
         const started: Date | null = build.started ? new Date(build.started) : null;
-        return new BuildGeneralInfo(build.name, BuildsUtils.getStatusFromString(status), started, vcsList[0], build.number, build.url, ['None'], '');
+        return new BuildGeneralInfo(
+            build.name,
+            BuildsUtils.getStatusFromString(status),
+            started,
+            vcsList[0],
+            build.number,
+            build.url,
+            ['None'],
+            PackageType.Unknown
+        );
     }
 
     public static getStatusFromString(status: string): Status {
@@ -35,7 +45,7 @@ export class BuildsUtils {
 
     public static createArtifactsNode(): CiTitleNode {
         return new CiTitleNode(
-            new GeneralInfo(CiTitleNode.ARTIFACTS_NODE, '', ['None'], '', 'Module Artifacts'),
+            new GeneralInfo(CiTitleNode.ARTIFACTS_NODE, '', ['None'], '', PackageType.Unknown),
             vscode.TreeItemCollapsibleState.Collapsed,
             undefined
         );
@@ -43,7 +53,7 @@ export class BuildsUtils {
 
     public static createDependenciesNode(): CiTitleNode {
         return new CiTitleNode(
-            new GeneralInfo(CiTitleNode.DEPENDENCIES_NODE, '', ['None'], '', 'Module Dependencies'),
+            new GeneralInfo(CiTitleNode.DEPENDENCIES_NODE, '', ['None'], '', PackageType.Unknown),
             vscode.TreeItemCollapsibleState.Collapsed,
             undefined
         );

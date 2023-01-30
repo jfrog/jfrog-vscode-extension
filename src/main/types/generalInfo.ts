@@ -1,10 +1,11 @@
+import { PackageType } from './projectType';
 export class GeneralInfo {
     constructor(
         private _artifactId: string,
         private _version: string,
         private _scopes: string[],
         private _path: string,
-        private _pkgType: string,
+        private _pkgType: PackageType,
         private _sha1?: string,
         private _sha256?: string
     ) {}
@@ -41,10 +42,10 @@ export class GeneralInfo {
         this._path = path;
     }
 
-    public get pkgType(): string {
+    public get pkgType(): PackageType {
         return this._pkgType;
     }
-    public set pkgType(pkgType: string) {
+    public set pkgType(pkgType: PackageType) {
         this._pkgType = pkgType;
     }
 
@@ -75,7 +76,7 @@ export class GeneralInfo {
         if (newGeneralInfo.path !== '') {
             this.path = newGeneralInfo.path;
         }
-        if (newGeneralInfo.pkgType !== '') {
+        if (newGeneralInfo.pkgType !== PackageType.Unknown) {
             this.pkgType = newGeneralInfo.pkgType;
         }
         if (newGeneralInfo.scopes.length !== 0) {

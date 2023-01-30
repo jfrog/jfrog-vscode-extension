@@ -98,7 +98,7 @@ describe('Go Utils Tests', async () => {
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(goMod);
 
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
-            new GeneralInfo('github.com/jfrog/jfrog-cli-core', '1.9.1', [], '', '')
+            new GeneralInfo('github.com/jfrog/jfrog-cli-core', '1.9.1', [], '', PackageType.Unknown)
         );
         let dependencyPos: vscode.Range[] = GoUtils.getDependencyPosition(textDocument, dependenciesTreeNode.dependencyId, FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(5, 1));
@@ -115,7 +115,7 @@ describe('Go Utils Tests', async () => {
      * Test GoUtils.createGoDependenciesTrees.
      */
     it('Create go Dependencies Trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
         let componentsToScan: ProjectDetails[] = [];
         await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
 
@@ -209,7 +209,7 @@ describe('Go Utils Tests', async () => {
 
     async function createGoDependencyTreeAndValidate(projectName: string, expectedChildren: Map<string, number>) {
         try {
-            let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
+            let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
             let componentsToScan: ProjectDetails[] = [];
             await runCreateGoDependenciesTrees(getWorkspaceFolders(projectName), componentsToScan, parent);
 

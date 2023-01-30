@@ -18,13 +18,14 @@ import { IIssueCacheObject } from '../types/issueCacheObject';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
 import { FileLocation } from '../scanLogic/scanRunners/analyzerModels';
+import { toPackageType } from '../types/projectType';
 
 export class Translators {
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
         let components: string[] = clientGeneral.component_id.split(':');
         return components.length === 2
-            ? new GeneralInfo(components[0], components[1], [], clientGeneral.path, clientGeneral.pkg_type)
-            : new GavGeneralInfo(components[0], components[1], components[2], [], clientGeneral.path, clientGeneral.pkg_type);
+            ? new GeneralInfo(components[0], components[1], [], clientGeneral.path, toPackageType(clientGeneral.pkg_type))
+            : new GavGeneralInfo(components[0], components[1], components[2], [], clientGeneral.path, toPackageType(clientGeneral.pkg_type));
     }
 
     public static toCacheIssue(clientIssue: IIssue): IIssueCacheObject {
@@ -173,5 +174,8 @@ export class Translators {
         );
 
         return extendedInfo;
+    }
+    public static cleanVersionParentheses(version: string) {
+        return version.replace(/[\][]/g, '');
     }
 }

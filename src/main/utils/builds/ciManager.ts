@@ -20,6 +20,7 @@ import { Consts } from '../consts';
 import { ScanCancellationError } from '../scanUtils';
 import { Translators } from '../translators';
 import { BuildsUtils } from './buildsUtils';
+import { PackageType } from '../../types/projectType';
 
 /**
  * Manage the filters of the components tree.
@@ -37,7 +38,12 @@ export class CiManager {
             this._treesManager.logManager
         );
         if (!root) {
-            this.root = new DependenciesTreeNode(new GeneralInfo('', '', ['None'], '', ''), vscode.TreeItemCollapsibleState.Expanded, undefined, '');
+            this.root = new DependenciesTreeNode(
+                new GeneralInfo('', '', ['None'], '', PackageType.Unknown),
+                vscode.TreeItemCollapsibleState.Expanded,
+                undefined,
+                ''
+            );
         } else {
             this.root = root;
         }
@@ -54,7 +60,7 @@ export class CiManager {
         const buildTree: BuildsNode = new BuildsNode(bgi);
         parent.addChild(buildTree);
         const modulesTree: CiTitleNode = new CiTitleNode(
-            new GeneralInfo(CiTitleNode.MODULES_NODE, '', ['None'], '', 'Build Modules'),
+            new GeneralInfo(CiTitleNode.MODULES_NODE, '', ['None'], '', PackageType.Unknown),
             vscode.TreeItemCollapsibleState.Expanded,
             parent
         );

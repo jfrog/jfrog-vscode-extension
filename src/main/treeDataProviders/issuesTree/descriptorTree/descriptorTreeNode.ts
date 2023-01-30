@@ -6,7 +6,7 @@ import { IssueTreeNode } from '../issueTreeNode';
 import { CveApplicableDetails } from '../../../scanLogic/scanRunners/applicabilityScan';
 import { CveTreeNode } from './cveTreeNode';
 import { IComponent } from 'jfrog-client-js';
-
+import * as path from 'path';
 /**
  * Describes a descriptor file type with Xray issues for the 'Issues' view.
  * Holds a list of dependencies that has issues
@@ -22,9 +22,11 @@ export class DescriptorTreeNode extends FileTreeNode {
     private _scannedCve?: Set<string> | undefined;
     // Is applicable if key in here
     private _applicableCve?: Map<string, CveApplicableDetails> | undefined;
+    private workspace: string;
 
-    constructor(fileFullPath: string, packageType?: PackageType, parent?: IssuesRootTreeNode) {
-        super(fileFullPath, parent);
+    constructor(filePath: string, packageType?: PackageType, parent?: IssuesRootTreeNode) {
+        super(filePath, parent);
+        this.workspace = filePath.substring(0, filePath.lastIndexOf(path.sep));
         this._packageType = packageType ?? PackageType.Unknown;
     }
 
@@ -146,8 +148,15 @@ export class DescriptorTreeNode extends FileTreeNode {
     public get dependenciesWithIssue(): DependencyIssuesTreeNode[] {
         return this._dependenciesWithIssue;
     }
+    public set dependenciesWithIssue(dependencyIssuesTreeNode: DependencyIssuesTreeNode[]) {
+        this._dependenciesWithIssue = dependencyIssuesTreeNode;
+    }
 
     public get type(): PackageType {
         return this._packageType;
+    }
+
+    public getWorkspace() {
+        return this.workspace;
     }
 }

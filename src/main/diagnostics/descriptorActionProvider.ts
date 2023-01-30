@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
-
 import { DescriptorTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { IssueTreeNode } from '../treeDataProviders/issuesTree/issueTreeNode';
@@ -46,43 +45,124 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
     }
 
     /** @Override */
-    provideCodeActions(document: vscode.TextDocument, range: vscode.Range | vscode.Selection): vscode.Command[] | undefined {
-        // Search if the file had issues in the scan
-        const fileNode: FileTreeNode | undefined = this._treesManager.issuesTreeDataProvider.getFileIssuesTree(document.uri.fsPath);
-        if (fileNode instanceof DescriptorTreeNode) {
-            // Get the dependency information we created in the specific range in the document
-            let processedDependencies: Map<string, DirectDependencyInfo> | undefined = this._processedMap.get(document.uri);
-            if (!processedDependencies) {
-                return undefined;
+    provideCodeActions(document: vscode.TextDocument, range: vscode.Range | vscode.Selection): vscode.CodeAction[] {
+        const [dependency, dependencyChildren] = this.getDependencyAtCursor(document, range);
+        return [...this.createJumpActions(dependencyChildren), ...this.createFixActions(dependency)];
+    }
+
+    private getDependencyAtCursor(
+        document: vscode.TextDocument,
+        range: vscode.Range | vscode.Selection
+    ): [DependencyIssuesTreeNode?, Set<DependencyIssuesTreeNode>?] | [] {
+        const [dependencyId, dependencyInfo] = this.getDependencyIdAtCursor(document, range);
+        if (!dependencyId || !dependencyInfo) {
+            return [];
+        }
+        return this.getDependencyById(document, dependencyId, dependencyInfo);
+    }
+
+    private getDependencyIdAtCursor(document: vscode.TextDocument, range: vscode.Range | vscode.Selection): [string, DirectDependencyInfo] | [] {
+        const dependencies: Map<string, DirectDependencyInfo> | undefined = this.getDescriptorDependencies(document.uri);
+        if (!dependencies) {
+            return [];
+        }
+        return this.getDependencyInRange(dependencies, range);
+    }
+
+    private getDependencyInRange(dependencies: Map<string, DirectDependencyInfo>, range: vscode.Range): [string, DirectDependencyInfo] | [] {
+        for (let [id, info] of dependencies) {
+            if (info.range.some(position => range.intersection(position))) {
+                return [id, info];
             }
-            let rangeDependencies: DirectDependencyInfo[] = Array.from(processedDependencies.values()).filter(dependency =>
-                dependency.range.some(pos => range.intersection(pos))
+        }
+        return [];
+    }
+
+    private getDependencyById(
+        document: vscode.TextDocument,
+        dependencyId: string,
+        dependencyInfo: DirectDependencyInfo
+    ): [DependencyIssuesTreeNode?, Set<DependencyIssuesTreeNode>?] | [] {
+        const root: DescriptorTreeNode | undefined = this._treesManager.issuesTreeDataProvider.getDescriptorTreeNode(document.uri.fsPath);
+        if (!root) {
+            return [];
+        }
+        return [root.getDependencyByID(dependencyId), this.createChildDependency(dependencyInfo, root)];
+    }
+
+    private getDescriptorDependencies(file: vscode.Uri) {
+        return this._processedMap.get(file);
+    }
+
+    private createFixActions(dependency: DependencyIssuesTreeNode | undefined) {
+        const actions: vscode.CodeAction[] = [];
+        if (!dependency) {
+            return actions;
+        }
+        const versionToCves: Map<string, Set<string>> = dependency.getFixedVersionToCves();
+        let previousCves: Set<string> = new Set<string>();
+        versionToCves.forEach((cves: Set<string>, fixedVersion: string) => {
+            previousCves = new Set([...previousCves, ...cves]);
+            actions.push(this.createFixAction(dependency, previousCves, fixedVersion));
+        });
+        return actions.reverse();
+    }
+
+    private createFixAction(dependency: DependencyIssuesTreeNode, cves: Set<string>, fixedVersion: string): vscode.CodeAction {
+        const action: vscode.CodeAction = new vscode.CodeAction(this.createFixActionMessage(fixedVersion, cves), vscode.CodeActionKind.QuickFix);
+        action.command = {
+            command: 'jfrog.issues.select.updateDependency',
+            title: 'Update vulnerable dependency',
+            tooltip: `This will update ${dependency.name} to version ${fixedVersion}.`,
+            arguments: [dependency, fixedVersion]
+        };
+        return action;
+    }
+
+    private createFixActionMessage(fixedVersion: string, cves: Set<string>) {
+        let message: string = `Update to version ${fixedVersion} fixes the issue`;
+        if (cves.size > 1) {
+            message += 's';
+        }
+        message += `: ${cves.values().next().value}`;
+        if (cves.size > 1) {
+            message += ` and ${cves.size - 1} more.`;
+        }
+        return message;
+    }
+
+    private createJumpActions(infectedDependencies: Set<DependencyIssuesTreeNode> | undefined) {
+        const actions: vscode.CodeAction[] = [];
+        if (!infectedDependencies) {
+            return actions;
+        }
+        for (const infectedDependency of infectedDependencies) {
+            const action: vscode.CodeAction = new vscode.CodeAction(
+                "Show infected dependency '" + infectedDependency.componentId + "' in issues tree",
+                vscode.CodeActionKind.Empty
             );
-            let infectedDependencies: Set<DependencyIssuesTreeNode> = new Set<DependencyIssuesTreeNode>();
-            // Get all the infected dependencies for a direct dependency as a set
-            for (const directDependencyInfo of rangeDependencies) {
-                for (const issueInfo of directDependencyInfo.diagnosticIssues.values()) {
-                    for (const infectedDependencyId of issueInfo.infectedDependencies) {
-                        let infectedDependency: DependencyIssuesTreeNode | undefined = fileNode.getDependencyByID(infectedDependencyId);
-                        if (infectedDependency) {
-                            infectedDependencies.add(infectedDependency);
-                        }
-                    }
+            action.command = {
+                command: 'jfrog.issues.select.node',
+                title: "Show infected dependency '" + infectedDependency.componentId + "' in issues tree",
+                arguments: [infectedDependency]
+            };
+            actions.push(action);
+        }
+        return actions;
+    }
+
+    private createChildDependency(directDependencyInfo: DirectDependencyInfo, tree: DescriptorTreeNode): Set<DependencyIssuesTreeNode> {
+        let infectedDependencies: Set<DependencyIssuesTreeNode> = new Set<DependencyIssuesTreeNode>();
+        // Get all the infected dependencies for a direct dependency as a set
+        for (const issueInfo of directDependencyInfo.diagnosticIssues.values()) {
+            for (const infectedDependencyId of issueInfo.infectedDependencies) {
+                let infectedDependency: DependencyIssuesTreeNode | undefined = tree.getDependencyByID(infectedDependencyId);
+                if (infectedDependency) {
+                    infectedDependencies.add(infectedDependency);
                 }
             }
-            let commands: vscode.Command[] = [];
-            // Add jump to tree commands for each infected dependency
-            for (const infectedDependency of infectedDependencies) {
-                commands.push({
-                    command: 'jfrog.issues.select.node',
-                    title: "Show infected dependency '" + infectedDependency.componentId + "' in issues tree",
-                    arguments: [infectedDependency]
-                });
-            }
-            return commands;
         }
-
-        return undefined;
+        return infectedDependencies;
     }
 
     /** @Override */

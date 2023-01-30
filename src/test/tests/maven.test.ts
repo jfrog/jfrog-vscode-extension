@@ -169,7 +169,7 @@ describe('Maven Tests', async () => {
         let pomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'pom.xml'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(pomXml);
         let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
-            new GavGeneralInfo('javax.servlet.jsp', 'jsp-api', '2.1', [], '', '')
+            new GavGeneralInfo('javax.servlet.jsp', 'jsp-api', '2.1', [], '', PackageType.Unknown)
         );
         let dependencyPos: vscode.Range[] = MavenUtils.getDependencyPosition(
             textDocument,
@@ -185,7 +185,9 @@ describe('Maven Tests', async () => {
 
         pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi1', 'pom.xml'));
         textDocument = await vscode.workspace.openTextDocument(pomXml);
-        dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('org.apache.commons', 'commons-email', '1.1', [], '', ''));
+        dependenciesTreeNode = new DependenciesTreeNode(
+            new GavGeneralInfo('org.apache.commons', 'commons-email', '1.1', [], '', PackageType.Unknown)
+        );
         dependencyPos = MavenUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.getComponentId(), FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(51, 12));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(51, 49));
@@ -194,7 +196,9 @@ describe('Maven Tests', async () => {
         assert.deepEqual(dependencyPos[2].start, new vscode.Position(53, 12));
         assert.deepEqual(dependencyPos[2].end, new vscode.Position(53, 34));
 
-        dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('org.codehaus.plexus', 'plexus-utils', '1.5.1', [], '', ''));
+        dependenciesTreeNode = new DependenciesTreeNode(
+            new GavGeneralInfo('org.codehaus.plexus', 'plexus-utils', '1.5.1', [], '', PackageType.Unknown)
+        );
         dependencyPos = MavenUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.getComponentId(), FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(57, 12));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(57, 50));
@@ -203,7 +207,7 @@ describe('Maven Tests', async () => {
         assert.deepEqual(dependencyPos[2].start, new vscode.Position(59, 12));
         assert.deepEqual(dependencyPos[2].end, new vscode.Position(59, 36));
 
-        dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('javax.servlet.jsp', 'jsp-api', '2.1', [], '', ''));
+        dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('javax.servlet.jsp', 'jsp-api', '2.1', [], '', PackageType.Unknown));
         dependencyPos = MavenUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.getComponentId(), FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(62, 12));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(62, 48));
@@ -212,7 +216,7 @@ describe('Maven Tests', async () => {
         assert.deepEqual(dependencyPos[2].start, new vscode.Position(65, 12));
         assert.deepEqual(dependencyPos[2].end, new vscode.Position(65, 34));
 
-        dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('commons-io', 'commons-io', '1.4', [], '', ''));
+        dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('commons-io', 'commons-io', '1.4', [], '', PackageType.Unknown));
         dependencyPos = MavenUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.getComponentId(), FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(68, 12));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(68, 41));
@@ -221,7 +225,9 @@ describe('Maven Tests', async () => {
         assert.deepEqual(dependencyPos[2].start, new vscode.Position(70, 12));
         assert.deepEqual(dependencyPos[2].end, new vscode.Position(70, 34));
 
-        dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('org.springframework', 'spring-aop', '2.5.6', [], '', ''));
+        dependenciesTreeNode = new DependenciesTreeNode(
+            new GavGeneralInfo('org.springframework', 'spring-aop', '2.5.6', [], '', PackageType.Unknown)
+        );
         dependencyPos = MavenUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.getComponentId(), FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(73, 12));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(73, 50));
@@ -241,7 +247,7 @@ describe('Maven Tests', async () => {
      * Test createMavenDependenciesTrees.
      */
     it('Create Maven dependencies trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
         let projectDetails: ProjectDetails[] = [];
         let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(projectDetails, parent);
         let expectedProjectDetails: Map<string, string[]> = new Map([

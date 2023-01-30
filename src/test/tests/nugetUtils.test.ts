@@ -70,7 +70,7 @@ describe('Nuget Utils Tests', async () => {
      * Test NugetUtils.createDependenciesTrees.
      */
     it('Create NuGet Dependencies Trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
         let projectDetails: ProjectDetails[] = [];
         let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(projectDetails, parent);
         projectDetails.sort((a, b) => a.name.localeCompare(b.name));

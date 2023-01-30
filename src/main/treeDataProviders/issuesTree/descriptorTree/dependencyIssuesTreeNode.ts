@@ -51,7 +51,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n';
         this.tooltip += 'Issues count: ' + this._issues.length + '\n';
         this.tooltip += 'Artifact' + (this._indirect ? ' (indirect):' : ':') + '\n' + this.artifactId;
-
+        this.description = this._version + (this._indirect ? ' (indirect)' : '');
         this._issues
             // 1st priority - Sort by severity
             .sort((lhs, rhs) => rhs.severity - lhs.severity);
@@ -91,6 +91,16 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         return this._issues;
     }
 
+    public getCveIssues(): CveTreeNode[] {
+        let cveTreeNodes: CveTreeNode[] = [];
+        this._issues.forEach(issue => {
+            if (issue instanceof CveTreeNode) {
+                cveTreeNodes.push(issue);
+            }
+        });
+        return cveTreeNodes;
+    }
+
     public get parent(): DescriptorTreeNode {
         return this._parent;
     }
@@ -109,5 +119,27 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
 
     public get type(): PackageType {
         return this._type;
+    }
+
+    public getWorkspace(): string {
+        return this.parent.getWorkspace();
+    }
+
+    public getFixedVersionToCves() {
+        const versionToCves: Map<string, Set<string>> = new Map<string, Set<string>>();
+        this.getCveIssues().forEach(issue => {
+            issue.fixedVersions?.forEach(fixedVersion => {
+                const cve: string = issue.cve?.cve || issue.issueId;
+                if (versionToCves.has(fixedVersion)) {
+                    versionToCves.get(fixedVersion)?.add(cve);
+                } else {
+                    versionToCves.set(
+                        fixedVersion,
+                        new Set<string>([cve])
+                    );
+                }
+            });
+        });
+        return new Map([...versionToCves.entries()].sort());
     }
 }
