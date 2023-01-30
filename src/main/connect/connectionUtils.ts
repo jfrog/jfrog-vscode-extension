@@ -117,33 +117,22 @@ export class ConnectionUtils {
                 logger.logMessage(xrayVersion, 'DEBUG');
             }
         } catch (error) {
-            if (prompt) {
+            if ((<ServerNotActiveError>error).activationUrl) {
+                const answer: string | undefined = await vscode.window.showErrorMessage(
+                    (<ServerNotActiveError>error).message + ', do you want to open the activation page?',
+                    ...['Yes', 'No']
+                );
+                if (answer === 'Yes') {
+                    CommandManager.doOpenUrlInBrowser((<ServerNotActiveError>error).activationUrl);
+                }
+            } else if (prompt) {
                 vscode.window.showErrorMessage((<any>error).message || error, <vscode.MessageOptions>{ modal: true });
             } else {
                 logger.logMessage((<any>error).message, 'DEBUG');
             }
-            await this.checkServerNotActive(<any>error);
             return Promise.resolve(false);
         }
         return Promise.resolve(true);
-    }
-
-    /**
-     * Checks if a given data is a ServerNotActiveError.
-     * Notify the user on the error and asks to open the activation url
-     * @param data - the data to check
-     */
-    private static async checkServerNotActive(data: any) {
-        let notActiveErr: ServerNotActiveError = <ServerNotActiveError>data;
-        if (notActiveErr.activationUrl) {
-            const answer: string | undefined = await vscode.window.showErrorMessage(
-                notActiveErr.message + ', do you want to open the activation page?',
-                ...['Yes', 'No']
-            );
-            if (answer === 'Yes') {
-                CommandManager.doOpenUrlInBrowser(notActiveErr.activationUrl);
-            }
-        }
     }
 
     /**
