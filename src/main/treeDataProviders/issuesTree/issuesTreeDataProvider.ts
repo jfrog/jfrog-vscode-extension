@@ -26,6 +26,7 @@ import { CodeIssueTreeNode } from './codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
 import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
 import { DescriptorIssuesData, FileIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
+import { EosTreeNode } from './codeFileTree/eosTreeNode';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -86,7 +87,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 ScanUtils.setScanInProgress(false);
                 this.onChangeFire();
             });
-        this._logManager.logMessage('Scans completed 🐸 (elapsed = ' + (Date.now() - startRefreshTimestamp) / 1000 + ' seconds)', 'INFO');
+        this._logManager.logMessage('Scans completed 🐸 (elapsed ' + (Date.now() - startRefreshTimestamp) / 1000 + ' seconds)', 'INFO');
     }
 
     /**
@@ -176,10 +177,10 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     root.children.push(descriptorNode);
                 });
             }
-            // if (workspaceData.eosScan) {
-            //     root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
-            //     AnalyzerUtils.populateEosIssues(root, workspaceData);
-            // }
+            if (workspaceData.eosScan) {
+                root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
+                AnalyzerUtils.populateEosIssues(root, workspaceData);
+            }
             return root;
         }
         return undefined;
@@ -286,8 +287,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             checkCanceled
         );
 
-        progressManager.startStep('🔎 Scanning for issues', graphSupported ? 2 * descriptorsCount : 0);
+        progressManager.startStep('🔎 Scanning for issues', graphSupported ? 2 * descriptorsCount + 1 : 1);
         let scansPromises: Promise<any>[] = [];
+        scansPromises.push(AnalyzerUtils.runEos(workspaceData, root, workspaceDescriptors, this._scanManager, progressManager));
         // Dependency graph scan and applicability scan for each descriptor
         if (graphSupported) {
             scansPromises.push(
@@ -504,7 +506,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 issuesCount +
                 ' issues for descriptor ' +
                 descriptorData.fullpath +
-                ' (elapsed: ' +
+                ' (elapsed ' +
                 (descriptorData.graphScanTimestamp - startGraphScan) / 1000 +
                 ' seconds)',
             'INFO'
@@ -551,7 +553,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     applicableIssuesCount +
                     " applicable CVE issues in descriptor = '" +
                     descriptorData.fullpath +
-                    "' (elapsed: " +
+                    "' (elapsed " +
                     (Date.now() - startApplicableTime) / 1000 +
                     ' seconds)',
                 'INFO'
@@ -568,11 +570,20 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      */
     public getFileIssuesTree(filePath: string): FileTreeNode | undefined {
         for (let [workspace, issuesRoot] of this._workspaceToRoot) {
-            if (filePath.includes(workspace.uri.fsPath)) {
-                return issuesRoot?.children.find(file => file.fullPath == filePath);
+            if (this.isWorkspaceContainsFile(workspace.uri.fsPath, filePath)) {
+                return issuesRoot?.getFileTreeNode(filePath);
             }
         }
         return undefined;
+    }
+
+    public getCodeIssueTree(filePath: string): CodeFileTreeNode | undefined {
+        const tree: FileTreeNode | undefined = this.getFileIssuesTree(filePath);
+        return tree instanceof CodeFileTreeNode ? tree : undefined;
+    }
+
+    private isWorkspaceContainsFile(workspace: string, file: string): boolean {
+        return file.startsWith(workspace);
     }
 
     /**
@@ -619,9 +630,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         }
     }
 
-    public getTreeItem(
-        element: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | IssueTreeNode
-    ): vscode.TreeItem | Thenable<vscode.TreeItem> {
+    public async getTreeItem(element: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | IssueTreeNode): Promise<vscode.TreeItem> {
         if (
             element instanceof FileTreeNode ||
             element instanceof DependencyIssuesTreeNode ||
@@ -634,24 +643,27 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             if (element instanceof FileTreeNode) {
                 element.command = Utils.createNodeCommand('jfrog.issues.file.open', 'Open file', [element.fullPath]);
             }
-            // Descriptor issues nodes
-            if (element instanceof CveTreeNode || element instanceof LicenseIssueTreeNode) {
-                element.command = Utils.createNodeCommand('jfrog.view.dependency.details.page', 'Show details', [element.getDetailsPage()]);
-            }
-            // Source code issues nodes
-            if (element instanceof CodeIssueTreeNode) {
-                if (element instanceof ApplicableTreeNode) {
-                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.applicable', 'Open file location', [
+            if (element instanceof DependencyIssuesTreeNode) {
+                let directDependenciesLocations: vscode.Range[] = await DescriptorUtils.getDirectDependenciesLocations(element);
+                if (directDependenciesLocations?.length > 0) {
+                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open location in file', [
                         element.parent.fullPath,
-                        element.regionWithIssue,
-                        element.getDetailsPage()
-                    ]);
-                } else {
-                    element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open file location', [
-                        element.parent.fullPath,
-                        element.regionWithIssue
+                        // If there are more than one direct dependency with this indirect jump to the first one
+                        directDependenciesLocations[0]
                     ]);
                 }
+            }
+            // Descriptor issues nodes
+            if (element instanceof CveTreeNode || element instanceof LicenseIssueTreeNode) {
+                element.command = Utils.createNodeCommand('jfrog.view.details.page', 'Show details', [element.getDetailsPage()]);
+            }
+            // Source code issues nodes
+            if (element instanceof ApplicableTreeNode || element instanceof EosTreeNode) {
+                element.command = Utils.createNodeCommand('jfrog.issues.file.open.details', 'Open file location and show details', [
+                    element.parent.fullPath,
+                    element.regionWithIssue,
+                    element.getDetailsPage()
+                ]);
             }
         }
         return element;

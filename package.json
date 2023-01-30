@@ -120,28 +120,20 @@
         },
         "commands": [
             {
-                "command": "jfrog.view.dependency.vulnerability",
-                "title": "jfrog.view.dependency.vulnerability'",
-                "category": "jfrog.view.dependency.vulnerability"
-            },
-            {
-                "command": "jfrog.view.dependency.details.page",
-                "title": "jfrog.view.dependency.details.page",
-                "category": "jfrog.view.dependency.vulnerability"
-            },
-            {
                 "command": "jfrog.xray.refresh",
                 "title": "Refresh",
                 "icon": {
                     "light": "resources/light/refresh.png",
                     "dark": "resources/dark/refresh.png"
                 },
+                "category": "JFrog",
                 "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
             },
             {
                 "command": "jfrog.xray.disconnect",
                 "title": "Disconnect",
                 "icon": "$(debug-disconnect)",
+                "category": "JFrog",
                 "enablement": "jfrog.connection.status != signedOut && !jfrog.scanInProgress"
             },
             {
@@ -151,21 +143,19 @@
                     "light": "resources/light/filter.png",
                     "dark": "resources/dark/filter.png"
                 },
-                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
-            },
-            {
-                "command": "jfrog.xray.file.open",
-                "title": "Open File",
-                "icon": "$(eye)"
+                "category": "JFrog",
+                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress && isCi"
             },
             {
                 "command": "jfrog.issues.open.ignore",
                 "title": "Add ignore rule",
-                "icon": "$(eye-closed)"
+                "icon": "$(eye-closed)",
+                "enablement": "viewItem =~ /jfrog.issues.open.ignore.enabled/"
             },
             {
                 "command": "jfrog.xray.copyToClipboard",
-                "title": "Copy"
+                "title": "Copy",
+                "enablement": "viewItem =~ /jfrog.item.copy.to.clipboard/"
             },
             {
                 "command": "jfrog.xray.builds",
@@ -173,13 +163,16 @@
                 "icon": {
                     "light": "resources/light/build.png",
                     "dark": "resources/dark/build.png"
-                }
+                },
+                "category": "JFrog",
+                "enablement": "isCi"
             },
             {
                 "command": "jfrog.xray.local",
                 "title": "Switch to local mode",
                 "icon": "$(home)",
-                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
+                "category": "JFrog",
+                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress && isCi"
             },
             {
                 "command": "jfrog.xray.ci",
@@ -188,13 +181,8 @@
                     "light": "resources/light/ci.png",
                     "dark": "resources/dark/ci.png"
                 },
-                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
-            },
-            {
-                "command": "jfrog.xray.export",
-                "title": "Export",
-                "icon": "$(link-external)",
-                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
+                "category": "JFrog",
+                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress && isLocal"
             }
         ],
         "menus": {
@@ -232,17 +220,13 @@
             ],
             "view/item/context": [
                 {
-                    "command": "jfrog.xray.file.open",
-                    "when": "viewItem =~ /jfrog.source.code.scan.jumpToSource.enabled/",
-                    "group": "inline"
-                },
-                {
                     "command": "jfrog.issues.open.ignore",
                     "when": "viewItem =~ /jfrog.issues.open.ignore.enabled/",
                     "group": "inline"
                 },
                 {
-                    "command": "jfrog.xray.copyToClipboard"
+                    "command": "jfrog.xray.copyToClipboard",
+                    "when": "viewItem =~ /jfrog.item.copy.to.clipboard/"
                 }
             ]
         },
@@ -272,7 +256,7 @@
         "adm-zip": "~0.5.9",
         "fs-extra": "~10.1.0",
         "jfrog-client-js": "github:jfrog/jfrog-client-js#master",
-        "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.1.16.tgz",
+        "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.1.19.tgz",
         "js-yaml": "^4.1.0",
         "json2csv": "~5.0.7",
         "keytar": "~7.9.0",

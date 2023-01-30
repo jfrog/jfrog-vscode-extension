@@ -110,11 +110,15 @@ export class SeverityUtils {
             case Severity.Pending:
                 return IconsPaths.PENDING_SEVERITY;
             case Severity.NotApplicableUnknown:
+                return hover ? IconsPaths.UNKNOWN_HOVER_SEVERITY : IconsPaths.NOT_APPLICABLE_UNKNOWN_SEVERITY;
             case Severity.NotApplicableLow:
+                return hover ? IconsPaths.LOW_HOVER_SEVERITY : IconsPaths.NOT_APPLICABLE_LOW_SEVERITY;
             case Severity.NotApplicableMedium:
+                return hover ? IconsPaths.MEDIUM_HOVER_SEVERITY : IconsPaths.NOT_APPLICABLE_MEDIUM_SEVERITY;
             case Severity.NotApplicableHigh:
+                return hover ? IconsPaths.HIGH_HOVER_SEVERITY : IconsPaths.NOT_APPLICABLE_HIGH_SEVERITY;
             case Severity.NotApplicableCritical:
-                return IconsPaths.NOT_APPLICABLE_SEVERITY;
+                return hover ? IconsPaths.CRITICAL_HOVER_SEVERITY : IconsPaths.NOT_APPLICABLE_CRITICAL_SEVERITY;
             case Severity.Unknown:
                 return hover ? IconsPaths.UNKNOWN_HOVER_SEVERITY : IconsPaths.UNKNOWN_SEVERITY;
             case Severity.Information:

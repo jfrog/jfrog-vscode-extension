@@ -31,17 +31,15 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
      * Add a new decoration to the gutter.
      * @param textEditor Gutter's editor.
      * @param iconPath Gutter's icon path.
-     * @param position Gutter's position in the editor.
+     * @param locations Gutter's positions in the editor.
      */
-    addGutter(textEditor: vscode.TextEditor, iconPath: string, position: vscode.Position[]) {
+    addGutter(textEditor: vscode.TextEditor, iconPath: string, ...locations: vscode.Range[]) {
         if (textEditor) {
-            for (let i: number = 0; i < position.length; i += 2) {
-                const decoration: vscode.TextEditorDecorationType = vscode.window.createTextEditorDecorationType({
-                    gutterIconPath: iconPath
-                });
-                textEditor.setDecorations(decoration, [new vscode.Range(position[i], position[i + 1])]);
-                this._gutterDecorations.push(decoration);
-            }
+            const decoration: vscode.TextEditorDecorationType = vscode.window.createTextEditorDecorationType({
+                gutterIconPath: iconPath
+            });
+            textEditor.setDecorations(decoration, locations);
+            this._gutterDecorations.push(decoration);
         }
     }
 
@@ -54,17 +52,17 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
     createDiagnostics(
         diagnosticId: string,
         msg: string,
-        position: vscode.Position[],
-        diagnosticSeverity: vscode.DiagnosticSeverity = vscode.DiagnosticSeverity.Warning
+        diagnosticSeverity: vscode.DiagnosticSeverity,
+        ...locations: vscode.Range[]
     ): vscode.Diagnostic[] {
-        let diagnostics: vscode.Diagnostic[] = [];
-        for (let i: number = 0; i < position.length; i += 2) {
-            let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(new vscode.Range(position[i], position[i + 1]), msg, diagnosticSeverity);
-            diagnostic.source = this.getSource();
-            diagnostic.code = diagnosticId;
-            diagnostics.push(diagnostic);
-        }
-        return diagnostics;
+        return locations.map(location => this.createDiagnostic(diagnosticId, msg, diagnosticSeverity, location));
+    }
+
+    createDiagnostic(diagnosticId: string, msg: string, diagnosticSeverity: vscode.DiagnosticSeverity, location: vscode.Range): vscode.Diagnostic {
+        let diagnostic: vscode.Diagnostic = new vscode.Diagnostic(location, msg, diagnosticSeverity);
+        diagnostic.source = this.getSource();
+        diagnostic.code = diagnosticId;
+        return diagnostic;
     }
 
     protected getSource(): string {

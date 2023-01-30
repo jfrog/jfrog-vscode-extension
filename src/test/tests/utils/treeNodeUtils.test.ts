@@ -1,4 +1,5 @@
 import { IComponent, IGraphCve, IVulnerability } from 'jfrog-client-js';
+import { IImpactGraph } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
 import { CveTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 import { DependencyIssuesTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
@@ -186,9 +187,9 @@ export function createAndPopulateDescriptor(testData: DescriptorNodeTestData): D
 export function createDummyCveIssue(
     severity: Severity,
     parent: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '1.0.0'),
-    cveId?: string
+    cveId?: string,
+    issueID: string = '' + issueCounter++
 ): CveTreeNode {
-    let issueID: string = '' + issueCounter++;
     let component: IComponent = {
         package_name: parent.name,
         package_version: parent.version,
@@ -210,7 +211,7 @@ export function createDummyCveIssue(
         severity,
         parent,
         component,
-        undefined,
+        {} as IImpactGraph,
         cveNode
     );
     parent.issues.push(node);

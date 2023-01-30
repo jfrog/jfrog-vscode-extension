@@ -1,14 +1,13 @@
 import { IGraphResponse } from 'jfrog-client-js';
+import { IImpactGraph } from 'jfrog-ide-webview';
 import { ApplicabilityScanResponse } from '../scanLogic/scanRunners/applicabilityScan';
 import { EosScanResponse } from '../scanLogic/scanRunners/eosScan';
 import { PackageType } from './projectType';
-import { IImpactedPath } from 'jfrog-ide-webview';
 
 /**
  * Describes all the issue data for a specific workspace from Xray scan
  */
 export class WorkspaceIssuesData {
-    // public readonly path: string;
     public readonly descriptorsIssuesData: DescriptorIssuesData[] = [];
     eosScan: EosScanResponse = {} as EosScanResponse;
     eosScanTimestamp?: number;
@@ -21,7 +20,7 @@ export class WorkspaceIssuesData {
      * @returns true if at least one issue exists
      */
     public hasIssues(): boolean {
-        return this.descriptorsIssuesData.length > 0;
+        return this.descriptorsIssuesData.length > 0 || this.eosScan?.filesWithIssues?.length > 0;
     }
 
     /**
@@ -47,7 +46,7 @@ export interface DescriptorIssuesData extends FileIssuesData {
     type: PackageType;
     graphScanTimestamp: number;
     dependenciesGraphScan: IGraphResponse;
-    impactTreeData: { [issue_id: string]: IImpactedPath };
+    impactTreeData: { [issue_id: string]: IImpactGraph };
     applicableIssues: ApplicabilityScanResponse;
     applicableScanTimestamp?: number;
 }
