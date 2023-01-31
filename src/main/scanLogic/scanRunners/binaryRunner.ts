@@ -165,8 +165,6 @@ export abstract class BinaryRunner {
                 binaryVars.HTTPS_PROXY = 'https://' + this.addOptionalProxyAuthInformation(proxyHttpsUrl);
             }
 
-            this._logManager.logMessage('Eun vars:\n' + JSON.stringify(binaryVars), 'INFO');
-
             return {
                 ...process.env,
                 ...binaryVars
