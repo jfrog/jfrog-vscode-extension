@@ -120,7 +120,7 @@ export class ConnectionUtils {
             if ((<ServerNotActiveError>error).activationUrl) {
                 const answer: string | undefined = await vscode.window.showErrorMessage(
                     (<ServerNotActiveError>error).message,
-                    ...['Activate Server']
+                    'Activate Server'
                 );
                 if (answer === 'Activate Server') {
                     CommandManager.doOpenUrlInBrowser((<ServerNotActiveError>error).activationUrl);
