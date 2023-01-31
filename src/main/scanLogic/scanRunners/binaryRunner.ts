@@ -11,7 +11,6 @@ import { ConnectionManager } from '../../connect/connectionManager';
 import { ConnectionUtils } from '../../connect/connectionUtils';
 import { IProxyConfig } from 'jfrog-client-js';
 import { Configuration } from '../../utils/configuration';
-import { ConnectionManager } from '../../connect/connectionManager';
 import { Resource } from '../../utils/resource';
 
 /**
@@ -44,30 +43,35 @@ export class NotEntitledError extends Error {
  */
 export abstract class BinaryRunner {
     protected _runDirectory: string;
-    private _isSupported: boolean = true;
+    // private _isSupported: boolean = true;
 
     protected static readonly RUNNER_FOLDER: string = 'analyzer-manager';
     private static readonly RUNNER_NAME: string = 'analyzerManager';
 
     private static readonly DOWNLOAD_URL: string = '';
+    private static readonly NOT_ENTITLED: number = 31;
 
     constructor(
         protected _connectionManager: ConnectionManager,
         protected _abortCheckInterval: number,
         protected _logManager: LogManager,
-        protected _binary: Resource = new Resource(
-            BinaryRunner.DOWNLOAD_URL,
-            path.join(ScanUtils.getHomePath(), BinaryRunner.RUNNER_FOLDER, BinaryRunner.getBinaryName()),
-            _logManager
-        )
+        protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager)
     ) {
         this._runDirectory = path.dirname(this._binary.fullPath);
-        this._isSupported = this.validateSupported();
+        // this._isSupported = this.validateSupported();
 
         if (this._abortCheckInterval <= 0) {
             // Default check in 1 sec intervals
             this._abortCheckInterval = 1 * 1000;
         }
+    }
+
+    public static getAnalyzerManagerResource(logManager: LogManager): Resource {
+        return new Resource(
+            BinaryRunner.DOWNLOAD_URL,
+            path.join(ScanUtils.getHomePath(), BinaryRunner.RUNNER_FOLDER, BinaryRunner.getBinaryName()),
+            logManager
+        );
     }
 
     /**
@@ -103,7 +107,7 @@ export abstract class BinaryRunner {
      * Validates that the binary exists and can run
      * @returns true if supported false otherwise
      */
-    protected validateSupported(): boolean {
+    public validateSupported(): boolean {
         return this._binary.isExists();
     }
 
@@ -280,7 +284,7 @@ export abstract class BinaryRunner {
      */
     public async run(abortController: AbortController, split: boolean, ...requests: AnalyzeScanRequest[]): Promise<AnalyzerScanResponse | undefined> {
         // Prepare and validate
-        if (!this._isSupported) {
+        if (!this.validateSupported()) {
             return undefined;
         }
         let args: RunArgs = {
@@ -345,7 +349,7 @@ export abstract class BinaryRunner {
                     throw new NotEntitledError();
                 }
                 this._logManager.logMessage(
-                    "Binary '" + Utils.getLastSegment(this._binaryPath) + "' task ended with status code: " + error.code,
+                    "Binary '" + Utils.getLastSegment(this._binary.fullPath) + "' task ended with status code: " + error.code,
                     'ERR'
                 );
             }
@@ -366,10 +370,7 @@ export abstract class BinaryRunner {
         return analyzerScanResponse;
     }
 
-    /**
-     * Check if the runner is supported and can produce responses
-     */
-    public get isSupported(): boolean {
-        return this._isSupported;
+    public get binary(): Resource {
+        return this._binary;
     }
 }

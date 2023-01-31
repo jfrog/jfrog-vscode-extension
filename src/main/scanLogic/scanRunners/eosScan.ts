@@ -49,7 +49,7 @@ export class EosRunner extends BinaryRunner {
         );
     }
 
-    protected validateSupported(): boolean {
+    public validateSupported(): boolean {
         if (os.platform() !== 'linux' && os.platform() !== 'darwin' && os.platform() !== 'win32') {
             this._logManager.logMessage("Eos scan is not supported on '" + os.platform() + "' os", 'DEBUG');
             return false;

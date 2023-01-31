@@ -37,6 +37,22 @@ export class ScanUtils {
         );
     }
 
+    public static async inBackground(scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>) => Promise<void>,
+    title: string) {
+        title = 'JFrog: ' + title;
+        await vscode.window.withProgress(
+            <vscode.ProgressOptions>{
+                location: vscode.ProgressLocation.Window,
+                title: title,
+                cancellable: false
+            },
+            async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {
+                ScanUtils.checkCanceled(token);
+                await scanCbk(progress);
+            }
+        );
+    }
+
     /**
      * Find go.mod, pom.xml, package.json, *.sln, setup.py, and requirements*.txt files in workspaces.
      * @param workspaceFolders - Base workspace folders to search
