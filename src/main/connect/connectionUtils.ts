@@ -273,8 +273,9 @@ export class ConnectionUtils {
 
     public static addProxyAuthHeader(clientConfig: IJfrogClientConfig) {
         if (clientConfig.proxy) {
-            let proxyAuthHeader: string | undefined = vscode.workspace.getConfiguration().get('http.proxyAuthorization');
+            let proxyAuthHeader: string | undefined = Configuration.getProxyAuth();
             if (proxyAuthHeader && clientConfig.headers) {
+                clientConfig.proxy.proxyAuthorizationHeader = proxyAuthHeader;
                 clientConfig.headers['Proxy-Authorization'] = proxyAuthHeader;
             }
         }
@@ -285,15 +286,18 @@ export class ConnectionUtils {
         if (proxySupport === 'off') {
             return false;
         }
-        let proxyConfig: IProxyConfig = {} as IProxyConfig;
         let httpProxy: string | undefined = vscode.workspace.getConfiguration().get('http.proxy');
-        if (httpProxy) {
-            let proxyUri: URL = new URL(httpProxy);
-            proxyConfig.protocol = proxyUri.protocol;
-            proxyConfig.host = proxyUri.host;
-            if (proxyUri.port) {
-                proxyConfig.port = +proxyUri.port;
-            }
+
+        if (!httpProxy) {
+            return false;
+        }
+
+        let proxyConfig: IProxyConfig = {} as IProxyConfig;
+        let proxyUri: URL = new URL(httpProxy);
+        proxyConfig.protocol = proxyUri.protocol;
+        proxyConfig.host = proxyUri.host;
+        if (proxyUri.port) {
+            proxyConfig.port = +proxyUri.port;
         }
         return proxyConfig;
     }
