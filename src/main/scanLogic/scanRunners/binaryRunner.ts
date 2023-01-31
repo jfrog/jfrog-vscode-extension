@@ -1,5 +1,5 @@
 import * as fs from 'fs';
-
+import * as os from 'os';
 import yaml from 'js-yaml';
 import * as path from 'path';
 
@@ -7,6 +7,10 @@ import { LogManager } from '../../log/logManager';
 import { Utils } from '../../treeDataProviders/utils/utils';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { AnalyzerRequest, AnalyzerScanResponse, AnalyzeScanRequest } from './analyzerModels';
+import { ConnectionManager } from '../../connect/connectionManager';
+import { ConnectionUtils } from '../../connect/connectionUtils';
+import { IProxyConfig } from 'jfrog-client-js';
+import { Configuration } from '../../utils/configuration';
 
 /**
  * Arguments for running binary async
@@ -28,6 +32,10 @@ interface RunRequest {
     responsePaths: string[];
 }
 
+export class NotEntitledError extends Error {
+    message: string = 'User is not entitled to run the binary';
+}
+
 /**
  * Describes a runner for binary executable files.
  * The executable expected to be provided with a path to request file (yaml format) and produce a response file with a result
@@ -36,13 +44,46 @@ export abstract class BinaryRunner {
     protected _runDirectory: string;
     private _isSupported: boolean = true;
 
-    constructor(protected _binaryPath: string, protected _abortCheckInterval: number, protected _logManager: LogManager) {
+    protected static readonly RUNNER_FOLDER: string = 'analyzer-manager';
+    private static readonly RUNNER_NAME: string = 'analyzerManager';
+
+    private static readonly NOT_ENTITLED: number = 31;
+
+    constructor(
+        protected _connectionManager: ConnectionManager,
+        protected _abortCheckInterval: number,
+        protected _logManager: LogManager,
+        protected _binaryPath: string = path.join(ScanUtils.getHomePath(), BinaryRunner.RUNNER_FOLDER, BinaryRunner.getBinaryName())
+    ) {
         this._runDirectory = path.dirname(_binaryPath);
         this._isSupported = this.validateSupported();
+
         if (this._abortCheckInterval <= 0) {
             // Default check in 1 sec intervals
             this._abortCheckInterval = 1 * 1000;
         }
+    }
+
+    /**
+     * Get the binary name for the runner base on the running os
+     * @returns the name of the expected binary file to run
+     */
+    protected static getBinaryName(): string {
+        let name: string = BinaryRunner.RUNNER_NAME;
+        switch (os.platform()) {
+            case 'win32':
+                return name + '_windows.exe';
+            case 'linux':
+                return name + '_linux';
+            case 'darwin':
+                name += '_mac';
+                if (os.arch() === 'arm' || os.arch() === 'arm64') {
+                    return name + '_arm';
+                } else {
+                    return name + '_amd';
+                }
+        }
+        return name;
     }
 
     /**
@@ -70,17 +111,14 @@ export abstract class BinaryRunner {
         let tasksInfo: { activeTasks: number; signal: AbortSignal; tasks: Promise<any>[] } = { activeTasks: 1, signal: abortSignal, tasks: [] };
         // Add execute cmd task
         tasksInfo.tasks.push(
-            ScanUtils.executeCmdAsync('"' + this._binaryPath + '" ' + args.join(' '), this._runDirectory)
+            ScanUtils.executeCmdAsync('"' + this._binaryPath + '" ' + args.join(' '), this._runDirectory, this.createEnvForRun())
                 .then(std => {
                     if (std.stdout && std.stdout.length > 0) {
-                        this._logManager.logMessage(
-                            "Done executing with log '" + Utils.getLastSegment(this._binaryPath) + "', log:\n" + std.stdout,
-                            'DEBUG'
-                        );
+                        this._logManager.logMessage("Done executing '" + Utils.getLastSegment(this._binaryPath) + "', log:\n" + std.stdout, 'DEBUG');
                     }
                     if (std.stderr && std.stderr.length > 0) {
                         this._logManager.logMessage(
-                            "Done executing with error '" + Utils.getLastSegment(this._binaryPath) + "', error log:\n" + std.stderr,
+                            "Done executing '" + Utils.getLastSegment(this._binaryPath) + "' with error, error log:\n" + std.stderr,
                             'ERR'
                         );
                     }
@@ -90,6 +128,70 @@ export abstract class BinaryRunner {
         // Add check abort task
         tasksInfo.tasks.push(this.checkIfAbortedTask(tasksInfo));
         await Promise.all(tasksInfo.tasks);
+    }
+
+    /**
+     * Create the needed environment variables for the runner to run
+     * @returns list of environment variables to use while executing the runner or unidentified if credential not set
+     */
+    private createEnvForRun(): NodeJS.ProcessEnv | undefined {
+        if (this._connectionManager.areXrayCredentialsSet()) {
+            // Platform information
+            let binaryVars: NodeJS.ProcessEnv = {
+                JF_PLATFORM_URL: this._connectionManager.url
+            };
+            if (this._connectionManager.accessToken) {
+                binaryVars.JF_TOKEN = this._connectionManager.accessToken;
+            } else {
+                binaryVars.JF_USER = this._connectionManager.username;
+                binaryVars.JF_PASS = this._connectionManager.password;
+            }
+            // Proxy information - environment variable
+            let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
+            let proxyHttpsUrl: string | undefined = process.env['HTTPS_PROXY'];
+            // Proxy information - vscode configuration override
+            let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
+            if (optional) {
+                let proxyConfig: IProxyConfig = <IProxyConfig>optional;
+                let proxyUrl: string = proxyConfig.host + (proxyConfig.port !== 0 ? ':' + proxyConfig.port : '');
+                proxyHttpUrl = proxyUrl;
+                proxyHttpsUrl = proxyUrl;
+            }
+            // Proxy url
+            if (proxyHttpUrl) {
+                binaryVars.HTTP_PROXY = 'http://' + this.addOptionalProxyAuthInformation(proxyHttpUrl);
+            }
+            if (proxyHttpsUrl) {
+                binaryVars.HTTPS_PROXY = 'https://' + this.addOptionalProxyAuthInformation(proxyHttpsUrl);
+            }
+
+            this._logManager.logMessage('Eun vars:\n' + JSON.stringify(binaryVars), 'INFO');
+
+            return {
+                ...process.env,
+                ...binaryVars
+            };
+        }
+        return undefined;
+    }
+
+    /**
+     * Add optional proxy auth information to the base url if exists
+     * @param url - the base url to add information on
+     * @returns the url with the auth information if exists or the given url if not
+     */
+    private addOptionalProxyAuthInformation(url: string): string {
+        let authOptional: string | undefined = Configuration.getProxyAuth();
+        if (authOptional) {
+            if (authOptional.startsWith('Basic ')) {
+                // We expect the decoded auth string to be in the format: <proxy-user>:<proxy-password>
+                return Buffer.from(authOptional.substring('Basic '.length), 'base64').toString('binary') + '@' + url;
+            } else if (authOptional.startsWith('Bearer ')) {
+                // Access token
+                return url + '?access_token=' + authOptional.substring('Bearer '.length);
+            }
+        }
+        return url;
     }
 
     /**
@@ -198,10 +300,10 @@ export abstract class BinaryRunner {
                         }
                     })
                     .catch(err => {
-                        if (err instanceof ScanCancellationError) {
+                        if (err instanceof ScanCancellationError || err instanceof NotEntitledError) {
                             throw err;
                         }
-                        this._logManager.logError(err, true);
+                        this._logManager.logError(err);
                     })
             );
         }
@@ -229,7 +331,19 @@ export abstract class BinaryRunner {
         // 1. Save requests as yaml file in folder
         fs.writeFileSync(requestPath, request);
         // 2. Run the binary
-        await this.runBinary(abortSignal, requestPath);
+        await this.runBinary(abortSignal, requestPath).catch(error => {
+            if (error.code) {
+                // Not entitled to run binary
+                if (error.code === BinaryRunner.NOT_ENTITLED) {
+                    throw new NotEntitledError();
+                }
+                this._logManager.logMessage(
+                    "Binary '" + Utils.getLastSegment(this._binaryPath) + "' task ended with status code: " + error.code,
+                    'ERR'
+                );
+            }
+            throw error;
+        });
         // 3. Collect responses
         let analyzerScanResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (const responsePath of responsePaths) {
