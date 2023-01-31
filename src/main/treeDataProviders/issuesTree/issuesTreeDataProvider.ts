@@ -74,17 +74,18 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             vscode.window.showInformationMessage('Previous scan still running...');
             return;
         }
+        // Prepare
         this.clearTree();
         this._logManager.showOutput();
+        this.scanInProgress = true;
+        await this._scanManager.updateResources();
         this._logManager.logMessage('Refresh: starting workspace scans 🐸', 'INFO');
-        this._scanInProgress = true;
-        ScanUtils.setScanInProgress(true);
         const startRefreshTimestamp: number = Date.now();
+        // Scan
         await this.scanWorkspaces()
             .catch(error => this._logManager.logError(error, true))
             .finally(() => {
-                this._scanInProgress = false;
-                ScanUtils.setScanInProgress(false);
+                this.scanInProgress = false;
                 this.onChangeFire();
             });
         this._logManager.logMessage('Scans completed 🐸 (elapsed ' + (Date.now() - startRefreshTimestamp) / 1000 + ' seconds)', 'INFO');
@@ -402,7 +403,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 }
             })
             .catch(error => this.onFileScanError(workspaceData, root, error, descriptorData))
-            .finally(() => progressManager.onProgress());
+            .finally(() => progressManager.activateOnProgress());
         // Applicable scan task
         if (!this._scanManager.validateApplicableSupported() || !foundIssues) {
             progressManager.reportProgress();
@@ -677,6 +678,11 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         element: FileTreeNode | DependencyIssuesTreeNode | CveTreeNode | LicenseIssueTreeNode | CodeIssueTreeNode
     ): Thenable<IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | undefined> {
         return Promise.resolve(element.parent);
+    }
+
+    public set scanInProgress(value: boolean) {
+        this._scanInProgress = value;
+        ScanUtils.setScanInProgress(value);
     }
 
     /**

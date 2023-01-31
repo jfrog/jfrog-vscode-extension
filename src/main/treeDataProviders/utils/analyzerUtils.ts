@@ -267,7 +267,7 @@ export class AnalyzerUtils {
             );
 
             root.apply();
-            progressManager.onProgress();
+            progressManager.activateOnProgress();
         }
     }
 

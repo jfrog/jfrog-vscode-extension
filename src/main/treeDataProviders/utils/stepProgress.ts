@@ -16,7 +16,7 @@ export class StepProgress {
 
     constructor(
         private _progress: vscode.Progress<{ message?: string; increment?: number }>,
-        public onProgress: () => void,
+        public onProgress?: () => void,
         totalSteps?: number,
         private _log?: LogManager
     ) {
@@ -40,12 +40,18 @@ export class StepProgress {
         this.currentStepMsg = msg + (this._totalSteps > 1 ? ' (' + this.currentStepsDone + '/' + this._totalSteps + ')' : '');
         this.currentSubstepsCount = subSteps && subSteps > 0 ? subSteps : undefined;
         this._progress.report({ message: msg });
-        try {
-            this.onProgress();
-        } catch (error) {
-            if (error instanceof ScanCancellationError) {
-                this.abortController.abort();
-                throw error;
+        this.activateOnProgress();
+    }
+
+    public activateOnProgress() {
+        if (this.onProgress) {
+            try {
+                this.onProgress();
+            } catch (error) {
+                if (error instanceof ScanCancellationError) {
+                    this.abortController.abort();
+                    throw error;
+                }
             }
         }
     }
@@ -65,14 +71,7 @@ export class StepProgress {
     public reportProgress(inc: number = this.getStepIncValue) {
         if (this.currentStepMsg) {
             this._progress.report({ message: this.currentStepMsg, increment: inc });
-            try {
-                this.onProgress();
-            } catch (error) {
-                if (error instanceof ScanCancellationError) {
-                    this.abortController.abort();
-                    throw error;
-                }
-            }
+            this.activateOnProgress();
         }
     }
 
