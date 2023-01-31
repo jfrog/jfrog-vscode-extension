@@ -37,6 +37,18 @@ export class ScanUtils {
         );
     }
 
+    public static getUniqueDirectories(filePaths: vscode.Uri[]): string[] {
+        let roots: string[] = [];
+        for (const filePath of filePaths) {
+            let directory: string = path.dirname(filePath.fsPath);
+            if (!roots.includes(directory)) {
+                roots.push(directory);
+            }
+        }
+
+        return roots;
+    }
+
     /**
      * Find go.mod, pom.xml, package.json, *.sln, setup.py, and requirements*.txt files in workspaces.
      * @param workspaceFolders - Base workspace folders to search

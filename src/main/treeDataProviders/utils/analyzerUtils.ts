@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import * as os from 'os';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
 import { CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
@@ -11,13 +10,14 @@ import { DescriptorTreeNode } from '../issuesTree/descriptorTree/descriptorTreeN
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
-import { PackageType } from '../../types/projectType';
+import { PackageType, toPackageType } from '../../types/projectType';
 import { StepProgress } from './stepProgress';
 import { EosIssue, EosIssueLocation, EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
 import { ScanManager } from '../../scanLogic/scanManager';
 import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
 import { DescriptorIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
 import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
+import { ScanUtils } from '../../utils/scanUtils';
 
 export class AnalyzerUtils {
     /**
@@ -191,6 +191,64 @@ export class AnalyzerUtils {
         return issuesCount;
     }
 
+    public static async createEosRequestsByType(type: PackageType, workspace: vscode.Uri, splitRequests: boolean = true): Promise<EosScanRequest[]> {
+        let pattern: string | undefined;
+        let language: string | undefined;
+        switch (type) {
+            case PackageType.Python:
+                pattern = '**/*.py';
+                language = 'python';
+                break;
+        }
+        if (!pattern || !language) {
+            return [];
+        }
+        let files: vscode.Uri[] = await vscode.workspace.findFiles({
+            baseUri: workspace,
+            base: workspace.fsPath,
+            pattern: pattern
+        });
+        return this.createEosRequests(language, files, splitRequests);
+    }
+
+    public static createEosRequestsByDescriptors(
+        descriptorsType: PackageType,
+        descriptorPaths: vscode.Uri[],
+        splitRequests: boolean = true
+    ): EosScanRequest[] {
+        let language: string | undefined;
+        switch (descriptorsType) {
+            case PackageType.Python:
+                language = 'python';
+                break;
+        }
+        if (language) {
+            return this.createEosRequests(language, descriptorPaths, splitRequests);
+        }
+        return [];
+    }
+
+    private static createEosRequests(language: string, filesToScan: vscode.Uri[], splitRequests: boolean = true): EosScanRequest[] {
+        let roots: string[] = ScanUtils.getUniqueDirectories(filesToScan);
+        if (roots.length > 0) {
+            return splitRequests
+                ? roots.map(
+                      root =>
+                          ({
+                              language: language,
+                              roots: [root]
+                          } as EosScanRequest)
+                  )
+                : [
+                      {
+                          language: language,
+                          roots: Array.from(roots)
+                      } as EosScanRequest
+                  ];
+        }
+        return [];
+    }
+
     /**
      *  Run eos scan async task
      * @param workspaceData - the issues data for the workspace
@@ -208,38 +266,21 @@ export class AnalyzerUtils {
         progressManager: StepProgress,
         splitRequests: boolean = true
     ): Promise<any> {
+        // Validate
         if (!scanManager.validateEosSupported()) {
             progressManager.reportProgress();
             return;
         }
-        // Prepare
+        // Create Requests
         let requests: EosScanRequest[] = [];
-        for (const [type, descriptorPaths] of workspaceDescriptors) {
-            let language: string | undefined;
-            switch (type) {
-                case PackageType.Python:
-                    language = 'python';
-                    break;
+        if (workspaceDescriptors.size > 0) {
+            for (const [type, descriptorPaths] of workspaceDescriptors) {
+                requests.push(...this.createEosRequestsByDescriptors(type, descriptorPaths, splitRequests));
             }
-            if (language) {
-                let roots: Set<string> = new Set<string>();
-                for (const descriptorPath of descriptorPaths) {
-                    let directory: string = path.dirname(descriptorPath.fsPath);
-                    if (!roots.has(directory)) {
-                        roots.add(directory);
-                        if (splitRequests) {
-                            requests.push({
-                                language: language,
-                                roots: [directory]
-                            } as EosScanRequest);
-                        }
-                    }
-                }
-                if (!splitRequests && roots.size > 0) {
-                    requests.push({
-                        language: language,
-                        roots: Array.from(roots)
-                    } as EosScanRequest);
+        } else {
+            for (let type in PackageType) {
+                if (isNaN(Number(type))) {
+                    requests.push(...(await this.createEosRequestsByType(toPackageType(type), root.workSpace.uri, splitRequests)));
                 }
             }
         }
