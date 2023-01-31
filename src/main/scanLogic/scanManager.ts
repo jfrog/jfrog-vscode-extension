@@ -1,3 +1,5 @@
+import * as vscode from 'vscode';
+
 import { ExtensionComponent } from '../extensionComponent';
 
 import { LogManager } from '../log/logManager';
@@ -11,12 +13,17 @@ import { ApplicabilityRunner, ApplicabilityScanResponse } from './scanRunners/ap
 import { EosRunner, EosScanRequest, EosScanResponse } from './scanRunners/eosScan';
 import { AnalyzerUtils } from '../treeDataProviders/utils/analyzerUtils';
 import { Configuration } from '../utils/configuration';
+import { Resource } from '../utils/resource';
+import { BinaryRunner } from './scanRunners/binaryRunner';
+import { ScanUtils } from '../utils/scanUtils';
+import { StepProgress } from '../treeDataProviders/utils/stepProgress';
 
 /**
  * Manage all the Xray scans
  */
 export class ScanManager implements ExtensionComponent {
-    private static readonly BINARY_ABORT_CHECK_INTERVAL: number = 1 * 1000; // every 1 sec
+    private static readonly BINARY_ABORT_CHECK_INTERVAL: number = 1000; // every 1 sec
+    private static readonly RESOURCE_CHECK_UPDATE_INTERVAL: number = 1000 * 60 * 60 * 24; // every day
 
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
@@ -33,6 +40,33 @@ export class ScanManager implements ExtensionComponent {
     }
 
     /**
+     * Updates all the resources that are outdated
+     * @returns true if all the outdated resources updated successfully, false otherwise
+     */
+    public async updateResources(): Promise<boolean> {
+        let resources: Resource[] = await this.getOutdatedResources();
+        if (resources.length === 0) {
+            // Noting to do
+            return true;
+        }
+        this._logManager.logMessage('Updating ' + resources.length + ' outdated extension resources', 'INFO');
+        let updatePromises: Promise<boolean>[] = [];
+        let results: boolean[] = [];
+        // Update
+        await ScanUtils.inBackground(async (progress: vscode.Progress<{ message?: string; increment?: number }>) => {
+            let progressManager: StepProgress = new StepProgress(progress);
+            progressManager.startStep('Updating ' + resources.length + ' resources', resources.length);
+            resources.forEach(async resource => updatePromises.push(resource.update().finally(() => progressManager.reportProgress())));
+            results = await Promise.all(updatePromises);
+        },'Update outdated resources');
+        return results.reduce((accumulator, currentValue) => accumulator && currentValue, true);
+    }
+
+    private async getOutdatedResources(): Promise<Resource[]> {
+        return [BinaryRunner.getAnalyzerManagerResource(this._logManager)].filter(async resource => await resource.isOutdated());
+    }
+
+    /**
      * Validate if the graph-scan is supported in the Xray version
      */
     public async validateGraphSupported(): Promise<boolean> {
@@ -43,14 +77,14 @@ export class ScanManager implements ExtensionComponent {
      * Validate if the applicable-scan is supported
      */
     public validateApplicableSupported(): boolean {
-        return new ApplicabilityRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).isSupported;
+        return new ApplicabilityRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).validateSupported();
     }
 
     /**
      * Validate if the eos-scan is supported
      */
     public validateEosSupported(): boolean {
-        return new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).isSupported;
+        return new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).validateSupported();
     }
 
     /**
@@ -80,7 +114,7 @@ export class ScanManager implements ExtensionComponent {
             ScanManager.BINARY_ABORT_CHECK_INTERVAL,
             this._logManager
         );
-        if (!applicableRunner.isSupported) {
+        if (!applicableRunner.validateSupported()) {
             this._logManager.logMessage('Applicability scan is not supported', 'DEBUG');
             return {} as ApplicabilityScanResponse;
         }
@@ -91,7 +125,7 @@ export class ScanManager implements ExtensionComponent {
 
     public async scanEos(abortController: AbortController, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
         let eosRunner: EosRunner = new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager);
-        if (!eosRunner.isSupported) {
+        if (!eosRunner.validateSupported()) {
             this._logManager.logMessage('Eos scan is not supported', 'DEBUG');
             return {} as EosScanResponse;
         }

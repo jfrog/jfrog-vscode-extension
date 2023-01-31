@@ -7,23 +7,24 @@ import { Utils } from '../treeDataProviders/utils/utils';
 import { ScanUtils } from './scanUtils';
 
 /**
- * Represent a resource file that is fetched (downloaded) from a source and can be updated if outdated.
+ * Represent a resource file that is fetched (download) from a source URL and can be updated from it if outdated.
  */
 export class Resource {
+    private static readonly DEFAULT_SERVER: string = 'https://releases.jfrog.io';
+
     private _connectionManager: JfrogClient;
     // Resource's sha256
     private sha2: string | undefined;
 
     constructor(
-        private _sourceUrl: string,
+        public readonly sourceUrl: string,
         private _targetPath: string,
         private _logManager: LogManager,
         connectionManager?: JfrogClient,
         private _mode: fs.Mode = '755'
     ) {
         this._connectionManager =
-            connectionManager ??
-            ConnectionUtils.createJfrogClient('https://releases.jfrog.io', 'https://releases.jfrog.io/artifactory', '', '', '', '');
+            connectionManager ?? ConnectionUtils.createJfrogClient(Resource.DEFAULT_SERVER, Resource.DEFAULT_SERVER + '/artifactory', '', '', '', '');
     }
 
     /**
@@ -33,10 +34,10 @@ export class Resource {
     public async update(): Promise<boolean> {
         const hasUpdate: boolean = await this.isOutdated();
         if (!hasUpdate) {
-            this._logManager.logMessage('Resource ' + this._targetPath + ' is the latest version', 'DEBUG');
+            this._logManager.logMessage('Resource ' + this._targetPath + ' is not outdated.', 'DEBUG');
             return false;
         }
-        this._logManager.logMessage('Starting to update resource ' + this._targetPath + ' from ' + this._sourceUrl, 'INFO');
+        this._logManager.logMessage('Starting to update resource ' + this._targetPath + ' from ' + this.sourceUrl, 'INFO');
         // Remove old
         if (this.isExists()) {
             fs.rmSync(this._targetPath);
@@ -51,7 +52,7 @@ export class Resource {
         await this._connectionManager
             .artifactory()
             .download()
-            .downloadArtifactToFile(this._sourceUrl, this._targetPath);
+            .downloadArtifactToFile(this.sourceUrl, this._targetPath);
         // Give permissions
         fs.chmodSync(this._targetPath, this._mode);
         this._logManager.logMessage('Resource ' + this._targetPath + ' was successfully updated.', 'INFO');
@@ -75,12 +76,16 @@ export class Resource {
         if (!this.isExists()) {
             return true;
         }
+        // Check only if a given amount of time passed
+        if (this.createTime) {
+            //
+        }
         // Check if has update - compare the sha256 of the resource with the latest released resource.
         let checksumResult: IChecksumResult = { sha256: '', sha1: '', md5: '' };
         checksumResult = await this._connectionManager
             .artifactory()
             .download()
-            .getArtifactChecksum(this._sourceUrl);
+            .getArtifactChecksum(this.sourceUrl);
         if (!this.sha2) {
             const fileBuffer: Buffer = fs.readFileSync(this._targetPath);
             this.sha2 = ScanUtils.Hash('sha256', fileBuffer.toString());
@@ -88,7 +93,20 @@ export class Resource {
         return checksumResult.sha256 !== this.sha2;
     }
 
+    public shouldCheckOutdated(): boolean {
+        return (Date.now() - this.createTime) > 
+    }
+
+    public get createTime(): number {
+        return fs.statSync(this._targetPath).birthtimeMs;
+    }
+
     public get fullPath(): string {
         return this._targetPath;
     }
+
+    public get name(): string {
+        return Utils.getLastSegment(this.fullPath);
+    }
 }
+
