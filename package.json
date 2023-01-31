@@ -28,7 +28,7 @@
         "viewsWelcome": [
             {
                 "view": "jfrog.issues",
-                "contents": "🐸 Thank you for installing the JFrog VS Code extension 🐸\nWith this extension, you can scan your workspace for for vulnerabilities and security issues.\nJFrog Security data on each security issues and resolutions include:\n* Security issues are marked in the editor for easy visibility\n* Xray dependency scans\n* Run Contextual Analysis and receive applicability data for each discovered CVE\n* CI View for builds in your CI system regardless of the CI provider used\nLet's get started:\n[Enter your JFrog Platform connection details](command:jfrog.xray.connect)\n[Let us create a FREE JFrog Platform for you](https://github.com/jfrog/jfrog-vscode-extension#set-up-a-free-jfrog-environment-in-the-cloud)",
+                "contents": "🐸 Thank you for installing the JFrog VS Code extension 🐸\nWith this extension, you can scan your workspace for vulnerabilities and security issues.\nJFrog Security data on each security issue and resolution includes:\n* Security issues are marked in the editor for easy visibility\n* Xray dependency scans\n* Run Contextual Analysis and receive applicability data for each discovered CVE\n* CI View for builds in your CI system regardless of the CI provider used\nLet's get started:\n[Enter your JFrog Platform connection details](command:jfrog.xray.connect)\n[Let us create a FREE JFrog Platform for you](https://github.com/jfrog/jfrog-vscode-extension#set-up-a-free-jfrog-environment-in-the-cloud)",
                 "when": "jfrog.connection.status == signedOut || !jfrog.connection.status"
             },
             {
@@ -96,7 +96,7 @@
                         "type": "string"
                     },
                     "scope": "application",
-                    "markdownDescription": "Add one or more Xray Watches, to reflect the security policies required by your organization.\n\nIf both “Project Key” and “Watches” are configured, VS Code will use the configured Watches, and not the Project Key to determine the policy for for the security scanning."
+                    "markdownDescription": "Add one or more Xray Watches, to reflect the security policies required by your organization.\n\nIf both “Project Key” and “Watches” are configured, VS Code will use the configured Watches, and not the Project Key to determine the policy for the security scanning."
                 },
                 "jfrog.logLevel": {
                     "type": "string",
