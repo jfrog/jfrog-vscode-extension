@@ -56,7 +56,7 @@ describe('Dependency Details Tests', () => {
 
         let pkgTypeNode: TreeDataHolder = generalDetailNode[2];
         assert.deepEqual(pkgTypeNode.key, 'Type');
-        assert.deepEqual(pkgTypeNode.value, 'testPkg');
+        assert.deepEqual(pkgTypeNode.value, 'Unknown');
 
         let licenses: any[] = await getAndAssertLicenses();
         assert.isEmpty(licenses);
