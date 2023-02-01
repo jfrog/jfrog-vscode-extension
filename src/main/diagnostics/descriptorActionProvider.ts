@@ -101,7 +101,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
     }
 
     /**
-     * Creates code actions in the editor that update a vulnerable dependency to it's fixed version.
+     * Creates code actions in the editor that update a vulnerable dependency to its fixed version.
      * @param dependency - The vulnerable dependency.
      * @returns - Fixed versions that are available for updating.
      */

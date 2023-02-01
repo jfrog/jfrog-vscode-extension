@@ -14,7 +14,7 @@ export abstract class AbstractDependencyUpdate {
     /**
      * Update the dependency version in the project descriptor (i.e pom.xml).
      * @param dependency - The dependencies tree node.
-     * @param version - This is the new version to update to
+     * @param version - This is the new version to update to.
      */
     public abstract update(dependency: DependencyIssuesTreeNode, version: string): void;
 }

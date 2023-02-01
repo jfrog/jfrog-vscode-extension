@@ -34,7 +34,7 @@ export class DependencyUpdateManager implements ExtensionComponent {
         return false;
     }
 
-    public getUpdateManager(dependency: DependencyIssuesTreeNode) {
+    public getUpdateManager(dependency: DependencyIssuesTreeNode): AbstractDependencyUpdate | undefined {
         return this._dependencyUpdaters.find(manager => manager.isMatched(dependency));
     }
 }
