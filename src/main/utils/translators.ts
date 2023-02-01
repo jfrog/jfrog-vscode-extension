@@ -175,7 +175,7 @@ export class Translators {
 
         return extendedInfo;
     }
-    
+
     public static cleanVersionParentheses(version: string) {
         return version.replace(/[\][]/g, '');
     }

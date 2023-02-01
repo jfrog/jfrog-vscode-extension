@@ -45,7 +45,7 @@ export class GeneralInfo {
     public get pkgType(): PackageType {
         return this._pkgType;
     }
-    
+
     public set pkgType(pkgType: PackageType) {
         this._pkgType = pkgType;
     }

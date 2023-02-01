@@ -128,9 +128,9 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     public getFixedVersionToCves() {
         const versionToCves: Map<string, Set<string>> = new Map<string, Set<string>>();
         this.getCveIssues().forEach((issue: CveTreeNode) => {
-            issue.fixedVersions?.forEach((fixedVersion: string)  => {
+            issue.fixedVersions?.forEach((fixedVersion: string) => {
                 const cve: string = issue.cve?.cve || issue.issueId;
-                const cves: Set<string> | undefined = versionToCves.get(fixedVersion)
+                const cves: Set<string> | undefined = versionToCves.get(fixedVersion);
                 if (cves) {
                     cves.add(cve);
                 } else {

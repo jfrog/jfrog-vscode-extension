@@ -581,7 +581,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         const tree: FileTreeNode | undefined = this.getFileIssuesTree(filePath);
         return tree instanceof DescriptorTreeNode ? tree : undefined;
     }
-    
+
     public getCodeIssueTree(filePath: string): CodeFileTreeNode | undefined {
         const tree: FileTreeNode | undefined = this.getFileIssuesTree(filePath);
         return tree instanceof CodeFileTreeNode ? tree : undefined;

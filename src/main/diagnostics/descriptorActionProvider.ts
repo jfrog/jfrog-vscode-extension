@@ -123,7 +123,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
         return action;
     }
 
-    private createFixActionMessage(fixedVersion: string, cves: Set<string>):string {
+    private createFixActionMessage(fixedVersion: string, cves: Set<string>): string {
         let message: string = `Update to version ${fixedVersion} fixes the issue`;
         if (cves.size > 1) {
             message += 's';
