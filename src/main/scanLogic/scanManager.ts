@@ -25,7 +25,7 @@ export class ScanManager implements ExtensionComponent {
     private static readonly BINARY_ABORT_CHECK_INTERVAL: number = 1000; // every 1 sec
     private static readonly RESOURCE_CHECK_UPDATE_INTERVAL: number = 1000 * 60 * 60 * 24; // every day
 
-    private static checkedOutdatedTimestamp: number;
+    private static lastOutdatedTimestamp: number;
 
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
@@ -51,16 +51,29 @@ export class ScanManager implements ExtensionComponent {
             // Noting to do
             return true;
         }
-        this._logManager.logMessage('Updating ' + resources.length + ' outdated extension resources', 'INFO');
+        this._logManager.logMessage(
+            'Updating outdated resources (' + resources.length + '): ' + resources.map(resource => resource.name).join(),
+            'INFO'
+        );
         let updatePromises: Promise<boolean>[] = [];
         let results: boolean[] = [];
         // Update
-        await ScanUtils.inBackground(async (progress: vscode.Progress<{ message?: string; increment?: number }>) => {
+        await ScanUtils.backgroundTask(async (progress: vscode.Progress<{ message?: string; increment?: number }>) => {
             let progressManager: StepProgress = new StepProgress(progress);
-            progressManager.startStep('Updating ' + resources.length + ' resources', resources.length);
-            resources.forEach(async resource => updatePromises.push(resource.update().finally(() => progressManager.reportProgress())));
+            progressManager.startStep('Update outdated resources', resources.length);
+            resources.forEach(async resource =>
+                updatePromises.push(
+                    resource
+                        .update()
+                        .catch(err => {
+                            this._logManager.logError(<Error>err);
+                            return false;
+                        })
+                        .finally(() => progressManager.reportProgress())
+                )
+            );
             results = await Promise.all(updatePromises);
-        }, 'Update outdated resources');
+        });
         let result: boolean = results.reduce((accumulator, currentValue) => accumulator && currentValue, true);
         this._logManager.logMessage(
             'Updating outdated extension resources finished ' + (result ? 'successfully' : 'with error'),
@@ -70,12 +83,33 @@ export class ScanManager implements ExtensionComponent {
     }
 
     private async getOutdatedResources(): Promise<Resource[]> {
-        let now: number = Date.now();
-        if (!ScanManager.checkedOutdatedTimestamp || now - ScanManager.checkedOutdatedTimestamp > ScanManager.RESOURCE_CHECK_UPDATE_INTERVAL) {
-            ScanManager.checkedOutdatedTimestamp = now;
-            return [BinaryRunner.getAnalyzerManagerResource(this._logManager)].filter(async resource => await resource.isOutdated());
+        if (this.shouldCheckOutdated()) {
+            ScanManager.lastOutdatedTimestamp = Date.now();
+            let promises: Promise<boolean>[] = [];
+            let outdatedResources: Resource[] = [];
+            for (const resource of this.getResources()) {
+                promises.push(
+                    resource.isOutdated().then(outdated => {
+                        if (outdated) {
+                            outdatedResources.push(resource);
+                        }
+                        return outdated;
+                    })
+                );
+            }
+            await Promise.all(promises);
+            return outdatedResources;
         }
         return [];
+    }
+
+    private shouldCheckOutdated(): boolean {
+        let now: number = Date.now();
+        return !ScanManager.lastOutdatedTimestamp || now - ScanManager.lastOutdatedTimestamp > ScanManager.RESOURCE_CHECK_UPDATE_INTERVAL;
+    }
+
+    private getResources(): Resource[] {
+        return [BinaryRunner.getAnalyzerManagerResource(this._logManager)];
     }
 
     /**

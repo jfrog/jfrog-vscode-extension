@@ -43,13 +43,13 @@ export class NotEntitledError extends Error {
  */
 export abstract class BinaryRunner {
     protected _runDirectory: string;
-    // private _isSupported: boolean = true;
 
     protected static readonly RUNNER_FOLDER: string = 'analyzer-manager';
     private static readonly RUNNER_NAME: string = 'analyzerManager';
 
-    private static readonly DOWNLOAD_URL: string = '';
     private static readonly NOT_ENTITLED: number = 31;
+
+    private static readonly DOWNLOAD_URL: string = '';
 
     constructor(
         protected _connectionManager: ConnectionManager,
@@ -68,7 +68,7 @@ export abstract class BinaryRunner {
 
     public static getAnalyzerManagerResource(logManager: LogManager): Resource {
         return new Resource(
-            BinaryRunner.DOWNLOAD_URL,
+            BinaryRunner.DOWNLOAD_URL + BinaryRunner.getBinaryName(),
             path.join(ScanUtils.getHomePath(), BinaryRunner.RUNNER_FOLDER, BinaryRunner.getBinaryName()),
             logManager
         );
@@ -125,7 +125,7 @@ export abstract class BinaryRunner {
                 .then(std => {
                     if (std.stdout && std.stdout.length > 0) {
                         this._logManager.logMessage(
-                            "Done executing with log '" + Utils.getLastSegment(this._binary.fullPath) + "', log:\n" + std.stdout,
+                            "Done executing '" + Utils.getLastSegment(this._binary.fullPath) + "' with log, log:\n" + std.stdout,
                             'DEBUG'
                         );
                     }

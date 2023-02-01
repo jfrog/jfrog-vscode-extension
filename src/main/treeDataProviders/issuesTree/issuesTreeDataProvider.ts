@@ -73,22 +73,23 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         if (this._scanInProgress) {
             vscode.window.showInformationMessage('Previous scan still running...');
             return;
+        } else {
+            // Prepare
+            this.scanInProgress = true;
+            this._logManager.showOutput();
+            await this._scanManager.updateResources();
+            // Scan
+            this._logManager.logMessage('Refresh: starting workspace scans 🐸', 'INFO');
+            this.clearTree();
+            const startRefreshTimestamp: number = Date.now();
+            await this.scanWorkspaces()
+                .catch(error => this._logManager.logError(error, true))
+                .finally(() => {
+                    this.scanInProgress = false;
+                    this.onChangeFire();
+                });
+            this._logManager.logMessage('Scans completed 🐸 (elapsed ' + (Date.now() - startRefreshTimestamp) / 1000 + ' seconds)', 'INFO');
         }
-        // Prepare
-        this.clearTree();
-        this._logManager.showOutput();
-        this.scanInProgress = true;
-        await this._scanManager.updateResources();
-        this._logManager.logMessage('Refresh: starting workspace scans 🐸', 'INFO');
-        const startRefreshTimestamp: number = Date.now();
-        // Scan
-        await this.scanWorkspaces()
-            .catch(error => this._logManager.logError(error, true))
-            .finally(() => {
-                this.scanInProgress = false;
-                this.onChangeFire();
-            });
-        this._logManager.logMessage('Scans completed 🐸 (elapsed ' + (Date.now() - startRefreshTimestamp) / 1000 + ' seconds)', 'INFO');
     }
 
     /**

@@ -14,8 +14,8 @@ export class Resource {
     private static readonly DEFAULT_SERVER: string = 'https://releases.jfrog.io';
 
     private _connectionManager: JfrogClient;
-    // Resource's sha256
-    private sha2: string | undefined;
+    // Cached remote resource's sha256
+    private _remoteSha256: string | undefined;
 
     private _targetDir: string;
     private _name: string;
@@ -29,31 +29,43 @@ export class Resource {
     ) {
         this._connectionManager =
             connectionManager ?? ConnectionUtils.createJfrogClient(Resource.DEFAULT_SERVER, Resource.DEFAULT_SERVER + '/artifactory', '', '', '', '');
-            this._name = Utils.getLastSegment(this._targetPath);
-            this._targetDir = path.dirname(this._targetPath);
+        this._name = Utils.getLastSegment(this._targetPath);
+        this._targetDir = path.dirname(this._targetPath);
     }
 
+    /**
+     * Download the resource to the given folder
+     * @param downloadToFolder - the folder that the resource will be downloaded to
+     * @returns the full path of the file that was downloaded successfully, undefined otherwise
+     */
     private async downloadToFolder(downloadToFolder: string = this._targetDir): Promise<string | undefined> {
-        let resourcePath: string = path.join(downloadToFolder,this._name);
         try {
+            let resourcePath: string = path.join(downloadToFolder, this._name);
             // Download new
             await this._connectionManager
-            .artifactory()
-            .download()
-            .downloadArtifactToFile(this.sourceUrl, resourcePath);
+                .artifactory()
+                .download()
+                .downloadArtifactToFile(this.sourceUrl, resourcePath);
+            return this.calculateLocalChecksum(resourcePath) === this._remoteSha256 ? resourcePath : undefined;
         } catch (err) {
             this._logManager.logError(<Error>err);
             return undefined;
         }
-        return resourcePath;
     }
 
-    private async copyToTarget(filePath: string) {
+    /**
+     * Copy the given file to the target path, override the file if already exists.
+     * Gives the configured permission to it and creates the target directory if not exists.
+     * @param filePath - the file to copy
+     */
+    private async copyToTargetAndApplyPermissions(filePath: string) {
         if (this.isExists()) {
+            // Remove old file
             fs.rmSync(this._targetPath);
         } else if (!fs.existsSync(this._targetDir)) {
-            fs.mkdirSync(this._targetDir);
-        }   
+            // Make sure target directory exist
+            fs.mkdirSync(this._targetDir, { recursive: true } as fs.MakeDirectoryOptions);
+        }
         fs.copyFileSync(filePath, this._targetPath);
         fs.chmodSync(this._targetPath, this._mode);
     }
@@ -65,13 +77,14 @@ export class Resource {
     public async update(): Promise<boolean> {
         let tmpFolder: string = ScanUtils.createTmpDir();
         try {
-            this._logManager.logMessage('Starting to update resource ' + this._targetPath + ' from ' + this.sourceUrl, 'INFO');
+            this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this.sourceUrl, 'DEBUG');
             let resourceTmpPath: string | undefined = await this.downloadToFolder(tmpFolder);
             if (!resourceTmpPath) {
+                this._logManager.logMessage('Resource ' + this._name + ' update failed.', 'ERR');
                 return false;
             }
-            this.copyToTarget(resourceTmpPath);
-            this._logManager.logMessage('Resource ' + this._targetPath + ' was update successfully.', 'INFO');
+            this.copyToTargetAndApplyPermissions(resourceTmpPath);
+            this._logManager.logMessage('Resource ' + this._name + ' was update successfully.', 'DEBUG');
             return true;
         } finally {
             ScanUtils.removeFolder(tmpFolder);
@@ -96,26 +109,33 @@ export class Resource {
             return true;
         }
         // Check if has update - compare the sha256 of the resource with the latest released resource.
-        let checksumResult: IChecksumResult = { sha256: '', sha1: '', md5: '' };
-        try {
-            checksumResult = await this._connectionManager
-            .artifactory()
-            .download()
-            .getArtifactChecksum(this.sourceUrl);
-        } catch (err) {
-            this._logManager.logError(<Error>err);
-            // In case of failure download anyway
+        this._remoteSha256 = await this.calculateRemoteChecksum();
+        if (!this._remoteSha256) {
+            // In case of failure download anyway to make sure
             return true;
         }
-        if (!this.sha2) {
-            const fileBuffer: Buffer = fs.readFileSync(this._targetPath);
-            this.sha2 = ScanUtils.Hash('sha256', fileBuffer.toString());
-        }
-        return checksumResult.sha256 !== this.sha2;
+        return this._remoteSha256 !== this.calculateLocalChecksum(this._targetPath);
     }
 
-    public get createTime(): number {
-        return fs.statSync(this._targetPath).birthtimeMs;
+    private async calculateRemoteChecksum(): Promise<string | undefined> {
+        try {
+            let checksumResult: IChecksumResult = await this._connectionManager
+                .artifactory()
+                .download()
+                .getArtifactChecksum(this.sourceUrl);
+            return checksumResult ? checksumResult.sha256 : undefined;
+        } catch (err) {
+            this._logManager.logError(<Error>err);
+            return undefined;
+        }
+    }
+
+    private calculateLocalChecksum(filePath: string): string | undefined {
+        if (!fs.existsSync(filePath)) {
+            return undefined;
+        }
+        const fileBuffer: Buffer = fs.readFileSync(filePath);
+        return ScanUtils.Hash('sha256', fileBuffer.toString());
     }
 
     public get fullPath(): string {
