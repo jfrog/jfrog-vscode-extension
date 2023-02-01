@@ -18,14 +18,13 @@ import { DependencyUpdateManager } from './main/dependencyUpdate/dependencyUpdat
  * @param context - The extension context
  */
 export async function activate(context: vscode.ExtensionContext) {
-    let workspaceFolders: vscode.WorkspaceFolder[] = vscode.workspace.workspaceFolders?.map(el => el) || [];
-    let logManager: LogManager = new LogManager().activate();
-    let connectionManager: ConnectionManager = await new ConnectionManager(logManager).activate(context);
-    let scanManager: ScanManager = new ScanManager(connectionManager, logManager).activate();
-    let cacheManager: CacheManager = new CacheManager().activate(context);
-
-    let scanCacheManager: ScanCacheManager = new ScanCacheManager().activate(context); // TODO: remove when refactoring builds.
-    let treesManager: TreesManager = await new TreesManager(
+    const workspaceFolders: vscode.WorkspaceFolder[] = vscode.workspace.workspaceFolders?.map(el => el) || [];
+    const logManager: LogManager = new LogManager().activate();
+    const connectionManager: ConnectionManager = await new ConnectionManager(logManager).activate(context);
+    const scanManager: ScanManager = new ScanManager(connectionManager, logManager).activate();
+    const cacheManager: CacheManager = new CacheManager().activate(context);
+    const scanCacheManager: ScanCacheManager = new ScanCacheManager().activate(context); // TODO: remove when refactoring builds.
+    const treesManager: TreesManager = await new TreesManager(
         workspaceFolders,
         connectionManager,
         scanCacheManager,
@@ -34,14 +33,13 @@ export async function activate(context: vscode.ExtensionContext) {
         logManager
     ).activate(context);
 
-    let filterManager: FilterManager = new FilterManager(treesManager, scanCacheManager).activate();
-    let buildsManager: BuildsManager = new BuildsManager(treesManager).activate();
-
-    let diagnosticManager: DiagnosticsManager = new DiagnosticsManager(treesManager).activate(context);
+    const filterManager: FilterManager = new FilterManager(treesManager, scanCacheManager).activate();
+    const buildsManager: BuildsManager = new BuildsManager(treesManager).activate();
+    const dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager(logManager).activate();
+    const diagnosticManager: DiagnosticsManager = new DiagnosticsManager(treesManager, dependencyUpdateManager).activate(context);
     new DetailsWebView(logManager).activate(context);
-    new CodeLensManager().activate(context);
-    let dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager(logManager).activate();
 
+    new CodeLensManager().activate(context);
     new CommandManager(
         logManager,
         connectionManager,

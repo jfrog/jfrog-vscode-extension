@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
+import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
 import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { DescriptorTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { IssueTreeNode } from '../treeDataProviders/issuesTree/issueTreeNode';
+import { TreesManager } from '../treeDataProviders/treesManager';
 import { DescriptorUtils } from '../treeDataProviders/utils/descriptorUtils';
 import { PackageType } from '../types/projectType';
 import { Severity, SeverityUtils } from '../types/severity';
@@ -32,6 +34,10 @@ interface DirectDependencyIssue {
  */
 export class DescriptorActionProvider extends AbstractFileActionProvider implements vscode.CodeActionProvider {
     private _processedMap: Map<vscode.Uri, Map<string, DirectDependencyInfo>> = new Map<vscode.Uri, Map<string, DirectDependencyInfo>>();
+
+    constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager, private updateManager: DependencyUpdateManager) {
+        super(diagnosticCollection, treesManager);
+    }
 
     /** @Override */
     public activate(context: vscode.ExtensionContext) {
@@ -93,6 +99,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
     private getDescriptorDependencies(file: vscode.Uri) {
         return this._processedMap.get(file);
     }
+
     /**
      * Creates code actions in the editor that update a vulnerable dependency to it's fixed version.
      * @param dependency - The vulnerable dependency.
@@ -100,16 +107,26 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
      */
     private createFixActions(dependency: DependencyIssuesTreeNode | undefined): vscode.CodeAction[] {
         const actions: vscode.CodeAction[] = [];
+        let previousCves: Set<string> = new Set<string>();
+
         if (!dependency) {
             return actions;
         }
-        const versionToCves: Map<string, Set<string>> = dependency.getFixedVersionToCves();
-        let previousCves: Set<string> = new Set<string>();
-        versionToCves.forEach((cves: Set<string>, fixedVersion: string) => {
+
+        if (!this.availableUpdateManager(dependency)) {
+            return actions;
+        }
+
+        dependency.getFixedVersionToCves().forEach((cves: Set<string>, fixedVersion: string) => {
             previousCves = new Set([...previousCves, ...cves]);
             actions.push(this.createFixAction(dependency, previousCves, fixedVersion));
         });
+
         return actions.reverse();
+    }
+
+    private availableUpdateManager(dependency: DependencyIssuesTreeNode): boolean {
+        return this.updateManager.getUpdateManager(dependency) !== undefined;
     }
 
     private createFixAction(dependency: DependencyIssuesTreeNode, cves: Set<string>, fixedVersion: string): vscode.CodeAction {
