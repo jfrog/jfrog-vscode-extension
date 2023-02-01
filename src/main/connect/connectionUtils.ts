@@ -13,7 +13,6 @@ import * as semver from 'semver';
 import { SemVer } from 'semver';
 import { URL } from 'url';
 import * as vscode from 'vscode';
-import { CommandManager } from '../commands/commandManager';
 import { LogManager } from '../log/logManager';
 import { Configuration } from '../utils/configuration';
 
@@ -120,7 +119,7 @@ export class ConnectionUtils {
             if ((<ServerNotActiveError>error).activationUrl) {
                 const answer: string | undefined = await vscode.window.showErrorMessage((<ServerNotActiveError>error).message, 'Activate Server');
                 if (answer === 'Activate Server') {
-                    CommandManager.doOpenUrlInBrowser((<ServerNotActiveError>error).activationUrl);
+                    vscode.env.openExternal(vscode.Uri.parse((<ServerNotActiveError>error).activationUrl));
                 }
             } else if (prompt) {
                 vscode.window.showErrorMessage((<any>error).message || error, <vscode.MessageOptions>{ modal: true });
