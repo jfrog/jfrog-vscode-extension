@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import * as path from 'path';
 
 import { IChecksumResult, JfrogClient } from 'jfrog-client-js';
 import { ConnectionUtils } from '../connect/connectionUtils';
@@ -16,6 +17,9 @@ export class Resource {
     // Resource's sha256
     private sha2: string | undefined;
 
+    private _targetDir: string;
+    private _name: string;
+
     constructor(
         public readonly sourceUrl: string,
         private _targetPath: string,
@@ -25,6 +29,33 @@ export class Resource {
     ) {
         this._connectionManager =
             connectionManager ?? ConnectionUtils.createJfrogClient(Resource.DEFAULT_SERVER, Resource.DEFAULT_SERVER + '/artifactory', '', '', '', '');
+            this._name = Utils.getLastSegment(this._targetPath);
+            this._targetDir = path.dirname(this._targetPath);
+    }
+
+    private async downloadToFolder(downloadToFolder: string = this._targetDir): Promise<string | undefined> {
+        let resourcePath: string = path.join(downloadToFolder,this._name);
+        try {
+            // Download new
+            await this._connectionManager
+            .artifactory()
+            .download()
+            .downloadArtifactToFile(this.sourceUrl, resourcePath);
+        } catch (err) {
+            this._logManager.logError(<Error>err);
+            return undefined;
+        }
+        return resourcePath;
+    }
+
+    private async copyToTarget(filePath: string) {
+        if (this.isExists()) {
+            fs.rmSync(this._targetPath);
+        } else if (!fs.existsSync(this._targetDir)) {
+            fs.mkdirSync(this._targetDir);
+        }   
+        fs.copyFileSync(filePath, this._targetPath);
+        fs.chmodSync(this._targetPath, this._mode);
     }
 
     /**
@@ -32,31 +63,19 @@ export class Resource {
      * @returns true if the resource was updated, false otherwise
      */
     public async update(): Promise<boolean> {
-        const hasUpdate: boolean = await this.isOutdated();
-        if (!hasUpdate) {
-            this._logManager.logMessage('Resource ' + this._targetPath + ' is not outdated.', 'DEBUG');
-            return false;
-        }
-        this._logManager.logMessage('Starting to update resource ' + this._targetPath + ' from ' + this.sourceUrl, 'INFO');
-        // Remove old
-        if (this.isExists()) {
-            fs.rmSync(this._targetPath);
-        } else {
-            // make sure target folder exists for download
-            let targetDir: string = Utils.getLastSegment(this._targetPath);
-            if (!fs.existsSync(targetDir)) {
-                fs.mkdirSync(targetDir);
+        let tmpFolder: string = ScanUtils.createTmpDir();
+        try {
+            this._logManager.logMessage('Starting to update resource ' + this._targetPath + ' from ' + this.sourceUrl, 'INFO');
+            let resourceTmpPath: string | undefined = await this.downloadToFolder(tmpFolder);
+            if (!resourceTmpPath) {
+                return false;
             }
+            this.copyToTarget(resourceTmpPath);
+            this._logManager.logMessage('Resource ' + this._targetPath + ' was update successfully.', 'INFO');
+            return true;
+        } finally {
+            ScanUtils.removeFolder(tmpFolder);
         }
-        // Download new
-        await this._connectionManager
-            .artifactory()
-            .download()
-            .downloadArtifactToFile(this.sourceUrl, this._targetPath);
-        // Give permissions
-        fs.chmodSync(this._targetPath, this._mode);
-        this._logManager.logMessage('Resource ' + this._targetPath + ' was successfully updated.', 'INFO');
-        return true;
     }
 
     /**
@@ -76,25 +95,23 @@ export class Resource {
         if (!this.isExists()) {
             return true;
         }
-        // Check only if a given amount of time passed
-        if (this.createTime) {
-            //
-        }
         // Check if has update - compare the sha256 of the resource with the latest released resource.
         let checksumResult: IChecksumResult = { sha256: '', sha1: '', md5: '' };
-        checksumResult = await this._connectionManager
+        try {
+            checksumResult = await this._connectionManager
             .artifactory()
             .download()
             .getArtifactChecksum(this.sourceUrl);
+        } catch (err) {
+            this._logManager.logError(<Error>err);
+            // In case of failure download anyway
+            return true;
+        }
         if (!this.sha2) {
             const fileBuffer: Buffer = fs.readFileSync(this._targetPath);
             this.sha2 = ScanUtils.Hash('sha256', fileBuffer.toString());
         }
         return checksumResult.sha256 !== this.sha2;
-    }
-
-    public shouldCheckOutdated(): boolean {
-        return (Date.now() - this.createTime) > 
     }
 
     public get createTime(): number {
@@ -106,7 +123,6 @@ export class Resource {
     }
 
     public get name(): string {
-        return Utils.getLastSegment(this.fullPath);
+        return this._name;
     }
 }
-

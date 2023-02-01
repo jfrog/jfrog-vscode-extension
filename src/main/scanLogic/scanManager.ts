@@ -25,6 +25,8 @@ export class ScanManager implements ExtensionComponent {
     private static readonly BINARY_ABORT_CHECK_INTERVAL: number = 1000; // every 1 sec
     private static readonly RESOURCE_CHECK_UPDATE_INTERVAL: number = 1000 * 60 * 60 * 24; // every day
 
+    private static checkedOutdatedTimestamp: number;
+
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
     activate() {
@@ -58,12 +60,22 @@ export class ScanManager implements ExtensionComponent {
             progressManager.startStep('Updating ' + resources.length + ' resources', resources.length);
             resources.forEach(async resource => updatePromises.push(resource.update().finally(() => progressManager.reportProgress())));
             results = await Promise.all(updatePromises);
-        },'Update outdated resources');
-        return results.reduce((accumulator, currentValue) => accumulator && currentValue, true);
+        }, 'Update outdated resources');
+        let result: boolean = results.reduce((accumulator, currentValue) => accumulator && currentValue, true);
+        this._logManager.logMessage(
+            'Updating outdated extension resources finished ' + (result ? 'successfully' : 'with error'),
+            result ? 'INFO' : 'ERR'
+        );
+        return result;
     }
 
     private async getOutdatedResources(): Promise<Resource[]> {
-        return [BinaryRunner.getAnalyzerManagerResource(this._logManager)].filter(async resource => await resource.isOutdated());
+        let now: number = Date.now();
+        if (!ScanManager.checkedOutdatedTimestamp || now - ScanManager.checkedOutdatedTimestamp > ScanManager.RESOURCE_CHECK_UPDATE_INTERVAL) {
+            ScanManager.checkedOutdatedTimestamp = now;
+            return [BinaryRunner.getAnalyzerManagerResource(this._logManager)].filter(async resource => await resource.isOutdated());
+        }
+        return [];
     }
 
     /**

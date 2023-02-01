@@ -101,4 +101,3 @@ describe('Resource Tests', () => {
             .replyWithFile(200, fileToReturn);
     }
 });
-

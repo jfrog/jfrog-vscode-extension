@@ -37,8 +37,7 @@ export class ScanUtils {
         );
     }
 
-    public static async inBackground(scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>) => Promise<void>,
-    title: string) {
+    public static async inBackground(scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>) => Promise<void>, title: string) {
         title = 'JFrog: ' + title;
         await vscode.window.withProgress(
             <vscode.ProgressOptions>{
