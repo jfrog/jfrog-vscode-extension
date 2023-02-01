@@ -116,7 +116,7 @@ export class ConnectionUtils {
                 logger.logMessage(xrayVersion, 'DEBUG');
             }
         } catch (error) {
-            if ((error instanceof ServerNotActiveError)) {
+            if (error instanceof ServerNotActiveError) {
                 const answer: string | undefined = await vscode.window.showErrorMessage((<ServerNotActiveError>error).message, 'Activate Server');
                 if (answer === 'Activate Server') {
                     vscode.env.openExternal(vscode.Uri.parse((<ServerNotActiveError>error).activationUrl));

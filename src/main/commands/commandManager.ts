@@ -38,7 +38,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
         // Local state
-        this.registerCommand(context, 'jfrog.issues.open.ignore', issue => this.doOpenUrlInBrowser(issue.ignoreUrl));
+        this.registerCommand(context, 'jfrog.issues.open.ignore', issue => vscode.env.openExternal(vscode.Uri.parse(issue.ignoreUrl)));
         this.registerCommand(context, 'jfrog.issues.file.open', file => ScanUtils.openFile(file));
         this.registerCommand(context, 'jfrog.issues.file.open.location', (file, fileRegion) => ScanUtils.openFile(file, fileRegion));
         this.registerCommand(context, 'jfrog.issues.select.node', item => this._treesManager.selectItemOnIssuesTree(item));
@@ -140,14 +140,6 @@ export class CommandManager implements ExtensionComponent {
     private async doRefresh(scan: boolean = true) {
         await this._treesManager.refresh(scan);
         this._diagnosticManager.updateDiagnostics();
-    }
-
-    /**
-     * Open a url in a browser
-     * @param url - url to open in a browser
-     */
-    public doOpenUrlInBrowser(url: string) {
-        vscode.env.openExternal(vscode.Uri.parse(url));
     }
 
     /**
