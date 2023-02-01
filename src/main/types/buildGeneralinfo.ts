@@ -1,5 +1,6 @@
 import { Vcs } from './vcs';
 import { GeneralInfo } from './generalInfo';
+import { PackageType } from './projectType';
 
 export enum Status {
     Success,
@@ -16,9 +17,9 @@ export class BuildGeneralInfo extends GeneralInfo {
         _version?: string,
         _path?: string,
         _scopes?: string[],
-        _pkgType?: string
+        _pkgType?: PackageType
     ) {
-        super(_artifactId, _version || '', _scopes || [], _path || '', _pkgType || '');
+        super(_artifactId, _version || '', _scopes || [], _path || '', _pkgType || PackageType.Unknown);
     }
 
     get startedReadable(): string {

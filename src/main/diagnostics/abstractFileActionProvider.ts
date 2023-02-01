@@ -85,6 +85,7 @@ export abstract class AbstractFileActionProvider implements ExtensionComponent, 
 
     clearDiagnostics() {
         this._diagnosticCollection.clear();
+        this.disposeGutterDecorations();
     }
 
     /** @override */

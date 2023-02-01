@@ -25,7 +25,7 @@ export class PypiTreeNode extends RootNode {
             pypiList = JSON.parse(
                 ScanUtils.executeCmd(this._pythonPath + ' ' + PypiUtils.PIP_DEP_TREE_SCRIPT + ' --json-tree', this.workspaceFolder).toString()
             );
-            this.generalInfo = new GeneralInfo(this.workspaceFolder.replace(/^.*[\\/]/, ''), '', ['None'], this.workspaceFolder, PypiUtils.PKG_TYPE);
+            this.generalInfo = new GeneralInfo(this.workspaceFolder.replace(/^.*[\\/]/, ''), '', ['None'], this.workspaceFolder, PackageType.Python);
         } catch (error) {
             this._treesManager.logManager.logError(<any>error, true);
         }
@@ -43,7 +43,7 @@ export class PypiTreeNode extends RootNode {
             let version: string = dependency.installed_version;
             if (version) {
                 let childDependencies: any = dependency.dependencies;
-                let generalInfo: GeneralInfo = new GeneralInfo(dependency.key, version, ['None'], '', PypiUtils.PKG_TYPE);
+                let generalInfo: GeneralInfo = new GeneralInfo(dependency.key, version, ['None'], '', PackageType.Python);
                 let treeCollapsibleState: vscode.TreeItemCollapsibleState =
                     childDependencies && childDependencies.length > 0
                         ? vscode.TreeItemCollapsibleState.Collapsed

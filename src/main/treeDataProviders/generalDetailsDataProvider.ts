@@ -4,6 +4,7 @@ import { ScanCacheManager } from '../cache/scanCacheManager';
 import { BuildGeneralInfo, Status } from '../types/buildGeneralinfo';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { ILicenseKey } from '../types/licenseKey';
+import { fromPackageType } from '../types/projectType';
 import { Consts } from '../utils/consts';
 import { IconsPaths } from '../utils/iconsPaths';
 import { BuildsNode } from './dependenciesTree/ciNodes/buildsTree';
@@ -70,7 +71,7 @@ export class GeneralDetailsDataProvider extends vscode.TreeItem implements vscod
         if (!(this._selectedNode instanceof CiTitleNode && !this._selectedNode.generalInfo.version)) {
             children.push(new TreeDataHolder('Version', this._selectedNode.generalInfo.version));
         }
-        children.push(new TreeDataHolder('Type', this._selectedNode.generalInfo.pkgType));
+        children.push(new TreeDataHolder('Type', fromPackageType(this._selectedNode.generalInfo.pkgType)));
         const scopes: string[] = this._selectedNode.generalInfo.scopes;
         if (scopes.length > 0 && !this.isNoneScope(scopes)) {
             children.push(new TreeDataHolder('Scopes', this._selectedNode.generalInfo.scopes.join(',')));

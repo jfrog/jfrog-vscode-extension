@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import { GeneralInfo } from '../../../types/generalInfo';
-import { GoUtils } from '../../../utils/goUtils';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
@@ -25,10 +24,10 @@ export class GoTreeNode extends RootNode {
         } catch (error) {
             this._treesManager.logManager.logError(<any>error);
             this.label = this.workspaceFolder + ' [Not installed]';
-            this.generalInfo = new GeneralInfo(this.label, '', [], this.workspaceFolder, GoUtils.PKG_TYPE);
+            this.generalInfo = new GeneralInfo(this.label, '', [], this.workspaceFolder, PackageType.Go);
             return;
         }
-        this.generalInfo = new GeneralInfo(rootPackageName, '', ['None'], this.workspaceFolder, GoUtils.PKG_TYPE);
+        this.generalInfo = new GeneralInfo(rootPackageName, '', ['None'], this.workspaceFolder, PackageType.Go);
         this.label = rootPackageName;
         this.projectDetails.name = rootPackageName;
         if (goModGraph.length === 0) {
@@ -88,7 +87,7 @@ export class GoTreeNode extends RootNode {
         let directDependenciesGeneralInfos: GeneralInfo[] = [];
         for (; goModGraphIndex < goModGraph.length && !goModGraph[goModGraphIndex].package.includes('@'); goModGraphIndex++) {
             let nameVersionTuple: string[] = this.getNameVersionTuple(goModGraph[goModGraphIndex].dependency);
-            directDependenciesGeneralInfos.push(new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], ['None'], '', GoUtils.PKG_TYPE));
+            directDependenciesGeneralInfos.push(new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], ['None'], '', PackageType.Go));
         }
 
         // Create a set of packages that are actually in use in the project
@@ -115,7 +114,7 @@ export class GoTreeNode extends RootNode {
             this.addChild(new DependenciesTreeNode(generalInfo, this.getTreeCollapsibleState(dependenciesMap, generalInfo)));
         });
         // Add go version as a direct dependency to scan it as well
-        this.addChild(new DependenciesTreeNode(new GeneralInfo('github.com/golang/go', goVersion.format(), ['None'], '', GoUtils.PKG_TYPE)));
+        this.addChild(new DependenciesTreeNode(new GeneralInfo('github.com/golang/go', goVersion.format(), ['None'], '', PackageType.Go)));
 
         return dependenciesMap;
     }
@@ -129,7 +128,7 @@ export class GoTreeNode extends RootNode {
             dependenciesMap.get(dependenciesTreeNode.generalInfo.artifactId + '@v' + dependenciesTreeNode.generalInfo.version) || [];
         childDependencies.forEach(childDependency => {
             let nameVersionTuple: string[] = this.getNameVersionTuple(childDependency);
-            let generalInfo: GeneralInfo = new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], ['None'], '', GoUtils.PKG_TYPE);
+            let generalInfo: GeneralInfo = new GeneralInfo(nameVersionTuple[0], nameVersionTuple[1], ['None'], '', PackageType.Go);
             let grandchild: DependenciesTreeNode = new DependenciesTreeNode(
                 generalInfo,
                 this.getTreeCollapsibleState(dependenciesMap, generalInfo),

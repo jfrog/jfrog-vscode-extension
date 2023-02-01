@@ -5,6 +5,7 @@ import { ScanCacheManager } from '../../cache/scanCacheManager';
 import { BuildGeneralInfo, Status } from '../../types/buildGeneralinfo';
 import { GeneralInfo } from '../../types/generalInfo';
 import { ILicenseKey } from '../../types/licenseKey';
+import { PackageType } from '../../types/projectType';
 import { Scope } from '../../types/scope';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { BuildsUtils } from '../../utils/builds/buildsUtils';
@@ -186,12 +187,12 @@ export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesT
     private clearAllTrees() {
         this.clearDisplayedTree();
         this._filteredDependenciesTree = undefined;
-        let generalInfo: GeneralInfo = new GeneralInfo('', '', [], '', '');
+        let generalInfo: GeneralInfo = new GeneralInfo('', '', [], '', PackageType.Unknown);
         this._allBuildsTree = new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.Expanded);
     }
 
     private clearDisplayedTree() {
-        let generalInfo: GeneralInfo = new GeneralInfo('', '', [], '', '');
+        let generalInfo: GeneralInfo = new GeneralInfo('', '', [], '', PackageType.Unknown);
         this._dependenciesTree = new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.Expanded);
     }
 

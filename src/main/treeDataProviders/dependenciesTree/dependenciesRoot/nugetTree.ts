@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { GeneralInfo } from '../../../types/generalInfo';
-import { NugetUtils } from '../../../utils/nugetUtils';
 import { RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
 
@@ -13,7 +12,7 @@ export class NugetTreeNode extends RootNode {
     }
 
     public refreshDependencies(project: any) {
-        this.generalInfo = new GeneralInfo(project.name, '', ['None'], this.workspaceFolder, NugetUtils.PKG_TYPE);
+        this.generalInfo = new GeneralInfo(project.name, '', ['None'], this.workspaceFolder, PackageType.Nuget);
         this.label = project.name;
         this.projectDetails.name = project.name;
         this.populateDependenciesTree(this, project.dependencies);
@@ -29,7 +28,7 @@ export class NugetTreeNode extends RootNode {
             let version: string = dependency.version;
             let childDependencies: any = dependency.dependencies;
             if (id && version && childDependencies) {
-                let generalInfo: GeneralInfo = new GeneralInfo(id, version, ['None'], '', NugetUtils.PKG_TYPE);
+                let generalInfo: GeneralInfo = new GeneralInfo(id, version, ['None'], '', PackageType.Nuget);
                 let treeCollapsibleState: vscode.TreeItemCollapsibleState =
                     childDependencies.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode, '');
