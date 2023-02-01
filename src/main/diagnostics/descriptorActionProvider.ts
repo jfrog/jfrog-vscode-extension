@@ -93,8 +93,12 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
     private getDescriptorDependencies(file: vscode.Uri) {
         return this._processedMap.get(file);
     }
-
-    private createFixActions(dependency: DependencyIssuesTreeNode | undefined) {
+    /**
+     * Creates code actions in the editor that update a vulnerable dependency to it's fixed version.
+     * @param dependency - The vulnerable dependency.
+     * @returns - Fixed versions that are available for updating.
+     */
+    private createFixActions(dependency: DependencyIssuesTreeNode | undefined): vscode.CodeAction[] {
         const actions: vscode.CodeAction[] = [];
         if (!dependency) {
             return actions;
@@ -119,7 +123,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
         return action;
     }
 
-    private createFixActionMessage(fixedVersion: string, cves: Set<string>) {
+    private createFixActionMessage(fixedVersion: string, cves: Set<string>):string {
         let message: string = `Update to version ${fixedVersion} fixes the issue`;
         if (cves.size > 1) {
             message += 's';
@@ -131,7 +135,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
         return message;
     }
 
-    private createJumpActions(infectedDependencies: Set<DependencyIssuesTreeNode> | undefined) {
+    private createJumpActions(infectedDependencies: Set<DependencyIssuesTreeNode> | undefined): vscode.CodeAction[] {
         const actions: vscode.CodeAction[] = [];
         if (!infectedDependencies) {
             return actions;

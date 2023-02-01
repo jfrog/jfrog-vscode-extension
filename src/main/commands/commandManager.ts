@@ -141,14 +141,12 @@ export class CommandManager implements ExtensionComponent {
         await ScanUtils.scanWithProgress(async (): Promise<void> => {
             updated = await this._DependencyUpdateManager.updateToFixedVersion(dependency, version);
             if (updated) {
-                vscode.window.showInformationMessage(`'Successfully updated the dependency ${dependency.name} to version ${version}.`, <
-                    vscode.MessageOptions
-                >{ modal: false });
+                this._logManager.logMessageAndToastInfo(`'Successfully updated the dependency ${dependency.name} to version ${version}.`, 'INFO');
             } else {
-                vscode.window.showErrorMessage('Update dependency version was canceled.', <vscode.MessageOptions>{ modal: false });
+                this._logManager.logMessageAndToastInfo('Update dependency version was canceled.', 'INFO');
             }
         }, 'Updating ' + dependency.name);
-        if (updated && (await this.askYesNo('Scan your project to reflect the changes?'))) {
+        if (updated && (await this.askRescan('Scan your project to reflect the changes?'))) {
             this.doRefresh(true);
         }
     }
@@ -242,6 +240,13 @@ export class CommandManager implements ExtensionComponent {
     private async askYesNo(message: string): Promise<boolean> {
         const answer: string | undefined = await vscode.window.showInformationMessage(message, 'Yes', 'No');
         if (answer === 'Yes') {
+            return true;
+        }
+        return false;
+    }
+    private async askRescan(message: string): Promise<boolean> {
+        const answer: string | undefined = await vscode.window.showInformationMessage(message, 'Rescan project');
+        if (answer === 'Rescan project') {
             return true;
         }
         return false;

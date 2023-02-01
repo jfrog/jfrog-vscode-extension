@@ -22,11 +22,11 @@ export class DescriptorTreeNode extends FileTreeNode {
     private _scannedCve?: Set<string> | undefined;
     // Is applicable if key in here
     private _applicableCve?: Map<string, CveApplicableDetails> | undefined;
-    private workspace: string;
+    private descriptorAbsPath: string;
 
     constructor(filePath: string, packageType?: PackageType, parent?: IssuesRootTreeNode) {
         super(filePath, parent);
-        this.workspace = filePath.substring(0, filePath.lastIndexOf(path.sep));
+        this.descriptorAbsPath = path.dirname(filePath);
         this._packageType = packageType ?? PackageType.Unknown;
     }
 
@@ -148,6 +148,7 @@ export class DescriptorTreeNode extends FileTreeNode {
     public get dependenciesWithIssue(): DependencyIssuesTreeNode[] {
         return this._dependenciesWithIssue;
     }
+
     public set dependenciesWithIssue(dependencyIssuesTreeNode: DependencyIssuesTreeNode[]) {
         this._dependenciesWithIssue = dependencyIssuesTreeNode;
     }
@@ -156,7 +157,7 @@ export class DescriptorTreeNode extends FileTreeNode {
         return this._packageType;
     }
 
-    public getWorkspace() {
-        return this.workspace;
+    public getDescriptorAbsPath() {
+        return this.descriptorAbsPath;
     }
 }

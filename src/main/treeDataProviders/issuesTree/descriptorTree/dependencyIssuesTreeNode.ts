@@ -122,16 +122,17 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     }
 
     public getWorkspace(): string {
-        return this.parent.getWorkspace();
+        return this.parent.getDescriptorAbsPath();
     }
 
     public getFixedVersionToCves() {
         const versionToCves: Map<string, Set<string>> = new Map<string, Set<string>>();
-        this.getCveIssues().forEach(issue => {
-            issue.fixedVersions?.forEach(fixedVersion => {
+        this.getCveIssues().forEach((issue: CveTreeNode) => {
+            issue.fixedVersions?.forEach((fixedVersion: string)  => {
                 const cve: string = issue.cve?.cve || issue.issueId;
-                if (versionToCves.has(fixedVersion)) {
-                    versionToCves.get(fixedVersion)?.add(cve);
+                const cves: Set<string> | undefined = versionToCves.get(fixedVersion)
+                if (cves) {
+                    cves.add(cve);
                 } else {
                     versionToCves.set(
                         fixedVersion,
@@ -140,6 +141,6 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
                 }
             });
         });
-        return new Map([...versionToCves.entries()].sort());
+        return new Map([...versionToCves].sort());
     }
 }
