@@ -27,6 +27,7 @@ import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
 import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
 import { DescriptorIssuesData, FileIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
 import { EosTreeNode } from './codeFileTree/eosTreeNode';
+import { NotEntitledError } from '../../scanLogic/scanRunners/binaryRunner';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -421,6 +422,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     private onScanError(error: Error, handle: boolean = true, log: boolean = false): Error | undefined {
         if (error instanceof ScanCancellationError) {
             throw error;
+        }
+        if (error instanceof NotEntitledError) {
+            this._logManager.logMessage(error.message, 'INFO');
         }
         if (log) {
             this._logManager.logError(error, true);

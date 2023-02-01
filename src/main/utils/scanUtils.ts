@@ -119,8 +119,8 @@ export class ScanUtils {
         return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
     }
 
-    public static async executeCmdAsync(command: string, cwd?: string): Promise<any> {
-        return await util.promisify(exec.exec)(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE });
+    public static async executeCmdAsync(command: string, cwd?: string, env?: NodeJS.ProcessEnv | undefined): Promise<any> {
+        return await util.promisify(exec.exec)(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
     }
 
     public static setScanInProgress(state: boolean) {

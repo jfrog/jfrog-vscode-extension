@@ -43,14 +43,14 @@ export class ScanManager implements ExtensionComponent {
      * Validate if the applicable-scan is supported
      */
     public validateApplicableSupported(): boolean {
-        return new ApplicabilityRunner(ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).isSupported;
+        return new ApplicabilityRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).isSupported;
     }
 
     /**
      * Validate if the eos-scan is supported
      */
     public validateEosSupported(): boolean {
-        return new EosRunner(ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).isSupported;
+        return new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).isSupported;
     }
 
     /**
@@ -75,7 +75,11 @@ export class ScanManager implements ExtensionComponent {
      * @returns the applicability scan response
      */
     public async scanApplicability(directory: string, abortController: AbortController, cveToRun: string[] = []): Promise<ApplicabilityScanResponse> {
-        let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager);
+        let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(
+            this._connectionManager,
+            ScanManager.BINARY_ABORT_CHECK_INTERVAL,
+            this._logManager
+        );
         if (!applicableRunner.isSupported) {
             this._logManager.logMessage('Applicability scan is not supported', 'DEBUG');
             return {} as ApplicabilityScanResponse;
@@ -86,7 +90,7 @@ export class ScanManager implements ExtensionComponent {
     }
 
     public async scanEos(abortController: AbortController, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
-        let eosRunner: EosRunner = new EosRunner(ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager);
+        let eosRunner: EosRunner = new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager);
         if (!eosRunner.isSupported) {
             this._logManager.logMessage('Eos scan is not supported', 'DEBUG');
             return {} as EosScanResponse;
