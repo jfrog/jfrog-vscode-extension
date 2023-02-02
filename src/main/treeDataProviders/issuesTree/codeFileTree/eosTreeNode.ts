@@ -1,7 +1,6 @@
 import { IAnalysisStep, IEosPage, PageType } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
 import { EosIssue, EosIssueLocation } from '../../../scanLogic/scanRunners/eosScan';
-import { Severity } from '../../../types/severity';
 import { Translators } from '../../../utils/translators';
 import { CodeFileTreeNode } from './codeFileTreeNode';
 import { CodeIssueTreeNode } from './codeIssueTreeNode';
@@ -13,8 +12,9 @@ export class EosTreeNode extends CodeIssueTreeNode {
     private _codeFlows: IAnalysisStep[][];
 
     private _fullDescription?: string;
+    private _snippet?: string;
 
-    constructor(issue: EosIssue, location: EosIssueLocation, parent: CodeFileTreeNode, severity?: Severity) {
+    constructor(issue: EosIssue, location: EosIssueLocation, parent: CodeFileTreeNode) {
         super(
             issue.ruleId,
             parent,
@@ -22,15 +22,20 @@ export class EosTreeNode extends CodeIssueTreeNode {
                 new vscode.Position(location.region.startLine, location.region.startColumn),
                 new vscode.Position(location.region.endLine, location.region.endColumn)
             ),
-            severity,
+            issue.severity,
             issue.ruleName
         );
+        this._snippet = location.region.snippet?.text;
         this._fullDescription = issue.fullDescription;
         this._codeFlows = Translators.toAnalysisSteps(location.threadFlows);
     }
 
     public get codeFlows(): IAnalysisStep[][] {
         return this._codeFlows;
+    }
+
+    public get snippet(): string | undefined {
+        return this._snippet;
     }
 
     /**

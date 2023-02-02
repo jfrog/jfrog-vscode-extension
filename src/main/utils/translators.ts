@@ -17,7 +17,7 @@ import { GeneralInfo } from '../types/generalInfo';
 import { IIssueCacheObject } from '../types/issueCacheObject';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
-import { FileLocation } from '../scanLogic/scanRunners/analyzerModels';
+import { FileLocation, SeverityLevel } from '../scanLogic/scanRunners/analyzerModels';
 import { toPackageType } from '../types/projectType';
 
 export class Translators {
@@ -54,6 +54,19 @@ export class Translators {
                 return Severity.High;
             case 'Critical':
                 return Severity.Critical;
+            default:
+                return Severity.Unknown;
+        }
+    }
+
+    public static levelToSeverity(level: SeverityLevel): Severity {
+        switch (level) {
+            case 'note':
+                return Severity.Low;
+            case 'warning':
+                return Severity.Medium;
+            case 'error':
+                return Severity.High;
             default:
                 return Severity.Unknown;
         }
