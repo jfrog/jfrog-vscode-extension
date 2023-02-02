@@ -294,4 +294,63 @@ export class AnalyzerUtils {
 
         return issuesCount;
     }
+
+    public static async runIac(
+        workspaceData: WorkspaceIssuesData,
+        root: IssuesRootTreeNode,
+        scanManager: ScanManager,
+        progressManager: StepProgress
+        ) : Promise<any> 
+        {
+            if (!scanManager.validateIacSupported()) {
+                progressManager.reportProgress();
+                return;
+            }
+            // Run
+        let startTime: number = Date.now();
+        workspaceData.eosScan = await scanManager
+            .scanIac(root.workSpace.uri.fsPath,progressManager.abortController)
+            .finally(() => progressManager.reportProgress());
+        if (workspaceData.eosScan) {
+            workspaceData.eosScanTimestamp = Date.now();
+            let applicableIssuesCount: number = AnalyzerUtils.populateIacIssues(root, workspaceData);
+            scanManager.logManager.logMessage(
+                'Found ' +
+                    applicableIssuesCount +
+                    " Eos issues in workspace = '" +
+                    workspaceData.path +
+                    "' (elapsed " +
+                    (Date.now() - startTime) / 1000 +
+                    ' seconds)',
+                'INFO'
+            );
+
+            root.apply();
+            progressManager.onProgress();
+        }
+    }
+
+    /**
+     * Populate Iac information in
+     * @param root - root node to populate data inside
+     * @param workspaceData - data to populate on node
+     * @returns number of Iac issues populated
+     */
+    public static populateIacIssues(root: IssuesRootTreeNode, workspaceData: WorkspaceIssuesData): number {
+        root.iacScanTimeStamp = workspaceData.iacScanTimestamp;
+        let issuesCount: number = 0;
+        if (workspaceData.iacScan && workspaceData.iacScan.filesWithIssues) {
+            workspaceData.iacScan.filesWithIssues.forEach(fileWithIssues => {
+                let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
+                fileWithIssues.issues.forEach((issue: EosIssue) => {
+                    issue.locations.forEach((location: EosIssueLocation) => {
+                        fileNode.issues.push(new EosTreeNode(issue, location, fileNode));
+                        issuesCount++;
+                    });
+                });
+            });
+        }
+
+        return issuesCount;
+    }
 }

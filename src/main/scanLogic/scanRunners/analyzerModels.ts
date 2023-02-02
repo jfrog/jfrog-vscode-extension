@@ -2,7 +2,7 @@ export interface AnalyzerRequest {
     scans: AnalyzeScanRequest[];
 }
 
-type AnalyzerType = 'analyze-applicability' | 'analyze-codebase';
+type AnalyzerType = 'analyze-applicability' | 'analyze-codebase' | 'iac-scan-modules';
 
 export interface AnalyzeScanRequest {
     // What type of scan

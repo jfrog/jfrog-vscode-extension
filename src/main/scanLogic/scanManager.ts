@@ -11,6 +11,7 @@ import { ApplicabilityRunner, ApplicabilityScanResponse } from './scanRunners/ap
 import { EosRunner, EosScanRequest, EosScanResponse } from './scanRunners/eosScan';
 import { AnalyzerUtils } from '../treeDataProviders/utils/analyzerUtils';
 import { Configuration } from '../utils/configuration';
+import { TerraformRunner, TerraformScanResponse } from './scanRunners/terraformScan';
 
 /**
  * Manage all the Xray scans
@@ -51,6 +52,13 @@ export class ScanManager implements ExtensionComponent {
      */
     public validateEosSupported(): boolean {
         return new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).isSupported;
+    }
+
+    /**
+     * Validate if the iac-scan is supported
+     */
+    public validateIacSupported(): boolean {
+        return new TerraformRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).isSupported;
     }
 
     /**
@@ -106,5 +114,15 @@ export class ScanManager implements ExtensionComponent {
         }
         this._logManager.logMessage('Scanning for Eos issues, roots: ' + eosRequests.map(request => request.roots.join()).join(), 'DEBUG');
         return eosRunner.scan(abortController, ...eosRequests);
+    }
+
+    public async scanIac(directory: string, abortController: AbortController): Promise<TerraformScanResponse> {
+        let iacRunner: TerraformRunner = new TerraformRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager);
+        if (!iacRunner.isSupported) {
+            this._logManager.logMessage('Iac scan is not supported', 'DEBUG');
+            return {} as TerraformScanResponse;
+        }
+        this._logManager.logMessage('Scanning for Iac issues, root: ' + directory, 'DEBUG');
+        return iacRunner.scan(abortController, directory);
     }
 }

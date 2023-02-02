@@ -32,6 +32,7 @@ import { NotEntitledError } from '../../scanLogic/scanRunners/binaryRunner';
 export interface ScanConfig {
     dependencyScan: boolean;
     applicableScan: boolean;
+    terraformScan: boolean;
     eosScan: boolean;
 }
 
@@ -184,6 +185,10 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
                 AnalyzerUtils.populateEosIssues(root, workspaceData);
             }
+            if (workspaceData.iacScan) {
+                root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
+                AnalyzerUtils.populateIacIssues(root, workspaceData);
+            }
             return root;
         }
         return undefined;
@@ -283,6 +288,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         }
         checkCanceled();
         let eosSupported: boolean = !!this._currentScanConfig && this._currentScanConfig.eosScan && this._scanManager.validateEosSupported();
+        let iacSupported: boolean = !!this._currentScanConfig && this._currentScanConfig.terraformScan && this._scanManager.validateIacSupported();
         let graphSupported: boolean =
             !!this._currentScanConfig && this._currentScanConfig.dependencyScan && (await this._scanManager.validateGraphSupported());
         let applicableSupported: boolean =
@@ -308,6 +314,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         }
         if (eosSupported) {
             scansPromises.push(AnalyzerUtils.runEos(workspaceData, root, workspaceDescriptors, this._scanManager, progressManager));
+        }
+        if (iacSupported) {
+            scansPromises.push(AnalyzerUtils.runIac(workspaceData, root, this._scanManager, progressManager));
         }
 
         await Promise.all(scansPromises);

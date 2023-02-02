@@ -2,6 +2,7 @@ import { IGraphResponse } from 'jfrog-client-js';
 import { IImpactGraph } from 'jfrog-ide-webview';
 import { ApplicabilityScanResponse } from '../scanLogic/scanRunners/applicabilityScan';
 import { EosScanResponse } from '../scanLogic/scanRunners/eosScan';
+import { TerraformScanResponse } from '../scanLogic/scanRunners/terraformScan';
 import { PackageType } from './projectType';
 
 /**
@@ -11,6 +12,8 @@ export class WorkspaceIssuesData {
     public readonly descriptorsIssuesData: DescriptorIssuesData[] = [];
     eosScan: EosScanResponse = {} as EosScanResponse;
     eosScanTimestamp?: number;
+    iacScan: TerraformScanResponse = {} as TerraformScanResponse;
+    iacScanTimestamp?: number;
     failedFiles: FileIssuesData[] = [];
 
     constructor(public readonly path: string) {}
@@ -20,7 +23,7 @@ export class WorkspaceIssuesData {
      * @returns true if at least one issue exists
      */
     public hasIssues(): boolean {
-        return this.descriptorsIssuesData.length > 0 || this.eosScan?.filesWithIssues?.length > 0;
+        return this.descriptorsIssuesData.length > 0 || this.eosScan?.filesWithIssues?.length > 0 || this.iacScan?.filesWithIssues?.length > 0;
     }
 
     /**

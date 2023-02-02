@@ -40,10 +40,10 @@ export class CommandManager implements ExtensionComponent {
         // General
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
-        this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh({ dependencyScan: true, applicableScan: true, eosScan: true }));
+        this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh({ dependencyScan: true, applicableScan: true, eosScan: true, terraformScan: true }));
         // Local state
         this.registerCommand(context, 'jfrog.issues.clear', () => this.doClear());
-        this.registerCommand(context, 'jfrog.issues.scan.eos', () => this.doRefresh({ dependencyScan: false, applicableScan: false, eosScan: true }));
+        this.registerCommand(context, 'jfrog.issues.scan.eos', () => this.doRefresh({ dependencyScan: false, applicableScan: false, eosScan: true, terraformScan: false }));
         this.registerCommand(context, 'jfrog.issues.open.ignore', issue => vscode.env.openExternal(vscode.Uri.parse(issue.ignoreUrl)));
         this.registerCommand(context, 'jfrog.issues.file.open', file => ScanUtils.openFile(file));
         this.registerCommand(context, 'jfrog.issues.file.open.location', (file, fileRegion) => ScanUtils.openFile(file, fileRegion));
@@ -200,7 +200,7 @@ export class CommandManager implements ExtensionComponent {
     private async doConnect() {
         let credentialsSet: boolean = await this._connectionManager.connect();
         if (credentialsSet) {
-            await this.doRefresh({ dependencyScan: true, applicableScan: true, eosScan: true });
+            await this.doRefresh({ dependencyScan: true, applicableScan: true, eosScan: true, terraformScan: true });
         }
     }
 
