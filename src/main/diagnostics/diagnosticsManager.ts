@@ -3,7 +3,7 @@ import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateMan
 import { ExtensionComponent } from '../extensionComponent';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
-import { ApplicabilityActionProvider } from './applicabilityActionProvider';
+import { CodeFileActionProvider } from './codeFileActionProvider';
 import { DescriptorActionProvider } from './descriptorActionProvider';
 
 /**
@@ -19,7 +19,7 @@ export class DiagnosticsManager implements ExtensionComponent {
 
         this._codeActionProviders.push(
             new DescriptorActionProvider(diagnosticCollection, treesManager, updateManager),
-            new ApplicabilityActionProvider(diagnosticCollection, treesManager)
+            new CodeFileActionProvider(diagnosticCollection, treesManager)
         );
     }
 
