@@ -39,7 +39,9 @@ export class CveTreeNode extends IssueTreeNode {
             this._researchInfo = Translators.toWebViewExtendedInformation(sourceVul.extended_information);
         }
 
-        this._fixedVersions = component.fixed_versions;
+        this._fixedVersions = component.fixed_versions
+            ? component.fixed_versions.map(fixedVersion => Translators.cleanVersionParentheses(fixedVersion))
+            : [];
         this._infectedVersions = component.infected_versions;
 
         let violation: IViolation = <IViolation>sourceVul;

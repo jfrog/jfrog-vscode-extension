@@ -40,7 +40,7 @@ export class NpmTreeNode extends RootNode {
             productionScope.projectVersion,
             [],
             this.workspaceFolder,
-            NpmUtils.PKG_TYPE
+            PackageType.Npm
         );
         if (npmLsFailed) {
             this.topSeverity = Severity.Unknown;
@@ -60,7 +60,7 @@ export class NpmTreeNode extends RootNode {
                 let childDependencies: any = dependency.dependencies;
                 const scope: string = NpmUtils.getDependencyScope(key);
                 const currentDependencyScope: string[] = scope !== '' ? [globalScope, scope] : [globalScope];
-                let generalInfo: GeneralInfo = new GeneralInfo(key, version, currentDependencyScope, '', NpmUtils.PKG_TYPE);
+                let generalInfo: GeneralInfo = new GeneralInfo(key, version, currentDependencyScope, '', PackageType.Npm);
                 let treeCollapsibleState: vscode.TreeItemCollapsibleState = childDependencies
                     ? vscode.TreeItemCollapsibleState.Collapsed
                     : vscode.TreeItemCollapsibleState.None;

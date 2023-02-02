@@ -24,7 +24,7 @@ export class MavenTreeNode extends RootNode {
     public async refreshDependencies(prototypeTree: PomTree, parentDependencies?: string[]): Promise<ProjectDetails[]> {
         const mavenProjectDetails: ProjectDetails[] = [];
         const [group, name, version] = prototypeTree.pomGav.split(':');
-        this.generalInfo = new GavGeneralInfo(group, name, version, [], this.workspaceFolder, MavenUtils.PKG_TYPE);
+        this.generalInfo = new GavGeneralInfo(group, name, version, [], this.workspaceFolder, PackageType.Maven);
         this.label = group + ':' + name;
         this.projectDetails.name = this.label;
         // Add project details of root node.
@@ -59,7 +59,7 @@ export class MavenTreeNode extends RootNode {
         for (; rawDependenciesPtr.index < rawDependenciesList.length; rawDependenciesPtr.index++) {
             let dependency: string = rawDependenciesList[rawDependenciesPtr.index];
             const [group, name, version, scope] = MavenUtils.getDependencyInfo(dependency);
-            const gavGeneralInfo: GavGeneralInfo = new GavGeneralInfo(group, name, version, [scope], '', MavenUtils.PKG_TYPE);
+            const gavGeneralInfo: GavGeneralInfo = new GavGeneralInfo(group, name, version, [scope], '', PackageType.Maven);
             let treeCollapsibleState: vscode.TreeItemCollapsibleState = this.isParent(rawDependenciesList, rawDependenciesPtr.index)
                 ? vscode.TreeItemCollapsibleState.Collapsed
                 : vscode.TreeItemCollapsibleState.None;

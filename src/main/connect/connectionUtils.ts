@@ -8,6 +8,7 @@ import {
     IXrayVersion,
     JfrogClient
 } from 'jfrog-client-js';
+import { ServerNotActiveError } from 'jfrog-client-js/dist/src/HttpClient';
 import * as semver from 'semver';
 import { SemVer } from 'semver';
 import { URL } from 'url';
@@ -115,7 +116,12 @@ export class ConnectionUtils {
                 logger.logMessage(xrayVersion, 'DEBUG');
             }
         } catch (error) {
-            if (prompt) {
+            if (error instanceof ServerNotActiveError) {
+                const answer: string | undefined = await vscode.window.showErrorMessage((<ServerNotActiveError>error).message, 'Activate Server');
+                if (answer === 'Activate Server') {
+                    vscode.env.openExternal(vscode.Uri.parse((<ServerNotActiveError>error).activationUrl));
+                }
+            } else if (prompt) {
                 vscode.window.showErrorMessage((<any>error).message || error, <vscode.MessageOptions>{ modal: true });
             } else {
                 logger.logMessage((<any>error).message, 'DEBUG');

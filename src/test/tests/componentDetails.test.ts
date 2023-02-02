@@ -10,6 +10,7 @@ import { createScanCacheManager } from './utils/utils.test';
 import { LicensesNode } from '../../main/treeDataProviders/generalDetailsDataProvider';
 import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependencyDetailsProvider';
 import { TreeDataHolder } from '../../main/treeDataProviders/utils/treeDataHolder';
+import { PackageType } from '../../main/types/projectType';
 // import { SourceCodeTreeDataProvider } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeTreeDataProvider';
 // import { TreesManager } from '../../main/treeDataProviders/treesManager';
 // import { LogManager } from '../../main/log/logManager';
@@ -37,7 +38,7 @@ describe('Dependency Details Tests', () => {
     let Components: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager); //, sourceCodeTreeDataProvider);
     let dependenciesTreeNode: DependenciesTreeNode;
     before(() => {
-        let generalInfo: GeneralInfo = new GeneralInfo('artifactId', '1.2.3', [], __dirname, 'testPkg');
+        let generalInfo: GeneralInfo = new GeneralInfo('artifactId', '1.2.3', [], __dirname, PackageType.Unknown);
         dependenciesTreeNode = new DependenciesTreeNode(generalInfo);
         Components.selectNode(dependenciesTreeNode);
     });
@@ -55,7 +56,7 @@ describe('Dependency Details Tests', () => {
 
         let pkgTypeNode: TreeDataHolder = generalDetailNode[2];
         assert.deepEqual(pkgTypeNode.key, 'Type');
-        assert.deepEqual(pkgTypeNode.value, 'testPkg');
+        assert.deepEqual(pkgTypeNode.value, 'Unknown');
 
         let licenses: any[] = await getAndAssertLicenses();
         assert.isEmpty(licenses);

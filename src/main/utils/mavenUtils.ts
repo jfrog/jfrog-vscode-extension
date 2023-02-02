@@ -5,6 +5,7 @@ import { ContextKeys, FocusType } from '../constants/contextKeys';
 import { LogManager } from '../log/logManager';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ProjectDetails } from '../types/projectDetails';
 import { PomTree } from './pomTree';
@@ -13,7 +14,6 @@ import { ScanUtils } from './scanUtils';
 export class MavenUtils {
     public static readonly DOCUMENT_SELECTOR: any = { scheme: 'file', pattern: '**/pom.xml' };
     public static readonly MAVEN_GAV_READER: string = path.join(ScanUtils.RESOURCES_DIR, 'maven-gav-reader.jar');
-    public static readonly PKG_TYPE: string = 'maven';
     private static mavenGavReaderInstalled: boolean;
     static pathToNode: Map<string, MavenTreeNode> = new Map<string, MavenTreeNode>();
 
@@ -106,13 +106,10 @@ export class MavenUtils {
 
     /**
      * Get an array of [groupId, artifactId, version] from dependencies tree node.
-     * @param dependenciesTreeNode - The dependencies tree node
+     * @param dependency - The dependencies tree node
      */
-    public static getGavArray(dependenciesTreeNode: DependenciesTreeNode): string[] {
-        return dependenciesTreeNode.generalInfo
-            .getComponentId()
-            .toLowerCase()
-            .split(':');
+    public static getGavArray(dependency: DependencyIssuesTreeNode): string[] {
+        return dependency.componentId.toLowerCase().split(':');
     }
 
     /**

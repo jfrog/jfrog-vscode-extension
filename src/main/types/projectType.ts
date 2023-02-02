@@ -30,3 +30,21 @@ export function toPackageType(str: string): PackageType {
             return PackageType.Unknown;
     }
 }
+export function fromPackageType(packageType: PackageType): string {
+    switch (packageType) {
+        case PackageType.Go:
+            return 'Go';
+        case PackageType.Maven:
+            return 'Maven';
+        case PackageType.Npm:
+            return 'npm';
+        case PackageType.Yarn:
+            return 'Yarn';
+        case PackageType.Nuget:
+            return 'NuGet';
+        case PackageType.Python:
+            return 'Python';
+        default:
+            return 'Unknown';
+    }
+}

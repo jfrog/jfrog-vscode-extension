@@ -12,6 +12,8 @@ import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
 import { ScanUtils } from '../utils/scanUtils';
 import { DiagnosticsManager } from '../diagnostics/diagnosticsManager';
 import { IDependencyPage, IEosPage } from 'jfrog-ide-webview';
+import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
+import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
 
 /**
  * Register and execute all commands in the extension.
@@ -23,7 +25,8 @@ export class CommandManager implements ExtensionComponent {
         private _treesManager: TreesManager,
         private _filterManager: FilterManager,
         private _buildsManager: BuildsManager,
-        private _diagnosticManager: DiagnosticsManager
+        private _diagnosticManager: DiagnosticsManager,
+        private _DependencyUpdateManager: DependencyUpdateManager
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
@@ -37,11 +40,15 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
+        this.registerCommand(context, 'jfrog.xray.update.dependency', () => this.doRefresh());
         // Local state
-        this.registerCommand(context, 'jfrog.issues.open.ignore', issue => this.doOpenUrlInBrowser(issue.ignoreUrl));
+        this.registerCommand(context, 'jfrog.issues.open.ignore', issue => vscode.env.openExternal(vscode.Uri.parse(issue.ignoreUrl)));
         this.registerCommand(context, 'jfrog.issues.file.open', file => ScanUtils.openFile(file));
         this.registerCommand(context, 'jfrog.issues.file.open.location', (file, fileRegion) => ScanUtils.openFile(file, fileRegion));
         this.registerCommand(context, 'jfrog.issues.select.node', item => this._treesManager.selectItemOnIssuesTree(item));
+        this.registerCommand(context, 'jfrog.issues.select.updateDependency', (dependency: DependencyIssuesTreeNode, version: string) =>
+            this.fixDependencyIssue(dependency, version)
+        );
         this.registerCommand(context, 'jfrog.issues.file.open.details', (file, fileRegion, details) =>
             this.doOpenFileAndDetailsPage(file, fileRegion, details)
         );
@@ -127,6 +134,24 @@ export class CommandManager implements ExtensionComponent {
     }
 
     /**
+     * Update a dependency in the project descriptor (e.g. package.json) to a new version.
+     */
+    private async fixDependencyIssue(dependency: DependencyIssuesTreeNode, version: string) {
+        let updated: boolean = false;
+        await ScanUtils.scanWithProgress(async (): Promise<void> => {
+            updated = await this._DependencyUpdateManager.updateToFixedVersion(dependency, version);
+            if (updated) {
+                this._logManager.logMessageAndToastInfo(`'Successfully updated the dependency ${dependency.name} to version ${version}.`, 'INFO');
+            } else {
+                this._logManager.logMessageAndToastInfo('Update dependency version was canceled.', 'INFO');
+            }
+        }, 'Updating ' + dependency.name);
+        if (updated && (await this.askRescan('Scan your project to reflect the changes?'))) {
+            this.doRefresh(true);
+        }
+    }
+
+    /**
      * Show JFrog Output tab.
      */
     private showOutput() {
@@ -138,16 +163,9 @@ export class CommandManager implements ExtensionComponent {
      * @param scan - True to scan the workspace, false will load from cache
      */
     private async doRefresh(scan: boolean = true) {
+        this._diagnosticManager.clearDiagnostics();
         await this._treesManager.refresh(scan);
         this._diagnosticManager.updateDiagnostics();
-    }
-
-    /**
-     * Open a url in a browser
-     * @param url - url to open in a browser
-     */
-    public doOpenUrlInBrowser(url: string) {
-        vscode.env.openExternal(vscode.Uri.parse(url));
     }
 
     /**
@@ -197,19 +215,26 @@ export class CommandManager implements ExtensionComponent {
      */
     private async doDisconnect(question: boolean) {
         if (question) {
-            const answer: string | undefined = await vscode.window.showInformationMessage(
+            const answer: boolean = await this.askYesNo(
                 'Are you sure you want to disconnect from the JFrog Platform (' +
                     (this._connectionManager.url || this._connectionManager.xrayUrl) +
-                    ') ?',
-                ...['Yes', 'No']
+                    ') ?'
             );
-            if (answer !== 'Yes') {
+            if (answer) {
                 return;
             }
         }
         if (await this._connectionManager.disconnect()) {
             await this.doRefresh(true);
         }
+    }
+
+    private async askYesNo(message: string): Promise<boolean> {
+        return (await vscode.window.showInformationMessage(message, 'Yes', 'No')) === 'Yes';
+    }
+    
+    private async askRescan(message: string): Promise<boolean> {
+        return (await vscode.window.showInformationMessage(message, 'Rescan project')) === 'Rescan project';
     }
 
     private async showConnectionStatus() {

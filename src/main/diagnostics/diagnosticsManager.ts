@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
@@ -13,11 +14,11 @@ import { DescriptorActionProvider } from './descriptorActionProvider';
 export class DiagnosticsManager implements ExtensionComponent {
     private _codeActionProviders: AbstractFileActionProvider[] = [];
 
-    constructor(treesManager: TreesManager) {
+    constructor(treesManager: TreesManager, updateManager: DependencyUpdateManager) {
         let diagnosticCollection: vscode.DiagnosticCollection = vscode.languages.createDiagnosticCollection();
 
         this._codeActionProviders.push(
-            new DescriptorActionProvider(diagnosticCollection, treesManager),
+            new DescriptorActionProvider(diagnosticCollection, treesManager, updateManager),
             new ApplicabilityActionProvider(diagnosticCollection, treesManager)
         );
     }

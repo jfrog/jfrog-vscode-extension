@@ -14,7 +14,6 @@ export class PypiUtils {
     public static readonly PYTHON_SCRIPTS: string = path.join(ScanUtils.RESOURCES_DIR, 'python');
     public static readonly PIP_DEP_TREE_SCRIPT: string = path.join(PypiUtils.PYTHON_SCRIPTS, 'pipDepTree.py');
     public static readonly CHECK_VENV_SCRIPT: string = path.join(PypiUtils.PYTHON_SCRIPTS, 'checkVenv.py');
-    public static readonly PKG_TYPE: string = 'pypi';
 
     /**
      * Get setup.py file and return the position of 'install_requires' section.

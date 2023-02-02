@@ -22,7 +22,7 @@ export class DependenciesTreesFactory {
         treesManager: TreesManager,
         progressManager: StepProgress,
         checkCanceled: () => void,
-        parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('', '', [], '', ''))
+        parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('', '', [], '', PackageType.Unknown))
     ): Promise<DependenciesTreeNode> {
         if (!treesManager.connectionManager.areXrayCredentialsSet()) {
             return parent;

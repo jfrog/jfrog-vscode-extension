@@ -39,7 +39,7 @@ export class YarnTreeNode extends RootNode {
             yarnProject.projectVersion,
             [],
             this.workspaceFolder,
-            YarnUtils.PKG_TYPE
+            PackageType.Yarn
         );
         this.projectDetails.name = yarnProject.projectName || path.join(this.workspaceFolder, 'yarn.lock');
         this.label = this.projectDetails.name;
@@ -59,7 +59,7 @@ export class YarnTreeNode extends RootNode {
             let dependencyName: string = node.name.substring(0, lastIndexOfAt);
             let dependencyVersion: string = node.name.substring(lastIndexOfAt + 1);
 
-            let generalInfo: GeneralInfo = new GeneralInfo(dependencyName, dependencyVersion, scope !== '' ? [scope] : [], '', YarnUtils.PKG_TYPE);
+            let generalInfo: GeneralInfo = new GeneralInfo(dependencyName, dependencyVersion, scope !== '' ? [scope] : [], '', PackageType.Yarn);
             let hasRealChildren: boolean = this.hasRealChildren(node.children);
             let treeCollapsibleState: vscode.TreeItemCollapsibleState = hasRealChildren
                 ? vscode.TreeItemCollapsibleState.Collapsed

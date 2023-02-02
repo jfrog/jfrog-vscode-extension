@@ -11,7 +11,6 @@ import { FocusType } from '../constants/contextKeys';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
-    public static readonly PKG_TYPE: string = 'npm';
 
     /**
      * Get package.json file and return the position of 'dependencies' section.
