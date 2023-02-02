@@ -12,7 +12,7 @@ import { DependenciesTreesFactory } from '../dependenciesTree/dependenciesTreeFa
 import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
 import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
 import { CacheManager } from '../../cache/cacheManager';
-import { getNumberOfSupportedPackageTypes, PackageType } from '../../types/projectType';
+import { PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { StepProgress } from '../utils/stepProgress';
 import { Utils } from '../utils/utils';
@@ -28,6 +28,12 @@ import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
 import { DescriptorIssuesData, FileIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
 import { EosTreeNode } from './codeFileTree/eosTreeNode';
 import { NotEntitledError } from '../../scanLogic/scanRunners/binaryRunner';
+
+export interface ScanConfig {
+    dependencyScan: boolean;
+    applicableScan: boolean;
+    eosScan: boolean;
+}
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -45,6 +51,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
     private _workspaceToRoot: Map<vscode.WorkspaceFolder, IssuesRootTreeNode | undefined> = new Map<vscode.WorkspaceFolder, IssuesRootTreeNode>();
     private _scanInProgress: boolean = false;
+    private _currentScanConfig?: ScanConfig;
 
     constructor(
         protected _workspaceFolders: vscode.WorkspaceFolder[],
@@ -59,13 +66,14 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * Updates the workspace data with issues base on the given state of the workspace or load the last refresh from cache.
      * @param scan - If true (default), runs Xray scan, else get from cache the last old scan.
      */
-    public async refresh(scan: boolean = true): Promise<void> {
+    public async refresh(scan?: ScanConfig): Promise<void> {
         if (!(await this._treesManager.connectionManager.isSignedIn())) {
             this._logManager.logMessage('Refresh: user is not signed in', 'INFO');
             this.clearTree();
             return;
         }
-        if (!scan) {
+        this._currentScanConfig = scan;
+        if (!this._currentScanConfig) {
             this._logManager.logMessage('Refresh: loading data from cache', 'INFO');
             this.loadFromCache();
             return;
@@ -263,9 +271,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 this.onChangeFire();
                 checkCanceled();
             },
-            2,
             this._logManager
         );
+
         // Scan workspace to prepare the needed information for the scans and progress
         progress.report({ message: '👷 Preparing workspace' });
         let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
@@ -274,29 +282,34 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             descriptorsCount += descriptorPaths.length;
         }
         checkCanceled();
-        let graphSupported: boolean = await this._scanManager.validateGraphSupported();
+        let eosSupported: boolean = !!this._currentScanConfig && this._currentScanConfig.eosScan && this._scanManager.validateEosSupported();
+        let graphSupported: boolean =
+            !!this._currentScanConfig && this._currentScanConfig.dependencyScan && (await this._scanManager.validateGraphSupported());
+        let applicableSupported: boolean =
+            !!this._currentScanConfig && this._currentScanConfig.applicableScan && (await this._scanManager.validateApplicableSupported());
         checkCanceled();
-
-        // Build workspace dependency tree for all the descriptors
-        progressManager.startStep('👷 Building workspace dependencies tree', getNumberOfSupportedPackageTypes());
-        let workspaceDependenciesTree: DependenciesTreeNode = await DependenciesTreesFactory.createDependenciesTrees(
-            workspaceDescriptors,
-            [root.workSpace],
-            [],
-            this._treesManager,
-            progressManager,
-            checkCanceled
-        );
-
-        progressManager.startStep('🔎 Scanning for issues', graphSupported ? 2 * descriptorsCount + 1 : 1);
+        let totalSubSteps: number = (graphSupported ? (applicableSupported ? 2 : 1) * descriptorsCount : 0) + (eosSupported ? 1 : 0);
+        progressManager.startStep('🔎 Scanning for issues', totalSubSteps);
         let scansPromises: Promise<any>[] = [];
-        scansPromises.push(AnalyzerUtils.runEos(workspaceData, root, workspaceDescriptors, this._scanManager, progressManager));
-        // Dependency graph scan and applicability scan for each descriptor
         if (graphSupported) {
+            // Dependency graph scan and applicability scan for each descriptor
             scansPromises.push(
-                this.descriptorsScanning(workspaceData, root, workspaceDescriptors, workspaceDependenciesTree, progressManager, checkCanceled)
+                DependenciesTreesFactory.createDependenciesTrees(
+                    workspaceDescriptors,
+                    [root.workSpace],
+                    [],
+                    this._treesManager,
+                    progressManager,
+                    checkCanceled
+                ).then(workspaceDependenciesTree =>
+                    this.descriptorsScanning(workspaceData, root, workspaceDescriptors, workspaceDependenciesTree, progressManager, checkCanceled)
+                )
             );
         }
+        if (eosSupported) {
+            scansPromises.push(AnalyzerUtils.runEos(workspaceData, root, workspaceDescriptors, this._scanManager, progressManager));
+        }
+
         await Promise.all(scansPromises);
         return root;
     }

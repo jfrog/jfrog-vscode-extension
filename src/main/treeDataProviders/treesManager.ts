@@ -6,7 +6,7 @@ import { ScanCacheManager } from '../cache/scanCacheManager';
 import { BuildsDataProvider } from './dependenciesTree/buildsDataProvider';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { DependencyDetailsProvider } from './dependencyDetailsProvider';
-import { IssuesTreeDataProvider } from './issuesTree/issuesTreeDataProvider';
+import { IssuesTreeDataProvider, ScanConfig } from './issuesTree/issuesTreeDataProvider';
 import { FileTreeNode } from './issuesTree/fileTreeNode';
 import { ScanManager } from '../scanLogic/scanManager';
 import { IssuesRootTreeNode } from './issuesTree/issuesRootTreeNode';
@@ -61,10 +61,10 @@ export class TreesManager implements ExtensionComponent {
             this._issuesTreeView,
             vscode.window.registerTreeDataProvider('jfrog.xray.ci.issues.details', this._dependencyDetailsProvider)
         );
-        return Promise.resolve(this).finally(() => this.issuesTreeDataProvider.refresh(false));
+        return Promise.resolve(this).finally(() => this.issuesTreeDataProvider.refresh());
     }
 
-    public async refresh(scan: boolean = true) {
+    public async refresh(scan?: ScanConfig) {
         if (this.isLocalState()) {
             await this.issuesTreeDataProvider.refresh(scan);
         } else {
@@ -83,7 +83,7 @@ export class TreesManager implements ExtensionComponent {
     public set state(value: State) {
         this._state = value;
         if (this._state === State.Local) {
-            this.issuesTreeDataProvider.refresh(false);
+            this.issuesTreeDataProvider.refresh();
         } else {
             this._buildsTreesProvider.stateChange();
         }

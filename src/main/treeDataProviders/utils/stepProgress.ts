@@ -17,8 +17,8 @@ export class StepProgress {
     constructor(
         private _progress: vscode.Progress<{ message?: string; increment?: number }>,
         public onProgress: () => void,
-        totalSteps?: number,
-        private _log?: LogManager
+        private _log?: LogManager,
+        totalSteps?: number
     ) {
         this._totalSteps = totalSteps ?? 1;
         this.abortController = new AbortController();

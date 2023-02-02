@@ -125,6 +125,22 @@
                 "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
             },
             {
+                "command": "jfrog.issues.scan.eos",
+                "title": "Scan for Eos issues",
+                "icon": {
+                    "light": "resources/light/refresh.png",
+                    "dark": "resources/dark/refresh.png"
+                },
+                "category": "JFrog",
+                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
+            },
+            {
+                "command": "jfrog.issues.clear",
+                "title": "Clear all the issues",
+                "category": "JFrog",
+                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
+            },
+            {
                 "command": "jfrog.xray.disconnect",
                 "title": "Disconnect",
                 "icon": "$(debug-disconnect)",

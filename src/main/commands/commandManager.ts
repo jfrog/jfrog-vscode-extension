@@ -14,6 +14,7 @@ import { DiagnosticsManager } from '../diagnostics/diagnosticsManager';
 import { IDependencyPage, IEosPage } from 'jfrog-ide-webview';
 import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
+import { ScanConfig } from '../treeDataProviders/issuesTree/issuesTreeDataProvider';
 
 /**
  * Register and execute all commands in the extension.
@@ -39,9 +40,10 @@ export class CommandManager implements ExtensionComponent {
         // General
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
-        this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
-        this.registerCommand(context, 'jfrog.xray.update.dependency', () => this.doRefresh());
+        this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh({ dependencyScan: true, applicableScan: true, eosScan: true }));
         // Local state
+        this.registerCommand(context, 'jfrog.issues.clear', () => this.doClear());
+        this.registerCommand(context, 'jfrog.issues.scan.eos', () => this.doRefresh({ dependencyScan: false, applicableScan: false, eosScan: true }));
         this.registerCommand(context, 'jfrog.issues.open.ignore', issue => vscode.env.openExternal(vscode.Uri.parse(issue.ignoreUrl)));
         this.registerCommand(context, 'jfrog.issues.file.open', file => ScanUtils.openFile(file));
         this.registerCommand(context, 'jfrog.issues.file.open.location', (file, fileRegion) => ScanUtils.openFile(file, fileRegion));
@@ -147,7 +149,7 @@ export class CommandManager implements ExtensionComponent {
             }
         }, 'Updating ' + dependency.name);
         if (updated && (await this.askRescan('Scan your project to reflect the changes?'))) {
-            this.doRefresh(true);
+            this.doRefresh();
         }
     }
 
@@ -158,11 +160,17 @@ export class CommandManager implements ExtensionComponent {
         this._logManager.showOutput();
     }
 
+    private async doClear() {
+        this._diagnosticManager.clearDiagnostics();
+        this._treesManager.issuesTreeDataProvider.clearTree();
+        this._treesManager.issuesTreeDataProvider.onChangeFire();
+    }
+
     /**
      * Refresh the components tree and updates the currently open files with diagnostics
      * @param scan - True to scan the workspace, false will load from cache
      */
-    private async doRefresh(scan: boolean = true) {
+    private async doRefresh(scan?: ScanConfig) {
         this._diagnosticManager.clearDiagnostics();
         await this._treesManager.refresh(scan);
         this._diagnosticManager.updateDiagnostics();
@@ -192,7 +200,7 @@ export class CommandManager implements ExtensionComponent {
     private async doConnect() {
         let credentialsSet: boolean = await this._connectionManager.connect();
         if (credentialsSet) {
-            await this.doRefresh(false);
+            await this.doRefresh({ dependencyScan: true, applicableScan: true, eosScan: true });
         }
     }
 
@@ -225,14 +233,14 @@ export class CommandManager implements ExtensionComponent {
             }
         }
         if (await this._connectionManager.disconnect()) {
-            await this.doRefresh(true);
+            await this.doRefresh();
         }
     }
 
     private async askYesNo(message: string): Promise<boolean> {
         return (await vscode.window.showInformationMessage(message, 'Yes', 'No')) === 'Yes';
     }
-    
+
     private async askRescan(message: string): Promise<boolean> {
         return (await vscode.window.showInformationMessage(message, 'Rescan project')) === 'Rescan project';
     }
