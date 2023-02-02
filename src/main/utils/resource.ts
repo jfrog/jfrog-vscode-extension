@@ -38,19 +38,14 @@ export class Resource {
      * @param downloadToFolder - the folder that the resource will be downloaded to
      * @returns the full path of the file that was downloaded successfully, undefined otherwise
      */
-    private async downloadToFolder(downloadToFolder: string = this._targetDir): Promise<string | undefined> {
-        try {
-            let resourcePath: string = path.join(downloadToFolder, this._name);
-            // Download new
-            await this._connectionManager
-                .artifactory()
-                .download()
-                .downloadArtifactToFile(this.sourceUrl, resourcePath);
-            return this.calculateLocalChecksum(resourcePath) === this._remoteSha256 ? resourcePath : undefined;
-        } catch (err) {
-            this._logManager.logError(<Error>err);
-            return undefined;
-        }
+    private async downloadToFolder(downloadToFolder: string = this._targetDir): Promise<string> {
+        let resourcePath: string = path.join(downloadToFolder, this._name);
+        // Download new
+        await this._connectionManager
+            .artifactory()
+            .download()
+            .downloadArtifactToFile(this.sourceUrl, resourcePath);
+        return resourcePath;
     }
 
     /**
@@ -72,14 +67,15 @@ export class Resource {
 
     /**
      * Update the resource to the latest version.
+     * if remoteSha256 is not set a request for the remote will be sent to check the most recent checksum
      * @returns true if the resource was updated, false otherwise
      */
     public async update(): Promise<boolean> {
         let tmpFolder: string = ScanUtils.createTmpDir();
         try {
             this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this.sourceUrl, 'DEBUG');
-            let resourceTmpPath: string | undefined = await this.downloadToFolder(tmpFolder);
-            if (!resourceTmpPath) {
+            let resourceTmpPath: string = await this.downloadToFolder(tmpFolder);
+            if (this.calculateLocalChecksum(resourceTmpPath) !== (this._remoteSha256 ?? (await this.calculateRemoteChecksum()))) {
                 this._logManager.logMessage('Resource ' + this._name + ' update failed.', 'ERR');
                 return false;
             }
@@ -100,7 +96,8 @@ export class Resource {
     }
 
     /**
-     * Check if the resource is outdated and has a new version to update
+     * Check if the resource is outdated and has a new version to update.
+     * Sets the remoteSha256 attribute base on the most recent value in the remote server.
      * @returns true if the resource in the path is outdated (or not exists), false otherwise
      */
     public async isOutdated(): Promise<boolean> {

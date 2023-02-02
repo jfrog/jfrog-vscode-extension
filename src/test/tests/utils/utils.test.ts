@@ -44,5 +44,3 @@ export function getCliHomeDir(): string {
 export function setCliHomeDir(newHome: string): void {
     process.env['JFROG_CLI_HOME_DIR'] = newHome;
 }
-
-// export function create

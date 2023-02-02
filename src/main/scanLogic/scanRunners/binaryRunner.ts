@@ -58,7 +58,6 @@ export abstract class BinaryRunner {
         protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager)
     ) {
         this._runDirectory = path.dirname(this._binary.fullPath);
-        // this._isSupported = this.validateSupported();
 
         if (this._abortCheckInterval <= 0) {
             // Default check in 1 sec intervals

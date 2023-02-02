@@ -89,12 +89,18 @@ export class ScanManager implements ExtensionComponent {
             let outdatedResources: Resource[] = [];
             for (const resource of this.getResources()) {
                 promises.push(
-                    resource.isOutdated().then(outdated => {
-                        if (outdated) {
-                            outdatedResources.push(resource);
-                        }
-                        return outdated;
-                    })
+                    resource
+                        .isOutdated()
+                        .then(outdated => {
+                            if (outdated) {
+                                outdatedResources.push(resource);
+                            }
+                            return outdated;
+                        })
+                        .catch(err => {
+                            this._logManager.logError(<Error>err);
+                            return false;
+                        })
                 );
             }
             await Promise.all(promises);
