@@ -14,8 +14,7 @@ export class Resource {
     private static readonly DEFAULT_SERVER: string = 'https://releases.jfrog.io';
 
     private _connectionManager: JfrogClient;
-    // Cached remote resource's sha256
-    private _remoteSha256: string | undefined;
+    private _cacheRemoteSha256: string | undefined;
 
     private _targetDir: string;
     private _name: string;
@@ -75,7 +74,7 @@ export class Resource {
         try {
             this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this.sourceUrl, 'DEBUG');
             let resourceTmpPath: string = await this.downloadToFolder(tmpFolder);
-            if (this.calculateLocalChecksum(resourceTmpPath) !== (this._remoteSha256 ?? (await this.calculateRemoteChecksum()))) {
+            if (this.calculateLocalChecksum(resourceTmpPath) !== (this._cacheRemoteSha256 ?? (await this.calculateRemoteChecksum()))) {
                 this._logManager.logMessage('Resource ' + this._name + ' update failed.', 'ERR');
                 return false;
             }
@@ -106,12 +105,12 @@ export class Resource {
             return true;
         }
         // Check if has update - compare the sha256 of the resource with the latest released resource.
-        this._remoteSha256 = await this.calculateRemoteChecksum();
-        if (!this._remoteSha256) {
+        this._cacheRemoteSha256 = await this.calculateRemoteChecksum();
+        if (!this._cacheRemoteSha256) {
             // In case of failure download anyway to make sure
             return true;
         }
-        return this._remoteSha256 !== this.calculateLocalChecksum(this._targetPath);
+        return this._cacheRemoteSha256 !== this.calculateLocalChecksum(this._targetPath);
     }
 
     private async calculateRemoteChecksum(): Promise<string | undefined> {
