@@ -13,7 +13,7 @@ export class CodeIssueTreeNode extends IssueTreeNode {
             new vscode.Position(region.start.line - 1 > 0 ? region.start.line - 1 : 0, region.start.character),
             new vscode.Position(region.end.line - 1 > 0 ? region.end.line - 1 : 0, region.end.character)
         );
-        this.description = 'row = ' + region.start.line + ', column = ' + region.start.character;
+        this.description = 'line = ' + region.start.line;
     }
 
     public get parent(): CodeFileTreeNode {

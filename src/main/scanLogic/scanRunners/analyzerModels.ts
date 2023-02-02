@@ -3,6 +3,7 @@ export interface AnalyzerRequest {
 }
 
 type AnalyzerType = 'analyze-applicability' | 'analyze-codebase';
+export type SeverityLevel = 'note' | 'warning' | 'error';
 
 export interface AnalyzeScanRequest {
     // What type of scan
@@ -36,6 +37,7 @@ export interface AnalyzerRule {
 
 export interface AnalyzeIssue {
     ruleId: string;
+    level: SeverityLevel;
     message: ResultContent;
     locations: AnalyzeLocation[];
     codeFlows?: CodeFlow[];

@@ -7,6 +7,8 @@ import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeIssue, AnalyzerScanResponse, AnalyzeScanRequest, AnalyzeLocation, FileRegion, FileLocation, CodeFlow } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
+import { Severity } from '../../types/severity';
+import { Translators } from '../../utils/translators';
 
 export interface EosScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
@@ -25,6 +27,7 @@ export interface EosFileIssues {
 
 export interface EosIssue {
     ruleId: string;
+    severity: Severity;
     ruleName: string;
     fullDescription?: string;
     locations: EosIssueLocation[];
@@ -193,6 +196,7 @@ export class EosRunner extends BinaryRunner {
         }
         let fileIssue: EosIssue = {
             ruleId: analyzeIssue.ruleId,
+            severity: Translators.levelToSeverity(analyzeIssue.level),
             ruleName: analyzeIssue.message.text,
             fullDescription: fullDescription,
             locations: []
