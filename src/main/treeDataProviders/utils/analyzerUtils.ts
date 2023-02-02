@@ -18,6 +18,8 @@ import { ScanManager } from '../../scanLogic/scanManager';
 import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
 import { DescriptorIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
 import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
+import { TerraformIssue } from '../../scanLogic/scanRunners/terraformScan';
+import { TerraformTreeNode } from '../issuesTree/codeFileTree/terraformTreeNode';
 
 export class AnalyzerUtils {
     /**
@@ -300,24 +302,23 @@ export class AnalyzerUtils {
         root: IssuesRootTreeNode,
         scanManager: ScanManager,
         progressManager: StepProgress
-        ) : Promise<any> 
-        {
-            if (!scanManager.validateIacSupported()) {
-                progressManager.reportProgress();
-                return;
-            }
-            // Run
+    ): Promise<any> {
+        if (!scanManager.validateIacSupported()) {
+            progressManager.reportProgress();
+            return;
+        }
+        // Run
         let startTime: number = Date.now();
-        workspaceData.eosScan = await scanManager
-            .scanIac(root.workSpace.uri.fsPath,progressManager.abortController)
+        workspaceData.iacScan = await scanManager
+            .scanIac(root.workSpace.uri.fsPath, progressManager.abortController)
             .finally(() => progressManager.reportProgress());
-        if (workspaceData.eosScan) {
-            workspaceData.eosScanTimestamp = Date.now();
-            let applicableIssuesCount: number = AnalyzerUtils.populateIacIssues(root, workspaceData);
+        if (workspaceData.iacScan) {
+            workspaceData.iacScanTimestamp = Date.now();
+            let issuesCount: number = AnalyzerUtils.populateIacIssues(root, workspaceData);
             scanManager.logManager.logMessage(
                 'Found ' +
-                    applicableIssuesCount +
-                    " Eos issues in workspace = '" +
+                    issuesCount +
+                    " Iac issues in workspace = '" +
                     workspaceData.path +
                     "' (elapsed " +
                     (Date.now() - startTime) / 1000 +
@@ -342,9 +343,9 @@ export class AnalyzerUtils {
         if (workspaceData.iacScan && workspaceData.iacScan.filesWithIssues) {
             workspaceData.iacScan.filesWithIssues.forEach(fileWithIssues => {
                 let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
-                fileWithIssues.issues.forEach((issue: EosIssue) => {
-                    issue.locations.forEach((location: EosIssueLocation) => {
-                        fileNode.issues.push(new EosTreeNode(issue, location, fileNode));
+                fileWithIssues.issues.forEach((issue: TerraformIssue) => {
+                    issue.locations.forEach((location: FileRegion) => {
+                        fileNode.issues.push(new TerraformTreeNode(issue, location, fileNode));
                         issuesCount++;
                     });
                 });

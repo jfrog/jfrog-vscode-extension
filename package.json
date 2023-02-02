@@ -135,6 +135,16 @@
                 "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
             },
             {
+                "command": "jfrog.issues.scan.iac",
+                "title": "Scan for Iac issues",
+                "icon": {
+                    "light": "resources/light/refresh.png",
+                    "dark": "resources/dark/refresh.png"
+                },
+                "category": "JFrog",
+                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
+            },
+            {
                 "command": "jfrog.issues.clear",
                 "title": "Clear all the issues",
                 "category": "JFrog",
