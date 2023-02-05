@@ -286,7 +286,7 @@ export abstract class BinaryRunner {
             ScanUtils.removeFolder(args.directory);
             return undefined;
         }
-        
+
         // Run
         let runs: Promise<any>[] = [];
         let aggResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;

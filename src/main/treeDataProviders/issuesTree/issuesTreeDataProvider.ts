@@ -294,7 +294,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         let applicableSupported: boolean =
             !!this._currentScanConfig && this._currentScanConfig.applicableScan && (await this._scanManager.validateApplicableSupported());
         checkCanceled();
-        let totalSubSteps: number = (graphSupported ? (applicableSupported ? 2 : 1) * descriptorsCount : 0) + (eosSupported ? 1 : 0) + (iacSupported ? 1 : 0);
+        let totalSubSteps: number =
+            (graphSupported ? (applicableSupported ? 2 : 1) * descriptorsCount : 0) + (eosSupported ? 1 : 0) + (iacSupported ? 1 : 0);
         progressManager.startStep('🔎 Scanning for issues', totalSubSteps);
         let scansPromises: Promise<any>[] = [];
         if (graphSupported) {

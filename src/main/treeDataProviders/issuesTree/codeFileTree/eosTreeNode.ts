@@ -1,6 +1,7 @@
 import { IAnalysisStep, IEosPage, PageType } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
 import { EosIssue, EosIssueLocation } from '../../../scanLogic/scanRunners/eosScan';
+import { SeverityUtils } from '../../../types/severity';
 import { Translators } from '../../../utils/translators';
 import { CodeFileTreeNode } from './codeFileTreeNode';
 import { CodeIssueTreeNode } from './codeIssueTreeNode';
@@ -44,9 +45,11 @@ export class EosTreeNode extends CodeIssueTreeNode {
     public getDetailsPage(): IEosPage {
         return {
             header: this.label,
+            severity: SeverityUtils.toWebviewSeverity(this.severity),
             pageType: PageType.Eos,
             location: {
                 file: this.parent.fullPath,
+                snippet: this._snippet,
                 row: this.regionWithIssue.start.line + 1,
                 colum: this.regionWithIssue.start.character
             } as IAnalysisStep,

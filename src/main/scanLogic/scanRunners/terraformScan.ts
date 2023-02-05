@@ -77,7 +77,6 @@ export class TerraformRunner extends BinaryRunner {
             type: 'iac-scan-modules',
             roots: [directory]
         } as AnalyzeScanRequest;
-        this._logManager.logMessage(JSON.stringify(request),'DEBUG');
         return await this.run(abortController, true, request).then(runResult => this.generateScanResponse(runResult));
     }
 
@@ -90,7 +89,6 @@ export class TerraformRunner extends BinaryRunner {
         if (!response) {
             return {} as TerraformScanResponse;
         }
-        this._logManager.logMessage(JSON.stringify(response),'DEBUG');
         let iacResponse: TerraformScanResponse = {
             filesWithIssues: []
         } as TerraformScanResponse;
