@@ -3,7 +3,7 @@ export interface AnalyzerRequest {
 }
 
 type AnalyzerType = 'analyze-applicability' | 'analyze-codebase' | 'iac-scan-modules';
-export type SeverityLevel = 'note' | 'warning' | 'error';
+export type SeverityLevel = 'none' | 'note' | 'warning' | 'error';
 
 export interface AnalyzeScanRequest {
     // What type of scan
@@ -37,7 +37,7 @@ export interface AnalyzerRule {
 
 export interface AnalyzeIssue {
     ruleId: string;
-    level: SeverityLevel;
+    level?: SeverityLevel;
     message: ResultContent;
     locations: AnalyzeLocation[];
     codeFlows?: CodeFlow[];
