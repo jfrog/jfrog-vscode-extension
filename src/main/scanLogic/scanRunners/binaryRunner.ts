@@ -286,6 +286,7 @@ export abstract class BinaryRunner {
             ScanUtils.removeFolder(args.directory);
             return undefined;
         }
+        
         // Run
         let runs: Promise<any>[] = [];
         let aggResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
@@ -339,6 +340,8 @@ export abstract class BinaryRunner {
                     "Binary '" + Utils.getLastSegment(this._binaryPath) + "' task ended with status code: " + error.code,
                     'ERR'
                 );
+                // TODO: remove when iac returns error code 0
+                return;
             }
             throw error;
         });
