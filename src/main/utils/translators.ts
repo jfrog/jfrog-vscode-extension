@@ -59,16 +59,16 @@ export class Translators {
         }
     }
 
-    public static levelToSeverity(level: SeverityLevel): Severity {
+    public static levelToSeverity(level?: SeverityLevel): Severity {
         switch (level) {
+            case 'none':
+                return Severity.Unknown;
             case 'note':
                 return Severity.Low;
-            case 'warning':
-                return Severity.Medium;
             case 'error':
                 return Severity.High;
             default:
-                return Severity.Unknown;
+                return Severity.Medium;
         }
     }
 
