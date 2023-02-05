@@ -9,11 +9,10 @@ import { ProjectDetails } from '../types/projectDetails';
 import { GeneralInfo } from '../types/generalInfo';
 import { NpmGlobalScopes, ScopedNpmProject } from './npmUtils';
 import { ScanUtils } from './scanUtils';
+import { PackageType } from '../types/projectType';
 
 export class YarnUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/yarn.lock' };
-    public static readonly PKG_TYPE: string = 'yarn';
-
     /**
      * Get yarn.lock file and return the start position of the dependencies.
      * @param document - yarn.lock file
@@ -92,7 +91,7 @@ export class YarnUtils {
                     yarnProject.projectVersion,
                     [],
                     workspaceFolder,
-                    YarnUtils.PKG_TYPE
+                    PackageType.Yarn
                 );
                 new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.None, parent);
                 return false;

@@ -95,7 +95,9 @@ describe('Yarn Utils Tests', async () => {
         // Test 'resources/yarn/project-1/yarn.lock'
         let yarnLock: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'project-1', 'yarn.lock'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(yarnLock);
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@types/node', '14.14.10', [], '', ''));
+        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
+            new GeneralInfo('@types/node', '14.14.10', [], '', PackageType.Unknown)
+        );
         let dependencyPos: vscode.Range[] = YarnUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
         assert.isEmpty(dependencyPos);
     });
@@ -104,7 +106,7 @@ describe('Yarn Utils Tests', async () => {
         // Test 'resources/yarn/project-2/yarn.lock'
         let yarnLock: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'project-2', 'yarn.lock'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(yarnLock);
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('progress', '"2.0.3', [], '', ''));
+        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('progress', '"2.0.3', [], '', PackageType.Unknown));
         let dependencyPos: vscode.Range[] = YarnUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(4, 0));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(4, 14));
@@ -114,22 +116,24 @@ describe('Yarn Utils Tests', async () => {
         // Test 'resources/yarn/project-3/yarn.lock'
         let yarnLock: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'project-3', 'yarn.lock'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(yarnLock);
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@types/node', '14.14.10', [], '', ''));
+        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
+            new GeneralInfo('@types/node', '14.14.10', [], '', PackageType.Unknown)
+        );
         let dependencyPos: vscode.Range[] = YarnUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(4, 1));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(4, 21));
 
-        dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@ungap/promise-all-settled', '1.1.2', [], '', ''));
+        dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@ungap/promise-all-settled', '1.1.2', [], '', PackageType.Unknown));
         dependencyPos = YarnUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(9, 1));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(9, 33));
 
-        dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('has-flag', '3.0.0', [], '', ''));
+        dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('has-flag', '3.0.0', [], '', PackageType.Unknown));
         dependencyPos = YarnUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(14, 0));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(14, 14));
 
-        dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('progress', '2.0.3', [], '', ''));
+        dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('progress', '2.0.3', [], '', PackageType.Unknown));
         dependencyPos = YarnUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(19, 0));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(19, 14));
@@ -139,7 +143,7 @@ describe('Yarn Utils Tests', async () => {
      * Test YarnUtils.createYarnDependencyTrees.
      */
     it('Create yarn dependency trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
         let componentsToScan: ProjectDetails[] = [];
         let res: DependenciesTreeNode[] = await runCreateYarnDependencyTrees(componentsToScan, parent);
 

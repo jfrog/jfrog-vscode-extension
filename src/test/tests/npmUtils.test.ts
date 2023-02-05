@@ -96,7 +96,9 @@ describe('Npm Utils Tests', async () => {
         // Test 'resources/npm/project-1/package.json'
         let packageJson: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'project-1', 'package.json'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(packageJson);
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@types/node', '14.14.10', [], '', ''));
+        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
+            new GeneralInfo('@types/node', '14.14.10', [], '', PackageType.Unknown)
+        );
         let dependencyPos: vscode.Range[] = NpmUtils.getDependencyPosition(
             textDocument,
             dependenciesTreeNode.generalInfo.artifactId,
@@ -109,7 +111,7 @@ describe('Npm Utils Tests', async () => {
         // Test 'resources/npm/project-2/package.json'
         let packageJson: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'project-2', 'package.json'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(packageJson);
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('progress', '"2.0.3', [], '', ''));
+        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('progress', '"2.0.3', [], '', PackageType.Unknown));
         let dependencyPos: vscode.Range[] = NpmUtils.getDependencyPosition(
             textDocument,
             dependenciesTreeNode.generalInfo.artifactId,
@@ -123,7 +125,9 @@ describe('Npm Utils Tests', async () => {
         // Test 'resources/npm/project-3/package.json'
         let packageJson: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'project-3', 'package.json'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(packageJson);
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@types/node', '14.14.10', [], '', ''));
+        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
+            new GeneralInfo('@types/node', '14.14.10', [], '', PackageType.Unknown)
+        );
         let dependencyPos: vscode.Range[] = NpmUtils.getDependencyPosition(
             textDocument,
             dependenciesTreeNode.generalInfo.artifactId,
@@ -132,17 +136,17 @@ describe('Npm Utils Tests', async () => {
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(13, 4));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(13, 29));
 
-        dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@ungap/promise-all-settled', '1.1.2', [], '', ''));
+        dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('@ungap/promise-all-settled', '1.1.2', [], '', PackageType.Unknown));
         dependencyPos = NpmUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId, FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(9, 4));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(9, 41));
 
-        dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('has-flag', '3.0.0', [], '', ''));
+        dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('has-flag', '3.0.0', [], '', PackageType.Unknown));
         dependencyPos = NpmUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId, FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(8, 4));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(8, 23));
 
-        dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('progress', '2.0.3', [], '', ''));
+        dependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('progress', '2.0.3', [], '', PackageType.Unknown));
         dependencyPos = NpmUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId, FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(12, 4));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(12, 23));
@@ -152,7 +156,7 @@ describe('Npm Utils Tests', async () => {
      * Test NpmUtils.createNpmDependenciesTrees.
      */
     it('Create npm Dependencies Trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''));
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
         let componentsToScan: ProjectDetails[] = [];
         let res: DependenciesTreeNode[] = await runCreateNpmDependenciesTrees(componentsToScan, parent);
 

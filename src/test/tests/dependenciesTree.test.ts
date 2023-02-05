@@ -6,7 +6,7 @@ import { IIssueKey } from '../../main/types/issueKey';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { Severity } from '../../main/types/severity';
-
+import { PackageType } from '../../main/types/projectType';
 /**
  * Test functionality of @class DependenciesTreeNode.
  */
@@ -112,7 +112,7 @@ describe('Dependencies Tree Tests', () => {
     }
 
     function createNode(label: string): DependenciesTreeNode {
-        return new DependenciesTreeNode(new GeneralInfo(label, '1.0.0', [], '', ''));
+        return new DependenciesTreeNode(new GeneralInfo(label, '1.0.0', [], '', PackageType.Unknown));
     }
 
     function createDummyIssue(): IIssueKey {

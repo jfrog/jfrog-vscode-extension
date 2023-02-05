@@ -15,6 +15,7 @@ import { PypiUtils } from '../../main/utils/pypiUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager } from './utils/utils.test';
 import { CacheManager } from '../../main/cache/cacheManager';
+import { PackageType } from '../../main/types/projectType';
 
 /**
  * Test functionality of @class PypiUtils.
@@ -81,7 +82,9 @@ describe('Pypi Utils Tests', async () => {
         // Test 'resources/python/requirements'
         let requirements: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'requirements', 'requirements.txt'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(requirements);
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('newrelic', '2.0.0.1', [], '', ''));
+        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
+            new GeneralInfo('newrelic', '2.0.0.1', [], '', PackageType.Unknown)
+        );
         let dependencyPos: vscode.Range[] = PypiUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(2, 0));
 
@@ -102,7 +105,7 @@ describe('Pypi Utils Tests', async () => {
             workspaceFolders[0].uri.fsPath,
             treesManager,
             path.join(workspaceFolders[0].uri.fsPath, localPython),
-            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
+            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown))
         );
         dependenciesTreeNode.refreshDependencies();
         assert.deepEqual(dependenciesTreeNode.label, 'requirements');
@@ -114,7 +117,7 @@ describe('Pypi Utils Tests', async () => {
             workspaceFolders[1].uri.fsPath,
             treesManager,
             path.join(workspaceFolders[1].uri.fsPath, localPython),
-            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
+            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown))
         );
         dependenciesTreeNode.refreshDependencies();
         assert.deepEqual(dependenciesTreeNode.label, 'setup');
@@ -129,7 +132,7 @@ describe('Pypi Utils Tests', async () => {
             workspaceFolders[2].uri.fsPath,
             treesManager,
             path.join(workspaceFolders[2].uri.fsPath, localPython),
-            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', ''))
+            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown))
         );
         dependenciesTreeNode.refreshDependencies();
         assert.deepEqual(dependenciesTreeNode.label, 'setupAndRequirements');

@@ -13,6 +13,7 @@ import { Severity } from '../../main/types/severity';
 import { TestMemento } from './utils/testMemento.test';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependencyDetailsProvider';
+import { PackageType } from '../../main/types/projectType';
 // import { SourceCodeTreeDataProvider } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeTreeDataProvider';
 // import { TreesManager } from '../../main/treeDataProviders/treesManager';
 // import { ConnectionManager } from '../../main/connect/connectionManager';
@@ -49,7 +50,7 @@ describe('Issues Data Provider Tests', () => {
             storagePath: ScanUtils.createTmpDir(),
             workspaceState: new TestMemento()
         }) as vscode.ExtensionContext);
-        let generalInfo: GeneralInfo = new GeneralInfo('odin', '1.2.3', [], __dirname, 'asgard');
+        let generalInfo: GeneralInfo = new GeneralInfo('odin', '1.2.3', [], __dirname, PackageType.Unknown);
         dependenciesTreeNode = new DependenciesTreeNode(generalInfo);
         workspaceFolders.push({ uri: vscode.Uri.file(__dirname), name: '', index: 0 } as vscode.WorkspaceFolder);
     });
@@ -83,7 +84,7 @@ describe('Issues Data Provider Tests', () => {
 
     it('Second node', async () => {
         // Create a second DependenciesTreNode
-        let secondNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('thor', '1.2.4', [], __dirname, 'midgard'));
+        let secondNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('thor', '1.2.4', [], __dirname, PackageType.Unknown));
         dependenciesTreeNode.addChild(secondNode);
 
         // Add a new issue to the second node

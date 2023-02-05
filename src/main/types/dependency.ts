@@ -1,9 +1,11 @@
+import { PackageType } from './projectType';
+
 export class Dependency {
     constructor(
         private _id: string,
         private _scopes: string[],
         private _requestedBy: string[][],
-        private _type: string,
+        private _type: PackageType,
         private _sha1?: string,
         private _sha256?: string
     ) {}
@@ -32,11 +34,11 @@ export class Dependency {
         this._requestedBy = requestedBy;
     }
 
-    get type(): string {
+    get type(): PackageType {
         return this._type;
     }
 
-    set type(value: string) {
+    set type(value: PackageType) {
         this._type = value;
     }
 

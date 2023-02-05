@@ -14,7 +14,6 @@ import { ScanUtils } from './scanUtils';
 
 export class GoUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/go.mod' };
-    public static readonly PKG_TYPE: string = 'go';
     private static readonly GO_MOD_TIDY_CMD: string = 'go mod tidy';
     private static readonly GO_VERSION: string = 'go version';
     // Required files of the gomod-absolutizer Go program.

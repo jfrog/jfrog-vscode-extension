@@ -8,8 +8,6 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { ProjectDetails } from '../types/projectDetails';
 
 export class NugetUtils {
-    public static readonly PKG_TYPE: string = 'nuget';
-
     /**
      * @param solutions        - Paths to *.sln files
      * @param componentsToScan - Set of nuget components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
