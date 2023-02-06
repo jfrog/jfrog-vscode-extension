@@ -13,15 +13,12 @@ import { TestMemento } from './utils/testMemento.test';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependenciesTree/dependencyDetailsProvider';
 import { PackageType } from '../../main/types/projectType';
-import { IssuesDataProvider, LicensesTitleNode, VulnerabilitiesTitleNode, VulnerabilityNode } from '../../main/treeDataProviders/dependenciesTree/issuesDataProvider';
-// import { SourceCodeTreeDataProvider } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeTreeDataProvider';
-// import { TreesManager } from '../../main/treeDataProviders/treesManager';
-// import { ConnectionManager } from '../../main/connect/connectionManager';
-// import { LogManager } from '../../main/log/logManager';
-// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
-// import { createScanCacheManager } from './utils/utils.test';
-// import { ScanManager } from '../../main/scanLogic/scanManager';
-// import { CacheManager } from '../../main/cache/cacheManager';
+import {
+    IssuesDataProvider,
+    LicensesTitleNode,
+    VulnerabilitiesTitleNode,
+    VulnerabilityNode
+} from '../../main/treeDataProviders/dependenciesTree/issuesDataProvider';
 
 /**
  * Test functionality of @class IssuesDataProvider.
@@ -29,19 +26,8 @@ import { IssuesDataProvider, LicensesTitleNode, VulnerabilitiesTitleNode, Vulner
 describe('Issues Data Provider Tests', () => {
     let scanCacheManager: ScanCacheManager = new ScanCacheManager();
 
-    // let logManager: LogManager = new LogManager().activate();
-    // let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
-    // let treesManager: TreesManager = new TreesManager(
-    //     [],
-    //     new ConnectionManager(logManager),
-    //     dummyScanCacheManager,
-    //     {} as ScanManager,
-    //     {} as CacheManager,
-    //     logManager
-    // );
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
-    // let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider(workspaceFolders, treesManager);
-    let dependencyDetailsProvider: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager); //, sourceCodeTreeDataProvider);
+    let dependencyDetailsProvider: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager);
     let issuesDataProvider: IssuesDataProvider = dependencyDetailsProvider.issuesDataProvider;
     let dependenciesTreeNode: DependenciesTreeNode;
 
