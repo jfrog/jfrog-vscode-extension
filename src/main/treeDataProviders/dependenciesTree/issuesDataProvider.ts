@@ -1,14 +1,14 @@
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
-import { ScanCacheManager } from '../cache/scanCacheManager';
-import { IIssueCacheObject } from '../types/issueCacheObject';
-import { Severity, SeverityUtils } from '../types/severity';
-import { Consts } from '../utils/consts';
-import { IconsPaths } from '../utils/iconsPaths';
-import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
-import { TreeDataHolder } from './utils/treeDataHolder';
-import { Utils } from './utils/utils';
 import { IExtendedInformation, IReference } from 'jfrog-client-js';
+import { DependenciesTreeNode } from './dependenciesTreeNode';
+import { ScanCacheManager } from '../../cache/scanCacheManager';
+import { Utils } from '../utils/utils';
+import { TreeDataHolder } from '../utils/treeDataHolder';
+import { IIssueCacheObject } from '../../types/issueCacheObject';
+import { Consts } from '../../utils/consts';
+import { Severity, SeverityUtils } from '../../types/severity';
+import { IconsPaths } from '../../utils/iconsPaths';
 
 export abstract class IssueNode extends vscode.TreeItem {
     constructor(label: string, collapsibleState?: vscode.TreeItemCollapsibleState) {

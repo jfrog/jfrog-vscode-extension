@@ -5,7 +5,7 @@ import { LogManager } from '../log/logManager';
 import { ScanCacheManager } from '../cache/scanCacheManager';
 import { BuildsDataProvider } from './dependenciesTree/buildsDataProvider';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
-import { DependencyDetailsProvider } from './dependencyDetailsProvider';
+import { DependencyDetailsProvider } from './dependenciesTree/dependencyDetailsProvider';
 import { IssuesTreeDataProvider } from './issuesTree/issuesTreeDataProvider';
 import { FileTreeNode } from './issuesTree/fileTreeNode';
 import { ScanManager } from '../scanLogic/scanManager';

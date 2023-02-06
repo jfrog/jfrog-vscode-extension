@@ -7,35 +7,17 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
 import { ILicenseKey } from '../../main/types/licenseKey';
 import { createScanCacheManager } from './utils/utils.test';
-import { LicensesNode } from '../../main/treeDataProviders/generalDetailsDataProvider';
-import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependencyDetailsProvider';
+import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependenciesTree/dependencyDetailsProvider';
 import { TreeDataHolder } from '../../main/treeDataProviders/utils/treeDataHolder';
 import { PackageType } from '../../main/types/projectType';
-// import { SourceCodeTreeDataProvider } from '../../main/treeDataProviders/sourceCodeTree/sourceCodeTreeDataProvider';
-// import { TreesManager } from '../../main/treeDataProviders/treesManager';
-// import { LogManager } from '../../main/log/logManager';
-// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
-// import { ConnectionManager } from '../../main/connect/connectionManager';
-// import { ScanManager } from '../../main/scanLogic/scanManager';
-// import { CacheManager } from '../../main/cache/cacheManager';
+import { LicensesNode } from '../../main/treeDataProviders/dependenciesTree/generalDetailsDataProvider';
 
 /**
  * Test functionality of @class DependencyDataProvider.
  */
 describe('Dependency Details Tests', () => {
     let scanCacheManager: ScanCacheManager = createScanCacheManager();
-    // let logManager: LogManager = new LogManager().activate();
-    // let dummyScanCacheManager: ScanCacheManager = createScanCacheManager();
-    // let treesManager: TreesManager = new TreesManager(
-    //     [],
-    //     new ConnectionManager(logManager),
-    //     dummyScanCacheManager,
-    //     {} as ScanManager,
-    //     {} as CacheManager,
-    //     logManager
-    // );
-    // let sourceCodeTreeDataProvider: SourceCodeTreeDataProvider = new SourceCodeTreeDataProvider([], treesManager);
-    let Components: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager); //, sourceCodeTreeDataProvider);
+    let Components: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager);
     let dependenciesTreeNode: DependenciesTreeNode;
     before(() => {
         let generalInfo: GeneralInfo = new GeneralInfo('artifactId', '1.2.3', [], __dirname, PackageType.Unknown);
