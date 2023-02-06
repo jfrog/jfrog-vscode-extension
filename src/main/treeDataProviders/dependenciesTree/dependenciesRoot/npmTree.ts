@@ -7,6 +7,7 @@ import { NpmGlobalScopes, ScopedNpmProject, NpmUtils } from '../../../utils/npmU
 import { RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
 import { Severity } from '../../../types/severity';
+import { Constants } from '../../../constants/consts';
 
 export class NpmTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
@@ -36,7 +37,7 @@ export class NpmTreeNode extends RootNode {
             );
         }
         this.generalInfo = new GeneralInfo(
-            npmLsFailed ? (productionScope.projectName += ' [Not installed]') : productionScope.projectName,
+            npmLsFailed ? (productionScope.projectName += ' ' + Constants.NOT_INSTALLED) : productionScope.projectName,
             productionScope.projectVersion,
             [],
             this.workspaceFolder,

@@ -8,6 +8,7 @@ import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
+import { Constants } from '../../../constants/consts';
 
 export class YarnTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
@@ -35,7 +36,7 @@ export class YarnTreeNode extends RootNode {
 
         const yarnProject: ScopedNpmProject = YarnUtils.getYarnProjectDetails(this.workspaceFolder);
         this.generalInfo = new GeneralInfo(
-            yarnProject.projectName + (yarnListFailed ? ' [Not installed]' : ''),
+            yarnProject.projectName + (yarnListFailed ? ' ' + Constants.NOT_INSTALLED : ''),
             yarnProject.projectVersion,
             [],
             this.workspaceFolder,

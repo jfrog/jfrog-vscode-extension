@@ -6,6 +6,7 @@ import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
 import { SemVer } from 'semver';
+import { Constants } from '../../../constants/consts';
 
 export class GoTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
@@ -23,7 +24,7 @@ export class GoTreeNode extends RootNode {
             goList = this.runGoList(goVersion);
         } catch (error) {
             this._treesManager.logManager.logError(<any>error);
-            this.label = this.workspaceFolder + ' [Not installed]';
+            this.label = this.workspaceFolder + ' ' + Constants.NOT_INSTALLED;
             this.generalInfo = new GeneralInfo(this.label, '', [], this.workspaceFolder, PackageType.Go);
             return;
         }

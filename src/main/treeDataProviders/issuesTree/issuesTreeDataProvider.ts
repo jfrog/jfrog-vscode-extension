@@ -28,6 +28,7 @@ import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
 import { DescriptorIssuesData, FileIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
 import { EosTreeNode } from './codeFileTree/eosTreeNode';
 import { NotEntitledError } from '../../scanLogic/scanRunners/binaryRunner';
+import { Constants } from '../../constants/consts';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -339,23 +340,23 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     continue;
                 }
                 // Project is not installed - Go, npm, Yarn v1, or Python
-                if (descriptorGraph?.label?.toString().includes('[Not installed]')) {
+                if (descriptorGraph?.label?.toString().includes(Constants.NOT_INSTALLED)) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this.onFileScanError(
                         workspaceData,
                         root,
-                        new FileScanError('Project with descriptor file ' + descriptorPath.fsPath + ' is not installed', '[Project not installed]'),
+                        new FileScanError('Project with descriptor file ' + descriptorPath.fsPath + ' is not installed', Constants.NOT_INSTALLED),
                         descriptorData
                     );
                     continue;
                 }
                 // Project is not supported - Yarn v2+
-                if (descriptorGraph?.label?.toString().includes('[Not supported]')) {
+                if (descriptorGraph?.label?.toString().includes(Constants.NOT_SUPPORTED)) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this.onFileScanError(
                         workspaceData,
                         root,
-                        new FileScanError('Project with descriptor file ' + descriptorPath.fsPath + ' is not supported', '[Not supported]'),
+                        new FileScanError('Project with descriptor file ' + descriptorPath.fsPath + ' is not supported', Constants.NOT_SUPPORTED),
                         descriptorData
                     );
                     continue;
