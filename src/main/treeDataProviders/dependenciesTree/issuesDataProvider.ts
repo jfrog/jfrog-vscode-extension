@@ -6,7 +6,7 @@ import { ScanCacheManager } from '../../cache/scanCacheManager';
 import { Utils } from '../utils/utils';
 import { TreeDataHolder } from '../utils/treeDataHolder';
 import { IIssueCacheObject } from '../../types/issueCacheObject';
-import { Consts } from '../../utils/consts';
+import { Constants } from '../../constants/consts';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { IconsPaths } from '../../utils/iconsPaths';
 
@@ -110,7 +110,7 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
     private getVulnerabilityNodes(selectedNode: DependenciesTreeNode): VulnerabilityNode[] {
         let children: VulnerabilityNode[] = [];
         selectedNode.issues.forEach(xrayIssueId => {
-            if (xrayIssueId.issue_id === Consts.MISSING_COMPONENT) {
+            if (xrayIssueId.issue_id === Constants.MISSING_COMPONENT) {
                 return;
             }
             let issue: IIssueCacheObject | undefined = this._scanCacheManager.getIssue(xrayIssueId.issue_id);

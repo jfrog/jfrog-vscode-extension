@@ -5,7 +5,7 @@ import { BuildGeneralInfo, Status } from '../../types/buildGeneralinfo';
 import { ILicenseCacheObject } from '../../types/licenseCacheObject';
 import { ILicenseKey } from '../../types/licenseKey';
 import { fromPackageType } from '../../types/projectType';
-import { Consts } from '../../utils/consts';
+import { Constants } from '../../constants/consts';
 import { IconsPaths } from '../../utils/iconsPaths';
 import { TreeDataHolder } from '../utils/treeDataHolder';
 import { BuildsNode } from './ciNodes/buildsTree';
@@ -146,6 +146,6 @@ export class LicensesNode extends vscode.TreeItem {
     }
 
     public isFullNameEmpty(license: ILicenseCacheObject) {
-        return !license.fullName || license.fullName === Consts.UNKNOWN_LICENSE_FULL_NAME;
+        return !license.fullName || license.fullName === Constants.UNKNOWN_LICENSE_FULL_NAME;
     }
 }

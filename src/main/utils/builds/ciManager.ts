@@ -16,7 +16,7 @@ import { IIssueKey } from '../../types/issueKey';
 import { ILicenseKey } from '../../types/licenseKey';
 import { Severity } from '../../types/severity';
 import { Configuration } from '../configuration';
-import { Consts } from '../consts';
+import { Constants } from '../../constants/consts';
 import { ScanCancellationError } from '../scanUtils';
 import { Translators } from '../translators';
 import { BuildsUtils } from './buildsUtils';
@@ -291,14 +291,14 @@ export class CiManager {
     }
 
     private addUnknownLicenseToMissingNode(node: DependenciesTreeNode) {
-        node.licenses.add({ licenseName: Consts.UNKNOWN_LICENSE } as ILicenseKey);
+        node.licenses.add({ licenseName: Constants.UNKNOWN_LICENSE } as ILicenseKey);
     }
 
     public populateTreeWithUnknownIssues(modulesTree: DependenciesTreeNode) {
         for (const node of modulesTree.children) {
             this.populateTreeWithUnknownIssues(node);
         }
-        modulesTree.issues.add({ issue_id: Consts.MISSING_COMPONENT } as IIssueKey);
+        modulesTree.issues.add({ issue_id: Constants.MISSING_COMPONENT } as IIssueKey);
         this.addUnknownLicenseToMissingNode(modulesTree);
     }
 
