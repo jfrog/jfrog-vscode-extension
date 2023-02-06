@@ -160,7 +160,7 @@ export class Translators {
             for (let location of locations) {
                 codeFlow.push({
                     file: location.artifactLocation.uri,
-                    snippet: location.region.snippet,
+                    snippet: location.region.snippet?.text,
                     row: location.region.startLine,
                     colum: location.region.startColumn
                 } as IAnalysisStep);
