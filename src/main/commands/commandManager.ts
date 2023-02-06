@@ -220,7 +220,7 @@ export class CommandManager implements ExtensionComponent {
                     (this._connectionManager.url || this._connectionManager.xrayUrl) +
                     ') ?'
             );
-            if (answer) {
+            if (!answer) {
                 return;
             }
         }

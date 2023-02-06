@@ -7,6 +7,7 @@ export class ContextKeys {
     public static SESSION_STATUS: string = 'jfrog.connection.status';
     public static SCAN_IN_PROGRESS: string = 'jfrog.scanInProgress';
     public static COPY_TO_CLIPBOARD_ENABLED: string = 'jfrog.item.copy.to.clipboard';
+    public static FIRST_SCAN_STATUS: string = 'jfrog.firstScanInWorkspace';
     public static SET_CONTEXT: string = 'setContext';
 }
 
