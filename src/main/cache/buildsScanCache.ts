@@ -1,4 +1,3 @@
-import AdmZip, { IZipEntry } from 'adm-zip';
 import * as fs from 'fs';
 import { IDetailsResponse } from 'jfrog-client-js';
 import * as path from 'path';
@@ -42,22 +41,11 @@ export class BuildsScanCache {
     }
 
     public save(content: string, timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): void {
-        let zip: AdmZip = new AdmZip();
-        zip.addFile(type.toString(), Buffer.alloc(content.length, content));
-        zip.writeZip(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type));
+        ScanUtils.saveAsZip(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type),  {fileName: type.toString(), content: content});
     }
 
     public load(timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): any {
-        const buildPath: string = this.getZipPath(timestamp, buildName, buildNumber, projectKey, type);
-        if (!fs.existsSync(buildPath)) {
-            return '';
-        }
-        let zip: AdmZip = new AdmZip(buildPath);
-        let entry: IZipEntry | null = zip.getEntry(type.toString());
-        if (!entry) {
-            throw new Error('Could not find expected content in archive in cache');
-        }
-        return entry.getData().toString('utf8');
+        return ScanUtils.extractZipEntry(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type),type.toString());
     }
 
     public loadBuildInfo(timestamp: string, buildName: string, buildNumber: string, projectKey: string): any {

@@ -11,9 +11,14 @@ import { PackageType } from '../types/projectType';
 import { Configuration } from './configuration';
 import { ContextKeys } from '../constants/contextKeys';
 import * as util from 'util';
+import AdmZip, { IZipEntry } from 'adm-zip';
 export class ScanUtils {
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
+
+    private static readonly MAX_FILES_EXTRACTED_ZIP: number = 1000;
+    private static readonly MAX_SIZE_EXTRACTED_ZIP: number = 1000000000; // 1 GB
+    private static readonly COMPRESSION_THRESHOLD_RATIO: number = 10;
 
     public static async scanWithProgress(
         scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => Promise<void>,
@@ -201,6 +206,66 @@ export class ScanUtils {
             .createHash(algorithm)
             .update(data)
             .digest('hex');
+    }
+
+    static saveAsZip(zipPath: string, ...files: {fileName: string, content: string}[]): void {
+        let zip: AdmZip = new AdmZip();
+        for (let file of files) {
+            zip.addFile(file.fileName,Buffer.alloc(file.content.length, file.content))
+        }
+        zip.writeZip(zipPath);
+    }
+    
+    static extractZip(zipPath: string, targetDir: string): any {
+        if (!fs.existsSync(zipPath)) {
+            return '';
+        }
+        if (!fs.existsSync(targetDir)) {
+            fs.mkdirSync(targetDir, { recursive: true});
+        }
+        let zip: AdmZip = new AdmZip(zipPath);
+        let fileCount: number = 0;
+        let totalSize: number = 0;
+
+        zip.getEntries().forEach(entry => {
+            // Protect against zip bomb
+            fileCount++;
+            if (fileCount > ScanUtils.MAX_FILES_EXTRACTED_ZIP) {
+                throw new ZipExtractError(zipPath, "Reached max files allowed");
+            }
+
+            let entrySize: number = entry.getData().length;
+            totalSize += entrySize;
+            if (totalSize > ScanUtils.MAX_SIZE_EXTRACTED_ZIP) {
+                throw new ZipExtractError(zipPath, "Reached max size allowed");
+            }
+
+            let compressionRatio: number = entrySize / entry.header.compressedSize;
+            if (compressionRatio > ScanUtils.COMPRESSION_THRESHOLD_RATIO) {
+                throw new ZipExtractError(zipPath, "Reached max compression ratio allowed");
+            }
+
+            zip.extractEntryTo(entry, targetDir);
+        });
+    }
+
+    static extractZipEntry(zipPath: string, name: string): any {
+        if (!fs.existsSync(zipPath)) {
+            return '';
+        }
+        let zip: AdmZip = new AdmZip(zipPath);
+
+        let entry: IZipEntry | null = zip.getEntry(name);
+        if (!entry) {
+            throw new ZipExtractError(zipPath,'Could not find expected content ' + name);
+        }
+        return entry.getData().toString('utf8');
+    }
+}
+
+export class ZipExtractError extends Error {
+    constructor(public readonly zipPath: string, reason: string) {
+        super("Zip extraction error: " + reason + " in zip " + zipPath);
     }
 }
 
