@@ -80,6 +80,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         this._logManager.logMessage('Refresh: starting workspace scans 🐸', 'INFO');
         this._scanInProgress = true;
         ScanUtils.setScanInProgress(true);
+        ScanUtils.setFirstScanForWorkspace(false);
         const startRefreshTimestamp: number = Date.now();
         await this.scanWorkspaces()
             .catch(error => this._logManager.logError(error, true))
@@ -105,10 +106,12 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     public async loadFromCache() {
         if (this._cacheManager.issuesCache) {
             let workspaceLoads: Promise<void>[] = [];
+            let firstTime: boolean = true;
             for (const workspace of this._workspaceFolders) {
                 // Create dummy root to give input to the user while waiting for the workspace loading task or when error occur
                 const tempRoot: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, 'Loading...');
                 this._workspaceToRoot.set(workspace, tempRoot);
+                this.onChangeFire();
                 // Create a new async load task for each workspace
                 workspaceLoads.push(
                     this.loadIssuesFromCache(workspace)
@@ -121,6 +124,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                                 this._logManager.logMessage("WorkSpace '" + workspace.name + "' has no data in cache", 'DEBUG');
                                 this._workspaceToRoot.set(workspace, undefined);
                             }
+                            firstTime = !root;
                             this.onChangeFire();
                         })
                         .catch(async error => {
@@ -139,6 +143,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 );
             }
             await Promise.all(workspaceLoads);
+            ScanUtils.setFirstScanForWorkspace(firstTime);
+            this.onChangeFire();
         }
     }
 
@@ -196,16 +202,11 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, '🔎 Scanning...');
                     this._workspaceToRoot.set(workspace, root);
                     let shouldDeleteRoot: boolean = false;
-                    let shouldCacheRoot: boolean = false;
                     // Execute workspace scan task
                     await this.repopulateWorkspaceTree(workspaceData, root, progress, checkCanceled)
                         .then(() => {
                             this._logManager.logMessage("Workspace '" + workspace.name + "' scan ended", 'INFO');
                             shouldDeleteRoot = !workspaceData.hasInformation();
-                            shouldCacheRoot = workspaceData.hasIssues();
-                            if (shouldDeleteRoot) {
-                                this._logManager.logMessageAndToastInfo("🐸 Workspace '" + workspace.name + "' has no issues", 'INFO');
-                            }
                             if (workspaceData.failedFiles.length > 0) {
                                 root.title = 'Scan failed';
                             } else {
@@ -216,7 +217,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                             if (error instanceof ScanCancellationError) {
                                 this._logManager.logMessage("Workspace '" + workspace.name + "' scan task was canceled", 'INFO');
                                 shouldDeleteRoot = !workspaceData.hasInformation();
-                                shouldCacheRoot = workspaceData.hasIssues();
                                 root.title = 'Scan canceled';
                             } else {
                                 this._logManager.logMessage("Workspace '" + workspace.name + "' scan task ended with error:", 'ERR');
@@ -231,7 +231,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                                 root.apply();
                             }
                             this.onChangeFire();
-                            if (shouldCacheRoot && this._cacheManager.issuesCache) {
+                            if (this._cacheManager.issuesCache) {
                                 this._cacheManager.issuesCache.store(workspace, workspaceData);
                             }
                         });

@@ -127,6 +127,10 @@ export class ScanUtils {
         vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ContextKeys.SCAN_IN_PROGRESS, state);
     }
 
+    public static setFirstScanForWorkspace(state: boolean) {
+        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ContextKeys.FIRST_SCAN_STATUS, state);
+    }
+
     private static getResourcesDir(): string {
         let parent: string = path.dirname(__dirname);
         if (parent.endsWith('main')) {

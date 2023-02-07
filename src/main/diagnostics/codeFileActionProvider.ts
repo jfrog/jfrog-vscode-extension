@@ -7,7 +7,7 @@ import { Severity, SeverityUtils } from '../types/severity';
 
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
 
-export class ApplicabilityActionProvider extends AbstractFileActionProvider implements vscode.CodeActionProvider {
+export class CodeFileActionProvider extends AbstractFileActionProvider implements vscode.CodeActionProvider {
     /** @Override */
     public activate(context: vscode.ExtensionContext) {
         super.activate(context);
@@ -44,7 +44,7 @@ export class ApplicabilityActionProvider extends AbstractFileActionProvider impl
                 if (issue) {
                     commands.push({
                         command: 'jfrog.issues.select.node',
-                        title: 'Show in issues tree',
+                        title: 'Show ' + issue.label + ' issue in issues tree',
                         arguments: [issue]
                     });
                 }
@@ -90,7 +90,7 @@ export class ApplicabilityActionProvider extends AbstractFileActionProvider impl
     createDiagnosticIssue(issue: CodeIssueTreeNode): vscode.Diagnostic {
         return this.createDiagnostic(
             issue.issueId,
-            'Severity: ' + SeverityUtils.getString(issue.severity),
+            `🐸 ${issue.label} - Severity: ${SeverityUtils.getString(issue.severity)}`,
             vscode.DiagnosticSeverity.Warning,
             issue.regionWithIssue
         );

@@ -28,13 +28,18 @@
         "viewsWelcome": [
             {
                 "view": "jfrog.issues",
-                "contents": "Thank you for installing the JFrog extension 🐸\nIf you already have a JFrog Platform, please connect it to VS Code:\n[Connect to JFrog platform](command:jfrog.xray.connect)\nDon't have a JFrog Platform? [Get one for FREE](https://github.com/jfrog/jfrog-vscode-extension#set-up-a-free-jfrog-environment-in-the-cloud) ",
+                "contents": "🐸 Thank you for installing the JFrog VS Code extension 🐸\nWith this extension, you can scan your workspace for security issues.\nFeatures:\n* The project dependencies are scanned for security issues.\n* For Python, npm and yarn Xray's [Contextual Analysis](https://www.jfrog.com/confluence/display/JFROG/Vulnerability+Contextual+Analysis) scan will help you determine which security issues impact your code and which don't, by marking them as Applicable and Non Applicable.\n* The security issues are marked in the editor for easy visibility.\n* The entire list of security issues are displayed in the JFrog tab.\n* For security issues with a known fix version, the extension allows an upgrade to this version.\n* For some security issues, with Xray's CVE Research and Enrichment, get detailed technical information and enhanced analysis on CVEs to allow you to focus on the most important issues.\n* An Impact Graph is displayed for impacted project dependencies.\n* Displays the status of your project while it is being built and tested by the CI.\nLet's get started:\n[Enter your JFrog Platform connection details](command:jfrog.xray.connect)\n[Let us create a FREE JFrog Platform for you](https://github.com/jfrog/jfrog-vscode-extension#set-up-a-free-jfrog-environment-in-the-cloud)",
                 "when": "jfrog.connection.status == signedOut || !jfrog.connection.status"
             },
             {
                 "view": "jfrog.issues",
-                "contents": "This view displays the security scan issues in the workspace. The results of applicability scanning of CVEs in the code currently support Python, npm and yarn.\n[Scan](command:jfrog.xray.refresh)",
-                "when": "jfrog.connection.status == signedIn"
+                "contents": "Your project is ready to be scanned for security issues.\nIf your JFrog subscription includes Advanced DevSecOps enabled, we will also run Contextual Analysis scans for CVE applicability, to determine whether your code is actually impacted by the vulnerable dependency, to learn more about this feature, see [Xray Advanced Scans](https://www.jfrog.com/confluence/display/JFROG/Xray+Advanced+Scans).\n[Scan](command:jfrog.xray.refresh)",
+                "when": "jfrog.connection.status == signedIn && jfrog.firstScanInWorkspace"
+            },
+            {
+                "view": "jfrog.issues",
+                "contents": "Your project was scanned and we didn't find any security issues.\n[Rescan](command:jfrog.xray.refresh)",
+                "when": "jfrog.connection.status == signedIn && !jfrog.firstScanInWorkspace"
             }
         ],
         "viewsContainers": {
@@ -91,7 +96,7 @@
                         "type": "string"
                     },
                     "scope": "application",
-                    "markdownDescription": "Add one or more Xray Watches, to reflect the security policies required by your organization.\n\nIf both “Project Key” and “Watches” are configured, VS Code will use the configured Watches, and not the Project Key to determine the policy for for the security scanning."
+                    "markdownDescription": "Add one or more Xray Watches, to reflect the security policies required by your organization.\n\nIf both “Project Key” and “Watches” are configured, VS Code will use the configured Watches, and not the Project Key to determine the policy for the security scanning."
                 },
                 "jfrog.logLevel": {
                     "type": "string",
