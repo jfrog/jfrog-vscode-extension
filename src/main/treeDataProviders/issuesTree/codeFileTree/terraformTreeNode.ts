@@ -1,8 +1,12 @@
+import { IAnalysisStep, IIaCPage, PageType } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
 import { FileRegion } from '../../../scanLogic/scanRunners/analyzerModels';
 import { TerraformIssue } from '../../../scanLogic/scanRunners/terraformScan';
 import { CodeFileTreeNode } from './codeFileTreeNode';
 import { CodeIssueTreeNode } from './codeIssueTreeNode';
+import { SeverityUtils } from '../../../types/severity';
+
+
 
 /**
  * Describe a Terraform (Iac) issue
@@ -32,5 +36,23 @@ export class TerraformTreeNode extends CodeIssueTreeNode {
 
     public get fullDescription(): string | undefined {
         return this._fullDescription;
+    }
+
+      /**
+     * Get the CVE details page of the issue
+     */
+      public getDetailsPage(): IIaCPage {
+        return {
+            pageType: PageType.IaC,
+            header: this.label,
+            severity: SeverityUtils.toWebviewSeverity(this.severity),
+            location: {
+                file: this.parent.fullPath,
+                snippet: this._snippet,
+                row: this.regionWithIssue.start.line + 1,
+                column: this.regionWithIssue.start.character
+            } as IAnalysisStep,
+            description: this._fullDescription
+        } as IIaCPage;
     }
 }

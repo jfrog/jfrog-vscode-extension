@@ -51,7 +51,7 @@ export class EosTreeNode extends CodeIssueTreeNode {
                 file: this.parent.fullPath,
                 snippet: this._snippet,
                 row: this.regionWithIssue.start.line + 1,
-                colum: this.regionWithIssue.start.character
+                column: this.regionWithIssue.start.character
             } as IAnalysisStep,
             description: this._fullDescription,
             analysisStep: this._codeFlows.length > 0 ? this._codeFlows[0] : undefined

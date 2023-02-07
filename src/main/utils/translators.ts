@@ -162,7 +162,7 @@ export class Translators {
                     file: location.artifactLocation.uri,
                     snippet: location.region.snippet?.text,
                     row: location.region.startLine,
-                    colum: location.region.startColumn
+                    column: location.region.startColumn
                 } as IAnalysisStep);
             }
             result.push(codeFlow);
