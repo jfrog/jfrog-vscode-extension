@@ -1,7 +1,7 @@
 import { IGraphRequestModel, IGraphResponse, XrayScanProgress } from 'jfrog-client-js';
 import { ConnectionManager } from '../connect/connectionManager';
-import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { RootNode } from '../dependencyTree/dependenciesRoot/rootTree';
+import { DependencyTreeNode } from '../dependencyTree/dependencyTreeNode';
 import { Configuration } from '../utils/configuration';
 
 /**
@@ -42,7 +42,7 @@ export class GraphScanLogic {
      * @param components - the components that are already discovered to remove duplication
      * @returns - flatten unique dependency entries of the root children
      */
-    private getFlattenRequestModelNodes(dependency: DependenciesTreeNode, components: Set<string>): IGraphRequestModel[] | undefined {
+    private getFlattenRequestModelNodes(dependency: DependencyTreeNode, components: Set<string>): IGraphRequestModel[] | undefined {
         let nodes: IGraphRequestModel[] = [];
         for (let child of dependency.children) {
             if (child.dependencyId && !components.has(child.dependencyId)) {

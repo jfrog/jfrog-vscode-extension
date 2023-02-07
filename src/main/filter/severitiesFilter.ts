@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../cache/scanCacheManager';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyTreeNode } from '../dependencyTree/dependencyTreeNode';
 import { SeverityStrings, SeverityUtils } from '../types/severity';
 import { AbstractFilter } from './abstractFilter';
 
@@ -21,7 +21,7 @@ export class SeverityFilter extends AbstractFilter {
     }
 
     /** @override */
-    public isNodePicked(dependenciesTreeNode: DependenciesTreeNode): boolean {
+    public isNodePicked(dependenciesTreeNode: DependencyTreeNode): boolean {
         if (!this._choice || (this.isPicked(SeverityStrings.Normal) && dependenciesTreeNode.issues.isEmpty())) {
             return true;
         }

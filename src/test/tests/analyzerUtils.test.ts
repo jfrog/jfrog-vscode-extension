@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils';
+import { AnalyzerUtils } from '../../main/treeDataProviders/utils/issues/analyzerUtils';
 
 /**
  * Test functionality of @class AnalyzerUtils.

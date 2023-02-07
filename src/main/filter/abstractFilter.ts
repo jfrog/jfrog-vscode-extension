@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyTreeNode } from '../dependencyTree/dependencyTreeNode';
 import { FilterManager } from './filterManager';
 
 /**
@@ -17,7 +17,7 @@ export abstract class AbstractFilter {
      * Get a dependencies tree node and return true iff the node doesn't filtered out.
      * @param dependenciesTreeNode - The dependencies tree node
      */
-    public abstract isNodePicked(dependenciesTreeNode: DependenciesTreeNode): boolean;
+    public abstract isNodePicked(dependenciesTreeNode: DependencyTreeNode): boolean;
 
     public showFilterMenu(filterManager: FilterManager) {
         let quickPick: vscode.QuickPick<vscode.QuickPickItem> = vscode.window.createQuickPick();

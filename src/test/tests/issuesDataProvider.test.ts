@@ -2,7 +2,7 @@ import { assert } from 'chai';
 import { faker } from '@faker-js/faker';
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyTreeNode } from '../../main/dependencyTree/dependencyTreeNode';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { IIssueCacheObject } from '../../main/types/issueCacheObject';
 import { IIssueKey } from '../../main/types/issueKey';
@@ -11,15 +11,14 @@ import * as issueSeverity from '../../main/types/severity';
 import { Severity } from '../../main/types/severity';
 import { TestMemento } from './utils/testMemento.test';
 import { ScanUtils } from '../../main/utils/scanUtils';
-import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependenciesTree/dependencyDetailsProvider';
+import { DependencyDetailsProvider } from '../../main/treeDataProviders/ciNodes/dependencyDetailsProvider';
 import { PackageType } from '../../main/types/projectType';
 import {
     IssuesDataProvider,
     LicensesTitleNode,
     VulnerabilitiesTitleNode,
     VulnerabilityNode
-} from '../../main/treeDataProviders/dependenciesTree/issuesDataProvider';
-
+} from '../../main/treeDataProviders/ciNodes/issuesDataProvider';
 /**
  * Test functionality of @class IssuesDataProvider.
  */
@@ -29,7 +28,7 @@ describe('Issues Data Provider Tests', () => {
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
     let dependencyDetailsProvider: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager);
     let issuesDataProvider: IssuesDataProvider = dependencyDetailsProvider.issuesDataProvider;
-    let dependenciesTreeNode: DependenciesTreeNode;
+    let dependenciesTreeNode: DependencyTreeNode;
 
     before(() => {
         scanCacheManager.activate((<any>{
@@ -37,7 +36,7 @@ describe('Issues Data Provider Tests', () => {
             workspaceState: new TestMemento()
         }) as vscode.ExtensionContext);
         let generalInfo: GeneralInfo = new GeneralInfo('odin', '1.2.3', [], __dirname, PackageType.Unknown);
-        dependenciesTreeNode = new DependenciesTreeNode(generalInfo);
+        dependenciesTreeNode = new DependencyTreeNode(generalInfo);
         workspaceFolders.push({ uri: vscode.Uri.file(__dirname), name: '', index: 0 } as vscode.WorkspaceFolder);
     });
 
@@ -46,7 +45,7 @@ describe('Issues Data Provider Tests', () => {
     });
 
     it('No issues', async () => {
-        let children: DependenciesTreeNode[] = await issuesDataProvider.getChildren();
+        let children: DependencyTreeNode[] = await issuesDataProvider.getChildren();
         assert.isEmpty(children);
     });
 
@@ -70,7 +69,7 @@ describe('Issues Data Provider Tests', () => {
 
     it('Second node', async () => {
         // Create a second DependenciesTreNode
-        let secondNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('thor', '1.2.4', [], __dirname, PackageType.Unknown));
+        let secondNode: DependencyTreeNode = new DependencyTreeNode(new GeneralInfo('thor', '1.2.4', [], __dirname, PackageType.Unknown));
         dependenciesTreeNode.addChild(secondNode);
 
         // Add a new issue to the second node
@@ -147,12 +146,12 @@ describe('Issues Data Provider Tests', () => {
         } as IIssueCacheObject;
     }
 
-    function storeIssue(node: DependenciesTreeNode, issue: IIssueCacheObject) {
+    function storeIssue(node: DependencyTreeNode, issue: IIssueCacheObject) {
         node.issues.add({ issue_id: issue.issueId } as IIssueKey);
         scanCacheManager.storeIssue(issue);
     }
 
-    function storeViolatedLicense(node: DependenciesTreeNode, license: ILicenseCacheObject) {
+    function storeViolatedLicense(node: DependencyTreeNode, license: ILicenseCacheObject) {
         node.licenses.add({ licenseName: license.name, violated: true });
         scanCacheManager.storeLicense(license);
     }

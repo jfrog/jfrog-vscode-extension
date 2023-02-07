@@ -5,7 +5,7 @@ import { DescriptorTreeNode } from '../treeDataProviders/issuesTree/descriptorTr
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { IssueTreeNode } from '../treeDataProviders/issuesTree/issueTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { DescriptorUtils } from '../treeDataProviders/utils/descriptorUtils';
+import { DescriptorUtils } from '../treeDataProviders/utils/issues/descriptorUtils';
 import { PackageType } from '../types/projectType';
 import { Severity, SeverityUtils } from '../types/severity';
 import { AbstractFileActionProvider } from './abstractFileActionProvider';

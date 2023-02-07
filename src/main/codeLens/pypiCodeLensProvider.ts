@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
+import { PypiUtils } from '../utils/dependency/pypiUtils';
 import { AbstractCodeLensProvider } from './abstractCodeLensProvider';
-import { PypiUtils } from '../utils/pypiUtils';
 
 export class PypiCodeLensProvider extends AbstractCodeLensProvider {
     constructor() {

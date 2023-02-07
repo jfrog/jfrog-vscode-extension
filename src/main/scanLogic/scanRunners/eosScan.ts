@@ -6,7 +6,7 @@ import { BinaryRunner } from './binaryRunner';
 import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeIssue, AnalyzerScanResponse, AnalyzeScanRequest, AnalyzeLocation, FileRegion, FileLocation, CodeFlow } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
-import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
+import { AnalyzerUtils } from '../../treeDataProviders/utils/issues/analyzerUtils';
 
 export interface EosScanRequest extends AnalyzeScanRequest {
     language: LanguageType;

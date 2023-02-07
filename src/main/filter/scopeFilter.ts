@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { AbstractFilter } from './abstractFilter';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyTreeNode } from '../dependencyTree/dependencyTreeNode';
 
 export class ScopesFilter extends AbstractFilter {
     constructor(private _treesManager: TreesManager) {
@@ -20,7 +20,7 @@ export class ScopesFilter extends AbstractFilter {
     }
 
     /** @override */
-    public isNodePicked(dependenciesTreeNode: DependenciesTreeNode): boolean {
+    public isNodePicked(dependenciesTreeNode: DependencyTreeNode): boolean {
         if (!this._choice) {
             return true;
         }

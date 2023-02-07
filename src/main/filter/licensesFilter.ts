@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyTreeNode } from '../dependencyTree/dependencyTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { AbstractFilter } from './abstractFilter';
@@ -25,7 +25,7 @@ export class LicensesFilter extends AbstractFilter {
     }
 
     /** @override */
-    public isNodePicked(dependenciesTreeNode: DependenciesTreeNode): boolean {
+    public isNodePicked(dependenciesTreeNode: DependencyTreeNode): boolean {
         if (!this._choice) {
             return true;
         }

@@ -6,10 +6,10 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyTreeNode } from '../../main/dependencyTree/dependencyTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
-import { GoUtils } from '../../main/utils/goUtils';
+import { GoUtils } from '../../main/utils/dependency/goUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
@@ -97,7 +97,7 @@ describe('Go Utils Tests', async () => {
         let goMod: vscode.Uri = vscode.Uri.file(path.join(commonProjDir.fsPath, 'dependency', 'go.mod'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(goMod);
 
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
+        let dependenciesTreeNode: DependencyTreeNode = new DependencyTreeNode(
             new GeneralInfo('github.com/jfrog/jfrog-cli-core', '1.9.1', [], '', PackageType.Go)
         );
         let dependencyPos: vscode.Range[] = GoUtils.getDependencyPosition(textDocument, dependenciesTreeNode.dependencyId, FocusType.Dependency);
@@ -115,7 +115,7 @@ describe('Go Utils Tests', async () => {
      * Test GoUtils.createGoDependenciesTrees.
      */
     it('Create go Dependencies Trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
+        let parent: DependencyTreeNode = new DependencyTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
         let componentsToScan: ProjectDetails[] = [];
         await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
 
@@ -140,7 +140,7 @@ describe('Go Utils Tests', async () => {
 
         // Check children.
         assert.lengthOf(parent.children[0].children, 3);
-        let child: DependenciesTreeNode = parent.children[0].children[0];
+        let child: DependencyTreeNode = parent.children[0].children[0];
         assert.deepEqual(child.componentId, 'github.com/jfrog/jfrog-cli-core:1.9.0');
         assert.deepEqual(child.label, 'github.com/jfrog/jfrog-cli-core');
         assert.deepEqual(child.description, '1.9.0');
@@ -193,7 +193,7 @@ describe('Go Utils Tests', async () => {
     async function runCreateGoDependenciesTrees(
         workspaceFolders: vscode.WorkspaceFolder[],
         componentsToScan: ProjectDetails[],
-        parent: DependenciesTreeNode
+        parent: DependencyTreeNode
     ) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Go);
@@ -209,7 +209,7 @@ describe('Go Utils Tests', async () => {
 
     async function createGoDependencyTreeAndValidate(projectName: string, expectedChildren: Map<string, number>) {
         try {
-            let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
+            let parent: DependencyTreeNode = new DependencyTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
             let componentsToScan: ProjectDetails[] = [];
             await runCreateGoDependenciesTrees(getWorkspaceFolders(projectName), componentsToScan, parent);
 
@@ -219,14 +219,14 @@ describe('Go Utils Tests', async () => {
         }
     }
 
-    function validateDependencyTreeResults(projectName: string, expectedChildren: Map<string, number>, node: DependenciesTreeNode) {
-        let parent: DependenciesTreeNode | null = getNodeByArtifactId(node, projectName);
+    function validateDependencyTreeResults(projectName: string, expectedChildren: Map<string, number>, node: DependencyTreeNode) {
+        let parent: DependencyTreeNode | null = getNodeByArtifactId(node, projectName);
         if (!parent) {
             assert.isNotNull(node);
             return;
         }
 
-        let children: DependenciesTreeNode[] = parent.children;
+        let children: DependencyTreeNode[] = parent.children;
         assert.lengthOf(children, expectedChildren.size);
         children.forEach(child => {
             assert.isTrue(expectedChildren.has(child.componentId));

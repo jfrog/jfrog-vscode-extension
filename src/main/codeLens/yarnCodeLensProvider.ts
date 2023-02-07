@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { YarnUtils } from '../utils/yarnUtils';
+import { YarnUtils } from '../utils/dependency/yarnUtils';
 import { AbstractCodeLensProvider } from './abstractCodeLensProvider';
 
 export class YarnCodeLensProvider extends AbstractCodeLensProvider {

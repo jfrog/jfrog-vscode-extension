@@ -1,8 +1,8 @@
-import { MavenUtils } from '../utils/mavenUtils';
 import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 import { ScanUtils } from '../utils/scanUtils';
 import { PackageType } from '../types/projectType';
 import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
+import { MavenUtils } from '../utils/dependency/mavenUtils';
 
 export class MavenDependencyUpdate extends AbstractDependencyUpdate {
     constructor() {

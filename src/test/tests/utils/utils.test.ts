@@ -3,14 +3,14 @@ import * as tmp from 'tmp';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../../main/connect/connectionManager';
 import { ScanCacheManager } from '../../../main/cache/scanCacheManager';
-import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyTreeNode } from '../../../main/dependencyTree/dependencyTreeNode';
 import { TestMemento } from './testMemento.test';
 
 export function isWindows(): boolean {
     return os.platform() === 'win32';
 }
 
-export function getNodeByArtifactId(root: DependenciesTreeNode, artifactId: string): DependenciesTreeNode | null {
+export function getNodeByArtifactId(root: DependencyTreeNode, artifactId: string): DependencyTreeNode | null {
     if (root === null) {
         return null;
     }
@@ -18,7 +18,7 @@ export function getNodeByArtifactId(root: DependenciesTreeNode, artifactId: stri
         if (root.children[i].generalInfo.artifactId === artifactId) {
             return root.children[i];
         }
-        const res: DependenciesTreeNode | null = getNodeByArtifactId(root.children[i], artifactId);
+        const res: DependencyTreeNode | null = getNodeByArtifactId(root.children[i], artifactId);
         if (res !== null) {
             return res;
         }

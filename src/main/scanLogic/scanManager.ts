@@ -4,12 +4,12 @@ import { LogManager } from '../log/logManager';
 import { ConnectionManager } from '../connect/connectionManager';
 import { ConnectionUtils } from '../connect/connectionUtils';
 
-import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
+import { RootNode } from '../dependencyTree/dependenciesRoot/rootTree';
 import { IGraphResponse, XrayScanProgress } from 'jfrog-client-js';
 import { GraphScanLogic } from './scanGraphLogic';
 import { ApplicabilityRunner, ApplicabilityScanResponse } from './scanRunners/applicabilityScan';
 import { EosRunner, EosScanRequest, EosScanResponse } from './scanRunners/eosScan';
-import { AnalyzerUtils } from '../treeDataProviders/utils/analyzerUtils';
+import { AnalyzerUtils } from '../treeDataProviders/utils/issues/analyzerUtils';
 import { Configuration } from '../utils/configuration';
 
 /**

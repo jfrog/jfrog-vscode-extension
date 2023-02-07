@@ -6,17 +6,16 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
-import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyTreeNode } from '../../main/dependencyTree/dependencyTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { PackageType } from '../../main/types/projectType';
-import { NugetUtils } from '../../main/utils/nugetUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, isWindows } from './utils/utils.test';
 import { ProjectDetails } from '../../main/types/projectDetails';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
+import { NugetUtils } from '../../main/utils/dependency/nugetUtils';
 
 /**
  * Test functionality of @class NugetUtils.
@@ -70,9 +69,9 @@ describe('Nuget Utils Tests', async () => {
      * Test NugetUtils.createDependenciesTrees.
      */
     it('Create NuGet Dependencies Trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
+        let parent: DependencyTreeNode = new DependencyTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
         let projectDetails: ProjectDetails[] = [];
-        let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(projectDetails, parent);
+        let res: DependencyTreeNode[] = await runCreateNugetDependenciesTrees(projectDetails, parent);
         projectDetails.sort((a, b) => a.name.localeCompare(b.name));
 
         // Check that project details data.
@@ -94,14 +93,14 @@ describe('Nuget Utils Tests', async () => {
         assert.lengthOf(res[0].children, 1);
         assert.lengthOf(res[1].children, 1);
         assert.deepEqual(res[0].children[0].label, res[1].children[0].label);
-        let child: DependenciesTreeNode = res[0].children[0];
+        let child: DependencyTreeNode = res[0].children[0];
         assert.deepEqual(child.componentId, 'MyLogger:1.0.0');
         assert.deepEqual(child.label, 'MyLogger');
         assert.deepEqual(child.description, '1.0.0');
         assert.deepEqual(child.parent, res[0]);
     });
 
-    async function runCreateNugetDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
+    async function runCreateNugetDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependencyTreeNode) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Nuget);
         assert.isDefined(solutions);

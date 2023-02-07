@@ -4,13 +4,13 @@ import yaml from 'js-yaml';
 import * as path from 'path';
 
 import { LogManager } from '../../log/logManager';
-import { Utils } from '../../treeDataProviders/utils/utils';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { AnalyzerRequest, AnalyzerScanResponse, AnalyzeScanRequest } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { ConnectionUtils } from '../../connect/connectionUtils';
 import { IProxyConfig } from 'jfrog-client-js';
 import { Configuration } from '../../utils/configuration';
+import { Utils } from '../../utils/utils';
 
 /**
  * Arguments for running binary async

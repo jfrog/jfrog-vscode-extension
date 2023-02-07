@@ -3,9 +3,9 @@ import { ConnectionManager } from '../connect/connectionManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
 import { ScanCacheManager } from '../cache/scanCacheManager';
-import { BuildsDataProvider } from './dependenciesTree/buildsDataProvider';
-import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
-import { DependencyDetailsProvider } from './dependenciesTree/dependencyDetailsProvider';
+import { BuildsDataProvider } from './ciNodes/buildsDataProvider';
+import { DependencyTreeNode } from '../dependencyTree/dependencyTreeNode';
+import { DependencyDetailsProvider } from './ciNodes/dependencyDetailsProvider';
 import { IssuesTreeDataProvider } from './issuesTree/issuesTreeDataProvider';
 import { FileTreeNode } from './issuesTree/fileTreeNode';
 import { ScanManager } from '../scanLogic/scanManager';
@@ -23,7 +23,7 @@ export enum State {
  * Manages all the trees in the extension: Builds (CI state), Issues (Local state).
  */
 export class TreesManager implements ExtensionComponent {
-    private _ciTreeView!: vscode.TreeView<DependenciesTreeNode>;
+    private _ciTreeView!: vscode.TreeView<DependencyTreeNode>;
     private _buildsTreesProvider: BuildsDataProvider;
 
     private _issuesTreeView!: vscode.TreeView<IssuesRootTreeNode | FileTreeNode | IssueTreeNode | DependencyIssuesTreeNode>;

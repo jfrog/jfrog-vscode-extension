@@ -3,9 +3,9 @@ import { ConnectionManager } from '../connect/connectionManager';
 import { ExtensionComponent } from '../extensionComponent';
 import { FilterManager } from '../filter/filterManager';
 import { LogManager } from '../log/logManager';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyTreeNode } from '../dependencyTree/dependencyTreeNode';
 import { State, TreesManager } from '../treeDataProviders/treesManager';
-import { TreeDataHolder } from '../treeDataProviders/utils/treeDataHolder';
+import { TreeDataHolder } from '../treeDataProviders/ciNodes/treeDataHolder';
 import { BuildsManager } from '../builds/buildsManager';
 import { Configuration } from '../utils/configuration';
 import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
@@ -277,7 +277,7 @@ export class CommandManager implements ExtensionComponent {
      * Focus on dependency after a click on a dependency in the components tree.
      * @param dependenciesTreeNode - The chosen dependency.
      */
-    private doFocus(dependenciesTreeNode: DependenciesTreeNode) {
+    private doFocus(dependenciesTreeNode: DependencyTreeNode) {
         this.onSelectNode(dependenciesTreeNode);
     }
 
@@ -299,7 +299,7 @@ export class CommandManager implements ExtensionComponent {
      * Populate component details and component issues details with information about dependenciesTreeNode.
      * @param dependenciesTreeNode - The selected node in the components tree.
      */
-    private onSelectNode(dependenciesTreeNode: DependenciesTreeNode) {
+    private onSelectNode(dependenciesTreeNode: DependencyTreeNode) {
         this._treesManager.dependencyDetailsProvider.selectNode(dependenciesTreeNode);
     }
 }

@@ -6,13 +6,11 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-import { MavenTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
-import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { MavenTreeNode } from '../../main/dependencyTree/dependenciesRoot/mavenTree';
+import { DependencyTreeNode } from '../../main/dependencyTree/dependencyTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GavGeneralInfo } from '../../main/types/gavGeneralinfo';
 import { GeneralInfo } from '../../main/types/generalInfo';
-import { MavenUtils } from '../../main/utils/mavenUtils';
-import { PomTree } from '../../main/utils/pomTree';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
@@ -21,6 +19,8 @@ import { ComponentDetails } from 'jfrog-client-js';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { FocusType } from '../../main/constants/contextKeys';
+import { MavenUtils } from '../../main/utils/dependency/mavenUtils';
+import { PomTree } from '../../main/utils/dependency/pomTree';
 
 /**
  * Test functionality of Maven.
@@ -168,7 +168,7 @@ describe('Maven Tests', async () => {
         // Test 'resources/maven/dependency/pom.xml'
         let pomXml: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'dependency', 'pom.xml'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(pomXml);
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
+        let dependenciesTreeNode: DependencyTreeNode = new DependencyTreeNode(
             new GavGeneralInfo('javax.servlet.jsp', 'jsp-api', '2.1', [], '', PackageType.Unknown)
         );
         let dependencyPos: vscode.Range[] = MavenUtils.getDependencyPosition(
@@ -185,9 +185,7 @@ describe('Maven Tests', async () => {
 
         pomXml = vscode.Uri.file(path.join(tmpDir.fsPath, 'multiPomDependency', 'multi1', 'pom.xml'));
         textDocument = await vscode.workspace.openTextDocument(pomXml);
-        dependenciesTreeNode = new DependenciesTreeNode(
-            new GavGeneralInfo('org.apache.commons', 'commons-email', '1.1', [], '', PackageType.Unknown)
-        );
+        dependenciesTreeNode = new DependencyTreeNode(new GavGeneralInfo('org.apache.commons', 'commons-email', '1.1', [], '', PackageType.Unknown));
         dependencyPos = MavenUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.getComponentId(), FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(51, 12));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(51, 49));
@@ -196,7 +194,7 @@ describe('Maven Tests', async () => {
         assert.deepEqual(dependencyPos[2].start, new vscode.Position(53, 12));
         assert.deepEqual(dependencyPos[2].end, new vscode.Position(53, 34));
 
-        dependenciesTreeNode = new DependenciesTreeNode(
+        dependenciesTreeNode = new DependencyTreeNode(
             new GavGeneralInfo('org.codehaus.plexus', 'plexus-utils', '1.5.1', [], '', PackageType.Unknown)
         );
         dependencyPos = MavenUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.getComponentId(), FocusType.Dependency);
@@ -207,7 +205,7 @@ describe('Maven Tests', async () => {
         assert.deepEqual(dependencyPos[2].start, new vscode.Position(59, 12));
         assert.deepEqual(dependencyPos[2].end, new vscode.Position(59, 36));
 
-        dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('javax.servlet.jsp', 'jsp-api', '2.1', [], '', PackageType.Unknown));
+        dependenciesTreeNode = new DependencyTreeNode(new GavGeneralInfo('javax.servlet.jsp', 'jsp-api', '2.1', [], '', PackageType.Unknown));
         dependencyPos = MavenUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.getComponentId(), FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(62, 12));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(62, 48));
@@ -216,7 +214,7 @@ describe('Maven Tests', async () => {
         assert.deepEqual(dependencyPos[2].start, new vscode.Position(65, 12));
         assert.deepEqual(dependencyPos[2].end, new vscode.Position(65, 34));
 
-        dependenciesTreeNode = new DependenciesTreeNode(new GavGeneralInfo('commons-io', 'commons-io', '1.4', [], '', PackageType.Unknown));
+        dependenciesTreeNode = new DependencyTreeNode(new GavGeneralInfo('commons-io', 'commons-io', '1.4', [], '', PackageType.Unknown));
         dependencyPos = MavenUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.getComponentId(), FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(68, 12));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(68, 41));
@@ -225,9 +223,7 @@ describe('Maven Tests', async () => {
         assert.deepEqual(dependencyPos[2].start, new vscode.Position(70, 12));
         assert.deepEqual(dependencyPos[2].end, new vscode.Position(70, 34));
 
-        dependenciesTreeNode = new DependenciesTreeNode(
-            new GavGeneralInfo('org.springframework', 'spring-aop', '2.5.6', [], '', PackageType.Unknown)
-        );
+        dependenciesTreeNode = new DependencyTreeNode(new GavGeneralInfo('org.springframework', 'spring-aop', '2.5.6', [], '', PackageType.Unknown));
         dependencyPos = MavenUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.getComponentId(), FocusType.Dependency);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(73, 12));
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(73, 50));
@@ -247,9 +243,9 @@ describe('Maven Tests', async () => {
      * Test createMavenDependenciesTrees.
      */
     it('Create Maven dependencies trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
+        let parent: DependencyTreeNode = new DependencyTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
         let projectDetails: ProjectDetails[] = [];
-        let res: DependenciesTreeNode[] = await runCreateMavenDependenciesTrees(projectDetails, parent);
+        let res: DependencyTreeNode[] = await runCreateMavenDependenciesTrees(projectDetails, parent);
         let expectedProjectDetails: Map<string, string[]> = new Map([
             ['org.jfrog.test:multi', ['gav://junit:junit:3.8.1']],
             [
@@ -327,7 +323,7 @@ describe('Maven Tests', async () => {
         assert.deepEqual(res[0].children[0].parent, res[0]);
         assert.equal(res[0].children[0].componentId, 'junit:junit:3.8.1');
         assert.deepEqual(res[0].children[0].generalInfo.scopes, ['test']);
-        assert.isTrue(res[0].children[0] instanceof DependenciesTreeNode);
+        assert.isTrue(res[0].children[0] instanceof DependencyTreeNode);
         assert.lengthOf(res[0].children[2].children, 3);
         assert.deepEqual(res[0].children[2].parent, res[0]);
         assert.equal(res[0].children[2].componentId, 'org.jfrog.test:multi3:3.7-SNAPSHOT');
@@ -342,45 +338,45 @@ describe('Maven Tests', async () => {
         // First
         assert.equal(res[0].children[2].children[0].componentId, 'org.jfrog.test:multi1:3.7-SNAPSHOT');
         assert.deepEqual(res[0].children[2].children[0].generalInfo.scopes, ['compile']);
-        assert.isTrue(res[0].children[2].children[0] instanceof DependenciesTreeNode);
+        assert.isTrue(res[0].children[2].children[0] instanceof DependencyTreeNode);
         assert.deepEqual(res[0].children[2].children[0].parent, res[0].children[2]);
         assert.equal(res[0].children[2].children[1].componentId, 'hsqldb:hsqldb:1.8.0.10');
         assert.deepEqual(res[0].children[2].children[1].generalInfo.scopes, ['runtime']);
-        assert.isTrue(res[0].children[2].children[1] instanceof DependenciesTreeNode);
+        assert.isTrue(res[0].children[2].children[1] instanceof DependencyTreeNode);
         assert.deepEqual(res[0].children[2].children[1].parent, res[0].children[2]);
         assert.equal(res[0].children[2].children[2].componentId, 'javax.servlet:servlet-api:2.5');
         assert.deepEqual(res[0].children[2].children[2].generalInfo.scopes, ['provided']);
-        assert.isTrue(res[0].children[2].children[2] instanceof DependenciesTreeNode);
+        assert.isTrue(res[0].children[2].children[2] instanceof DependencyTreeNode);
         assert.deepEqual(res[0].children[2].children[2].parent, res[0].children[2]);
 
         // Third
         assert.equal(res[0].children[1].children[0].componentId, 'org.apache.commons:commons-email:1.1');
         assert.deepEqual(res[0].children[1].children[0].generalInfo.scopes, ['compile']);
-        assert.isTrue(res[0].children[1].children[0] instanceof DependenciesTreeNode);
+        assert.isTrue(res[0].children[1].children[0] instanceof DependencyTreeNode);
         assert.deepEqual(res[0].children[1].children[0].parent, res[0].children[1]);
         assert.equal(res[0].children[1].children[1].componentId, 'org.codehaus.plexus:plexus-utils:1.5.1');
         assert.deepEqual(res[0].children[1].children[1].generalInfo.scopes, ['compile']);
-        assert.isTrue(res[0].children[1].children[1] instanceof DependenciesTreeNode);
+        assert.isTrue(res[0].children[1].children[1] instanceof DependencyTreeNode);
         assert.deepEqual(res[0].children[1].children[1].parent, res[0].children[1]);
         assert.equal(res[0].children[1].children[2].componentId, 'javax.servlet.jsp:jsp-api:2.1');
         assert.deepEqual(res[0].children[1].children[2].generalInfo.scopes, ['compile']);
-        assert.isTrue(res[0].children[1].children[2] instanceof DependenciesTreeNode);
+        assert.isTrue(res[0].children[1].children[2] instanceof DependencyTreeNode);
         assert.deepEqual(res[0].children[1].children[2].parent, res[0].children[1]);
         assert.equal(res[0].children[1].children[3].componentId, 'commons-io:commons-io:1.4');
         assert.deepEqual(res[0].children[1].children[3].generalInfo.scopes, ['compile']);
-        assert.isTrue(res[0].children[1].children[3] instanceof DependenciesTreeNode);
+        assert.isTrue(res[0].children[1].children[3] instanceof DependencyTreeNode);
         assert.deepEqual(res[0].children[1].children[3].parent, res[0].children[1]);
         assert.equal(res[0].children[1].children[4].componentId, 'org.springframework:spring-aop:2.5.6');
         assert.deepEqual(res[0].children[1].children[4].generalInfo.scopes, ['compile']);
-        assert.isTrue(res[0].children[1].children[4] instanceof DependenciesTreeNode);
+        assert.isTrue(res[0].children[1].children[4] instanceof DependencyTreeNode);
         assert.deepEqual(res[0].children[1].children[4].parent, res[0].children[1]);
         assert.equal(res[0].children[1].children[5].componentId, 'org.testng:testng:5.9');
         assert.deepEqual(res[0].children[1].children[5].generalInfo.scopes, ['test']);
-        assert.isTrue(res[0].children[1].children[5] instanceof DependenciesTreeNode);
+        assert.isTrue(res[0].children[1].children[5] instanceof DependencyTreeNode);
         assert.deepEqual(res[0].children[1].children[5].parent, res[0].children[1]);
     });
 
-    async function runCreateMavenDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
+    async function runCreateMavenDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependencyTreeNode) {
         let pomXmlsArray: vscode.Uri[] | undefined = await locatePomXmls(workspaceFolders);
         await MavenUtils.createDependenciesTrees(pomXmlsArray, componentsToScan, treesManager, parent, () => {
             assert;

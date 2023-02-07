@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../cache/scanCacheManager';
 import { ExtensionComponent } from '../extensionComponent';
-import { BuildsNode } from '../treeDataProviders/dependenciesTree/ciNodes/buildsTree';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { BuildsNode } from '../treeDataProviders/ciNodes/buildsTree';
+import { DependencyTreeNode } from '../dependencyTree/dependencyTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { LicensesFilter } from './licensesFilter';
 import { ScopesFilter } from './scopeFilter';
@@ -69,16 +69,16 @@ export class FilterManager implements ExtensionComponent {
     }
 
     public applyFilters() {
-        let unfilteredRoot: DependenciesTreeNode = this._treesManager.buildsTreesProvider.dependenciesTree;
-        if (!(unfilteredRoot instanceof DependenciesTreeNode)) {
+        let unfilteredRoot: DependencyTreeNode = this._treesManager.buildsTreesProvider.dependenciesTree;
+        if (!(unfilteredRoot instanceof DependencyTreeNode)) {
             return;
         }
-        let filteredRoot: DependenciesTreeNode = unfilteredRoot.shallowClone();
+        let filteredRoot: DependencyTreeNode = unfilteredRoot.shallowClone();
         this._applyFilters(unfilteredRoot, filteredRoot, { nodeSelected: true });
         this._treesManager.buildsTreesProvider.applyFilters(filteredRoot);
     }
 
-    private _applyFilters(unfilteredNode: DependenciesTreeNode, filteredNode: DependenciesTreeNode, picked: { nodeSelected: boolean }): void {
+    private _applyFilters(unfilteredNode: DependencyTreeNode, filteredNode: DependencyTreeNode, picked: { nodeSelected: boolean }): void {
         // Keep this node if it compiles with all filters or if it is a build node.
         picked.nodeSelected =
             (this._severitiesFilter.isNodePicked(unfilteredNode) &&
@@ -86,7 +86,7 @@ export class FilterManager implements ExtensionComponent {
                 this._scopeFilter.isNodePicked(unfilteredNode)) ||
             unfilteredNode instanceof BuildsNode;
         for (let unfilteredChild of unfilteredNode.children) {
-            let filteredNodeChild: DependenciesTreeNode = unfilteredChild.shallowClone();
+            let filteredNodeChild: DependencyTreeNode = unfilteredChild.shallowClone();
             let childSelected: any = { nodeSelected: false };
             this._applyFilters(unfilteredChild, filteredNodeChild, childSelected);
             if (childSelected.nodeSelected) {

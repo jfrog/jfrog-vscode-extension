@@ -2,15 +2,15 @@ import { assert } from 'chai';
 import { faker } from '@faker-js/faker';
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyTreeNode } from '../../main/dependencyTree/dependencyTreeNode';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
 import { ILicenseKey } from '../../main/types/licenseKey';
 import { createScanCacheManager } from './utils/utils.test';
-import { DependencyDetailsProvider } from '../../main/treeDataProviders/dependenciesTree/dependencyDetailsProvider';
-import { TreeDataHolder } from '../../main/treeDataProviders/utils/treeDataHolder';
+import { DependencyDetailsProvider } from '../../main/treeDataProviders/ciNodes/dependencyDetailsProvider';
+import { TreeDataHolder } from '../../main/treeDataProviders/ciNodes/treeDataHolder';
 import { PackageType } from '../../main/types/projectType';
-import { LicensesNode } from '../../main/treeDataProviders/dependenciesTree/generalDetailsDataProvider';
+import { LicensesNode } from '../../main/treeDataProviders/ciNodes/generalDetailsDataProvider';
 
 /**
  * Test functionality of @class DependencyDataProvider.
@@ -18,10 +18,10 @@ import { LicensesNode } from '../../main/treeDataProviders/dependenciesTree/gene
 describe('Dependency Details Tests', () => {
     let scanCacheManager: ScanCacheManager = createScanCacheManager();
     let Components: DependencyDetailsProvider = new DependencyDetailsProvider(scanCacheManager);
-    let dependenciesTreeNode: DependenciesTreeNode;
+    let dependenciesTreeNode: DependencyTreeNode;
     before(() => {
         let generalInfo: GeneralInfo = new GeneralInfo('artifactId', '1.2.3', [], __dirname, PackageType.Unknown);
-        dependenciesTreeNode = new DependenciesTreeNode(generalInfo);
+        dependenciesTreeNode = new DependencyTreeNode(generalInfo);
         Components.selectNode(dependenciesTreeNode);
     });
 

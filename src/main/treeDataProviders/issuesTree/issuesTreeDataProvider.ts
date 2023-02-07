@@ -8,20 +8,19 @@ import { FileTreeNode } from './fileTreeNode';
 import { DescriptorTreeNode } from './descriptorTree/descriptorTreeNode';
 import { DependencyIssuesTreeNode } from './descriptorTree/dependencyIssuesTreeNode';
 import { CveTreeNode } from './descriptorTree/cveTreeNode';
-import { DependenciesTreesFactory } from '../dependenciesTree/dependenciesTreeFactory';
-import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
-import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
+import { DependencyTreesFactory } from '../../dependencyTree/dependencyTreeFactory';
+import { RootNode } from '../../dependencyTree/dependenciesRoot/rootTree';
+import { DependencyTreeNode } from '../../dependencyTree/dependencyTreeNode';
 import { CacheManager } from '../../cache/cacheManager';
 import { getNumberOfSupportedPackageTypes, PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { StepProgress } from '../utils/stepProgress';
-import { Utils } from '../utils/utils';
-import { DescriptorUtils } from '../utils/descriptorUtils';
+import { Utils } from '../../utils/utils';
 import { TreesManager } from '../treesManager';
 import { IssueTreeNode } from './issueTreeNode';
 import { LogManager } from '../../log/logManager';
 import { LicenseIssueTreeNode } from './descriptorTree/licenseIssueTreeNode';
-import { AnalyzerUtils } from '../utils/analyzerUtils';
+import { AnalyzerUtils } from '../utils/issues/analyzerUtils';
 import { CodeIssueTreeNode } from './codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
 import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
@@ -29,6 +28,7 @@ import { DescriptorIssuesData, FileIssuesData, WorkspaceIssuesData } from '../..
 import { EosTreeNode } from './codeFileTree/eosTreeNode';
 import { NotEntitledError } from '../../scanLogic/scanRunners/binaryRunner';
 import { Constants } from '../../constants/consts';
+import { DescriptorUtils } from '../utils/issues/descriptorUtils';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -280,7 +280,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
         // Build workspace dependency tree for all the descriptors
         progressManager.startStep('👷 Building workspace dependencies tree', getNumberOfSupportedPackageTypes());
-        let workspaceDependenciesTree: DependenciesTreeNode = await DependenciesTreesFactory.createDependenciesTrees(
+        let workspaceDependenciesTree: DependencyTreeNode = await DependencyTreesFactory.createDependenciesTrees(
             workspaceDescriptors,
             [root.workSpace],
             [],
@@ -317,7 +317,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         workspaceData: WorkspaceIssuesData,
         root: IssuesRootTreeNode,
         workspaceDescriptors: Map<PackageType, vscode.Uri[]>,
-        workspaceDependenciesTree: DependenciesTreeNode,
+        workspaceDependenciesTree: DependencyTreeNode,
         progressManager: StepProgress,
         checkCanceled: () => void
     ): Promise<any> {

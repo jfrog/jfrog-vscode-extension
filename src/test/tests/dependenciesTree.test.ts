@@ -3,7 +3,7 @@ import { faker } from '@faker-js/faker';
 import { before } from 'mocha';
 import * as Collections from 'typescript-collections';
 import { IIssueKey } from '../../main/types/issueKey';
-import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyTreeNode } from '../../main/dependencyTree/dependencyTreeNode';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { Severity } from '../../main/types/severity';
 import { PackageType } from '../../main/types/projectType';
@@ -17,12 +17,12 @@ describe('Dependencies Tree Tests', () => {
     let lowIssueTwo: IIssueKey = createDummyIssue();
     let mediumIssue: IIssueKey = createDummyIssue();
 
-    let root: DependenciesTreeNode = createNode('root');
-    let one: DependenciesTreeNode = createNode('one');
-    let two: DependenciesTreeNode = createNode('two');
-    let three: DependenciesTreeNode = createNode('three');
-    let four: DependenciesTreeNode = createNode('four');
-    let five: DependenciesTreeNode = createNode('five');
+    let root: DependencyTreeNode = createNode('root');
+    let one: DependencyTreeNode = createNode('one');
+    let two: DependencyTreeNode = createNode('two');
+    let three: DependencyTreeNode = createNode('three');
+    let four: DependencyTreeNode = createNode('four');
+    let five: DependencyTreeNode = createNode('five');
 
     before(() => {
         root.addChild(one); // 0 -> 1
@@ -111,8 +111,8 @@ describe('Dependencies Tree Tests', () => {
         return root.processTreeIssues();
     }
 
-    function createNode(label: string): DependenciesTreeNode {
-        return new DependenciesTreeNode(new GeneralInfo(label, '1.0.0', [], '', PackageType.Unknown));
+    function createNode(label: string): DependencyTreeNode {
+        return new DependencyTreeNode(new GeneralInfo(label, '1.0.0', [], '', PackageType.Unknown));
     }
 
     function createDummyIssue(): IIssueKey {

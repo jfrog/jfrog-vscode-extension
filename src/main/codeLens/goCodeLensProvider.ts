@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { AbstractCodeLensProvider } from './abstractCodeLensProvider';
-import { GoUtils } from '../utils/goUtils';
+import { GoUtils } from '../utils/dependency/goUtils';
 
 export class GoCodeLensProvider extends AbstractCodeLensProvider {
     constructor() {

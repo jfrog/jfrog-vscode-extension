@@ -7,15 +7,15 @@ import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { ScanManager } from '../../main/scanLogic/scanManager';
-import { PypiTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
-import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { PypiTreeNode } from '../../main/dependencyTree/dependenciesRoot/pypiTree';
+import { DependencyTreeNode } from '../../main/dependencyTree/dependencyTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
-import { PypiUtils } from '../../main/utils/pypiUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager } from './utils/utils.test';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { PackageType } from '../../main/types/projectType';
+import { PypiUtils } from '../../main/utils/dependency/pypiUtils';
 
 /**
  * Test functionality of @class PypiUtils.
@@ -82,9 +82,7 @@ describe('Pypi Utils Tests', async () => {
         // Test 'resources/python/requirements'
         let requirements: vscode.Uri = vscode.Uri.file(path.join(tmpDir.fsPath, 'requirements', 'requirements.txt'));
         let textDocument: vscode.TextDocument = await vscode.workspace.openTextDocument(requirements);
-        let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(
-            new GeneralInfo('newrelic', '2.0.0.1', [], '', PackageType.Unknown)
-        );
+        let dependenciesTreeNode: DependencyTreeNode = new DependencyTreeNode(new GeneralInfo('newrelic', '2.0.0.1', [], '', PackageType.Unknown));
         let dependencyPos: vscode.Range[] = PypiUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
         assert.deepEqual(dependencyPos[0].start, new vscode.Position(2, 0));
 
@@ -105,7 +103,7 @@ describe('Pypi Utils Tests', async () => {
             workspaceFolders[0].uri.fsPath,
             treesManager,
             path.join(workspaceFolders[0].uri.fsPath, localPython),
-            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown))
+            new DependencyTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown))
         );
         dependenciesTreeNode.refreshDependencies();
         assert.deepEqual(dependenciesTreeNode.label, 'requirements');
@@ -117,7 +115,7 @@ describe('Pypi Utils Tests', async () => {
             workspaceFolders[1].uri.fsPath,
             treesManager,
             path.join(workspaceFolders[1].uri.fsPath, localPython),
-            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown))
+            new DependencyTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown))
         );
         dependenciesTreeNode.refreshDependencies();
         assert.deepEqual(dependenciesTreeNode.label, 'setup');
@@ -132,7 +130,7 @@ describe('Pypi Utils Tests', async () => {
             workspaceFolders[2].uri.fsPath,
             treesManager,
             path.join(workspaceFolders[2].uri.fsPath, localPython),
-            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown))
+            new DependencyTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown))
         );
         dependenciesTreeNode.refreshDependencies();
         assert.deepEqual(dependenciesTreeNode.label, 'setupAndRequirements');
@@ -144,7 +142,7 @@ describe('Pypi Utils Tests', async () => {
     });
 
     function checkFireDependency(dependenciesTreeNode: PypiTreeNode) {
-        let fire: DependenciesTreeNode | undefined = dependenciesTreeNode.children.filter(child => child.label === 'fire').pop();
+        let fire: DependencyTreeNode | undefined = dependenciesTreeNode.children.filter(child => child.label === 'fire').pop();
         assert.isDefined(fire);
         assert.deepEqual(fire!.generalInfo.artifactId, 'fire');
         assert.deepEqual(fire!.generalInfo.version, '0.1.3');

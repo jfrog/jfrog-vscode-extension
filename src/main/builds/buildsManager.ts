@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { BuildGeneralInfo } from '../types/buildGeneralinfo';
-import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyTreeNode } from '../dependencyTree/dependencyTreeNode';
 import { GeneralInfo } from '../types/generalInfo';
 
 /**
@@ -34,7 +34,7 @@ export class BuildsManager implements ExtensionComponent {
 
     public getBuilds(): Map<string, GeneralInfo> {
         let buildsMap: Map<string, GeneralInfo> = new Map<string, BuildGeneralInfo>();
-        const buildsTree: DependenciesTreeNode = this._treesManager.buildsTreesProvider.allBuildsTree;
+        const buildsTree: DependencyTreeNode = this._treesManager.buildsTreesProvider.allBuildsTree;
         if (!!buildsTree && !!buildsTree.children) {
             for (const build of buildsTree.children) {
                 const gi: GeneralInfo = build.generalInfo;

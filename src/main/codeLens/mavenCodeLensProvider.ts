@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
+import { MavenUtils } from '../utils/dependency/mavenUtils';
 import { AbstractCodeLensProvider } from './abstractCodeLensProvider';
-import { MavenUtils } from '../utils/mavenUtils';
 
 export class MavenCodeLensProvider extends AbstractCodeLensProvider {
     constructor() {
