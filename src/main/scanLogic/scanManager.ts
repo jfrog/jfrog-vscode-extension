@@ -25,7 +25,7 @@ export class ScanManager implements ExtensionComponent {
     private static readonly BINARY_ABORT_CHECK_INTERVAL: number = 1000; // every 1 sec
     private static readonly RESOURCE_CHECK_UPDATE_INTERVAL: number = 1000 * 60 * 60 * 24; // every day
 
-    private static lastOutdatedTimestamp: number;
+    private static lastOutdatedCheck: number;
 
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
@@ -46,35 +46,34 @@ export class ScanManager implements ExtensionComponent {
      * @returns true if all the outdated resources updated successfully, false otherwise
      */
     public async updateResources(): Promise<boolean> {
-        let resources: Resource[] = await this.getOutdatedResources();
-        if (resources.length === 0) {
-            // Noting to do
-            return true;
-        }
-        this._logManager.logMessage(
-            'Updating outdated resources (' + resources.length + '): ' + resources.map(resource => resource.name).join(),
-            'INFO'
-        );
-        let updatePromises: Promise<boolean>[] = [];
-        let results: boolean[] = [];
-        // Update
+        let result: boolean = true;
         await ScanUtils.backgroundTask(async (progress: vscode.Progress<{ message?: string; increment?: number }>) => {
+            progress.report({ message: 'Get outdated resources' });
+            let resources: Resource[] = await this.getOutdatedResources();
+            if (resources.length === 0) {
+                // Noting to do
+                return;
+            }
             let progressManager: StepProgress = new StepProgress(progress);
-            progressManager.startStep('Update outdated resources', resources.length);
+            progressManager.startStep('Update resources', resources.length);
+            this._logManager.logMessage(
+                'Updating outdated resources (' + resources.length + '): ' + resources.map(resource => resource.name).join(),
+                'INFO'
+            );
+            let updatePromises: Promise<any>[] = [];
             resources.forEach(async resource =>
                 updatePromises.push(
                     resource
                         .update()
                         .catch(err => {
                             this._logManager.logError(<Error>err);
-                            return false;
+                            result = false;
                         })
                         .finally(() => progressManager.reportProgress())
                 )
             );
-            results = await Promise.all(updatePromises);
+            await Promise.all(updatePromises);
         });
-        let result: boolean = results.reduce((accumulator, currentValue) => accumulator && currentValue, true);
         this._logManager.logMessage(
             'Updating outdated extension resources finished ' + (result ? 'successfully' : 'with error'),
             result ? 'INFO' : 'ERR'
@@ -83,39 +82,43 @@ export class ScanManager implements ExtensionComponent {
     }
 
     private async getOutdatedResources(): Promise<Resource[]> {
-        if (this.shouldCheckOutdated()) {
-            ScanManager.lastOutdatedTimestamp = Date.now();
-            let promises: Promise<boolean>[] = [];
-            let outdatedResources: Resource[] = [];
-            for (const resource of this.getResources()) {
-                promises.push(
-                    resource
-                        .isOutdated()
-                        .then(outdated => {
-                            if (outdated) {
-                                outdatedResources.push(resource);
-                            }
-                            return outdated;
-                        })
-                        .catch(err => {
-                            this._logManager.logError(<Error>err);
-                            return false;
-                        })
-                );
-            }
-            await Promise.all(promises);
-            return outdatedResources;
+        if (!this.shouldCheckOutdated()) {
+            return [];
         }
-        return [];
+
+        ScanManager.lastOutdatedCheck = Date.now();
+        let promises: Promise<boolean>[] = [];
+        let outdatedResources: Resource[] = [];
+        for (const resource of await this.getResources()) {
+            promises.push(
+                resource
+                    .isOutdated()
+                    .then(outdated => {
+                        if (outdated) {
+                            outdatedResources.push(resource);
+                        }
+                        return outdated;
+                    })
+                    .catch(err => {
+                        this._logManager.logError(<Error>err);
+                        return false;
+                    })
+            );
+        }
+        await Promise.all(promises);
+        return outdatedResources;
     }
 
     private shouldCheckOutdated(): boolean {
-        let now: number = Date.now();
-        return !ScanManager.lastOutdatedTimestamp || now - ScanManager.lastOutdatedTimestamp > ScanManager.RESOURCE_CHECK_UPDATE_INTERVAL;
+        return !ScanManager.lastOutdatedCheck || Date.now() - ScanManager.lastOutdatedCheck > ScanManager.RESOURCE_CHECK_UPDATE_INTERVAL;
     }
 
-    private getResources(): Resource[] {
-        return [BinaryRunner.getAnalyzerManagerResource(this._logManager)];
+    private async getResources(): Promise<Resource[]> {
+        let resources: Resource[] = [];
+        if (await this.validateAnalyzerManagerSupported()) {
+            resources.push(BinaryRunner.getAnalyzerManagerResource(this._logManager));
+        }
+        return resources;
     }
 
     /**
@@ -123,6 +126,10 @@ export class ScanManager implements ExtensionComponent {
      */
     public async validateGraphSupported(): Promise<boolean> {
         return await ConnectionUtils.testXrayVersionForScanGraph(this._connectionManager.createJfrogClient(), this._logManager);
+    }
+
+    public async validateAnalyzerManagerSupported(): Promise<boolean> {
+        return await ConnectionUtils.testXrayEntitlement(this._connectionManager.createJfrogClient(), 'contextual_analysis');
     }
 
     /**

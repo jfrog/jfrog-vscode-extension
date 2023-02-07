@@ -180,6 +180,15 @@ export class ConnectionUtils {
         return true;
     }
 
+    public static async testXrayEntitlement(jfrogClient: JfrogClient, feature: string): Promise<boolean> {
+        // TODO: uncomment when entitlement api is published
+        // return await jfrogClient
+        //     .xray()
+        //     .entitlements()
+        //     .feature(feature);
+        return true;
+    }
+
     public static async testXrayVersionForCi(jfrogClient: JfrogClient, logger: LogManager): Promise<boolean> {
         let xrayVersion: string = await this.getXrayVersion(jfrogClient);
         if (!(await this.isXrayVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI))) {
