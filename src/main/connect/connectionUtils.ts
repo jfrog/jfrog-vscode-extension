@@ -181,12 +181,10 @@ export class ConnectionUtils {
     }
 
     public static async testXrayEntitlement(jfrogClient: JfrogClient, feature: string): Promise<boolean> {
-        // TODO: uncomment when entitlement api is published
-        // return await jfrogClient
-        //     .xray()
-        //     .entitlements()
-        //     .feature(feature);
-        return true;
+        return await jfrogClient
+            .xray()
+            .entitlements()
+            .feature(feature);
     }
 
     public static async testXrayVersionForCi(jfrogClient: JfrogClient, logger: LogManager): Promise<boolean> {

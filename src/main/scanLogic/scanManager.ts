@@ -85,7 +85,7 @@ export class ScanManager implements ExtensionComponent {
         if (!this.shouldCheckOutdated()) {
             return [];
         }
-
+        this._logManager.logMessage('Checking for outdated resources', 'INFO');
         ScanManager.lastOutdatedCheck = Date.now();
         let promises: Promise<boolean>[] = [];
         let outdatedResources: Resource[] = [];
@@ -117,6 +117,8 @@ export class ScanManager implements ExtensionComponent {
         let resources: Resource[] = [];
         if (await this.validateAnalyzerManagerSupported()) {
             resources.push(BinaryRunner.getAnalyzerManagerResource(this._logManager));
+        } else {
+            this.logManager.logMessage('You are not entitled to run contextual analysis scans', 'WARN');
         }
         return resources;
     }
