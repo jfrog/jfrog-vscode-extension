@@ -15,7 +15,7 @@ import { CacheManager } from '../../cache/cacheManager';
 import { getNumberOfSupportedPackageTypes, PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { StepProgress } from '../utils/stepProgress';
-import { Utils } from '../utils/utils';
+import { Utils } from '../../utils/utils';
 import { DescriptorUtils } from '../utils/descriptorUtils';
 import { TreesManager } from '../treesManager';
 import { IssueTreeNode } from './issueTreeNode';

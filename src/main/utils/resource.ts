@@ -4,7 +4,7 @@ import * as path from 'path';
 import { IChecksumResult, JfrogClient } from 'jfrog-client-js';
 import { ConnectionUtils } from '../connect/connectionUtils';
 import { LogManager } from '../log/logManager';
-import { Utils } from '../treeDataProviders/utils/utils';
+import { Utils } from './utils';
 import { ScanUtils } from './scanUtils';
 
 /**
@@ -38,7 +38,7 @@ export class Resource {
      * @returns the full path of the file that was downloaded successfully, undefined otherwise
      */
     private async downloadToFolder(downloadToFolder: string = this._targetDir): Promise<string> {
-        let resourcePath: string = path.join(downloadToFolder, this._name);
+        let resourcePath: string = path.join(downloadToFolder, Utils.getLastSegment(this.sourceUrl));
         // Download new
         await this._connectionManager
             .artifactory()
@@ -47,21 +47,32 @@ export class Resource {
         return resourcePath;
     }
 
-    /**
-     * Copy the given file to the target path, override the file if already exists.
-     * Gives the configured permission to it and creates the target directory if not exists.
-     * @param filePath - the file to copy
-     */
-    private async copyToTargetAndApplyPermissions(filePath: string) {
+    private removeOldTargetAndCopyFile(filePath: string) {
         if (this.isExists()) {
-            // Remove old file
             fs.rmSync(this._targetPath);
-        } else if (!fs.existsSync(this._targetDir)) {
-            // Make sure target directory exist
-            fs.mkdirSync(this._targetDir, { recursive: true } as fs.MakeDirectoryOptions);
         }
         fs.copyFileSync(filePath, this._targetPath);
         fs.chmodSync(this._targetPath, this._mode);
+    }
+
+    private removeOldTargetDirAndExtractZip(filePath: string) {
+        if (fs.existsSync(this._targetDir)) {
+            ScanUtils.removeFolder(this._targetDir);
+        }
+        ScanUtils.extractZip(filePath, this._targetDir);
+    }
+
+    /**
+     * if the given temp file is a binary within a zip, replace and extract its content to the target dir.
+     * if the given file is a binary, replace and copy it to the target path
+     * @param tempPath - the file to copy into target
+     */
+    public copyToTarget(tempPath: string) {
+        if (tempPath.endsWith('.zip')) {
+            this.removeOldTargetDirAndExtractZip(tempPath);
+        } else {
+            this.removeOldTargetAndCopyFile(tempPath);
+        }
     }
 
     /**
@@ -78,7 +89,7 @@ export class Resource {
                 this._logManager.logMessage('Resource ' + this._name + ' update failed.', 'ERR');
                 return false;
             }
-            this.copyToTargetAndApplyPermissions(resourceTmpPath);
+            this.copyToTarget(resourceTmpPath);
             this._logManager.logMessage('Resource ' + this._name + ' was update successfully.', 'DEBUG');
             return true;
         } finally {

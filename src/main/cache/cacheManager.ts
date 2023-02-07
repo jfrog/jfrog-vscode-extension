@@ -18,6 +18,11 @@ export class CacheManager implements ExtensionComponent {
         if (!fs.existsSync(homeDir)) {
             fs.mkdirSync(homeDir, { recursive: true });
         }
+        // Create issues folder if not exists
+        let issuesDir: string = ScanUtils.getIssuesPath();
+        if (!fs.existsSync(issuesDir)) {
+            fs.mkdirSync(issuesDir, { recursive: true });
+        }
         // Set caches
         this._cache = context.workspaceState;
         this._issuesCache = new IssuesCache(context.workspaceState);

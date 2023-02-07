@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Utils } from '../utils/utils';
+import { Utils } from '../../utils/utils';
 import { FileTreeNode } from './fileTreeNode';
 
 /**

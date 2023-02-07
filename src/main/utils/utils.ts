@@ -1,5 +1,6 @@
 import * as pathUtils from 'path';
 import * as vscode from 'vscode';
+import * as os from 'os';
 
 export class Utils {
     /**
@@ -42,5 +43,13 @@ export class Utils {
             return 'Never';
         }
         return new Date(timeStamp).toUTCString();
+    }
+
+    public static addZipSuffix(str: string): string {
+        return str + '.zip';
+    }
+
+    public static addWinSuffixIFNeeded(str: string): string {
+        return str + (os.platform() === 'win32' ? '.exe' : '');
     }
 }

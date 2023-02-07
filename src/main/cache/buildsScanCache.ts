@@ -41,11 +41,11 @@ export class BuildsScanCache {
     }
 
     public save(content: string, timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): void {
-        ScanUtils.saveAsZip(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type),  {fileName: type.toString(), content: content});
+        ScanUtils.saveAsZip(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type), { fileName: type.toString(), content: content });
     }
 
     public load(timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): any {
-        return ScanUtils.extractZipEntry(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type),type.toString());
+        return ScanUtils.extractZipEntry(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type), type.toString());
     }
 
     public loadBuildInfo(timestamp: string, buildName: string, buildNumber: string, projectKey: string): any {

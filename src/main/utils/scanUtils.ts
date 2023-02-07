@@ -18,7 +18,7 @@ export class ScanUtils {
 
     private static readonly MAX_FILES_EXTRACTED_ZIP: number = 1000;
     private static readonly MAX_SIZE_EXTRACTED_ZIP: number = 1000000000; // 1 GB
-    private static readonly COMPRESSION_THRESHOLD_RATIO: number = 10;
+    private static readonly COMPRESSION_THRESHOLD_RATIO: number = 100;
 
     public static async scanWithProgress(
         scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => Promise<void>,
@@ -104,6 +104,10 @@ export class ScanUtils {
 
     public static getHomePath(): string {
         return path.join(os.homedir(), '.jfrog-vscode-extension');
+    }
+
+    public static getIssuesPath(): string {
+        return path.join(ScanUtils.getHomePath(), 'issues');
     }
 
     static readFileIfExists(filePath: string): string | undefined {
@@ -208,20 +212,20 @@ export class ScanUtils {
             .digest('hex');
     }
 
-    static saveAsZip(zipPath: string, ...files: {fileName: string, content: string}[]): void {
+    static saveAsZip(zipPath: string, ...files: { fileName: string; content: string }[]): void {
         let zip: AdmZip = new AdmZip();
         for (let file of files) {
-            zip.addFile(file.fileName,Buffer.alloc(file.content.length, file.content))
+            zip.addFile(file.fileName, Buffer.alloc(file.content.length, file.content));
         }
         zip.writeZip(zipPath);
     }
-    
-    static extractZip(zipPath: string, targetDir: string): any {
+
+    static extractZip(zipPath: string, targetDir: string, overwrite: boolean = true, keepOriginalPermission: boolean = true): any {
         if (!fs.existsSync(zipPath)) {
             return '';
         }
         if (!fs.existsSync(targetDir)) {
-            fs.mkdirSync(targetDir, { recursive: true});
+            fs.mkdirSync(targetDir, { recursive: true });
         }
         let zip: AdmZip = new AdmZip(zipPath);
         let fileCount: number = 0;
@@ -231,21 +235,27 @@ export class ScanUtils {
             // Protect against zip bomb
             fileCount++;
             if (fileCount > ScanUtils.MAX_FILES_EXTRACTED_ZIP) {
-                throw new ZipExtractError(zipPath, "Reached max files allowed");
+                throw new ZipExtractError(zipPath, 'Reached max files allowed');
             }
 
             let entrySize: number = entry.getData().length;
             totalSize += entrySize;
             if (totalSize > ScanUtils.MAX_SIZE_EXTRACTED_ZIP) {
-                throw new ZipExtractError(zipPath, "Reached max size allowed");
+                throw new ZipExtractError(zipPath, 'Reached max size allowed');
             }
 
             let compressionRatio: number = entrySize / entry.header.compressedSize;
             if (compressionRatio > ScanUtils.COMPRESSION_THRESHOLD_RATIO) {
-                throw new ZipExtractError(zipPath, "Reached max compression ratio allowed");
+                throw new ZipExtractError(zipPath, 'Reached max compression ratio allowed');
             }
 
-            zip.extractEntryTo(entry, targetDir);
+            if (entry.isDirectory) {
+                return;
+            }
+
+            if (!zip.extractEntryTo(entry, targetDir, true, overwrite, keepOriginalPermission)) {
+                throw new ZipExtractError(zipPath, "can't extract entry " + entry.entryName);
+            }
         });
     }
 
@@ -257,7 +267,7 @@ export class ScanUtils {
 
         let entry: IZipEntry | null = zip.getEntry(name);
         if (!entry) {
-            throw new ZipExtractError(zipPath,'Could not find expected content ' + name);
+            throw new ZipExtractError(zipPath, 'Could not find expected content ' + name);
         }
         return entry.getData().toString('utf8');
     }
@@ -265,7 +275,7 @@ export class ScanUtils {
 
 export class ZipExtractError extends Error {
     constructor(public readonly zipPath: string, reason: string) {
-        super("Zip extraction error: " + reason + " in zip " + zipPath);
+        super('Zip extraction error: ' + reason + ' in zip ' + zipPath);
     }
 }
 

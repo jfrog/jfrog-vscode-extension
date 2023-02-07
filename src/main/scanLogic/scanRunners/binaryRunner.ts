@@ -4,7 +4,7 @@ import yaml from 'js-yaml';
 import * as path from 'path';
 
 import { LogManager } from '../../log/logManager';
-import { Utils } from '../../treeDataProviders/utils/utils';
+import { Utils } from '../../utils/utils';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { AnalyzerRequest, AnalyzerScanResponse, AnalyzeScanRequest } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
@@ -44,12 +44,12 @@ export class NotEntitledError extends Error {
 export abstract class BinaryRunner {
     protected _runDirectory: string;
 
-    protected static readonly RUNNER_FOLDER: string = 'analyzer-manager';
     private static readonly RUNNER_NAME: string = 'analyzerManager';
+    private static readonly RUNNER_FOLDER: string = path.join(ScanUtils.getIssuesPath(), BinaryRunner.getBinaryName());
 
     private static readonly NOT_ENTITLED: number = 31;
 
-    private static readonly DOWNLOAD_URL: string = '';
+    private static readonly DOWNLOAD_URL: string = ''; // '/mid-path-can-be-empty/';
 
     constructor(
         protected _connectionManager: ConnectionManager,
@@ -67,8 +67,8 @@ export abstract class BinaryRunner {
 
     public static getAnalyzerManagerResource(logManager: LogManager): Resource {
         return new Resource(
-            BinaryRunner.DOWNLOAD_URL + BinaryRunner.getBinaryName(),
-            path.join(ScanUtils.getHomePath(), BinaryRunner.RUNNER_FOLDER, BinaryRunner.getBinaryName()),
+            Utils.addZipSuffix(BinaryRunner.DOWNLOAD_URL + BinaryRunner.getBinaryName()),
+            Utils.addWinSuffixIFNeeded(path.join(BinaryRunner.RUNNER_FOLDER, BinaryRunner.getBinaryName())),
             logManager
         );
     }
@@ -81,7 +81,7 @@ export abstract class BinaryRunner {
         let name: string = BinaryRunner.RUNNER_NAME;
         switch (os.platform()) {
             case 'win32':
-                return name + '_windows.exe';
+                return name + '_windows';
             case 'linux':
                 return name + '_linux';
             case 'darwin':

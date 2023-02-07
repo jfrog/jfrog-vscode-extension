@@ -7,7 +7,7 @@ import { Consts } from '../utils/consts';
 import { IconsPaths } from '../utils/iconsPaths';
 import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
 import { TreeDataHolder } from './utils/treeDataHolder';
-import { Utils } from './utils/utils';
+import { Utils } from '../utils/utils';
 import { IExtendedInformation, IReference } from 'jfrog-client-js';
 
 export abstract class IssueNode extends vscode.TreeItem {
