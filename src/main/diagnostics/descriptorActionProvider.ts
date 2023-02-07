@@ -220,7 +220,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
                     diagnostics.push(
                         ...this.createDiagnostics(
                             issueId,
-                            `${info.label} - Severity: ${SeverityUtils.getString(
+                            `🐸 ${info.label} - Severity: ${SeverityUtils.getString(
                                 info.severity
                             )}\nImpacted Components: ${info.infectedDependencies.join()}`,
                             vscode.DiagnosticSeverity.Warning,
