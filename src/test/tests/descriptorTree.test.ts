@@ -214,9 +214,9 @@ describe('Descriptor Tree Tests', () => {
                 assert.include(testNode.tooltip, 'Issues count: ' + testNode.issues.length);
                 // Check artifact information
                 if (testNode.indirect) {
-                    assert.include(testNode.tooltip, 'Artifact (indirect):\n' + testNode.artifactId);
+                    assert.include(testNode.tooltip, '\n(indirect)');
                 } else {
-                    assert.include(testNode.tooltip, 'Artifact:\n' + testNode.artifactId);
+                    assert.notInclude(testNode.tooltip, '\n(indirect)');
                 }
             });
         });
