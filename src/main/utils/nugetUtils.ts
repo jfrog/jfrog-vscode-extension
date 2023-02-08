@@ -9,7 +9,6 @@ import { Utils } from '../treeDataProviders/utils/utils';
 import { ProjectDetails } from '../types/projectDetails';
 
 export class NugetUtils {
-    
     public static readonly SOLUTION_SUFFIX: string = '.sln';
     public static readonly PROJECT_SUFFIX: string = '.csproj';
 
@@ -39,8 +38,8 @@ export class NugetUtils {
             if (!tree) {
                 continue;
             }
-            let projectsInSolutions: vscode.Uri[] | undefined = this.filterProjects(solutionsAndProjects,solution);
-            
+            let projectsInSolutions: vscode.Uri[] | undefined = this.filterProjects(solutionsAndProjects, solution);
+
             let root: NugetTreeNode = this.createSolutionNode(parent, solution, projectsInSolutions, tree, treesManager.logManager);
             for (let project of tree.projects) {
                 checkCanceled();
@@ -54,7 +53,13 @@ export class NugetUtils {
         }
     }
 
-    private static createSolutionNode(parent: DependenciesTreeNode, solution: vscode.Uri, projectsInSolutions: vscode.Uri[] | undefined, tree: any, logManager: LogManager): NugetTreeNode {
+    private static createSolutionNode(
+        parent: DependenciesTreeNode,
+        solution: vscode.Uri,
+        projectsInSolutions: vscode.Uri[] | undefined,
+        tree: any,
+        logManager: LogManager
+    ): NugetTreeNode {
         let solutionDir: string = path.dirname(solution.fsPath);
         let failed: boolean = false;
         if (projectsInSolutions && projectsInSolutions.length !== tree.projects.length) {
@@ -70,7 +75,7 @@ export class NugetUtils {
     }
 
     private static getProjectUri(projectName: string, solutionsAndProjects: vscode.Uri[] | undefined): vscode.Uri | undefined {
-        return solutionsAndProjects?.find(optional => optional.fsPath.includes(projectName))
+        return solutionsAndProjects?.find(optional => optional.fsPath.includes(projectName));
     }
 
     public static filterProjects(solutionsAndProjects: vscode.Uri[] | undefined, inSolution?: vscode.Uri): vscode.Uri[] | undefined {
