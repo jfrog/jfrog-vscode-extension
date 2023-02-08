@@ -17,7 +17,7 @@ export class NugetUtils {
      * @param componentsToScan - Set of nuget components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
      * @param treesManager     - Scan trees manager
      * @param parent           - The base tree node
-     * @param quickScan        - True to allow using the scan cache
+     * @returns - the paths to the project files and failed solution files
      */
     public static async createDependenciesTrees(
         solutionsAndProjects: vscode.Uri[] | undefined,
@@ -25,53 +25,54 @@ export class NugetUtils {
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         checkCanceled: () => void
-    ): Promise<void> {
+    ): Promise<vscode.Uri[]> {
         let solutions: vscode.Uri[] | undefined = this.filterSolutions(solutionsAndProjects);
         if (!solutions) {
             treesManager.logManager.logMessage('No *.sln files found in workspaces.', 'DEBUG');
-            return;
+            return [];
         }
         treesManager.logManager.logMessage('Solution files to scan: [' + solutions.toString() + ']', 'DEBUG');
+        let updatedDescriptorList: vscode.Uri[] = [];
         for (let solution of solutions) {
             checkCanceled();
-            let tree: any = await NugetUtils.getProjects(solution.fsPath, treesManager.logManager);
+            let solutionDir: string = path.dirname(solution.fsPath);
+            let solutionName: string = Utils.getLastSegment(solution.fsPath);
+            let projectsInSolutions: vscode.Uri[] | undefined = this.filterProjects(solutionsAndProjects, solution);
+            let tree: any = await NugetUtils.getProjects(solution, projectsInSolutions, treesManager.logManager);
             if (!tree) {
+                // We show sln files only if we have error
+                this.createSolutionNode(parent, solutionName, solutionDir, true);
+                updatedDescriptorList.push(solution);
                 continue;
             }
-            let projectsInSolutions: vscode.Uri[] | undefined = this.filterProjects(solutionsAndProjects, solution);
-
-            let root: NugetTreeNode = this.createSolutionNode(parent, solution, projectsInSolutions, tree, treesManager.logManager);
+            let root: NugetTreeNode = this.createSolutionNode(parent, solutionName, solutionDir);
             for (let project of tree.projects) {
                 checkCanceled();
                 let projectUri: vscode.Uri | undefined = this.getProjectUri(project.name, projectsInSolutions);
                 if (projectUri) {
-                    let projectDir: string = path.dirname(projectUri.fsPath);
-                    let projectNode: NugetTreeNode = new NugetTreeNode(projectDir, root);
-                    projectNode.refreshDependencies(project);
+                    this.createProjectNode(root, projectUri, project);
+                    // We show project files as descriptors
+                    updatedDescriptorList.push(projectUri);
                 }
             }
         }
+        return updatedDescriptorList;
+    }
+
+    private static createProjectNode(solution: NugetTreeNode, projectUri: vscode.Uri, project: any) {
+        let projectNode: NugetTreeNode = new NugetTreeNode(path.dirname(projectUri.fsPath), solution);
+        projectNode.refreshDependencies(project);
     }
 
     private static createSolutionNode(
         parent: DependenciesTreeNode,
-        solution: vscode.Uri,
-        projectsInSolutions: vscode.Uri[] | undefined,
-        tree: any,
-        logManager: LogManager
+        solutionName: string,
+        solutionDir: string,
+        failed: boolean = false
     ): NugetTreeNode {
-        let solutionDir: string = path.dirname(solution.fsPath);
-        let failed: boolean = false;
-        if (projectsInSolutions && projectsInSolutions.length !== tree.projects.length) {
-            logManager.logMessageAndToastErr(
-                `Failed to scan nuget project. Hint: Please make sure the commands 'dotnet restore' or 'nuget restore' run successfully in '${solutionDir}'`,
-                'ERR'
-            );
-            failed = true;
-        }
-        let solutionNode: NugetTreeNode = new NugetTreeNode(solutionDir, parent);
-        solutionNode.setName(Utils.getLastSegment(solution.fsPath) + (failed ? ' [Not installed]' : ''));
-        return solutionNode;
+        let solution: NugetTreeNode = new NugetTreeNode(solutionDir, parent);
+        solution.setName(solutionName + (failed ? ' [Not installed]' : ''));
+        return solution;
     }
 
     private static getProjectUri(projectName: string, solutionsAndProjects: vscode.Uri[] | undefined): vscode.Uri | undefined {
@@ -97,28 +98,25 @@ export class NugetUtils {
      * @param logManager  - Log manager
      * @param quickScan   - True to allow using the scan cache
      */
-    private static async getProjects(slnFilePath: string, logManager: LogManager): Promise<any> {
+    private static async getProjects(solution: vscode.Uri, projectsInSolutions: vscode.Uri[] | undefined, logManager: LogManager): Promise<any> {
         let nugetList: any;
         try {
-            nugetList = NugetDepsTree.generate(slnFilePath);
+            nugetList = NugetDepsTree.generate(solution.fsPath);
         } catch (error) {
             logManager.logError(<any>error, true);
-            logManager.logMessage(
-                'Failed building tree for solution "' + slnFilePath + '", due to the above error. Skipping to next solution... ',
-                'INFO'
+            logManager.logMessage('Failed building tree for solution "' + solution.fsPath + '", due to the above error.', 'ERR');
+            return null;
+        }
+
+        if (!nugetList.projects || (projectsInSolutions && projectsInSolutions.length !== nugetList.projects.length)) {
+            logManager.logError(new Error('No projects found for solution "' + solution.fsPath + '".'), true);
+            logManager.logMessageAndToastErr(
+                `Failed to scan nuget project. Hint: Please make sure the commands 'dotnet restore' or 'nuget restore' run successfully for '${solution.fsPath}'`,
+                'ERR'
             );
             return null;
         }
 
-        if (!nugetList.projects) {
-            logManager.logError(new Error('No projects found for solution "' + slnFilePath + '".'), true);
-            logManager.logMessageAndToastErr(
-                'Possible cause: The solution needs to be restored. Restore it by running "nuget restore ' + path.resolve(slnFilePath) ||
-                    slnFilePath + '".',
-                'INFO'
-            );
-            return null;
-        }
         return nugetList;
     }
 
