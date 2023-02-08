@@ -340,7 +340,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
                 let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptorData.fullPath, descriptorData.type);
                 // Search for the dependency graph of the descriptor
-                let descriptorGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(workspaceDependenciesTree, descriptorPath.fsPath);
+                let descriptorGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(workspaceDependenciesTree, descriptorPath.fsPath, descriptorData.type);
                 if (!descriptorGraph) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this._logManager.logMessage("Can't find descriptor graph for " + descriptorPath.fsPath, 'DEBUG');

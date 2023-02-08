@@ -181,12 +181,13 @@ export class DependencyUtils {
      * Get the dependency graph of a descriptor base on a given path
      * @param workspaceDependenciesTree - the dependencies graph for all the descriptors in the workspace
      * @param descriptorPath - the descriptor we want to fetch its sub tree graph
+     * @param descriptorType - the package type of the descriptor
      * @returns the descriptor dependencies tree if exists the provided workspace tree, undefined otherwise
      */
-    public static getDependencyGraph(workspaceDependenciesTree: DependenciesTreeNode, descriptorPath: string): RootNode | undefined {
+    public static getDependencyGraph(workspaceDependenciesTree: DependenciesTreeNode, descriptorPath: string, descriptorType: PackageType): RootNode | undefined {
         // Search for the dependency graph of the descriptor
         for (const child of workspaceDependenciesTree.children) {
-            if (child instanceof RootNode) {
+            if (child instanceof RootNode && child.projectDetails.type === descriptorType) {
                 let graph: RootNode | undefined = this.searchDependencyGraph(descriptorPath, child);
                 if (graph) {
                     return graph;
