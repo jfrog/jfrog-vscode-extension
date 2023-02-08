@@ -53,7 +53,7 @@ export class ScanUtils {
                 {
                     baseUri: workspace.uri,
                     base: workspace.uri.fsPath,
-                    pattern: '**/{go.mod,pom.xml,package.json,yarn.lock,*.sln,setup.py,requirements*.txt}'
+                    pattern: '**/{go.mod,pom.xml,package.json,yarn.lock,*.sln,*.csproj,setup.py,requirements*.txt}'
                 },
                 Configuration.getScanExcludePattern(workspace)
             );
@@ -146,7 +146,7 @@ export class ScanUtils {
      * @param fsPath - path to package descriptor such as pom.xml, go.mod, etc.
      * @returns PackageType or undefined
      */
-    private static extractDescriptorTypeFromPath(fsPath: string): PackageType | undefined {
+    public static extractDescriptorTypeFromPath(fsPath: string): PackageType | undefined {
         if (fsPath.endsWith('go.mod')) {
             return PackageType.Go;
         }
@@ -163,7 +163,7 @@ export class ScanUtils {
             }
             return PackageType.Npm;
         }
-        if (fsPath.endsWith('.sln')) {
+        if (fsPath.endsWith('.sln') || fsPath.endsWith('.csproj')) {
             return PackageType.Nuget;
         }
         return PackageType.Python;
