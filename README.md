@@ -7,7 +7,7 @@
 ![JFrog Extension Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/JFrog.jfrog-vscode-extension?label=VS%20Code%20installs&color=blue&style=for-the-badge)
 ![JFrog Extension Marketplace Installs](https://img.shields.io/open-vsx/dt/JFrog/jfrog-vscode-extension?label=Eclipse%20Theia%20installs&color=blue&style=for-the-badge)
 
-[![Visual Studio Marketplace](https://vsmarketplacebadge.apphb.com/version/JFrog.jfrog-vscode-extension.svg)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension) [![Open VSX Registry](https://img.shields.io/open-vsx/v/jfrog/jfrog-vscode-extension?label=Open%20VSX%20Registry)](https://open-vsx.org/extension/JFrog/jfrog-vscode-extension)
+[![Visual Studio Marketplace](https://vsmarketplacebadges.dev/version/JFrog.jfrog-vscode-extension.svg)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension) [![Open VSX Registry](https://img.shields.io/open-vsx/v/jfrog/jfrog-vscode-extension?label=Open%20VSX%20Registry)](https://open-vsx.org/extension/JFrog/jfrog-vscode-extension)
 [![Test](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml/badge.svg)](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml)
 </div>
 
@@ -55,7 +55,7 @@ The earlier you remediate a vulnerability in the release cycle, the lower the co
 [JFrog Xray](https://jfrog.com/xray/) is instrumental in flagging components when vulnerabilities are discovered in production systems at runtime,
 or even sooner, during the development.
 
-The JFrog VS Code Extension adds JFrog Xray scanning of project dependencies to your VS Code IDE. It allows developers to view panels displaying vulnerability information about the components and their dependencies directly in their VS Code IDE. The extension also allows developers to track the status of the code while it is being built, tested and scanned on the CI server.
+The JFrog VS Code Extension adds JFrog Xray scanning of project security issues to your VS Code IDE. It allows developers to view a panel displaying a list of issues for each file in the project and a detailed vulnerability information about the issues discovered directly in their VS Code IDE. The extension also allows developers to track the status of the code while it is being built, tested and scanned on the CI server.
 
 The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
@@ -83,14 +83,16 @@ powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://r
 ```
 
 ## Connecting VS Code to Your JFrog Environment
-Connect to your JFrog environment by clicking on the green Connect ![Connect](resources/readme/connect.png) button:
+Connect to your JFrog environment by clicking on the green Connect ![Connect](resources/readme/connect.png) button or the provided button in the JFrog extension tab:
 ![Connect](resources/readme/gifs/connect.gif)
 
 You can leave the platform URL empty, to enter the separate URLs for Artifactory and Xray.
 
+**Note**: If the auth credentials configured using JFrog CLI the extension will try to read and use them to connect.
+
 The extension also supports connecting to your JFrog environment using environment variables. You may provide basic auth credentials or access token as follows:
 
-Note: For security reasons, it is recommended to unset the environment variables after launching VS Code.
+**Note**: For security reasons, it is recommended to unset the environment variables after launching VS Code.
 
 - `JFROG_IDE_URL` - JFrog URL
 - `JFROG_IDE_USERNAME` - JFrog username
@@ -126,9 +128,11 @@ If your proxy server requires credentials, follow these steps:
 1. Follow 1-3 steps under [Proxy configuration](#proxy-configuration).
 1. Encode with base64: `[Username]:[Password]`.
 1. Under 'Proxy Authorization' click on 'Edit in settings.json'.
-1. Add to settings.json: `"http.proxyAuthorization": "Basic [Encoded credentials]"`.
+1. Add to settings.json: 
+*  `"http.proxyAuthorization": "Basic [Encoded credentials]"`
+* `"http.proxyAuthorization": "Bearer [Access token]"`.
 
-#### Example
+#### Example for basic
 - `Username: foo`
 - `Password: bar`
 
@@ -150,11 +154,11 @@ To open the extension settings, use the following VS Code menu command:
 The extension offers two modes, **Local** and **CI**.
 The two modes can be toggled by pressing on their respective buttons that will appear next to the components tree.
 
-- The **Local** view displays information about the local code as it is being developed in VS Code. JFrog Xray continuously scans the project's dependencies and source code locally. The information is displayed in the **Local** view.
+- The **Local** view displays information about the local code as it is being developed in VS Code. The developer can scan their local workspace continuously. The information is displayed in the **Local** view.
 - The **CI** view allows the tracking of the code as it is built, tested and scanned by the CI server. It displays information about the status of the build and includes a link to the build log on the CI server.
 
 ## The Local View
-The local view of the extension adds JFrog Xray scanning of project dependencies to your VS Code IDE.
+The local view of the extension adds JFrog Xray scanning of project dependencies and source code to your VS Code IDE.
 It allows developers to view panels displaying vulnerability information about their dependencies and source code in their VS Code IDE.
 With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
@@ -164,25 +168,28 @@ With this information, a developer can make an informed decision on whether to u
 | Issues and licenses scanning                            |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
 | Filter dependencies by severity, license, and scope     |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
 | Trigger scan on startup                                 |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
-| Jump from dependency tree to project descriptor         |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ❌           |
-| Jump from project descriptor to dependency tree         |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ❌           |
-| Show vulnerabilities inside the project descriptor      |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ❌           |
-| Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ✅           |           ❌           |          ❌           |
-| Automatically trigger a scan upon code changes          |         ✅         |            ❌            |          ✅          |           ✅           |           ❌           |          ❌           |
-| Exclude transitive dependencies from project descriptor |         ❌         |            ✅            |          ❌          |           ❌           |           ❌           |          ❌           |
+| Jump from dependency tree to project descriptor         |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
+| Jump from project descriptor to dependency tree         |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
+| Show vulnerabilities inside the project descriptor      |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
+| Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ✅           |           ❌           |          ✅           |
 
 
 ### Dependencies Tree Icons
-The icon demonstrates the top severity issue of a selected component and its transitive dependencies. The following table describes the severities from lowest to highest:
+The following table describes the severities from lowest to highest:
 
 |                 Icon                | Severity |                                       Description                                      |
 |:-----------------------------------:|:--------:|:---------------------------------------------------------------------------------------|
-|   ![Normal](resources/normal.png)   |  Normal  | Scanned - No Issues                                                                    |
-|  ![Unknown](resources/unknown.png)  |  Unknown | No CVEs attached to the vulnerability or the selected component not identified in Xray |
-|      ![Low](resources/low.png)      |    Low   | Top issue with low severity                                                            |
-|   ![Medium](resources/medium.png)   |  Medium  | Top issue with medium severity                                                         |
-|     ![High](resources/high.png)     |   High   | Top issue with high severity                                                           |
-| ![Critical](resources/critical.png) | Critical | Top issue with critical severity                                                       |
+|   ![Normal](resources/normal.png)   |  Normal  | No issues                                                                    |
+|  ![Unknown (Not applicable)](resources/notApplicableUnknown.svg)  |  Unknown (Not applicable) | CVE issue with unknown severity that is not applicable to the source code in the workspace |
+|      ![Low (Not applicable)](resources/notApplicableLow.svg)      |    Low (Not applicable)   | CVE issue with low severity that is not applicable to the source code in the workspace                                                            |
+|   ![Medium (Not applicable)](resources/notApplicableMedium.svg)   |  Medium (Not applicable)  | CVE issue with medium severity that is not applicable to the source code in the workspace                                                         |
+|     ![High (Not applicable)](resources/notApplicableHigh.svg)     |   High (Not applicable)   | CVE issue with high severity that is not applicable to the source code in the workspace                                                           |
+| ![Critical (Not applicable)](resources/notApplicableCritical.svg) | Critical (Not applicable) | CVE issue with critical severity that is not applicable to the source code in the workspace                                                       |
+|  ![Unknown](resources/Unknown.svg)  |  Unknown | Issue with unknown severity  |
+|      ![Low](resources/Low.svg)      |    Low   | Issue with low severity                                                            |
+|   ![Medium](resources/Medium.svg)   |  Medium  | Issue with medium severity                                                         |
+|     ![High](resources/High.svg)     |   High   | Issue with high severity                                                           |
+| ![Critical](resources/Critical.svg) | Critical | Issue with critical severity                                                       |
 
 ### Viewing and Updating Project Dependencies
 View the dependencies used by the project in a tree, where the direct dependencies are at the top.
