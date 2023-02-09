@@ -134,26 +134,6 @@ export class NugetUtils {
         return nugetList;
     }
 
-    // /**
-    //  * Get package.json file and return the position of 'dependencies' section.
-    //  * @param document - package.json file
-    //  */
-    // public static getDependenciesPos(document: vscode.TextDocument): vscode.Position[] {
-    //     let res: vscode.Position[] = [];
-    //     let packageJsonContent: string = document.getText();
-    //     let dependenciesMatch: RegExpMatchArray | null = packageJsonContent.match('"((devD)|(d))ependencies"s*:s*');
-    //     if (!dependenciesMatch) {
-    //         return res;
-    //     }
-    //     res.push(document.positionAt(<number>dependenciesMatch.index));
-    //     res.push(new vscode.Position(res[0].line, res[0].character + dependenciesMatch[0].length));
-    //     return res;
-    // }
-
-    // // public static getDependenciesPos(document: vscode.TextDocument): vscode.Position[] {
-
-    // // }
-
     public static getDependencyPosition(document: vscode.TextDocument, artifactId: string): vscode.Range[] {
         let res: vscode.Range[] = [];
         let projectContent: string = document.getText();
