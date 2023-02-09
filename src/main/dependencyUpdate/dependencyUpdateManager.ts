@@ -32,7 +32,7 @@ export class DependencyUpdateManager implements ExtensionComponent {
         const manager: AbstractDependencyUpdate | undefined = this.getUpdateManager(dependency);
         try {
             if (manager) {
-                await manager.update(dependency, version);
+                manager.update(dependency, version);
                 return true;
             }
         } catch (error) {

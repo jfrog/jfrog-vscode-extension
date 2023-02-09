@@ -159,9 +159,6 @@ export class NugetUtils {
     private static getCSProjFileRegex(artifactId: string): RegExp {
         let [artifactName, artifactVersion] = artifactId.split(':');
         artifactVersion = artifactVersion.replace(/\./g, '\\.');
-        // let referenceTag: string = `(<Reference\\s+Include=\\"` + artifactName + '\\"(\\s+Version=\\"' + artifactVersion + '\\")?.*>)';
-        // let packageReferenceTag: string = ;
-        // let hintPathTag: string = `((<HintPath>\\.\\.\\\\packages\\\\` + artifactName + '\\.' + artifactVersion + ').*>)';
         return new RegExp(`<PackageReference\\s+Include=\\"` + artifactName + '\\"(\\s+Version=\\"' + artifactVersion + '\\")?.*>', 'i');
     }
 }

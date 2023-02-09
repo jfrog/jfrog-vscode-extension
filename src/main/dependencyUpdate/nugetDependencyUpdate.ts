@@ -15,7 +15,7 @@ export class NugetDependencyUpdate extends AbstractDependencyUpdate {
     }
 
     /** @override */
-    public async update(dependency: DependencyIssuesTreeNode, version: string): Promise<void> {
+    public update(dependency: DependencyIssuesTreeNode, version: string): void {
         const workspace: string = dependency.getWorkspace();
         let descriptorFile: string = dependency.parent.fullPath;
         if (descriptorFile.endsWith(NugetUtils.PROJECT_SUFFIX)) {
