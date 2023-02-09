@@ -1,5 +1,6 @@
 import { NugetDepsTree } from 'nuget-deps-tree';
 import * as path from 'path';
+import * as fs from 'fs';
 import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
 import { NugetTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/nugetTree';
@@ -11,6 +12,7 @@ import { ProjectDetails } from '../types/projectDetails';
 export class NugetUtils {
     public static readonly SOLUTION_SUFFIX: string = '.sln';
     public static readonly PROJECT_SUFFIX: string = '.csproj';
+    public static readonly PACKAGES_CONFIG: string = 'packages.config';
 
     /**
      * @param solutionsAndProjects        - Paths to *.sln files
@@ -50,13 +52,25 @@ export class NugetUtils {
                 checkCanceled();
                 let projectUri: vscode.Uri | undefined = this.getProjectUri(project.name, projectsInSolutions);
                 if (projectUri) {
-                    this.createProjectNode(root, projectUri, project);
-                    // We show project files as descriptors
-                    updatedDescriptorList.push(projectUri);
+                    let configUri: vscode.Uri | undefined = this.getPackagesConfigUri(projectUri);
+                    if (configUri) {
+                        this.createProjectNode(root, configUri, project);
+                        updatedDescriptorList.push(configUri);
+                    } else {
+                        // We show project files as descriptors if packages.config file not exists
+                        this.createProjectNode(root, projectUri, project);
+                        updatedDescriptorList.push(projectUri);
+                    }
                 }
             }
         }
         return updatedDescriptorList;
+    }
+
+    private static getPackagesConfigUri(projectUri: vscode.Uri): vscode.Uri | undefined {
+        let projectDir: string = path.dirname(projectUri.fsPath);
+        let potentialUri: vscode.Uri = vscode.Uri.parse(path.join(projectDir, NugetUtils.PACKAGES_CONFIG));
+        return fs.existsSync(potentialUri.fsPath) ? potentialUri : undefined;
     }
 
     private static createProjectNode(solution: NugetTreeNode, projectUri: vscode.Uri, project: any) {
@@ -140,28 +154,34 @@ export class NugetUtils {
 
     // // }
 
-    // /**
-    //  * Get package.json file and dependencies tree node. return the position of the dependency in the package.json file.
-    //  * @param document             - package.json file
-    //  * @param dependenciesTreeNode - dependencies tree node
-    //  */
-    // public static getDependencyPosition(document: vscode.TextDocument, artifactId: string, focusType: FocusType): vscode.Range[] {
-    //     let res: vscode.Range[] = [];
-    //     let packageJsonContent: string = document.getText();
-    //     let dependencyMatch: RegExpMatchArray | null = packageJsonContent.match('("' + artifactId + '"\\s*:\\s*).*"');
-    //     if (!dependencyMatch) {
-    //         return res;
-    //     }
-    //     let startPos: vscode.Position;
-    //     switch (focusType) {
-    //         case FocusType.Dependency:
-    //             startPos = document.positionAt(<number>dependencyMatch.index);
-    //             break;
-    //         case FocusType.DependencyVersion:
-    //             startPos = document.positionAt(<number>dependencyMatch.index + dependencyMatch[1].length);
-    //             break;
-    //     }
-    //     res.push(new vscode.Range(startPos, new vscode.Position(startPos.line, startPos.character + dependencyMatch[0].length)));
-    //     return res;
-    // }
+    public static getDependencyPosition(document: vscode.TextDocument, artifactId: string): vscode.Range[] {
+        let res: vscode.Range[] = [];
+        let projectContent: string = document.getText();
+        let dependencyMatch: RegExpMatchArray | null = projectContent.match(
+            document.uri.fsPath.endsWith(NugetUtils.PACKAGES_CONFIG)
+                ? this.getPackageConfigFileRegex(artifactId)
+                : this.getCSProjFileRegex(artifactId)
+        );
+        if (!dependencyMatch) {
+            return res;
+        }
+        let startPos: vscode.Position = document.positionAt(<number>dependencyMatch.index);
+        res.push(new vscode.Range(startPos, new vscode.Position(startPos.line, startPos.character + dependencyMatch[0].length)));
+        return res;
+    }
+
+    private static getPackageConfigFileRegex(artifactId: string): RegExp {
+        let [artifactName, artifactVersion] = artifactId.split(':');
+        artifactVersion = artifactVersion.replace(/\./g, '\\.');
+        return new RegExp('<package\\s+id=\\"' + artifactName + '\\"\\s+version=\\"' + artifactVersion + '\\".*>', 'i');
+    }
+
+    private static getCSProjFileRegex(artifactId: string): RegExp {
+        let [artifactName, artifactVersion] = artifactId.split(':');
+        artifactVersion = artifactVersion.replace(/\./g, '\\.');
+        // let referenceTag: string = `(<Reference\\s+Include=\\"` + artifactName + '\\"(\\s+Version=\\"' + artifactVersion + '\\")?.*>)';
+        // let packageReferenceTag: string = ;
+        // let hintPathTag: string = `((<HintPath>\\.\\.\\\\packages\\\\` + artifactName + '\\.' + artifactVersion + ').*>)';
+        return new RegExp(`<PackageReference\\s+Include=\\"` + artifactName + '\\"(\\s+Version=\\"' + artifactVersion + '\\")?.*>', 'i');
+    }
 }

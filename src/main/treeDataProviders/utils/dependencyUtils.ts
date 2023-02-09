@@ -256,7 +256,10 @@ export class DependencyUtils {
      * @returns the list of positions in the document this dependency appears in
      */
     public static getDependencyPosition(document: vscode.TextDocument, packageType: PackageType, dependencyId: string): vscode.Range[] {
-        let dependencyName: string = packageType == PackageType.Maven ? dependencyId : dependencyId.substring(0, dependencyId.lastIndexOf(':'));
+        let dependencyName: string =
+            packageType == PackageType.Maven || packageType == PackageType.Nuget
+                ? dependencyId
+                : dependencyId.substring(0, dependencyId.lastIndexOf(':'));
 
         switch (packageType) {
             case PackageType.Go:
@@ -269,6 +272,8 @@ export class DependencyUtils {
                 return PypiUtils.getDependencyPosition(document, dependencyName);
             case PackageType.Yarn:
                 return YarnUtils.getDependencyPosition(document, dependencyName);
+            case PackageType.Nuget:
+                return NugetUtils.getDependencyPosition(document, dependencyName);
             default:
                 return [];
         }
