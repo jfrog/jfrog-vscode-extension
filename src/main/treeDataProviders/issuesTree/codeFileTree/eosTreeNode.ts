@@ -32,6 +32,7 @@ export class EosTreeNode extends CodeIssueTreeNode {
     }
 
     public get codeFlows(): IAnalysisStep[][] {
+        console.log('this._codeFlows', this._codeFlows);
         return this._codeFlows;
     }
 
@@ -48,6 +49,7 @@ export class EosTreeNode extends CodeIssueTreeNode {
             severity: SeverityUtils.toWebviewSeverity(this.severity),
             pageType: PageType.Eos,
             location: {
+                fileName: this.parent.name,
                 file: this.parent.fullPath,
                 snippet: this._snippet,
                 row: this.regionWithIssue.start.line + 1,

@@ -73,6 +73,18 @@ function createWebview(context: vscode.ExtensionContext) {
             enableCommandUris: true
         }
     );
+    panel.webview.onDidReceiveMessage(  
+    message => {  
+      switch (message.command) {  
+        case 'reverse_click':  
+            vscode.window.showTextDocument(vscode.Uri.file(message.fileName), {  
+                viewColumn: vscode.ViewColumn.One,  
+  selection: new vscode.Range(new vscode.Position(+message.line - 1, 0), new vscode.Position(+message.line - 1, 0))  
+            });  
+ return;  }  
+    },  
+ undefined,  context.subscriptions  
+  );
     panel.iconPath = vscode.Uri.file(context.asAbsolutePath(path.join('resources', 'extensionIcon.png')));
     // And set its HTML content
     panel.webview.html = getHtmlForWebview(context, panel.webview);

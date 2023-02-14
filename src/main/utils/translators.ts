@@ -158,15 +158,17 @@ export class Translators {
         for (let locations of threadFlows) {
             let codeFlow: IAnalysisStep[] = [];
             for (let location of locations) {
+                const artifactLocation  : string = location.artifactLocation.uri;
                 codeFlow.push({
-                    file: location.artifactLocation.uri,
+                    fileName: artifactLocation.split('/')[artifactLocation.length - 1],
+                    file: artifactLocation,
                     snippet: location.region.snippet?.text,
                     row: location.region.startLine,
                     column: location.region.startColumn
                 } as IAnalysisStep);
             }
             result.push(codeFlow);
-        }
+        }        
         return result;
     }
 
