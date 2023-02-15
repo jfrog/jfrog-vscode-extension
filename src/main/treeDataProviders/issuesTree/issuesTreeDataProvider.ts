@@ -16,7 +16,7 @@ import { getNumberOfSupportedPackageTypes, PackageType } from '../../types/proje
 import { Severity, SeverityUtils } from '../../types/severity';
 import { StepProgress } from '../utils/stepProgress';
 import { Utils } from '../utils/utils';
-import { DescriptorUtils } from '../utils/descriptorUtils';
+import { DependencyUtils } from '../utils/dependencyUtils';
 import { TreesManager } from '../treesManager';
 import { IssueTreeNode } from './issueTreeNode';
 import { LogManager } from '../../log/logManager';
@@ -25,9 +25,12 @@ import { AnalyzerUtils } from '../utils/analyzerUtils';
 import { CodeIssueTreeNode } from './codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
 import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
-import { DescriptorIssuesData, FileIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
 import { EosTreeNode } from './codeFileTree/eosTreeNode';
 import { NotEntitledError } from '../../scanLogic/scanRunners/binaryRunner';
+import { EnvironmentTreeNode } from './descriptorTree/environmentTreeNode';
+import { ProjectDependencyTreeNode } from './descriptorTree/projectDependencyTreeNode';
+import { VirtualEnvPypiTree } from '../dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
+import { ScanResults, DependencyScanResults, FileIssuesData } from '../../types/workspaceIssuesDetails';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -103,84 +106,90 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * Loads the issues from the last scan of all the workspaces if they exist.
      */
     public async loadFromCache() {
-        if (this._cacheManager.issuesCache) {
-            let workspaceLoads: Promise<void>[] = [];
-            let firstTime: boolean = true;
-            for (const workspace of this._workspaceFolders) {
-                // Create dummy root to give input to the user while waiting for the workspace loading task or when error occur
-                const tempRoot: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, 'Loading...');
-                this._workspaceToRoot.set(workspace, tempRoot);
-                this.onChangeFire();
-                // Create a new async load task for each workspace
-                workspaceLoads.push(
-                    this.loadIssuesFromCache(workspace)
-                        .then(root => {
-                            if (root && root.children.length > 0) {
-                                this._workspaceToRoot.set(workspace, root);
-                                root.title = Utils.getLastScanString(root.oldestScanTimestamp);
-                                root.apply();
-                            } else {
-                                this._logManager.logMessage("WorkSpace '" + workspace.name + "' has no data in cache", 'DEBUG');
-                                this._workspaceToRoot.set(workspace, undefined);
-                            }
-                            firstTime = !root;
-                            this.onChangeFire();
-                        })
-                        .catch(async error => {
-                            this._logManager.logError(error, true);
-                            tempRoot.title = 'Loading error';
-                            tempRoot.apply();
-                            this.onChangeFire();
-                            const answer: string | undefined = await vscode.window.showInformationMessage(
-                                "Loading error occur on workspace '" + workspace.name + "', do you want to clear the old data?",
-                                ...['Yes', 'No']
-                            );
-                            if (answer === 'Yes') {
-                                this._workspaceToRoot.set(workspace, undefined);
-                            }
-                        })
-                );
-            }
-            await Promise.all(workspaceLoads);
-            ScanUtils.setFirstScanForWorkspace(firstTime);
-            this.onChangeFire();
+        if (!this._cacheManager.issuesCache) {
+            return;
         }
+        let workspaceLoads: Promise<void>[] = [];
+        let firstTime: boolean = true;
+        for (const workspace of this._workspaceFolders) {
+            // Create dummy root to give input to the user while waiting for the workspace loading task or when error occur
+            const tempRoot: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, 'Loading...');
+            this._workspaceToRoot.set(workspace, tempRoot);
+            this.onChangeFire();
+            // Create a new async load task for each workspace
+            workspaceLoads.push(
+                this.loadIssuesFromCache(workspace)
+                    .then(root => {
+                        if (root && root.children.length > 0) {
+                            this._workspaceToRoot.set(workspace, root);
+                            root.title = Utils.getLastScanString(root.oldestScanTimestamp);
+                            root.apply();
+                        } else {
+                            this._logManager.logMessage("WorkSpace '" + workspace.name + "' has no data in cache", 'DEBUG');
+                            this._workspaceToRoot.set(workspace, undefined);
+                        }
+                        firstTime = !root;
+                        this.onChangeFire();
+                    })
+                    .catch(async error => {
+                        this._logManager.logError(error, true);
+                        tempRoot.title = 'Loading error';
+                        tempRoot.apply();
+                        this.onChangeFire();
+                        const answer: string | undefined = await vscode.window.showInformationMessage(
+                            "Loading error occur on workspace '" + workspace.name + "', do you want to clear the old data?",
+                            ...['Yes', 'No']
+                        );
+                        if (answer === 'Yes') {
+                            this._workspaceToRoot.set(workspace, undefined);
+                        }
+                    })
+            );
+        }
+        await Promise.all(workspaceLoads);
+        ScanUtils.setFirstScanForWorkspace(firstTime);
+        this.onChangeFire();
     }
 
     /**
      * Async task to load the issues from the last scan of a given workspace
-     * @param workSpace - the workspace to load it's issues
+     * @param workspace - the workspace to load it's issues
      * @returns - the workspace issues if the exists, undefined otherwise
      */
-    private async loadIssuesFromCache(workSpace: vscode.WorkspaceFolder): Promise<IssuesRootTreeNode | undefined> {
+    private async loadIssuesFromCache(workspace: vscode.WorkspaceFolder): Promise<IssuesRootTreeNode | undefined> {
         // Check if data for the workspace exists in the cache
-        let workspaceData: WorkspaceIssuesData | undefined = this._cacheManager.issuesCache?.get(workSpace);
-        if (workspaceData != undefined) {
-            this._logManager.logMessage("Loading issues from last scan for the workspace '" + workSpace.name + "'", 'INFO');
-            let root: IssuesRootTreeNode = new IssuesRootTreeNode(workSpace);
-            if (workspaceData.failedFiles) {
+        let scanResults: ScanResults | undefined = this._cacheManager.issuesCache?.get(workspace);
+        if (scanResults != undefined) {
+            this._logManager.logMessage("Loading issues from last scan for the workspace '" + workspace.name + "'", 'INFO');
+            let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace);
+            if (scanResults.failedFiles) {
                 // Load files that had error on the last scan and create tree node in the root
-                workspaceData.failedFiles.forEach(file => {
-                    this._logManager.logMessage("Loading file with scan error '" + file.name + "': '" + file.fullpath + "'", 'DEBUG');
-                    let failed: FileTreeNode = FileTreeNode.createFailedScanNode(file.fullpath, file.name);
+                scanResults.failedFiles.forEach(file => {
+                    this._logManager.logMessage("Loading file with scan error '" + file.name + "': '" + file.fullPath + "'", 'DEBUG');
+                    let failed: FileTreeNode = FileTreeNode.createFailedScanNode(file.fullPath, file.name);
                     return root.children.push(failed);
                 });
             }
-            if (workspaceData.descriptorsIssuesData) {
+            if (scanResults.descriptorsIssues) {
                 // Load descriptors issues and create tree node in the root
-                workspaceData.descriptorsIssuesData.forEach(descriptor => {
-                    this._logManager.logMessage("Loading issues of descriptor '" + descriptor.fullpath + "'", 'DEBUG');
-                    let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptor.fullpath, descriptor.type, root);
-                    DescriptorUtils.populateDescriptorData(descriptorNode, descriptor);
+                scanResults.descriptorsIssues.forEach(descriptor => {
+                    this._logManager.logMessage("Loading issues of descriptor '" + descriptor.fullPath + "'", 'DEBUG');
+                    let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptor.fullPath, descriptor.type, root);
+                    DependencyUtils.populateDependencyScanResults(descriptorNode, descriptor);
                     if (descriptor.applicableIssues && descriptor.applicableIssues.scannedCve) {
                         AnalyzerUtils.populateApplicableIssues(root, descriptorNode, descriptor);
                     }
                     root.children.push(descriptorNode);
                 });
             }
-            if (workspaceData.eosScan) {
-                root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
-                AnalyzerUtils.populateEosIssues(root, workspaceData);
+            if (scanResults.issues) {
+                let environmentNode: EnvironmentTreeNode = new EnvironmentTreeNode(scanResults.issues.fullPath, scanResults.issues.type, root);
+                DependencyUtils.populateDependencyScanResults(environmentNode, scanResults.issues);
+                root.children.push(environmentNode);
+            }
+            if (scanResults.eosScan) {
+                root.eosScanTimeStamp = scanResults.eosScanTimestamp;
+                AnalyzerUtils.populateEosIssues(root, scanResults);
             }
             return root;
         }
@@ -196,17 +205,17 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             workspaceScans.push(
                 ScanUtils.scanWithProgress(async (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => {
                     // Create workspace scan data that will be populated at the scan and will be saved to the cache
-                    const workspaceData: WorkspaceIssuesData = new WorkspaceIssuesData(workspace.uri.fsPath);
+                    const scanResults: ScanResults = new ScanResults(workspace.uri.fsPath);
                     // Create workspace tree root node to give feedback and update the user on any change while handling the async scan task
                     let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, '🔎 Scanning...');
                     this._workspaceToRoot.set(workspace, root);
                     let shouldDeleteRoot: boolean = false;
                     // Execute workspace scan task
-                    await this.repopulateWorkspaceTree(workspaceData, root, progress, checkCanceled)
+                    this.repopulateWorkspaceTree(scanResults, root, progress, checkCanceled)
                         .then(() => {
                             this._logManager.logMessage("Workspace '" + workspace.name + "' scan ended", 'INFO');
-                            shouldDeleteRoot = !workspaceData.hasInformation();
-                            if (workspaceData.failedFiles.length > 0) {
+                            shouldDeleteRoot = !scanResults.hasInformation();
+                            if (scanResults.failedFiles.length > 0) {
                                 root.title = 'Scan failed';
                             } else {
                                 root.title = Utils.getLastScanString(root.oldestScanTimestamp);
@@ -215,7 +224,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                         .catch(error => {
                             if (error instanceof ScanCancellationError) {
                                 this._logManager.logMessage("Workspace '" + workspace.name + "' scan task was canceled", 'INFO');
-                                shouldDeleteRoot = !workspaceData.hasInformation();
+                                shouldDeleteRoot = !scanResults.hasInformation();
                                 root.title = 'Scan canceled';
                             } else {
                                 this._logManager.logMessage("Workspace '" + workspace.name + "' scan task ended with error:", 'ERR');
@@ -231,7 +240,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                             }
                             this.onChangeFire();
                             if (this._cacheManager.issuesCache) {
-                                this._cacheManager.issuesCache.store(workspace, workspaceData);
+                                this._cacheManager.issuesCache.store(workspace, scanResults);
                             }
                         });
                 }, "Refreshing workspace '" + workspace.name + "'")
@@ -245,14 +254,14 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * Execute async scan task for the given workspace and populate the issues from the scan to the data and to the tree
      * Step 1: Build dependency tree step with two substeps (get the workspace descriptors and then build the tree for each of them)
      * Step 2: Run security scans on files in the workspace, async
-     * @param workspaceData - the given object that holds all the issues data for the workspace and will be populated at the task
+     * @param scanResults - the given object that holds all the issues data for the workspace and will be populated at the task
      * @param root - the given tree root for the workspace, the nodes that the user will see at the issues view
      * @param progress - the progress notification window for the given task
      * @param checkCanceled - the method to check if the task was canceled by the user from the notification window, will throw ScanCancellationError.
      * @returns root argument for chaining
      */
     private async repopulateWorkspaceTree(
-        workspaceData: WorkspaceIssuesData,
+        scanResults: ScanResults,
         root: IssuesRootTreeNode,
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void
@@ -281,7 +290,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         progressManager.startStep('👷 Building workspace dependencies tree', getNumberOfSupportedPackageTypes());
         let workspaceDependenciesTree: DependenciesTreeNode = await DependenciesTreesFactory.createDependenciesTrees(
             workspaceDescriptors,
-            [root.workSpace],
+            root.workSpace,
             [],
             this._treesManager,
             progressManager,
@@ -290,30 +299,40 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
         progressManager.startStep('🔎 Scanning for issues', graphSupported ? 2 * descriptorsCount + 1 : 1);
         let scansPromises: Promise<any>[] = [];
-        scansPromises.push(AnalyzerUtils.runEos(workspaceData, root, workspaceDescriptors, this._scanManager, progressManager));
+        scansPromises.push(AnalyzerUtils.runEos(scanResults, root, workspaceDescriptors, this._scanManager, progressManager));
         // Dependency graph scan and applicability scan for each descriptor
         if (graphSupported) {
             scansPromises.push(
-                this.descriptorsScanning(workspaceData, root, workspaceDescriptors, workspaceDependenciesTree, progressManager, checkCanceled)
+                this.scanDescriptors(scanResults, root, workspaceDescriptors, workspaceDependenciesTree, progressManager, checkCanceled)
             );
+            const virtualEnvIssues: Promise<void> | undefined = this.scanPythonVirtualEnv(
+                scanResults,
+                root,
+                workspaceDependenciesTree,
+                progressManager,
+                checkCanceled
+            );
+            if (virtualEnvIssues) {
+                scansPromises.push(virtualEnvIssues);
+            }
         }
         await Promise.all(scansPromises);
         return root;
     }
 
     /**
-     * Preform security scanning for all the descriptors in the workspace in two substeps:
+     * Preform security scanning for all the descriptors in the workspace in two steps:
      * 1. Dependency graph scan to discover CVE issues
      * 2. Applicability scan of the CVE in the workspace
-     * @param workspaceData - the given object that holds all the issues data for the workspace and will be populated at the task
+     * @param scanResults - the given object that holds all the issues data for the workspace and will be populated at the task
      * @param root - the dependenciesTreeRoot that will be populated and will hold the final tree
      * @param workspaceDescriptors - map of all the descriptors in the workspace with the packageType of the descriptor as key and the file paths as values
      * @param workspaceDependenciesTree - the dependencies graph of all the descriptors in the workspace (each child of root is a descriptor graph)
      * @param progressManager - the progress manager for the workspace scanning process
      * @param checkCanceled - the method to check if the task was canceled by the user from the notification window, will throw ScanCancellationError.
      */
-    private async descriptorsScanning(
-        workspaceData: WorkspaceIssuesData,
+    private async scanDescriptors(
+        scanResults: ScanResults,
         root: IssuesRootTreeNode,
         workspaceDescriptors: Map<PackageType, vscode.Uri[]>,
         workspaceDependenciesTree: DependenciesTreeNode,
@@ -324,15 +343,15 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         let scansPromises: Promise<any>[] = [];
         for (const [type, descriptorsPaths] of workspaceDescriptors) {
             for (const descriptorPath of descriptorsPaths) {
-                const descriptorData: DescriptorIssuesData = {
+                const descriptorData: DependencyScanResults = {
                     type: type,
                     name: Utils.getLastSegment(descriptorPath.fsPath),
-                    fullpath: descriptorPath.fsPath
-                } as DescriptorIssuesData;
+                    fullPath: descriptorPath.fsPath
+                } as DependencyScanResults;
 
-                let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptorData.fullpath, descriptorData.type);
+                let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptorData.fullPath, descriptorData.type);
                 // Search for the dependency graph of the descriptor
-                let descriptorGraph: RootNode | undefined = DescriptorUtils.getDependencyGraph(workspaceDependenciesTree, descriptorPath.fsPath);
+                let descriptorGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(workspaceDependenciesTree, descriptorPath.fsPath);
                 if (!descriptorGraph) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this._logManager.logMessage("Can't find descriptor graph for " + descriptorPath.fsPath, 'DEBUG');
@@ -342,7 +361,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 if (descriptorGraph?.label?.toString().includes('[Not installed]')) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this.onFileScanError(
-                        workspaceData,
+                        scanResults,
                         root,
                         new FileScanError('Project with descriptor file ' + descriptorPath.fsPath + ' is not installed', '[Project not installed]'),
                         descriptorData
@@ -353,7 +372,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 if (descriptorGraph?.label?.toString().includes('[Not supported]')) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this.onFileScanError(
-                        workspaceData,
+                        scanResults,
                         root,
                         new FileScanError('Project with descriptor file ' + descriptorPath.fsPath + ' is not supported', '[Not supported]'),
                         descriptorData
@@ -362,55 +381,89 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 }
                 // Scan the descriptor
                 scansPromises.push(
-                    this.createDescriptorTask(workspaceData, root, descriptorData, descriptorNode, descriptorGraph, progressManager, checkCanceled)
+                    this.createScanTask(scanResults, root, descriptorData, descriptorNode, descriptorGraph, progressManager, checkCanceled)
                 );
             }
         }
+
         await Promise.all(scansPromises);
+    }
+
+    private scanPythonVirtualEnv(
+        scanResults: ScanResults,
+        root: IssuesRootTreeNode,
+        workspaceDependenciesTree: DependenciesTreeNode,
+        progressManager: StepProgress,
+        checkCanceled: () => void
+    ) {
+        const envIssues: DependenciesTreeNode | undefined = workspaceDependenciesTree.getChildByPath(scanResults.path);
+        if (!envIssues || !(envIssues instanceof VirtualEnvPypiTree)) {
+            return;
+        }
+        let environmentNode: EnvironmentTreeNode = new EnvironmentTreeNode(envIssues.virtualEnvironmentPath, envIssues.generalInfo.pkgType);
+        let environmentGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(workspaceDependenciesTree, scanResults.path);
+        if (!environmentGraph) {
+            progressManager.reportProgress(2 * progressManager.getStepIncValue);
+            this._logManager.logMessage("Can't find virtual environment graph at " + envIssues.virtualEnvironmentPath, 'DEBUG');
+            return;
+        }
+        const dependencyScanResult: DependencyScanResults = {
+            type: envIssues.generalInfo.pkgType,
+            name: 'Virtual Environment',
+            fullPath: envIssues.virtualEnvironmentPath
+        } as DependencyScanResults;
+        return this.createScanTask(scanResults, root, dependencyScanResult, environmentNode, environmentGraph, progressManager, checkCanceled);
     }
 
     /**
      * Runs the descriptor scans asynchronously.
      * 1. Dependency graph scanning
      * 2. CVE Applicability scanning
-     * @param workspaceData - the issues data for the workspace
+     * @param workspaceScanDetails - the issues data for the workspace
      * @param root - the root node of the workspace
-     * @param descriptorData - the descriptor issues data
-     * @param descriptorNode - the descriptor node
-     * @param descriptorGraph - the descriptor dependencies graph
+     * @param workspaceIssues - the descriptor issues data
+     * @param projectNode - the descriptor node
+     * @param rootGraph - the descriptor dependencies graph
      * @param progressManager - the progress manager for the process
      * @param checkCanceled - the method to check if cancel was requested
      */
-    private async createDescriptorTask(
-        workspaceData: WorkspaceIssuesData,
+    private async createScanTask(
+        workspaceScanDetails: ScanResults,
         root: IssuesRootTreeNode,
-        descriptorData: DescriptorIssuesData,
-        descriptorNode: DescriptorTreeNode,
-        descriptorGraph: RootNode,
+        workspaceIssues: DependencyScanResults,
+        projectNode: ProjectDependencyTreeNode,
+        rootGraph: RootNode,
         progressManager: StepProgress,
         checkCanceled: () => void
     ): Promise<void> {
         let foundIssues: boolean = false;
         // Dependency graph scan task
-        await this.scanDescriptorGraph(descriptorData, descriptorNode, descriptorGraph, progressManager, checkCanceled)
+        await this.scanProjectDependencyGraph(workspaceIssues, projectNode, rootGraph, progressManager, checkCanceled)
             .then(descriptorWithIssues => {
-                if (descriptorWithIssues) {
-                    // Add to data and update view
-                    workspaceData.descriptorsIssuesData.push(descriptorData);
+                // Add to data and update view
+                if (descriptorWithIssues instanceof DescriptorTreeNode) {
+                    workspaceScanDetails.descriptorsIssues.push(workspaceIssues);
+                    root.addChildAndApply(descriptorWithIssues);
+                    foundIssues = true;
+                }
+                if (descriptorWithIssues instanceof EnvironmentTreeNode) {
+                    workspaceScanDetails.issues = workspaceIssues;
                     root.addChildAndApply(descriptorWithIssues);
                     foundIssues = true;
                 }
             })
-            .catch(error => this.onFileScanError(workspaceData, root, error, descriptorData))
+            .catch(error => this.onFileScanError(workspaceScanDetails, root, error, workspaceIssues))
             .finally(() => progressManager.onProgress());
         // Applicable scan task
         if (!this._scanManager.validateApplicableSupported() || !foundIssues) {
             progressManager.reportProgress();
             return;
         }
-        await this.cveApplicableScanning(root, descriptorData, descriptorNode, progressManager.abortController)
-            .catch(err => this.onScanError(err))
-            .finally(() => progressManager.reportProgress());
+        if (projectNode instanceof DescriptorTreeNode) {
+            await this.cveApplicableScanning(root, workspaceIssues, projectNode, progressManager.abortController)
+                .catch(err => this.onScanError(err))
+                .finally(() => progressManager.reportProgress());
+        }
     }
 
     /**
@@ -437,26 +490,21 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * 1.1 If error occur during file scan and failedFile provided a failed node will be created to notify the user.
      * 1.2 If the error is FileScanError the reason attribute will be added to the label
      * 2. If cancel is reported throw the error to handle on workspace level
-     * @param workspaceData - the workspace that the file belongs to
+     * @param scanResults - the workspace that the file belongs to
      * @param root - the root that represents the workspace
      * @param error - the error that occur
      * @param failedFile - the file that was scanning during the error
      * @returns - failedFile argument for chaining
      */
-    private onFileScanError(
-        workspaceData: WorkspaceIssuesData,
-        root: IssuesRootTreeNode,
-        error: Error,
-        failedFile?: FileIssuesData
-    ): FileTreeNode | undefined {
+    private onFileScanError(scanResults: ScanResults, root: IssuesRootTreeNode, error: Error, failedFile?: FileIssuesData): FileTreeNode | undefined {
         let err: Error | undefined = this.onScanError(error, false);
         if (err) {
             if (failedFile) {
                 this._logManager.logMessage(
-                    "Workspace '" + root.workSpace.name + "' scan on file '" + failedFile.fullpath + "' ended with error:\n" + err,
+                    "Workspace '" + root.workSpace.name + "' scan on file '" + failedFile.fullPath + "' ended with error:\n" + err,
                     'ERR'
                 );
-                workspaceData.failedFiles.push(failedFile);
+                scanResults.failedFiles.push(failedFile);
                 let failReason: string | undefined;
                 if (error instanceof FileScanError) {
                     failReason = error.reason;
@@ -464,7 +512,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     failReason = '[Fail to scan]';
                 }
                 failedFile.name = failReason;
-                return root.addChildAndApply(FileTreeNode.createFailedScanNode(failedFile.fullpath, failReason));
+                return root.addChildAndApply(FileTreeNode.createFailedScanNode(failedFile.fullPath, failReason));
             }
             throw err;
         }
@@ -473,61 +521,61 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
     /**
      * Runs Xray scanning for a single descriptor and populates the data and view
-     * @param descriptorData - the issues data for the given descriptor
-     * @param descriptorNode - the node that represents the descriptor in view
+     * @param workspaceIssues - the issues data for the given descriptor
+     * @param projectNode - the node that represents the descriptor in view
      * @param descriptorGraph - the dependency graph of the descriptor
      * @param progressManager - the progress manager for the workspace scanning process
      * @param checkCanceled - the method to check if the task was canceled by the user from the notification window, will throw ScanCancellationError.
      * @returns the number of issues that the Xray scanning found for the given descriptor
      */
-    private async scanDescriptorGraph(
-        descriptorData: DescriptorIssuesData,
-        descriptorNode: DescriptorTreeNode,
+    private async scanProjectDependencyGraph(
+        workspaceIssues: DependencyScanResults,
+        projectNode: ProjectDependencyTreeNode,
         descriptorGraph: RootNode,
         progressManager: StepProgress,
         checkCanceled: () => void
-    ): Promise<DescriptorTreeNode | undefined> {
-        this._logManager.logMessage('Scanning descriptor ' + descriptorData.fullpath + ' for dependencies issues', 'INFO');
-        let scanProgress: XrayScanProgress = progressManager.createScanProgress(descriptorData.fullpath);
+    ): Promise<ProjectDependencyTreeNode | undefined> {
+        this._logManager.logMessage('Scanning descriptor ' + workspaceIssues.fullPath + ' for dependencies issues', 'INFO');
+        let scanProgress: XrayScanProgress = progressManager.createScanProgress(workspaceIssues.fullPath);
         // Scan
         let startGraphScan: number = Date.now();
-        descriptorData.dependenciesGraphScan = await this._scanManager
+        workspaceIssues.dependenciesGraphScan = await this._scanManager
             .scanDependencyGraph(scanProgress, descriptorGraph, checkCanceled)
             .finally(() => {
                 scanProgress.setPercentage(100);
-                descriptorData.graphScanTimestamp = Date.now();
+                workspaceIssues.graphScanTimestamp = Date.now();
             });
-        if (!descriptorData.dependenciesGraphScan.vulnerabilities && !descriptorData.dependenciesGraphScan.violations) {
+        if (!workspaceIssues.dependenciesGraphScan.vulnerabilities && !workspaceIssues.dependenciesGraphScan.violations) {
             return undefined;
         }
         // Populate response
-        descriptorData.impactTreeData = Object.fromEntries(
-            DescriptorUtils.createImpactedPaths(descriptorGraph, descriptorData.dependenciesGraphScan).entries()
+        workspaceIssues.impactTreeData = Object.fromEntries(
+            DependencyUtils.createImpactedPaths(descriptorGraph, workspaceIssues.dependenciesGraphScan).entries()
         );
-        let issuesCount: number = DescriptorUtils.populateDescriptorData(descriptorNode, descriptorData);
+        let issuesCount: number = DependencyUtils.populateDependencyScanResults(projectNode, workspaceIssues);
         this._logManager.logMessage(
             'Found ' +
                 issuesCount +
                 ' issues for descriptor ' +
-                descriptorData.fullpath +
+                workspaceIssues.fullPath +
                 ' (elapsed ' +
-                (descriptorData.graphScanTimestamp - startGraphScan) / 1000 +
+                (workspaceIssues.graphScanTimestamp - startGraphScan) / 1000 +
                 ' seconds)',
             'INFO'
         );
-        return issuesCount > 0 ? descriptorNode : undefined;
+        return issuesCount > 0 ? projectNode : undefined;
     }
 
     /**
      * Run CVE applicable scan async task.
      * @param root - the root node to generate the issues inside
-     * @param descriptorData - the descriptor data to store the response inside
+     * @param descriptorIssues - the workspace data to store the response inside
      * @param descriptorNode - the descriptor node with the CVE to scan
      * @param abortController - the controller to abort the operation
      */
     private async cveApplicableScanning(
         root: IssuesRootTreeNode,
-        descriptorData: DescriptorIssuesData,
+        descriptorIssues: DependencyScanResults,
         descriptorNode: DescriptorTreeNode,
         abortController: AbortController
     ): Promise<void> {
@@ -540,23 +588,23 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         if (cveToScan.length == 0) {
             return;
         }
-        this._logManager.logMessage('Scanning descriptor ' + descriptorData.fullpath + ' for cve applicability issues', 'INFO');
+        this._logManager.logMessage('Scanning descriptor ' + descriptorIssues.fullPath + ' for cve applicability issues', 'INFO');
 
         let startApplicableTime: number = Date.now();
-        descriptorData.applicableIssues = await this._scanManager.scanApplicability(
-            path.dirname(descriptorData.fullpath),
+        descriptorIssues.applicableIssues = await this._scanManager.scanApplicability(
+            path.dirname(descriptorIssues.fullPath),
             abortController,
             cveToScan
         );
 
-        if (descriptorData.applicableIssues && descriptorData.applicableIssues.applicableCve) {
-            descriptorData.applicableScanTimestamp = Date.now();
-            let applicableIssuesCount: number = AnalyzerUtils.populateApplicableIssues(root, descriptorNode, descriptorData);
+        if (descriptorIssues.applicableIssues && descriptorIssues.applicableIssues.applicableCve) {
+            descriptorIssues.applicableScanTimestamp = Date.now();
+            let applicableIssuesCount: number = AnalyzerUtils.populateApplicableIssues(root, descriptorNode, descriptorIssues);
             this._logManager.logMessage(
                 'Found ' +
                     applicableIssuesCount +
                     " applicable CVE issues in descriptor = '" +
-                    descriptorData.fullpath +
+                    descriptorIssues.fullPath +
                     "' (elapsed " +
                     (Date.now() - startApplicableTime) / 1000 +
                     ' seconds)',
@@ -600,12 +648,12 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * @param filePath - the full path to the descriptor
      * @returns - the descriptor issues data if exists issues for the descriptor, undefined otherwise
      */
-    public getDescriptorIssuesData(filePath: string): DescriptorIssuesData | undefined {
+    public getDescriptorIssuesData(filePath: string): DependencyScanResults | undefined {
         for (const workspace of this._workspaceToRoot.keys()) {
             if (filePath.includes(workspace.uri.fsPath)) {
-                let workspaceIssueData: WorkspaceIssuesData | undefined = this._cacheManager.issuesCache?.get(workspace);
-                if (workspaceIssueData) {
-                    return workspaceIssueData.descriptorsIssuesData.find(descriptor => descriptor.fullpath == filePath);
+                let scanResults: ScanResults | undefined = this._cacheManager.issuesCache?.get(workspace);
+                if (scanResults) {
+                    return scanResults.descriptorsIssues.find(descriptor => descriptor.fullPath == filePath);
                 }
             }
         }
@@ -627,7 +675,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             return Promise.resolve(element.children);
         }
         // Descriptor file type
-        if (element instanceof DescriptorTreeNode) {
+        if (element instanceof ProjectDependencyTreeNode) {
             return Promise.resolve(element.dependenciesWithIssue);
         }
         if (element instanceof DependencyIssuesTreeNode) {
@@ -648,12 +696,15 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             element instanceof IssueTreeNode
         ) {
             element.iconPath = SeverityUtils.getIcon(element.severity !== undefined ? element.severity : Severity.Unknown);
+            if (element instanceof EnvironmentTreeNode) {
+                return element;
+            }
             // File nodes
             if (element instanceof FileTreeNode) {
                 element.command = Utils.createNodeCommand('jfrog.issues.file.open', 'Open file', [element.fullPath]);
             }
             if (element instanceof DependencyIssuesTreeNode) {
-                let directDependenciesLocations: vscode.Range[] = await DescriptorUtils.getDirectDependenciesLocations(element);
+                let directDependenciesLocations: vscode.Range[] = await DependencyUtils.getDirectDependenciesLocations(element);
                 if (directDependenciesLocations?.length > 0) {
                     element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open location in file', [
                         element.parent.fullPath,

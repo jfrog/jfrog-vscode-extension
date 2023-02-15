@@ -17,7 +17,7 @@ import { DependenciesTreeNode } from './dependenciesTreeNode';
 export class DependenciesTreesFactory {
     public static async createDependenciesTrees(
         projectDescriptors: Map<PackageType, vscode.Uri[]>,
-        workspaceFolders: vscode.WorkspaceFolder[],
+        workspaceFolder: vscode.WorkspaceFolder,
         componentsToScan: ProjectDetails[],
         treesManager: TreesManager,
         progressManager: StepProgress,
@@ -42,7 +42,7 @@ export class DependenciesTreesFactory {
             progressManager.reportProgress();
             await PypiUtils.createDependenciesTrees(
                 projectDescriptors.get(PackageType.Python),
-                workspaceFolders,
+                workspaceFolder,
                 componentsToScan,
                 treesManager,
                 parent,

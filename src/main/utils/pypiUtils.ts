@@ -1,13 +1,15 @@
-import * as exec from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import { LogManager } from '../log/logManager';
 import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ProjectDetails } from '../types/projectDetails';
-import { Configuration } from './configuration';
 import { ScanUtils } from './scanUtils';
+import * as exec from 'child_process';
+import { PipDepTree } from '../types/pipDepTree';
+import { VirtualEnvPypiTree } from '../treeDataProviders/dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
 
 export class PypiUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/*requirements*.txt' };
@@ -49,25 +51,7 @@ export class PypiUtils {
     }
 
     /**
-     * Find *.py files in workspaces.
-     * @param workspaceFolders - Base workspace folders to search
-     * @param logManager       - Log manager
-     */
-    public static async arePythonFilesExist(workspaceFolder: vscode.WorkspaceFolder, logManager: LogManager): Promise<boolean> {
-        logManager.logMessage('Locating python files in workspace "' + workspaceFolder.name + '".', 'INFO');
-
-        let wsPythonFiles: vscode.Uri[] = await vscode.workspace.findFiles(
-            { baseUri: workspaceFolder.uri, base: workspaceFolder.uri.fsPath, pattern: '**/*{setup.py,requirements*.txt}' },
-            Configuration.getScanExcludePattern(workspaceFolder)
-        );
-        if (logManager && wsPythonFiles.length > 0) {
-            logManager.logMessage('Detected python files in workspace ' + workspaceFolder.name + ': [' + wsPythonFiles.toString() + ']', 'DEBUG');
-        }
-        return Promise.resolve(wsPythonFiles.length > 0);
-    }
-
-    /**
-     * @param pythonFiles      - Paths to setup.py and requirements*.txt files
+     * @param descriptors      - Paths to setup.py and requirements*.txt files
      * @param workspaceFolders - Base workspace folders
      * @param componentsToScan - Set of setup.py components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
      * @param treesManager     - Scan trees manager
@@ -75,62 +59,58 @@ export class PypiUtils {
      * @param quickScan        - True to allow using the scan cache
      */
     public static async createDependenciesTrees(
-        pythonFiles: vscode.Uri[] | undefined,
-        workspaceFolders: vscode.WorkspaceFolder[],
+        descriptors: vscode.Uri[] | undefined,
+        workspace: vscode.WorkspaceFolder,
         projectsToScan: ProjectDetails[],
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         checkCanceled: () => void
     ): Promise<void> {
-        if (!pythonFiles) {
-            treesManager.logManager.logMessage('No setup.py and requirements files found in workspaces.', 'DEBUG');
+        if (!descriptors) {
+            treesManager.logManager.logMessage('No setup.py or requirements.txt files found in workspaces.', 'DEBUG');
             return;
         }
-        let pythonExtension: vscode.Extension<any> | undefined;
-        for (let workspaceFolder of workspaceFolders) {
-            checkCanceled();
-            let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, treesManager.logManager);
-            if (!pythonFilesExist) {
-                treesManager.logManager.logMessage('No setup.py and requirements files found in workspace ' + workspaceFolder.name + '.', 'DEBUG');
-                continue;
-            }
-            if (!pythonExtension) {
-                pythonExtension = await PypiUtils.getAndActivatePythonExtension();
-                if (!pythonExtension) {
-                    treesManager.logManager.logError(
-                        new Error(
-                            'Could not scan Pypi project dependencies, because python extension is not installed. ' +
-                                'Please install Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python'
-                        ),
-                        true
-                    );
-                    return;
-                }
-            }
-
-            let pythonPath: string | undefined = PypiUtils.getPythonPath(pythonExtension, workspaceFolder);
-            if (!pythonPath) {
-                treesManager.logManager.logError(new Error('Could not scan Pypi project dependencies, because python interpreter is not set.'), true);
-                return;
-            }
-            if (!PypiUtils.isInVirtualEnv(pythonPath, workspaceFolder.uri.fsPath, treesManager.logManager)) {
-                treesManager.logManager.logError(
-                    new Error(
-                        'Please install and activate a virtual environment before running Xray scan. Then, install your Python project in that environment.'
-                    ),
-                    true
-                );
-                return;
-            }
-            checkCanceled();
-
-            treesManager.logManager.logMessage('Analyzing setup.py and requirements files of ' + workspaceFolder.name, 'INFO');
-            let root: PypiTreeNode = new PypiTreeNode(workspaceFolder.uri.fsPath, treesManager, pythonPath, parent);
-            root.refreshDependencies();
-            projectsToScan.push(root.projectDetails);
+        const pythonPath: string | undefined = await this.getPythonInterpreterPath(treesManager);
+        if (!pythonPath) {
+            return;
         }
+        if (!PypiUtils.isInVirtualEnv(pythonPath, treesManager.logManager)) {
+            treesManager.logManager.logError(
+                new Error(
+                    'Please install and activate a virtual environment before running Xray scan. Then, install your Python project in that environment.'
+                ),
+                true
+            );
+            return;
+        }
+        const tree: PipDepTree[] | undefined = this.runPipDepTree(pythonPath, treesManager.logManager);
+        if (!tree) {
+            return;
+        }
+        const [pythonTrees, remainingPipDepTree] = await this.descriptorsToDependencyTrees(descriptors, tree, checkCanceled, treesManager, parent);
+        pythonTrees.forEach(tree => projectsToScan.push(tree.projectDetails));
+        this.workspaceToDependencyTree(workspace, pythonPath, remainingPipDepTree, parent, projectsToScan);
     }
 
+    private static async getPythonInterpreterPath(treesManager: TreesManager) {
+        const pythonExtension: vscode.Extension<any> | undefined = await PypiUtils.getAndActivatePythonExtension();
+        if (!pythonExtension) {
+            treesManager.logManager.logError(
+                new Error(
+                    'Could not scan python project dependencies, because Python extension is not installed. ' +
+                        'Please install Python extension: https://marketplace.visualstudio.com/items?itemName=ms-python.python'
+                ),
+                true
+            );
+            return;
+        }
+
+        let pythonPath: string | undefined = await PypiUtils.getPythonPath(pythonExtension);
+        if (!pythonPath) {
+            treesManager.logManager.logError(new Error('Could not scan python Python dependencies, because python interpreter is not set.'), true);
+        }
+        return pythonPath;
+    }
     /**
      * Return reference to the VS-Code Python extension if installed.
      * Activate it to allow tracking on environmental changes -
@@ -150,10 +130,10 @@ export class PypiUtils {
     /**
      * Return python path as configured in Python extension.
      * @param pythonExtension - The python extension
-     * @param workspaceFolder - Base workspace folder
+     * @param descriptor - Base workspace folder
      */
-    private static getPythonPath(pythonExtension: vscode.Extension<any>, workspaceFolder: vscode.WorkspaceFolder): string | undefined {
-        let executionDetails: any = pythonExtension?.exports.settings.getExecutionDetails(workspaceFolder.uri);
+    private static async getPythonPath(pythonExtension: vscode.Extension<any>): Promise<string | undefined> {
+        let executionDetails: any = pythonExtension?.exports.settings.getExecutionDetails();
         let execCommand: string[] | undefined = executionDetails?.execCommand;
         return execCommand ? execCommand[0] : undefined;
     }
@@ -163,9 +143,9 @@ export class PypiUtils {
      * @param pythonPath      - Path to python interpreter
      * @param workspaceFolder - Base workspace folder
      */
-    public static isInVirtualEnv(pythonPath: string, workspaceFolder: string, logManager: LogManager): boolean {
+    public static isInVirtualEnv(pythonPath: string, logManager: LogManager): boolean {
         try {
-            exec.execSync(pythonPath + ' ' + PypiUtils.CHECK_VENV_SCRIPT, { cwd: workspaceFolder } as exec.ExecSyncOptionsWithStringEncoding);
+            exec.execSync(pythonPath + ' ' + PypiUtils.CHECK_VENV_SCRIPT);
             return true;
         } catch (error) {
             logManager.logError(<any>error, false);
@@ -173,14 +153,148 @@ export class PypiUtils {
         }
     }
 
-    /**
-     * Search for requirements files in the input path.
-     * @param fsPath - The base path to search
-     */
-    public static async getRequirementsFiles(fsPath: string): Promise<vscode.Uri[]> {
-        return await vscode.workspace.findFiles(
-            { baseUri: vscode.Uri.file(fsPath), base: fsPath, pattern: '**/*requirements*.txt' },
-            Configuration.getScanExcludePattern()
-        );
+    public static runPipDepTree(pythonPath: string, logManager: LogManager): PipDepTree[] | undefined {
+        let projectDependencies: PipDepTree[] | undefined;
+        try {
+            projectDependencies = JSON.parse(ScanUtils.executeCmd(pythonPath + ' ' + PypiUtils.PIP_DEP_TREE_SCRIPT + ' --json-tree').toString());
+        } catch (error) {
+            logManager.logError(<any>error, true);
+        }
+        return projectDependencies;
+    }
+
+    public static async descriptorsToDependencyTrees(
+        descriptors: vscode.Uri[],
+        pipDepTree: PipDepTree[],
+        checkCanceled: () => void,
+        treesManager: TreesManager,
+        parent: DependenciesTreeNode
+    ): Promise<[PypiTreeNode[], PipDepTree[]]> {
+        const projectName: string | undefined = this.scanForProjectName(descriptors);
+        const trees: PypiTreeNode[] = [];
+        for (const descriptor of descriptors) {
+            checkCanceled();
+            treesManager.logManager.logMessage(`Analyzing '${descriptor.fsPath}' file`, 'INFO');
+            let root: PypiTreeNode = new PypiTreeNode(descriptor.fsPath, parent);
+            let [descriptorDependencies, otherDependencies] = this.filterDescriptorDependencies(descriptor.fsPath, pipDepTree, projectName);
+            pipDepTree = otherDependencies;
+            root.refreshDependencies(descriptorDependencies);
+            trees.push(root);
+        }
+        return [trees, pipDepTree];
+    }
+
+    public static async workspaceToDependencyTree(
+        workspace: vscode.WorkspaceFolder,
+        virtualEnvPath: string,
+        pipDepTree: PipDepTree[],
+        parent: DependenciesTreeNode,
+        projectsToScan: ProjectDetails[]
+    ) {
+        let root: VirtualEnvPypiTree = new VirtualEnvPypiTree(virtualEnvPath, workspace.uri.fsPath, parent);
+        root.refreshDependencies(pipDepTree);
+        parent.children.push(root);
+        projectsToScan.push(root.projectDetails);
+    }
+
+    private static filterDescriptorDependencies(descriptorPath: string, pipDepTree: PipDepTree[], projectName?: string): PipDepTree[][] {
+        const isSetupPy: boolean = descriptorPath.endsWith('setup.py');
+        const dependencies: Map<string, string | undefined> = isSetupPy
+            ? this.getSetupPyDirectDependencies(descriptorPath)
+            : this.getRequirementsTxtDirectDependencies(descriptorPath);
+        if (!dependencies) {
+            return [[], pipDepTree];
+        }
+        return isSetupPy
+            ? this.filterSetupPyDependencies(dependencies, pipDepTree, projectName)
+            : this.filterDependencies(dependencies, pipDepTree, false);
+    }
+
+    public static filterDependencies(dependencies: Map<string, string | undefined>, pipDepTree: PipDepTree[], isSetupPy: boolean): PipDepTree[][] {
+        let filtered: PipDepTree[] = [];
+        let notFiltered: PipDepTree[] = [];
+        for (const dep of pipDepTree) {
+            if (!dependencies.has(dep.key)) {
+                notFiltered.push(dep);
+                continue;
+            }
+            const version: string | undefined = dependencies.get(dep.key);
+            if (version && !this.isVersionsEqual(dep, version, isSetupPy)) {
+                notFiltered.push(dep);
+                continue;
+            }
+            filtered.push(dep);
+        }
+        return [filtered, notFiltered];
+    }
+
+    public static filterSetupPyDependencies(
+        dependencies: Map<string, string | undefined>,
+        globalDependencies: PipDepTree[],
+        projectName?: string
+    ): PipDepTree[][] {
+        if (!projectName) {
+            return [[], globalDependencies];
+        }
+        const index: number = globalDependencies.findIndex((dep: PipDepTree) => dep.key === projectName.toLocaleLowerCase());
+        if (index === -1) {
+            return [[], globalDependencies];
+        }
+        let [filtered, notFiltered] = this.filterDependencies(dependencies, globalDependencies[index].dependencies, true);
+        if (notFiltered.length === 0) {
+            globalDependencies = globalDependencies.filter((v, i) => i !== index);
+        } else {
+            globalDependencies[index].dependencies = notFiltered;
+        }
+        return [filtered, globalDependencies];
+    }
+
+    private static isVersionsEqual(dependencyFromPipDepTree: PipDepTree, depFromDescriptor: string, isSetupPy: boolean): boolean {
+        if (isSetupPy) {
+            return dependencyFromPipDepTree.required_version === depFromDescriptor;
+        }
+        return depFromDescriptor.endsWith(dependencyFromPipDepTree.installed_version);
+    }
+
+    private static scanForProjectName(descriptors: vscode.Uri[]): string | undefined {
+        const setupPy: vscode.Uri | undefined = descriptors.find(descriptor => descriptor.fsPath.endsWith('setup.py'));
+        if (!setupPy) {
+            return;
+        }
+        return this.searchProjectName(setupPy.fsPath);
+    }
+
+    private static getRequirementsTxtDirectDependencies(path: string): Map<string, string | undefined> {
+        const content: string = fs.readFileSync(path, 'utf8');
+        return this.matchPythonDependencies(content);
+    }
+
+    private static getSetupPyDirectDependencies(path: string): Map<string, string | undefined> {
+        const content: string = fs.readFileSync(path, 'utf8');
+        // Use a regular expression to match the install_requires field
+        let installReqRegex: RegExp = /install_requires=\[(.*)\]/gms;
+        const match: RegExpExecArray | null = installReqRegex.exec(content);
+        if (!match) {
+            return new Map<string, string | undefined>();
+        }
+        return this.matchPythonDependencies(match[1]);
+    }
+
+    private static matchPythonDependencies(rawDependencies: string) {
+        let packageRegex: RegExp = /([\w\d\-.]+)\s*(?:\[.*\])?\s*((?:\s*(?:[<>]=?|!=|===?|~=)\s*[\d\w*-.]+,?)*)/gms;
+        let dependencyMatch: RegExpExecArray | null;
+        let dependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
+        while ((dependencyMatch = packageRegex.exec(rawDependencies)) !== null) {
+            const [, name, version] = dependencyMatch;
+            dependencies.set(name.toLowerCase(), version);
+        }
+        return dependencies;
+    }
+
+    private static searchProjectName(setupPyFile: string) {
+        const content: string = fs.readFileSync(setupPyFile, 'utf8');
+        const nameRegex: RegExp = new RegExp(`name=\\s*(?:"|')(.*)(?:"|')`, 'g');
+        const [, name] = nameRegex.exec(content) || [];
+        return name;
     }
 }
