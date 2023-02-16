@@ -15,7 +15,7 @@ export class NpmDependencyUpdate extends AbstractDependencyUpdate {
 
     /** @override */
     public update(dependency: DependencyIssuesTreeNode, version: string): void {
-        const workspace: string = dependency.getWorkspace();
+        const workspace: string = dependency.getSourcePath();
         ScanUtils.executeCmd('npm install ' + dependency.name + '@' + version, workspace);
     }
 }
