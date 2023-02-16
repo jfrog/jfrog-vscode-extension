@@ -122,6 +122,7 @@ describe('Pypi Utils Tests', async () => {
         checkFireDependency(node);
 
         // Test 'resources/python/setupAndRequirements'
+        parent = new DependenciesTreeNode(new GeneralInfo('', '', [], '', PackageType.Unknown));
         tree = PypiUtils.runPipDepTree(path.join(workspaceFolders[2].uri.fsPath, localPython), treesManager.logManager);
         if (tree === undefined) {
             assert.fail;
@@ -129,10 +130,18 @@ describe('Pypi Utils Tests', async () => {
         }
         workspaceDescriptors = await ScanUtils.locatePackageDescriptors([workspaceFolders[2]], treesManager.logManager);
         await PypiUtils.descriptorsToDependencyTrees(workspaceDescriptors.get(PackageType.Python) || [], tree, () => undefined, treesManager, parent);
-        node = parent.children[2] as PypiTreeNode;
-        assert.deepEqual(node.label, 'setup.py');
-        assert.deepEqual(node.children.length, 0);
-        node = parent.children[3] as PypiTreeNode;
+        node = parent.children.find(child => child.label === 'setup.py') as PypiTreeNode | undefined;
+        if (!node) {
+            assert.fail;
+            return;
+        }
+        assert.deepEqual(node?.label, 'setup.py');
+        assert.deepEqual(node?.children.length, 0);
+        node = parent.children.find(child => child.label === 'requirements.txt') as PypiTreeNode | undefined;
+        if (!node) {
+            assert.fail;
+            return;
+        }
         assert.deepEqual(node.children.length, 3);
         checkFireDependency(node);
     });
