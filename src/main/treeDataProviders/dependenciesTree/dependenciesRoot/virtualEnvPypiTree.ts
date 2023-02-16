@@ -1,5 +1,7 @@
 import { GeneralInfo } from '../../../types/generalInfo';
 import { PackageType } from '../../../types/projectType';
+import { DependencyScanResults } from '../../../types/workspaceIssuesDetails';
+import { EnvironmentTreeNode } from '../../issuesTree/descriptorTree/environmentTreeNode';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { PypiTreeNode } from './pypiTree';
 
@@ -22,5 +24,17 @@ export class VirtualEnvPypiTree extends PypiTreeNode {
 
     public set virtualEnvironmentPath(value: string) {
         this._virtualEnvironmentPath = value;
+    }
+
+    public toEnvironmentTreeNode() {
+        return new EnvironmentTreeNode(this.virtualEnvironmentPath, this.generalInfo.pkgType);
+    }
+    
+    public toDependencyScanResults() {
+        return {
+            type: this.generalInfo.pkgType,
+            name: 'Virtual Environment',
+            fullPath: this.virtualEnvironmentPath
+        } as DependencyScanResults;
     }
 }

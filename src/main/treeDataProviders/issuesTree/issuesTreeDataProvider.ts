@@ -29,8 +29,8 @@ import { EosTreeNode } from './codeFileTree/eosTreeNode';
 import { NotEntitledError } from '../../scanLogic/scanRunners/binaryRunner';
 import { EnvironmentTreeNode } from './descriptorTree/environmentTreeNode';
 import { ProjectDependencyTreeNode } from './descriptorTree/projectDependencyTreeNode';
-import { VirtualEnvPypiTree } from '../dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
 import { ScanResults, DependencyScanResults, FileIssuesData } from '../../types/workspaceIssuesDetails';
+import { PypiUtils } from '../../utils/pypiUtils';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -303,25 +303,15 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         // Dependency graph scan and applicability scan for each descriptor
         if (graphSupported) {
             scansPromises.push(
-                this.scanDescriptors(scanResults, root, workspaceDescriptors, workspaceDependenciesTree, progressManager, checkCanceled)
+                this.scanDependencies(scanResults, root, workspaceDescriptors, workspaceDependenciesTree, progressManager, checkCanceled)
             );
-            const virtualEnvIssues: Promise<void> | undefined = this.scanPythonVirtualEnv(
-                scanResults,
-                root,
-                workspaceDependenciesTree,
-                progressManager,
-                checkCanceled
-            );
-            if (virtualEnvIssues) {
-                scansPromises.push(virtualEnvIssues);
-            }
         }
         await Promise.all(scansPromises);
         return root;
     }
 
     /**
-     * Preform security scanning for all the descriptors in the workspace in two steps:
+     * Preform security scanning for all the dependencies in the workspace in two steps:
      * 1. Dependency graph scan to discover CVE issues
      * 2. Applicability scan of the CVE in the workspace
      * @param scanResults - the given object that holds all the issues data for the workspace and will be populated at the task
@@ -331,7 +321,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * @param progressManager - the progress manager for the workspace scanning process
      * @param checkCanceled - the method to check if the task was canceled by the user from the notification window, will throw ScanCancellationError.
      */
-    private async scanDescriptors(
+    private async scanDependencies(
         scanResults: ScanResults,
         root: IssuesRootTreeNode,
         workspaceDescriptors: Map<PackageType, vscode.Uri[]>,
@@ -339,7 +329,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         progressManager: StepProgress,
         checkCanceled: () => void
     ): Promise<any> {
-        // 2. Scan descriptors
         let scansPromises: Promise<any>[] = [];
         for (const [type, descriptorsPaths] of workspaceDescriptors) {
             for (const descriptorPath of descriptorsPaths) {
@@ -385,34 +374,19 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 );
             }
         }
-
+        // Scan the environment
+        const [dependencyScanResults, environmentTreeNode, environmentGraph] = PypiUtils.getEnvironmentScanTaskArgs(
+            scanResults,
+            workspaceDependenciesTree,
+            progressManager,
+            this._logManager
+        );
+        if (dependencyScanResults && environmentTreeNode && environmentGraph) {
+            scansPromises.push(
+                this.createScanTask(scanResults, root, dependencyScanResults, environmentTreeNode, environmentGraph, progressManager, checkCanceled)
+            );
+        }
         await Promise.all(scansPromises);
-    }
-
-    private scanPythonVirtualEnv(
-        scanResults: ScanResults,
-        root: IssuesRootTreeNode,
-        workspaceDependenciesTree: DependenciesTreeNode,
-        progressManager: StepProgress,
-        checkCanceled: () => void
-    ) {
-        const envIssues: DependenciesTreeNode | undefined = workspaceDependenciesTree.getChildByPath(scanResults.path);
-        if (!envIssues || !(envIssues instanceof VirtualEnvPypiTree)) {
-            return;
-        }
-        let environmentNode: EnvironmentTreeNode = new EnvironmentTreeNode(envIssues.virtualEnvironmentPath, envIssues.generalInfo.pkgType);
-        let environmentGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(workspaceDependenciesTree, scanResults.path);
-        if (!environmentGraph) {
-            progressManager.reportProgress(2 * progressManager.getStepIncValue);
-            this._logManager.logMessage("Can't find virtual environment graph at " + envIssues.virtualEnvironmentPath, 'DEBUG');
-            return;
-        }
-        const dependencyScanResult: DependencyScanResults = {
-            type: envIssues.generalInfo.pkgType,
-            name: 'Virtual Environment',
-            fullPath: envIssues.virtualEnvironmentPath
-        } as DependencyScanResults;
-        return this.createScanTask(scanResults, root, dependencyScanResult, environmentNode, environmentGraph, progressManager, checkCanceled);
     }
 
     /**

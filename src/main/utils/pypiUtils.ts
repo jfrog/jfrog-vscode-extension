@@ -7,15 +7,22 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ProjectDetails } from '../types/projectDetails';
 import { ScanUtils } from './scanUtils';
-import * as exec from 'child_process';
 import { PipDepTree } from '../types/pipDepTree';
 import { VirtualEnvPypiTree } from '../treeDataProviders/dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
+import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
+import { EnvironmentTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/environmentTreeNode';
+import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
+import { StepProgress } from '../treeDataProviders/utils/stepProgress';
+import { ScanResults, DependencyScanResults } from '../types/workspaceIssuesDetails';
 
 export class PypiUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/*requirements*.txt' };
     public static readonly PYTHON_SCRIPTS: string = path.join(ScanUtils.RESOURCES_DIR, 'python');
     public static readonly PIP_DEP_TREE_SCRIPT: string = path.join(PypiUtils.PYTHON_SCRIPTS, 'pipDepTree.py');
     public static readonly CHECK_VENV_SCRIPT: string = path.join(PypiUtils.PYTHON_SCRIPTS, 'checkVenv.py');
+    public static readonly packageRegex: RegExp = /([\w\-.]+)\s*(?:\[.*\])?\s*((?:\s*(?:[<>]=?|!=|===?|~=)\s*[\w*\-.]+,?)*)/gms;
+    public static readonly setupPyProjectNameRegex: RegExp = /name=\s*(?:"|')(.*)(?:"|')/gm;
+    public static readonly installReqRegex: RegExp = /install_requires\s*=\s*\[([^\]]+)\]/gm;
 
     /**
      * Get setup.py file and return the position of 'install_requires' section.
@@ -83,13 +90,13 @@ export class PypiUtils {
             );
             return;
         }
-        const tree: PipDepTree[] | undefined = this.runPipDepTree(pythonPath, treesManager.logManager);
-        if (!tree) {
+        const pipDepTree: PipDepTree[] | undefined = this.runPipDepTree(pythonPath, treesManager.logManager);
+        if (!pipDepTree) {
             return;
         }
-        const [pythonTrees, remainingPipDepTree] = await this.descriptorsToDependencyTrees(descriptors, tree, checkCanceled, treesManager, parent);
+        const pythonTrees: PypiTreeNode[] = await this.descriptorsToDependencyTrees(descriptors, pipDepTree, checkCanceled, treesManager, parent);
         pythonTrees.forEach(tree => projectsToScan.push(tree.projectDetails));
-        this.workspaceToDependencyTree(workspace, pythonPath, remainingPipDepTree, parent, projectsToScan);
+        this.workspaceToDependencyTree(workspace, pythonPath, pipDepTree, parent, projectsToScan);
     }
 
     private static async getPythonInterpreterPath(treesManager: TreesManager) {
@@ -145,7 +152,7 @@ export class PypiUtils {
      */
     public static isInVirtualEnv(pythonPath: string, logManager: LogManager): boolean {
         try {
-            exec.execSync(pythonPath + ' ' + PypiUtils.CHECK_VENV_SCRIPT);
+            ScanUtils.executeCmd(pythonPath + ' ' + PypiUtils.CHECK_VENV_SCRIPT);
             return true;
         } catch (error) {
             logManager.logError(<any>error, false);
@@ -163,14 +170,21 @@ export class PypiUtils {
         return projectDependencies;
     }
 
+    /**
+     * Create a dependency tree for each descriptor path based on its dependencies declaration.
+     * @param descriptors - Path to descriptors
+     * @param pipDepTree - project dependency tree
+     * @param parent - Parent of all the descriptors
+     * @returns All descriptors dependency trees
+     */
     public static async descriptorsToDependencyTrees(
         descriptors: vscode.Uri[],
         pipDepTree: PipDepTree[],
         checkCanceled: () => void,
         treesManager: TreesManager,
         parent: DependenciesTreeNode
-    ): Promise<[PypiTreeNode[], PipDepTree[]]> {
-        const projectName: string | undefined = this.scanForProjectName(descriptors);
+    ): Promise<PypiTreeNode[]> {
+        const projectName: string | undefined = this.getProjectName(descriptors);
         const trees: PypiTreeNode[] = [];
         for (const descriptor of descriptors) {
             checkCanceled();
@@ -179,9 +193,16 @@ export class PypiUtils {
             root.refreshDependencies(this.filterDescriptorDependencies(descriptor.fsPath, pipDepTree, projectName));
             trees.push(root);
         }
-        return [trees, pipDepTree];
+        return trees;
     }
 
+    /**
+     * Create a virtual environment tree node with all its dependencies
+     * @param workspace - Workspace to scan.
+     * @param virtualEnvPath - Path to workspace virtual environment.
+     * @param pipDepTree - virtual environment dependencies tree (json format).
+     * @param parent - Workspace tree node.
+     */
     public static async workspaceToDependencyTree(
         workspace: vscode.WorkspaceFolder,
         virtualEnvPath: string,
@@ -195,6 +216,11 @@ export class PypiUtils {
         projectsToScan.push(root.projectDetails);
     }
 
+    /**
+     *  Get the dependencies of the descriptor from those of the environment.
+     * @param pipDepTree - virtual environment dependencies tree (json format).
+     * @param projectName  Name of the project as written in setup.py.
+     */
     private static filterDescriptorDependencies(descriptorPath: string, pipDepTree: PipDepTree[], projectName?: string): PipDepTree[] {
         const isSetupPy: boolean = descriptorPath.endsWith('setup.py');
         const dependencies: Map<string, string | undefined> = isSetupPy
@@ -206,6 +232,9 @@ export class PypiUtils {
         return this.filterDependencies(dependencies, pipDepTree, false, projectName);
     }
 
+    /**
+     * From pipDepTree, which contains all the environment dependencies, get the dependencies of the dependencies' map
+     */
     public static filterDependencies(
         dependencies: Map<string, string | undefined>,
         pipDepTree: PipDepTree[],
@@ -239,7 +268,7 @@ export class PypiUtils {
         return depFromDescriptor.endsWith(dependencyFromPipDepTree.installed_version);
     }
 
-    private static scanForProjectName(descriptors: vscode.Uri[]): string | undefined {
+    private static getProjectName(descriptors: vscode.Uri[]): string | undefined {
         const setupPy: vscode.Uri | undefined = descriptors.find(descriptor => descriptor.fsPath.endsWith('setup.py'));
         if (!setupPy) {
             return;
@@ -255,8 +284,7 @@ export class PypiUtils {
     private static getSetupPyDirectDependencies(path: string): Map<string, string | undefined> {
         const content: string = fs.readFileSync(path, 'utf8');
         // Use a regular expression to match the install_requires field
-        let installReqRegex: RegExp = /install_requires=\[(.*)\]/gms;
-        const match: RegExpExecArray | null = installReqRegex.exec(content);
+        const match: RegExpExecArray | null = PypiUtils.installReqRegex.exec(content);
         if (!match) {
             return new Map<string, string | undefined>();
         }
@@ -264,10 +292,9 @@ export class PypiUtils {
     }
 
     private static matchPythonDependencies(rawDependencies: string) {
-        let packageRegex: RegExp = /([\w\d\-.]+)\s*(?:\[.*\])?\s*((?:\s*(?:[<>]=?|!=|===?|~=)\s*[\d\w*-.]+,?)*)/gms;
         let dependencyMatch: RegExpExecArray | null;
         let dependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
-        while ((dependencyMatch = packageRegex.exec(rawDependencies)) !== null) {
+        while ((dependencyMatch = PypiUtils.packageRegex.exec(rawDependencies)) !== null) {
             const [, name, version] = dependencyMatch;
             dependencies.set(name.toLowerCase(), version);
         }
@@ -276,8 +303,26 @@ export class PypiUtils {
 
     private static searchProjectName(setupPyFile: string) {
         const content: string = fs.readFileSync(setupPyFile, 'utf8');
-        const nameRegex: RegExp = new RegExp(`name=\\s*(?:"|')(.*)(?:"|')`, 'g');
-        const [, name] = nameRegex.exec(content) || [];
+        const [, name] = PypiUtils.setupPyProjectNameRegex.exec(content) || [];
         return name;
+    }
+
+    public static getEnvironmentScanTaskArgs(
+        scanResults: ScanResults,
+        workspaceDependenciesTree: DependenciesTreeNode,
+        progressManager: StepProgress,
+        logManager: LogManager
+    ): [DependencyScanResults?, EnvironmentTreeNode?, RootNode?] {
+        const envIssues: DependenciesTreeNode | undefined = workspaceDependenciesTree.getChildByPath(scanResults.path);
+        if (!envIssues || !(envIssues instanceof VirtualEnvPypiTree)) {
+            return [];
+        }
+        let environmentGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(workspaceDependenciesTree, scanResults.path);
+        if (!environmentGraph) {
+            progressManager.reportProgress(2 * progressManager.getStepIncValue);
+            logManager.logMessage("Can't find virtual environment graph at " + envIssues.virtualEnvironmentPath, 'DEBUG');
+            return [];
+        }
+        return [envIssues.toDependencyScanResults(), envIssues.toEnvironmentTreeNode(), environmentGraph];
     }
 }

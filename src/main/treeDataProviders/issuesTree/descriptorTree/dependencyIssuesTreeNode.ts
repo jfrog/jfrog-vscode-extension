@@ -122,8 +122,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     }
 
     /**
-     *
-     * @returns The file system path to the dependency declaration
+     * @returns the file system path to the project descriptor directory or to the Python virtual environment
      */
     public getSourcePath(): string {
         return this.parent.getProjectPath();
