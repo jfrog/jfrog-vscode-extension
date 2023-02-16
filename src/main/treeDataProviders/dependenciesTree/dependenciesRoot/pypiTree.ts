@@ -15,7 +15,7 @@ export class PypiTreeNode extends RootNode {
 
     constructor(workspaceFolder: string, parent?: DependenciesTreeNode) {
         super(workspaceFolder, PackageType.Python, parent);
-        this.generalInfo = new GeneralInfo(this.workspaceFolder.replace(/^.*[\\/]/,''), '', ['None'], this.workspaceFolder, PackageType.Python);
+        this.generalInfo = new GeneralInfo(this.workspaceFolder.replace(/^.*[\\/]/, ''), '', ['None'], this.workspaceFolder, PackageType.Python);
         this.projectDetails.name = this.generalInfo.artifactId;
         this.label = this.projectDetails.name;
     }

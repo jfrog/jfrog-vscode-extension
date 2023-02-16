@@ -176,9 +176,7 @@ export class PypiUtils {
             checkCanceled();
             treesManager.logManager.logMessage(`Analyzing '${descriptor.fsPath}' file`, 'INFO');
             let root: PypiTreeNode = new PypiTreeNode(descriptor.fsPath, parent);
-            let [descriptorDependencies, otherDependencies] = this.filterDescriptorDependencies(descriptor.fsPath, pipDepTree, projectName);
-            pipDepTree = otherDependencies;
-            root.refreshDependencies(descriptorDependencies);
+            root.refreshDependencies(this.filterDescriptorDependencies(descriptor.fsPath, pipDepTree, projectName));
             trees.push(root);
         }
         return [trees, pipDepTree];
@@ -197,56 +195,41 @@ export class PypiUtils {
         projectsToScan.push(root.projectDetails);
     }
 
-    private static filterDescriptorDependencies(descriptorPath: string, pipDepTree: PipDepTree[], projectName?: string): PipDepTree[][] {
+    private static filterDescriptorDependencies(descriptorPath: string, pipDepTree: PipDepTree[], projectName?: string): PipDepTree[] {
         const isSetupPy: boolean = descriptorPath.endsWith('setup.py');
         const dependencies: Map<string, string | undefined> = isSetupPy
             ? this.getSetupPyDirectDependencies(descriptorPath)
             : this.getRequirementsTxtDirectDependencies(descriptorPath);
         if (!dependencies) {
-            return [[], pipDepTree];
+            return pipDepTree;
         }
-        return isSetupPy
-            ? this.filterSetupPyDependencies(dependencies, pipDepTree, projectName)
-            : this.filterDependencies(dependencies, pipDepTree, false);
+        return this.filterDependencies(dependencies, pipDepTree, false, projectName);
     }
 
-    public static filterDependencies(dependencies: Map<string, string | undefined>, pipDepTree: PipDepTree[], isSetupPy: boolean): PipDepTree[][] {
+    public static filterDependencies(
+        dependencies: Map<string, string | undefined>,
+        pipDepTree: PipDepTree[],
+        isSetupPy: boolean,
+        projectName?: string
+    ): PipDepTree[] {
         let filtered: PipDepTree[] = [];
-        let notFiltered: PipDepTree[] = [];
+        if (dependencies.size === 0) {
+            return filtered;
+        }
         for (const dep of pipDepTree) {
+            if (dep.key === projectName) {
+                filtered.push(...this.filterDependencies(dependencies, dep.dependencies, isSetupPy));
+            }
             if (!dependencies.has(dep.key)) {
-                notFiltered.push(dep);
                 continue;
             }
             const version: string | undefined = dependencies.get(dep.key);
             if (version && !this.isVersionsEqual(dep, version, isSetupPy)) {
-                notFiltered.push(dep);
                 continue;
             }
             filtered.push(dep);
         }
-        return [filtered, notFiltered];
-    }
-
-    public static filterSetupPyDependencies(
-        dependencies: Map<string, string | undefined>,
-        globalDependencies: PipDepTree[],
-        projectName?: string
-    ): PipDepTree[][] {
-        if (!projectName) {
-            return [[], globalDependencies];
-        }
-        const index: number = globalDependencies.findIndex((dep: PipDepTree) => dep.key === projectName.toLocaleLowerCase());
-        if (index === -1) {
-            return [[], globalDependencies];
-        }
-        let [filtered, notFiltered] = this.filterDependencies(dependencies, globalDependencies[index].dependencies, true);
-        if (notFiltered.length === 0) {
-            globalDependencies = globalDependencies.filter((v, i) => i !== index);
-        } else {
-            globalDependencies[index].dependencies = notFiltered;
-        }
-        return [filtered, globalDependencies];
+        return filtered;
     }
 
     private static isVersionsEqual(dependencyFromPipDepTree: PipDepTree, depFromDescriptor: string, isSetupPy: boolean): boolean {
