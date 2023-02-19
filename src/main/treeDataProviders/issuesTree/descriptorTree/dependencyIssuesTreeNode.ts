@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import { ILicense } from 'jfrog-ide-webview';
 import { PackageType, toPackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
-import { DescriptorTreeNode } from './descriptorTreeNode';
 import { IComponent } from 'jfrog-client-js';
 import { CveTreeNode } from './cveTreeNode';
 import { LicenseIssueTreeNode } from './licenseIssueTreeNode';
 import { ContextKeys } from '../../../constants/contextKeys';
+import { ProjectDependencyTreeNode } from './projectDependencyTreeNode';
 
 export class DependencyIssuesTreeNode extends vscode.TreeItem {
     // Infer from data
@@ -19,7 +19,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     private _issues: (CveTreeNode | LicenseIssueTreeNode)[] = [];
     private _licenses: ILicense[] = [];
 
-    constructor(private _artifactId: string, component: IComponent, private _indirect: boolean, private _parent: DescriptorTreeNode) {
+    constructor(private _artifactId: string, component: IComponent, private _indirect: boolean, private _parent: ProjectDependencyTreeNode) {
         super(component.package_name);
 
         this._name = component.package_name;
@@ -101,7 +101,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         return cveTreeNodes;
     }
 
-    public get parent(): DescriptorTreeNode {
+    public get parent(): ProjectDependencyTreeNode {
         return this._parent;
     }
 
@@ -121,8 +121,11 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         return this._type;
     }
 
-    public getWorkspace(): string {
-        return this.parent.getDescriptorAbsPath();
+    /**
+     * @returns the file system path to the project descriptor directory or to the Python virtual environment
+     */
+    public getSourcePath(): string {
+        return this.parent.getProjectPath();
     }
 
     public getFixedVersionToCves() {

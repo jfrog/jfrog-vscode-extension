@@ -16,6 +16,7 @@ import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager } from './utils/utils.test';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { PackageType } from '../../main/types/projectType';
+import { PipDepTree } from '../../main/types/pipDepTree';
 
 /**
  * Test functionality of @class PypiUtils.
@@ -45,17 +46,6 @@ describe('Pypi Utils Tests', async () => {
             } as vscode.WorkspaceFolder);
         });
         createVirtualEnvironment();
-    });
-
-    /**
-     * Test PypiUtils.arePythonFilesExist.
-     */
-    it('Python files exist', async () => {
-        // Assert that results contains all projects
-        for (let workspaceFolder of workspaceFolders) {
-            let pythonFilesExist: boolean = await PypiUtils.arePythonFilesExist(workspaceFolder, treesManager.logManager);
-            assert.isTrue(pythonFilesExist, workspaceFolder.uri + ' should contain Python files');
-        }
     });
 
     /**
@@ -100,47 +90,60 @@ describe('Pypi Utils Tests', async () => {
      */
     it('Create Pypi Dependencies Trees', async () => {
         let localPython: string = getLocalPython();
-        // Test 'resources/python/requirements'
-        let dependenciesTreeNode: PypiTreeNode = new PypiTreeNode(
-            workspaceFolders[0].uri.fsPath,
-            treesManager,
-            path.join(workspaceFolders[0].uri.fsPath, localPython),
-            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown))
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('', '', [], '', PackageType.Unknown));
+        let tree: PipDepTree[] | undefined = PypiUtils.runPipDepTree(path.join(workspaceFolders[0].uri.fsPath, localPython), treesManager.logManager);
+        if (tree === undefined) {
+            assert.fail;
+            return;
+        }
+        let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            [workspaceFolders[0]],
+            treesManager.logManager
         );
-        dependenciesTreeNode.refreshDependencies();
-        assert.deepEqual(dependenciesTreeNode.label, 'requirements');
-        assert.deepEqual(dependenciesTreeNode.children.length, 5);
-        checkFireDependency(dependenciesTreeNode);
+        await PypiUtils.descriptorsToDependencyTrees(workspaceDescriptors.get(PackageType.Python) || [], tree, () => undefined, treesManager, parent);
+
+        // Test 'resources/python/requirements'
+        let node: PypiTreeNode | undefined = parent.children[0] as PypiTreeNode;
+        assert.deepEqual(node?.label, 'requirements.txt');
+        assert.deepEqual(node?.children.length, 3);
+        checkFireDependency(node);
 
         // Test 'resources/python/setup'
-        dependenciesTreeNode = new PypiTreeNode(
-            workspaceFolders[1].uri.fsPath,
-            treesManager,
-            path.join(workspaceFolders[1].uri.fsPath, localPython),
-            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown))
-        );
-        dependenciesTreeNode.refreshDependencies();
-        assert.deepEqual(dependenciesTreeNode.label, 'setup');
-        assert.deepEqual(dependenciesTreeNode.children.length, 3);
-        let snake: PypiTreeNode | undefined = <PypiTreeNode | undefined>dependenciesTreeNode.children.filter(child => child.label === 'snake').pop();
-        assert.isDefined(snake);
-        assert.deepEqual(snake!.children.length, 3);
-        checkFireDependency(snake!);
+        tree = PypiUtils.runPipDepTree(path.join(workspaceFolders[1].uri.fsPath, localPython), treesManager.logManager);
+        if (tree === undefined) {
+            assert.fail;
+            return;
+        }
+        workspaceDescriptors = await ScanUtils.locatePackageDescriptors([workspaceFolders[1]], treesManager.logManager);
+        await PypiUtils.descriptorsToDependencyTrees(workspaceDescriptors.get(PackageType.Python) || [], tree, () => undefined, treesManager, parent);
+        node = parent.children[1] as PypiTreeNode;
+        assert.deepEqual(node.label, 'setup.py');
+        assert.deepEqual(node.children.length, 3);
+        checkFireDependency(node);
 
         // Test 'resources/python/setupAndRequirements'
-        dependenciesTreeNode = new PypiTreeNode(
-            workspaceFolders[2].uri.fsPath,
-            treesManager,
-            path.join(workspaceFolders[2].uri.fsPath, localPython),
-            new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown))
-        );
-        dependenciesTreeNode.refreshDependencies();
-        assert.deepEqual(dependenciesTreeNode.label, 'setupAndRequirements');
-        assert.deepEqual(dependenciesTreeNode.children.length, 3);
-        snake = <PypiTreeNode | undefined>dependenciesTreeNode.children.filter(child => child.label === 'snake').pop();
-        assert.isDefined(snake);
-        assert.deepEqual(snake!.children.length, 3);
-        checkFireDependency(snake!);
+        parent = new DependenciesTreeNode(new GeneralInfo('', '', [], '', PackageType.Unknown));
+        tree = PypiUtils.runPipDepTree(path.join(workspaceFolders[2].uri.fsPath, localPython), treesManager.logManager);
+        if (tree === undefined) {
+            assert.fail;
+            return;
+        }
+        workspaceDescriptors = await ScanUtils.locatePackageDescriptors([workspaceFolders[2]], treesManager.logManager);
+        await PypiUtils.descriptorsToDependencyTrees(workspaceDescriptors.get(PackageType.Python) || [], tree, () => undefined, treesManager, parent);
+        node = parent.children.find(child => child.label === 'setup.py') as PypiTreeNode | undefined;
+        if (!node) {
+            assert.fail;
+            return;
+        }
+        assert.deepEqual(node?.label, 'setup.py');
+        assert.deepEqual(node?.children.length, 0);
+        node = parent.children.find(child => child.label === 'requirements.txt') as PypiTreeNode | undefined;
+        if (!node) {
+            assert.fail;
+            return;
+        }
+        assert.deepEqual(node.children.length, 3);
+        checkFireDependency(node);
     });
 
     function checkFireDependency(dependenciesTreeNode: PypiTreeNode) {

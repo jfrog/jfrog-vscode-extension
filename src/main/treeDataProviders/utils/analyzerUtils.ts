@@ -16,7 +16,7 @@ import { StepProgress } from './stepProgress';
 import { EosIssue, EosIssueLocation, EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
 import { ScanManager } from '../../scanLogic/scanManager';
 import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
-import { DescriptorIssuesData, WorkspaceIssuesData } from '../../types/issuesData';
+import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
 import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
 
 export class AnalyzerUtils {
@@ -97,20 +97,20 @@ export class AnalyzerUtils {
      * Populate the applicable data to the view (create file issue nodes)
      * @param root - the root to populate the data inside
      * @param descriptorNode - the node of the descriptor that the applicable data is related to
-     * @param descriptorData - the descriptor data with the applicable information inside
+     * @param dependencyScanResults - the descriptor data with the applicable information inside
      * @returns the number of issues that were populated from the data
      */
     public static populateApplicableIssues(
         root: IssuesRootTreeNode,
         descriptorNode: DescriptorTreeNode,
-        descriptorData: DescriptorIssuesData
+        dependencyScanResults: DependencyScanResults
     ): number {
         // Populate descriptor node with data
-        descriptorNode.scannedCve = new Set<string>(descriptorData.applicableIssues?.scannedCve ?? []);
+        descriptorNode.scannedCve = new Set<string>(dependencyScanResults.applicableIssues?.scannedCve ?? []);
         descriptorNode.applicableCve = new Map<string, CveApplicableDetails>(
-            descriptorData.applicableIssues ? Object.entries(descriptorData.applicableIssues.applicableCve) : []
+            dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.applicableCve) : []
         );
-        descriptorNode.applicableScanTimeStamp = descriptorData.applicableScanTimestamp;
+        descriptorNode.applicableScanTimeStamp = dependencyScanResults.applicableScanTimestamp;
 
         // Populate related CodeFile nodes with issues and update the descriptor CVE applicability details
         let issuesCount: number = 0;
@@ -201,7 +201,7 @@ export class AnalyzerUtils {
      * @param splitRequests - if true each request will be preformed on a different run, false all at once
      */
     public static async runEos(
-        workspaceData: WorkspaceIssuesData,
+        workspaceData: ScanResults,
         root: IssuesRootTreeNode,
         workspaceDescriptors: Map<PackageType, vscode.Uri[]>,
         scanManager: ScanManager,
@@ -277,7 +277,7 @@ export class AnalyzerUtils {
      * @param workspaceData - data to populate on node
      * @returns number of eos issues populated
      */
-    public static populateEosIssues(root: IssuesRootTreeNode, workspaceData: WorkspaceIssuesData): number {
+    public static populateEosIssues(root: IssuesRootTreeNode, workspaceData: ScanResults): number {
         root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
         let issuesCount: number = 0;
         if (workspaceData.eosScan && workspaceData.eosScan.filesWithIssues) {

@@ -179,7 +179,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
             .sort((lhs, rhs) => rhs.topSeverity - lhs.topSeverity);
     }
 
-    public getWorkingDir(): string {
-        return this._generalInfo.path;
+    public getChildByPath(path: string): DependenciesTreeNode | undefined {
+        return this.children.find(child => child._generalInfo.path === path);
     }
 }

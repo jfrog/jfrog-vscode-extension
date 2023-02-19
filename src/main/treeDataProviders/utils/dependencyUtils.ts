@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { IComponent, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
 import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
 import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
-import { DescriptorTreeNode } from '../issuesTree/descriptorTree/descriptorTreeNode';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { DependencyIssuesTreeNode } from '../issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
@@ -17,14 +15,11 @@ import { YarnUtils } from '../../utils/yarnUtils';
 import { IImpactGraph, ILicense } from 'jfrog-ide-webview';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { FocusType } from '../../constants/contextKeys';
-import { DescriptorIssuesData } from '../../types/issuesData';
+import { DependencyScanResults } from '../../types/workspaceIssuesDetails';
+import { EnvironmentTreeNode } from '../issuesTree/descriptorTree/environmentTreeNode';
+import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectDependencyTreeNode';
 
-export class DescriptorUtils {
-    public static readonly DESCRIPTOR_SELECTOR: vscode.DocumentSelector = {
-        scheme: 'file',
-        pattern: '**/{go.mod,package.json,pom.xml,*requirements*.txt,yarn.lock}'
-    };
-
+export class DependencyUtils {
     /**
      * Creates a map for each Xray issue in a component (key= issue_id+componentId) in the response to the impact path in the given dependency graph.
      * @param descriptorGraph - the descriptor full dependency graph
@@ -109,16 +104,16 @@ export class DescriptorUtils {
     }
 
     /**
-     * Populate the provided issues data to the descriptor node (view element)
-     * @param descriptorNode - the descriptor node that will be populated
-     * @param descriptorData - the issues data that the descriptor has
+     * Populate the provided issues data to the project node (view element)
+     * @param projectNode - the project node that will be populated
+     * @param dependencyScanResults - the issues data that the descriptor has
      * @returns the number of issues was populated in the descriptor node
      */
-    public static populateDescriptorData(descriptorNode: DescriptorTreeNode, descriptorData: DescriptorIssuesData): number {
+    public static populateDependencyScanResults(projectNode: ProjectDependencyTreeNode, dependencyScanResults: DependencyScanResults): number {
         // Get the information from data
-        let graphResponse: IGraphResponse = descriptorData.dependenciesGraphScan;
-        descriptorNode.dependencyScanTimeStamp = descriptorData.graphScanTimestamp;
-        let impactedPaths: Map<string, IImpactGraph> = new Map<string, IImpactGraph>(Object.entries(descriptorData.impactTreeData));
+        let graphResponse: IGraphResponse = dependencyScanResults.dependenciesGraphScan;
+        projectNode.dependencyScanTimeStamp = dependencyScanResults.graphScanTimestamp;
+        let impactedPaths: Map<string, IImpactGraph> = new Map<string, IImpactGraph>(Object.entries(dependencyScanResults.impactTreeData));
         let directComponents: Set<string> = this.getDirectComponents(impactedPaths);
         let issues: IVulnerability[] | IViolation[] = graphResponse.violations || graphResponse.vulnerabilities;
         // Populate issues
@@ -131,13 +126,12 @@ export class DescriptorUtils {
                 if (!impactedPath) {
                     continue;
                 }
-                let dependencyWithIssue: DependencyIssuesTreeNode = descriptorNode.addNode(
+                let dependencyWithIssue: DependencyIssuesTreeNode = projectNode.addNode(
                     artifactId,
                     component,
                     // Search if the dependency is indirect
                     !directComponents.has(component.package_name + ':' + component.package_version)
                 );
-
                 let matchIssue: IssueTreeNode | undefined = dependencyWithIssue.issues.find(issueExists => issueExists.issueId === issue.issue_id);
                 let violationIssue: IViolation = <IViolation>issue;
                 if (matchIssue && violationIssue.watch_name && !matchIssue.watchNames.includes(violationIssue.watch_name)) {
@@ -155,12 +149,12 @@ export class DescriptorUtils {
                 Object.entries(license.components)
                     .map(entry => entry[0])
                     .forEach(componentId => {
-                        let dependencyWithIssue: DependencyIssuesTreeNode | undefined = descriptorNode.getDependencyByID(componentId);
+                        let dependencyWithIssue: DependencyIssuesTreeNode | undefined = projectNode.getDependencyByID(componentId);
                         dependencyWithIssue?.licenses.push({ name: license.license_key } as ILicense);
                     });
             });
         }
-        return descriptorNode.dependenciesWithIssue.length;
+        return projectNode.dependenciesWithIssue.length;
     }
 
     /**
@@ -191,10 +185,9 @@ export class DescriptorUtils {
      */
     public static getDependencyGraph(workspaceDependenciesTree: DependenciesTreeNode, descriptorPath: string): RootNode | undefined {
         // Search for the dependency graph of the descriptor
-        let descriptorDir: string = path.dirname(descriptorPath);
         for (const child of workspaceDependenciesTree.children) {
             if (child instanceof RootNode) {
-                let graph: RootNode | undefined = this.searchDependencyGraph(descriptorDir, child);
+                let graph: RootNode | undefined = this.searchDependencyGraph(descriptorPath, child);
                 if (graph) {
                     return graph;
                 }
@@ -225,6 +218,9 @@ export class DescriptorUtils {
      * @returns - list of ranges, one for each direct dependency
      */
     public static async getDirectDependenciesLocations(dependency: DependencyIssuesTreeNode): Promise<vscode.Range[]> {
+        if (dependency.parent instanceof EnvironmentTreeNode) {
+            return [];
+        }
         let document: vscode.TextDocument = await vscode.workspace.openTextDocument(dependency.parent.fullPath);
         if (dependency.indirect) {
             // Collect direct dependencies from all the issues impact tree first children
