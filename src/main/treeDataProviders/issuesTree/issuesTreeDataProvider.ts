@@ -70,9 +70,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         }
         if (!scan) {
             this._logManager.logMessage('Refresh: loading data from cache', 'INFO');
-            this.loadFromCache();
+            await this.loadFromCache();
             return;
         }
+        await this.scan();
+    }
+
+    public async scan() {
         if (this._scanInProgress) {
             vscode.window.showInformationMessage('Previous scan still running...');
             return;

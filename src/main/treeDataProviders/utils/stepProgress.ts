@@ -16,7 +16,9 @@ export class StepProgress {
 
     constructor(
         private _progress: vscode.Progress<{ message?: string; increment?: number }>,
-        public onProgress?: () => void,
+        public onProgress: () => void = () => {
+            //
+        },
         totalSteps?: number,
         private _log?: LogManager
     ) {
@@ -44,14 +46,12 @@ export class StepProgress {
     }
 
     public activateOnProgress() {
-        if (this.onProgress) {
-            try {
-                this.onProgress();
-            } catch (error) {
-                if (error instanceof ScanCancellationError) {
-                    this.abortController.abort();
-                    throw error;
-                }
+        try {
+            this.onProgress();
+        } catch (error) {
+            if (error instanceof ScanCancellationError) {
+                this.abortController.abort();
+                throw error;
             }
         }
     }
