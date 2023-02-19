@@ -1,7 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
 import nock from 'nock';
-// import * as crypto from 'crypto';
 import { assert } from 'chai';
 import { LogManager } from '../../main/log/logManager';
 import { Resource } from '../../main/utils/resource';

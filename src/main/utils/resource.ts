@@ -59,7 +59,7 @@ export class Resource {
         if (fs.existsSync(this._targetDir)) {
             ScanUtils.removeFolder(this._targetDir);
         }
-        ScanUtils.extractZip(filePath, this._targetDir);
+        Utils.extractZip(filePath, this._targetDir);
     }
 
     /**

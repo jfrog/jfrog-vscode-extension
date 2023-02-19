@@ -51,7 +51,6 @@ export class ScanManager implements ExtensionComponent {
             progress.report({ message: 'Get outdated resources' });
             let resources: Resource[] = await this.getOutdatedResources();
             if (resources.length === 0) {
-                // Noting to do
                 return;
             }
             let progressManager: StepProgress = new StepProgress(progress);
@@ -115,7 +114,7 @@ export class ScanManager implements ExtensionComponent {
 
     private async getResources(): Promise<Resource[]> {
         let resources: Resource[] = [];
-        if (await this.validateAnalyzerManagerSupported()) {
+        if (await this.isAnalyzerManagerSupported()) {
             resources.push(BinaryRunner.getAnalyzerManagerResource(this._logManager));
         } else {
             this.logManager.logMessage('You are not entitled to run contextual analysis scans', 'WARN');
@@ -130,21 +129,21 @@ export class ScanManager implements ExtensionComponent {
         return await ConnectionUtils.testXrayVersionForScanGraph(this._connectionManager.createJfrogClient(), this._logManager);
     }
 
-    public async validateAnalyzerManagerSupported(): Promise<boolean> {
+    public async isAnalyzerManagerSupported(): Promise<boolean> {
         return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), 'contextual_analysis');
     }
 
     /**
      * Validate if the applicable-scan is supported
      */
-    public validateApplicableSupported(): boolean {
+    public isApplicableSupported(): boolean {
         return new ApplicabilityRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).validateSupported();
     }
 
     /**
      * Validate if the eos-scan is supported
      */
-    public validateEosSupported(): boolean {
+    public isEosSupported(): boolean {
         return new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).validateSupported();
     }
 

@@ -430,7 +430,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             .catch(error => this.onFileScanError(workspaceScanDetails, root, error, workspaceIssues))
             .finally(() => progressManager.activateOnProgress());
         // Applicable scan task
-        if (!this._scanManager.validateApplicableSupported() || !foundIssues) {
+        if (!this._scanManager.isApplicableSupported() || !foundIssues) {
             progressManager.reportProgress();
             return;
         }
