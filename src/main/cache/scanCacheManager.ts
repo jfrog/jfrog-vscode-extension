@@ -14,6 +14,7 @@ import { ScanCacheObject } from './scanCacheObject';
 import { CveDetails, ProjectComponents } from '../types/projectComponents';
 import { IProjectDetailsCacheObject } from '../types/IProjectDetailsCacheObject';
 import { ScanUtils } from '../utils/scanUtils';
+import { Utils } from '../utils/utils';
 
 /**
  * Provide the cache mechanism. The scan cache consists of 3 components -
@@ -49,15 +50,9 @@ export class ScanCacheManager implements ExtensionComponent {
         // CVEs found in the workspace.
         this._projectCvesCache = path.join(storageDir, 'scanned-cves');
         this._licensesCache = path.join(storageDir, 'licenses');
-        if (!fs.existsSync(this._issuesCache)) {
-            fs.mkdirSync(this._issuesCache, { recursive: true } as fs.MakeDirectoryOptions);
-        }
-        if (!fs.existsSync(this._projectCvesCache)) {
-            fs.mkdirSync(this._projectCvesCache, { recursive: true } as fs.MakeDirectoryOptions);
-        }
-        if (!fs.existsSync(this._licensesCache)) {
-            fs.mkdirSync(this._licensesCache);
-        }
+        Utils.createDirIfNotExists(this._issuesCache);
+        Utils.createDirIfNotExists(this._projectCvesCache);
+        Utils.createDirIfNotExists(this._licensesCache);
         this._isOutdated = this._scanCache.get(ScanCacheManager.CACHE_VERSION_KEY) !== ScanCacheManager.CACHE_VERSION;
         return this;
     }

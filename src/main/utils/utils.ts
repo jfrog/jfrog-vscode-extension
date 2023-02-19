@@ -67,9 +67,7 @@ export class Utils {
         if (!fs.existsSync(zipPath)) {
             return '';
         }
-        if (!fs.existsSync(targetDir)) {
-            fs.mkdirSync(targetDir, { recursive: true });
-        }
+        Utils.createDirIfNotExists(targetDir);
         let zip: AdmZip = new AdmZip(zipPath);
         let fileCount: number = 0;
         let totalSize: number = 0;
@@ -117,6 +115,12 @@ export class Utils {
 
     public static addWinSuffixIFNeeded(str: string): string {
         return str + (os.platform() === 'win32' ? '.exe' : '');
+    }
+
+    public static createDirIfNotExists(dirPath: string, createRecursive: boolean = true) {
+        if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: createRecursive } as fs.MakeDirectoryOptions);
+        }
     }
 }
 

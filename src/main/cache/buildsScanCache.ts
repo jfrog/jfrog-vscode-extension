@@ -19,9 +19,7 @@ export class BuildsScanCache {
 
     constructor(private _projectKey: string, private _url: string, private _logger: LogManager) {
         this.buildsDir = path.resolve(BuildsScanCache.CACHE_BASE_PATH, ScanUtils.Hash('sha1', this._projectKey + '_' + this._url));
-        if (!fs.existsSync(this.buildsDir)) {
-            fs.mkdirSync(this.buildsDir, { recursive: true });
-        }
+        Utils.createDirIfNotExists(this.buildsDir);
         this.cleanUpOldBuilds();
     }
 
