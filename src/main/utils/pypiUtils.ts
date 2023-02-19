@@ -152,7 +152,7 @@ export class PypiUtils {
      */
     public static isInVirtualEnv(pythonPath: string, logManager: LogManager): boolean {
         try {
-            ScanUtils.executeCmd(pythonPath + ' ' + PypiUtils.CHECK_VENV_SCRIPT);
+            ScanUtils.executeCmd(`"${pythonPath}" "${PypiUtils.CHECK_VENV_SCRIPT}"`);
             return true;
         } catch (error) {
             logManager.logError(<any>error, false);
@@ -163,7 +163,7 @@ export class PypiUtils {
     public static runPipDepTree(pythonPath: string, logManager: LogManager): PipDepTree[] | undefined {
         let projectDependencies: PipDepTree[] | undefined;
         try {
-            projectDependencies = JSON.parse(ScanUtils.executeCmd(pythonPath + ' ' + PypiUtils.PIP_DEP_TREE_SCRIPT + ' --json-tree').toString());
+            projectDependencies = JSON.parse(ScanUtils.executeCmd(`"${pythonPath}" "${PypiUtils.PIP_DEP_TREE_SCRIPT}" --json-tree`).toString());
         } catch (error) {
             logManager.logError(<any>error, true);
         }
