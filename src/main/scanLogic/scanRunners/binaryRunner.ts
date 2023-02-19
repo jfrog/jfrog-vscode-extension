@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as os from 'os';
 import yaml from 'js-yaml';
 import * as path from 'path';
 
@@ -12,6 +11,7 @@ import { ConnectionUtils } from '../../connect/connectionUtils';
 import { IProxyConfig } from 'jfrog-client-js';
 import { Configuration } from '../../utils/configuration';
 import { Resource } from '../../utils/resource';
+import { RunUtils } from '../../utils/runUtils';
 
 /**
  * Arguments for running binary async
@@ -45,11 +45,11 @@ export abstract class BinaryRunner {
     protected _runDirectory: string;
 
     private static readonly RUNNER_NAME: string = 'analyzerManager';
-    private static readonly RUNNER_FOLDER: string = path.join(ScanUtils.getIssuesPath(), BinaryRunner.getBinaryName());
+    private static readonly RUNNER_FOLDER: string = path.join(ScanUtils.getIssuesPath(), BinaryRunner.RUNNER_NAME);
 
     private static readonly NOT_ENTITLED: number = 31;
 
-    private static readonly DOWNLOAD_URL: string = ''; // '/mid-path-can-be-empty/';
+    private static readonly DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/[RELEASE]/';
 
     constructor(
         protected _connectionManager: ConnectionManager,
@@ -67,32 +67,10 @@ export abstract class BinaryRunner {
 
     public static getAnalyzerManagerResource(logManager: LogManager): Resource {
         return new Resource(
-            Utils.addZipSuffix(BinaryRunner.DOWNLOAD_URL + BinaryRunner.getBinaryName()),
-            Utils.addWinSuffixIFNeeded(path.join(BinaryRunner.RUNNER_FOLDER, BinaryRunner.getBinaryName())),
+            Utils.addZipSuffix(BinaryRunner.DOWNLOAD_URL + Utils.getArchitecture() + '/' + BinaryRunner.RUNNER_NAME),
+            Utils.addWinSuffixIFNeeded(path.join(BinaryRunner.RUNNER_FOLDER, BinaryRunner.RUNNER_NAME)),
             logManager
         );
-    }
-
-    /**
-     * Get the binary name for the runner base on the running os
-     * @returns the name of the expected binary file to run
-     */
-    protected static getBinaryName(): string {
-        let name: string = BinaryRunner.RUNNER_NAME;
-        switch (os.platform()) {
-            case 'win32':
-                return name + '_windows';
-            case 'linux':
-                return name + '_linux';
-            case 'darwin':
-                name += '_mac';
-                if (os.arch() === 'arm' || os.arch() === 'arm64') {
-                    return name + '_arm';
-                } else {
-                    return name + '_amd';
-                }
-        }
-        return name;
     }
 
     /**
@@ -117,29 +95,18 @@ export abstract class BinaryRunner {
      * @param args - the arguments for the command
      */
     protected async executeBinary(abortSignal: AbortSignal, args: string[]): Promise<void> {
-        let tasksInfo: { activeTasks: number; signal: AbortSignal; tasks: Promise<any>[] } = { activeTasks: 1, signal: abortSignal, tasks: [] };
-        // Add execute cmd task
-        tasksInfo.tasks.push(
-            ScanUtils.executeCmdAsync('"' + this._binary.fullPath + '" ' + args.join(' '), this._runDirectory, this.createEnvForRun())
-                .then(std => {
-                    if (std.stdout && std.stdout.length > 0) {
-                        this._logManager.logMessage(
-                            "Done executing '" + Utils.getLastSegment(this._binary.fullPath) + "' with log, log:\n" + std.stdout,
-                            'DEBUG'
-                        );
-                    }
-                    if (std.stderr && std.stderr.length > 0) {
-                        this._logManager.logMessage(
-                            "Done executing '" + Utils.getLastSegment(this._binary.fullPath) + "' with error, error log:\n" + std.stderr,
-                            'ERR'
-                        );
-                    }
-                })
-                .finally(() => tasksInfo.activeTasks--)
+        await RunUtils.withAbortSignal(
+            abortSignal,
+            this._abortCheckInterval,
+            ScanUtils.executeCmdAsync('"' + this._binary.fullPath + '" ' + args.join(' '), this._runDirectory, this.createEnvForRun()).then(std => {
+                if (std.stdout && std.stdout.length > 0) {
+                    this._logManager.logMessage("Done executing '" + this._binary.name + "' with log, log:\n" + std.stdout, 'DEBUG');
+                }
+                if (std.stderr && std.stderr.length > 0) {
+                    this._logManager.logMessage("Done executing '" + this._binary.name + "' with error, error log:\n" + std.stderr, 'ERR');
+                }
+            })
         );
-        // Add check abort task
-        tasksInfo.tasks.push(this.checkIfAbortedTask(tasksInfo));
-        await Promise.all(tasksInfo.tasks);
     }
 
     /**
@@ -253,28 +220,6 @@ export abstract class BinaryRunner {
     }
 
     /**
-     * Async task that checks if an abort signal was given every this._abortCheckInterval milliseconds.
-     * If the active task is <= 0 the task is completed
-     * @param taskInfo - an object that holds the information about the active async tasks count and the abort signal for them
-     */
-    private async checkIfAbortedTask(taskInfo: { activeTasks: number; signal: AbortSignal }): Promise<void> {
-        while (taskInfo.activeTasks > 0) {
-            if (taskInfo.signal.aborted) {
-                throw new ScanCancellationError();
-            }
-            await this.delay(this._abortCheckInterval);
-        }
-    }
-
-    /**
-     * Sleep and delay task for sleepIntervalMilliseconds
-     * @param sleepIntervalMilliseconds - the amount of time in milliseconds to wait
-     */
-    private async delay(sleepIntervalMilliseconds: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, sleepIntervalMilliseconds));
-    }
-
-    /**
      * Run the runner async, and perform the given run requests using this binary.
      * @param abortController - the abort controller that signals on a cancel/abort request
      * @param split - if true the runner will be run separately for all the requests otherwise all the requests will be performed together
@@ -347,10 +292,7 @@ export abstract class BinaryRunner {
                 if (error.code === BinaryRunner.NOT_ENTITLED) {
                     throw new NotEntitledError();
                 }
-                this._logManager.logMessage(
-                    "Binary '" + Utils.getLastSegment(this._binary.fullPath) + "' task ended with status code: " + error.code,
-                    'ERR'
-                );
+                this._logManager.logMessage("Binary '" + this._binary.name + "' task ended with status code: " + error.code, 'ERR');
             }
             throw error;
         });
@@ -358,7 +300,7 @@ export abstract class BinaryRunner {
         let analyzerScanResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (const responsePath of responsePaths) {
             if (!fs.existsSync(responsePath)) {
-                throw new Error("Running '" + Utils.getLastSegment(this._binary.fullPath) + "' binary didn't produce response.\nRequest: " + request);
+                throw new Error("Running '" + this._binary.name + "' binary didn't produce response.\nRequest: " + request);
             }
             // Load result and parse as response
             let result: AnalyzerScanResponse = JSON.parse(fs.readFileSync(responsePath, 'utf8').toString());

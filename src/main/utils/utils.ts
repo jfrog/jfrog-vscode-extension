@@ -122,6 +122,23 @@ export class Utils {
             fs.mkdirSync(dirPath, { recursive: createRecursive } as fs.MakeDirectoryOptions);
         }
     }
+
+    public static getArchitecture(): string {
+        if (Utils.isWindows()) {
+            return 'windows-amd64';
+        }
+        if (os.platform().includes('darwin')) {
+            return os.arch() === 'arm64' ? 'mac-arm64' : 'mac-386';
+        }
+        if (os.arch().includes('arm')) {
+            return os.arch().includes('64') ? 'linux-arm64' : 'linux-arm';
+        }
+        return os.arch().includes('64') ? 'linux-amd64' : 'linux-386';
+    }
+
+    public static isWindows(): boolean {
+        return os.platform().startsWith('win');
+    }
 }
 
 export class ZipExtractError extends Error {
