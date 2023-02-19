@@ -3,6 +3,7 @@ import { IDetailsResponse } from 'jfrog-client-js';
 import * as path from 'path';
 import { LogManager } from '../log/logManager';
 import { ScanUtils } from '../utils/scanUtils';
+import { Utils } from '../utils/utils';
 
 export enum Type {
     BUILD_INFO,
@@ -41,11 +42,11 @@ export class BuildsScanCache {
     }
 
     public save(content: string, timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): void {
-        ScanUtils.saveAsZip(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type), { fileName: type.toString(), content: content });
+        Utils.saveAsZip(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type), { fileName: type.toString(), content: content });
     }
 
     public load(timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): any {
-        return ScanUtils.extractZipEntry(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type), type.toString());
+        return Utils.extractZipEntry(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type), type.toString());
     }
 
     public loadBuildInfo(timestamp: string, buildName: string, buildNumber: string, projectKey: string): any {
