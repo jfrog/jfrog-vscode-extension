@@ -17,6 +17,7 @@ export class ScanUtils {
 
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
+    public static readonly DESCRIPTOR_PATTERN: string = '**/{go.mod,pom.xml,package.json,yarn.lock,*.sln,setup.py,requirements*.txt}';
 
     public static async scanWithProgress(
         scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => Promise<void>,

@@ -75,7 +75,7 @@ export class CodeFileActionProvider extends AbstractFileActionProvider implement
         if (!tree) {
             return;
         }
-        this._treesManager.logManager.logMessage("Creating applicable diagnostics for issue '" + tree.fullPath + "'", 'DEBUG');
+        this._treesManager.logManager.logMessage("Creating applicable diagnostics for issue '" + tree.projectFilePath + "'", 'DEBUG');
         this.addUnderlineToIssues(document, tree.issues);
         this.addGutterToIssues(document, tree.issues);
     }

@@ -55,7 +55,7 @@ export class AnalyzerUtils {
      */
     public static getOrCreateCodeFileNode(root: IssuesRootTreeNode, filePath: string): CodeFileTreeNode {
         let actualPath: string = this.parseLocationFilePath(filePath);
-        let node: FileTreeNode | undefined = root.children.find(child => actualPath == child.fullPath);
+        let node: FileTreeNode | undefined = root.children.find(child => actualPath == child.projectFilePath);
         if (node instanceof CodeFileTreeNode) {
             return node;
         }

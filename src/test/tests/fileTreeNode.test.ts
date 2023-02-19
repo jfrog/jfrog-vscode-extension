@@ -75,11 +75,11 @@ describe('File Node Tests', () => {
         it('Description test - ' + testCase.test, () => {
             let testNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data);
             // No parent
-            assert.equal(testNode.description, testNode.fullPath);
+            assert.equal(testNode.description, testNode.projectFilePath);
             // Local path not in parent path
             testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: path.join('nowhere') } as vscode.Uri } as vscode.WorkspaceFolder);
             testNode.apply();
-            assert.equal(testNode.description, testNode.fullPath);
+            assert.equal(testNode.description, testNode.projectFilePath);
             // Parent in path, parent is root
             testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: path.join('root', 'folder') } as vscode.Uri } as vscode.WorkspaceFolder);
             testNode.apply();
@@ -113,8 +113,8 @@ describe('File Node Tests', () => {
         it('Tooltip test - ' + testCase.test, () => {
             let testNode: FileTreeNode = createAndPopulateFileTestNode(testCase.data);
             // Check path
-            assert.equal(testNode.fullPath, testCase.data.path);
-            assert.include(testNode.tooltip, 'Full path: ' + testNode.fullPath);
+            assert.equal(testNode.projectFilePath, testCase.data.path);
+            assert.include(testNode.tooltip, 'Full path: ' + testNode.projectFilePath);
             // Check issue count
             assert.equal(testNode.issues.length, testCase.data.issues.length);
             assert.include(testNode.tooltip, 'Issues count: ' + testNode.issues.length);

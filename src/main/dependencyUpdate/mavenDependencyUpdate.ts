@@ -16,7 +16,7 @@ export class MavenDependencyUpdate extends AbstractDependencyUpdate {
 
     /** @override */
     public update(dependency: DependencyIssuesTreeNode, version: string): void {
-        const workspace: string = dependency.getProjectPath();
+        const workspace: string = dependency.getDependencyProjectPath();
         const [groupId, artifactId] = MavenUtils.getGavArray(dependency);
         ScanUtils.executeCmd(
             'mvn versions:use-dep-version -DgenerateBackupPoms=false -Dincludes=' + groupId + ':' + artifactId + ' -DdepVersion=' + version,

@@ -224,7 +224,7 @@ export class DependencyUtils {
         if (dependency.parent instanceof EnvironmentTreeNode) {
             return [];
         }
-        let document: vscode.TextDocument = await vscode.workspace.openTextDocument(dependency.parent.fullPath);
+        let document: vscode.TextDocument = await vscode.workspace.openTextDocument(dependency.parent.projectFilePath);
         if (dependency.indirect) {
             // Collect direct dependencies from all the issues impact tree first children
             let ranges: vscode.Range[] = [];

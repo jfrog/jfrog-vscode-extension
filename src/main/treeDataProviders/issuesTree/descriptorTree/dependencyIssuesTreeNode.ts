@@ -123,8 +123,12 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         return this._type;
     }
 
-    public getProjectPath(): string {
+    public getDependencyProjectPath(): string {
         return this.parent.getProjectPath();
+    }
+
+    public getDependencyFilePath(): string {
+        return this.parent.getProjectFilePath();
     }
 
     public getFixedVersionToCves() {
