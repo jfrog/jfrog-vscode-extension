@@ -180,7 +180,7 @@ export class ConnectionUtils {
         return true;
     }
 
-    public static async testXrayEntitlement(jfrogClient: JfrogClient, feature: string): Promise<boolean> {
+    public static async testXrayEntitlementForFeature(jfrogClient: JfrogClient, feature: string): Promise<boolean> {
         return await jfrogClient
             .xray()
             .entitlements()

@@ -131,7 +131,7 @@ export class ScanManager implements ExtensionComponent {
     }
 
     public async validateAnalyzerManagerSupported(): Promise<boolean> {
-        return await ConnectionUtils.testXrayEntitlement(this._connectionManager.createJfrogClient(), 'contextual_analysis');
+        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), 'contextual_analysis');
     }
 
     /**
