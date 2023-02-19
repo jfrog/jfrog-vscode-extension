@@ -26,7 +26,8 @@
   - [Using the Extension](#using-the-extension)
   - [The Local View](#the-local-view)
     - [Supported Features](#supported-features)
-    - [Dependencies Tree Icons](#dependencies-tree-icons)
+    - [Extension Icons](#extension-icons)
+    - [Scanning, Viewing and Updating Project Vulnerabilities](#scanning-viewing-and-updating-project-vulnerabilities)
     - [Viewing and Updating Project Dependencies](#viewing-and-updating-project-dependencies)
     - [Scan after dependencies change](#scan-after-dependencies-change)
     - [Exclude Paths from Scan](#exclude-paths-from-scan)
@@ -166,15 +167,13 @@ With this information, a developer can make an informed decision on whether to u
 | Features                                                | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
 | ------------------------------------------------------- | :----------------: | :----------------------: | :------------------: | :--------------------: | :--------------------: | :-------------------: |
 | Issues and licenses scanning                            |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
-| Filter dependencies by severity, license, and scope     |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
-| Trigger scan on startup                                 |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
-| Jump from dependency tree to project descriptor         |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
-| Jump from project descriptor to dependency tree         |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
-| Show vulnerabilities inside the project descriptor      |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
-| Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ✅           |           ❌           |          ✅           |
+| Contextual analysis scanning      |         ❌         |            ❌            |          ✅          |           ✅           |           ✅           |          ❌           |
+| Show vulnerabilities inside the project files      |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
+| Upgrade vulnerable dependencies to fixed versions       |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
+| Jump from issues tree to the locations in the editor         |         ✅         |            ✅            |          ✅          |           ✅           |           ✅           |          ✅           |
 
 
-### Dependencies Tree Icons
+### Extension Icons
 The following table describes the severities from lowest to highest:
 
 |                 Icon                | Severity |                                       Description                                      |
@@ -190,6 +189,8 @@ The following table describes the severities from lowest to highest:
 |   ![Medium](resources/Medium.svg)   |  Medium  | Issue with medium severity                                                         |
 |     ![High](resources/High.svg)     |   High   | Issue with high severity                                                           |
 | ![Critical](resources/Critical.svg) | Critical | Issue with critical severity                                                       |
+
+### Scanning, Viewing and Updating Project Vulnerabilities
 
 ### Viewing and Updating Project Dependencies
 View the dependencies used by the project in a tree, where the direct dependencies are at the top.
