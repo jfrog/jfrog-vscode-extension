@@ -142,7 +142,7 @@ export class Resource {
             return undefined;
         }
         const fileBuffer: Buffer = fs.readFileSync(filePath);
-        return ScanUtils.Hash('sha256', fileBuffer.toString());
+        return ScanUtils.Hash('SHA256', fileBuffer);
     }
 
     public get fullPath(): string {

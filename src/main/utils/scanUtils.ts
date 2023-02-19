@@ -200,7 +200,7 @@ export class ScanUtils {
      * @param data - The data to hash
      * @returns hashed data in Hex
      */
-    static Hash(algorithm: string, data: string): string {
+    static Hash(algorithm: string, data: crypto.BinaryLike): string {
         return crypto
             .createHash(algorithm)
             .update(data)
