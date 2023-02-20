@@ -35,7 +35,7 @@ interface DirectDependencyIssue {
 export class DescriptorActionProvider extends AbstractFileActionProvider implements vscode.CodeActionProvider {
     public static readonly DESCRIPTOR_SELECTOR: vscode.DocumentSelector = {
         scheme: 'file',
-        pattern: '**/{go.mod,package.json,pom.xml,*requirements*.txt,yarn.lock}'
+        pattern: '**/{go.mod,package.json,pom.xml,*requirements*.txt,yarn.lock,*.csproj,packages.config}'
     };
 
     private _processedMap: Map<vscode.Uri, Map<string, DirectDependencyInfo>> = new Map<vscode.Uri, Map<string, DirectDependencyInfo>>();

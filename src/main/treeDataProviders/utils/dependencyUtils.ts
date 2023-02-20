@@ -18,6 +18,7 @@ import { FocusType } from '../../constants/contextKeys';
 import { DependencyScanResults } from '../../types/workspaceIssuesDetails';
 import { EnvironmentTreeNode } from '../issuesTree/descriptorTree/environmentTreeNode';
 import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectDependencyTreeNode';
+import { NugetUtils } from '../../utils/nugetUtils';
 
 export class DependencyUtils {
     /**
