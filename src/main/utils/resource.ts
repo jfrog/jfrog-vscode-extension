@@ -58,6 +58,8 @@ export class Resource {
         if (tempPath.endsWith('.zip')) {
             Utils.removeDirIfExists(this._targetDir);
             Utils.extractZip(tempPath, this._targetDir);
+            // Copy zip file to folder to calculate checksum
+            fs.copyFileSync(tempPath, this.getTargetPathAsZip());
         } else {
             Utils.removeFileIfExists(this._targetPath);
             fs.copyFileSync(tempPath, this._targetPath);
@@ -93,6 +95,15 @@ export class Resource {
         return fs.existsSync(this._targetPath);
     }
 
+    private getTargetPathAsZip(): string {
+        if (this._targetPath.endsWith('.zip')) {
+            return this._targetPath;
+        }
+        let extensionIdx: number = this.name.indexOf('.');
+        let cleanName: string = extensionIdx > 0 ? this.name.substring(0, extensionIdx) : this.name;
+        return Utils.addZipSuffix(path.join(this._targetDir, cleanName));
+    }
+
     /**
      * Check if the resource is outdated and has a new version to update.
      * Sets the remoteSha256 attribute base on the most recent value in the remote server.
@@ -109,7 +120,9 @@ export class Resource {
             // In case of failure download anyway to make sure
             return true;
         }
-        return this._cacheRemoteSha256 !== this.calculateLocalChecksum(this._targetPath);
+        return (
+            this._cacheRemoteSha256 !== this.calculateLocalChecksum(this.sourceUrl.includes('.zip') ? this.getTargetPathAsZip() : this._targetPath)
+        );
     }
 
     private async calculateRemoteChecksum(): Promise<string | undefined> {
