@@ -25,14 +25,13 @@ export class NugetUtils {
         treesManager: TreesManager,
         parent: DependenciesTreeNode,
         checkCanceled: () => void
-    ): Promise<vscode.Uri[]> {
+    ): Promise<void> {
         let solutions: vscode.Uri[] | undefined = this.filterSolutions(solutionsAndProjects);
         if (!solutions) {
             treesManager.logManager.logMessage('No *.sln files found in workspaces.', 'DEBUG');
-            return [];
+            return;
         }
         treesManager.logManager.logMessage('Solution files to scan: [' + solutions.toString() + ']', 'DEBUG');
-        let updatedDescriptorList: vscode.Uri[] = [];
         for (let solution of solutions) {
             checkCanceled();
             let projectsInSolutions: vscode.Uri[] | undefined = this.filterProjects(solutionsAndProjects, solution);
@@ -51,7 +50,6 @@ export class NugetUtils {
                 }
             }
         }
-        return updatedDescriptorList;
     }
 
     private static getPackagesConfigUri(projectUri: vscode.Uri): vscode.Uri | undefined {

@@ -13,7 +13,7 @@ import { ContextKeys } from '../constants/contextKeys';
 import * as util from 'util';
 export class ScanUtils {
     public static readonly DESCRIPTOR_SELECTOR_PATTERN: string =
-        '**/{go.mod,package.json,pom.xml,*requirements*.txt,yarn.lock,*.csproj,*.sln,packages.config}';
+        '**/{go.mod,package.json,pom.xml,setup.py,*requirements*.txt,yarn.lock,*.csproj,*.sln,packages.config}';
 
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;

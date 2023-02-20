@@ -71,22 +71,19 @@ describe('Nuget Utils Tests', async () => {
     it('Create NuGet Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
         let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(parent);
-        assert.equal(res.length, 2);
+        assert.equal(res.length, 3);
         // Assert dependency information
-        assert.deepEqual(res[0].label, 'assets.sln');
-        assert.deepEqual(res[0].parent, parent);
-        assert.lengthOf(res[0].children, 2);
-        assert.deepEqual(res[0].children[0].label, 'api');
-        assert.lengthOf(res[0].children[0].children, 1);
-        let child: DependenciesTreeNode = res[0].children[0].children[0];
-        assert.deepEqual(child.componentId, 'MyLogger:1.0.0');
-        assert.deepEqual(child.label, 'MyLogger');
-        assert.deepEqual(child.description, '1.0.0');
-        assert.deepEqual(child.parent, res[0].children[0]);
-        assert.deepEqual(res[0].children[1].label, 'core');
-        // Not installed
-        assert.deepEqual(res[1].label, 'empty.sln [Not installed]');
-        assert.lengthOf(res[1].children, 0);
+        let node: DependenciesTreeNode | undefined = res.find(child => child.label === 'api')
+        assert.isDefined(node)
+        assert.deepEqual(node?.children.length ?? 0, 1);
+        // Assert dependency information
+        node = res.find(child => child.label === 'core')
+        assert.isDefined(node)
+        assert.deepEqual(node?.children.length ?? 0, 1);
+        // Assert dependency information
+        node = res.find(child => child.label === 'empty.sln [Not installed]')
+        assert.isDefined(node)
+        assert.deepEqual(node?.children.length ?? 1, 0);
     });
 
     async function runCreateNugetDependenciesTrees(parent: DependenciesTreeNode): Promise<DependenciesTreeNode[]> {

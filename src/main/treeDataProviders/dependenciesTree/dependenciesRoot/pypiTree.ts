@@ -13,9 +13,9 @@ import { PipDepTree } from '../../../types/pipDepTree';
 export class PypiTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'pypi://';
 
-    constructor(workspaceFolder: string, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, PackageType.Python, parent);
-        this.generalInfo = new GeneralInfo(this.workspaceFolder.replace(/^.*[\\/]/, ''), '', ['None'], this.workspaceFolder, PackageType.Python);
+    constructor(filePath: string, parent?: DependenciesTreeNode) {
+        super(filePath, PackageType.Python, parent);
+        this.generalInfo = new GeneralInfo(this.fullPath.replace(/^.*[\\/]/, ''), '', ['None'], this.fullPath, PackageType.Python);
         this.projectDetails.name = this.generalInfo.artifactId;
         this.label = this.projectDetails.name;
     }
