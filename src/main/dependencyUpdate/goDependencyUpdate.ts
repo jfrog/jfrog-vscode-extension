@@ -15,7 +15,7 @@ export class GoDependencyUpdate extends AbstractDependencyUpdate {
 
     /** @override */
     public update(dependency: DependencyIssuesTreeNode, version: string): void {
-        const workspace: string = dependency.getSourcePath();
+        const workspace: string = dependency.getProjectPath();
         ScanUtils.executeCmd('go get ' + dependency.name + '@v' + version, workspace);
     }
 }

@@ -7,8 +7,8 @@ import { PackageType } from '../../../types/projectType';
 export class NugetTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'nuget://';
 
-    constructor(workspaceFolder: string, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, PackageType.Nuget, parent, '');
+    constructor(fullPath: string, parent?: DependenciesTreeNode) {
+        super(fullPath, PackageType.Nuget, parent, '');
     }
 
     public setName(name: string) {

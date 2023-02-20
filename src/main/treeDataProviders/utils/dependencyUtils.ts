@@ -193,22 +193,19 @@ export class DependencyUtils {
         // Search for the dependency graph of the descriptor
         for (const child of workspaceDependenciesTree.children) {
             if (child instanceof RootNode && child.projectDetails.type === descriptorType) {
-                let graph: RootNode | undefined = this.searchDependencyGraph(descriptorPath, child);
-                if (graph) {
-                    return graph;
-                }
+                return this.searchDependencyGraph(descriptorPath, child);
             }
         }
         return undefined;
     }
 
-    private static searchDependencyGraph(descriptorDir: string, node: RootNode): RootNode | undefined {
-        if (node.fullPath == descriptorDir || node.projectDetails.path == descriptorDir) {
+    private static searchDependencyGraph(descriptorPath: string, node: RootNode): RootNode | undefined {
+        if (node.fullPath == descriptorPath || node.projectDetails.path == descriptorPath) {
             return node;
         }
         for (const child of node.children) {
             if (child instanceof RootNode) {
-                let graph: RootNode | undefined = this.searchDependencyGraph(descriptorDir, child);
+                let graph: RootNode | undefined = this.searchDependencyGraph(descriptorPath, child);
                 if (graph) {
                     return graph;
                 }

@@ -59,17 +59,7 @@ export class DependenciesTreesFactory {
             );
             typesDone++;
             progressManager.reportProgress();
-
-            projectDescriptors.set(
-                PackageType.Nuget,
-                await NugetUtils.createDependenciesTrees(
-                    projectDescriptors.get(PackageType.Nuget),
-                    componentsToScan,
-                    treesManager,
-                    parent,
-                    checkCanceled
-                )
-            );
+            await NugetUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Nuget), treesManager, parent, checkCanceled);
         } finally {
             progressManager.reportProgress((getNumberOfSupportedPackageTypes() - typesDone) * progressManager.getStepIncValue);
         }

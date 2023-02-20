@@ -69,11 +69,11 @@ export class YarnUtils {
         for (let yarnLock of yarnLocks) {
             checkCanceled();
             // In yarn, the version may vary in different workspaces. Therefore we run 'yarn --version' for each workspace.
-            if (!YarnUtils.isVersionSupported(parent, treesManager.logManager, path.dirname(yarnLock.fsPath))) {
+            if (!YarnUtils.isVersionSupported(parent, treesManager.logManager, yarnLock.fsPath)) {
                 return;
             }
             checkCanceled();
-            let root: YarnTreeNode = new YarnTreeNode(path.dirname(yarnLock.fsPath), treesManager, parent);
+            let root: YarnTreeNode = new YarnTreeNode(yarnLock.fsPath, treesManager, parent);
             projectsToScan.push(root.projectDetails);
             root.refreshDependencies();
         }
