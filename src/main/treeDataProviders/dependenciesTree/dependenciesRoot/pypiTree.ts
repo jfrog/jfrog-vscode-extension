@@ -1,11 +1,9 @@
 import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
-import { TreesManager } from '../../treesManager';
 import { GeneralInfo } from '../../../types/generalInfo';
-import { ScanUtils } from '../../../utils/scanUtils';
-import { PypiUtils } from '../../../utils/pypiUtils';
 import { RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
+import { PipDepTree } from '../../../types/pipDepTree';
 
 /**
  * Pypi packages can be installed in two different ways:
@@ -15,27 +13,19 @@ import { PackageType } from '../../../types/projectType';
 export class PypiTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'pypi://';
 
-    constructor(workspaceFolder: string, private _treesManager: TreesManager, private _pythonPath: string, parent?: DependenciesTreeNode) {
+    constructor(workspaceFolder: string, parent?: DependenciesTreeNode) {
         super(workspaceFolder, PackageType.Python, parent);
-    }
-
-    public async refreshDependencies() {
-        let pypiList: any;
-        try {
-            pypiList = JSON.parse(
-                ScanUtils.executeCmd(this._pythonPath + ' ' + PypiUtils.PIP_DEP_TREE_SCRIPT + ' --json-tree', this.workspaceFolder).toString()
-            );
-            this.generalInfo = new GeneralInfo(this.workspaceFolder.replace(/^.*[\\/]/, ''), '', ['None'], this.workspaceFolder, PackageType.Python);
-        } catch (error) {
-            this._treesManager.logManager.logError(<any>error, true);
-        }
+        this.generalInfo = new GeneralInfo(this.workspaceFolder.replace(/^.*[\\/]/, ''), '', ['None'], this.workspaceFolder, PackageType.Python);
         this.projectDetails.name = this.generalInfo.artifactId;
         this.label = this.projectDetails.name;
-        this.populateDependenciesTree(this, pypiList);
     }
 
-    private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any) {
-        if (!dependencies) {
+    public async refreshDependencies(dependencyTree: PipDepTree[]) {
+        this.populateDependenciesTree(this, dependencyTree);
+    }
+
+    protected populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: PipDepTree[]) {
+        if (!dependencies || dependencies.length === 0) {
             return;
         }
         for (let key in dependencies) {

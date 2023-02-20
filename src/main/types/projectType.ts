@@ -24,7 +24,7 @@ export function toPackageType(str: string): PackageType {
             return PackageType.Yarn;
         case 'NUGET':
             return PackageType.Nuget;
-        case 'PYTHON':
+        case 'PYPI':
             return PackageType.Python;
         default:
             return PackageType.Unknown;
@@ -43,7 +43,7 @@ export function fromPackageType(packageType: PackageType): string {
         case PackageType.Nuget:
             return 'NuGet';
         case PackageType.Python:
-            return 'Python';
+            return 'PYPI';
         default:
             return 'Unknown';
     }

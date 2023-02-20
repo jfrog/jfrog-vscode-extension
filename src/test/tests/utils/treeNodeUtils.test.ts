@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { CveTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 import { DependencyIssuesTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { DescriptorTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
+import { ProjectDependencyTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
 import { FileTreeNode } from '../../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../../../main/treeDataProviders/issuesTree/issueTreeNode';
@@ -127,7 +128,7 @@ export function createDummyIssue(severity: Severity): IssueTreeNode {
 export function createDummyDependencyIssues(
     name: string,
     version: string,
-    parent: DescriptorTreeNode = new DescriptorTreeNode('dummy'),
+    parent: ProjectDependencyTreeNode = new ProjectDependencyTreeNode('dummy'),
     indirect: boolean = false
 ): DependencyIssuesTreeNode {
     return parent.addNode(

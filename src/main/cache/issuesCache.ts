@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { WorkspaceIssuesData } from '../types/issuesData';
+import { ScanResults } from '../types/workspaceIssuesDetails';
 
 /**
  * Describes a cache that holds all the information from an Xray scan for a workspace
@@ -32,10 +32,10 @@ export class IssuesCache {
      * @param workspace - the workspace to search it's data
      * @returns WorkspaceIssuesData if exists in cache, false otherwise.
      */
-    public get(workspace: vscode.WorkspaceFolder): WorkspaceIssuesData | undefined {
+    public get(workspace: vscode.WorkspaceFolder): ScanResults | undefined {
         let rawData: string | undefined = this._cache.get(IssuesCache.toKey(workspace));
         if (rawData) {
-            return JSON.parse(rawData);
+            return ScanResults.fromJson(rawData);
         }
         return undefined;
     }
@@ -45,7 +45,7 @@ export class IssuesCache {
      * @param workspace - the workspace to store it's data
      * @param value - the data we want to store
      */
-    public store(workspace: vscode.WorkspaceFolder, value: WorkspaceIssuesData) {
+    public store(workspace: vscode.WorkspaceFolder, value: ScanResults) {
         return this._cache.update(IssuesCache.toKey(workspace), JSON.stringify(value));
     }
 

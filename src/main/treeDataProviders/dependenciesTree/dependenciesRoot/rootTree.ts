@@ -10,7 +10,7 @@ export class RootNode extends DependenciesTreeNode {
     private _fullPath: string;
 
     constructor(private _workspaceFolder: string, packageType: PackageType, parent?: DependenciesTreeNode, contextValue?: string) {
-        super(new GeneralInfo('', '', [], _workspaceFolder, PackageType.Unknown), vscode.TreeItemCollapsibleState.Expanded, parent, contextValue);
+        super(new GeneralInfo('', '', [], _workspaceFolder, packageType), vscode.TreeItemCollapsibleState.Expanded, parent, contextValue);
         this._projectDetails = new ProjectDetails(_workspaceFolder, packageType);
         this._fullPath = _workspaceFolder;
     }
