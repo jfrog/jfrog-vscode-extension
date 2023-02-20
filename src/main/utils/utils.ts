@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import * as os from 'os';
 import * as fs from 'fs';
 import AdmZip, { IZipEntry } from 'adm-zip';
+import { ScanUtils } from './scanUtils';
 
 export class Utils {
     private static readonly MAX_FILES_EXTRACTED_ZIP: number = 1000;
@@ -120,6 +121,18 @@ export class Utils {
     public static createDirIfNotExists(dirPath: string, createRecursive: boolean = true) {
         if (!fs.existsSync(dirPath)) {
             fs.mkdirSync(dirPath, { recursive: createRecursive } as fs.MakeDirectoryOptions);
+        }
+    }
+
+    public static removeDirIfExists(dirPath: string) {
+        if (fs.existsSync(dirPath)) {
+            ScanUtils.removeFolder(dirPath);
+        }
+    }
+
+    public static removeFileIfExists(filePath: string) {
+        if (fs.existsSync(filePath)) {
+            fs.rmSync(filePath);
         }
     }
 

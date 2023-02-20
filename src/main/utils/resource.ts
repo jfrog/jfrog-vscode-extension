@@ -37,29 +37,16 @@ export class Resource {
      * @param downloadToFolder - the folder that the resource will be downloaded to
      * @returns the full path of the file that was downloaded successfully, undefined otherwise
      */
-    private async downloadToFolder(downloadToFolder: string = this._targetDir): Promise<string> {
+    private async download(downloadToFolder: string = this._targetDir): Promise<string> {
         let resourcePath: string = path.join(downloadToFolder, Utils.getLastSegment(this.sourceUrl));
-        // Download new
         await this._connectionManager
             .artifactory()
             .download()
             .downloadArtifactToFile(this.sourceUrl, resourcePath);
+        if (!(await this.isLocalAndRemoteChecksumMatch(resourcePath))) {
+            throw Error('Local checksum is not match to the remote');
+        }
         return resourcePath;
-    }
-
-    private removeOldTargetAndCopyFile(filePath: string) {
-        if (this.isExists()) {
-            fs.rmSync(this._targetPath);
-        }
-        fs.copyFileSync(filePath, this._targetPath);
-        fs.chmodSync(this._targetPath, this._mode);
-    }
-
-    private removeOldTargetDirAndExtractZip(filePath: string) {
-        if (fs.existsSync(this._targetDir)) {
-            ScanUtils.removeFolder(this._targetDir);
-        }
-        Utils.extractZip(filePath, this._targetDir);
     }
 
     /**
@@ -67,11 +54,14 @@ export class Resource {
      * if the given file is a binary, replace and copy it to the target path
      * @param tempPath - the file to copy into target
      */
-    public copyToTarget(tempPath: string) {
+    public moveToTarget(tempPath: string) {
         if (tempPath.endsWith('.zip')) {
-            this.removeOldTargetDirAndExtractZip(tempPath);
+            Utils.removeDirIfExists(this._targetDir);
+            Utils.extractZip(tempPath, this._targetDir);
         } else {
-            this.removeOldTargetAndCopyFile(tempPath);
+            Utils.removeFileIfExists(this._targetPath);
+            fs.copyFileSync(tempPath, this._targetPath);
+            fs.chmodSync(this._targetPath, this._mode);
         }
     }
 
@@ -84,23 +74,22 @@ export class Resource {
         let tmpFolder: string = ScanUtils.createTmpDir();
         try {
             this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this.sourceUrl, 'DEBUG');
-            let resourceTmpPath: string = await this.downloadToFolder(tmpFolder);
-            if (this.calculateLocalChecksum(resourceTmpPath) !== (this._cacheRemoteSha256 ?? (await this.calculateRemoteChecksum()))) {
-                this._logManager.logMessage('Resource ' + this._name + ' update failed.', 'ERR');
-                return false;
-            }
-            this.copyToTarget(resourceTmpPath);
+            this.moveToTarget(await this.download(tmpFolder));
             this._logManager.logMessage('Resource ' + this._name + ' was update successfully.', 'DEBUG');
             return true;
+        } catch (error) {
+            this._logManager.logError(<Error>error);
+            this._logManager.logMessage('Resource ' + this._name + ' update failed.', 'ERR');
+            return false;
         } finally {
             ScanUtils.removeFolder(tmpFolder);
         }
     }
 
-    /**
-     * Check if the resource exists in the provided target path.
-     * @returns true if file exists in the path, false otherwise
-     */
+    private async isLocalAndRemoteChecksumMatch(localFile: string): Promise<boolean> {
+        return this.calculateLocalChecksum(localFile) === (this._cacheRemoteSha256 ?? (await this.calculateRemoteChecksum()));
+    }
+
     public isExists(): boolean {
         return fs.existsSync(this._targetPath);
     }
