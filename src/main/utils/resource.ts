@@ -78,9 +78,8 @@ export class Resource {
             this._logManager.logMessage('Resource ' + this._name + ' was update successfully.', 'DEBUG');
             return true;
         } catch (error) {
-            this._logManager.logError(<Error>error);
             this._logManager.logMessage('Resource ' + this._name + ' update failed.', 'ERR');
-            return false;
+            throw error;
         } finally {
             ScanUtils.removeFolder(tmpFolder);
         }
