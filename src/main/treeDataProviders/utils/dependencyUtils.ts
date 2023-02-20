@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { IComponent, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
 import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
 import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
@@ -196,13 +197,17 @@ export class DependencyUtils {
         return undefined;
     }
 
-    private static searchDependencyGraph(descriptorDir: string, node: RootNode): RootNode | undefined {
-        if (node.fullPath == descriptorDir || node.projectDetails.path == descriptorDir) {
+    private static isNodeMatchPath(filePath: string, node: RootNode): boolean {
+        return node.fullPath === filePath || node.projectDetails.path === filePath;
+    }
+
+    private static searchDependencyGraph(descriptorPath: string, node: RootNode): RootNode | undefined {
+        if (this.isNodeMatchPath(descriptorPath, node) || this.isNodeMatchPath(path.dirname(descriptorPath), node)) {
             return node;
         }
         for (const child of node.children) {
             if (child instanceof RootNode) {
-                let graph: RootNode | undefined = this.searchDependencyGraph(descriptorDir, child);
+                let graph: RootNode | undefined = this.searchDependencyGraph(descriptorPath, child);
                 if (graph) {
                     return graph;
                 }
