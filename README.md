@@ -85,7 +85,7 @@ powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://r
 
 ## Connecting VS Code to Your JFrog Environment
 Connect to your JFrog environment by clicking on the green Connect ![Connect](resources/readme/connect.png) button or the provided button in the JFrog extension tab:
-![Connect](resources/readme/gifs/connect.gif)
+![Connect](resources/readme/preview/connect.png)
 
 You can leave the platform URL empty, to enter the separate URLs for Artifactory and Xray.
 
@@ -127,13 +127,16 @@ If your JFrog environment is behind an HTTP/S proxy, follow these steps to confi
 If your proxy server requires credentials, follow these steps:
 
 1. Follow 1-3 steps under [Proxy configuration](#proxy-configuration).
+#### Basic authorization
 1. Encode with base64: `[Username]:[Password]`.
 1. Under 'Proxy Authorization' click on 'Edit in settings.json'.
 1. Add to settings.json: 
-*  `"http.proxyAuthorization": "Basic [Encoded credentials]"`
-* `"http.proxyAuthorization": "Bearer [Access token]"`.
-
-#### Example for basic
+*  `"http.proxyAuthorization": "Basic [Encoded credentials]"`.
+#### Access token authorization
+1. Under 'Proxy Authorization' click on 'Edit in settings.json'.
+1. Add to settings.json: 
+*  `"http.proxyAuthorization": "Bearer [Access token]"`.
+#### Example
 - `Username: foo`
 - `Password: bar`
 
@@ -144,7 +147,6 @@ settings.json:
    "http.proxyAuthorization": "Basic Zm9vOmJhcg=="
 }
 ```
-
 ## Extension Settings
 To open the extension settings, use the following VS Code menu command:
 
@@ -179,11 +181,7 @@ The following table describes the severities from lowest to highest:
 |                 Icon                | Severity |                                       Description                                      |
 |:-----------------------------------:|:--------:|:---------------------------------------------------------------------------------------|
 |   ![Normal](resources/normal.png)   |  Normal  | No issues                                                                    |
-|  ![Unknown (Not applicable)](resources/notApplicableUnknown.svg)  |  Unknown (Not applicable) | CVE issue with unknown severity that is not applicable to the source code in the workspace |
-|      ![Low (Not applicable)](resources/notApplicableLow.svg)      |    Low (Not applicable)   | CVE issue with low severity that is not applicable to the source code in the workspace                                                            |
-|   ![Medium (Not applicable)](resources/notApplicableMedium.svg)   |  Medium (Not applicable)  | CVE issue with medium severity that is not applicable to the source code in the workspace                                                         |
-|     ![High (Not applicable)](resources/notApplicableHigh.svg)     |   High (Not applicable)   | CVE issue with high severity that is not applicable to the source code in the workspace                                                           |
-| ![Critical (Not applicable)](resources/notApplicableCritical.svg) | Critical (Not applicable) | CVE issue with critical severity that is not applicable to the source code in the workspace                                                       |
+|  ![Unknown (Not applicable)](resources/notApplicableUnknown.svg)![Low (Not applicable)](resources/notApplicableLow.svg)![Medium (Not applicable)](resources/notApplicableMedium.svg)![High (Not applicable)](resources/notApplicableHigh.svg)![Critical (Not applicable)](resources/notApplicableCritical.svg)|  Not applicable | CVE issue that is not applicable to the source code in the workspace |
 |  ![Unknown](resources/Unknown.svg)  |  Unknown | Issue with unknown severity  |
 |      ![Low](resources/Low.svg)      |    Low   | Issue with low severity                                                            |
 |   ![Medium](resources/Medium.svg)   |  Medium  | Issue with medium severity                                                         |
