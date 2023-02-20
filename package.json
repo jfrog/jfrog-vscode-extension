@@ -130,11 +130,18 @@
                 "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
             },
             {
+                "command": "jfrog.xray.connect",
+                "title": "Connect",
+                "icon": "./resources/readme/connect.png",
+                "category": "JFrog",
+                "enablement": "!jfrog.scanInProgress"
+            },
+            {
                 "command": "jfrog.xray.disconnect",
                 "title": "Disconnect",
                 "icon": "$(debug-disconnect)",
                 "category": "JFrog",
-                "enablement": "jfrog.connection.status != signedOut && !jfrog.scanInProgress"
+                "enablement": "!jfrog.scanInProgress"
             },
             {
                 "command": "jfrog.xray.filter",
@@ -188,8 +195,13 @@
         "menus": {
             "view/title": [
                 {
+                    "command": "jfrog.xray.connect",
+                    "when": "jfrog.connection.status != signedIn",
+                    "group": "navigation@0"
+                },
+                {
                     "command": "jfrog.xray.disconnect",
-                    "when": "jfrog.connection.status != signedOut && view == jfrog.xray.ci.issues || view == jfrog.issues",
+                    "when": "jfrog.connection.status == signedIn",
                     "group": "navigation@0"
                 },
                 {
