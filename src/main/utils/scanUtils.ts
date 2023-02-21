@@ -12,6 +12,9 @@ import { Configuration } from './configuration';
 import { ContextKeys } from '../constants/contextKeys';
 import * as util from 'util';
 export class ScanUtils {
+    public static readonly DESCRIPTOR_SELECTOR_PATTERN: string =
+        '**/{go.mod,package.json,pom.xml,setup.py,*requirements*.txt,yarn.lock,*.csproj,*.sln,packages.config}';
+
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
 
@@ -53,7 +56,7 @@ export class ScanUtils {
                 {
                     baseUri: workspace.uri,
                     base: workspace.uri.fsPath,
-                    pattern: '**/{go.mod,pom.xml,package.json,yarn.lock,*.sln,setup.py,requirements*.txt}'
+                    pattern: ScanUtils.DESCRIPTOR_SELECTOR_PATTERN
                 },
                 Configuration.getScanExcludePattern(workspace)
             );
@@ -146,7 +149,7 @@ export class ScanUtils {
      * @param fsPath - path to package descriptor such as pom.xml, go.mod, etc.
      * @returns PackageType or undefined
      */
-    private static extractDescriptorTypeFromPath(fsPath: string): PackageType | undefined {
+    public static extractDescriptorTypeFromPath(fsPath: string): PackageType | undefined {
         if (fsPath.endsWith('go.mod')) {
             return PackageType.Go;
         }
@@ -163,10 +166,13 @@ export class ScanUtils {
             }
             return PackageType.Npm;
         }
-        if (fsPath.endsWith('.sln')) {
+        if (fsPath.endsWith('.sln') || fsPath.endsWith('.csproj') || fsPath.endsWith('packages.config')) {
             return PackageType.Nuget;
         }
-        return PackageType.Python;
+        if (fsPath.endsWith('.txt') || fsPath.endsWith('.py')) {
+            return PackageType.Python;
+        }
+        return;
     }
 
     static createTmpDir(): string {

@@ -1,5 +1,4 @@
 import { execSync } from 'child_process';
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -78,7 +77,7 @@ export class NpmUtils {
         treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
         for (let packageJson of packageJsons) {
             checkCanceled();
-            let root: NpmTreeNode = new NpmTreeNode(path.dirname(packageJson.fsPath), treesManager, parent);
+            let root: NpmTreeNode = new NpmTreeNode(packageJson.fsPath, treesManager, parent);
             root.refreshDependencies();
             projectsToScan.push(root.projectDetails);
         }

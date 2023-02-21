@@ -278,10 +278,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         // Scan workspace to prepare the needed information for the scans and progress
         progress.report({ message: '👷 Preparing workspace' });
         let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
-        let descriptorsCount: number = 0;
-        for (let descriptorPaths of workspaceDescriptors.values()) {
-            descriptorsCount += descriptorPaths.length;
-        }
         checkCanceled();
         let graphSupported: boolean = await this._scanManager.validateGraphSupported();
         checkCanceled();
@@ -297,6 +293,10 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             checkCanceled
         );
 
+        let descriptorsCount: number = 0;
+        for (let descriptorPaths of workspaceDescriptors.values()) {
+            descriptorsCount += descriptorPaths.length;
+        }
         progressManager.startStep('🔎 Scanning for issues', graphSupported ? 2 * descriptorsCount + 1 : 1);
         let scansPromises: Promise<any>[] = [];
         scansPromises.push(AnalyzerUtils.runEos(scanResults, root, workspaceDescriptors, this._scanManager, progressManager));
@@ -340,7 +340,11 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
                 let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptorData.fullPath, descriptorData.type);
                 // Search for the dependency graph of the descriptor
-                let descriptorGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(workspaceDependenciesTree, descriptorPath.fsPath);
+                let descriptorGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(
+                    workspaceDependenciesTree,
+                    descriptorPath.fsPath,
+                    descriptorData.type
+                );
                 if (!descriptorGraph) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this._logManager.logMessage("Can't find descriptor graph for " + descriptorPath.fsPath, 'DEBUG');

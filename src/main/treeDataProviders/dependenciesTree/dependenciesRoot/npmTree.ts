@@ -11,8 +11,8 @@ import { Severity } from '../../../types/severity';
 export class NpmTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
 
-    constructor(workspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, PackageType.Npm, parent);
+    constructor(fullPath: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
+        super(fullPath, PackageType.Npm, parent);
     }
 
     public async refreshDependencies() {
@@ -24,7 +24,7 @@ export class NpmTreeNode extends RootNode {
                 scopedProject.loadProjectDetails(NpmUtils.runNpmLs(scopedProject.scope, this.workspaceFolder));
             } catch (error) {
                 this._treesManager.logManager.logError(<any>error, false);
-                scopedProject.loadProjectDetailsFromFile(path.join(this.workspaceFolder, 'package.json'));
+                scopedProject.loadProjectDetailsFromFile(path.join(this.fullPath));
                 npmLsFailed = true;
             }
             this.populateDependenciesTree(this, scopedProject.dependencies, scopedProject.scope);
@@ -39,13 +39,13 @@ export class NpmTreeNode extends RootNode {
             npmLsFailed ? (productionScope.projectName += ' [Not installed]') : productionScope.projectName,
             productionScope.projectVersion,
             [],
-            this.workspaceFolder,
+            this.fullPath,
             PackageType.Npm
         );
         if (npmLsFailed) {
             this.topSeverity = Severity.Unknown;
         }
-        this.projectDetails.name = productionScope.projectName ? productionScope.projectName : path.join(this.workspaceFolder, 'package.json');
+        this.projectDetails.name = productionScope.projectName ? productionScope.projectName : this.fullPath;
         this.label = this.projectDetails.name;
     }
 

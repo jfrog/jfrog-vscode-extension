@@ -14,6 +14,7 @@ import { EnvironmentTreeNode } from '../treeDataProviders/issuesTree/descriptorT
 import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
 import { StepProgress } from '../treeDataProviders/utils/stepProgress';
 import { ScanResults, DependencyScanResults } from '../types/workspaceIssuesDetails';
+import { PackageType } from '../types/projectType';
 
 export class PypiUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/*requirements*.txt' };
@@ -317,7 +318,11 @@ export class PypiUtils {
         if (!envIssues || !(envIssues instanceof VirtualEnvPypiTree)) {
             return [];
         }
-        let environmentGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(workspaceDependenciesTree, scanResults.path);
+        let environmentGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(
+            workspaceDependenciesTree,
+            scanResults.path,
+            PackageType.Python
+        );
         if (!environmentGraph) {
             progressManager.reportProgress(2 * progressManager.getStepIncValue);
             logManager.logMessage("Can't find virtual environment graph at " + envIssues.virtualEnvironmentPath, 'DEBUG');
