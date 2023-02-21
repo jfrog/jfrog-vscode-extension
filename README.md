@@ -20,27 +20,31 @@
     -   [Getting Started](#getting-started)
     -   [Set Up a FREE JFrog Environment in the Cloud](#set-up-a-free-jfrog-environment-in-the-cloud)
     -   [Connecting VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
-    -   [Applying Your Xray Policies](#applying-your-xray-policies)
-    -   [Proxy Configuration](#proxy-configuration)
-        -   [Proxy Authorization](#proxy-authorization)
-            -   [Example](#example)
     -   [Extension Settings](#extension-settings)
-    -   [Using the Extension](#using-the-extension)
-    -   [The Local View](#the-local-view)
-        -   [Supported Features](#supported-features)
-        -   [Extension Icons](#extension-icons)
-        -   [Scanning, Viewing and Updating Project Vulnerabilities](#scanning-viewing-and-updating-project-vulnerabilities)
-        -   [Viewing and Updating Project Dependencies](#viewing-and-updating-project-dependencies)
-        -   [Scan after dependencies change](#scan-after-dependencies-change)
+        -   [Apply Xray Policies to your Projects](#apply-xray-policies-to-your-projects)
         -   [Exclude Paths from Scan](#exclude-paths-from-scan)
-        -   [Go Projects](#go-projects)
-        -   [Maven Projects](#maven-projects)
-            -   [Excluding transitive dependency in pom.xml](#excluding-transitive-dependency-in-pomxml)
-            -   [Behind the Scenes](#behind-the-scenes)
-        -   [Npm Projects](#npm-projects)
-        -   [Yarn v1 Projects](#yarn-v1-projects)
-        -   [Pypi Projects](#pypi-projects)
-        -   [.NET Projects](#net-projects)
+        -   [Proxy Configuration](#proxy-configuration)
+        -   [Proxy Authorization](#proxy-authorization)
+            -   [Basic authorization](#basic-authorization)
+            -   [Access token authorization](#access-token-authorization)
+            -   [Example](#example)
+    -   [Using the Extension](#using-the-extension)
+        -   [Severity Icons](#severity-icons)
+    -   [The Local View](#the-local-view)
+        -   [Scanning Workspace](#scanning-workspace)
+            -   [Contextual Analysis](#contextual-analysis)
+                -   [Supported Packages](#supported-packages)
+        -   [Viewing Vulnerabilities](#viewing-vulnerabilities)
+            -   [Viewing Vulnerability Details](#viewing-vulnerability-details)
+        -   [Updating Dependencies](#updating-dependencies)
+        -   [Ignore Rules](#ignore-rules)
+        -   [Behind the Scenes](#behind-the-scenes)
+            -   [Go Projects](#go-projects)
+            -   [Maven Projects](#maven-projects)
+            -   [Npm Projects](#npm-projects)
+            -   [Yarn v1 Projects](#yarn-v1-projects)
+            -   [Pypi Projects](#pypi-projects)
+            -   [.NET Projects](#net-projects)
     -   [The CI View](#the-ci-view)
         -   [How Does It Work?](#how-does-it-work)
         -   [Setting Up Your CI Pipeline](#setting-up-your-ci-pipeline)
@@ -97,7 +101,7 @@ Connect to your JFrog environment by clicking on the green Connect ![Connect](re
 
 You can leave the platform URL empty, to enter the separate URLs for Artifactory and Xray.
 
-**Note**: If the auth credentials configured using JFrog CLI the extension will try to read and use them to connect.
+**Note**: If the credentials is configured and used by JFrog CLI the extension will try to read and use them to connect.
 
 The extension also supports connecting to your JFrog environment using environment variables. You may provide basic auth credentials or access token as follows:
 
@@ -109,9 +113,16 @@ The extension also supports connecting to your JFrog environment using environme
 -   `JFROG_IDE_ACCESS_TOKEN` - JFrog access token
 -   `JFROG_IDE_STORE_CONNECTION` - Set the value of this environment variable to **true**, if you'd like VS Code to store the connection details after reading them from the environment variables.
 
-## Applying Your Xray Policies
+## Extension Settings
 
-You can configure the JFrog VS-Code extension to reflect the Security Policies. The policies are configured in JFrog Xray.
+To open the extension settings, use the following VS Code menu command:
+
+-   On Windows/Linux - File > Preferences > Settings > Extensions > JFrog
+-   On macOS - Code > Preferences > Settings > Extensions > JFrog
+
+### Apply Xray Policies to your Projects
+
+You can configure the JFrog VS-Code extension  to use the security policies you create in Xray. Policies enable you to create a set of rules, in which each rule defines security criteria, with a corresponding set of automatic actions according to your needs. Policies are enforced when applying them to Watches.
 
 If you'd like to use a JFrog Project that is associated with the policy, follow these steps:
 
@@ -125,7 +136,12 @@ If however your policies are referenced through an Xray Watch or Watches, follow
 1. Create one or more [Watches](https://www.jfrog.com/confluence/display/JFROG/Configuring+Xray+Watches) on JFrog Xray.
 1. Configure your Watches in the [Extension Settings](#extension-settings).
 
-## Proxy Configuration
+### Exclude Paths from Scan
+
+By default, paths containing the words `test`, `venv` and `node_modules` are excluded from Xray scan.
+The exclude pattern can be configured in the [Extension Settings](#extension-settings).
+
+### Proxy Configuration
 
 If your JFrog environment is behind an HTTP/S proxy, follow these steps to configure the proxy server:
 
@@ -169,13 +185,6 @@ settings.json:
 }
 ```
 
-## Extension Settings
-
-To open the extension settings, use the following VS Code menu command:
-
--   On Windows/Linux - File > Preferences > Settings > Extensions > JFrog
--   On macOS - Code > Preferences > Settings > Extensions > JFrog
-
 ## Using the Extension
 
 The extension offers two modes, **Local** and **CI**.
@@ -184,23 +193,7 @@ The two modes can be toggled by pressing on their respective buttons that will a
 -   The **Local** view displays information about the local code as it is being developed in VS Code. The developer can scan their local workspace continuously. The information is displayed in the **Local** view.
 -   The **CI** view allows the tracking of the code as it is built, tested and scanned by the CI server. It displays information about the status of the build and includes a link to the build log on the CI server.
 
-## The Local View
-
-The local view of the extension adds JFrog Xray scanning of project dependencies and source code to your VS Code IDE.
-It allows developers to view panels displaying vulnerability information about their dependencies and source code in their VS Code IDE.
-With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
-
-### Supported Features
-
-| Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
-| ---------------------------------------------------- | :----------------: | :----------------------: | :------------------: | :--------------------------: | :--------------------: | :-------------------: |
-| Issues and licenses scanning                         |         ✅         |            ✅            |          ✅          |              ✅              |           ✅           |          ✅           |
-| Contextual analysis scanning                         |         ❌         |            ❌            |          ✅          |              ✅              |           ✅           |          ❌           |
-| Show vulnerabilities inside the project files        |         ✅         |            ✅            |          ✅          |              ✅              |           ✅           |          ✅           |
-| Upgrade vulnerable dependencies to fixed versions    |         ✅         |            ✅            |          ✅          |              ✅              |           ✅           |          ✅           |
-| Jump from issues tree to the locations in the editor |         ✅         |            ✅            |          ✅          |              ✅              |           ✅           |          ✅           |
-
-### Extension Icons
+### Severity Icons
 
 The following table describes the severities from lowest to highest:
 
@@ -214,60 +207,52 @@ The following table describes the severities from lowest to highest:
 |                                                                                                                                          <img src="resources/High.svg" width="30">                                                                                                                                          |      High      | Issue with high severity                                             |
 |                                                                                                                                      <img src="resources/Critical.svg" width="30">                                                                                                                                      |    Critical    | Issue with critical severity                                         |
 
-### Scanning, Viewing and Updating Project Vulnerabilities
-####
 
-### Viewing and Updating Project Dependencies
+## The Local View
 
-View the dependencies used by the project in a tree, where the direct dependencies are at the top.
-![Open_Extension](resources/readme/gifs/open.gif)
+The local view of the extension adds JFrog Xray scanning of project dependencies and source code to your VS Code IDE.
+It allows developers to view panels displaying vulnerability information about their dependencies and source code in their VS Code IDE.
+With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
-The JFrog extension automatically triggers a scan of the project's dependencies whenever a change is detected after building the code.
-To invoke a scan manually, click on the Refresh ![Refresh](resources/readme/refresh.png) button or click on _Start Xray Scan_ from within the editor.
-![Refresh](resources/readme/gifs/refresh.gif)
+### Scanning workspace
+scan your workspace by clicking the Scan/Rescan button, the <img src='resources/dark/refresh.png' height="15" width="15"> icon at the extendion tab or click on Start Xray Scan from within the editor. The scan will create a list of files with vulnerabilities in the workspace.
+![Refresh](resources/readme/preview/refresh.png)
+### Contextual Analysis
+Using [Contextual Analysis](https://www.jfrog.com/confluence/display/JFROG/Vulnerability+Contextual+Analysis) scans for CVE applicability, You can avoid wasting your time fixing risks that are not imposed and reduce false positives. determine whether your code is actually impacted by the vulnerable dependency and marking them as Applicable and Non Applicable., to learn more about this feature, see [Xray Advanced Scans](https://www.jfrog.com/confluence/display/JFROG/Xray+Advanced+Scans).
+#### Supported Packages
+| Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
+| ---------------------------------------------------- | :----------------: | :----------------------: | :------------------: | :--------------------------: | :--------------------: | :-------------------: |
+| CVE applicability                         |         ❌         |            ❌            |          ✅          |              ✅              |           ✅           |          ❌           |
 
-View the security information for a dependency by hovering over it in the editor.
-You can also navigate from the dependency declaration directly into the tree view. This allows you to see transitive (indirect) dependencies.
-![Show_In_Dependency_tree](resources/readme/gifs/show_in_dependency_tree.gif)
+### Viewing vulnerabilities
+View all the discovered files with vulnerabilities in a tree.
+Each descriptor file (like pom.xml in Maven, go.mod in Go, etc.) in the list contains vulnerable dependencies, and each dependency contains the vulnerabilities themselves.
+Other source code files contains a list of vulnerabilities for each location at the file.
+In addition the locations with vulnerabilities will be marked in the editor and you can jump from vulnerable location in the editor to the matching entry at the tree by clicking on th light bulb.
+![Tree view](resources/readme/preview/treeView.png)
 
-Search for a dependency in the tree:
-![Search_In_Tree](resources/readme/gifs/search.gif)
 
-View the issues associated with direct and transitive (indirect) dependencies.
-![Search_In_Tree](resources/readme/gifs/npm_issues.gif)
+### Viewing Vulnerability Details
+Clicking a vulnerability in the list will open the location with the issue in the editor and a vulnerability details view. This view contains information about the vulnerability, the vulnerable component, fixed versions, impact paths and much more.
+![JFrog_Research](resources/readme/preview/research.png)
+![Contextual_Analysis](resources/readme/preview/contextualDetails.png)
+![Public_Resources](resources/readme/preview/publicDetails.png)
+![Impact_Graph](resources/readme/preview/impactGraph.png)
 
-Update a vulnerable dependency to a fixed version:
-![Set_Fixed_Version](resources/readme/gifs/set_fixed_version.gif)
+### Updating Dependencies
+Update a vulnerable direct dependency to a fixed version directly from the vulnerable location at the editor using quick fix
+![Set_Fixed_Version](resources/readme/preview/updateQuickFix.png)
 
-To filter the dependencies viewed, click on the Filter ![Filter](resources/readme/filter.png) button.
-![Filter](resources/readme/gifs/filter.gif)
+### Ignore Rules
+If Xray watches is used, on a icon vulnerability line an closed eye icon will appear by clicking on it you can create an [Ignore Rule](https://www.jfrog.com/confluence/display/JFROG/Ignore+Rules) in Xray.
+![Ignore_Rule](resources/readme/preview/ignoreRule.png)
 
-Navigate from the tree view to a dependency's declaration in the editor.
-![Filter](resources/readme/gifs/focus.gif)
-
-### Scan after dependencies change
-
-The JFrog VS-Code extension can trigger an Xray scan after a change in go.sum or package-lock.json.
-This feature is disabled by default. You can enable it in the [Extension Settings](#extension-settings).
-
-### Exclude Paths from Scan
-
-By default, paths containing the words `test`, `venv` and `node_modules` are excluded from Xray scan.
-The exclude pattern can be configured in the [Extension Settings](#extension-settings).
-
+## Behind the Scenes
 ### Go Projects
 
 Behind the scenes, the JFrog VS Code Extension scans all the project dependencies, both direct and indirect (transitive), even if they are not declared in the project's go.mod. It builds the Go dependencies tree by running `go mod graph` and intersecting the results with `go list -f '{{with .Module}}{{.Path}} {{.Version}}{{end}}' all` command. Therefore, please make sure to have Go CLI in your system PATH.
 
 ### Maven Projects
-
-#### Excluding transitive dependency in pom.xml
-
-To exclude a transitive dependency from your project, click on the "Exclude dependency" button in the dependencies tree.
-![Exclude_Maven](resources/readme/gifs/maven_exclude.gif)
-
-#### Behind the Scenes
-
 The JFrog VS Code Extension builds the Maven dependencies tree by running `mvn dependency:tree`. View licenses and top issue severities directly from the pom.xml.
 
 Important notes:
