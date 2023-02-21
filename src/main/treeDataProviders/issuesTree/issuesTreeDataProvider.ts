@@ -216,7 +216,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     this._workspaceToRoot.set(workspace, root);
                     let shouldDeleteRoot: boolean = false;
                     // Execute workspace scan task
-                    this.repopulateWorkspaceTree(scanResults, root, progress, checkCanceled)
+                    await this.repopulateWorkspaceTree(scanResults, root, progress, checkCanceled)
                         .then(() => {
                             this._logManager.logMessage("Workspace '" + workspace.name + "' scan ended", 'INFO');
                             shouldDeleteRoot = !scanResults.hasInformation();
