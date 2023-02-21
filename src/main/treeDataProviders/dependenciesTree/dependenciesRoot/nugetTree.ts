@@ -7,14 +7,18 @@ import { PackageType } from '../../../types/projectType';
 export class NugetTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'nuget://';
 
-    constructor(workspaceFolder: string, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, PackageType.Nuget, parent, '');
+    constructor(fullPath: string, parent?: DependenciesTreeNode) {
+        super(fullPath, PackageType.Nuget, parent, '');
+    }
+
+    public setName(name: string) {
+        this.generalInfo = new GeneralInfo(name, '', ['None'], this.workspaceFolder, PackageType.Nuget);
+        this.label = name;
+        this.projectDetails.name = name;
     }
 
     public refreshDependencies(project: any) {
-        this.generalInfo = new GeneralInfo(project.name, '', ['None'], this.workspaceFolder, PackageType.Nuget);
-        this.label = project.name;
-        this.projectDetails.name = project.name;
+        this.setName(project.name);
         this.populateDependenciesTree(this, project.dependencies);
     }
 

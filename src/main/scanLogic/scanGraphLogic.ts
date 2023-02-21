@@ -26,7 +26,10 @@ export class GraphScanLogic {
             component_id: graphRoot.generalInfo.artifactId,
             nodes: this.getFlattenRequestModelNodes(graphRoot, new Set<string>())
         } as IGraphRequestModel;
-
+        if (!graphRequest.nodes || graphRequest.nodes.length === 0) {
+            // No dependencies to scan
+            return {} as IGraphResponse;
+        }
         return this._connectionManager.scanWithGraph(
             graphRequest,
             progress,

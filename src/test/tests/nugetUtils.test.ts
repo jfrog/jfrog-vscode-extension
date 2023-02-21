@@ -6,7 +6,6 @@ import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
-// import { ScanLogicManager } from '../../main/scanLogic/scanLogicManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
@@ -14,7 +13,6 @@ import { PackageType } from '../../main/types/projectType';
 import { NugetUtils } from '../../main/utils/nugetUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, isWindows } from './utils/utils.test';
-import { ProjectDetails } from '../../main/types/projectDetails';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
 
@@ -32,9 +30,14 @@ describe('Nuget Utils Tests', async () => {
         {} as CacheManager,
         logManager
     );
-    let solutionsDirs: string[] = ['assets', 'empty'];
+
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'nuget'));
+    let expectedDescriptors: string[] = [
+        path.join(tmpDir.fsPath, 'empty/empty-proj/empty-proj.csproj'),
+        path.join(tmpDir.fsPath, 'assets/api/api.csproj'),
+        path.join(tmpDir.fsPath, 'assets/core/core.csproj')
+    ];
 
     before(() => {
         workspaceFolders = [
@@ -48,20 +51,16 @@ describe('Nuget Utils Tests', async () => {
     });
 
     /**
-     * Test NugetUtils.locateSolutions.
+     * Test NugetUtils.
      */
-    it('Locate solutions', async () => {
+    it('Locate descriptors', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
-        let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Nuget);
-        assert.isDefined(solutions);
-        assert.strictEqual(solutions?.length, solutionsDirs.length);
-
-        // Assert that results contains all solutions.
-        for (let expectedSolutionDir of solutionsDirs) {
-            let expectedSolution: string = path.join(tmpDir.fsPath, expectedSolutionDir, expectedSolutionDir + '.sln');
+        let descriptors: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Nuget);
+        assert.isDefined(descriptors);
+        for (let expectedDescriptor of expectedDescriptors) {
             assert.isDefined(
-                solutions?.find(solutions => solutions.fsPath === expectedSolution),
-                'Should contain ' + expectedSolution
+                descriptors?.find(descriptor => descriptor.fsPath === expectedDescriptor),
+                'Should contain ' + expectedDescriptor
             );
         }
     });
@@ -71,45 +70,33 @@ describe('Nuget Utils Tests', async () => {
      */
     it('Create NuGet Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
-        let projectDetails: ProjectDetails[] = [];
-        let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(projectDetails, parent);
-        projectDetails.sort((a, b) => a.name.localeCompare(b.name));
-
-        // Check that project details data.
-        assert.equal(projectDetails.length, 2);
-        assert.deepEqual(projectDetails[0].name, 'api');
-        assert.deepEqual(projectDetails[1].name, 'core');
-        assert.deepEqual(projectDetails[0].toArray()[0].component_id, 'nuget://MyLogger:1.0.0');
-        assert.deepEqual(projectDetails[1].toArray()[0].component_id, 'nuget://MyLogger:1.0.0');
-
-        // Check labels
-        assert.deepEqual(res[0].label, 'api');
-        assert.deepEqual(res[1].label, 'core');
-
-        // Check parents
-        assert.deepEqual(res[0].parent, parent);
-        assert.deepEqual(res[1].parent, parent);
-
-        // Check children
-        assert.lengthOf(res[0].children, 1);
-        assert.lengthOf(res[1].children, 1);
-        assert.deepEqual(res[0].children[0].label, res[1].children[0].label);
-        let child: DependenciesTreeNode = res[0].children[0];
-        assert.deepEqual(child.componentId, 'MyLogger:1.0.0');
-        assert.deepEqual(child.label, 'MyLogger');
-        assert.deepEqual(child.description, '1.0.0');
-        assert.deepEqual(child.parent, res[0]);
+        let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(parent);
+        assert.equal(res.length, 3);
+        // Assert dependency information
+        let node: DependenciesTreeNode | undefined = res.find(child => child.label === 'api');
+        assert.isDefined(node);
+        assert.deepEqual(node?.children.length ?? 0, 1);
+        // Assert dependency information
+        node = res.find(child => child.label === 'core');
+        assert.isDefined(node);
+        assert.deepEqual(node?.children.length ?? 0, 1);
+        // Assert dependency information
+        node = res.find(child => child.label === 'empty.sln [Not installed]');
+        assert.isDefined(node);
+        assert.deepEqual(node?.children.length ?? 1, 0);
     });
 
-    async function runCreateNugetDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
+    async function runCreateNugetDependenciesTrees(parent: DependenciesTreeNode): Promise<DependenciesTreeNode[]> {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Nuget);
         assert.isDefined(solutions);
-        await NugetUtils.createDependenciesTrees(solutions, componentsToScan, treesManager, parent, () => {
-            assert;
-        });
-        componentsToScan = componentsToScan.sort((l, r) => l.name.localeCompare(r.name));
-        return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        await NugetUtils.createDependenciesTrees(solutions, treesManager, parent, () => {});
+        let res: DependenciesTreeNode[] = parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
+        for (let child of res) {
+            child.children = child.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
+        }
+        return res;
     }
 
     function replacePackagesPathInAssets() {

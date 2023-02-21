@@ -3,13 +3,16 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
 
 export class PomTree {
+    private _pomLocation: string = '';
     constructor(
         private _pomGav: string = '',
         private _pomPath: string = '',
         private _children: PomTree[] = [],
         private _parent?: PomTree,
         private _parentGav: string = ''
-    ) {}
+    ) {
+        this._pomLocation = path.dirname(_pomPath);
+    }
 
     public get pomGav(): string {
         return this._pomGav;
@@ -25,6 +28,11 @@ export class PomTree {
 
     public set pomPath(v: string) {
         this._pomPath = v;
+        this._pomLocation = path.dirname(v);
+    }
+
+    public get pomLocation(): string {
+        return this._pomLocation;
     }
 
     public get children(): PomTree[] {
@@ -65,11 +73,11 @@ export class PomTree {
         return;
     }
     public runMavenDependencyTree(): void {
-        ScanUtils.executeCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog_vscode/maven`, this.pomPath);
+        ScanUtils.executeCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog_vscode/maven`, this.pomLocation);
     }
 
     public async getRawDependencies(treesManager: TreesManager): Promise<string[] | undefined> {
-        const dependencyTreeFile: string = path.join(this._pomPath, '.jfrog_vscode', 'maven');
+        const dependencyTreeFile: string = path.join(this.pomLocation, '.jfrog_vscode', 'maven');
         try {
             const pomContent: string | undefined = ScanUtils.readFileIfExists(dependencyTreeFile);
             if (!pomContent) {
@@ -80,7 +88,7 @@ export class PomTree {
         } catch (error) {
             treesManager.logManager.logMessage(
                 'Dependencies were not found at ' +
-                    path.join(this._pomPath, 'pom.xml') +
+                    path.join(this.pomLocation, 'pom.xml') +
                     '.\n' +
                     "Hint: For projects which include the 'org.apache.maven.plugins:maven-dependency-plugin' the scanning functionality is disabled",
                 'ERR'

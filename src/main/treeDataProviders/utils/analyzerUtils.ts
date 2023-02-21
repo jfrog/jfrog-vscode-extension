@@ -137,7 +137,7 @@ export class AnalyzerUtils {
                             searchTarget: details.fullDescription,
                             evidence: evidences
                         } as IApplicableDetails;
-                    } else if (!node.parent.indirect) {
+                    } else {
                         // Not applicable
                         node.severity = SeverityUtils.notApplicable(node.severity);
                         node.applicableDetails = { isApplicable: false } as IApplicableDetails;
@@ -208,7 +208,7 @@ export class AnalyzerUtils {
         progressManager: StepProgress,
         splitRequests: boolean = true
     ): Promise<any> {
-        if (!scanManager.validateEosSupported()) {
+        if (!scanManager.isEosSupported()) {
             progressManager.reportProgress();
             return;
         }
@@ -267,7 +267,7 @@ export class AnalyzerUtils {
             );
 
             root.apply();
-            progressManager.onProgress();
+            progressManager.activateOnProgress();
         }
     }
 

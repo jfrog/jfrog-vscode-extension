@@ -12,6 +12,9 @@ import { Configuration } from './configuration';
 import { ContextKeys } from '../constants/contextKeys';
 import * as util from 'util';
 export class ScanUtils {
+    public static readonly DESCRIPTOR_SELECTOR_PATTERN: string =
+        '**/{go.mod,package.json,pom.xml,setup.py,*requirements*.txt,yarn.lock,*.csproj,*.sln,packages.config}';
+
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
 
@@ -38,6 +41,30 @@ export class ScanUtils {
     }
 
     /**
+     * Start a background task (not cancelable) with progress in the status bar.
+     * the text that will be displayed in the status bar will be: 'JFrog: <TITLE> <Progress.message>
+     * @param scanCbk - task callback to execute in the background
+     * @param title - the given task title that will be displayed in the status bar, a 'JFrog: ' prefix will be added to it
+     */
+    public static async backgroundTask(
+        scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>) => Promise<void>,
+        title: string = ''
+    ) {
+        title = 'JFrog' + (title ? ': ' + title : '');
+        await vscode.window.withProgress(
+            <vscode.ProgressOptions>{
+                location: vscode.ProgressLocation.Window,
+                title: title,
+                cancellable: false
+            },
+            async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {
+                ScanUtils.checkCanceled(token);
+                await scanCbk(progress);
+            }
+        );
+    }
+
+    /**
      * Find go.mod, pom.xml, package.json, *.sln, setup.py, and requirements*.txt files in workspaces.
      * @param workspaceFolders - Base workspace folders to search
      * @param logManager       - Log manager
@@ -53,7 +80,7 @@ export class ScanUtils {
                 {
                     baseUri: workspace.uri,
                     base: workspace.uri.fsPath,
-                    pattern: '**/{go.mod,pom.xml,package.json,yarn.lock,*.sln,setup.py,requirements*.txt}'
+                    pattern: ScanUtils.DESCRIPTOR_SELECTOR_PATTERN
                 },
                 Configuration.getScanExcludePattern(workspace)
             );
@@ -81,6 +108,10 @@ export class ScanUtils {
 
     public static getHomePath(): string {
         return path.join(os.homedir(), '.jfrog-vscode-extension');
+    }
+
+    public static getIssuesPath(): string {
+        return path.join(ScanUtils.getHomePath(), 'issues');
     }
 
     static readFileIfExists(filePath: string): string | undefined {
@@ -146,7 +177,7 @@ export class ScanUtils {
      * @param fsPath - path to package descriptor such as pom.xml, go.mod, etc.
      * @returns PackageType or undefined
      */
-    private static extractDescriptorTypeFromPath(fsPath: string): PackageType | undefined {
+    public static extractDescriptorTypeFromPath(fsPath: string): PackageType | undefined {
         if (fsPath.endsWith('go.mod')) {
             return PackageType.Go;
         }
@@ -163,10 +194,13 @@ export class ScanUtils {
             }
             return PackageType.Npm;
         }
-        if (fsPath.endsWith('.sln')) {
+        if (fsPath.endsWith('.sln') || fsPath.endsWith('.csproj') || fsPath.endsWith('packages.config')) {
             return PackageType.Nuget;
         }
-        return PackageType.Python;
+        if (fsPath.endsWith('.txt') || fsPath.endsWith('.py')) {
+            return PackageType.Python;
+        }
+        return;
     }
 
     static createTmpDir(): string {
@@ -178,7 +212,7 @@ export class ScanUtils {
      * @param data - The data to hash
      * @returns hashed data in Hex
      */
-    static Hash(algorithm: string, data: string): string {
+    static Hash(algorithm: string, data: crypto.BinaryLike): string {
         return crypto
             .createHash(algorithm)
             .update(data)

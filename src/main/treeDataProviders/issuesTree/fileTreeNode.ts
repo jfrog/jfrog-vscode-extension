@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ContextKeys } from '../../constants/contextKeys';
 
 import { Severity, SeverityUtils } from '../../types/severity';
-import { Utils } from '../utils/utils';
+import { Utils } from '../../utils/utils';
 import { IssuesRootTreeNode } from './issuesRootTreeNode';
 import { IssueTreeNode } from './issueTreeNode';
 

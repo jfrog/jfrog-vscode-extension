@@ -398,26 +398,26 @@ describe('Maven Tests', async () => {
 
     function expectedBuildPrototypePomTree(): PomTree[][] {
         return [
-            [new PomTree('org.jfrog.test:multi2:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'dependency'))],
+            [new PomTree('org.jfrog.test:multi2:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'dependency', 'pom.xml'))],
             [
-                new PomTree('org.jfrog.test:multi:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency'), [
+                new PomTree('org.jfrog.test:multi:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'pom.xml'), [
                     new PomTree(
                         'org.jfrog.test:multi1:3.7-SNAPSHOT',
-                        path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi1'),
+                        path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi1', 'pom.xml'),
                         [],
                         undefined,
                         'org.jfrog.test:multi:3.7-SNAPSHOT'
                     ),
                     new PomTree(
                         'org.jfrog.test:multi2:3.7-SNAPSHOT',
-                        path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi2'),
+                        path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi2', 'pom.xml'),
                         [],
                         undefined,
                         'org.jfrog.test:multi:3.7-SNAPSHOT'
                     ),
                     new PomTree(
                         'org.jfrog.test:multi3:3.7-SNAPSHOT',
-                        path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi3'),
+                        path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi3', 'pom.xml'),
                         [],
                         undefined,
                         'org.jfrog.test:multi:3.7-SNAPSHOT'
