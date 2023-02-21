@@ -6,7 +6,7 @@ import { LogManager } from '../log/logManager';
 import { NugetTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/nugetTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { Utils } from '../treeDataProviders/utils/utils';
+import { Utils } from './utils';
 
 export class NugetUtils {
     public static readonly SOLUTION_SUFFIX: string = '.sln';
