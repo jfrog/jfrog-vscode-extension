@@ -29,7 +29,7 @@ export function getNodeByArtifactId(root: DependenciesTreeNode, artifactId: stri
 export function createScanCacheManager(): ScanCacheManager {
     return new ScanCacheManager().activate({
         workspaceState: new TestMemento() as vscode.Memento,
-        storagePath: tmp.dirSync().name
+        storageUri: { fsPath: tmp.dirSync().name } as vscode.Uri
     } as vscode.ExtensionContext);
 }
 
