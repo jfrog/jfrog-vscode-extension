@@ -69,7 +69,7 @@ export class YarnUtils {
         for (let yarnLock of yarnLocks) {
             checkCanceled();
             // In yarn, the version may vary in different workspaces. Therefore we run 'yarn --version' for each workspace.
-            if (!YarnUtils.isVersionSupported(parent, treesManager.logManager, yarnLock.fsPath)) {
+            if (!YarnUtils.isVersionSupported(parent, treesManager.logManager, path.dirname(yarnLock.fsPath))) {
                 return;
             }
             checkCanceled();

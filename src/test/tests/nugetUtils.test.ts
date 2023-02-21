@@ -90,9 +90,8 @@ describe('Nuget Utils Tests', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Nuget);
         assert.isDefined(solutions);
-        await NugetUtils.createDependenciesTrees(solutions, treesManager, parent, () => {
-            assert;
-        });
+        // eslint-disable-next-line @typescript-eslint/no-empty-function
+        await NugetUtils.createDependenciesTrees(solutions, treesManager, parent, () => {});
         let res: DependenciesTreeNode[] = parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
         for (let child of res) {
             child.children = child.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
