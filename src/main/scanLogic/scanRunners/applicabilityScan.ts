@@ -1,6 +1,6 @@
 import { LogManager } from '../../log/logManager';
 import { BinaryRunner } from './binaryRunner';
-import { AnalyzeIssue, AnalyzerScanRun, AnalyzeScanRequest, FileIssues } from './analyzerModels';
+import { AnalyzeIssue, AnalyzeLocation, AnalyzerScanRun, AnalyzeScanRequest, FileIssues } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 
 /**
@@ -82,6 +82,7 @@ export class ApplicabilityRunner extends BinaryRunner {
         }
         // Prepare
         let applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
+        let scanned: Set<string> = new Set<string>();
         let rulesFullDescription: Map<string, string> = new Map<string, string>();
         for (const rule of run.tool.driver.rules) {
             rulesFullDescription.set(rule.id, rule.fullDescription.text);
@@ -89,21 +90,24 @@ export class ApplicabilityRunner extends BinaryRunner {
         let issues: AnalyzeIssue[] = run.results;
         if (issues) {
             // Generate applicable data for all the issues
-            issues.forEach(analyzeIssue => {
-                let applicableDetails: CveApplicableDetails = this.getOrCreateApplicableDetails(
-                    analyzeIssue,
-                    applicable,
-                    rulesFullDescription.get(analyzeIssue.ruleId)
-                );
-                analyzeIssue.locations.forEach(location => {
-                    let fileIssues: FileIssues = this.getOrCreateFileIssues(applicableDetails, location.physicalLocation.artifactLocation.uri);
-                    fileIssues.locations.push(location.physicalLocation.region);
-                });
+            issues.forEach((analyzeIssue: AnalyzeIssue) => {
+                if ((!analyzeIssue.kind || analyzeIssue.kind === 'fail') && analyzeIssue.locations) {
+                    let applicableDetails: CveApplicableDetails = this.getOrCreateApplicableDetails(
+                        analyzeIssue,
+                        applicable,
+                        rulesFullDescription.get(analyzeIssue.ruleId)
+                    );
+                    analyzeIssue.locations.forEach((location: AnalyzeLocation) => {
+                        let fileIssues: FileIssues = this.getOrCreateFileIssues(applicableDetails, location.physicalLocation.artifactLocation.uri);
+                        fileIssues.locations.push(location.physicalLocation.region);
+                    });
+                }
+                scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
             });
         }
         // Convert data to a response
         return {
-            scannedCve: run.tool.driver.rules.map(rule => this.getCveFromRuleId(rule.id)),
+            scannedCve: Array.from(scanned),
             applicableCve: Object.fromEntries(applicable.entries())
         } as ApplicabilityScanResponse;
     }
