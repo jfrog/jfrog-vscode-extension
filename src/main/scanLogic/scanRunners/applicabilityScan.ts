@@ -90,20 +90,22 @@ export class ApplicabilityRunner extends BinaryRunner {
         if (issues) {
             // Generate applicable data for all the issues
             issues.forEach(analyzeIssue => {
-                let applicableDetails: CveApplicableDetails = this.getOrCreateApplicableDetails(
-                    analyzeIssue,
-                    applicable,
-                    rulesFullDescription.get(analyzeIssue.ruleId)
-                );
-                analyzeIssue.locations.forEach(location => {
-                    let fileIssues: FileIssues = this.getOrCreateFileIssues(applicableDetails, location.physicalLocation.artifactLocation.uri);
-                    fileIssues.locations.push(location.physicalLocation.region);
-                });
+                if ((!analyzeIssue.kind || analyzeIssue.kind === 'fail') && analyzeIssue.locations) {
+                    let applicableDetails: CveApplicableDetails = this.getOrCreateApplicableDetails(
+                        analyzeIssue,
+                        applicable,
+                        rulesFullDescription.get(analyzeIssue.ruleId)
+                    );
+                    analyzeIssue.locations.forEach(location => {
+                        let fileIssues: FileIssues = this.getOrCreateFileIssues(applicableDetails, location.physicalLocation.artifactLocation.uri);
+                        fileIssues.locations.push(location.physicalLocation.region);
+                    });
+                }
             });
         }
         // Convert data to a response
         return {
-            scannedCve: run.tool.driver.rules.map(rule => this.getCveFromRuleId(rule.id)),
+            scannedCve: issues.map(issue => this.getCveFromRuleId(issue.ruleId)),
             applicableCve: Object.fromEntries(applicable.entries())
         } as ApplicabilityScanResponse;
     }

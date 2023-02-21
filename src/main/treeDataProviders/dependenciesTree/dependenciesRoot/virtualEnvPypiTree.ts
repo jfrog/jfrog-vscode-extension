@@ -29,7 +29,7 @@ export class VirtualEnvPypiTree extends PypiTreeNode {
     public toEnvironmentTreeNode() {
         return new EnvironmentTreeNode(this.virtualEnvironmentPath, this.generalInfo.pkgType);
     }
-    
+
     public toDependencyScanResults() {
         return {
             type: this.generalInfo.pkgType,

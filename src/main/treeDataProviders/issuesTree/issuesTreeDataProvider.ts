@@ -555,7 +555,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     ): Promise<void> {
         let cveToScan: string[] = [];
         descriptorNode.issues.forEach(issue => {
-            if (issue instanceof CveTreeNode && issue.cve && issue.cve.cve && !cveToScan.find(i => issue.cve && i == issue.cve.cve)) {
+            if (
+                issue instanceof CveTreeNode &&
+                !issue.parent.indirect &&
+                issue.cve &&
+                issue.cve.cve &&
+                !cveToScan.find(i => issue.cve && i == issue.cve.cve)
+            ) {
                 cveToScan.push(issue.cve.cve);
             }
         });
