@@ -309,7 +309,7 @@ export class MavenUtils {
                     } else {
                         currNode = new PomTree(pomGav);
                     }
-                    currNode.pomPath = path.dirname(pom.fsPath);
+                    currNode.pomPath = pom.fsPath;
                     currNode.parentGav = parentGav;
                     MavenUtils.addPrototypeNode(prototypeTree, currNode);
                 }

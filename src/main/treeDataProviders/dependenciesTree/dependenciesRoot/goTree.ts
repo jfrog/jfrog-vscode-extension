@@ -9,8 +9,8 @@ import { SemVer } from 'semver';
 
 export class GoTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
-    constructor(tmpWorkspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
-        super(tmpWorkspaceFolder, PackageType.Go, parent);
+    constructor(tmpFullPath: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
+        super(tmpFullPath, PackageType.Go, parent);
     }
 
     public refreshDependencies(goVersion: SemVer) {

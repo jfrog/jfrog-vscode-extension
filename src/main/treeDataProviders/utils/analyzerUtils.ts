@@ -137,7 +137,7 @@ export class AnalyzerUtils {
                             searchTarget: details.fullDescription,
                             evidence: evidences
                         } as IApplicableDetails;
-                    } else if (!node.parent.indirect) {
+                    } else {
                         // Not applicable
                         node.severity = SeverityUtils.notApplicable(node.severity);
                         node.applicableDetails = { isApplicable: false } as IApplicableDetails;

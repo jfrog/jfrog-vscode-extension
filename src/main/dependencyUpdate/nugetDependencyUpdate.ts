@@ -1,11 +1,12 @@
 import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { PackageType } from '../types/projectType';
+import { NugetUtils } from '../utils/nugetUtils';
 import { ScanUtils } from '../utils/scanUtils';
 import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 
-export class GoDependencyUpdate extends AbstractDependencyUpdate {
+export class NugetDependencyUpdate extends AbstractDependencyUpdate {
     constructor() {
-        super(PackageType.Go);
+        super(PackageType.Nuget);
     }
 
     /** @override */
@@ -16,6 +17,11 @@ export class GoDependencyUpdate extends AbstractDependencyUpdate {
     /** @override */
     public update(dependency: DependencyIssuesTreeNode, version: string): void {
         const workspace: string = dependency.getProjectPath();
-        ScanUtils.executeCmd('go get ' + dependency.name + '@v' + version, workspace);
+        let descriptorFile: string = dependency.parent.fullPath;
+        if (descriptorFile.endsWith(NugetUtils.PROJECT_SUFFIX)) {
+            ScanUtils.executeCmd('dotnet add package ' + dependency.name + ' --version ' + version, workspace);
+        } else {
+            ScanUtils.executeCmd('nuget update ' + dependency.parent.fullPath + ' -Id ' + dependency.name + ' -Version ' + version, workspace);
+        }
     }
 }

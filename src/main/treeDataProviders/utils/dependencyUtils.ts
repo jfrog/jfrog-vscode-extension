@@ -19,6 +19,7 @@ import { FocusType } from '../../constants/contextKeys';
 import { DependencyScanResults } from '../../types/workspaceIssuesDetails';
 import { EnvironmentTreeNode } from '../issuesTree/descriptorTree/environmentTreeNode';
 import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectDependencyTreeNode';
+import { NugetUtils } from '../../utils/nugetUtils';
 
 export class DependencyUtils {
     /**
@@ -182,27 +183,25 @@ export class DependencyUtils {
      * Get the dependency graph of a descriptor base on a given path
      * @param workspaceDependenciesTree - the dependencies graph for all the descriptors in the workspace
      * @param descriptorPath - the descriptor we want to fetch its sub tree graph
+     * @param descriptorType - the package type of the descriptor
      * @returns the descriptor dependencies tree if exists the provided workspace tree, undefined otherwise
      */
-    public static getDependencyGraph(workspaceDependenciesTree: DependenciesTreeNode, descriptorPath: string): RootNode | undefined {
+    public static getDependencyGraph(
+        workspaceDependenciesTree: DependenciesTreeNode,
+        descriptorPath: string,
+        descriptorType: PackageType
+    ): RootNode | undefined {
         // Search for the dependency graph of the descriptor
         for (const child of workspaceDependenciesTree.children) {
-            if (child instanceof RootNode) {
-                let graph: RootNode | undefined = this.searchDependencyGraph(descriptorPath, child);
-                if (graph) {
-                    return graph;
-                }
+            if (child instanceof RootNode && child.projectDetails.type === descriptorType) {
+                return this.searchDependencyGraph(descriptorPath, child);
             }
         }
         return undefined;
     }
 
-    private static isNodeMatchPath(filePath: string, node: RootNode): boolean {
-        return node.fullPath === filePath || node.projectDetails.path === filePath;
-    }
-
     private static searchDependencyGraph(descriptorPath: string, node: RootNode): RootNode | undefined {
-        if (this.isNodeMatchPath(descriptorPath, node) || this.isNodeMatchPath(path.dirname(descriptorPath), node)) {
+        if (node.fullPath == descriptorPath || node.projectDetails.path == descriptorPath) {
             return node;
         }
         for (const child of node.children) {
@@ -256,7 +255,10 @@ export class DependencyUtils {
      * @returns the list of positions in the document this dependency appears in
      */
     public static getDependencyPosition(document: vscode.TextDocument, packageType: PackageType, dependencyId: string): vscode.Range[] {
-        let dependencyName: string = packageType == PackageType.Maven ? dependencyId : dependencyId.substring(0, dependencyId.lastIndexOf(':'));
+        let dependencyName: string =
+            packageType == PackageType.Maven || packageType == PackageType.Nuget
+                ? dependencyId
+                : dependencyId.substring(0, dependencyId.lastIndexOf(':'));
 
         switch (packageType) {
             case PackageType.Go:
@@ -269,6 +271,8 @@ export class DependencyUtils {
                 return PypiUtils.getDependencyPosition(document, dependencyName);
             case PackageType.Yarn:
                 return YarnUtils.getDependencyPosition(document, dependencyName);
+            case PackageType.Nuget:
+                return NugetUtils.getDependencyPosition(document, dependencyName);
             default:
                 return [];
         }

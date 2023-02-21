@@ -49,8 +49,10 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         this._severity = topSeverity;
 
         this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n';
-        this.tooltip += 'Issues count: ' + this._issues.length + '\n';
-        this.tooltip += 'Artifact' + (this._indirect ? ' (indirect):' : ':') + '\n' + this.artifactId;
+        this.tooltip += 'Issues count: ' + this._issues.length;
+        if (this.indirect) {
+            this.tooltip += '\n(indirect)';
+        }
         this.description = this._version + (this._indirect ? ' (indirect)' : '');
         this._issues
             // 1st priority - Sort by severity
@@ -121,10 +123,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         return this._type;
     }
 
-    /**
-     * @returns the file system path to the project descriptor directory or to the Python virtual environment
-     */
-    public getSourcePath(): string {
+    public getProjectPath(): string {
         return this.parent.getProjectPath();
     }
 

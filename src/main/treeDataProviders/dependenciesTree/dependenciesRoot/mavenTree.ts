@@ -11,9 +11,9 @@ import { ProjectDetails } from '../../../types/projectDetails';
 export class MavenTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'gav://';
 
-    constructor(workspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
-        super(workspaceFolder, PackageType.Maven, parent);
-        MavenUtils.pathToNode.set(workspaceFolder, this);
+    constructor(fullPath: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
+        super(fullPath, PackageType.Maven, parent);
+        MavenUtils.pathToNode.set(fullPath, this);
     }
 
     /**

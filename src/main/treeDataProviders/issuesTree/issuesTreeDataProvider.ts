@@ -283,10 +283,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         // Scan workspace to prepare the needed information for the scans and progress
         progress.report({ message: '👷 Preparing workspace' });
         let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
-        let descriptorsCount: number = 0;
-        for (let descriptorPaths of workspaceDescriptors.values()) {
-            descriptorsCount += descriptorPaths.length;
-        }
         checkCanceled();
         let graphSupported: boolean = await this._scanManager.validateGraphSupported();
         checkCanceled();
@@ -302,6 +298,10 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             checkCanceled
         );
 
+        let descriptorsCount: number = 0;
+        for (let descriptorPaths of workspaceDescriptors.values()) {
+            descriptorsCount += descriptorPaths.length;
+        }
         progressManager.startStep('🔎 Scanning for issues', graphSupported ? 2 * descriptorsCount + 1 : 1);
         let scansPromises: Promise<any>[] = [];
         scansPromises.push(AnalyzerUtils.runEos(scanResults, root, workspaceDescriptors, this._scanManager, progressManager));
@@ -345,7 +345,11 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
                 let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptorData.fullPath, descriptorData.type);
                 // Search for the dependency graph of the descriptor
-                let descriptorGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(workspaceDependenciesTree, descriptorPath.fsPath);
+                let descriptorGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(
+                    workspaceDependenciesTree,
+                    descriptorPath.fsPath,
+                    descriptorData.type
+                );
                 if (!descriptorGraph) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this._logManager.logMessage("Can't find descriptor graph for " + descriptorPath.fsPath, 'DEBUG');
@@ -558,13 +562,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         descriptorNode: DescriptorTreeNode,
         abortController: AbortController
     ): Promise<void> {
-        let cveToScan: string[] = [];
+        let cvesToScan: string[] = [];
         descriptorNode.issues.forEach(issue => {
-            if (issue instanceof CveTreeNode && issue.cve && issue.cve.cve && !cveToScan.find(i => issue.cve && i == issue.cve.cve)) {
-                cveToScan.push(issue.cve.cve);
+            if (issue instanceof CveTreeNode && !issue.parent.indirect && issue.cve?.cve && !cvesToScan.includes(issue.cve?.cve)) {
+                cvesToScan.push(issue.cve.cve);
             }
         });
-        if (cveToScan.length == 0) {
+        if (cvesToScan.length == 0) {
             return;
         }
         this._logManager.logMessage('Scanning descriptor ' + descriptorIssues.fullPath + ' for cve applicability issues', 'INFO');
@@ -573,7 +577,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         descriptorIssues.applicableIssues = await this._scanManager.scanApplicability(
             path.dirname(descriptorIssues.fullPath),
             abortController,
-            cveToScan
+            cvesToScan
         );
 
         if (descriptorIssues.applicableIssues && descriptorIssues.applicableIssues.applicableCve) {

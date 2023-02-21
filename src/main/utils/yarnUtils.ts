@@ -73,7 +73,7 @@ export class YarnUtils {
                 return;
             }
             checkCanceled();
-            let root: YarnTreeNode = new YarnTreeNode(path.dirname(yarnLock.fsPath), treesManager, parent);
+            let root: YarnTreeNode = new YarnTreeNode(yarnLock.fsPath, treesManager, parent);
             projectsToScan.push(root.projectDetails);
             root.refreshDependencies();
         }

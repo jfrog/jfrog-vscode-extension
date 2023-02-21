@@ -8,6 +8,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
 import { PackageType } from '../types/projectType';
 import { Severity, SeverityUtils } from '../types/severity';
+import { ScanUtils } from '../utils/scanUtils';
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
 
 /**
@@ -35,7 +36,7 @@ interface DirectDependencyIssue {
 export class DescriptorActionProvider extends AbstractFileActionProvider implements vscode.CodeActionProvider {
     public static readonly DESCRIPTOR_SELECTOR: vscode.DocumentSelector = {
         scheme: 'file',
-        pattern: '**/{go.mod,package.json,pom.xml,*requirements*.txt,yarn.lock}'
+        pattern: ScanUtils.DESCRIPTOR_SELECTOR_PATTERN
     };
 
     private _processedMap: Map<vscode.Uri, Map<string, DirectDependencyInfo>> = new Map<vscode.Uri, Map<string, DirectDependencyInfo>>();
