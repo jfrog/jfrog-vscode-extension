@@ -28,7 +28,7 @@ export class RunUtils {
         }
         // Add abort task to execute and stop the other tasks if abort signal was given
         bundle.tasks.push(this.checkIfAbortedTask(bundle));
-        return (await Promise.all(bundle.tasks)).slice(0,promises.length);
+        return (await Promise.all(bundle.tasks)).slice(0, promises.length);
     }
 
     /**

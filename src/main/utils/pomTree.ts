@@ -3,7 +3,7 @@ import { TreesManager } from '../treeDataProviders/treesManager';
 import { ScanUtils } from './scanUtils';
 
 export class PomTree {
-    private _pomLocation:string =''
+    private _pomLocation: string = '';
     constructor(
         private _pomGav: string = '',
         private _pomPath: string = '',
@@ -11,7 +11,7 @@ export class PomTree {
         private _parent?: PomTree,
         private _parentGav: string = ''
     ) {
-        this._pomLocation = path.dirname(_pomPath)
+        this._pomLocation = path.dirname(_pomPath);
     }
 
     public get pomGav(): string {
@@ -28,7 +28,7 @@ export class PomTree {
 
     public set pomPath(v: string) {
         this._pomPath = v;
-        this._pomLocation = path.dirname(v)
+        this._pomLocation = path.dirname(v);
     }
 
     public get pomLocation(): string {
@@ -73,7 +73,7 @@ export class PomTree {
         return;
     }
     public runMavenDependencyTree(): void {
-        ScanUtils.executeCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog_vscode/maven`,  this.pomLocation);
+        ScanUtils.executeCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog_vscode/maven`, this.pomLocation);
     }
 
     public async getRawDependencies(treesManager: TreesManager): Promise<string[] | undefined> {

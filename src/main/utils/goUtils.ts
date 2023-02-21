@@ -165,11 +165,11 @@ export class GoUtils {
                 }
             }
         }
-        const tmpGoModPath:string = path.join(targetDir,'go.mod')
-        if(!fs.existsSync(tmpGoModPath)){
-            throw new Error("fail to find temp go.mod while copy go.mod file to a temporary directory at "+ targetDir);
+        const tmpGoModPath: string = path.join(targetDir, 'go.mod');
+        if (!fs.existsSync(tmpGoModPath)) {
+            throw new Error('fail to find temp go.mod while copy go.mod file to a temporary directory at ' + targetDir);
         }
-        return  tmpGoModPath;
+        return tmpGoModPath;
     }
 
     /**
