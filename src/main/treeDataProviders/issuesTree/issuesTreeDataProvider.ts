@@ -553,19 +553,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         descriptorNode: DescriptorTreeNode,
         abortController: AbortController
     ): Promise<void> {
-        let cveToScan: string[] = [];
+        let cvesToScan: string[] = [];
         descriptorNode.issues.forEach(issue => {
-            if (
-                issue instanceof CveTreeNode &&
-                !issue.parent.indirect &&
-                issue.cve &&
-                issue.cve.cve &&
-                !cveToScan.find(i => issue.cve && i == issue.cve.cve)
-            ) {
-                cveToScan.push(issue.cve.cve);
+            if (issue instanceof CveTreeNode && !issue.parent.indirect && issue.cve?.cve && !cvesToScan.includes(issue.cve?.cve)) {
+                cvesToScan.push(issue.cve.cve);
             }
         });
-        if (cveToScan.length == 0) {
+        if (cvesToScan.length == 0) {
             return;
         }
         this._logManager.logMessage('Scanning descriptor ' + descriptorIssues.fullPath + ' for cve applicability issues', 'INFO');
@@ -574,7 +568,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         descriptorIssues.applicableIssues = await this._scanManager.scanApplicability(
             path.dirname(descriptorIssues.fullPath),
             abortController,
-            cveToScan
+            cvesToScan
         );
 
         if (descriptorIssues.applicableIssues && descriptorIssues.applicableIssues.applicableCve) {

@@ -1,6 +1,6 @@
 import { LogManager } from '../../log/logManager';
 import { BinaryRunner } from './binaryRunner';
-import { AnalyzeIssue, AnalyzerScanRun, AnalyzeScanRequest, FileIssues } from './analyzerModels';
+import { AnalyzeIssue, AnalyzeLocation, AnalyzerScanRun, AnalyzeScanRequest, FileIssues } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 
 /**
@@ -90,14 +90,14 @@ export class ApplicabilityRunner extends BinaryRunner {
         let issues: AnalyzeIssue[] = run.results;
         if (issues) {
             // Generate applicable data for all the issues
-            issues.forEach(analyzeIssue => {
+            issues.forEach((analyzeIssue: AnalyzeIssue) => {
                 if ((!analyzeIssue.kind || analyzeIssue.kind === 'fail') && analyzeIssue.locations) {
                     let applicableDetails: CveApplicableDetails = this.getOrCreateApplicableDetails(
                         analyzeIssue,
                         applicable,
                         rulesFullDescription.get(analyzeIssue.ruleId)
                     );
-                    analyzeIssue.locations.forEach(location => {
+                    analyzeIssue.locations.forEach((location: AnalyzeLocation) => {
                         let fileIssues: FileIssues = this.getOrCreateFileIssues(applicableDetails, location.physicalLocation.artifactLocation.uri);
                         fileIssues.locations.push(location.physicalLocation.region);
                     });
