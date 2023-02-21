@@ -82,6 +82,7 @@ export class ApplicabilityRunner extends BinaryRunner {
         }
         // Prepare
         let applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
+        let scanned: Set<string> = new Set<string>();
         let rulesFullDescription: Map<string, string> = new Map<string, string>();
         for (const rule of run.tool.driver.rules) {
             rulesFullDescription.set(rule.id, rule.fullDescription.text);
@@ -101,11 +102,12 @@ export class ApplicabilityRunner extends BinaryRunner {
                         fileIssues.locations.push(location.physicalLocation.region);
                     });
                 }
+                scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
             });
         }
         // Convert data to a response
         return {
-            scannedCve: issues.map(issue => this.getCveFromRuleId(issue.ruleId)),
+            scannedCve: Object.values(scanned),
             applicableCve: Object.fromEntries(applicable.entries())
         } as ApplicabilityScanResponse;
     }
