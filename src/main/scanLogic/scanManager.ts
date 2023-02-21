@@ -50,13 +50,13 @@ export class ScanManager implements ExtensionComponent {
     public async updateResources(): Promise<boolean> {
         let result: boolean = true;
         await ScanUtils.backgroundTask(async (progress: vscode.Progress<{ message?: string; increment?: number }>) => {
-            progress.report({ message: 'Get outdated resources' });
+            progress.report({ message: 'Checking for outdated scanners' });
             let resources: Resource[] = await this.getOutdatedResources();
             if (resources.length === 0) {
                 return;
             }
             let progressManager: StepProgress = new StepProgress(progress);
-            progressManager.startStep('Update resources', resources.length);
+            progressManager.startStep('Updating scanners', resources.length);
             this._logManager.logMessage(
                 'Updating outdated resources (' + resources.length + '): ' + resources.map(resource => resource.name).join(),
                 'INFO'
