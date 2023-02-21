@@ -107,7 +107,7 @@ export class ApplicabilityRunner extends BinaryRunner {
         }
         // Convert data to a response
         return {
-            scannedCve: Object.values(scanned),
+            scannedCve: Array.from(scanned),
             applicableCve: Object.fromEntries(applicable.entries())
         } as ApplicabilityScanResponse;
     }
