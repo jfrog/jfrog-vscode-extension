@@ -7,7 +7,8 @@ import { ScanUtils } from './scanUtils';
 
 export class Utils {
     private static readonly MAX_FILES_EXTRACTED_ZIP: number = 1000;
-    private static readonly MAX_SIZE_EXTRACTED_ZIP: number = 1000000000; // 1 GB
+    // 1 GB
+    private static readonly MAX_SIZE_EXTRACTED_ZIP_BYTES: number = 1000000000;
     private static readonly COMPRESSION_THRESHOLD_RATIO: number = 100;
 
     /**
@@ -82,7 +83,7 @@ export class Utils {
 
             let entrySize: number = entry.getData().length;
             totalSize += entrySize;
-            if (totalSize > Utils.MAX_SIZE_EXTRACTED_ZIP) {
+            if (totalSize > Utils.MAX_SIZE_EXTRACTED_ZIP_BYTES) {
                 throw new ZipExtractError(zipPath, 'Reached max size allowed');
             }
 
@@ -114,7 +115,7 @@ export class Utils {
         return entry.getData().toString('utf8');
     }
 
-    public static addWinSuffixIFNeeded(str: string): string {
+    public static addWinSuffixIfNeeded(str: string): string {
         return str + (os.platform() === 'win32' ? '.exe' : '');
     }
 

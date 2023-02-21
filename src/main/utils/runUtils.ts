@@ -8,7 +8,14 @@ interface TasksBundle {
 }
 
 export class RunUtils {
-    public static async withAbortSignal(abortSignal: AbortSignal, abortCheckInterval: number, ...promises: Promise<any>[]) {
+    /**
+     * Creates a Promise that is resolved with an array of results when all of the provided Promises resolve, or rejected when any Promise is rejected or if a given abort signal was given.
+     * @param abortSignal - the signal that can abort and reject all the given promises
+     * @param abortCheckInterval - the interval in milliseconds to check if an abort signal was fired
+     * @param promises - the promises that the new promise will wrap
+     * @returns Promise that wrap the given promises
+     */
+    public static async withAbortSignal(abortSignal: AbortSignal, abortCheckInterval: number, ...promises: Promise<any>[]): Promise<any[]> {
         let bundle: TasksBundle = {
             activeTasks: promises.length,
             tasks: [],
@@ -21,7 +28,7 @@ export class RunUtils {
         }
         // Add abort task to execute and stop the other tasks if abort signal was given
         bundle.tasks.push(this.checkIfAbortedTask(bundle));
-        await Promise.all(bundle.tasks);
+        return (await Promise.all(bundle.tasks)).slice(0,promises.length);
     }
 
     /**

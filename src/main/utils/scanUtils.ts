@@ -37,11 +37,17 @@ export class ScanUtils {
         );
     }
 
+    /**
+     * Start a background task (not cancelable) with progress in the status bar.
+     * the text that will be displayed in the status bar will be: 'JFrog: <TITLE> <Progress.message>
+     * @param scanCbk - task callback to execute in the background
+     * @param title - the given task title that will be displayed in the status bar, a 'JFrog: ' prefix will be added to it
+     */
     public static async backgroundTask(
         scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>) => Promise<void>,
         title: string = ''
     ) {
-        title = 'JFrog: ' + title;
+        title = 'JFrog' + (title ? ': ' + title : '');
         await vscode.window.withProgress(
             <vscode.ProgressOptions>{
                 location: vscode.ProgressLocation.Window,

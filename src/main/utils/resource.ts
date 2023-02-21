@@ -24,7 +24,7 @@ export class Resource {
         private _targetPath: string,
         private _logManager: LogManager,
         connectionManager?: JfrogClient,
-        private _mode: fs.Mode = '755'
+        private _mode: fs.Mode = '700'
     ) {
         this._connectionManager =
             connectionManager ?? ConnectionUtils.createJfrogClient(Resource.DEFAULT_SERVER, Resource.DEFAULT_SERVER + '/artifactory', '', '', '', '');
@@ -88,7 +88,7 @@ export class Resource {
     }
 
     private async isLocalAndRemoteChecksumMatch(localFile: string): Promise<boolean> {
-        return this.calculateLocalChecksum(localFile) === (this._cacheRemoteSha256 ?? (await this.calculateRemoteChecksum()));
+        return this.calculateLocalChecksum(localFile) === (this._cacheRemoteSha256 ?? (await this.getRemoteChecksum()));
     }
 
     public isExists(): boolean {
@@ -115,7 +115,7 @@ export class Resource {
             return true;
         }
         // Check if has update - compare the sha256 of the resource with the latest released resource.
-        this._cacheRemoteSha256 = await this.calculateRemoteChecksum();
+        this._cacheRemoteSha256 = await this.getRemoteChecksum();
         if (!this._cacheRemoteSha256) {
             // In case of failure download anyway to make sure
             return true;
@@ -125,13 +125,13 @@ export class Resource {
         );
     }
 
-    private async calculateRemoteChecksum(): Promise<string | undefined> {
+    private async getRemoteChecksum(): Promise<string | undefined> {
         try {
             let checksumResult: IChecksumResult = await this._connectionManager
                 .artifactory()
                 .download()
                 .getArtifactChecksum(this.sourceUrl);
-            return checksumResult ? checksumResult.sha256 : undefined;
+            return checksumResult?.sha256;
         } catch (err) {
             this._logManager.logError(<Error>err);
             return undefined;

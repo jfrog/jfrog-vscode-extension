@@ -22,8 +22,10 @@ import { StepProgress } from '../treeDataProviders/utils/stepProgress';
  * Manage all the Xray scans
  */
 export class ScanManager implements ExtensionComponent {
-    private static readonly BINARY_ABORT_CHECK_INTERVAL: number = 1000; // every 1 sec
-    private static readonly RESOURCE_CHECK_UPDATE_INTERVAL: number = 1000 * 60 * 60 * 24; // every day
+    // every 1 sec
+    private static readonly BINARY_ABORT_CHECK_INTERVAL_MILLISECS: number = 1000;
+    // every day
+    private static readonly RESOURCE_CHECK_UPDATE_INTERVAL_MILLISECS: number = 1000 * 60 * 60 * 24;
 
     private static lastOutdatedCheck: number;
 
@@ -60,7 +62,7 @@ export class ScanManager implements ExtensionComponent {
                 'INFO'
             );
             let updatePromises: Promise<any>[] = [];
-            resources.forEach(async resource =>
+            resources.forEach(async (resource: Resource) =>
                 updatePromises.push(
                     resource
                         .update()
@@ -109,7 +111,7 @@ export class ScanManager implements ExtensionComponent {
     }
 
     private shouldCheckOutdated(): boolean {
-        return !ScanManager.lastOutdatedCheck || Date.now() - ScanManager.lastOutdatedCheck > ScanManager.RESOURCE_CHECK_UPDATE_INTERVAL;
+        return !ScanManager.lastOutdatedCheck || Date.now() - ScanManager.lastOutdatedCheck > ScanManager.RESOURCE_CHECK_UPDATE_INTERVAL_MILLISECS;
     }
 
     private async getResources(): Promise<Resource[]> {
@@ -117,7 +119,7 @@ export class ScanManager implements ExtensionComponent {
         if (await this.isAnalyzerManagerSupported()) {
             resources.push(BinaryRunner.getAnalyzerManagerResource(this._logManager));
         } else {
-            this.logManager.logMessage('You are not entitled to run contextual analysis scans', 'WARN');
+            this.logManager.logMessage('You are not entitled to run contextual analysis scans', 'DEBUG');
         }
         return resources;
     }
@@ -137,14 +139,18 @@ export class ScanManager implements ExtensionComponent {
      * Validate if the applicable-scan is supported
      */
     public isApplicableSupported(): boolean {
-        return new ApplicabilityRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).validateSupported();
+        return new ApplicabilityRunner(
+            this._connectionManager,
+            ScanManager.BINARY_ABORT_CHECK_INTERVAL_MILLISECS,
+            this._logManager
+        ).validateSupported();
     }
 
     /**
      * Validate if the eos-scan is supported
      */
     public isEosSupported(): boolean {
-        return new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager).validateSupported();
+        return new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL_MILLISECS, this._logManager).validateSupported();
     }
 
     /**
@@ -171,7 +177,7 @@ export class ScanManager implements ExtensionComponent {
     public async scanApplicability(directory: string, abortController: AbortController, cveToRun: string[] = []): Promise<ApplicabilityScanResponse> {
         let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(
             this._connectionManager,
-            ScanManager.BINARY_ABORT_CHECK_INTERVAL,
+            ScanManager.BINARY_ABORT_CHECK_INTERVAL_MILLISECS,
             this._logManager
         );
         if (!applicableRunner.validateSupported()) {
@@ -184,7 +190,7 @@ export class ScanManager implements ExtensionComponent {
     }
 
     public async scanEos(abortController: AbortController, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
-        let eosRunner: EosRunner = new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL, this._logManager);
+        let eosRunner: EosRunner = new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL_MILLISECS, this._logManager);
         if (!eosRunner.validateSupported()) {
             this._logManager.logMessage('Eos scan is not supported', 'DEBUG');
             return {} as EosScanResponse;

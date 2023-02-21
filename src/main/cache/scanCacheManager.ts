@@ -42,7 +42,7 @@ export class ScanCacheManager implements ExtensionComponent {
 
     public activate(context: vscode.ExtensionContext): ScanCacheManager {
         this._scanCache = context.workspaceState;
-        let storageDir: string | undefined = context.storagePath;
+        let storageDir: string | undefined = context.storageUri?.fsPath;
         if (!storageDir) {
             return this;
         }

@@ -68,7 +68,7 @@ export abstract class BinaryRunner {
     public static getAnalyzerManagerResource(logManager: LogManager): Resource {
         return new Resource(
             Utils.addZipSuffix(BinaryRunner.DOWNLOAD_URL + Utils.getArchitecture() + '/' + BinaryRunner.RUNNER_NAME),
-            Utils.addWinSuffixIFNeeded(path.join(BinaryRunner.RUNNER_FOLDER, BinaryRunner.RUNNER_NAME)),
+            Utils.addWinSuffixIfNeeded(path.join(BinaryRunner.RUNNER_FOLDER, BinaryRunner.RUNNER_NAME)),
             logManager
         );
     }
