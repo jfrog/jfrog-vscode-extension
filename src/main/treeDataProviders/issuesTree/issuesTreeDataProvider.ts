@@ -15,7 +15,7 @@ import { CacheManager } from '../../cache/cacheManager';
 import { getNumberOfSupportedPackageTypes, PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { StepProgress } from '../utils/stepProgress';
-import { Utils } from '../utils/utils';
+import { Utils } from '../../utils/utils';
 import { DependencyUtils } from '../utils/dependencyUtils';
 import { TreesManager } from '../treesManager';
 import { IssueTreeNode } from './issueTreeNode';
@@ -70,25 +70,30 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         }
         if (!scan) {
             this._logManager.logMessage('Refresh: loading data from cache', 'INFO');
-            this.loadFromCache();
+            await this.loadFromCache();
             return;
         }
+        await this.scan();
+    }
+
+    public async scan() {
         if (this._scanInProgress) {
             vscode.window.showInformationMessage('Previous scan still running...');
             return;
         }
-        this.clearTree();
+        // Prepare
+        this.scanInProgress = true;
         this._logManager.showOutput();
+        await this._scanManager.updateResources();
+        // Scan
         this._logManager.logMessage('Refresh: starting workspace scans 🐸', 'INFO');
-        this._scanInProgress = true;
-        ScanUtils.setScanInProgress(true);
+        this.clearTree();
         ScanUtils.setFirstScanForWorkspace(false);
         const startRefreshTimestamp: number = Date.now();
         await this.scanWorkspaces()
             .catch(error => this._logManager.logError(error, true))
             .finally(() => {
-                this._scanInProgress = false;
-                ScanUtils.setScanInProgress(false);
+                this.scanInProgress = false;
                 this.onChangeFire();
             });
         this._logManager.logMessage('Scans completed 🐸 (elapsed ' + (Date.now() - startRefreshTimestamp) / 1000 + ' seconds)', 'INFO');
@@ -211,7 +216,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     this._workspaceToRoot.set(workspace, root);
                     let shouldDeleteRoot: boolean = false;
                     // Execute workspace scan task
-                    this.repopulateWorkspaceTree(scanResults, root, progress, checkCanceled)
+                    await this.repopulateWorkspaceTree(scanResults, root, progress, checkCanceled)
                         .then(() => {
                             this._logManager.logMessage("Workspace '" + workspace.name + "' scan ended", 'INFO');
                             shouldDeleteRoot = !scanResults.hasInformation();
@@ -431,9 +436,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 }
             })
             .catch(error => this.onFileScanError(workspaceScanDetails, root, error, workspaceIssues))
-            .finally(() => progressManager.onProgress());
+            .finally(() => progressManager.activateOnProgress());
         // Applicable scan task
-        if (!this._scanManager.validateApplicableSupported() || !foundIssues) {
+        if (!this._scanManager.isApplicableSupported() || !foundIssues) {
             progressManager.reportProgress();
             return;
         }
@@ -711,6 +716,11 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         element: FileTreeNode | DependencyIssuesTreeNode | CveTreeNode | LicenseIssueTreeNode | CodeIssueTreeNode
     ): Thenable<IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode | undefined> {
         return Promise.resolve(element.parent);
+    }
+
+    public set scanInProgress(value: boolean) {
+        this._scanInProgress = value;
+        ScanUtils.setScanInProgress(value);
     }
 
     /**

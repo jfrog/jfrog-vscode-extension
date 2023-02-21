@@ -6,7 +6,7 @@ import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNo
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { Severity, SeverityUtils } from '../../main/types/severity';
 import { createAndPopulateFileTestNode, createDummyIssue, createFileTestNode, FileNodeTestCase, FileNodeTestData } from './utils/treeNodeUtils.test';
-import { Utils } from '../../main/treeDataProviders/utils/utils';
+import { Utils } from '../../main/utils/utils';
 import { IssueTreeNode } from '../../main/treeDataProviders/issuesTree/issueTreeNode';
 
 /**

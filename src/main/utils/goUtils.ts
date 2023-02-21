@@ -11,6 +11,7 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ProjectDetails } from '../types/projectDetails';
 import { ScanUtils } from './scanUtils';
+import { Utils } from './utils';
 
 export class GoUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/go.mod' };
@@ -164,11 +165,11 @@ export class GoUtils {
                 }
             }
         }
-        const tmpGoModPath:string = path.join(targetDir,'go.mod')
-        if(!fs.existsSync(tmpGoModPath)){
-            throw new Error("fail to find temp go.mod while copy go.mod file to a temporary directory at "+ targetDir);
+        const tmpGoModPath: string = path.join(targetDir, 'go.mod');
+        if (!fs.existsSync(tmpGoModPath)) {
+            throw new Error('fail to find temp go.mod while copy go.mod file to a temporary directory at ' + targetDir);
         }
-        return  tmpGoModPath;
+        return tmpGoModPath;
     }
 
     /**
@@ -219,9 +220,7 @@ export class GoUtils {
                 }
 
                 // Root dir, or dir without go.mod - create the directory in target.
-                if (!fs.existsSync(destPath)) {
-                    fs.mkdirSync(destPath);
-                }
+                Utils.createDirIfNotExists(destPath);
                 return;
             }
 

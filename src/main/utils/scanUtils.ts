@@ -41,6 +41,30 @@ export class ScanUtils {
     }
 
     /**
+     * Start a background task (not cancelable) with progress in the status bar.
+     * the text that will be displayed in the status bar will be: 'JFrog: <TITLE> <Progress.message>
+     * @param scanCbk - task callback to execute in the background
+     * @param title - the given task title that will be displayed in the status bar, a 'JFrog: ' prefix will be added to it
+     */
+    public static async backgroundTask(
+        scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>) => Promise<void>,
+        title: string = ''
+    ) {
+        title = 'JFrog' + (title ? ': ' + title : '');
+        await vscode.window.withProgress(
+            <vscode.ProgressOptions>{
+                location: vscode.ProgressLocation.Window,
+                title: title,
+                cancellable: false
+            },
+            async (progress: vscode.Progress<{ message?: string; increment?: number }>, token: vscode.CancellationToken) => {
+                ScanUtils.checkCanceled(token);
+                await scanCbk(progress);
+            }
+        );
+    }
+
+    /**
      * Find go.mod, pom.xml, package.json, *.sln, setup.py, and requirements*.txt files in workspaces.
      * @param workspaceFolders - Base workspace folders to search
      * @param logManager       - Log manager
@@ -84,6 +108,10 @@ export class ScanUtils {
 
     public static getHomePath(): string {
         return path.join(os.homedir(), '.jfrog-vscode-extension');
+    }
+
+    public static getIssuesPath(): string {
+        return path.join(ScanUtils.getHomePath(), 'issues');
     }
 
     static readFileIfExists(filePath: string): string | undefined {
@@ -184,7 +212,7 @@ export class ScanUtils {
      * @param data - The data to hash
      * @returns hashed data in Hex
      */
-    static Hash(algorithm: string, data: string): string {
+    static Hash(algorithm: string, data: crypto.BinaryLike): string {
         return crypto
             .createHash(algorithm)
             .update(data)

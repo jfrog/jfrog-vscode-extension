@@ -1,9 +1,9 @@
-import AdmZip, { IZipEntry } from 'adm-zip';
 import * as fs from 'fs';
 import { IDetailsResponse } from 'jfrog-client-js';
 import * as path from 'path';
 import { LogManager } from '../log/logManager';
 import { ScanUtils } from '../utils/scanUtils';
+import { Utils } from '../utils/utils';
 
 export enum Type {
     BUILD_INFO,
@@ -19,9 +19,7 @@ export class BuildsScanCache {
 
     constructor(private _projectKey: string, private _url: string, private _logger: LogManager) {
         this.buildsDir = path.resolve(BuildsScanCache.CACHE_BASE_PATH, ScanUtils.Hash('sha1', this._projectKey + '_' + this._url));
-        if (!fs.existsSync(this.buildsDir)) {
-            fs.mkdirSync(this.buildsDir, { recursive: true });
-        }
+        Utils.createDirIfNotExists(this.buildsDir);
         this.cleanUpOldBuilds();
     }
 
@@ -42,22 +40,11 @@ export class BuildsScanCache {
     }
 
     public save(content: string, timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): void {
-        let zip: AdmZip = new AdmZip();
-        zip.addFile(type.toString(), Buffer.alloc(content.length, content));
-        zip.writeZip(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type));
+        Utils.saveAsZip(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type), { fileName: type.toString(), content: content });
     }
 
     public load(timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): any {
-        const buildPath: string = this.getZipPath(timestamp, buildName, buildNumber, projectKey, type);
-        if (!fs.existsSync(buildPath)) {
-            return '';
-        }
-        let zip: AdmZip = new AdmZip(buildPath);
-        let entry: IZipEntry | null = zip.getEntry(type.toString());
-        if (!entry) {
-            throw new Error('Could not find expected content in archive in cache');
-        }
-        return entry.getData().toString('utf8');
+        return Utils.extractZipEntry(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type), type.toString());
     }
 
     public loadBuildInfo(timestamp: string, buildName: string, buildNumber: string, projectKey: string): any {

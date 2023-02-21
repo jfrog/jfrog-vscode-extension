@@ -208,7 +208,7 @@ export class AnalyzerUtils {
         progressManager: StepProgress,
         splitRequests: boolean = true
     ): Promise<any> {
-        if (!scanManager.validateEosSupported()) {
+        if (!scanManager.isEosSupported()) {
             progressManager.reportProgress();
             return;
         }
@@ -267,7 +267,7 @@ export class AnalyzerUtils {
             );
 
             root.apply();
-            progressManager.onProgress();
+            progressManager.activateOnProgress();
         }
     }
 

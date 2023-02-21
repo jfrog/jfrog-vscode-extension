@@ -73,16 +73,16 @@ describe('Nuget Utils Tests', async () => {
         let res: DependenciesTreeNode[] = await runCreateNugetDependenciesTrees(parent);
         assert.equal(res.length, 3);
         // Assert dependency information
-        let node: DependenciesTreeNode | undefined = res.find(child => child.label === 'api')
-        assert.isDefined(node)
+        let node: DependenciesTreeNode | undefined = res.find(child => child.label === 'api');
+        assert.isDefined(node);
         assert.deepEqual(node?.children.length ?? 0, 1);
         // Assert dependency information
-        node = res.find(child => child.label === 'core')
-        assert.isDefined(node)
+        node = res.find(child => child.label === 'core');
+        assert.isDefined(node);
         assert.deepEqual(node?.children.length ?? 0, 1);
         // Assert dependency information
-        node = res.find(child => child.label === 'empty.sln [Not installed]')
-        assert.isDefined(node)
+        node = res.find(child => child.label === 'empty.sln [Not installed]');
+        assert.isDefined(node);
         assert.deepEqual(node?.children.length ?? 1, 0);
     });
 
