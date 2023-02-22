@@ -19,6 +19,7 @@ import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
 import { FileLocation } from '../scanLogic/scanRunners/analyzerModels';
 import { toPackageType } from '../types/projectType';
+import { Utils } from './utils';
 
 export class Translators {
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
@@ -146,9 +147,10 @@ export class Translators {
             let codeFlow: IAnalysisStep[] = [];
             for (let location of locations) {
                 codeFlow.push({
+                    fileName: Utils.getLastSegment(location.artifactLocation.uri),
                     file: location.artifactLocation.uri,
                     row: location.region.startLine,
-                    colum: location.region.startColumn
+                    column: location.region.startColumn
                 } as IAnalysisStep);
             }
             result.push(codeFlow);
