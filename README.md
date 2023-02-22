@@ -89,7 +89,7 @@ The extension is available to install from the VS Code extensions marketplace. a
 **MacOS and Linux using cUrl**
 
 ```
-curl -fL https://getcli.jfrog.io?setup | sh
+curl -fL "https://getcli.jfrog.io?setup" | sh
 ```
 
 **Windows using PowerShell**
