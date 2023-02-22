@@ -17,6 +17,10 @@ import { createScanCacheManager } from './utils/utils.test';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { PackageType } from '../../main/types/projectType';
 import { PipDepTree } from '../../main/types/pipDepTree';
+import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
+import { IComponent } from 'jfrog-client-js';
+import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
+import { PythonDependencyUpdate } from '../../main/dependencyUpdate/pythonDependencyUpdate';
 
 /**
  * Test functionality of @class PypiUtils.
@@ -32,9 +36,10 @@ describe('Pypi Utils Tests', async () => {
         {} as CacheManager,
         logManager
     );
-    let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements'];
+    let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements', 'updateToFixedVersion'];
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
     let tmpDir: vscode.Uri = vscode.Uri.file(ScanUtils.createTmpDir());
+    let pythonDependencyUpdate: PythonDependencyUpdate = new PythonDependencyUpdate();
 
     before(() => {
         fs.copySync(path.join(__dirname, '..', 'resources', 'python'), tmpDir.fsPath);
@@ -49,7 +54,9 @@ describe('Pypi Utils Tests', async () => {
     });
 
     it('Match setup.py dependencies with regex', () => {
-        let dependencyToVersion: Map<string, string | undefined> = PypiUtils.getSetupPyDirectDependencies(path.join(tmpDir.fsPath, 'regex', 'setupNoDepFound.py'));
+        let dependencyToVersion: Map<string, string | undefined> = PypiUtils.getSetupPyDirectDependencies(
+            path.join(tmpDir.fsPath, 'regex', 'setupNoDepFound.py')
+        );
         assert.equal(dependencyToVersion.size, 0);
         dependencyToVersion = PypiUtils.getSetupPyDirectDependencies(path.join(tmpDir.fsPath, 'regex', 'setupOneDepFound.py'));
         assert.equal(dependencyToVersion.size, 1);
@@ -82,7 +89,9 @@ describe('Pypi Utils Tests', async () => {
         );
         assert.equal(dependencyToVersion.size, 0);
 
-        dependencyToVersion = PypiUtils.getRequirementsTxtDirectDependencies(path.join(tmpDir.fsPath, 'regex', 'requirementsAllKindOfDepsVariations.txt'));
+        dependencyToVersion = PypiUtils.getRequirementsTxtDirectDependencies(
+            path.join(tmpDir.fsPath, 'regex', 'requirementsAllKindOfDepsVariations.txt')
+        );
         assert.equal(dependencyToVersion.get('someproject1'), '');
         assert.equal(dependencyToVersion.get('some.project2'), '== 1.3');
         assert.equal(dependencyToVersion.get('someproject3'), '>= 1.2, < 2.0');
@@ -93,6 +102,19 @@ describe('Pypi Utils Tests', async () => {
         assert.equal(dependencyToVersion.get('someproject8'), '==6.7');
         assert.equal(dependencyToVersion.get('someproject9'), '== 9.8');
         assert.equal(dependencyToVersion.get('someproject10'), '==9.0');
+    });
+
+    it('Update python dependency to fixed version ', async () => {
+        // Setup test requirements
+        const testDataPath: string = path.join(tmpDir.fsPath, 'updateToFixedVersion', 'requirements.txt');
+        const issueNode: DependencyIssuesTreeNode = await createUpdateToFixVersionProject(testDataPath);
+
+        // Operate the test
+        pythonDependencyUpdate.update(issueNode, '1.0.0');
+
+        // check results
+        const fileContent: string = fs.readFileSync(testDataPath, 'utf-8');
+        assert.include(fileContent, 'fire==1.0.0');
     });
 
     /**
@@ -223,5 +245,27 @@ describe('Pypi Utils Tests', async () => {
             return path.join('.venv', 'Scripts', 'python.exe');
         }
         return path.join('.venv', 'bin', 'python');
+    }
+
+    async function createUpdateToFixVersionProject(testDataPath: string): Promise<DependencyIssuesTreeNode> {
+        let localPython: string = getLocalPython();
+        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('', '', [], '', PackageType.Unknown));
+        let tree: PipDepTree[] | undefined = PypiUtils.runPipDepTree(path.join(workspaceFolders[3].uri.fsPath, localPython), treesManager.logManager);
+        if (tree === undefined) {
+            assert.fail;
+            return {} as DependencyIssuesTreeNode;
+        }
+        let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            [workspaceFolders[3]],
+            treesManager.logManager
+        );
+        await PypiUtils.descriptorsToDependencyTrees(workspaceDescriptors.get(PackageType.Python) || [], tree, () => undefined, treesManager, parent);
+        assert.deepEqual(parent?.children[0]?.label, 'requirements.txt');
+        return new DependencyIssuesTreeNode(
+            'artifactId',
+            { package_type: 'PYPI', package_name: 'fire' } as IComponent,
+            false,
+            new ProjectDependencyTreeNode(testDataPath)
+        );
     }
 });

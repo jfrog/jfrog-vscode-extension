@@ -30,7 +30,7 @@ export class VirtualEnvPypiTree extends PypiTreeNode {
     public toDependencyScanResults() {
         return {
             type: this.generalInfo.pkgType,
-            name: 'Virtual Environment',
+            name: this.generalInfo.artifactId,
             fullPath: this.virtualEnvironmentPath
         } as DependencyScanResults;
     }
