@@ -77,19 +77,14 @@ The extension also applies [JFrog File Spec JSON schema](https://raw.githubuserc
 
 ## Install the **JFrog** extension in VS Code
 
-The extension is avaliable to install from the VS Code extensions marketplace. after installing the JFrog extension tab <img src="resources/extensionIcon.png" width="30"> will appear in the activity bar
+The extension is available to install from the VS Code extensions marketplace. after installing the JFrog extension tab <img src="resources/extensionIcon.png" width="30"> will appear in the activity bar
 ![Install](resources/readme/preview/install.png)
 
 ## Connecting VS Code to Your JFrog Environment
-<br>
+
+### Set Up a FREE JFrog Environment in the Cloud
 <details>
-<summary> Set Up a FREE JFrog Environment in the Cloud</summary> 
-
-Run one of the following commands in your terminal. The commands will do the following:
-
-1. Install JFrog CLI on your machine.
-2. Create a FREE JFrog environment in the cloud for you.
-3. Configure VS Code to connect to your new environment.
+<summary>Run one of the following commands in your terminal.</summary>
 
 **MacOS and Linux using cUrl**
 
@@ -102,6 +97,11 @@ curl -fL https://getcli.jfrog.io?setup | sh
 ```
 powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/[RELEASE]/jfrog-cli-windows-amd64/jf.exe -OutFile $env:SYSTEMROOT\system32\jf.exe'" ; jf setup
 ```
+The commands will do the following:
+
+1. Install JFrog CLI on your machine.
+2. Create a FREE JFrog environment in the cloud for you.
+3. Configure VS Code to connect to your new environment.
 </details>
 <br>
 
@@ -154,7 +154,7 @@ It allows developers to view panels displaying vulnerability information about t
 With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
 ### Scanning workspace
-scan your workspace by clicking the Scan/Rescan button, the <img src='resources/dark/refresh.png' height="15" width="15"> icon at the extendion tab or click on Start Xray Scan from within the editor. The scan will create a list of files with vulnerabilities in the workspace.
+scan your workspace by clicking the Scan/Rescan button, the <img src='resources/dark/refresh.png' height="15" width="15"> icon at the extension tab or click on Start Xray Scan from within the editor. The scan will create a list of files with vulnerabilities in the workspace.
 ![Refresh](resources/readme/preview/refresh.png)
 ### Contextual Analysis
 Using [Contextual Analysis](https://www.jfrog.com/confluence/display/JFROG/Vulnerability+Contextual+Analysis) scans for CVE applicability, You can avoid wasting your time fixing risks that are not imposed and reduce false positives. determine whether your code is actually impacted by the vulnerable dependency and marking them as Applicable and Non Applicable., to learn more about this feature, see [Xray Advanced Scans](https://www.jfrog.com/confluence/display/JFROG/Xray+Advanced+Scans).
