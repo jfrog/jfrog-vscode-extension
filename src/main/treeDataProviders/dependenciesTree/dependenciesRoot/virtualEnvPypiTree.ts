@@ -11,7 +11,7 @@ export class VirtualEnvPypiTree extends PypiTreeNode {
     // Virtual env may be located outside the project dir.
     constructor(private _virtualEnvironmentPath: string, workspaceFolder: string, parent?: DependenciesTreeNode) {
         super(workspaceFolder, parent);
-        this.generalInfo.artifactId = 'Virtual Environment'
+        this.generalInfo.artifactId = 'Virtual Environment';
         this.projectDetails.name = this.generalInfo.artifactId;
     }
 

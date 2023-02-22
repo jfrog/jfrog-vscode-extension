@@ -26,12 +26,12 @@ export class PypiUtils {
     public static readonly setupPyProjectNameRegex: RegExp = /name=\s*(?:"|')(.*)(?:"|')/gm;
     public static readonly installReqRegex: RegExp = /install_requires\s*=\s*\[([^\]]+)\]/gm;
 
-    public static searchProjectName(setupPyFile: string) {
+    public static searchProjectName(setupPyFile: string): string {
         const content: string = fs.readFileSync(setupPyFile, 'utf8');
-        const [, name] = new RegExp(PypiUtils.setupPyProjectNameRegex).exec(content)|| [];
+        const [, name] = new RegExp(PypiUtils.setupPyProjectNameRegex).exec(content) || [];
         return name;
     }
-    
+
     public static getSetupPyDirectDependencies(path: string): Map<string, string | undefined> {
         const content: string = fs.readFileSync(path, 'utf8');
         // Use a regular expression to match the install_requires field
@@ -46,12 +46,12 @@ export class PypiUtils {
         let dependencyMatch: RegExpExecArray | null;
         // let cleanRawDependencies: RegExpExecArray | null;
         let dependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
-        const cleanMatch: RegExpExecArray | null = new RegExp(PypiUtils.removeFlagCommentRegex).exec(rawDependencies)
-        if(!cleanMatch){
-            return dependencies
+        const cleanMatch: RegExpExecArray | null = new RegExp(PypiUtils.removeFlagCommentRegex).exec(rawDependencies);
+        if (!cleanMatch) {
+            return dependencies;
         }
         for (const cleanedMatch of cleanMatch) {
-            const match: RegExp = new RegExp(PypiUtils.packageRegex)
+            const match: RegExp = new RegExp(PypiUtils.packageRegex);
             while ((dependencyMatch = match.exec(cleanedMatch)) !== null) {
                 const [, name, version] = dependencyMatch;
                 dependencies.set(name.toLowerCase(), version);
