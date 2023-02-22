@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { EosIssue, EosIssueLocation } from '../../../scanLogic/scanRunners/eosScan';
 import { Severity } from '../../../types/severity';
 import { Translators } from '../../../utils/translators';
+import { Utils } from '../../../utils/utils';
 import { CodeFileTreeNode } from './codeFileTreeNode';
 import { CodeIssueTreeNode } from './codeIssueTreeNode';
 
@@ -41,9 +42,10 @@ export class EosTreeNode extends CodeIssueTreeNode {
             header: this.label,
             pageType: PageType.Eos,
             location: {
+                fileName: Utils.getLastSegment(this.parent.projectFilePath),
                 file: this.parent.projectFilePath,
                 row: this.regionWithIssue.start.line + 1,
-                colum: this.regionWithIssue.start.character
+                column: this.regionWithIssue.start.character
             } as IAnalysisStep,
             description: this._fullDescription,
             analysisStep: this._codeFlows.length > 0 ? this._codeFlows[0] : undefined
