@@ -74,7 +74,7 @@ export abstract class FileTreeNode extends vscode.TreeItem {
         // Calculate the tooltip information
         this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n';
         this.tooltip += 'Issues count: ' + this.issues.length + '\n';
-        this.tooltip += 'Full path: ' + this.fullPath;
+        this.tooltip += 'Full path: ' + this.projectFilePath;
         if (this.timeStamp) {
             this.tooltip += '\nLast ' + Utils.getLastScanString(this.timeStamp);
         }
@@ -132,11 +132,11 @@ export abstract class FileTreeNode extends vscode.TreeItem {
         return this._severity;
     }
 
-    public get fullPath(): string {
+    public get projectFilePath(): string {
         return this._fullPath;
     }
 
-    public set fullPath(value: string) {
+    public set projectFilePath(value: string) {
         this._fullPath = value;
     }
 }

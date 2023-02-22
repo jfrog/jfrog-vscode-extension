@@ -1,0 +1,10 @@
+SomeProject1
+Some.Project2 == 1.3
+SomeProject3 >= 1.2, < 2.0
+SomeProject5 ~= 1.4.2
+SomeProject6 == 5.4 ; python_version < '3.8'
+SomeProject7 ; sys_platform == 'win32'
+requests8 [security] >= 2.8.1, == 2.8.* ; python_version < "2.7"
+SomeProject8 ==6.7
+SomeProject9== 9.8
+SomeProject10==9.0

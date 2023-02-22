@@ -193,7 +193,10 @@ export class DependencyUtils {
         // Search for the dependency graph of the descriptor
         for (const child of workspaceDependenciesTree.children) {
             if (child instanceof RootNode && child.projectDetails.type === descriptorType) {
-                return this.searchDependencyGraph(descriptorPath, child);
+                let graph: RootNode | undefined = this.searchDependencyGraph(descriptorPath, child);
+                if (graph) {
+                    return graph;
+                }
             }
         }
         return undefined;
@@ -224,7 +227,7 @@ export class DependencyUtils {
         if (dependency.parent instanceof EnvironmentTreeNode) {
             return [];
         }
-        let document: vscode.TextDocument = await vscode.workspace.openTextDocument(dependency.parent.fullPath);
+        let document: vscode.TextDocument = await vscode.workspace.openTextDocument(dependency.parent.projectFilePath);
         if (dependency.indirect) {
             // Collect direct dependencies from all the issues impact tree first children
             let ranges: vscode.Range[] = [];

@@ -7,6 +7,7 @@ import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descri
 import { LogManager } from '../log/logManager';
 import { YarnDependencyUpdate } from './yarnDependencyUpdate';
 import { NugetDependencyUpdate } from './nugetDependencyUpdate';
+import { PythonDependencyUpdate } from './pythonDependencyUpdate';
 
 /**
  * Update the dependency version in the project descriptor (e.g. pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
@@ -20,7 +21,8 @@ export class DependencyUpdateManager implements ExtensionComponent {
             new NpmDependencyUpdate(),
             new YarnDependencyUpdate(),
             new GoDependencyUpdate(),
-            new NugetDependencyUpdate()
+            new NugetDependencyUpdate(),
+            new PythonDependencyUpdate()
         );
     }
 

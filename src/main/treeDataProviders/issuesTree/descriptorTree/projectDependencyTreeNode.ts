@@ -16,12 +16,12 @@ export class ProjectDependencyTreeNode extends FileTreeNode {
     protected _dependencyScanTimeStamp?: number;
     protected _applicableScanTimeStamp?: number;
     protected _packageType: PackageType;
-    private path: string;
+    private projectPath: string;
 
     constructor(filePath: string, packageType?: PackageType, parent?: IssuesRootTreeNode) {
         super(filePath, parent);
         this._packageType = packageType ?? PackageType.Unknown;
-        this.path = path.dirname(filePath);
+        this.projectPath = path.dirname(filePath);
     }
 
     /** @override */
@@ -128,6 +128,10 @@ export class ProjectDependencyTreeNode extends FileTreeNode {
     }
 
     public getProjectPath() {
-        return this.path;
+        return this.projectPath;
+    }
+
+    public getProjectFilePath() {
+        return this.projectFilePath;
     }
 }

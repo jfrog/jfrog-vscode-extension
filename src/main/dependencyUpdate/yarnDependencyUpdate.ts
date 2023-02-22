@@ -15,7 +15,7 @@ export class YarnDependencyUpdate extends AbstractDependencyUpdate {
 
     /** @override */
     public update(dependenciesTreeNode: DependencyIssuesTreeNode, version: string): void {
-        const workspace: string = dependenciesTreeNode.getProjectPath();
+        const workspace: string = dependenciesTreeNode.getDependencyProjectPath();
         ScanUtils.executeCmd('yarn upgrade ' + dependenciesTreeNode.name + '@' + version, workspace);
     }
 }

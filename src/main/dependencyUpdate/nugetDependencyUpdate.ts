@@ -16,12 +16,12 @@ export class NugetDependencyUpdate extends AbstractDependencyUpdate {
 
     /** @override */
     public update(dependency: DependencyIssuesTreeNode, version: string): void {
-        const workspace: string = dependency.getProjectPath();
-        let descriptorFile: string = dependency.parent.fullPath;
+        const workspace: string = dependency.getDependencyProjectPath();
+        let descriptorFile: string = dependency.getDependencyFilePath();
         if (descriptorFile.endsWith(NugetUtils.PROJECT_SUFFIX)) {
             ScanUtils.executeCmd('dotnet add package ' + dependency.name + ' --version ' + version, workspace);
         } else {
-            ScanUtils.executeCmd('nuget update ' + dependency.parent.fullPath + ' -Id ' + dependency.name + ' -Version ' + version, workspace);
+            ScanUtils.executeCmd('nuget update ' + descriptorFile + ' -Id ' + dependency.name + ' -Version ' + version, workspace);
         }
     }
 }

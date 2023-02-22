@@ -1,5 +1,3 @@
-import { GeneralInfo } from '../../../types/generalInfo';
-import { PackageType } from '../../../types/projectType';
 import { DependencyScanResults } from '../../../types/workspaceIssuesDetails';
 import { EnvironmentTreeNode } from '../../issuesTree/descriptorTree/environmentTreeNode';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
@@ -13,9 +11,8 @@ export class VirtualEnvPypiTree extends PypiTreeNode {
     // Virtual env may be located outside the project dir.
     constructor(private _virtualEnvironmentPath: string, workspaceFolder: string, parent?: DependenciesTreeNode) {
         super(workspaceFolder, parent);
-        this.generalInfo = new GeneralInfo('Virtual Environment', '', ['None'], this.workspaceFolder, PackageType.Python);
+        this.generalInfo.artifactId = 'Virtual Environment';
         this.projectDetails.name = this.generalInfo.artifactId;
-        this.label = this.projectDetails.name;
     }
 
     public get virtualEnvironmentPath(): string {
@@ -33,7 +30,7 @@ export class VirtualEnvPypiTree extends PypiTreeNode {
     public toDependencyScanResults() {
         return {
             type: this.generalInfo.pkgType,
-            name: 'Virtual Environment',
+            name: this.generalInfo.artifactId,
             fullPath: this.virtualEnvironmentPath
         } as DependencyScanResults;
     }
