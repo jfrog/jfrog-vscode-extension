@@ -1,6 +1,6 @@
 name: Test
 
-on: [push, pull_request]
+on: [push, pull_request_target]
 
 jobs:
     test:
@@ -26,6 +26,11 @@ jobs:
             - name: Install
               run: npm i
               # Make sure no new dependencies were installed after running 'npm i'
+            - name: Setup Maven v3.8.7 for Windows
+              uses: stCarolas/setup-maven@v4.5
+              with:
+                maven-version: 3.8.7
+                if: runner.os == 'Windows'
             - name: Make sure branch is clean
               run: git diff --exit-code
             - name: Lint

@@ -7,7 +7,7 @@
 ![JFrog Extension Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/JFrog.jfrog-vscode-extension?label=VS%20Code%20installs&color=blue&style=for-the-badge)
 ![JFrog Extension Marketplace Installs](https://img.shields.io/open-vsx/dt/JFrog/jfrog-vscode-extension?label=Eclipse%20Theia%20installs&color=blue&style=for-the-badge)
 
-[![Visual Studio Marketplace](https://vsmarketplacebadges.dev/version/JFrog.jfrog-vscode-extension.svg)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension) [![Open VSX Registry](https://img.shields.io/open-vsx/v/jfrog/jfrog-vscode-extension?label=Open%20VSX%20Registry)](https://open-vsx.org/extension/JFrog/jfrog-vscode-extension)
+[![Visual Studio Marketplace](https://vsmarketplacebadges.dev/version/JFrog.jfrog-vscode-extension.png)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension) [![Open VSX Registry](https://img.shields.io/open-vsx/v/jfrog/jfrog-vscode-extension?label=Open%20VSX%20Registry)](https://open-vsx.org/extension/JFrog/jfrog-vscode-extension)
 [![Test](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml/badge.svg)](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml)
 
 </div>
@@ -18,7 +18,6 @@
     -   [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
     -   [Connecting VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
     -   [Using the extension](#using-the-extension)
-    -   [Severity Icons](#severity-icons)
 -   [The Local View](#the-local-view)
     -   [Scanning Workspace](#scanning-workspace)
     -   [Viewing Vulnerabilities](#viewing-vulnerabilities)
@@ -149,21 +148,6 @@ The two modes can be toggled by pressing on their respective buttons that will a
 
 -   The **Local** view displays information about the local code as it is being developed in VS Code. The developer can scan their local workspace continuously. The information is displayed in the **Local** view.
 -   The **CI** view allows the tracking of the code as it is built, tested and scanned by the CI server. It displays information about the status of the build and includes a link to the build log on the CI server.
-
-### Severity Icons
-
-The following table describes the severities from lowest to highest:
-
-|                                                                                                                                                     Icon                                                                                                                                                      |    Severity    | Description                                                          |
-| :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :------------: | :------------------------------------------------------------------- |
-|                                                                                                                                        <img src="resources/normal.png" width="30">                                                                                                                                        |     Normal     | No issues                                                            |
-| <img src="resources/notApplicableUnknown.svg" height="20" width="20"><img src="resources/notApplicableLow.svg" height="20" width="20"><img src="resources/notApplicableMedium.svg" height="20" width="20"><img src="resources/notApplicableHigh.svg" height="20" width="20"><img src="resources/notApplicableCritical.svg" height="20" width="20"> | Not applicable | CVE issue that is not applicable to the source code in the workspace |
-|                                                                                                                                       <img src="resources/Unknown.svg" width="30">                                                                                                                                       |    Unknown     | Issue with unknown severity                                          |
-|                                                                                                                                           <img src="resources/Low.svg" width="30">                                                                                                                                           |      Low       | Issue with low severity                                              |
-|                                                                                                                                        <img src="resources/Medium.svg" width="30">                                                                                                                                        |     Medium     | Issue with medium severity                                           |
-|                                                                                                                                          <img src="resources/High.svg" width="30">                                                                                                                                          |      High      | Issue with high severity                                             |
-|                                                                                                                                      <img src="resources/Critical.svg" width="30">                                                                                                                                      |    Critical    | Issue with critical severity                                         |
-
 
 ## The Local View
 

@@ -234,7 +234,7 @@ describe('Pypi Utils Tests', async () => {
 
         exec.execSync(globalPython + ' -m venv .venv', { cwd: workspaceFolders[2].uri.fsPath });
         exec.execSync(localPython + ' -m pip install .', { cwd: workspaceFolders[2].uri.fsPath });
-        
+
         exec.execSync(globalPython + ' -m venv .venv', { cwd: workspaceFolders[3].uri.fsPath });
         exec.execSync(localPython + ' -m pip install -r requirements.txt', { cwd: workspaceFolders[3].uri.fsPath });
     }
