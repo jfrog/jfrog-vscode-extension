@@ -47,7 +47,7 @@ describe('Issues Data Provider Tests', () => {
 
     before(() => {
         scanCacheManager.activate((<any>{
-            storagePath: ScanUtils.createTmpDir(),
+            storageUri: { fsPath: ScanUtils.createTmpDir() } as vscode.Uri,
             workspaceState: new TestMemento()
         }) as vscode.ExtensionContext);
         let generalInfo: GeneralInfo = new GeneralInfo('odin', '1.2.3', [], __dirname, PackageType.Unknown);

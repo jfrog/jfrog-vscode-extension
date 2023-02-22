@@ -17,7 +17,7 @@ import { DependenciesTreeNode } from './dependenciesTreeNode';
 export class DependenciesTreesFactory {
     public static async createDependenciesTrees(
         projectDescriptors: Map<PackageType, vscode.Uri[]>,
-        workspaceFolders: vscode.WorkspaceFolder[],
+        workspaceFolder: vscode.WorkspaceFolder,
         componentsToScan: ProjectDetails[],
         treesManager: TreesManager,
         progressManager: StepProgress,
@@ -42,7 +42,7 @@ export class DependenciesTreesFactory {
             progressManager.reportProgress();
             await PypiUtils.createDependenciesTrees(
                 projectDescriptors.get(PackageType.Python),
-                workspaceFolders,
+                workspaceFolder,
                 componentsToScan,
                 treesManager,
                 parent,
@@ -59,13 +59,7 @@ export class DependenciesTreesFactory {
             );
             typesDone++;
             progressManager.reportProgress();
-            await NugetUtils.createDependenciesTrees(
-                projectDescriptors.get(PackageType.Nuget),
-                componentsToScan,
-                treesManager,
-                parent,
-                checkCanceled
-            );
+            await NugetUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Nuget), treesManager, parent, checkCanceled);
         } finally {
             progressManager.reportProgress((getNumberOfSupportedPackageTypes() - typesDone) * progressManager.getStepIncValue);
         }

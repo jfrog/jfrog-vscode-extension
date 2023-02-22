@@ -41,7 +41,7 @@ export class EosTreeNode extends CodeIssueTreeNode {
             header: this.label,
             pageType: PageType.Eos,
             location: {
-                file: this.parent.fullPath,
+                file: this.parent.projectFilePath,
                 row: this.regionWithIssue.start.line + 1,
                 colum: this.regionWithIssue.start.character
             } as IAnalysisStep,

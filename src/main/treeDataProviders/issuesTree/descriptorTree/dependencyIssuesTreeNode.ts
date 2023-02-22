@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import { ILicense } from 'jfrog-ide-webview';
 import { PackageType, toPackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
-import { DescriptorTreeNode } from './descriptorTreeNode';
 import { IComponent } from 'jfrog-client-js';
 import { CveTreeNode } from './cveTreeNode';
 import { LicenseIssueTreeNode } from './licenseIssueTreeNode';
 import { ContextKeys } from '../../../constants/contextKeys';
+import { ProjectDependencyTreeNode } from './projectDependencyTreeNode';
 
 export class DependencyIssuesTreeNode extends vscode.TreeItem {
     // Infer from data
@@ -19,7 +19,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
     private _issues: (CveTreeNode | LicenseIssueTreeNode)[] = [];
     private _licenses: ILicense[] = [];
 
-    constructor(private _artifactId: string, component: IComponent, private _indirect: boolean, private _parent: DescriptorTreeNode) {
+    constructor(private _artifactId: string, component: IComponent, private _indirect: boolean, private _parent: ProjectDependencyTreeNode) {
         super(component.package_name);
 
         this._name = component.package_name;
@@ -49,8 +49,10 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         this._severity = topSeverity;
 
         this.tooltip = 'Top severity: ' + SeverityUtils.getString(this.severity) + '\n';
-        this.tooltip += 'Issues count: ' + this._issues.length + '\n';
-        this.tooltip += 'Artifact' + (this._indirect ? ' (indirect):' : ':') + '\n' + this.artifactId;
+        this.tooltip += 'Issues count: ' + this._issues.length;
+        if (this.indirect) {
+            this.tooltip += '\n(indirect)';
+        }
         this.description = this._version + (this._indirect ? ' (indirect)' : '');
         this._issues
             // 1st priority - Sort by severity
@@ -101,7 +103,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         return cveTreeNodes;
     }
 
-    public get parent(): DescriptorTreeNode {
+    public get parent(): ProjectDependencyTreeNode {
         return this._parent;
     }
 
@@ -121,8 +123,12 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
         return this._type;
     }
 
-    public getWorkspace(): string {
-        return this.parent.getDescriptorAbsPath();
+    public getDependencyProjectPath(): string {
+        return this.parent.getProjectPath();
+    }
+
+    public getDependencyFilePath(): string {
+        return this.parent.getProjectFilePath();
     }
 
     public getFixedVersionToCves() {

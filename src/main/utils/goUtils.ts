@@ -11,6 +11,7 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { ProjectDetails } from '../types/projectDetails';
 import { ScanUtils } from './scanUtils';
+import { Utils } from './utils';
 
 export class GoUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/go.mod' };
@@ -103,10 +104,10 @@ export class GoUtils {
             checkCanceled();
             treesManager.logManager.logMessage('Analyzing go.mod file ' + goMod.fsPath, 'INFO');
             let projectDir: string = path.dirname(goMod.fsPath);
-            let tmpWorkspace: string = '';
+            let tmpGoModPath: string = '';
             try {
-                tmpWorkspace = this.createGoWorkspace(projectDir, treesManager.logManager);
-                ScanUtils.executeCmd(GoUtils.GO_MOD_TIDY_CMD, tmpWorkspace);
+                tmpGoModPath = this.createGoWorkspace(projectDir, treesManager.logManager);
+                ScanUtils.executeCmd(GoUtils.GO_MOD_TIDY_CMD, path.dirname(tmpGoModPath));
             } catch (error) {
                 treesManager.logManager.logMessage('Failed creating go temporary workspace: ' + error, 'ERR');
                 treesManager.logManager.logMessageAndToastErr(
@@ -115,7 +116,7 @@ export class GoUtils {
                 );
             }
 
-            let root: GoTreeNode = new GoTreeNode(tmpWorkspace, treesManager, parent);
+            let root: GoTreeNode = new GoTreeNode(tmpGoModPath, treesManager, parent);
             root.refreshDependencies(goVersion);
             projectsToScan.push(root.projectDetails);
             // Set actual paths.
@@ -125,7 +126,7 @@ export class GoUtils {
             root.workspaceFolder = projectDir;
 
             try {
-                await ScanUtils.removeFolder(tmpWorkspace);
+                await ScanUtils.removeFolder(path.dirname(tmpGoModPath));
             } catch (error) {
                 treesManager.logManager.logMessage('Failed removing go temporary workspace directory: ' + error, 'ERR');
             }
@@ -164,7 +165,11 @@ export class GoUtils {
                 }
             }
         }
-        return targetDir;
+        const tmpGoModPath: string = path.join(targetDir, 'go.mod');
+        if (!fs.existsSync(tmpGoModPath)) {
+            throw new Error('fail to find temp go.mod while copy go.mod file to a temporary directory at ' + targetDir);
+        }
+        return tmpGoModPath;
     }
 
     /**
@@ -215,9 +220,7 @@ export class GoUtils {
                 }
 
                 // Root dir, or dir without go.mod - create the directory in target.
-                if (!fs.existsSync(destPath)) {
-                    fs.mkdirSync(destPath);
-                }
+                Utils.createDirIfNotExists(destPath);
                 return;
             }
 

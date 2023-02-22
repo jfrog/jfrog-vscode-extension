@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { Utils } from '../utils/utils';
+import { Utils } from '../../utils/utils';
 import { FileTreeNode } from './fileTreeNode';
 
 /**
@@ -72,7 +72,7 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
     }
 
     public getFileTreeNode(file: string): FileTreeNode | undefined {
-        return this._children.find(child => child.fullPath === file);
+        return this._children.find(child => child.projectFilePath === file);
     }
 
     public get eosScanTimeStamp(): number | undefined {

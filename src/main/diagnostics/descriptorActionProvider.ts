@@ -5,9 +5,10 @@ import { DescriptorTreeNode } from '../treeDataProviders/issuesTree/descriptorTr
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { IssueTreeNode } from '../treeDataProviders/issuesTree/issueTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
-import { DescriptorUtils } from '../treeDataProviders/utils/descriptorUtils';
+import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
 import { PackageType } from '../types/projectType';
 import { Severity, SeverityUtils } from '../types/severity';
+import { ScanUtils } from '../utils/scanUtils';
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
 
 /**
@@ -33,6 +34,11 @@ interface DirectDependencyIssue {
  * 2. Adds severity icon to the descriptor file in the places were the infected dependency exists
  */
 export class DescriptorActionProvider extends AbstractFileActionProvider implements vscode.CodeActionProvider {
+    public static readonly DESCRIPTOR_SELECTOR: vscode.DocumentSelector = {
+        scheme: 'file',
+        pattern: ScanUtils.DESCRIPTOR_SELECTOR_PATTERN
+    };
+
     private _processedMap: Map<vscode.Uri, Map<string, DirectDependencyInfo>> = new Map<vscode.Uri, Map<string, DirectDependencyInfo>>();
 
     constructor(diagnosticCollection: vscode.DiagnosticCollection, treesManager: TreesManager, private updateManager: DependencyUpdateManager) {
@@ -44,7 +50,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
         super.activate(context);
         context.subscriptions.push(
             this,
-            vscode.languages.registerCodeActionsProvider(DescriptorUtils.DESCRIPTOR_SELECTOR, this, {
+            vscode.languages.registerCodeActionsProvider(DescriptorActionProvider.DESCRIPTOR_SELECTOR, this, {
                 providedCodeActionKinds: [vscode.CodeActionKind.Empty]
             } as vscode.CodeActionProviderMetadata)
         );
@@ -220,7 +226,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
                     diagnostics.push(
                         ...this.createDiagnostics(
                             issueId,
-                            `${info.label} - Severity: ${SeverityUtils.getString(
+                            `🐸 ${info.label} - Severity: ${SeverityUtils.getString(
                                 info.severity
                             )}\nImpacted Components: ${info.infectedDependencies.join()}`,
                             vscode.DiagnosticSeverity.Warning,
@@ -300,7 +306,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
         if (potential) {
             return potential;
         }
-        let range: vscode.Range[] = DescriptorUtils.getDependencyPosition(document, packageType, directDependencyId);
+        let range: vscode.Range[] = DependencyUtils.getDependencyPosition(document, packageType, directDependencyId);
         if (range.length === 0) {
             return undefined;
         }

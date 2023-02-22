@@ -13,7 +13,7 @@ import { CiManager } from '../../utils/builds/ciManager';
 import { Configuration } from '../../utils/configuration';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { TreesManager } from '../treesManager';
-import { Utils } from '../utils/utils';
+import { Utils } from '../../utils/utils';
 import { BuildsNode } from './ciNodes/buildsTree';
 import { DependenciesTreeNode } from './dependenciesTreeNode';
 

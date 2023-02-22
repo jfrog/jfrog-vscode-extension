@@ -7,6 +7,7 @@ import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeIssue, AnalyzerScanResponse, AnalyzeScanRequest, AnalyzeLocation, FileRegion, FileLocation, CodeFlow } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
+import { Resource } from '../../utils/resource';
 
 export interface EosScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
@@ -44,11 +45,11 @@ export class EosRunner extends BinaryRunner {
             connectionManager,
             abortCheckInterval,
             logManager,
-            path.join(ScanUtils.getHomePath(), EosRunner.BINARY_FOLDER, EosRunner.getBinaryName())
+            new Resource('', path.join(ScanUtils.getHomePath(), EosRunner.BINARY_FOLDER, EosRunner.getBinaryName()), logManager)
         );
     }
 
-    protected validateSupported(): boolean {
+    public validateSupported(): boolean {
         if (os.platform() !== 'linux' && os.platform() !== 'darwin' && os.platform() !== 'win32') {
             this._logManager.logMessage("Eos scan is not supported on '" + os.platform() + "' os", 'DEBUG');
             return false;

@@ -220,7 +220,7 @@ export class CommandManager implements ExtensionComponent {
                     (this._connectionManager.url || this._connectionManager.xrayUrl) +
                     ') ?'
             );
-            if (answer) {
+            if (!answer) {
                 return;
             }
         }
@@ -232,7 +232,7 @@ export class CommandManager implements ExtensionComponent {
     private async askYesNo(message: string): Promise<boolean> {
         return (await vscode.window.showInformationMessage(message, 'Yes', 'No')) === 'Yes';
     }
-    
+
     private async askRescan(message: string): Promise<boolean> {
         return (await vscode.window.showInformationMessage(message, 'Rescan project')) === 'Rescan project';
     }
