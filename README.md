@@ -21,8 +21,6 @@
     -   [Severity Icons](#severity-icons)
 -   [The Local View](#the-local-view)
     -   [Scanning Workspace](#scanning-workspace)
-        -   [Contextual Analysis](#contextual-analysis)
-            -   [Supported Packages](#supported-packages)
     -   [Viewing Vulnerabilities](#viewing-vulnerabilities)
         -   [Viewing Vulnerability Details](#viewing-vulnerability-details)
     -   [Updating Dependencies](#updating-dependencies)
@@ -54,17 +52,35 @@
     -   [Guidelines](#guidelines)
 
 ## About this Extension
-
 The cost of remediating a vulnerability is akin to the cost of fixing a bug.
 The earlier you remediate a vulnerability in the release cycle, the lower the cost.
-[JFrog Xray](https://jfrog.com/xray/) is instrumental in flagging components when vulnerabilities are discovered in production systems at runtime,
-or even sooner, during the development.
+The extension allows developers to find and fix security vulnerabilities in their projects and to see valuable information
+about the status of their code by continuously scanning it locally with [JFrog Xray](https://jfrog.com/xray/).
 
-The JFrog VS Code Extension adds JFrog Xray scanning of project security issues to your VS Code IDE. It allows developers to view a panel displaying a list of issues for each file in the project and a detailed vulnerability information about the issues discovered directly in their VS Code IDE. The extension also allows developers to track the status of the code while it is being built, tested and scanned on the CI server.
+### What security capabilities do we provide?
+#### Software Composition Analysis (SCA)
+Scan your project dependencies for security issues.
 
-Currently, Go, Maven, npm, Yarn (v1), Python and NuGet (.Net) are supported by the extension.
+#### Advanced Scans
+*Requires Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
 
+With advanced [**Contextual Analysis**](#contextual-analysis), understand the applicability of CVEs in your application and utilize JFrog Security scanners to analyze the way you use 3rd party packages in your projects.
+Automatically validate some high-impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and reduce false positives and vulnerability noise with smart CVE analysis.
 
+To learn more, see [here](https://www.jfrog.com/confluence/display/JFROG/Vulnerability+Contextual+Analysis).
+
+#### Supported Packages
+| Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
+|---------------------------------------------------|:---:|:-----:|:------:|:---:|:-------:|:------:|
+| SCA                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
+| Contextual Analysis                               |  ❌  |   ❌   |   ✅    |  ✅  |    ✅    |   ❌    |
+
+#### Additional Perks
+* Security issues are easily visible inline.
+* The results show issues with context, impact, and remediation.
+* View all security issues in one place, in the JFrog tab.
+* For Security issues with an available fixed version, you can upgrade to the fixed version within the plugin.
+* Track the status of the code while it is being built, tested, and scanned on the CI server.
 
 The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
@@ -156,12 +172,6 @@ With this information, a developer can make an informed decision on whether to u
 ### Scanning workspace
 scan your workspace by clicking the Scan/Rescan button, the <img src='resources/dark/refresh.png' height="15" width="15"> icon at the extension tab or click on Start Xray Scan from within the editor. The scan will create a list of files with vulnerabilities in the workspace.
 ![Refresh](resources/readme/preview/refresh.png)
-### Contextual Analysis
-Using [Contextual Analysis](https://www.jfrog.com/confluence/display/JFROG/Vulnerability+Contextual+Analysis) scans for CVE applicability, You can avoid wasting your time fixing risks that are not imposed and reduce false positives. determine whether your code is actually impacted by the vulnerable dependency and marking them as Applicable and Non Applicable., to learn more about this feature, see [Xray Advanced Scans](https://www.jfrog.com/confluence/display/JFROG/Xray+Advanced+Scans).
-#### Supported Packages
-| Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
-| ---------------------------------------------------- | :----------------: | :----------------------: | :------------------: | :--------------------------: | :--------------------: | :-------------------: |
-| CVE applicability                         |         ❌         |            ❌            |          ✅          |              ✅              |           ✅           |          ❌           |
 
 ### Viewing vulnerabilities
 View all the discovered files with vulnerabilities in a tree.
@@ -173,8 +183,33 @@ In addition the locations with vulnerabilities will be marked in the editor and 
 
 ### Viewing Vulnerability Details
 Clicking a vulnerability in the list will open the location with the issue in the editor and a vulnerability details view. This view contains information about the vulnerability, the vulnerable component, fixed versions, impact paths and much more.
+<details>
+<summary>CVE Research and Enrichment</summary>
+For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team. Prioritize the CVEs based on:
+
+* JFrog Severity: The severity given by the JFrog Security Research team after the manual analysis of the CVE by the team. CVEs with the highest JFrog security severity are the most likely to be used by real-world attackers. This means that you should put effort into fixing them as soon as possible.
+* Research Summary: The summary that is based on JFrog's security analysis of the security issue provides detailed technical information on the specific conditions for the CVE to be applicable. 
+Remediation: Detailed fix and mitigation options for the CVEs
+To learn more about enriched CVEs, see [here](https://www.jfrog.com/confluence/display/JFROG/JFrog+Security+CVE+Research+and+Enrichment)
+
+Check out what our research team is up to and stay updated on newly discovered issues by clicking on this [link](https://research.jfrog.com). 
+
 ![JFrog_Research](resources/readme/preview/research.png)
+
+</details>
+
+<details>
+<summary>Contextual Analysis</summary>
+Xray automatically validates some high and very high impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and provides contextual analysis information for these vulnerabilities, to assist you in figuring out which vulnerabilities need to be fixed.  Contextual Analysis data includes:
+
+* Contextual analysis status: Contextual analysis results indicating if a CVE was found applicable in your application or not applicable.
+* Contextual Analysis breakdown: An explanation provided by our research team as to why the CVE was found applicable or not applicable.
+* Remediation: Contextual mitigation steps and options provided by our research team that assist you with remediating the issues.
+
 ![Contextual_Analysis](resources/readme/preview/contextualDetails.png)
+
+</details>
+
 ![Public_Resources](resources/readme/preview/publicDetails.png)
 ![Impact_Graph](resources/readme/preview/impactGraph.png)
 
