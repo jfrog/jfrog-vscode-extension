@@ -60,6 +60,8 @@ about the status of their code by continuously scanning it locally with [JFrog X
 ### What security capabilities do we provide?
 #### Software Composition Analysis (SCA)
 Scan your project dependencies for security issues.
+For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team.
+To learn more about enriched CVEs, see [here](https://www.jfrog.com/confluence/display/JFROG/JFrog+Security+CVE+Research+and+Enrichment)
 
 #### Advanced Scans
 *Requires Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
@@ -190,7 +192,6 @@ For selected security issues, get leverage-enhanced CVE data that is provided by
 * JFrog Severity: The severity given by the JFrog Security Research team after the manual analysis of the CVE by the team. CVEs with the highest JFrog security severity are the most likely to be used by real-world attackers. This means that you should put effort into fixing them as soon as possible.
 * Research Summary: The summary that is based on JFrog's security analysis of the security issue provides detailed technical information on the specific conditions for the CVE to be applicable. 
 Remediation: Detailed fix and mitigation options for the CVEs
-To learn more about enriched CVEs, see [here](https://www.jfrog.com/confluence/display/JFROG/JFrog+Security+CVE+Research+and+Enrichment)
 
 Check out what our research team is up to and stay updated on newly discovered issues by clicking on this [link](https://research.jfrog.com). 
 
