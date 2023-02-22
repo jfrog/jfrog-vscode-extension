@@ -13,48 +13,45 @@
 </div>
 
 # Table of Contents
-
--   [JFrog Extension for VS Code & Eclipse Theia](#jfrog-extension-for-vs-code--eclipse-theia)
--   [Table of Contents](#table-of-contents)
-    -   [About this Extension](#about-this-extension)
-    -   [Getting Started](#getting-started)
-    -   [Set Up a FREE JFrog Environment in the Cloud](#set-up-a-free-jfrog-environment-in-the-cloud)
+-   [About this Extension](#about-this-extension)
+-   [Getting Started](#getting-started)
+    -   [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
     -   [Connecting VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
-    -   [Extension Settings](#extension-settings)
-        -   [Apply Xray Policies to your Projects](#apply-xray-policies-to-your-projects)
-        -   [Exclude Paths from Scan](#exclude-paths-from-scan)
-        -   [Proxy Configuration](#proxy-configuration)
-        -   [Proxy Authorization](#proxy-authorization)
-            -   [Basic authorization](#basic-authorization)
-            -   [Access token authorization](#access-token-authorization)
-            -   [Example](#example)
-    -   [Using the Extension](#using-the-extension)
-        -   [Severity Icons](#severity-icons)
-    -   [The Local View](#the-local-view)
-        -   [Scanning Workspace](#scanning-workspace)
-            -   [Contextual Analysis](#contextual-analysis)
-                -   [Supported Packages](#supported-packages)
-        -   [Viewing Vulnerabilities](#viewing-vulnerabilities)
-            -   [Viewing Vulnerability Details](#viewing-vulnerability-details)
-        -   [Updating Dependencies](#updating-dependencies)
-        -   [Ignore Rules](#ignore-rules)
-        -   [Behind the Scenes](#behind-the-scenes)
-            -   [Go Projects](#go-projects)
-            -   [Maven Projects](#maven-projects)
-            -   [Npm Projects](#npm-projects)
-            -   [Yarn v1 Projects](#yarn-v1-projects)
-            -   [Pypi Projects](#pypi-projects)
-            -   [.NET Projects](#net-projects)
-    -   [The CI View](#the-ci-view)
-        -   [How Does It Work?](#how-does-it-work)
-        -   [Setting Up Your CI Pipeline](#setting-up-your-ci-pipeline)
-        -   [Setting Up the CI View](#setting-up-the-ci-view)
-    -   [Troubleshooting](#troubleshooting)
-    -   [License](#license)
-    -   [Building and Testing the Sources](#building-and-testing-the-sources)
-        -   [Preconditions](#preconditions)
-    -   [Code Contributions](#code-contributions)
-        -   [Guidelines](#guidelines)
+    -   [Using the extension](#using-the-extension)
+    -   [Severity Icons](#severity-icons)
+-   [The Local View](#the-local-view)
+    -   [Scanning Workspace](#scanning-workspace)
+        -   [Contextual Analysis](#contextual-analysis)
+            -   [Supported Packages](#supported-packages)
+    -   [Viewing Vulnerabilities](#viewing-vulnerabilities)
+        -   [Viewing Vulnerability Details](#viewing-vulnerability-details)
+    -   [Updating Dependencies](#updating-dependencies)
+    -   [Ignore Rules](#ignore-rules)
+    -   [Behind the Scenes](#behind-the-scenes)
+        -   [Go Projects](#go-projects)
+        -   [Maven Projects](#maven-projects)
+        -   [Npm Projects](#npm-projects)
+        -   [Yarn v1 Projects](#yarn-v1-projects)
+        -   [Pypi Projects](#pypi-projects)
+        -   [.NET Projects](#net-projects)
+-   [The CI View](#the-ci-view)
+    -   [How Does It Work?](#how-does-it-work)
+    -   [Setting Up Your CI Pipeline](#setting-up-your-ci-pipeline)
+    -   [Setting Up the CI View](#setting-up-the-ci-view)
+-   [Extension Settings](#extension-settings)
+    -   [Apply Xray Policies to your Projects](#apply-xray-policies-to-your-projects)
+    -   [Exclude Paths from Scan](#exclude-paths-from-scan)
+    -   [Proxy Configuration](#proxy-configuration)
+    -   [Proxy Authorization](#proxy-authorization)
+        -   [Basic authorization](#basic-authorization)
+        -   [Access token authorization](#access-token-authorization)
+        -   [Example](#example)
+-   [Troubleshooting](#troubleshooting)
+-   [License](#license)
+-   [Building and Testing the Sources](#building-and-testing-the-sources)
+    -   [Preconditions](#preconditions)
+-   [Code Contributions](#code-contributions)
+    -   [Guidelines](#guidelines)
 
 ## About this Extension
 
@@ -65,18 +62,30 @@ or even sooner, during the development.
 
 The JFrog VS Code Extension adds JFrog Xray scanning of project security issues to your VS Code IDE. It allows developers to view a panel displaying a list of issues for each file in the project and a detailed vulnerability information about the issues discovered directly in their VS Code IDE. The extension also allows developers to track the status of the code while it is being built, tested and scanned on the CI server.
 
+Currently, Go, Maven, npm, Yarn (v1), Python and NuGet (.Net) are supported by the extension.
+
+
+
 The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
 ## Getting Started
 
-1. Install the **JFrog** extension in VS Code
-2. Need a FREE JFrog environment in the cloud? [Create one now and connect VS Code to it](#set-up-a-free-jfrog-environment-in-the-cloud)
-3. Already have a working JFrog environment? [Connect VS Code to it](#connecting-vs-code-to-your-jfrog-environment)
-4. [Start](#using-the-extension) using the extension
+1. [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
+2. [Connect VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
+3. [Start using the extension](#using-the-extension)
 
-## Set Up a FREE JFrog Environment in the Cloud
 
-Need a FREE JFrog environment in the cloud, so that VS Code can connect to it? Just run one of the following commands in your terminal. The commands will do the following:
+## Install the **JFrog** extension in VS Code
+
+The extension is avaliable to install from the VS Code extensions marketplace. after installing the JFrog extension tab <img src="resources/extensionIcon.png" width="30"> will appear in the activity bar
+![Install](resources/readme/preview/install.png)
+
+## Connecting VS Code to Your JFrog Environment
+<br>
+<details>
+<summary> Set Up a FREE JFrog Environment in the Cloud</summary> 
+
+Run one of the following commands in your terminal. The commands will do the following:
 
 1. Install JFrog CLI on your machine.
 2. Create a FREE JFrog environment in the cloud for you.
@@ -93,8 +102,8 @@ curl -fL https://getcli.jfrog.io?setup | sh
 ```
 powershell "Start-Process -Wait -Verb RunAs powershell '-NoProfile iwr https://releases.jfrog.io/artifactory/jfrog-cli/v2-jf/[RELEASE]/jfrog-cli-windows-amd64/jf.exe -OutFile $env:SYSTEMROOT\system32\jf.exe'" ; jf setup
 ```
-
-## Connecting VS Code to Your JFrog Environment
+</details>
+<br>
 
 Connect to your JFrog environment by clicking on the green Connect ![Connect](resources/readme/connect.png) button or the provided button in the JFrog extension tab:
 ![Connect](resources/readme/preview/connect.png)
@@ -113,77 +122,7 @@ The extension also supports connecting to your JFrog environment using environme
 -   `JFROG_IDE_ACCESS_TOKEN` - JFrog access token
 -   `JFROG_IDE_STORE_CONNECTION` - Set the value of this environment variable to **true**, if you'd like VS Code to store the connection details after reading them from the environment variables.
 
-## Extension Settings
 
-To open the extension settings, use the following VS Code menu command:
-
--   On Windows/Linux - File > Preferences > Settings > Extensions > JFrog
--   On macOS - Code > Preferences > Settings > Extensions > JFrog
-
-### Apply Xray Policies to your Projects
-
-You can configure the JFrog VS-Code extension  to use the security policies you create in Xray. Policies enable you to create a set of rules, in which each rule defines security criteria, with a corresponding set of automatic actions according to your needs. Policies are enforced when applying them to Watches.
-
-If you'd like to use a JFrog Project that is associated with the policy, follow these steps:
-
-1. Create a [JFrog Project](https://www.jfrog.com/confluence/display/JFROG/Projects), or obtain the relevant JFrog Project key.
-1. Create a [Policy](https://www.jfrog.com/confluence/display/JFROG/Creating+Xray+Policies+and+Rules) on JFrog Xray.
-1. Create a [Watch](https://www.jfrog.com/confluence/display/JFROG/Configuring+Xray+Watches) on JFrog Xray and assign your Policy and Project as resources to it.
-1. Configure your Project key in the [Extension Settings](#extension-settings).
-
-If however your policies are referenced through an Xray Watch or Watches, follow these steps instead:
-
-1. Create one or more [Watches](https://www.jfrog.com/confluence/display/JFROG/Configuring+Xray+Watches) on JFrog Xray.
-1. Configure your Watches in the [Extension Settings](#extension-settings).
-
-### Exclude Paths from Scan
-
-By default, paths containing the words `test`, `venv` and `node_modules` are excluded from Xray scan.
-The exclude pattern can be configured in the [Extension Settings](#extension-settings).
-
-### Proxy Configuration
-
-If your JFrog environment is behind an HTTP/S proxy, follow these steps to configure the proxy server:
-
-1. Go to Preferences --> Settings --> Application --> Proxy
-1. Set the proxy URL under 'Proxy'.
-1. Make sure 'Proxy Support' is 'override' or 'on'.
-
--   Alternatively, you can use the HTTP_PROXY and HTTPS_PROXY environment variables.
-
-### Proxy Authorization
-
-If your proxy server requires credentials, follow these steps:
-
-1. Follow 1-3 steps under [Proxy configuration](#proxy-configuration).
-
-#### Basic authorization
-
-1. Encode with base64: `[Username]:[Password]`.
-1. Under 'Proxy Authorization' click on 'Edit in settings.json'.
-1. Add to settings.json:
-
--   `"http.proxyAuthorization": "Basic [Encoded credentials]"`.
-
-#### Access token authorization
-
-1. Under 'Proxy Authorization' click on 'Edit in settings.json'.
-1. Add to settings.json:
-
--   `"http.proxyAuthorization": "Bearer [Access token]"`.
-
-#### Example
-
--   `Username: foo`
--   `Password: bar`
-
-settings.json:
-
-```json
-{
-    "http.proxyAuthorization": "Basic Zm9vOmJhcg=="
-}
-```
 
 ## Using the Extension
 
@@ -244,12 +183,11 @@ Update a vulnerable direct dependency to a fixed version directly from the vulne
 ![Set_Fixed_Version](resources/readme/preview/updateQuickFix.png)
 
 ### Ignore Rules
-If Xray watches is used, on a icon vulnerability line an closed eye icon will appear by clicking on it you can create an [Ignore Rule](https://www.jfrog.com/confluence/display/JFROG/Ignore+Rules) in Xray.
+If Xray watches are used, on an icon vulnerability line an closed eye icon will appear by clicking on it you can create an [Ignore Rule](https://www.jfrog.com/confluence/display/JFROG/Ignore+Rules) in Xray.
 ![Ignore_Rule](resources/readme/preview/ignoreRule.png)
 
 ## Behind the Scenes
 ### Go Projects
-
 Behind the scenes, the JFrog VS Code Extension scans all the project dependencies, both direct and indirect (transitive), even if they are not declared in the project's go.mod. It builds the Go dependencies tree by running `go mod graph` and intersecting the results with `go list -f '{{with .Module}}{{.Path}} {{.Version}}{{end}}' all` command. Therefore, please make sure to have Go CLI in your system PATH.
 
 ### Maven Projects
@@ -360,6 +298,78 @@ Set your CI build name in the Build name pattern field at the [Extension Setting
 After your builds were fetched from Artifactory, press on the Builds ![Builds](resources/light/build.png) button to choose what build to display.
 
 ![CI](resources/readme/gifs/ci.gif)
+
+## Extension Settings
+
+To open the extension settings, use the following VS Code menu command:
+
+-   On Windows/Linux - File > Preferences > Settings > Extensions > JFrog
+-   On macOS - Code > Preferences > Settings > Extensions > JFrog
+
+### Apply Xray Policies to your Projects
+
+You can configure the JFrog VS-Code extension  to use the security policies you create in Xray. Policies enable you to create a set of rules, in which each rule defines security criteria, with a corresponding set of automatic actions according to your needs. Policies are enforced when applying them to Watches.
+
+If you'd like to use a JFrog Project that is associated with the policy, follow these steps:
+
+1. Create a [JFrog Project](https://www.jfrog.com/confluence/display/JFROG/Projects), or obtain the relevant JFrog Project key.
+1. Create a [Policy](https://www.jfrog.com/confluence/display/JFROG/Creating+Xray+Policies+and+Rules) on JFrog Xray.
+1. Create a [Watch](https://www.jfrog.com/confluence/display/JFROG/Configuring+Xray+Watches) on JFrog Xray and assign your Policy and Project as resources to it.
+1. Configure your Project key in the [Extension Settings](#extension-settings).
+
+If however your policies are referenced through an Xray Watch or Watches, follow these steps instead:
+
+1. Create one or more [Watches](https://www.jfrog.com/confluence/display/JFROG/Configuring+Xray+Watches) on JFrog Xray.
+1. Configure your Watches in the [Extension Settings](#extension-settings).
+
+### Exclude Paths from Scan
+
+By default, paths containing the words `test`, `venv` and `node_modules` are excluded from Xray scan.
+The exclude pattern can be configured in the [Extension Settings](#extension-settings).
+
+### Proxy Configuration
+
+If your JFrog environment is behind an HTTP/S proxy, follow these steps to configure the proxy server:
+
+1. Go to Preferences --> Settings --> Application --> Proxy
+1. Set the proxy URL under 'Proxy'.
+1. Make sure 'Proxy Support' is 'override' or 'on'.
+
+-   Alternatively, you can use the HTTP_PROXY and HTTPS_PROXY environment variables.
+
+### Proxy Authorization
+
+If your proxy server requires credentials, follow these steps:
+
+1. Follow 1-3 steps under [Proxy configuration](#proxy-configuration).
+
+#### Basic authorization
+
+1. Encode with base64: `[Username]:[Password]`.
+1. Under 'Proxy Authorization' click on 'Edit in settings.json'.
+1. Add to settings.json:
+
+-   `"http.proxyAuthorization": "Basic [Encoded credentials]"`.
+
+#### Access token authorization
+
+1. Under 'Proxy Authorization' click on 'Edit in settings.json'.
+1. Add to settings.json:
+
+-   `"http.proxyAuthorization": "Bearer [Access token]"`.
+
+#### Example
+
+-   `Username: foo`
+-   `Password: bar`
+
+settings.json:
+
+```json
+{
+    "http.proxyAuthorization": "Basic Zm9vOmJhcg=="
+}
+```
 
 ## Troubleshooting
 
