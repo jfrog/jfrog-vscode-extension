@@ -22,9 +22,43 @@ export class PypiUtils {
     public static readonly PIP_DEP_TREE_SCRIPT: string = path.join(PypiUtils.PYTHON_SCRIPTS, 'pipDepTree.py');
     public static readonly CHECK_VENV_SCRIPT: string = path.join(PypiUtils.PYTHON_SCRIPTS, 'checkVenv.py');
     public static readonly packageRegex: RegExp = /([\w\-.]+)\s*(?:\[.*\])?\s*((?:\s*(?:[<>]=?|!=|===?|~=)\s*[\w*\-.]+,?)*)/gms;
+    public static readonly removeFlagCommentRegex: RegExp = /^(?:(?!#|-e).)*$/gms;
     public static readonly setupPyProjectNameRegex: RegExp = /name=\s*(?:"|')(.*)(?:"|')/gm;
     public static readonly installReqRegex: RegExp = /install_requires\s*=\s*\[([^\]]+)\]/gm;
 
+    public static searchProjectName(setupPyFile: string) {
+        const content: string = fs.readFileSync(setupPyFile, 'utf8');
+        const [, name] = new RegExp(PypiUtils.setupPyProjectNameRegex).exec(content)|| [];
+        return name;
+    }
+    
+    public static getSetupPyDirectDependencies(path: string): Map<string, string | undefined> {
+        const content: string = fs.readFileSync(path, 'utf8');
+        // Use a regular expression to match the install_requires field
+        const match: RegExpExecArray | null = new RegExp(PypiUtils.installReqRegex).exec(content);
+        if (!match) {
+            return new Map<string, string | undefined>();
+        }
+        return this.matchPythonDependencies(match[1]);
+    }
+
+    private static matchPythonDependencies(rawDependencies: string): Map<string, string | undefined> {
+        let dependencyMatch: RegExpExecArray | null;
+        // let cleanRawDependencies: RegExpExecArray | null;
+        let dependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
+        const cleanMatch: RegExpExecArray | null = new RegExp(PypiUtils.removeFlagCommentRegex).exec(rawDependencies)
+        if(!cleanMatch){
+            return dependencies
+        }
+        for (const cleanedMatch of cleanMatch) {
+            const match: RegExp = new RegExp(PypiUtils.packageRegex)
+            while ((dependencyMatch = match.exec(cleanedMatch)) !== null) {
+                const [, name, version] = dependencyMatch;
+                dependencies.set(name.toLowerCase(), version);
+            }
+        }
+        return dependencies;
+    }
     /**
      * Get setup.py file and return the position of 'install_requires' section.
      * @param document - setup.py file
@@ -277,35 +311,9 @@ export class PypiUtils {
         return this.searchProjectName(setupPy.fsPath);
     }
 
-    private static getRequirementsTxtDirectDependencies(path: string): Map<string, string | undefined> {
+    public static getRequirementsTxtDirectDependencies(path: string): Map<string, string | undefined> {
         const content: string = fs.readFileSync(path, 'utf8');
         return this.matchPythonDependencies(content);
-    }
-
-    private static getSetupPyDirectDependencies(path: string): Map<string, string | undefined> {
-        const content: string = fs.readFileSync(path, 'utf8');
-        // Use a regular expression to match the install_requires field
-        const match: RegExpExecArray | null = PypiUtils.installReqRegex.exec(content);
-        if (!match) {
-            return new Map<string, string | undefined>();
-        }
-        return this.matchPythonDependencies(match[1]);
-    }
-
-    private static matchPythonDependencies(rawDependencies: string) {
-        let dependencyMatch: RegExpExecArray | null;
-        let dependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
-        while ((dependencyMatch = PypiUtils.packageRegex.exec(rawDependencies)) !== null) {
-            const [, name, version] = dependencyMatch;
-            dependencies.set(name.toLowerCase(), version);
-        }
-        return dependencies;
-    }
-
-    private static searchProjectName(setupPyFile: string) {
-        const content: string = fs.readFileSync(setupPyFile, 'utf8');
-        const [, name] = PypiUtils.setupPyProjectNameRegex.exec(content) || [];
-        return name;
     }
 
     public static getEnvironmentScanTaskArgs(

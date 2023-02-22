@@ -193,7 +193,10 @@ export class DependencyUtils {
         // Search for the dependency graph of the descriptor
         for (const child of workspaceDependenciesTree.children) {
             if (child instanceof RootNode && child.projectDetails.type === descriptorType) {
-                return this.searchDependencyGraph(descriptorPath, child);
+                let graph: RootNode | undefined = this.searchDependencyGraph(descriptorPath, child);
+                if (graph) {
+                    return graph;
+                }
             }
         }
         return undefined;
