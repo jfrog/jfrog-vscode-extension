@@ -100,7 +100,7 @@ describe('Resource Tests', () => {
 
     function createTestResource(testCase: any, testDir: string): Resource {
         return new Resource(
-            testCase.target,
+            'baseURL/' + testCase.target,
             path.join(testDir, testCase.target),
             logManager,
             ConnectionUtils.createJfrogClient(SERVER_URL, SERVER_URL + '/artifactory', '', '', '', '')

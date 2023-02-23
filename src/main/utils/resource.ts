@@ -38,7 +38,7 @@ export class Resource {
      * @returns the full path of the file that was downloaded successfully, undefined otherwise
      */
     private async download(downloadToFolder: string = this._targetDir): Promise<string> {
-        let resourcePath: string = path.join(downloadToFolder, Utils.getLastSegment(this.sourceUrl));
+        let resourcePath: string = path.join(downloadToFolder, this.sourceUrl.substring(this.sourceUrl.lastIndexOf('/') + 1));
         await this._connectionManager
             .artifactory()
             .download()
@@ -99,7 +99,7 @@ export class Resource {
         if (this._targetPath.endsWith('.zip')) {
             return this._targetPath;
         }
-        let extensionIdx: number = this.name.indexOf('.');
+        let extensionIdx: number = this.name.lastIndexOf('.');
         let cleanName: string = extensionIdx > 0 ? this.name.substring(0, extensionIdx) : this.name;
         return Utils.addZipSuffix(path.join(this._targetDir, cleanName));
     }
