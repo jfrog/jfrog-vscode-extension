@@ -35,12 +35,18 @@ export class DependencyUtils {
             let issue: IVulnerability = issues[i];
             for (let [componentId, component] of Object.entries(issue.components)) {
                 paths.set(issue.issue_id + componentId, {
-                    name: descriptorGraph.componentId,
+                    name: this.getGraphName(descriptorGraph),
                     children: this.getChildrenImpact(descriptorGraph, component)
                 } as IImpactGraph);
             }
         }
         return paths;
+    }
+
+    private static getGraphName(descriptorGraph: RootNode): string {
+        return descriptorGraph.componentId.endsWith(':')
+            ? descriptorGraph.componentId.slice(0, descriptorGraph.componentId.length - 1)
+            : descriptorGraph.componentId;
     }
 
     /**
