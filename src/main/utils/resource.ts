@@ -54,7 +54,7 @@ export class Resource {
      * if the given file is a binary, replace and copy it to the target path
      * @param tempPath - the file to copy into target
      */
-    public moveToTarget(tempPath: string) {
+    public copyToTarget(tempPath: string) {
         if (tempPath.endsWith('.zip')) {
             Utils.removeDirIfExists(this._targetDir);
             Utils.extractZip(tempPath, this._targetDir);
@@ -76,7 +76,7 @@ export class Resource {
         let tmpFolder: string = ScanUtils.createTmpDir();
         try {
             this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this.sourceUrl, 'DEBUG');
-            this.moveToTarget(await this.download(tmpFolder));
+            this.copyToTarget(await this.download(tmpFolder));
             this._logManager.logMessage('Resource ' + this._name + ' was update successfully.', 'DEBUG');
             return true;
         } catch (error) {
