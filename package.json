@@ -132,7 +132,7 @@
             {
                 "command": "jfrog.xray.connect",
                 "title": "Connect",
-                "icon": "./resources/readme/connect.png",
+                "icon": "resources/readme/connect.png",
                 "category": "JFrog",
                 "enablement": "!jfrog.scanInProgress"
             },
@@ -196,33 +196,33 @@
             "view/title": [
                 {
                     "command": "jfrog.xray.connect",
-                    "when": "jfrog.connection.status != signedIn",
-                    "group": "navigation@0"
+                    "when": "jfrog.connection.status != signedIn && view =~ /^jfrog.issues$|^jfrog.xray.ci.issues$/",
+                    "group": "navigation@1"
                 },
                 {
                     "command": "jfrog.xray.disconnect",
-                    "when": "jfrog.connection.status == signedIn",
-                    "group": "navigation@0"
+                    "when": "jfrog.connection.status == signedIn && view =~ /^jfrog.issues$|^jfrog.xray.ci.issues$/",
+                    "group": "navigation@1"
                 },
                 {
                     "command": "jfrog.xray.refresh",
                     "when": "view == jfrog.xray.ci.issues || view == jfrog.issues",
-                    "group": "navigation@1"
+                    "group": "navigation@2"
                 },
                 {
                     "command": "jfrog.xray.filter",
                     "when": "view == jfrog.xray.ci.issues",
-                    "group": "navigation@2"
+                    "group": "navigation@3"
                 },
                 {
                     "command": "jfrog.xray.local",
                     "when": "view == jfrog.xray.ci.issues && isCi",
-                    "group": "navigation@3"
+                    "group": "navigation@4"
                 },
                 {
                     "command": "jfrog.xray.ci",
                     "when": "view == jfrog.issues && isLocal",
-                    "group": "navigation@3"
+                    "group": "navigation@4"
                 },
                 {
                     "command": "jfrog.xray.builds",
