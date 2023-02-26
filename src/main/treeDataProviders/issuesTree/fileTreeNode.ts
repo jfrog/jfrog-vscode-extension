@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { ContextKeys } from '../../constants/contextKeys';
 
 import { Severity, SeverityUtils } from '../../types/severity';
@@ -46,7 +47,7 @@ export abstract class FileTreeNode extends vscode.TreeItem {
         if (this._parent && this._fullPath.startsWith(this._parent.workSpace.uri.fsPath)) {
             let localPath: string = this._fullPath.substring(this._parent.workSpace.uri.fsPath.length + 1);
             if (localPath !== this.name) {
-                description = './' + localPath;
+                description = '.' + path.sep + localPath;
             } else {
                 description = undefined;
             }
