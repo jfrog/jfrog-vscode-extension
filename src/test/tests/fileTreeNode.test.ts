@@ -87,7 +87,7 @@ describe('File Node Tests', () => {
             // Parent in path and parent is not root
             testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: path.join('root') } as vscode.Uri } as vscode.WorkspaceFolder);
             testNode.apply();
-            assert.equal(testNode.description, './' + path.join('folder', 'path'));
+            assert.equal(testNode.description, '.' + path.sep + path.join('folder', 'path'));
         });
     });
 
