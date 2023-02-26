@@ -44,7 +44,11 @@ export class Resource {
             .download()
             .downloadArtifactToFile(this.sourceUrl, resourcePath);
         if (!(await this.isLocalAndRemoteChecksumMatch(resourcePath))) {
-            throw Error('Local checksum is not match to the remote');
+            if (this._cacheRemoteSha256) {
+                throw Error('Local checksum is not match to the remote');
+            } else {
+                this._logManager.logMessage("Can't get remote checksum header for resource " + this.name, 'WARN');
+            }
         }
         return resourcePath;
     }
