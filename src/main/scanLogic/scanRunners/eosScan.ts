@@ -107,7 +107,9 @@ export class EosRunner extends BinaryRunner {
             // Prepare
             let rulesFullDescription: Map<string, string> = new Map<string, string>();
             for (const rule of run.tool.driver.rules) {
-                rulesFullDescription.set(rule.id, rule.fullDescription.text);
+                if (rule.fullDescription) {
+                    rulesFullDescription.set(rule.id, rule.fullDescription.text);
+                }
             }
             // Generate response data
             run.results?.forEach(analyzeIssue => this.generateIssueData(eosResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId)));
