@@ -132,7 +132,7 @@
             {
                 "command": "jfrog.xray.connect",
                 "title": "Connect",
-                "icon": "./resources/readme/connect.png",
+                "icon": "resources/readme/connect.png",
                 "category": "JFrog",
                 "enablement": "!jfrog.scanInProgress"
             },
@@ -196,12 +196,12 @@
             "view/title": [
                 {
                     "command": "jfrog.xray.connect",
-                    "when": "jfrog.connection.status != signedIn",
+                    "when": "jfrog.connection.status != signedIn && view =~ /^jfrog.issues$|^jfrog.xray.ci.issues$/",
                     "group": "navigation@0"
                 },
                 {
                     "command": "jfrog.xray.disconnect",
-                    "when": "jfrog.connection.status == signedIn",
+                    "when": "jfrog.connection.status == signedIn && view =~ /^jfrog.issues$|^jfrog.xray.ci.issues$/",
                     "group": "navigation@0"
                 },
                 {
@@ -227,7 +227,7 @@
                 {
                     "command": "jfrog.xray.builds",
                     "when": "view == jfrog.xray.ci.issues && isCi",
-                    "group": "navigation@5"
+                    "group": "navigation@4"
                 }
             ],
             "view/item/context": [
