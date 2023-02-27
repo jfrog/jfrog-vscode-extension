@@ -11,6 +11,7 @@ import { PackageType } from '../types/projectType';
 import { Configuration } from './configuration';
 import { ContextKeys } from '../constants/contextKeys';
 import * as util from 'util';
+
 export class ScanUtils {
     public static readonly DESCRIPTOR_SELECTOR_PATTERN: string =
         '**/{go.mod,package.json,pom.xml,setup.py,*requirements*.txt,yarn.lock,*.csproj,*.sln,packages.config}';
@@ -112,6 +113,10 @@ export class ScanUtils {
 
     public static getIssuesPath(): string {
         return path.join(ScanUtils.getHomePath(), 'issues');
+    }
+
+    public static getLogsPath(): string {
+        return path.join(ScanUtils.getIssuesPath(), 'logs');
     }
 
     static readFileIfExists(filePath: string): string | undefined {

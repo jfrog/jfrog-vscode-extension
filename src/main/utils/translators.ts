@@ -22,6 +22,13 @@ import { toPackageType } from '../types/projectType';
 import { Utils } from './utils';
 
 export class Translators {
+    public static toAnalyzerLogLevel(logLevel: string): string {
+        if (logLevel === 'warn' || logLevel === 'err') {
+            return 'error';
+        }
+        return logLevel;
+    }
+
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
         let components: string[] = clientGeneral.component_id.split(':');
         return components.length === 2

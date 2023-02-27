@@ -2,6 +2,7 @@ import * as pathUtils from 'path';
 import * as vscode from 'vscode';
 import * as os from 'os';
 import * as fs from 'fs';
+import * as path from 'path';
 import AdmZip, { IZipEntry } from 'adm-zip';
 import { ScanUtils } from './scanUtils';
 
@@ -10,6 +11,30 @@ export class Utils {
     // 1 GB
     private static readonly MAX_SIZE_EXTRACTED_ZIP_BYTES: number = 1000000000;
     private static readonly COMPRESSION_THRESHOLD_RATIO: number = 100;
+    // keep up to 100 logs
+    public static readonly KEEP_LOGS_COUNT: number = 100;
+
+    public static cleanUpOldLogs() {
+        let logFolder: string = ScanUtils.getLogsPath();
+        let logFiles: string[] = fs.readdirSync(logFolder).map(fileName => path.join(logFolder, fileName));
+        let toRemoveCount: number = logFiles.length + 1 - this.KEEP_LOGS_COUNT;
+        let removed: number = 0;
+
+        if (toRemoveCount > 0) {
+            logFiles.sort((lhs, rhs) => fs.statSync(lhs).birthtime.getTime() - fs.statSync(rhs).birthtime.getTime());
+            while (removed < toRemoveCount) {
+                fs.rmSync(logFiles[removed]);
+                removed++;
+            }
+        }
+    }
+
+    public static getLogFileName(...args: string[]): string {
+        if (!args || args.length === 0) {
+            return 'Jfrog.log';
+        }
+        return args.join('-') + '.log';
+    }
 
     /**
      *  @returns the last segment of a path.

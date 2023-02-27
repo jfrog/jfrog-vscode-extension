@@ -20,10 +20,10 @@ import { DependencyUpdateManager } from './main/dependencyUpdate/dependencyUpdat
 export async function activate(context: vscode.ExtensionContext) {
     const workspaceFolders: vscode.WorkspaceFolder[] = vscode.workspace.workspaceFolders?.map(el => el) || [];
     const logManager: LogManager = new LogManager().activate();
+    const cacheManager: CacheManager = new CacheManager().activate(context);
     const connectionManager: ConnectionManager = await new ConnectionManager(logManager).activate(context);
     const scanManager: ScanManager = new ScanManager(connectionManager, logManager).activate();
-    const cacheManager: CacheManager = new CacheManager().activate(context);
-    const scanCacheManager: ScanCacheManager = new ScanCacheManager().activate(context); // TODO: remove when refactoring builds.
+    const scanCacheManager: ScanCacheManager = new ScanCacheManager().activate(context);
     const treesManager: TreesManager = await new TreesManager(
         workspaceFolders,
         connectionManager,
