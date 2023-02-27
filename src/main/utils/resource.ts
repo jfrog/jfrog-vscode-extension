@@ -47,7 +47,7 @@ export class Resource {
             if (this._cacheRemoteSha256) {
                 throw Error('Local checksum is not match to the remote');
             } else {
-                this._logManager.logMessage("Can't get remote checksum header for resource " + this.name, 'WARN');
+                this._logManager.logMessage("Can't get 'x-checksum-sha256' header from " + this.sourceUrl, 'WARN');
             }
         }
         return resourcePath;
