@@ -47,7 +47,10 @@ export class Resource {
             if (this._cacheRemoteSha256) {
                 throw Error('Local checksum is not match to the remote');
             } else {
-                this._logManager.logMessage("Can't get 'x-checksum-sha256' header from " + this.sourceUrl, 'WARN');
+                this._logManager.logMessage(
+                    "Can't get 'x-checksum-sha256' header from " + Resource.DEFAULT_SERVER + '/artifactory' + this.sourceUrl,
+                    'WARN'
+                );
             }
         }
         return resourcePath;
@@ -79,7 +82,10 @@ export class Resource {
     public async update(): Promise<boolean> {
         let tmpFolder: string = ScanUtils.createTmpDir();
         try {
-            this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this.sourceUrl, 'DEBUG');
+            this._logManager.logMessage(
+                'Starting to update resource ' + this._name + ' from ' + Resource.DEFAULT_SERVER + '/artifactory' + this.sourceUrl,
+                'DEBUG'
+            );
             this.copyToTarget(await this.download(tmpFolder));
             this._logManager.logMessage('Resource ' + this._name + ' was update successfully.', 'DEBUG');
             return true;

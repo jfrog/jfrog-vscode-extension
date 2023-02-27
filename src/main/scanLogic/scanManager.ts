@@ -74,11 +74,12 @@ export class ScanManager implements ExtensionComponent {
                 )
             );
             await Promise.all(updatePromises);
+            this._logManager.logMessage(
+                'Updating outdated extension resources finished ' + (result ? 'successfully' : 'with error'),
+                result ? 'INFO' : 'ERR'
+            );
         });
-        this._logManager.logMessage(
-            'Updating outdated extension resources finished ' + (result ? 'successfully' : 'with error'),
-            result ? 'INFO' : 'ERR'
-        );
+
         return result;
     }
 
@@ -86,7 +87,7 @@ export class ScanManager implements ExtensionComponent {
         if (!this.shouldCheckOutdated()) {
             return [];
         }
-        this._logManager.logMessage('Checking for outdated resources', 'INFO');
+        this._logManager.logMessage('Checking for outdated scanners', 'INFO');
         ScanManager.lastOutdatedCheck = Date.now();
         let promises: Promise<boolean>[] = [];
         let outdatedResources: Resource[] = [];
