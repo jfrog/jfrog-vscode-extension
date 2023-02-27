@@ -539,7 +539,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         this._logManager.logMessage(
             'Found ' +
                 issuesCount +
-                ' issues for descriptor ' +
+                ' unique CVE issues for descriptor ' +
                 workspaceIssues.fullPath +
                 ' (elapsed ' +
                 (workspaceIssues.graphScanTimestamp - startGraphScan) / 1000 +

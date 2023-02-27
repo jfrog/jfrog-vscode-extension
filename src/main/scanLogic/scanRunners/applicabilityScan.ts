@@ -85,7 +85,9 @@ export class ApplicabilityRunner extends BinaryRunner {
         let scanned: Set<string> = new Set<string>();
         let rulesFullDescription: Map<string, string> = new Map<string, string>();
         for (const rule of run.tool.driver.rules) {
-            rulesFullDescription.set(rule.id, rule.fullDescription.text);
+            if (rule.fullDescription) {
+                rulesFullDescription.set(rule.id, rule.fullDescription.text);
+            }
         }
         let issues: AnalyzeIssue[] = run.results;
         if (issues) {
