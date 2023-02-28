@@ -20,8 +20,16 @@ import { Severity } from '../types/severity';
 import { FileLocation } from '../scanLogic/scanRunners/analyzerModels';
 import { toPackageType } from '../types/projectType';
 import { Utils } from './utils';
+import { LogLevel } from '../log/logManager';
 
 export class Translators {
+    public static toAnalyzerLogLevel(logLevel: LogLevel): string {
+        if (logLevel === 'WARN' || logLevel === 'ERR') {
+            return 'error';
+        }
+        return logLevel.toLowerCase();
+    }
+
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {
         let components: string[] = clientGeneral.component_id.split(':');
         return components.length === 2

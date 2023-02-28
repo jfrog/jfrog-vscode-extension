@@ -72,8 +72,8 @@ export class EosRunner extends BinaryRunner {
     }
 
     /** @override */
-    public async runBinary(abortSignal: AbortSignal, yamlConfigPath: string): Promise<void> {
-        await this.executeBinary(abortSignal, ['analyze', 'config', yamlConfigPath]);
+    public async runBinary(abortSignal: AbortSignal, yamlConfigPath: string, executionLogDirectory: string): Promise<void> {
+        await this.executeBinary(abortSignal, ['analyze', 'config', yamlConfigPath], executionLogDirectory);
     }
 
     /**

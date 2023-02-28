@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 import { ExtensionComponent } from '../extensionComponent';
 import { Configuration } from '../utils/configuration';
+import { ScanUtils } from '../utils/scanUtils';
+import { Utils } from '../utils/utils';
 
-type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERR';
+export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERR';
 
 /**
  * Log to the "OUTPUT" channel. Add date and log level.
@@ -11,6 +13,7 @@ export class LogManager implements ExtensionComponent {
     private _outputChannel!: vscode.OutputChannel;
 
     activate(): LogManager {
+        Utils.createDirIfNotExists(ScanUtils.getLogsPath());
         this._outputChannel = vscode.window.createOutputChannel('JFrog');
         return this;
     }
@@ -25,7 +28,7 @@ export class LogManager implements ExtensionComponent {
         if (!message) {
             return;
         }
-        let selectedLogLevel: LogLevel = Configuration.getLogLevel().toUpperCase() as LogLevel;
+        let selectedLogLevel: LogLevel = Configuration.getLogLevel();
         if (this.logLevelToNumber(level) < this.logLevelToNumber(selectedLogLevel)) {
             return;
         }

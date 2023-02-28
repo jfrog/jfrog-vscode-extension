@@ -2,8 +2,8 @@ export interface AnalyzerRequest {
     scans: AnalyzeScanRequest[];
 }
 
-type AnalyzerType = 'analyze-applicability' | 'analyze-codebase';
-type ResultKind = 'pass' | 'fail';
+export type AnalyzerType = 'analyze-applicability' | 'analyze-codebase';
+export type ResultKind = 'pass' | 'fail';
 
 export interface AnalyzeScanRequest {
     // What type of scan

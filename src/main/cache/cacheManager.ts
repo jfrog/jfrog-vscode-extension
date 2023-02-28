@@ -14,7 +14,6 @@ export class CacheManager implements ExtensionComponent {
 
     public activate(context: vscode.ExtensionContext): CacheManager {
         Utils.createDirIfNotExists(ScanUtils.getHomePath());
-        Utils.createDirIfNotExists(ScanUtils.getIssuesPath());
         // Set caches
         this._cache = context.workspaceState;
         this._issuesCache = new IssuesCache(context.workspaceState);
