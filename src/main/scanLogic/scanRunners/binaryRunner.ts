@@ -274,6 +274,7 @@ export abstract class BinaryRunner {
                 let requestType: AnalyzerType = validRequest.type;
                 let requestRootName: string = Utils.getLastSegment(validRequest.roots[0]);
                 this.copyRunLogToFolder(args.directory, requestType, requestRootName, hadError);
+                ScanUtils.removeFolder(args.directory);
             });
         return aggResponse;
     }
