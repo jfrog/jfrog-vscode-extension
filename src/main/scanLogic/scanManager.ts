@@ -75,7 +75,7 @@ export class ScanManager implements ExtensionComponent {
             );
             await Promise.all(updatePromises);
             this._logManager.logMessage(
-                'Updating outdated extension resources finished ' + (result ? 'successfully' : 'with error'),
+                'Updating outdated extension resources finished ' + (result ? 'successfully' : 'with errors'),
                 result ? 'INFO' : 'ERR'
             );
         });

@@ -14,6 +14,7 @@ export class Resource {
     private static readonly DEFAULT_SERVER: string = 'https://releases.jfrog.io';
 
     private _connectionManager: JfrogClient;
+    private _artifactoryUrl: string;
     private _cacheRemoteSha256: string | undefined;
 
     private _targetDir: string;
@@ -26,8 +27,9 @@ export class Resource {
         connectionManager?: JfrogClient,
         private _mode: fs.Mode = '700'
     ) {
+        this._artifactoryUrl = Resource.DEFAULT_SERVER + '/artifactory';
         this._connectionManager =
-            connectionManager ?? ConnectionUtils.createJfrogClient(Resource.DEFAULT_SERVER, Resource.DEFAULT_SERVER + '/artifactory', '', '', '', '');
+            connectionManager ?? ConnectionUtils.createJfrogClient(Resource.DEFAULT_SERVER, this._artifactoryUrl, '', '', '', '');
         this._name = Utils.getLastSegment(this._targetPath);
         this._targetDir = path.dirname(this._targetPath);
     }
@@ -47,10 +49,7 @@ export class Resource {
             if (this._cacheRemoteSha256) {
                 throw Error('Local checksum is not match to the remote');
             } else {
-                this._logManager.logMessage(
-                    "Can't get 'x-checksum-sha256' header from " + Resource.DEFAULT_SERVER + '/artifactory' + this.sourceUrl,
-                    'WARN'
-                );
+                this._logManager.logMessage("Can't get 'x-checksum-sha256' header from " + this._artifactoryUrl + this.sourceUrl, 'WARN');
             }
         }
         return resourcePath;
@@ -82,10 +81,7 @@ export class Resource {
     public async update(): Promise<boolean> {
         let tmpFolder: string = ScanUtils.createTmpDir();
         try {
-            this._logManager.logMessage(
-                'Starting to update resource ' + this._name + ' from ' + Resource.DEFAULT_SERVER + '/artifactory' + this.sourceUrl,
-                'DEBUG'
-            );
+            this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this._artifactoryUrl + this.sourceUrl, 'DEBUG');
             this.copyToTarget(await this.download(tmpFolder));
             this._logManager.logMessage('Resource ' + this._name + ' was update successfully.', 'DEBUG');
             return true;
