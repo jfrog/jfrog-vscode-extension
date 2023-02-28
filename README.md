@@ -18,6 +18,7 @@
     -   [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
     -   [Connecting VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
     -   [Using the extension](#using-the-extension)
+        -   [Severity Icons](#severity-icons)
 -   [The Local View](#the-local-view)
     -   [Scanning Workspace](#scanning-workspace)
     -   [Viewing Vulnerabilities](#viewing-vulnerabilities)
@@ -63,7 +64,7 @@ For selected security issues, get leverage-enhanced CVE data that is provided by
 To learn more about enriched CVEs, see [here](https://www.jfrog.com/confluence/display/JFROG/JFrog+Security+CVE+Research+and+Enrichment)
 
 #### Advanced Scans
-*Requires Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
+*Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
 
 With advanced [**Contextual Analysis**](#contextual-analysis), understand the applicability of CVEs in your application and utilize JFrog Security scanners to analyze the way you use 3rd party packages in your projects.
 Automatically validate some high-impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and reduce false positives and vulnerability noise with smart CVE analysis.
@@ -74,6 +75,7 @@ To learn more, see [here](https://www.jfrog.com/confluence/display/JFROG/Vulnera
 | Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
 |---------------------------------------------------|:---:|:-----:|:------:|:---:|:-------:|:------:|
 | SCA                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
+| Upgrade vulnerable dependencies to fixed versions |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | Contextual Analysis                               |  ❌  |   ❌   |   ✅    |  ✅  |    ✅    |   ❌    |
 
 #### Additional Perks
@@ -148,6 +150,18 @@ The two modes can be toggled by pressing on their respective buttons that will a
 
 -   The **Local** view displays information about the local code as it is being developed in VS Code. The developer can scan their local workspace continuously. The information is displayed in the **Local** view.
 -   The **CI** view allows the tracking of the code as it is built, tested and scanned by the CI server. It displays information about the status of the build and includes a link to the build log on the CI server.
+
+### Severity Icons
+The icon demonstrates the top severity issue of a selected component and its transitive dependencies. The following table describes the severities from highest to lowest:
+| Icon                                                          | Severity  | Description                      |
+|---------------------------------------------------------------|:---------:|:--------------------------------:|
+| <img src="resources/readme/severities/High.png" width="20">  |  Critical |   Issue with critical severity   |
+| <img src="resources/readme/severities/High.png" width="20">  |  High  |   Issue with high severity   |
+| <img src="resources/readme/severities/Medium.png" width="20">  |  Medium  |   Issue with medium severity   |
+| <img src="resources/readme/severities/Low.png" width="20">  |  Low  |   Issue with low severity   |
+| <img src="resources/readme/severities/Unknown.png" width="20">  |  Unknown  |   Issue with unknown severity   |
+| <img src="resources/readme/severities/notApplicableUnknown.png" height="15" width="15"><img src="resources/readme/severities/notApplicableLow.png" height="15" width="15"><img src="resources/readme/severities/notApplicableMedium.png" height="15" width="15"><img src="resources/readme/severities/notApplicableHigh.png" height="15" width="15"><img src="resources/readme/severities/notApplicableCritical.png" height="15" width="15"> |  Not Applicable  |   CVE issue that is not applicable to your source code   |
+| <img src="./resources/severities/normal.png" width="20">  |  Normal  |   No issues   |
 
 ## The Local View
 
