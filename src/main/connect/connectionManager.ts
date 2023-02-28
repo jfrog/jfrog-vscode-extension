@@ -168,7 +168,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             (await this.tryCredentialsFromKeyStore()) ||
             (await this.tryCredentialsFromEnv()) ||
             (await this.tryCredentialsFromJfrogCli()) ||
-            (prompt && (await this.tryCredentialsFromPrmopt()))
+            (prompt && (await this.tryCredentialsFromPrompt()))
         );
     }
 
@@ -280,7 +280,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             }
 
             if (this.areCompleteCredentialsSet()) {
-                this._logManager.logMessage('Successfuly obtained credentials from JFrog CLI', 'DEBUG');
+                this._logManager.logMessage('Successfully obtained credentials from JFrog CLI', 'DEBUG');
                 return true;
             }
             return false;
@@ -410,7 +410,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return true;
     }
 
-    private async tryCredentialsFromPrmopt(): Promise<boolean> {
+    private async tryCredentialsFromPrompt(): Promise<boolean> {
         this._logManager.logMessage('Prompting for credentials...', 'DEBUG');
         if (!(await this.promptAll())) {
             return false;
@@ -657,7 +657,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     /**
      * Store URLs and username in VS-Code global state.
-     * Store Xray password and access token in Keychain.
+     * Store Xray password and access token in Key chain.
      */
     private async storeConnection(): Promise<void> {
         await this.storeXrayUrl();
