@@ -26,8 +26,8 @@ export class IconsPaths {
 
     // Icons builds status
     static readonly BUILD_SUCCESS: string = IconsPaths.getIconPath(path.join('severities', 'normal'));
-    static readonly BUILD_FAILED: string = IconsPaths.getSvgIconPath(path.join('Critical', 'severities'));
-    static readonly BUILD_UNKNOWN: string = IconsPaths.getSvgIconPath(path.join('Unknown', 'severities'));
+    static readonly BUILD_FAILED: string = IconsPaths.getSvgIconPath(path.join('severities', 'Critical'));
+    static readonly BUILD_UNKNOWN: string = IconsPaths.getSvgIconPath(path.join('severities', 'Unknown'));
 
     // License
     static readonly VIOLATED_LICENSE: string = IconsPaths.getIconPath('violatedLicense');
