@@ -17,6 +17,7 @@ import { Resource } from '../utils/resource';
 import { BinaryRunner } from './scanRunners/binaryRunner';
 import { ScanUtils } from '../utils/scanUtils';
 import { StepProgress } from '../treeDataProviders/utils/stepProgress';
+import { Utils } from '../utils/utils';
 
 /**
  * Manage all the Xray scans
@@ -32,6 +33,7 @@ export class ScanManager implements ExtensionComponent {
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
     activate() {
+        Utils.createDirIfNotExists(ScanUtils.getIssuesPath());
         return this;
     }
 

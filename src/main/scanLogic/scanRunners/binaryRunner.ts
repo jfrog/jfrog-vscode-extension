@@ -13,6 +13,7 @@ import { Configuration } from '../../utils/configuration';
 import { Resource } from '../../utils/resource';
 import { RunUtils } from '../../utils/runUtils';
 import { Translators } from '../../utils/translators';
+import { LogUtils } from '../../log/logUtils';
 
 /**
  * Arguments for running binary async
@@ -77,9 +78,9 @@ export abstract class BinaryRunner {
      * Run the executeBinary method with the provided request path
      * @param abortSignal - signal to abort the operation
      * @param yamlConfigPath - the path to the request
-     * @param executionLogDirectory - if exists a log file will be written to the dir, else log will be written to stdout/stderr
+     * @param executionLogDirectory - og file will be written to the dir
      */
-    public abstract runBinary(abortSignal: AbortSignal, yamlConfigPath: string, executionLogDirectory?: string): Promise<void>;
+    public abstract runBinary(abortSignal: AbortSignal, yamlConfigPath: string, executionLogDirectory: string): Promise<void>;
 
     /**
      * Validates that the binary exists and can run
@@ -95,7 +96,7 @@ export abstract class BinaryRunner {
      * @param abortSignal - the signal to abort the operation
      * @param args - the arguments for the command
      */
-    protected async executeBinary(abortSignal: AbortSignal, args: string[], executionLogDirectory?: string): Promise<void> {
+    protected async executeBinary(abortSignal: AbortSignal, args: string[], executionLogDirectory: string): Promise<void> {
         await RunUtils.withAbortSignal(
             abortSignal,
             this._abortCheckInterval,
@@ -258,6 +259,26 @@ export abstract class BinaryRunner {
         }
         // Run
         let runs: Promise<any>[] = [];
+        let aggResponse: AnalyzerScanResponse = this.populateRunTasks(args, runs);
+        let hadError: boolean = false;
+        await Promise.all(runs)
+            .catch(err => {
+                hadError = true;
+                throw err;
+            })
+            .finally(() => {
+                if (!validRequest) {
+                    return;
+                }
+                // Collect log if exist
+                let requestType: AnalyzerType = validRequest.type;
+                let requestRootName: string = Utils.getLastSegment(validRequest.roots[0]);
+                this.copyRunLogToFolder(args.directory, requestType, requestRootName, hadError);
+            });
+        return aggResponse;
+    }
+
+    private populateRunTasks(args: RunArgs, runs: Promise<any>[]): AnalyzerScanResponse {
         let aggResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (let i: number = 0; i < args.requests.length; i++) {
             runs.push(
@@ -275,43 +296,35 @@ export abstract class BinaryRunner {
                     })
             );
         }
-
-        let hadError: boolean = false;
-        await Promise.all(runs)
-            .catch(err => {
-                hadError = true;
-                throw err;
-            })
-            .finally(() => {
-                if (validRequest) {
-                    // Collect log if exist
-                    let requestType: AnalyzerType = validRequest.type;
-                    let requestRootName: string = Utils.getLastSegment(validRequest.roots[0]);
-                    this.copyRunLogToFolder(args.directory, requestType, requestRootName, hadError);
-                }
-                ScanUtils.removeFolder(args.directory);
-            });
         return aggResponse;
     }
 
+    /**
+     * Copy a file that includes 'log' in its name from a given folder to the logs folder
+     * @param logsSrcFolder - the directory that the log file exists in
+     * @param requestType - the type of runner request of the log, will be part of it's name
+     * @param rootName - the type of runner request of the log, will be part of it's name
+     * @param hadError - if true, will log result as error, otherwise success.
+     */
     private copyRunLogToFolder(logsSrcFolder: string, requestType: AnalyzerType, rootName: string, hadError: boolean) {
-        Utils.cleanUpOldLogs();
         let logFile: string | undefined = fs.readdirSync(logsSrcFolder).find(fileName => fileName.toLowerCase().includes('log'));
-        if (logFile) {
-            let logFinalPath: string = path.join(ScanUtils.getLogsPath(), Utils.getLogFileName(rootName, requestType, '' + Date.now()));
-            fs.copyFileSync(path.join(logsSrcFolder, logFile), logFinalPath);
-            this._logManager.logMessage(
-                'AnalyzerManager run ' +
-                    requestType +
-                    ' on ' +
-                    rootName +
-                    ' ended ' +
-                    (hadError ? 'with error' : 'successfully') +
-                    ', scan log was generated at ' +
-                    logFinalPath,
-                hadError ? 'ERR' : 'DEBUG'
-            );
+        if (!logFile) {
+            return;
         }
+        LogUtils.cleanUpOldLogs();
+        let logFinalPath: string = path.join(ScanUtils.getLogsPath(), LogUtils.getLogFileName(rootName, requestType, '' + Date.now()));
+        fs.copyFileSync(path.join(logsSrcFolder, logFile), logFinalPath);
+        this._logManager.logMessage(
+            'AnalyzerManager run ' +
+                requestType +
+                ' on ' +
+                rootName +
+                ' ended ' +
+                (hadError ? 'with error' : 'successfully') +
+                ', scan log was generated at ' +
+                logFinalPath,
+            hadError ? 'ERR' : 'DEBUG'
+        );
     }
 
     /**

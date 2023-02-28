@@ -20,13 +20,14 @@ import { Severity } from '../types/severity';
 import { FileLocation } from '../scanLogic/scanRunners/analyzerModels';
 import { toPackageType } from '../types/projectType';
 import { Utils } from './utils';
+import { LogLevel } from '../log/logManager';
 
 export class Translators {
-    public static toAnalyzerLogLevel(logLevel: string): string {
-        if (logLevel === 'warn' || logLevel === 'err') {
+    public static toAnalyzerLogLevel(logLevel: LogLevel): string {
+        if (logLevel === 'WARN' || logLevel === 'ERR') {
             return 'error';
         }
-        return logLevel;
+        return logLevel.toLowerCase();
     }
 
     public static toGeneralInfo(clientGeneral: IGeneral): GeneralInfo {

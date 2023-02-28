@@ -38,7 +38,7 @@ export class ApplicabilityRunner extends BinaryRunner {
     }
 
     /** @override */
-    public async runBinary(abortSignal: AbortSignal, yamlConfigPath: string, executionLogDirectory?: string): Promise<void> {
+    public async runBinary(abortSignal: AbortSignal, yamlConfigPath: string, executionLogDirectory: string): Promise<void> {
         await this.executeBinary(abortSignal, ['ca', yamlConfigPath], executionLogDirectory);
     }
 
