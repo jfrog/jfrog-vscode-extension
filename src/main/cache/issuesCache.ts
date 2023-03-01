@@ -1,4 +1,10 @@
 import * as vscode from 'vscode';
+import { LogManager } from '../log/logManager';
+import { DescriptorTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
+import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
+import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
+import { AnalyzerUtils } from '../treeDataProviders/utils/analyzerUtils';
+import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
 import { ScanResults } from '../types/workspaceIssuesDetails';
 
 /**
@@ -7,7 +13,7 @@ import { ScanResults } from '../types/workspaceIssuesDetails';
 export class IssuesCache {
     public static readonly CACHE_BASE_KEY: string = 'jfrog.cache.issues.';
 
-    constructor(public _cache: vscode.Memento) {}
+    constructor(public _cache: vscode.Memento, private _logManager: LogManager) {}
 
     /**
      * Get the unique key for this workspace
@@ -55,5 +61,45 @@ export class IssuesCache {
      */
     public remove(workspace: vscode.WorkspaceFolder) {
         return this._cache.update(IssuesCache.toKey(workspace), undefined);
+    }
+
+    /**
+     * Async task to load the issues from the last scan of a given workspace
+     * @param workspace - the workspace to load it's issues
+     * @returns - the workspace issues if the exists, undefined otherwise
+     */
+    public async loadIssues(workspace: vscode.WorkspaceFolder): Promise<IssuesRootTreeNode | undefined> {
+        // Check if data for the workspace exists in the cache
+        let scanResults: ScanResults | undefined = this.get(workspace);
+        if (scanResults != undefined) {
+            this._logManager.logMessage("Loading issues from last scan for the workspace '" + workspace.name + "'", 'INFO');
+            let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace);
+            if (scanResults.failedFiles) {
+                // Load files that had error on the last scan and create tree node in the root
+                scanResults.failedFiles.forEach(file => {
+                    this._logManager.logMessage("Loading file with scan error '" + file.name + "': '" + file.fullPath + "'", 'DEBUG');
+                    let failed: FileTreeNode = FileTreeNode.createFailedScanNode(file.fullPath, file.name);
+                    return root.children.push(failed);
+                });
+            }
+            if (scanResults.descriptorsIssues) {
+                // Load descriptors issues and create tree node in the root
+                scanResults.descriptorsIssues.forEach(descriptor => {
+                    this._logManager.logMessage("Loading issues of descriptor '" + descriptor.fullPath + "'", 'DEBUG');
+                    let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptor.fullPath, descriptor.type, root);
+                    DependencyUtils.populateDependencyScanResults(descriptorNode, descriptor);
+                    if (descriptor.applicableIssues && descriptor.applicableIssues.scannedCve) {
+                        AnalyzerUtils.populateApplicableIssues(root, descriptorNode, descriptor);
+                    }
+                    root.children.push(descriptorNode);
+                });
+            }
+            if (scanResults.eosScan) {
+                root.eosScanTimeStamp = scanResults.eosScanTimestamp;
+                AnalyzerUtils.populateEosIssues(root, scanResults);
+            }
+            return root;
+        }
+        return undefined;
     }
 }
