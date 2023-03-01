@@ -8,8 +8,6 @@ import { FocusType } from '../constants/contextKeys';
 import { LogManager } from '../log/logManager';
 import { GoTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/goTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { TreesManager } from '../treeDataProviders/treesManager';
-import { ProjectDetails } from '../types/projectDetails';
 import { ScanUtils } from './scanUtils';
 import { Utils } from './utils';
 
@@ -85,40 +83,38 @@ export class GoUtils {
      */
     public static async createDependenciesTrees(
         goMods: vscode.Uri[] | undefined,
-        projectsToScan: ProjectDetails[],
-        treesManager: TreesManager,
-        parent: DependenciesTreeNode,
-        checkCanceled: () => void
+        logManager: LogManager,
+        checkCanceled: () => void,
+        parent: DependenciesTreeNode
     ): Promise<void> {
         if (!goMods) {
-            treesManager.logManager.logMessage('No go.mod files found in workspaces.', 'DEBUG');
+            logManager.logMessage('No go.mod files found in workspaces.', 'DEBUG');
             return;
         }
-        treesManager.logManager.logMessage('go.mod files to scan: [' + goMods.toString() + ']', 'DEBUG');
+        logManager.logMessage('go.mod files to scan: [' + goMods.toString() + ']', 'DEBUG');
         if (!GoUtils.verifyGoInstalled()) {
-            treesManager.logManager.logError(new Error('Could not scan go project dependencies, because go CLI is not in the PATH.'), true);
+            logManager.logError(new Error('Could not scan go project dependencies, because go CLI is not in the PATH.'), true);
             return;
         }
         let goVersion: SemVer = this.getGoVersion();
         for (let goMod of goMods) {
             checkCanceled();
-            treesManager.logManager.logMessage('Analyzing go.mod file ' + goMod.fsPath, 'INFO');
+            logManager.logMessage('Analyzing go.mod file ' + goMod.fsPath, 'INFO');
             let projectDir: string = path.dirname(goMod.fsPath);
             let tmpGoModPath: string = '';
             try {
-                tmpGoModPath = this.createGoWorkspace(projectDir, treesManager.logManager);
+                tmpGoModPath = this.createGoWorkspace(projectDir, logManager);
                 ScanUtils.executeCmd(GoUtils.GO_MOD_TIDY_CMD, path.dirname(tmpGoModPath));
             } catch (error) {
-                treesManager.logManager.logMessage('Failed creating go temporary workspace: ' + error, 'ERR');
-                treesManager.logManager.logMessageAndToastErr(
+                logManager.logMessage('Failed creating go temporary workspace: ' + error, 'ERR');
+                logManager.logMessageAndToastErr(
                     `Failed to scan Go project. Hint: Please make sure the command 'go mod tidy' runs successfully in ` + goMod.fsPath,
                     'ERR'
                 );
             }
 
-            let root: GoTreeNode = new GoTreeNode(tmpGoModPath, treesManager, parent);
+            let root: GoTreeNode = new GoTreeNode(tmpGoModPath, logManager, parent);
             root.refreshDependencies(goVersion);
-            projectsToScan.push(root.projectDetails);
             // Set actual paths.
             root.fullPath = goMod.fsPath;
             root.projectDetails.path = projectDir;
@@ -128,7 +124,7 @@ export class GoUtils {
             try {
                 await ScanUtils.removeFolder(path.dirname(tmpGoModPath));
             } catch (error) {
-                treesManager.logManager.logMessage('Failed removing go temporary workspace directory: ' + error, 'ERR');
+                logManager.logMessage('Failed removing go temporary workspace directory: ' + error, 'ERR');
             }
         }
     }

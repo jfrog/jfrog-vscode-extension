@@ -4,8 +4,6 @@ import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
 import { YarnTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/yarnTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { TreesManager } from '../treeDataProviders/treesManager';
-import { ProjectDetails } from '../types/projectDetails';
 import { GeneralInfo } from '../types/generalInfo';
 import { NpmGlobalScopes, ScopedNpmProject } from './npmUtils';
 import { ScanUtils } from './scanUtils';
@@ -56,25 +54,23 @@ export class YarnUtils {
      */
     public static async createDependenciesTrees(
         yarnLocks: vscode.Uri[] | undefined,
-        projectsToScan: ProjectDetails[],
-        treesManager: TreesManager,
-        parent: DependenciesTreeNode,
-        checkCanceled: () => void
+        logManager: LogManager,
+        checkCanceled: () => void,
+        parent: DependenciesTreeNode
     ): Promise<void> {
         if (!yarnLocks) {
-            treesManager.logManager.logMessage('No yarn.lock files found in workspaces.', 'DEBUG');
+            logManager.logMessage('No yarn.lock files found in workspaces.', 'DEBUG');
             return;
         }
-        treesManager.logManager.logMessage('yarn.lock files to scan: [' + yarnLocks.toString() + ']', 'DEBUG');
+        logManager.logMessage('yarn.lock files to scan: [' + yarnLocks.toString() + ']', 'DEBUG');
         for (let yarnLock of yarnLocks) {
             checkCanceled();
             // In yarn, the version may vary in different workspaces. Therefore we run 'yarn --version' for each workspace.
-            if (!YarnUtils.isVersionSupported(parent, treesManager.logManager, path.dirname(yarnLock.fsPath))) {
+            if (!YarnUtils.isVersionSupported(parent, logManager, path.dirname(yarnLock.fsPath))) {
                 return;
             }
             checkCanceled();
-            let root: YarnTreeNode = new YarnTreeNode(yarnLock.fsPath, treesManager, parent);
-            projectsToScan.push(root.projectDetails);
+            let root: YarnTreeNode = new YarnTreeNode(yarnLock.fsPath, logManager, parent);
             root.refreshDependencies();
         }
     }

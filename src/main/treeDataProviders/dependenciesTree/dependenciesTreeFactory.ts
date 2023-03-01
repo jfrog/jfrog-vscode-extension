@@ -31,35 +31,28 @@ export class DependenciesTreesFactory {
         this.sendUsageReport(projectDescriptors, treesManager.connectionManager);
         let typesDone: number = 0;
         try {
-            await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Go), componentsToScan, treesManager, parent, checkCanceled);
+            await GoUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Go), treesManager.logManager, checkCanceled, parent);
             typesDone++;
             progressManager.reportProgress();
-            await NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Npm), componentsToScan, treesManager, parent, checkCanceled);
+            await NpmUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Npm), treesManager.logManager, checkCanceled, parent);
             typesDone++;
             progressManager.reportProgress();
-            await YarnUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Yarn), componentsToScan, treesManager, parent, checkCanceled);
+            await YarnUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Yarn), treesManager.logManager, checkCanceled, parent);
             typesDone++;
             progressManager.reportProgress();
             await PypiUtils.createDependenciesTrees(
                 projectDescriptors.get(PackageType.Python),
                 workspaceFolder,
-                componentsToScan,
-                treesManager,
-                parent,
-                checkCanceled
+                treesManager.logManager,
+                checkCanceled,
+                parent
             );
             typesDone++;
             progressManager.reportProgress();
-            await MavenUtils.createDependenciesTrees(
-                projectDescriptors.get(PackageType.Maven),
-                componentsToScan,
-                treesManager,
-                parent,
-                checkCanceled
-            );
+            await MavenUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Maven), treesManager.logManager, checkCanceled, parent);
             typesDone++;
             progressManager.reportProgress();
-            await NugetUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Nuget), treesManager, parent, checkCanceled);
+            await NugetUtils.createDependenciesTrees(projectDescriptors.get(PackageType.Nuget), treesManager.logManager, checkCanceled, parent);
         } finally {
             progressManager.reportProgress((getNumberOfSupportedPackageTypes() - typesDone) * progressManager.getStepIncValue);
         }

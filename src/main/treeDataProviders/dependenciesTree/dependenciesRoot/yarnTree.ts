@@ -4,15 +4,15 @@ import { GeneralInfo } from '../../../types/generalInfo';
 import { NpmUtils, ScopedNpmProject } from '../../../utils/npmUtils';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { YarnUtils } from '../../../utils/yarnUtils';
-import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
+import { LogManager } from '../../../log/logManager';
 
 export class YarnTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
 
-    constructor(workspaceFolder: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
+    constructor(workspaceFolder: string, private _logManager: LogManager, parent?: DependenciesTreeNode) {
         super(workspaceFolder, PackageType.Yarn, parent);
     }
 
@@ -22,8 +22,8 @@ export class YarnTreeNode extends RootNode {
         try {
             listResults = this.runYarnList();
         } catch (error) {
-            this._treesManager.logManager.logError(<any>error, false);
-            this._treesManager.logManager.logMessageAndToastErr(
+            this._logManager.logError(<any>error, false);
+            this._logManager.logMessageAndToastErr(
                 `Failed to scan Yarn project. Hint: Please make sure the command "yarn install" runs successfully in ` + this.workspaceFolder + '".',
                 'ERR'
             );

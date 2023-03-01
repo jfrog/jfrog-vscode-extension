@@ -6,8 +6,6 @@ import { LogManager } from '../log/logManager';
 import { MavenTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/mavenTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
-import { TreesManager } from '../treeDataProviders/treesManager';
-import { ProjectDetails } from '../types/projectDetails';
 import { PomTree } from './pomTree';
 import { ScanUtils } from './scanUtils';
 
@@ -155,45 +153,43 @@ export class MavenUtils {
      */
     public static async createDependenciesTrees(
         pomXmls: vscode.Uri[] | undefined,
-        projectDetails: ProjectDetails[],
-        treesManager: TreesManager,
-        root: DependenciesTreeNode,
-        checkCanceled: () => void
+        logManager: LogManager,
+        checkCanceled: () => void,
+        root: DependenciesTreeNode
     ): Promise<void> {
         if (!pomXmls) {
-            treesManager.logManager.logMessage('No pom.xml files found in workspaces.', 'DEBUG');
+            logManager.logMessage('No pom.xml files found in workspaces.', 'DEBUG');
             return;
         }
-        treesManager.logManager.logMessage('pom.xml files to scan: [' + pomXmls.toString() + ']', 'DEBUG');
+        logManager.logMessage('pom.xml files to scan: [' + pomXmls.toString() + ']', 'DEBUG');
         if (!MavenUtils.verifyMavenInstalled()) {
-            treesManager.logManager.logError(new Error('Could not scan Maven project dependencies, because "mvn" is not in the PATH.'), true);
+            logManager.logError(new Error('Could not scan Maven project dependencies, because "mvn" is not in the PATH.'), true);
             return;
         }
         checkCanceled();
-        treesManager.logManager.logMessage('Generating Maven Dependency Tree', 'INFO');
-        let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, treesManager.logManager);
+        logManager.logMessage('Generating Maven Dependency Tree', 'INFO');
+        let prototypeTree: PomTree[] = MavenUtils.buildPrototypePomTree(pomXmls, logManager);
         for (let ProjectTree of prototypeTree) {
             checkCanceled();
             try {
-                treesManager.logManager.logMessage('Analyzing pom.xml at ' + ProjectTree.pomPath, 'INFO');
+                logManager.logMessage('Analyzing pom.xml at ' + ProjectTree.pomPath, 'INFO');
                 ProjectTree.runMavenDependencyTree();
-                let mavenRoot: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, treesManager, root);
-                const mavenProjectsDetails: ProjectDetails[] = await mavenRoot.refreshDependencies(ProjectTree);
+                let mavenRoot: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, logManager, root);
+                await mavenRoot.refreshDependencies(ProjectTree);
                 if (mavenRoot.children.length === 0) {
                     root.children.splice(root.children.indexOf(mavenRoot), 1);
                 } else {
-                    projectDetails.push(...mavenProjectsDetails);
                     this.updateContextValue(mavenRoot);
                 }
             } catch (error) {
-                treesManager.logManager.logMessageAndToastErr(
+                logManager.logMessageAndToastErr(
                     'Could not get dependencies tree from pom.xml.\n' +
                         'Try to install it by running "mvn clean install" from ' +
                         ProjectTree.pomPath +
                         '.',
                     'ERR'
                 );
-                treesManager.logManager.logMessage((<any>error).stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
+                logManager.logMessage((<any>error).stdout?.toString().replace(/(\[.*?\])/g, ''), 'ERR');
             }
         }
     }

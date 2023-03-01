@@ -1,5 +1,5 @@
 import { assert } from 'chai';
-import { ComponentDetails, IArtifact, IGeneral, ILicense } from 'jfrog-client-js';
+import { IArtifact, IGeneral, ILicense } from 'jfrog-client-js';
 import { before } from 'mocha';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -13,7 +13,6 @@ import { GoUtils } from '../../main/utils/goUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
-import { ProjectDetails } from '../../main/types/projectDetails';
 import { ProjectComponents } from '../../main/types/projectComponents';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
@@ -116,19 +115,7 @@ describe('Go Utils Tests', async () => {
      */
     it('Create go Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
-        let componentsToScan: ProjectDetails[] = [];
-        await runCreateGoDependenciesTrees(commonWorkspaceFolders, componentsToScan, parent);
-
-        assert.isAbove(componentsToScan.length, 0);
-        let gofrog: ComponentDetails | undefined;
-        for (let index: number = 0; index < componentsToScan.length; index++) {
-            for (let component of componentsToScan[index].toArray()) {
-                if (component.component_id === 'go://github.com/jfrog/gofrog:1.0.6') {
-                    gofrog = component;
-                }
-            }
-        }
-        assert.isDefined(gofrog);
+        await runCreateGoDependenciesTrees(commonWorkspaceFolders, parent);
 
         // Check labels.
         assert.deepEqual(parent.children[0].label, 'github.com/shield/black-widow');
@@ -190,28 +177,18 @@ describe('Go Utils Tests', async () => {
         createGoDependencyTreeAndValidate(projectName, expectedChildren);
     });
 
-    async function runCreateGoDependenciesTrees(
-        workspaceFolders: vscode.WorkspaceFolder[],
-        componentsToScan: ProjectDetails[],
-        parent: DependenciesTreeNode
-    ) {
+    async function runCreateGoDependenciesTrees(workspaceFolders: vscode.WorkspaceFolder[], parent: DependenciesTreeNode) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Go);
-        await GoUtils.createDependenciesTrees(goMods, componentsToScan, treesManager, parent, () => {
-            assert;
-        });
+        await GoUtils.createDependenciesTrees(goMods, treesManager.logManager, () => undefined, parent);
         await dummyScanCacheManager.storeArtifacts(xrayScanResults, { componentIdToCve: new Map() } as ProjectComponents);
-        // parent.children.forEach(child => {
-        //     treesManager.dependenciesTreeDataProvider.addXrayInfoToTree(child);
-        // });
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 
     async function createGoDependencyTreeAndValidate(projectName: string, expectedChildren: Map<string, number>) {
         try {
             let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
-            let componentsToScan: ProjectDetails[] = [];
-            await runCreateGoDependenciesTrees(getWorkspaceFolders(projectName), componentsToScan, parent);
+            await runCreateGoDependenciesTrees(getWorkspaceFolders(projectName), parent);
 
             validateDependencyTreeResults(projectName, expectedChildren, parent);
         } catch (error) {

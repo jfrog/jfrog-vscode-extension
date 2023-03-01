@@ -169,7 +169,13 @@ describe('Pypi Utils Tests', async () => {
             [workspaceFolders[0]],
             treesManager.logManager
         );
-        await PypiUtils.descriptorsToDependencyTrees(workspaceDescriptors.get(PackageType.Python) || [], tree, () => undefined, treesManager, parent);
+        await PypiUtils.descriptorsToDependencyTrees(
+            workspaceDescriptors.get(PackageType.Python) || [],
+            tree,
+            () => undefined,
+            treesManager.logManager,
+            parent
+        );
 
         // Test 'resources/python/requirements'
         let node: PypiTreeNode | undefined = parent.children[0] as PypiTreeNode;
@@ -184,7 +190,13 @@ describe('Pypi Utils Tests', async () => {
             return;
         }
         workspaceDescriptors = await ScanUtils.locatePackageDescriptors([workspaceFolders[1]], treesManager.logManager);
-        await PypiUtils.descriptorsToDependencyTrees(workspaceDescriptors.get(PackageType.Python) || [], tree, () => undefined, treesManager, parent);
+        await PypiUtils.descriptorsToDependencyTrees(
+            workspaceDescriptors.get(PackageType.Python) || [],
+            tree,
+            () => undefined,
+            treesManager.logManager,
+            parent
+        );
         node = parent.children[1] as PypiTreeNode;
         assert.deepEqual(node.label, 'setup.py');
         assert.deepEqual(node.children.length, 3);
@@ -198,7 +210,13 @@ describe('Pypi Utils Tests', async () => {
             return;
         }
         workspaceDescriptors = await ScanUtils.locatePackageDescriptors([workspaceFolders[2]], treesManager.logManager);
-        await PypiUtils.descriptorsToDependencyTrees(workspaceDescriptors.get(PackageType.Python) || [], tree, () => undefined, treesManager, parent);
+        await PypiUtils.descriptorsToDependencyTrees(
+            workspaceDescriptors.get(PackageType.Python) || [],
+            tree,
+            () => undefined,
+            treesManager.logManager,
+            parent
+        );
         node = parent.children.find(child => child.label === 'setup.py') as PypiTreeNode | undefined;
         if (!node) {
             assert.fail;
@@ -262,7 +280,13 @@ describe('Pypi Utils Tests', async () => {
             [workspaceFolders[3]],
             treesManager.logManager
         );
-        await PypiUtils.descriptorsToDependencyTrees(workspaceDescriptors.get(PackageType.Python) || [], tree, () => undefined, treesManager, parent);
+        await PypiUtils.descriptorsToDependencyTrees(
+            workspaceDescriptors.get(PackageType.Python) || [],
+            tree,
+            () => undefined,
+            treesManager.logManager,
+            parent
+        );
         assert.deepEqual(parent?.children[0]?.label, 'requirements.txt');
         return new DependencyIssuesTreeNode(
             'artifactId',

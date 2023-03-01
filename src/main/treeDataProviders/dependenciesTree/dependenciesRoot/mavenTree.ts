@@ -2,16 +2,16 @@ import * as vscode from 'vscode';
 import { GavGeneralInfo } from '../../../types/gavGeneralinfo';
 import { MavenUtils } from '../../../utils/mavenUtils';
 import { PomTree } from '../../../utils/pomTree';
-import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
 import { ProjectDetails } from '../../../types/projectDetails';
+import { LogManager } from '../../../log/logManager';
 
 export class MavenTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'gav://';
 
-    constructor(fullPath: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
+    constructor(fullPath: string, private _logManager: LogManager, parent?: DependenciesTreeNode) {
         super(fullPath, PackageType.Maven, parent);
         MavenUtils.pathToNode.set(fullPath, this);
     }
@@ -29,14 +29,14 @@ export class MavenTreeNode extends RootNode {
         this.projectDetails.name = this.label;
         // Add project details of root node.
         mavenProjectDetails.push(this.projectDetails);
-        let rawDependenciesList: string[] | undefined = await prototypeTree.getRawDependencies(this._treesManager);
+        let rawDependenciesList: string[] | undefined = await prototypeTree.getRawDependencies(this._logManager);
         if (!!rawDependenciesList && rawDependenciesList.length > 0) {
             rawDependenciesList = MavenUtils.filterParentDependencies(rawDependenciesList, parentDependencies) || rawDependenciesList;
             this.collapsibleState = vscode.TreeItemCollapsibleState.Collapsed;
             this.populateDependenciesTree(this, rawDependenciesList, { index: 0 });
         }
         for (const childPom of prototypeTree.children) {
-            const dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(childPom.pomPath, this._treesManager, this);
+            const dependenciesTreeNode: MavenTreeNode = new MavenTreeNode(childPom.pomPath, this._logManager, this);
             await dependenciesTreeNode.refreshDependencies(childPom, rawDependenciesList);
             if (dependenciesTreeNode.children.length === 0) {
                 this.children.splice(this.children.indexOf(dependenciesTreeNode), 1);
@@ -86,7 +86,7 @@ export class MavenTreeNode extends RootNode {
 
     /** @override */
     public shallowClone(): MavenTreeNode {
-        const clone: MavenTreeNode = new MavenTreeNode(this.workspaceFolder, this._treesManager, undefined);
+        const clone: MavenTreeNode = new MavenTreeNode(this.workspaceFolder, this._logManager, undefined);
         clone.generalInfo = this.generalInfo;
         clone.licenses = this.licenses;
         clone.issues = this.issues;
@@ -131,17 +131,5 @@ export class MavenTreeNode extends RootNode {
 
     private isUpperInTree(rawDependenciesList: string[], toCompare: number, against: number) {
         return this.getDependenciesLevel(rawDependenciesList[against]) > this.getDependenciesLevel(rawDependenciesList[toCompare]);
-    }
-
-    /** @override */
-    public setUpgradableDependencies() {
-        this.children.forEach(child => {
-            // In case of a multi module pom.
-            if (child instanceof RootNode) {
-                child.children.forEach(c => this.upgradableDependencies(this._treesManager.buildsTreesProvider.scanCacheManager, c));
-            } else {
-                this.upgradableDependencies(this._treesManager.buildsTreesProvider.scanCacheManager, child);
-            }
-        });
     }
 }

@@ -123,7 +123,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             this.onChangeFire();
             // Create a new async load task for each workspace
             workspaceLoads.push(
-                this._cacheManager.issuesCache.loadIssues(workspace)
+                this._cacheManager.issuesCache
+                    .loadIssues(workspace)
                     .then(root => {
                         if (root && root.children.length > 0) {
                             this._workspaceToRoot.set(workspace, root);

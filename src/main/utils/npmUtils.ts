@@ -2,11 +2,10 @@ import { execSync } from 'child_process';
 import * as vscode from 'vscode';
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { TreesManager } from '../treeDataProviders/treesManager';
-import { ProjectDetails } from '../types/projectDetails';
 import * as fs from 'fs';
 import { ScanUtils } from './scanUtils';
 import { FocusType } from '../constants/contextKeys';
+import { LogManager } from '../log/logManager';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
@@ -61,25 +60,23 @@ export class NpmUtils {
      */
     public static async createDependenciesTrees(
         packageJsons: vscode.Uri[] | undefined,
-        projectsToScan: ProjectDetails[],
-        treesManager: TreesManager,
-        parent: DependenciesTreeNode,
-        checkCanceled: () => void
+        logManager: LogManager,
+        checkCanceled: () => void,
+        parent: DependenciesTreeNode
     ): Promise<void> {
         if (!packageJsons) {
-            treesManager.logManager.logMessage('No package.json files found in workspaces.', 'DEBUG');
+            logManager.logMessage('No package.json files found in workspaces.', 'DEBUG');
             return;
         }
         if (!NpmUtils.verifyNpmInstalled()) {
-            treesManager.logManager.logError(new Error('Could not scan npm project dependencies, because npm CLI is not in the PATH.'), true);
+            logManager.logError(new Error('Could not scan npm project dependencies, because npm CLI is not in the PATH.'), true);
             return;
         }
-        treesManager.logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
+        logManager.logMessage('package.json files to scan: [' + packageJsons.toString() + ']', 'DEBUG');
         for (let packageJson of packageJsons) {
             checkCanceled();
-            let root: NpmTreeNode = new NpmTreeNode(packageJson.fsPath, treesManager, parent);
+            let root: NpmTreeNode = new NpmTreeNode(packageJson.fsPath, logManager, parent);
             root.refreshDependencies();
-            projectsToScan.push(root.projectDetails);
         }
     }
 

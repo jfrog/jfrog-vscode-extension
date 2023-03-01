@@ -5,7 +5,6 @@ import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
 import { NugetTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/nugetTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { TreesManager } from '../treeDataProviders/treesManager';
 import { Utils } from './utils';
 
 export class NugetUtils {
@@ -22,20 +21,20 @@ export class NugetUtils {
      */
     public static async createDependenciesTrees(
         solutionsAndProjects: vscode.Uri[] | undefined,
-        treesManager: TreesManager,
-        parent: DependenciesTreeNode,
-        checkCanceled: () => void
+        logManager: LogManager,
+        checkCanceled: () => void,
+        parent: DependenciesTreeNode
     ): Promise<void> {
         let solutions: vscode.Uri[] | undefined = this.filterSolutions(solutionsAndProjects);
         if (!solutions) {
-            treesManager.logManager.logMessage('No *.sln files found in workspaces.', 'DEBUG');
+            logManager.logMessage('No *.sln files found in workspaces.', 'DEBUG');
             return;
         }
-        treesManager.logManager.logMessage('Solution files to scan: [' + solutions.toString() + ']', 'DEBUG');
+        logManager.logMessage('Solution files to scan: [' + solutions.toString() + ']', 'DEBUG');
         for (let solution of solutions) {
             checkCanceled();
             let projectsInSolutions: vscode.Uri[] | undefined = this.filterProjects(solutionsAndProjects, solution);
-            let tree: any = await NugetUtils.getProjects(solution, projectsInSolutions, treesManager.logManager);
+            let tree: any = await NugetUtils.getProjects(solution, projectsInSolutions, logManager);
             if (!tree) {
                 // We show sln files only if we have error
                 this.createSolutionNode(parent, solution.fsPath, true);
