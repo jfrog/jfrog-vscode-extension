@@ -366,17 +366,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         let foundIssues: boolean = false;
         // Dependency graph scan task
         await this.scanProjectDependencyGraph(workspaceIssues, projectNode, rootGraph, progressManager, checkCanceled)
-            .then(descriptorWithIssues => {
-                // Add to data and update view
-                if (descriptorWithIssues instanceof DescriptorTreeNode) {
+            .then(issuesCount => {
+                foundIssues = issuesCount > 0;
+                if (foundIssues) {
+                    foundIssues = true;
+                    // Add to data and view
+                    root.addChildAndApply(projectNode);
                     workspaceScanDetails.descriptorsIssues.push(workspaceIssues);
-                    root.addChildAndApply(descriptorWithIssues);
-                    foundIssues = true;
-                }
-                if (descriptorWithIssues instanceof EnvironmentTreeNode) {
-                    workspaceScanDetails.issues = workspaceIssues;
-                    root.addChildAndApply(descriptorWithIssues);
-                    foundIssues = true;
                 }
             })
             .catch(error => this.onFileScanError(workspaceScanDetails, root, error, workspaceIssues))
@@ -461,7 +457,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         descriptorGraph: RootNode,
         progressManager: StepProgress,
         checkCanceled: () => void
-    ): Promise<ProjectDependencyTreeNode | undefined> {
+    ): Promise<number> {
         this._logManager.logMessage('Scanning descriptor ' + workspaceIssues.fullPath + ' for dependencies issues', 'INFO');
         let scanProgress: XrayScanProgress = progressManager.createScanProgress(workspaceIssues.fullPath);
         // Scan
@@ -473,7 +469,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 workspaceIssues.graphScanTimestamp = Date.now();
             });
         if (!workspaceIssues.dependenciesGraphScan.vulnerabilities && !workspaceIssues.dependenciesGraphScan.violations) {
-            return undefined;
+            return 0;
         }
         // Populate response
         workspaceIssues.impactTreeData = Object.fromEntries(
@@ -490,7 +486,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 ' seconds)',
             'INFO'
         );
-        return issuesCount > 0 ? projectNode : undefined;
+        return issuesCount;
     }
 
     /**

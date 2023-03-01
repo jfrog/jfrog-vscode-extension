@@ -9,7 +9,6 @@ import { PackageType } from './projectType';
  */
 export class ScanResults {
     private _descriptorsIssues: DependencyScanResults[] = [];
-    private _workspaceIssues: DependencyScanResults | undefined;
     private _eosScan: EosScanResponse = {} as EosScanResponse;
     private _eosScanTimestamp?: number;
     private _failedFiles: FileIssuesData[] = [];
@@ -22,8 +21,8 @@ export class ScanResults {
         if (tmp._descriptorsIssues) {
             workspaceIssuesDetails.descriptorsIssues.push(...tmp._descriptorsIssues);
         }
-        workspaceIssuesDetails.issues = tmp._workspaceIssues;
         workspaceIssuesDetails.eosScan = tmp._eosScan;
+        workspaceIssuesDetails.eosScanTimestamp = tmp._eosScanTimestamp;
         if (tmp._failedFiles) {
             workspaceIssuesDetails.failedFiles.push(...tmp._failedFiles);
         }
@@ -35,19 +34,11 @@ export class ScanResults {
      * @returns true if at least one issue exists
      */
     public hasIssues(): boolean {
-        return this.descriptorsIssues.length > 0 || this.eosScan?.filesWithIssues?.length > 0 || !!this._workspaceIssues;
+        return this.descriptorsIssues.length > 0 || this.eosScan?.filesWithIssues?.length > 0;
     }
 
     get path(): string {
         return this._path;
-    }
-
-    get issues(): DependencyScanResults | undefined {
-        return this._workspaceIssues;
-    }
-
-    set issues(value: DependencyScanResults | undefined) {
-        this._workspaceIssues = value;
     }
 
     get descriptorsIssues(): DependencyScanResults[] {
