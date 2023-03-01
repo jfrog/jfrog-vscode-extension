@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { ScanManager } from '../../scanLogic/scanManager';
-import { FileScanError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
+import { FileScanBundle, FileScanError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { XrayScanProgress } from 'jfrog-client-js';
 import { IssuesRootTreeNode } from './issuesRootTreeNode';
 import { FileTreeNode } from './fileTreeNode';
@@ -26,10 +26,9 @@ import { CodeIssueTreeNode } from './codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
 import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
 import { EosTreeNode } from './codeFileTree/eosTreeNode';
-import { NotEntitledError } from '../../scanLogic/scanRunners/binaryRunner';
 import { EnvironmentTreeNode } from './descriptorTree/environmentTreeNode';
 import { ProjectDependencyTreeNode } from './descriptorTree/projectDependencyTreeNode';
-import { ScanResults, DependencyScanResults, FileIssuesData } from '../../types/workspaceIssuesDetails';
+import { ScanResults, DependencyScanResults } from '../../types/workspaceIssuesDetails';
 import { PypiUtils } from '../../utils/pypiUtils';
 
 /**
@@ -233,8 +232,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 this.onChangeFire();
                 checkCanceled();
             },
-            2,
-            this._logManager
+            this._logManager,
+            2
         );
         // Scan workspace to prepare the needed information for the scans and progress
         progress.report({ message: '👷 Preparing workspace' });
@@ -311,13 +310,18 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     this._logManager.logMessage("Can't find descriptor graph for " + descriptorPath.fsPath, 'DEBUG');
                     continue;
                 }
+                let scanBundle: FileScanBundle = {
+                    workspaceResults: scanResults,
+                    root: root,
+                    data: descriptorData,
+                    dataNode: descriptorNode
+                };
                 if (descriptorGraph.buildError) {
                     progressManager.reportProgress(2 * progressManager.getStepIncValue);
                     this.onFileScanError(
-                        scanResults,
-                        root,
                         new FileScanError('Project with descriptor file ' + descriptorPath.fsPath + ' has error', descriptorGraph.buildError),
-                        descriptorData
+                        this._logManager,
+                        scanBundle
                     );
                     continue;
                 }
@@ -364,6 +368,12 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         checkCanceled: () => void
     ): Promise<void> {
         let foundIssues: boolean = false;
+        let scanBundle: FileScanBundle = {
+            workspaceResults: workspaceScanDetails,
+            root: root,
+            data: workspaceIssues,
+            dataNode: projectNode
+        };
         // Dependency graph scan task
         await this.scanProjectDependencyGraph(workspaceIssues, projectNode, rootGraph, progressManager, checkCanceled)
             .then(issuesCount => {
@@ -375,7 +385,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                     workspaceScanDetails.descriptorsIssues.push(workspaceIssues);
                 }
             })
-            .catch(error => this.onFileScanError(workspaceScanDetails, root, error, workspaceIssues))
+            .catch(error => this.onFileScanError(error, this._logManager, scanBundle))
             .finally(() => progressManager.activateOnProgress());
         // Applicable scan task
         if (!this._scanManager.isApplicableSupported() || !foundIssues) {
@@ -384,28 +394,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         }
         if (projectNode instanceof DescriptorTreeNode) {
             await this.cveApplicableScanning(root, workspaceIssues, projectNode, progressManager.abortController)
-                .catch(err => this.onScanError(err))
+                .catch(err => ScanUtils.onScanError(err, this._logManager))
                 .finally(() => progressManager.reportProgress());
         }
-    }
-
-    /**
-     * Handle errors that occur during workspace scan, and checks if cancellation was requested.
-     * @param error - the error occurred
-     * @param handle - if true the error will be logged and not thrown/returned.
-     * @returns -  undefined if the error was handled or an error otherwise
-     */
-    private onScanError(error: Error, handle: boolean = true, log: boolean = false): Error | undefined {
-        if (error instanceof ScanCancellationError) {
-            throw error;
-        }
-        if (error instanceof NotEntitledError) {
-            this._logManager.logMessage(error.message, 'INFO');
-        }
-        if (log) {
-            this._logManager.logError(error, true);
-        }
-        return handle ? undefined : error;
     }
 
     /**
@@ -419,27 +410,33 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * @param failedFile - the file that was scanning during the error
      * @returns - failedFile argument for chaining
      */
-    private onFileScanError(scanResults: ScanResults, root: IssuesRootTreeNode, error: Error, failedFile?: FileIssuesData): FileTreeNode | undefined {
-        let err: Error | undefined = this.onScanError(error, false);
-        if (err) {
-            if (failedFile) {
-                this._logManager.logMessage(
-                    "Workspace '" + root.workSpace.name + "' scan on file '" + failedFile.fullPath + "' ended with error:\n" + err,
-                    'ERR'
-                );
-                scanResults.failedFiles.push(failedFile);
-                let failReason: string | undefined;
-                if (error instanceof FileScanError) {
-                    failReason = error.reason;
-                } else {
-                    failReason = '[Fail to scan]';
-                }
-                failedFile.name = failReason;
-                return root.addChildAndApply(FileTreeNode.createFailedScanNode(failedFile.fullPath, failReason));
-            }
-            throw err;
+    private onFileScanError(error: Error, logger: LogManager, fileScanBundle?: FileScanBundle): FileTreeNode | undefined {
+        let err: Error | undefined = ScanUtils.onScanError(error, logger);
+        if (!err) {
+            return undefined;
         }
-        return undefined;
+        if (fileScanBundle) {
+            logger.logMessage(
+                "Workspace '" +
+                    fileScanBundle.root.workSpace.name +
+                    "' scan on file '" +
+                    fileScanBundle.data.fullPath +
+                    "' ended with error:\n" +
+                    err,
+                'ERR'
+            );
+            let failReason: string | undefined;
+            if (error instanceof FileScanError) {
+                failReason = error.reason;
+            } else {
+                failReason = '[Fail to scan]';
+            }
+            fileScanBundle.data.name = failReason;
+            // Populate failed data
+            fileScanBundle.workspaceResults.failedFiles.push(fileScanBundle.data);
+            return fileScanBundle.root.addChildAndApply(FileTreeNode.createFailedScanNode(fileScanBundle.data.fullPath, failReason));
+        }
+        throw err;
     }
 
     /**

@@ -11,6 +11,9 @@ import { PackageType } from '../types/projectType';
 import { Configuration } from './configuration';
 import { ContextKeys } from '../constants/contextKeys';
 import * as util from 'util';
+import { FileIssuesData, ScanResults } from '../types/workspaceIssuesDetails';
+import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
+import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 
 export class ScanUtils {
     public static readonly DESCRIPTOR_SELECTOR_PATTERN: string =
@@ -223,6 +226,46 @@ export class ScanUtils {
             .update(data)
             .digest('hex');
     }
+
+    /**
+     * Handle errors that occur during workspace scan.
+     * If the error is ScanCancellationError it will be thrown.
+     * If it is NotEntitledError or handle flag is true it will handle the error by logging and returning undefined.
+     * Else the given error will be returned
+     * @param error  - the error occurred
+     * @param logger - the logManager to log the error in case handle flag is true
+     * @param handle - if true the error will be logged and undefined will be returned
+     * @returns the error or undefined if it was handled
+     */
+    public static onScanError(error: Error, logger: LogManager, handle: boolean = false): Error | undefined {
+        if (error instanceof ScanCancellationError) {
+            throw error;
+        }
+        if (error instanceof NotEntitledError) {
+            logger.logMessage(error.message, 'INFO');
+            return undefined;
+        }
+        if (handle) {
+            logger.logError(error, true);
+            return undefined;
+        }
+        return error;
+    }
+}
+
+export interface FileScanBundle {
+    // The results data of all the scans in the workspace
+    workspaceResults: ScanResults;
+    // The root view node of the workspace
+    root: IssuesRootTreeNode;
+    // The results if exists if the scan
+    data: FileIssuesData;
+    // The view node of the file if exists issues in data
+    dataNode?: FileTreeNode;
+}
+
+export class NotEntitledError extends Error {
+    message: string = 'User is not entitled to run the binary';
 }
 
 /**

@@ -19,8 +19,8 @@ export class StepProgress {
         public onProgress: () => void = () => {
             //
         },
-        totalSteps?: number,
-        private _log?: LogManager
+        private _log?: LogManager,
+        totalSteps?: number
     ) {
         this._totalSteps = totalSteps ?? 1;
         this.abortController = new AbortController();
