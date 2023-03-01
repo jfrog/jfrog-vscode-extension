@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
-import { RootNode } from './rootTree';
+import { BuildTreeErrorType, RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
 import { SemVer } from 'semver';
 import { LogManager } from '../../../log/logManager';
@@ -23,7 +23,8 @@ export class GoTreeNode extends RootNode {
             goList = this.runGoList(goVersion);
         } catch (error) {
             this._logManager.logError(<any>error);
-            this.label = this.workspaceFolder + ' [Not installed]';
+            this.label = this.workspaceFolder;
+            this.buildError = BuildTreeErrorType.NotInstalled;
             this.generalInfo = new GeneralInfo(this.label, '', [], this.workspaceFolder, PackageType.Go);
             return;
         }

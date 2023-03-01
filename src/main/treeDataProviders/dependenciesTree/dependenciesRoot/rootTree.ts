@@ -4,9 +4,16 @@ import { GeneralInfo } from '../../../types/generalInfo';
 import { ProjectDetails } from '../../../types/projectDetails';
 import { PackageType } from '../../../types/projectType';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
+
+export enum BuildTreeErrorType {
+    NotInstalled = '[Not Installed]',
+    NotSupported = '[Not Supported]'
+}
 export class RootNode extends DependenciesTreeNode {
     private _projectDetails: ProjectDetails;
     private _workspaceFolder: string;
+
+    private _buildError?: BuildTreeErrorType;
 
     constructor(private _fullPath: string, packageType: PackageType, parent?: DependenciesTreeNode, contextValue?: string) {
         super(new GeneralInfo('', '', [], _fullPath, packageType), vscode.TreeItemCollapsibleState.Expanded, parent, contextValue);
@@ -20,6 +27,14 @@ export class RootNode extends DependenciesTreeNode {
 
     public set projectDetails(value: ProjectDetails) {
         this._projectDetails = value;
+    }
+
+    public get buildError() {
+        return this._buildError;
+    }
+
+    public set buildError(value: BuildTreeErrorType | undefined) {
+        this._buildError = value;
     }
 
     public get fullPath() {

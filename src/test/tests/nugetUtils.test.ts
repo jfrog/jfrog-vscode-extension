@@ -81,7 +81,7 @@ describe('Nuget Utils Tests', async () => {
         assert.isDefined(node);
         assert.deepEqual(node?.children.length ?? 0, 1);
         // Assert dependency information
-        node = res.find(child => child.label === 'empty.sln [Not installed]');
+        node = res.find(child => child.label === 'empty.sln');
         assert.isDefined(node);
         assert.deepEqual(node?.children.length ?? 1, 0);
     });

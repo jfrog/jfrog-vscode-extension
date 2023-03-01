@@ -5,7 +5,7 @@ import { NpmUtils, ScopedNpmProject } from '../../../utils/npmUtils';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { YarnUtils } from '../../../utils/yarnUtils';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
-import { RootNode } from './rootTree';
+import { BuildTreeErrorType, RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
 import { LogManager } from '../../../log/logManager';
 
@@ -17,7 +17,6 @@ export class YarnTreeNode extends RootNode {
     }
 
     public refreshDependencies() {
-        let yarnListFailed: boolean = false;
         let listResults: any;
         try {
             listResults = this.runYarnList();
@@ -27,20 +26,14 @@ export class YarnTreeNode extends RootNode {
                 `Failed to scan Yarn project. Hint: Please make sure the command "yarn install" runs successfully in ` + this.workspaceFolder + '".',
                 'ERR'
             );
-            yarnListFailed = true;
+            this.buildError = BuildTreeErrorType.NotInstalled;
         }
-        if (!yarnListFailed) {
+        if (!this.buildError) {
             this.populateDependencyTree(this, listResults?.data?.trees);
         }
 
         const yarnProject: ScopedNpmProject = YarnUtils.getYarnProjectDetails(this.workspaceFolder);
-        this.generalInfo = new GeneralInfo(
-            yarnProject.projectName + (yarnListFailed ? ' [Not installed]' : ''),
-            yarnProject.projectVersion,
-            [],
-            this.workspaceFolder,
-            PackageType.Yarn
-        );
+        this.generalInfo = new GeneralInfo(yarnProject.projectName, yarnProject.projectVersion, [], this.workspaceFolder, PackageType.Yarn);
         this.projectDetails.name = yarnProject.projectName || path.join(this.workspaceFolder, 'yarn.lock');
         this.label = this.projectDetails.name;
     }

@@ -6,6 +6,7 @@ import { LogManager } from '../log/logManager';
 import { NugetTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/nugetTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { Utils } from './utils';
+import { BuildTreeErrorType } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 
 export class NugetUtils {
     public static readonly SOLUTION_SUFFIX: string = '.sln';
@@ -64,7 +65,8 @@ export class NugetUtils {
 
     private static createSolutionNode(parent: DependenciesTreeNode, descriptorPath: string, failed: boolean = false): NugetTreeNode {
         let solution: NugetTreeNode = new NugetTreeNode(descriptorPath, parent);
-        solution.setName(Utils.getLastSegment(descriptorPath) + (failed ? ' [Not installed]' : ''));
+        solution.buildError = failed ? BuildTreeErrorType.NotInstalled : undefined;
+        solution.setName(Utils.getLastSegment(descriptorPath));
         return solution;
     }
 
