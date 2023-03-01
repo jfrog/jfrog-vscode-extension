@@ -123,7 +123,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             this.onChangeFire();
             // Create a new async load task for each workspace
             workspaceLoads.push(
-                this.loadIssuesFromCache(workspace)
+                this._cacheManager.issuesCache.loadIssues(workspace)
                     .then(root => {
                         if (root && root.children.length > 0) {
                             this._workspaceToRoot.set(workspace, root);
@@ -154,51 +154,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         await Promise.all(workspaceLoads);
         ScanUtils.setFirstScanForWorkspace(firstTime);
         this.onChangeFire();
-    }
-
-    /**
-     * Async task to load the issues from the last scan of a given workspace
-     * @param workspace - the workspace to load it's issues
-     * @returns - the workspace issues if the exists, undefined otherwise
-     */
-    private async loadIssuesFromCache(workspace: vscode.WorkspaceFolder): Promise<IssuesRootTreeNode | undefined> {
-        // Check if data for the workspace exists in the cache
-        let scanResults: ScanResults | undefined = this._cacheManager.issuesCache?.get(workspace);
-        if (scanResults != undefined) {
-            this._logManager.logMessage("Loading issues from last scan for the workspace '" + workspace.name + "'", 'INFO');
-            let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace);
-            if (scanResults.failedFiles) {
-                // Load files that had error on the last scan and create tree node in the root
-                scanResults.failedFiles.forEach(file => {
-                    this._logManager.logMessage("Loading file with scan error '" + file.name + "': '" + file.fullPath + "'", 'DEBUG');
-                    let failed: FileTreeNode = FileTreeNode.createFailedScanNode(file.fullPath, file.name);
-                    return root.children.push(failed);
-                });
-            }
-            if (scanResults.descriptorsIssues) {
-                // Load descriptors issues and create tree node in the root
-                scanResults.descriptorsIssues.forEach(descriptor => {
-                    this._logManager.logMessage("Loading issues of descriptor '" + descriptor.fullPath + "'", 'DEBUG');
-                    let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptor.fullPath, descriptor.type, root);
-                    DependencyUtils.populateDependencyScanResults(descriptorNode, descriptor);
-                    if (descriptor.applicableIssues && descriptor.applicableIssues.scannedCve) {
-                        AnalyzerUtils.populateApplicableIssues(root, descriptorNode, descriptor);
-                    }
-                    root.children.push(descriptorNode);
-                });
-            }
-            if (scanResults.issues) {
-                let environmentNode: EnvironmentTreeNode = new EnvironmentTreeNode(scanResults.issues.fullPath, scanResults.issues.type, root);
-                DependencyUtils.populateDependencyScanResults(environmentNode, scanResults.issues);
-                root.children.push(environmentNode);
-            }
-            if (scanResults.eosScan) {
-                root.eosScanTimeStamp = scanResults.eosScanTimestamp;
-                AnalyzerUtils.populateEosIssues(root, scanResults);
-            }
-            return root;
-        }
-        return undefined;
     }
 
     /**
