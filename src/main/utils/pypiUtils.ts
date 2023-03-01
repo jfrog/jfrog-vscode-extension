@@ -91,12 +91,11 @@ export class PypiUtils {
     }
 
     /**
+     * @param workspace        - Base workspace folders
      * @param descriptors      - Paths to setup.py and requirements*.txt files
-     * @param workspaceFolders - Base workspace folders
-     * @param componentsToScan - Set of setup.py components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
-     * @param treesManager     - Scan trees manager
+     * @param logManager       - LogManager for the operation
+     * @param checkCanceled    - method to check if cancel
      * @param parent           - The base tree node
-     * @param quickScan        - True to allow using the scan cache
      */
     public static async createDependenciesTrees(
         descriptors: vscode.Uri[] | undefined,
