@@ -75,11 +75,10 @@ export class GoUtils {
     }
 
     /**
-     * @param goMods           - Paths to go.mod files
-     * @param componentsToScan - Set of go components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
-     * @param treesManager     - Scan trees manager
-     * @param parent           - The base tree node
-     * @param quickScan        - True to allow using the scan cache
+     * @param goMods - Paths to go.mod files
+     * @param parent - The base tree node
+     * @param progressManager - The progressManager to report progress and check cancel
+     * @param log - The logger to log information
      */
     public static async createDependenciesTrees(
         goMods: vscode.Uri[] | undefined,
