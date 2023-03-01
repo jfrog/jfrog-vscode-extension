@@ -14,10 +14,10 @@ export class NugetUtils {
     public static readonly PACKAGES_CONFIG: string = 'packages.config';
 
     /**
-     * @param solutionsAndProjects        - Paths to *.sln files
-     * @param componentsToScan - Set of nuget components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
-     * @param treesManager     - Scan trees manager
-     * @param parent           - The base tree node
+     * @param solutionsAndProjects  - Paths to *.sln files
+     * @param componentsToScan      - Set of nuget components to populate during the tree building. We'll use this set later on, while scanning the packages with Xray.
+     * @param log                   - LogManager for the operation
+     * @param parent                - The base tree node
      * @returns - the paths to the project files and failed solution files
      */
     public static async createDependenciesTrees(
