@@ -1,5 +1,7 @@
 import { assert, expect } from 'chai';
-import { ICve, IIssue, IReference, IVulnerableComponent } from 'jfrog-client-js';
+import { ICve, IGraphCve, IIssue, IReference, IVulnerableComponent } from 'jfrog-client-js';
+import { ICve as WebICve, IApplicableDetails } from 'jfrog-ide-webview';
+import { LogLevel } from '../../main/log/logManager';
 import { IIssueCacheObject } from '../../main/types/issueCacheObject';
 import { Translators } from '../../main/utils/translators';
 
@@ -7,6 +9,53 @@ import { Translators } from '../../main/utils/translators';
  * Test functionality of @class Translators.
  */
 describe('Translators Tests', () => {
+    it('toAnalyzerLogLevel', async () => {
+        [
+            { extLevel: 'DEBUG', analyzerLevel: 'debug' },
+            { extLevel: 'INFO', analyzerLevel: 'info' },
+            { extLevel: 'WARN', analyzerLevel: 'error' },
+            { extLevel: 'ERR', analyzerLevel: 'error' }
+        ].forEach(test => {
+            assert.equal(test.analyzerLevel, Translators.toAnalyzerLogLevel(<LogLevel>test.extLevel));
+        });
+    });
+
+    it('toWebViewICve', async () => {
+        //
+        let cve: IGraphCve = {
+            cve: 'cve',
+            cvss_v2_score: 'score v2',
+            cvss_v2_vector: 'vector v2',
+            cvss_v3_score: 'score v3',
+            cvss_v3_vector: 'vector v3'
+        } as IGraphCve;
+        let details: IApplicableDetails = {
+            isApplicable: true
+        };
+        assertWebCve(Translators.toWebViewICve());
+        assertWebCve(Translators.toWebViewICve(cve), cve);
+        assertWebCve(Translators.toWebViewICve(undefined, details), undefined, details);
+        assertWebCve(Translators.toWebViewICve(cve, details), cve, details);
+    });
+
+    function assertWebCve(result: WebICve | undefined, cve?: IGraphCve, details?: IApplicableDetails) {
+        if (cve || details) {
+            assert.isDefined(result);
+            if (cve) {
+                assert.equal(result?.id, cve.cve);
+                assert.equal(result?.cvssV2Score, cve.cvss_v2_score);
+                assert.equal(result?.cvssV2Vector, cve.cvss_v2_vector);
+                assert.equal(result?.cvssV3Score, cve.cvss_v3_score);
+                assert.equal(result?.cvssV3Vector, cve.cvss_v3_vector);
+            }
+            if (details) {
+                assert.equal(result?.applicableData, details);
+            }
+        } else {
+            assert.isUndefined(result);
+        }
+    }
+
     it('Fixed versions - No issues', async () => {
         let issue: IIssueCacheObject = Translators.toCacheIssue({} as IIssue);
         assert.isEmpty(issue.fixedVersions);
