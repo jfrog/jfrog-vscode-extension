@@ -119,10 +119,10 @@ describe('File Node Tests', () => {
             assert.equal(testNode.issues.length, testCase.data.issues.length);
             assert.include(testNode.tooltip, 'Issues count: ' + testNode.issues.length);
             // Check timestamp
-            assert.notInclude(testNode.tooltip, 'Last scan completed at');
+            assert.notInclude(testNode.tooltip, 'Last scanned at');
             testNode.timeStamp = Date.now();
             testNode.apply();
-            assert.include(testNode.tooltip, 'Last scan completed at');
+            assert.include(testNode.tooltip, 'Last scanned at');
         });
     });
 

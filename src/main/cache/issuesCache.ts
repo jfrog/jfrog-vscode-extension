@@ -5,7 +5,9 @@ import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
 import { AnalyzerUtils } from '../treeDataProviders/utils/analyzerUtils';
 import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
-import { ScanResults } from '../types/workspaceIssuesDetails';
+import { DependencyScanResults, ScanResults } from '../types/workspaceIssuesDetails';
+import { ProjectDependencyTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
+import { EnvironmentTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/environmentTreeNode';
 
 /**
  * Describes a cache that holds all the information from an Xray scan for a workspace
@@ -56,7 +58,7 @@ export class IssuesCache {
     }
 
     /**
-     * Remove issues data of workspcae from cache
+     * Remove issues data of workspace from cache
      * @param workspace - the workspace to delete it's data
      */
     public remove(workspace: vscode.WorkspaceFolder) {
@@ -84,14 +86,18 @@ export class IssuesCache {
             }
             if (scanResults.descriptorsIssues) {
                 // Load descriptors issues and create tree node in the root
-                scanResults.descriptorsIssues.forEach(descriptor => {
-                    this._logManager.logMessage("Loading issues of descriptor '" + descriptor.fullPath + "'", 'DEBUG');
-                    let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptor.fullPath, descriptor.type, root);
-                    DependencyUtils.populateDependencyScanResults(descriptorNode, descriptor);
-                    if (descriptor.applicableIssues && descriptor.applicableIssues.scannedCve) {
-                        AnalyzerUtils.populateApplicableIssues(root, descriptorNode, descriptor);
+                scanResults.descriptorsIssues.forEach(graphScanResult => {
+                    let projectNode: ProjectDependencyTreeNode = this.createProjectNode(graphScanResult, root);
+                    this._logManager.logMessage("Loading issues for '" + graphScanResult.fullPath + "'", 'DEBUG');
+                    DependencyUtils.populateDependencyScanResults(projectNode, graphScanResult);
+                    if (
+                        projectNode instanceof DescriptorTreeNode &&
+                        graphScanResult.applicableIssues &&
+                        graphScanResult.applicableIssues.scannedCve
+                    ) {
+                        AnalyzerUtils.populateApplicableIssues(root, projectNode, graphScanResult);
                     }
-                    root.children.push(descriptorNode);
+                    root.children.push(projectNode);
                 });
             }
             if (scanResults.eosScan) {
@@ -101,5 +107,11 @@ export class IssuesCache {
             return root;
         }
         return undefined;
+    }
+
+    private createProjectNode(graphScanResult: DependencyScanResults, parent: IssuesRootTreeNode): ProjectDependencyTreeNode {
+        return graphScanResult.isEnvironment
+            ? new EnvironmentTreeNode(graphScanResult.fullPath, graphScanResult.type, parent)
+            : new DescriptorTreeNode(graphScanResult.fullPath, graphScanResult.type, parent);
     }
 }

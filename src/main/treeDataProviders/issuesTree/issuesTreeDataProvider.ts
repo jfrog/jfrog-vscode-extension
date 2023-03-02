@@ -225,49 +225,55 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * Loads the issues from the last scan of all the workspaces if they exist.
      */
     public async loadFromCache() {
-        if (!this._cacheManager.issuesCache) {
-            return;
-        }
-        let workspaceLoads: Promise<void>[] = [];
-        let firstTime: boolean = true;
-        for (const workspace of this._workspaceFolders) {
-            // Create dummy root to give input to the user while waiting for the workspace loading task or when error occur
-            const tempRoot: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, 'Loading...');
-            this._workspaceToRoot.set(workspace, tempRoot);
-            this.onChangeFire();
-            // Create a new async load task for each workspace
-            workspaceLoads.push(
-                this._cacheManager.issuesCache
-                    .loadIssues(workspace)
-                    .then(root => {
-                        if (root && root.children.length > 0) {
-                            this._workspaceToRoot.set(workspace, root);
-                            root.title = Utils.getLastScanString(root.oldestScanTimestamp);
-                            root.apply();
-                        } else {
-                            this._logManager.logMessage("WorkSpace '" + workspace.name + "' has no data in cache", 'DEBUG');
-                            this._workspaceToRoot.set(workspace, undefined);
-                        }
-                        firstTime = !root;
-                        this.onChangeFire();
-                    })
-                    .catch(async error => {
-                        this._logManager.logError(error, true);
-                        tempRoot.title = 'Loading error';
-                        tempRoot.apply();
-                        this.onChangeFire();
-                        const answer: string | undefined = await vscode.window.showInformationMessage(
-                            "Loading error occur on workspace '" + workspace.name + "', do you want to clear the old data?",
-                            ...['Yes', 'No']
-                        );
-                        if (answer === 'Yes') {
-                            this._workspaceToRoot.set(workspace, undefined);
-                        }
-                    })
-            );
-        }
-        await Promise.all(workspaceLoads);
-        ScanUtils.setFirstScanForWorkspace(firstTime);
+        await ScanUtils.backgroundTask(async (progress: vscode.Progress<{ message?: string; increment?: number }>) => {
+            if (!this._cacheManager.issuesCache) {
+                return;
+            }
+            let progressManager: StepProgress = new StepProgress(progress);
+            progressManager.startStep('Loading workspace issues', this._workspaceFolders.length);
+            let workspaceLoads: Promise<void>[] = [];
+            let firstTime: boolean = true;
+            for (const workspace of this._workspaceFolders) {
+                // Create dummy root to give input to the user while waiting for the workspace loading task or when error occur
+                const tempRoot: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, 'Loading...');
+                this._workspaceToRoot.set(workspace, tempRoot);
+                this.onChangeFire();
+
+                // Create a new async load task for each workspace
+                workspaceLoads.push(
+                    this._cacheManager.issuesCache
+                        .loadIssues(workspace)
+                        .then(root => {
+                            if (root && root.children.length > 0) {
+                                this._workspaceToRoot.set(workspace, root);
+                                root.title = Utils.getLastScanString(root.oldestScanTimestamp);
+                                root.apply();
+                            } else {
+                                this._logManager.logMessage("WorkSpace '" + workspace.name + "' has no data in cache", 'DEBUG');
+                                this._workspaceToRoot.set(workspace, undefined);
+                            }
+                            firstTime = !root;
+                            this.onChangeFire();
+                        })
+                        .catch(async error => {
+                            this._logManager.logError(error, true);
+                            tempRoot.title = 'Loading error';
+                            tempRoot.apply();
+                            this.onChangeFire();
+                            const answer: string | undefined = await vscode.window.showInformationMessage(
+                                "Loading error occur on workspace '" + workspace.name + "', do you want to clear the old data?",
+                                ...['Yes', 'No']
+                            );
+                            if (answer === 'Yes') {
+                                this._workspaceToRoot.set(workspace, undefined);
+                            }
+                        })
+                        .finally(() => progressManager.reportProgress())
+                );
+            }
+            await Promise.all(workspaceLoads);
+            ScanUtils.setFirstScanForWorkspace(firstTime);
+        });
         this.onChangeFire();
     }
 

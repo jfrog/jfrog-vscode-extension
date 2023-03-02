@@ -77,7 +77,7 @@ export abstract class FileTreeNode extends vscode.TreeItem {
         this.tooltip += 'Issues count: ' + this.issues.length + '\n';
         this.tooltip += 'Full path: ' + this.projectFilePath;
         if (this.timeStamp) {
-            this.tooltip += '\nLast scan ' + Utils.getLastScanString(this.timeStamp);
+            this.tooltip += '\nLast ' + Utils.getLastScanString(this.timeStamp);
         }
     }
 

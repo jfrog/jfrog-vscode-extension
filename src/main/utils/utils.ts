@@ -41,7 +41,7 @@ export class Utils {
 
     public static getLastScanString(timeStamp: number | undefined): string {
         if (timeStamp) {
-            return "completed at '" + this.toDate(timeStamp) + "'";
+            return "scanned at '" + this.toDate(timeStamp) + "'";
         }
         return '';
     }

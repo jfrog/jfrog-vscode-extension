@@ -87,7 +87,7 @@ describe('Issues Root Node Tests', () => {
             let testNode: IssuesRootTreeNode = createAndPopulateRootTestNode(testCase.path, testCase.data);
             // No timestamp
             assert.isUndefined(testNode.oldestScanTimestamp);
-            assert.notInclude(testNode.tooltip, 'Last completed at');
+            assert.notInclude(testNode.tooltip, 'Last scanned at');
             if (testNode.children.length > 0) {
                 // With timestamp
                 for (let i: number = 0; i < testNode.children.length; i++) {
@@ -95,11 +95,11 @@ describe('Issues Root Node Tests', () => {
                 }
                 testNode.apply();
                 assert.equal(testNode.oldestScanTimestamp, 1);
-                assert.include(testNode.tooltip, 'Last completed at');
+                assert.include(testNode.tooltip, 'Last scanned at');
                 // Override with status
                 testNode.title = 'title';
                 testNode.apply();
-                assert.notInclude(testNode.tooltip, 'Last completed at');
+                assert.notInclude(testNode.tooltip, 'Last scanned at');
             }
         });
     });
