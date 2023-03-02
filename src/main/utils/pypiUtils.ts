@@ -7,12 +7,6 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { ScanUtils } from './scanUtils';
 import { PipDepTree } from '../types/pipDepTree';
 import { VirtualEnvPypiTree } from '../treeDataProviders/dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
-import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
-import { EnvironmentTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/environmentTreeNode';
-import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
-import { StepProgress } from '../treeDataProviders/utils/stepProgress';
-import { ScanResults, DependencyScanResults } from '../types/workspaceIssuesDetails';
-import { PackageType } from '../types/projectType';
 
 export class PypiUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/*requirements*.txt' };
@@ -241,7 +235,10 @@ export class PypiUtils {
     ) {
         let root: VirtualEnvPypiTree = new VirtualEnvPypiTree(virtualEnvPath, workspace.uri.fsPath, parent);
         root.refreshDependencies(pipDepTree);
-        parent.children.push(root);
+        // In case there are more than one descriptor in the same workspace
+        if (!parent.children.includes(root)) {
+            parent.children.push(root);
+        }
     }
 
     /**
@@ -307,28 +304,5 @@ export class PypiUtils {
     public static getRequirementsTxtDirectDependencies(path: string): Map<string, string | undefined> {
         const content: string = fs.readFileSync(path, 'utf8');
         return this.matchPythonDependencies(content);
-    }
-
-    public static getEnvironmentScanTaskArgs(
-        scanResults: ScanResults,
-        workspaceDependenciesTree: DependenciesTreeNode,
-        progressManager: StepProgress,
-        logManager: LogManager
-    ): [DependencyScanResults?, EnvironmentTreeNode?, RootNode?] {
-        const envIssues: DependenciesTreeNode | undefined = workspaceDependenciesTree.getChildByPath(scanResults.path);
-        if (!envIssues || !(envIssues instanceof VirtualEnvPypiTree)) {
-            return [];
-        }
-        let environmentGraph: RootNode | undefined = DependencyUtils.getDependencyGraph(
-            workspaceDependenciesTree,
-            scanResults.path,
-            PackageType.Python
-        );
-        if (!environmentGraph) {
-            progressManager.reportProgress(2 * progressManager.getStepIncValue);
-            logManager.logMessage("Can't find virtual environment graph at " + envIssues.virtualEnvironmentPath, 'DEBUG');
-            return [];
-        }
-        return [envIssues.toDependencyScanResults(), envIssues.toEnvironmentTreeNode(), environmentGraph];
     }
 }
