@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../cache/scanCacheManager';
 import { ExtensionComponent } from '../extensionComponent';
-import { BuildsNode } from '../treeDataProviders/dependenciesTree/ciNodes/buildsTree';
+import { BuildsNode } from '../treeDataProviders/ciTree/buildsTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../treeDataProviders/treesManager';
 import { LicensesFilter } from './licensesFilter';

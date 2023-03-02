@@ -1,14 +1,14 @@
+import { IExtendedInformation, IReference } from 'jfrog-client-js';
 import Set from 'typescript-collections/dist/lib/Set';
 import * as vscode from 'vscode';
-import { ScanCacheManager } from '../cache/scanCacheManager';
-import { IIssueCacheObject } from '../types/issueCacheObject';
-import { Severity, SeverityUtils } from '../types/severity';
-import { Consts } from '../utils/consts';
-import { IconsPaths } from '../utils/iconsPaths';
-import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
-import { TreeDataHolder } from './utils/treeDataHolder';
-import { Utils } from '../utils/utils';
-import { IExtendedInformation, IReference } from 'jfrog-client-js';
+import { ScanCacheManager } from '../../cache/scanCacheManager';
+import { IIssueCacheObject } from '../../types/issueCacheObject';
+import { Severity, SeverityUtils } from '../../types/severity';
+import { Constants } from '../../utils/consts';
+import { IconsPaths } from '../../utils/iconsPaths';
+import { Utils } from '../../utils/utils';
+import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
+import { TreeDataHolder } from '../utils/treeDataHolder';
 
 export abstract class IssueNode extends vscode.TreeItem {
     constructor(label: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
@@ -110,7 +110,7 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
     private getVulnerabilityNodes(selectedNode: DependenciesTreeNode): VulnerabilityNode[] {
         let children: VulnerabilityNode[] = [];
         selectedNode.issues.forEach(xrayIssueId => {
-            if (xrayIssueId.issue_id === Consts.MISSING_COMPONENT) {
+            if (xrayIssueId.issue_id === Constants.MISSING_COMPONENT) {
                 return;
             }
             let issue: IIssueCacheObject | undefined = this._scanCacheManager.getIssue(xrayIssueId.issue_id);
@@ -118,7 +118,7 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
                 return;
             }
             if (issue.cves.length === 0) {
-                // In case we dont have anny CVE for the given Xray issue, Show the summary as the title.
+                // In case we don't have any CVE for the given Xray issue, Show the summary as the title.
                 let issueNode: VulnerabilityNode = new VulnerabilityNode(
                     xrayIssueId.issue_id,
                     issue.severity,
@@ -175,9 +175,9 @@ export class IssuesDataProvider extends IssueNode implements vscode.TreeDataProv
     }
 
     /**
-     * Return ViolatedLicenseNode array of violated licences.
+     * Return ViolatedLicenseNode array of violated licenses.
      * @param node - the license title node
-     * @returns ViolatedLicenseNode array of violated licences
+     * @returns ViolatedLicenseNode array of violated licenses
      */
     private getLicenseNodes(node: LicensesTitleNode): ViolatedLicenseNode[] {
         let children: ViolatedLicenseNode[] = [];
@@ -217,7 +217,7 @@ export class LicensesTitleNode extends IssueNode {
     private _violatedLicenses: Map<string, Set<string>>;
 
     constructor(violatedLicenses: Map<string, Set<string>>) {
-        super('Violated Licences', vscode.TreeItemCollapsibleState.Expanded);
+        super('Violated Licenses', vscode.TreeItemCollapsibleState.Expanded);
         this._violatedLicenses = violatedLicenses;
     }
 

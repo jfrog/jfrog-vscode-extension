@@ -14,8 +14,8 @@ import { Configuration } from '../../utils/configuration';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { TreesManager } from '../treesManager';
 import { Utils } from '../../utils/utils';
-import { BuildsNode } from './ciNodes/buildsTree';
-import { DependenciesTreeNode } from './dependenciesTreeNode';
+import { BuildsNode } from './buildsTree';
+import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
 
 export class BuildsDataProvider implements vscode.TreeDataProvider<DependenciesTreeNode> {
     private _onDidChangeTreeData: vscode.EventEmitter<DependenciesTreeNode | undefined> = new vscode.EventEmitter<DependenciesTreeNode | undefined>();
