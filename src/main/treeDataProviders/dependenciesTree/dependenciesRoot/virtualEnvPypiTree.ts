@@ -34,4 +34,11 @@ export class VirtualEnvPypiTree extends PypiTreeNode {
             fullPath: this.virtualEnvironmentPath
         } as DependencyScanResults;
     }
+
+    /** @override */
+    public createEmptyScanResultsObject(): DependencyScanResults {
+        let results: DependencyScanResults = super.createEmptyScanResultsObject();
+        results.isEnvironment = true;
+        return results;
+    }
 }

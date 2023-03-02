@@ -11,7 +11,7 @@ import { PackageType } from '../types/projectType';
 import { Configuration } from './configuration';
 import { ContextKeys } from '../constants/contextKeys';
 import * as util from 'util';
-import { FileIssuesData, ScanResults } from '../types/workspaceIssuesDetails';
+import { EntryIssuesData, ScanResults } from '../types/workspaceIssuesDetails';
 import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 
@@ -259,7 +259,7 @@ export interface FileScanBundle {
     // The root view node of the workspace
     root: IssuesRootTreeNode;
     // The results if exists if the scan
-    data: FileIssuesData;
+    data: EntryIssuesData;
     // The view node of the file if exists issues in data
     dataNode?: FileTreeNode;
 }

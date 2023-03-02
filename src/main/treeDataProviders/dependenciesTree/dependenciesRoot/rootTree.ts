@@ -4,11 +4,14 @@ import { GeneralInfo } from '../../../types/generalInfo';
 import { ProjectDetails } from '../../../types/projectDetails';
 import { PackageType } from '../../../types/projectType';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
+import { DependencyScanResults } from '../../../types/workspaceIssuesDetails';
+import { Utils } from '../../../utils/utils';
 
 export enum BuildTreeErrorType {
     NotInstalled = '[Not Installed]',
     NotSupported = '[Not Supported]'
 }
+
 export class RootNode extends DependenciesTreeNode {
     private _projectDetails: ProjectDetails;
     private _workspaceFolder: string;
@@ -51,5 +54,23 @@ export class RootNode extends DependenciesTreeNode {
 
     public set workspaceFolder(wsFolder: string) {
         this._workspaceFolder = wsFolder;
+    }
+
+    public createEmptyScanResultsObject(): DependencyScanResults {
+        return {
+            type: this._projectDetails.type,
+            name: Utils.getLastSegment(this.fullPath),
+            fullPath: this.fullPath
+        } as DependencyScanResults;
+    }
+
+    public flattenRootChildren(): RootNode[] {
+        let result: RootNode[] = [];
+        for (let child of this.children) {
+            if (child instanceof RootNode) {
+                result.push(child, ...child.flattenRootChildren());
+            }
+        }
+        return result;
     }
 }

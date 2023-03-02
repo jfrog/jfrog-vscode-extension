@@ -11,7 +11,7 @@ export class ScanResults {
     private _descriptorsIssues: DependencyScanResults[] = [];
     private _eosScan: EosScanResponse = {} as EosScanResponse;
     private _eosScanTimestamp?: number;
-    private _failedFiles: FileIssuesData[] = [];
+    private _failedFiles: EntryIssuesData[] = [];
 
     constructor(private _path: string) {}
 
@@ -65,11 +65,11 @@ export class ScanResults {
         this._eosScanTimestamp = value;
     }
 
-    get failedFiles(): FileIssuesData[] {
+    get failedFiles(): EntryIssuesData[] {
         return this._failedFiles;
     }
 
-    set failedFiles(value: FileIssuesData[]) {
+    set failedFiles(value: EntryIssuesData[]) {
         this._failedFiles = value;
     }
 
@@ -85,15 +85,16 @@ export class ScanResults {
 /**
  * Describes all the issue data for a specific file from Xray scan
  */
-export interface FileIssuesData {
+export interface EntryIssuesData {
     name: string;
     fullPath: string;
+    isEnvironment: boolean;
 }
 
 /**
  * Describes all the issues data for a specific descriptor from Xray scan
  */
-export interface DependencyScanResults extends FileIssuesData {
+export interface DependencyScanResults extends EntryIssuesData {
     type: PackageType;
     graphScanTimestamp: number;
     dependenciesGraphScan: IGraphResponse;
