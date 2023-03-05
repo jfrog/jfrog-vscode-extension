@@ -31,6 +31,26 @@ export class ScanResults {
     }
 
     /**
+     * Get the oldest timestamp from all its results
+     */
+    public get oldestScanTimestamp(): number | undefined {
+        let oldestTimeStamp: number | undefined;
+        for (let descriptorIssues of this._descriptorsIssues) {
+            // Graph
+            let timeStamp: number | undefined = descriptorIssues.graphScanTimestamp;
+            if (timeStamp && (!oldestTimeStamp || timeStamp < oldestTimeStamp)) {
+                oldestTimeStamp = timeStamp;
+            }
+            // Contextual analysis
+            timeStamp = descriptorIssues.applicableScanTimestamp;
+            if (timeStamp && (!oldestTimeStamp || timeStamp < oldestTimeStamp)) {
+                oldestTimeStamp = timeStamp;
+            }
+        }
+        return oldestTimeStamp;
+    }
+
+    /**
      * Check if the data has at least one issue
      * @returns true if at least one issue exists
      */

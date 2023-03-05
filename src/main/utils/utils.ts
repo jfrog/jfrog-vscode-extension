@@ -10,6 +10,8 @@ export class Utils {
     // 1 GB
     private static readonly MAX_SIZE_EXTRACTED_ZIP_BYTES: number = 1000000000;
     private static readonly COMPRESSION_THRESHOLD_RATIO: number = 100;
+    // week
+    private static readonly OLDEST_SCAN_CACHE_SAVE_INTERVAL_MILLISECS: number = 1000 * 60 * 60 * 24 * 7;
 
     /**
      *  @returns the last segment of a path.
@@ -44,6 +46,13 @@ export class Utils {
             return "scan completed at '" + this.toDate(timeStamp) + "'";
         }
         return '';
+    }
+
+    public static isIssueCacheIntervalPassed(timeStamp: number | undefined): boolean {
+        if (!timeStamp) {
+            return false;
+        }
+        return Date.now() - timeStamp > Utils.OLDEST_SCAN_CACHE_SAVE_INTERVAL_MILLISECS;
     }
 
     public static toDate(timeStamp: number | undefined): string {
