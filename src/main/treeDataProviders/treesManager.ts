@@ -57,11 +57,11 @@ export class TreesManager implements ExtensionComponent {
             showCollapseAll: true
         });
         // Listen if the view is changed to visible
-        this.issuesTreeView.onDidChangeVisibility((e) => {
+        this.issuesTreeView.onDidChangeVisibility(e => {
             if (e.visible) {
                 this.issuesTreeDataProvider.refresh(false);
             }
-        })
+        });
         context.subscriptions.push(
             this._ciTreeView,
             this._issuesTreeView,
