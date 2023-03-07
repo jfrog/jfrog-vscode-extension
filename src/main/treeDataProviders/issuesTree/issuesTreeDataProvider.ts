@@ -105,102 +105,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     }
 
     /**
-     * Loads the issues from the last scan of all the workspaces if they exist.
-     */
-    public async loadFromCache() {
-        if (!this._cacheManager.issuesCache) {
-            return;
-        }
-        let workspaceLoads: Promise<void>[] = [];
-        let firstTime: boolean = true;
-        for (const workspace of this._workspaceFolders) {
-            // Create dummy root to give input to the user while waiting for the workspace loading task or when error occur
-            const tempRoot: IssuesRootTreeNode = new IssuesRootTreeNode(workspace, 'Loading...');
-            this._workspaceToRoot.set(workspace, tempRoot);
-            this.onChangeFire();
-            // Create a new async load task for each workspace
-            workspaceLoads.push(
-                this.loadIssuesFromCache(workspace)
-                    .then(root => {
-                        if (root && root.children.length > 0) {
-                            this._workspaceToRoot.set(workspace, root);
-                            root.title = Utils.getLastScanString(root.oldestScanTimestamp);
-                            root.apply();
-                        } else {
-                            this._logManager.logMessage("WorkSpace '" + workspace.name + "' has no data in cache", 'DEBUG');
-                            this._workspaceToRoot.set(workspace, undefined);
-                        }
-                        if (firstTime) {
-                            firstTime = !root;
-                        }
-                        this.onChangeFire();
-                    })
-                    .catch(async error => {
-                        this._logManager.logError(error, true);
-                        tempRoot.title = 'Loading error';
-                        tempRoot.apply();
-                        this.onChangeFire();
-                        const answer: string | undefined = await vscode.window.showInformationMessage(
-                            "Loading error occur on workspace '" + workspace.name + "', do you want to clear the old data?",
-                            ...['Yes', 'No']
-                        );
-                        if (answer === 'Yes') {
-                            this._workspaceToRoot.set(workspace, undefined);
-                        }
-                    })
-            );
-        }
-        await Promise.all(workspaceLoads);
-        ScanUtils.setFirstScanForWorkspace(firstTime);
-        this.onChangeFire();
-    }
-
-    /**
-     * Async task to load the issues from the last scan of a given workspace
-     * @param workspace - the workspace to load it's issues
-     * @returns - the workspace issues if the exists, undefined otherwise
-     */
-    private async loadIssuesFromCache(workspace: vscode.WorkspaceFolder): Promise<IssuesRootTreeNode | undefined> {
-        // Check if data for the workspace exists in the cache
-        let scanResults: ScanResults | undefined = this._cacheManager.issuesCache?.getOrClearIfNotRelevant(workspace);
-        if (scanResults != undefined) {
-            this._logManager.logMessage("Loading issues from last scan for the workspace '" + workspace.name + "'", 'INFO');
-            let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace);
-            if (scanResults.failedFiles) {
-                // Load files that had error on the last scan and create tree node in the root
-                scanResults.failedFiles.forEach(file => {
-                    this._logManager.logMessage("Loading file with scan error '" + file.name + "': '" + file.fullPath + "'", 'DEBUG');
-                    let failed: FileTreeNode = FileTreeNode.createFailedScanNode(file.fullPath, file.name);
-                    return root.children.push(failed);
-                });
-            }
-            if (scanResults.descriptorsIssues) {
-                // Load descriptors issues and create tree node in the root
-                scanResults.descriptorsIssues.forEach(descriptor => {
-                    this._logManager.logMessage("Loading issues of descriptor '" + descriptor.fullPath + "'", 'DEBUG');
-                    let descriptorNode: DescriptorTreeNode = new DescriptorTreeNode(descriptor.fullPath, descriptor.type, root);
-                    DependencyUtils.populateDependencyScanResults(descriptorNode, descriptor);
-                    if (descriptor.applicableIssues && descriptor.applicableIssues.scannedCve) {
-                        AnalyzerUtils.populateApplicableIssues(root, descriptorNode, descriptor);
-                    }
-                    root.children.push(descriptorNode);
-                });
-            }
-            if (scanResults.issues) {
-                let environmentNode: EnvironmentTreeNode = new EnvironmentTreeNode(scanResults.issues.fullPath, scanResults.issues.type, root);
-                DependencyUtils.populateDependencyScanResults(environmentNode, scanResults.issues);
-                root.children.push(environmentNode);
-            }
-            if (scanResults.eosScan) {
-                root.eosScanTimeStamp = scanResults.eosScanTimestamp;
-                AnalyzerUtils.populateEosIssues(root, scanResults);
-            }
-            return root;
-        }
-        return undefined;
-    }
-
-    /**
      * Run Xray scans on all the active workspaces async for each workspace
      */
     private async scanWorkspaces() {
@@ -348,7 +252,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                                 this._logManager.logMessage("WorkSpace '" + workspace.name + "' has no data in cache", 'DEBUG');
                                 this._workspaceToRoot.set(workspace, undefined);
                             }
-                            firstTime = !root;
+                            if (firstTime) {
+                                firstTime = !root;
+                            }
                             this.onChangeFire();
                         })
                         .catch(async error => {
