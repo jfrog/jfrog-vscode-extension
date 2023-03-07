@@ -2,6 +2,7 @@ import { IGraphResponse } from 'jfrog-client-js';
 import { IImpactGraph } from 'jfrog-ide-webview';
 import { ApplicabilityScanResponse } from '../scanLogic/scanRunners/applicabilityScan';
 import { EosScanResponse } from '../scanLogic/scanRunners/eosScan';
+import { Utils } from '../utils/utils';
 import { PackageType } from './projectType';
 
 /**
@@ -27,6 +28,17 @@ export class ScanResults {
             workspaceIssuesDetails.failedFiles.push(...tmp._failedFiles);
         }
         return workspaceIssuesDetails;
+    }
+
+    /**
+     * Get the oldest timestamp from all its results
+     */
+    public get oldestScanTimestamp(): number | undefined {
+        return Utils.getOldestTimeStamp(
+            ...this._descriptorsIssues.map(descriptorIssues => descriptorIssues.graphScanTimestamp),
+            ...this._descriptorsIssues.map(descriptorIssues => descriptorIssues.applicableScanTimestamp),
+            this.eosScanTimestamp
+        );
     }
 
     /**
