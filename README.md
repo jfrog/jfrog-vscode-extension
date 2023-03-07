@@ -161,7 +161,7 @@ The icon demonstrates the top severity issue of a selected component and its tra
 | <img src="resources/readme/severities/Low.png" width="20">  |  Low  |   Issue with low severity   |
 | <img src="resources/readme/severities/Unknown.png" width="20">  |  Unknown  |   Issue with unknown severity   |
 | <img src="resources/readme/severities/notApplicableUnknown.png" height="15" width="15"><img src="resources/readme/severities/notApplicableLow.png" height="15" width="15"><img src="resources/readme/severities/notApplicableMedium.png" height="15" width="15"><img src="resources/readme/severities/notApplicableHigh.png" height="15" width="15"><img src="resources/readme/severities/notApplicableCritical.png" height="15" width="15"> |  Not Applicable  |   CVE issue that is not applicable to your source code   |
-| <img src="./resources/severities/Normal.png" width="20">  |  Normal  |   No issues (Used only in CI view)   |
+| <img src="./resources/Normal.png" width="20">  |  Normal  |   No issues (Used only in CI view)   |
 
 ## The Local View
 

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { ScanResults } from '../types/workspaceIssuesDetails';
+import { Utils } from '../utils/utils';
 
 /**
  * Describes a cache that holds all the information from an Xray scan for a workspace
@@ -50,10 +51,25 @@ export class IssuesCache {
     }
 
     /**
-     * Remove issues data of workspcae from cache
+     * Remove issues data of workspace from cache
      * @param workspace - the workspace to delete it's data
      */
     public remove(workspace: vscode.WorkspaceFolder) {
         return this._cache.update(IssuesCache.toKey(workspace), undefined);
+    }
+
+    /**
+     * Get a scan results stored in the cache base on a given workspace and make sure the results are relevant.
+     * If the results are not relevant (the store interval period has passed) it will be removed them from the cache
+     * @param workspace - the workspace to search it's data
+     * @returns ScanResults if there are stored and relevant, undefined otherwise.
+     */
+    public getOrClearIfNotRelevant(workspace: vscode.WorkspaceFolder): ScanResults | undefined {
+        let data: ScanResults | undefined = this.get(workspace);
+        if (data && Utils.isIssueCacheIntervalPassed(data.oldestScanTimestamp)) {
+            this.remove(workspace);
+            return undefined;
+        }
+        return data;
     }
 }

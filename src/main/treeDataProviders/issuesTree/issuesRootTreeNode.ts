@@ -87,19 +87,7 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
      * Get the oldest timestamp from all its children
      */
     public get oldestScanTimestamp(): number | undefined {
-        let oldestTimeStamp: number | undefined;
-        for (let child of this.children) {
-            let timeStamp: number | undefined = child.timeStamp;
-            if (timeStamp && (!oldestTimeStamp || timeStamp < oldestTimeStamp)) {
-                oldestTimeStamp = timeStamp;
-            }
-        }
-        if (this._eosScanTimeStamp !== undefined) {
-            if (oldestTimeStamp == undefined || this._eosScanTimeStamp < oldestTimeStamp) {
-                oldestTimeStamp = this._eosScanTimeStamp;
-            }
-        }
-        return oldestTimeStamp;
+        return Utils.getOldestTimeStamp(...this.children.map(file => file.timeStamp), this._eosScanTimeStamp);
     }
 
     /**

@@ -133,7 +133,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                             this._logManager.logMessage("WorkSpace '" + workspace.name + "' has no data in cache", 'DEBUG');
                             this._workspaceToRoot.set(workspace, undefined);
                         }
-                        firstTime = !root;
+                        if (firstTime) {
+                            firstTime = !root;
+                        }
                         this.onChangeFire();
                     })
                     .catch(async error => {
@@ -163,7 +165,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      */
     private async loadIssuesFromCache(workspace: vscode.WorkspaceFolder): Promise<IssuesRootTreeNode | undefined> {
         // Check if data for the workspace exists in the cache
-        let scanResults: ScanResults | undefined = this._cacheManager.issuesCache?.get(workspace);
+        let scanResults: ScanResults | undefined = this._cacheManager.issuesCache?.getOrClearIfNotRelevant(workspace);
         if (scanResults != undefined) {
             this._logManager.logMessage("Loading issues from last scan for the workspace '" + workspace.name + "'", 'INFO');
             let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace);
