@@ -3,19 +3,19 @@ import { ScanUtils } from './scanUtils';
 
 export class IconsPaths {
     // Icons severities
-    static readonly NORMAL_SEVERITY: string = IconsPaths.getIconPath(path.join('severities', 'normal'));
-    static readonly PENDING_SEVERITY: string = IconsPaths.getSvgIconPath(path.join('severities', 'Unknown'));
-    static readonly UNKNOWN_SEVERITY: string = IconsPaths.getSvgIconPath(path.join('severities', 'Unknown'));
-    static readonly NOT_APPLICABLE_UNKNOWN_SEVERITY: string = IconsPaths.getSvgIconPath(path.join('severities', 'notApplicableUnknown'));
-    static readonly NOT_APPLICABLE_LOW_SEVERITY: string = IconsPaths.getSvgIconPath(path.join('severities', 'notApplicableLow'));
-    static readonly NOT_APPLICABLE_MEDIUM_SEVERITY: string = IconsPaths.getSvgIconPath(path.join('severities', 'notApplicableMedium'));
-    static readonly NOT_APPLICABLE_HIGH_SEVERITY: string = IconsPaths.getSvgIconPath(path.join('severities', 'notApplicableHigh'));
-    static readonly NOT_APPLICABLE_CRITICAL_SEVERITY: string = IconsPaths.getSvgIconPath(path.join('severities', 'notApplicableCritical'));
-    static readonly INFORMATION_SEVERITY: string = IconsPaths.getSvgIconPath(path.join('severities', 'Low'));
-    static readonly LOW_SEVERITY: string = IconsPaths.getSvgIconPath(path.join('severities', 'Low'));
-    static readonly MEDIUM_SEVERITY: string = IconsPaths.getSvgIconPath(path.join('severities', 'Medium'));
-    static readonly HIGH_SEVERITY: string = IconsPaths.getSvgIconPath(path.join('severities', 'High'));
-    static readonly CRITICAL_SEVERITY: string = IconsPaths.getSvgIconPath(path.join('severities', 'Critical'));
+    static readonly NORMAL_SEVERITY: string = IconsPaths.getIconPath(path.join('severities', 'Normal'));
+    static readonly PENDING_SEVERITY: string = IconsPaths.getSeverityIcon('Unknown');
+    static readonly UNKNOWN_SEVERITY: string = IconsPaths.getSeverityIcon('Unknown');
+    static readonly NOT_APPLICABLE_UNKNOWN_SEVERITY: string = IconsPaths.getSeverityIcon('notApplicableUnknown');
+    static readonly NOT_APPLICABLE_LOW_SEVERITY: string = IconsPaths.getSeverityIcon('notApplicableLow');
+    static readonly NOT_APPLICABLE_MEDIUM_SEVERITY: string = IconsPaths.getSeverityIcon('notApplicableMedium');
+    static readonly NOT_APPLICABLE_HIGH_SEVERITY: string = IconsPaths.getSeverityIcon('notApplicableHigh');
+    static readonly NOT_APPLICABLE_CRITICAL_SEVERITY: string = IconsPaths.getSeverityIcon('notApplicableCritical');
+    static readonly INFORMATION_SEVERITY: string = IconsPaths.getSeverityIcon('Low');
+    static readonly LOW_SEVERITY: string = IconsPaths.getSeverityIcon('Low');
+    static readonly MEDIUM_SEVERITY: string = IconsPaths.getSeverityIcon('Medium');
+    static readonly HIGH_SEVERITY: string = IconsPaths.getSeverityIcon('High');
+    static readonly CRITICAL_SEVERITY: string = IconsPaths.getSeverityIcon('Critical');
 
     // Hover severities
     static readonly UNKNOWN_HOVER_SEVERITY: string = IconsPaths.getIconPath(path.join('severities', 'hover', 'unknownHover'));
@@ -25,9 +25,9 @@ export class IconsPaths {
     static readonly CRITICAL_HOVER_SEVERITY: string = IconsPaths.getIconPath(path.join('severities', 'hover', 'criticalHover'));
 
     // Icons builds status
-    static readonly BUILD_SUCCESS: string = IconsPaths.getIconPath(path.join('severities', 'normal'));
-    static readonly BUILD_FAILED: string = IconsPaths.getSvgIconPath(path.join('severities', 'Critical'));
-    static readonly BUILD_UNKNOWN: string = IconsPaths.getSvgIconPath(path.join('severities', 'Unknown'));
+    static readonly BUILD_SUCCESS: string = IconsPaths.getIconPath(path.join('severities', 'Normal'));
+    static readonly BUILD_FAILED: string = IconsPaths.getSeverityIcon('Critical');
+    static readonly BUILD_UNKNOWN: string = IconsPaths.getSeverityIcon('Unknown');
 
     // License
     static readonly VIOLATED_LICENSE: string = IconsPaths.getIconPath('violatedLicense');
@@ -36,7 +36,7 @@ export class IconsPaths {
         return path.join(ScanUtils.RESOURCES_DIR, iconName + '.png');
     }
 
-    public static getSvgIconPath(iconName: string) {
-        return path.join(ScanUtils.RESOURCES_DIR, iconName + '.svg');
+    public static getSeverityIcon(iconName: string) {
+        return path.join(ScanUtils.RESOURCES_DIR, 'severities', iconName + '.svg');
     }
 }
