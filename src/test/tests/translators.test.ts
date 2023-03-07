@@ -11,17 +11,16 @@ import { Translators } from '../../main/utils/translators';
 describe('Translators Tests', () => {
     it('toAnalyzerLogLevel', async () => {
         [
-            { extLevel: 'DEBUG', analyzerLevel: 'debug' },
-            { extLevel: 'INFO', analyzerLevel: 'info' },
-            { extLevel: 'WARN', analyzerLevel: 'error' },
-            { extLevel: 'ERR', analyzerLevel: 'error' }
+            { inputLevel: 'DEBUG', expectedLevel: 'debug' },
+            { inputLevel: 'INFO', expectedLevel: 'info' },
+            { inputLevel: 'WARN', expectedLevel: 'error' },
+            { inputLevel: 'ERR', expectedLevel: 'error' }
         ].forEach(test => {
-            assert.equal(test.analyzerLevel, Translators.toAnalyzerLogLevel(<LogLevel>test.extLevel));
+            assert.equal(test.expectedLevel, Translators.toAnalyzerLogLevel(<LogLevel>test.inputLevel));
         });
     });
 
     it('toWebViewICve', async () => {
-        //
         let cve: IGraphCve = {
             cve: 'cve',
             cvss_v2_score: 'score v2',
