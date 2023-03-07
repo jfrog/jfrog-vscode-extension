@@ -56,8 +56,8 @@ export class TreesManager implements ExtensionComponent {
             treeDataProvider: this._issuesTreeDataProvider,
             showCollapseAll: true
         });
-        // Listen if the view is changed to visible
-        this.issuesTreeView.onDidChangeVisibility(e => {
+        // Listen to the event when the user click on the extension tab (view changed to visible)
+        this.issuesTreeView.onDidChangeVisibility((e: vscode.TreeViewVisibilityChangeEvent) => {
             if (e.visible) {
                 this.issuesTreeDataProvider.refresh(false);
             }

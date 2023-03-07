@@ -6,6 +6,7 @@ import { IssueTreeNode } from '../issueTreeNode';
 import { CveTreeNode } from './cveTreeNode';
 import { IComponent } from 'jfrog-client-js';
 import * as path from 'path';
+import { Utils } from '../../../utils/utils';
 
 /**
  * Describes a base class for descriptor/environment dependencies.
@@ -101,18 +102,7 @@ export class ProjectDependencyTreeNode extends FileTreeNode {
     }
 
     public get timeStamp(): number | undefined {
-        let oldest: number | undefined;
-        if (this._dependencyScanTimeStamp !== undefined) {
-            if (oldest === undefined || this._dependencyScanTimeStamp < oldest) {
-                oldest = this._dependencyScanTimeStamp;
-            }
-        }
-        if (this._applicableScanTimeStamp !== undefined) {
-            if (oldest === undefined || this._applicableScanTimeStamp < oldest) {
-                oldest = this._applicableScanTimeStamp;
-            }
-        }
-        return oldest;
+        return Utils.getOldestTimeStamp(this._dependencyScanTimeStamp, this._applicableScanTimeStamp);
     }
 
     public get dependenciesWithIssue(): DependencyIssuesTreeNode[] {
