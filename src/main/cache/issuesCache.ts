@@ -73,40 +73,36 @@ export class IssuesCache {
     public async loadIssues(workspace: vscode.WorkspaceFolder): Promise<IssuesRootTreeNode | undefined> {
         // Check if data for the workspace exists in the cache
         let scanResults: ScanResults | undefined = this.get(workspace);
-        if (scanResults != undefined) {
-            this._logManager.logMessage("Loading issues from last scan for the workspace '" + workspace.name + "'", 'INFO');
-            let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace);
-            if (scanResults.failedFiles) {
-                // Load files that had error on the last scan and create tree node in the root
-                scanResults.failedFiles.forEach(file => {
-                    this._logManager.logMessage("Loading file with scan error '" + file.name + "': '" + file.fullPath + "'", 'DEBUG');
-                    let failed: FileTreeNode = FileTreeNode.createFailedScanNode(file.fullPath, file.name);
-                    return root.children.push(failed);
-                });
-            }
-            if (scanResults.descriptorsIssues) {
-                // Load descriptors issues and create tree node in the root
-                scanResults.descriptorsIssues.forEach(graphScanResult => {
-                    let projectNode: ProjectDependencyTreeNode = this.createProjectNode(graphScanResult, root);
-                    this._logManager.logMessage("Loading issues for '" + graphScanResult.fullPath + "'", 'DEBUG');
-                    DependencyUtils.populateDependencyScanResults(projectNode, graphScanResult);
-                    if (
-                        projectNode instanceof DescriptorTreeNode &&
-                        graphScanResult.applicableIssues &&
-                        graphScanResult.applicableIssues.scannedCve
-                    ) {
-                        AnalyzerUtils.populateApplicableIssues(root, projectNode, graphScanResult);
-                    }
-                    root.children.push(projectNode);
-                });
-            }
-            if (scanResults.eosScan) {
-                root.eosScanTimeStamp = scanResults.eosScanTimestamp;
-                AnalyzerUtils.populateEosIssues(root, scanResults);
-            }
-            return root;
+        if (!scanResults) {
+            return undefined;
         }
-        return undefined;
+        this._logManager.logMessage("Loading issues from last scan for the workspace '" + workspace.name + "'", 'INFO');
+        let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace);
+        if (scanResults.failedFiles) {
+            // Load files that had error on the last scan and create tree node in the root
+            scanResults.failedFiles.forEach(file => {
+                this._logManager.logMessage("Loading file with scan error '" + file.name + "': '" + file.fullPath + "'", 'DEBUG');
+                let failed: FileTreeNode = FileTreeNode.createFailedScanNode(file.fullPath, file.name);
+                return root.children.push(failed);
+            });
+        }
+        if (scanResults.descriptorsIssues) {
+            // Load descriptors issues and create tree node in the root
+            scanResults.descriptorsIssues.forEach(graphScanResult => {
+                let projectNode: ProjectDependencyTreeNode = this.createProjectNode(graphScanResult, root);
+                this._logManager.logMessage("Loading issues for '" + graphScanResult.fullPath + "'", 'DEBUG');
+                DependencyUtils.populateDependencyScanResults(projectNode, graphScanResult);
+                if (projectNode instanceof DescriptorTreeNode && graphScanResult.applicableIssues && graphScanResult.applicableIssues.scannedCve) {
+                    AnalyzerUtils.populateApplicableIssues(root, projectNode, graphScanResult);
+                }
+                root.children.push(projectNode);
+            });
+        }
+        if (scanResults.eosScan) {
+            root.eosScanTimeStamp = scanResults.eosScanTimestamp;
+            AnalyzerUtils.populateEosIssues(root, scanResults);
+        }
+        return root;
     }
 
     private createProjectNode(graphScanResult: DependencyScanResults, parent: IssuesRootTreeNode): ProjectDependencyTreeNode {
