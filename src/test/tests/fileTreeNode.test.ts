@@ -3,9 +3,15 @@ import * as path from 'path';
 
 import { assert } from 'chai';
 import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
-import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { Severity, SeverityUtils } from '../../main/types/severity';
-import { createAndPopulateFileTestNode, createDummyIssue, createFileTestNode, FileNodeTestCase, FileNodeTestData } from './utils/treeNodeUtils.test';
+import {
+    createAndPopulateFileTestNode,
+    createDummyIssue,
+    createFileTestNode,
+    createRootTestNode,
+    FileNodeTestCase,
+    FileNodeTestData
+} from './utils/treeNodeUtils.test';
 import { Utils } from '../../main/utils/utils';
 import { IssueTreeNode } from '../../main/treeDataProviders/issuesTree/issueTreeNode';
 
@@ -77,15 +83,15 @@ describe('File Node Tests', () => {
             // No parent
             assert.equal(testNode.description, testNode.projectFilePath);
             // Local path not in parent path
-            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: path.join('nowhere') } as vscode.Uri } as vscode.WorkspaceFolder);
+            testNode.parent = createRootTestNode(path.join('nowhere'));
             testNode.apply();
             assert.equal(testNode.description, testNode.projectFilePath);
             // Parent in path, parent is root
-            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: path.join('root', 'folder') } as vscode.Uri } as vscode.WorkspaceFolder);
+            testNode.parent = createRootTestNode(path.join('root', 'folder'));
             testNode.apply();
             assert.equal(testNode.description, undefined);
             // Parent in path and parent is not root
-            testNode.parent = new IssuesRootTreeNode({ uri: { fsPath: path.join('root') } as vscode.Uri } as vscode.WorkspaceFolder);
+            testNode.parent = createRootTestNode(path.join('root'));
             testNode.apply();
             assert.equal(testNode.description, '.' + path.sep + path.join('folder', 'path'));
         });
@@ -101,7 +107,7 @@ describe('File Node Tests', () => {
         testNode.apply();
         assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.Collapsed);
         // One issue, with parent
-        new IssuesRootTreeNode({ uri: { fsPath: 'nowhere' } as vscode.Uri } as vscode.WorkspaceFolder).addChildAndApply(testNode);
+        createRootTestNode(path.join('nowhere')).addChildAndApply(testNode);
         assert.deepEqual(testNode.collapsibleState, vscode.TreeItemCollapsibleState.Expanded);
         // Multiple issues, with parent
         testNode.issues.push(createDummyIssue(Severity.NotApplicableCritical));

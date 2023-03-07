@@ -45,7 +45,7 @@ export class GraphScanLogic {
      * @param components - the components that are already discovered to remove duplication
      * @returns - flatten unique dependency entries of the root children
      */
-    private getFlattenRequestModelNodes(dependency: DependenciesTreeNode, components: Set<string>): IGraphRequestModel[] | undefined {
+    public getFlattenRequestModelNodes(dependency: DependenciesTreeNode, components: Set<string>): IGraphRequestModel[] | undefined {
         let nodes: IGraphRequestModel[] = [];
         for (let child of dependency.children) {
             if (child.dependencyId && !components.has(child.dependencyId)) {

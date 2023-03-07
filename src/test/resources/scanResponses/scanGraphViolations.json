@@ -1,0 +1,244 @@
+{
+    "component_id": "test",
+    "package_type": "Generic",
+    "licenses": [
+        {
+            "license_key": "Apache-2.0",
+            "license_name": "The Apache Software License, Version 2.0",
+            "components": {
+                "A:1.0.0": {
+                    "package_name": "A",
+                    "package_version": "1.0.0",
+                    "package_type": "maven",
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "A:1.0.0"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "references": [
+                "http://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+                "https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt",
+                "http://licenses.nuget.org/Apache-2.0"
+            ]
+        }
+    ],
+    "violations": [
+        {
+            "cves": [
+                {
+                    "cve": "CVE-2021-21295",
+                    "cvss_v2_score": "2.6",
+                    "cvss_v2_vector": "CVSS:2.0/AV:N/AC:H/Au:N/C:N/I:P/A:N",
+                    "cvss_v3_score": "5.9",
+                    "cvss_v3_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:N/I:H/A:N"
+                }
+            ],
+            "summary": "Netty is an open-source, asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients. In Netty (io.netty:netty-codec-http2) before version 4.1.60.Final there is a vulnerability that enables request smuggling. If a Content-Length header is present in the original HTTP/2 request, the field is not validated by `Http2MultiplexHandler` as it is propagated up. This is fine as long as the request is not proxied through as HTTP/1.1. If the request comes in as an HTTP/2 stream, gets converted into the HTTP/1.1 domain objects (`HttpRequest`, `HttpContent`, etc.) via `Http2StreamFrameToHttpObjectCodec `and then sent up to the child channel's pipeline and proxied through a remote peer as HTTP/1.1 this may result in request smuggling. In a proxy case, users may assume the content-length is validated somehow, which is not the case. If the request is forwarded to a backend channel that is a HTTP/1.1 connection, the Content-Length now has meaning and needs to be checked. An attacker can smuggle requests inside the body as it gets downgraded from HTTP/2 to HTTP/1.1. For an example attack refer to the linked GitHub Advisory. Users are only affected if all of this is true: `HTTP2MultiplexCodec` or `Http2FrameCodec` is used, `Http2StreamFrameToHttpObjectCodec` is used to convert to HTTP/1.1 objects, and these HTTP/1.1 objects are forwarded to another remote peer. This has been patched in 4.1.60.Final As a workaround, the user can do the validation by themselves by implementing a custom `ChannelInboundHandler` that is put in the `ChannelPipeline` behind `Http2StreamFrameToHttpObjectCodec`.",
+            "severity": "Medium",
+            "components": {
+                "C:2.0.0": {
+                    "package_name": "C",
+                    "package_version": "2.0.0",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[2.3.4]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "C:2.0.0"
+                            }
+                        ]
+                    ]
+                },
+                "A:1.0.1": {
+                    "package_name": "A",
+                    "package_version": "1.0.1",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[4.1.60.Final]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "A:1.0.1"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "XRAY-142007",
+            "references": [
+                "https://github.com/netty/netty/security/advisories/GHSA-wm47-8v5p-wjpj",
+                "https://security.netapp.com/advisory/ntap-20210604-0003/",
+                "https://www.debian.org/security/2021/dsa-4885"
+            ],
+            "type": "security",
+            "watch_name": "licenses-watch",
+            "fail_build": true,
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/dd7f18442",
+            "ignore_url_id": "2"
+        },
+        {
+            "cves": [
+                {
+                    "cve": "CVE-2019-20444",
+                    "cvss_v2_score": "6.4",
+                    "cvss_v2_vector": "CVSS:2.0/AV:N/AC:L/Au:N/C:P/I:P/A:N",
+                    "cvss_v3_score": "9.1",
+                    "cvss_v3_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N"
+                }
+            ],
+            "summary": "HttpObjectDecoder.java in Netty before 4.1.44 allows an HTTP header that lacks a colon, which might be interpreted as a separate header with an incorrect syntax, or might be interpreted as an \"invalid fold.\"",
+            "severity": "Critical",
+            "components": {
+                "B:1.0.0": {
+                    "package_name": "B",
+                    "package_version": "1.0.0",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[4.1.44.Final]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "B:1.0.0"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "XRAY-94201",
+            "references": [
+                "https://www.debian.org/security/2021/dsa-4885",
+                "https://lists.fedoraproject.org/archives/list/package-announce@lists.fedoraproject.org/message/TS6VX7OMXPDJIU5LRGUAHRK6MENAVJ46/",
+                "https://github.com/netty/netty/compare/netty-4.1.43.Final...netty-4.1.44.Final",
+                "https://github.com/netty/netty/issues/9866"
+            ],
+            "type": "security",
+            "watch_name": "licenses-watch",
+            "fail_build": true,
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/d61dc437d",
+            "ignore_url_id": "4"
+        },
+        {
+            "cves": [
+                {
+                    "cve": "CVE-2021-43797",
+                    "cvss_v3_score": "6.5",
+                    "cvss_v3_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:H/A:N"
+                }
+            ],
+            "summary": "Netty is an asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients. Netty prior to version 4.1.7.1.Final skips control chars when they are present at the beginning / end of the header name. It should instead fail fast as these are not allowed by the spec and could lead to HTTP request smuggling. Failing to do the validation might cause netty to \"sanitize\" header names before it forward these to another remote system when used as proxy. This remote system can't see the invalid usage anymore, and therefore does not do the validation itself. Users should upgrade to version 4.1.7.1.Final to receive a patch.",
+            "severity": "Medium",
+            "components": {
+                "A:1.0.0": {
+                    "package_name": "A",
+                    "package_version": "1.0.0",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[1.0.1]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "A:1.0.0"
+                            }
+                        ]
+                    ]
+                },
+                "C:2.0.0": {
+                    "package_name": "C",
+                    "package_version": "2.0.0",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[3.1.1]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "C:2.0.0"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "XRAY-191882",
+            "references": [
+                "https://github.com/netty/netty/security/advisories/GHSA-wx5j-54mm-rqqq",
+                "https://github.com/netty/netty/commit/07aa6b5938a8b6ed7a6586e066400e2643897323"
+            ],
+            "type": "security",
+            "watch_name": "watch1",
+            "fail_build": true,
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/0d4b59742",
+            "ignore_url_id": "7"
+        },
+        {
+            "cves": [
+                {
+                    "cve": "CVE-2021-43797",
+                    "cvss_v3_score": "6.5",
+                    "cvss_v3_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:N/I:H/A:N"
+                }
+            ],
+            "summary": "Netty is an asynchronous event-driven network application framework for rapid development of maintainable high performance protocol servers & clients. Netty prior to version 4.1.7.1.Final skips control chars when they are present at the beginning / end of the header name. It should instead fail fast as these are not allowed by the spec and could lead to HTTP request smuggling. Failing to do the validation might cause netty to \"sanitize\" header names before it forward these to another remote system when used as proxy. This remote system can't see the invalid usage anymore, and therefore does not do the validation itself. Users should upgrade to version 4.1.7.1.Final to receive a patch.",
+            "severity": "Medium",
+            "components": {
+                "A:1.0.0": {
+                    "package_name": "A",
+                    "package_version": "1.0.0",
+                    "package_type": "maven",
+                    "fixed_versions": [
+                        "[1.0.1]"
+                    ],
+                    "impact_paths": [
+                        [
+                            {
+                                "component_id": "test"
+                            },
+                            {
+                                "component_id": "A:1.0.0"
+                            }
+                        ]
+                    ]
+                }
+            },
+            "issue_id": "XRAY-191882",
+            "references": [
+                "https://github.com/netty/netty/security/advisories/GHSA-wx5j-54mm-rqqq",
+                "https://github.com/netty/netty/commit/07aa6b5938a8b6ed7a6586e066400e2643897323"
+            ],
+            "type": "security",
+            "watch_name": "watch2",
+            "fail_build": true,
+            "ignore_url": "https://ecosysjfrog.jfrog.io/xray/ir/0d4b59742",
+            "ignore_url_id": "7"
+        }
+    ],
+    "scan_id": "50f07f50-83a7-4f50-551d-bc76001e8b04",
+    "status": "completed",
+    "top_vulnerability_severity": "High"
+}
