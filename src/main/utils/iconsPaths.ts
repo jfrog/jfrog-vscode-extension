@@ -3,7 +3,7 @@ import { ScanUtils } from './scanUtils';
 
 export class IconsPaths {
     // Icons severities
-    static readonly NORMAL_SEVERITY: string = IconsPaths.getIconPath(path.join('severities', 'Normal'));
+    static readonly NORMAL_SEVERITY: string = IconsPaths.getIconPath('Normal');
     static readonly PENDING_SEVERITY: string = IconsPaths.getSeverityIcon('Unknown');
     static readonly UNKNOWN_SEVERITY: string = IconsPaths.getSeverityIcon('Unknown');
     static readonly NOT_APPLICABLE_UNKNOWN_SEVERITY: string = IconsPaths.getSeverityIcon('notApplicableUnknown');
@@ -25,7 +25,7 @@ export class IconsPaths {
     static readonly CRITICAL_HOVER_SEVERITY: string = IconsPaths.getIconPath(path.join('severities', 'hover', 'criticalHover'));
 
     // Icons builds status
-    static readonly BUILD_SUCCESS: string = IconsPaths.getIconPath(path.join('severities', 'Normal'));
+    static readonly BUILD_SUCCESS: string = IconsPaths.getIconPath('Normal');
     static readonly BUILD_FAILED: string = IconsPaths.getSeverityIcon('Critical');
     static readonly BUILD_UNKNOWN: string = IconsPaths.getSeverityIcon('Unknown');
 
