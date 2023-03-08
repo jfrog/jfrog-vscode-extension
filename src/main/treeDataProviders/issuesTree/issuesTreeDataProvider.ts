@@ -252,7 +252,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                                 this._logManager.logMessage("WorkSpace '" + workspace.name + "' has no data in cache", 'DEBUG');
                                 this._workspaceToRoot.set(workspace, undefined);
                             }
-                            firstTime = !root;
+                            if (firstTime) {
+                                firstTime = !root;
+                            }
                             this.onChangeFire();
                         })
                         .catch(async error => {

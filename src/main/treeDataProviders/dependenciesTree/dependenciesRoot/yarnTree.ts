@@ -20,6 +20,7 @@ export class YarnTreeNode extends RootNode {
         let listResults: any;
         try {
             listResults = this.runYarnList();
+            this.populateDependencyTree(this, listResults?.data?.trees);
         } catch (error) {
             this._logManager.logError(<any>error, false);
             this._logManager.logMessageAndToastErr(
@@ -27,9 +28,6 @@ export class YarnTreeNode extends RootNode {
                 'ERR'
             );
             this.buildError = BuildTreeErrorType.NotInstalled;
-        }
-        if (!this.buildError) {
-            this.populateDependencyTree(this, listResults?.data?.trees);
         }
 
         const yarnProject: ScopedNpmProject = YarnUtils.getYarnProjectDetails(this.workspaceFolder);

@@ -5,9 +5,10 @@ import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
 import { AnalyzerUtils } from '../treeDataProviders/utils/analyzerUtils';
 import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
-import { DependencyScanResults, ScanResults } from '../types/workspaceIssuesDetails';
+import { DependencyScanResults, EntryIssuesData, ScanResults } from '../types/workspaceIssuesDetails';
 import { ProjectDependencyTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
 import { EnvironmentTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/environmentTreeNode';
+import { Utils } from '../utils/utils';
 
 /**
  * Describes a cache that holds all the information from an Xray scan for a workspace
@@ -66,6 +67,21 @@ export class IssuesCache {
     }
 
     /**
+     * Get a scan results stored in the cache base on a given workspace and make sure the results are relevant.
+     * If the results are not relevant (the store interval period has passed) it will be removed them from the cache
+     * @param workspace - the workspace to search it's data
+     * @returns ScanResults if there are stored and relevant, undefined otherwise.
+     */
+    public getOrClearIfNotRelevant(workspace: vscode.WorkspaceFolder): ScanResults | undefined {
+        let data: ScanResults | undefined = this.get(workspace);
+        if (data && Utils.isIssueCacheIntervalPassed(data.oldestScanTimestamp)) {
+            this.remove(workspace);
+            return undefined;
+        }
+        return data;
+    }
+
+    /**
      * Async task to load the issues from the last scan of a given workspace
      * @param workspace - the workspace to load it's issues
      * @returns - the workspace issues if the exists, undefined otherwise
@@ -80,15 +96,15 @@ export class IssuesCache {
         let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace);
         if (scanResults.failedFiles) {
             // Load files that had error on the last scan and create tree node in the root
-            scanResults.failedFiles.forEach(file => {
+            scanResults.failedFiles.forEach((file: EntryIssuesData) => {
                 this._logManager.logMessage("Loading file with scan error '" + file.name + "': '" + file.fullPath + "'", 'DEBUG');
                 let failed: FileTreeNode = FileTreeNode.createFailedScanNode(file.fullPath, file.name);
-                return root.children.push(failed);
+                root.children.push(failed);
             });
         }
         if (scanResults.descriptorsIssues) {
             // Load descriptors issues and create tree node in the root
-            scanResults.descriptorsIssues.forEach(graphScanResult => {
+            scanResults.descriptorsIssues.forEach((graphScanResult: DependencyScanResults) => {
                 let projectNode: ProjectDependencyTreeNode = this.createProjectNode(graphScanResult, root);
                 this._logManager.logMessage("Loading issues for '" + graphScanResult.fullPath + "'", 'DEBUG');
                 DependencyUtils.populateDependencyScanResults(projectNode, graphScanResult);
