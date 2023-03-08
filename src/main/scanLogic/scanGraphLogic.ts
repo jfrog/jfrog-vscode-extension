@@ -23,7 +23,7 @@ export class GraphScanLogic {
      */
     public async scan(graphRoot: RootNode, progress: XrayScanProgress, checkCanceled: () => void): Promise<IGraphResponse> {
         let graphRequest: IGraphRequestModel = {
-            component_id: graphRoot.generalInfo.artifactId,
+            component_id: graphRoot.generalInfo.artifactId ?? graphRoot.dependencyId,
             nodes: this.getFlattenRequestModelNodes(graphRoot, new Set<string>())
         } as IGraphRequestModel;
         if (!graphRequest.nodes || graphRequest.nodes.length === 0) {

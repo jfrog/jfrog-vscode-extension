@@ -4,12 +4,11 @@ import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
 import { YarnTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/yarnTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { TreesManager } from '../treeDataProviders/treesManager';
-import { ProjectDetails } from '../types/projectDetails';
 import { GeneralInfo } from '../types/generalInfo';
 import { NpmGlobalScopes, ScopedNpmProject } from './npmUtils';
 import { ScanUtils } from './scanUtils';
 import { PackageType } from '../types/projectType';
+import { BuildTreeErrorType } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 
 export class YarnUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/yarn.lock' };
@@ -56,30 +55,30 @@ export class YarnUtils {
      */
     public static async createDependenciesTrees(
         yarnLocks: vscode.Uri[] | undefined,
-        projectsToScan: ProjectDetails[],
-        treesManager: TreesManager,
-        parent: DependenciesTreeNode,
-        checkCanceled: () => void
+        logManager: LogManager,
+        checkCanceled: () => void,
+        parent: DependenciesTreeNode
     ): Promise<void> {
         if (!yarnLocks) {
-            treesManager.logManager.logMessage('No yarn.lock files found in workspaces.', 'DEBUG');
+            logManager.logMessage('No yarn.lock files found in workspaces.', 'DEBUG');
             return;
         }
-        treesManager.logManager.logMessage('yarn.lock files to scan: [' + yarnLocks.toString() + ']', 'DEBUG');
+        logManager.logMessage('yarn.lock files to scan: [' + yarnLocks.toString() + ']', 'DEBUG');
         for (let yarnLock of yarnLocks) {
             checkCanceled();
+            let root: YarnTreeNode = new YarnTreeNode(yarnLock.fsPath, logManager, parent);
             // In yarn, the version may vary in different workspaces. Therefore we run 'yarn --version' for each workspace.
-            if (!YarnUtils.isVersionSupported(parent, treesManager.logManager, path.dirname(yarnLock.fsPath))) {
+            root.buildError = YarnUtils.isVersionSupported(parent, logManager, path.dirname(yarnLock.fsPath));
+            if (root.buildError) {
                 return;
             }
             checkCanceled();
-            let root: YarnTreeNode = new YarnTreeNode(yarnLock.fsPath, treesManager, parent);
-            projectsToScan.push(root.projectDetails);
+
             root.refreshDependencies();
         }
     }
 
-    public static isVersionSupported(parent: DependenciesTreeNode, logManager: LogManager, workspaceFolder: string): boolean {
+    public static isVersionSupported(parent: DependenciesTreeNode, logManager: LogManager, workspaceFolder: string): BuildTreeErrorType | undefined {
         try {
             let version: string = ScanUtils.executeCmd('yarn --version', workspaceFolder).toString();
             let yarnSemver: semver.SemVer = new semver.SemVer(version);
@@ -87,20 +86,20 @@ export class YarnUtils {
                 logManager.logError(new Error('Could not scan Yarn project dependencies, because currently only Yarn 1 is supported.'), true);
                 let yarnProject: ScopedNpmProject = this.getYarnProjectDetails(workspaceFolder);
                 let generalInfo: GeneralInfo = new GeneralInfo(
-                    (yarnProject.projectName || workspaceFolder) + ` [Not supported]`,
+                    yarnProject.projectName || workspaceFolder,
                     yarnProject.projectVersion,
                     [],
                     workspaceFolder,
                     PackageType.Yarn
                 );
                 new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.None, parent);
-                return false;
+                return BuildTreeErrorType.NotSupported;
             }
         } catch (error) {
             logManager.logError(new Error('Could not scan Yarn project dependencies, because Yarn is not installed.'), true);
-            return false;
+            return BuildTreeErrorType.NotInstalled;
         }
-        return true;
+        return undefined;
     }
 
     /**

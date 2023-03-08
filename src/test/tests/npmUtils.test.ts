@@ -12,7 +12,6 @@ import { NpmUtils } from '../../main/utils/npmUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
-import { ProjectDetails } from '../../main/types/projectDetails';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { FocusType } from '../../main/constants/contextKeys';
@@ -157,20 +156,7 @@ describe('Npm Utils Tests', async () => {
      */
     it('Create npm Dependencies Trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
-        let componentsToScan: ProjectDetails[] = [];
-        let res: DependenciesTreeNode[] = await runCreateNpmDependenciesTrees(componentsToScan, parent);
-
-        // Check that components to scan contains progress:2.0.3
-        assert.isTrue(componentsToScan.length === 3);
-        let found: boolean = false;
-        for (let index: number = 0; index < componentsToScan.length; index++) {
-            componentsToScan[index].dependencies.forEach(el => {
-                if (el.component_id === 'npm://progress:2.0.3') {
-                    found = true;
-                }
-            });
-        }
-        assert.isTrue(found);
+        let res: DependenciesTreeNode[] = await runCreateNpmDependenciesTrees(parent);
 
         // Check labels
         assert.deepEqual(res[0].label, 'package-name1');
@@ -211,13 +197,11 @@ describe('Npm Utils Tests', async () => {
         assert.deepEqual(child?.parent, res[2]);
     });
 
-    async function runCreateNpmDependenciesTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
+    async function runCreateNpmDependenciesTrees(parent: DependenciesTreeNode) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let packageJsons: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Npm);
         assert.isDefined(packageJsons);
-        await NpmUtils.createDependenciesTrees(packageJsons, componentsToScan, treesManager, parent, () => {
-            assert;
-        });
+        await NpmUtils.createDependenciesTrees(packageJsons, treesManager.logManager, () => undefined, parent);
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 });

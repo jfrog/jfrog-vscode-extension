@@ -7,7 +7,6 @@ import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
-import { ProjectDetails } from '../../main/types/projectDetails';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { PackageType } from '../../main/types/projectType';
 import { ScanUtils } from '../../main/utils/scanUtils';
@@ -144,20 +143,7 @@ describe('Yarn Utils Tests', async () => {
      */
     it('Create yarn dependency trees', async () => {
         let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
-        let componentsToScan: ProjectDetails[] = [];
-        let res: DependenciesTreeNode[] = await runCreateYarnDependencyTrees(componentsToScan, parent);
-
-        // Check that components to scan contains progress:2.0.3
-        assert.isTrue(componentsToScan.length === 3);
-        let found: boolean = false;
-        for (let index: number = 0; index < componentsToScan.length; index++) {
-            componentsToScan[index].dependencies.forEach(componentDetails => {
-                if (componentDetails.component_id === 'npm://progress:2.0.3') {
-                    found = true;
-                }
-            });
-        }
-        assert.isTrue(found);
+        let res: DependenciesTreeNode[] = await runCreateYarnDependencyTrees(parent);
 
         // Check labels
         assert.deepEqual(res[0].label, 'package-name1');
@@ -198,13 +184,11 @@ describe('Yarn Utils Tests', async () => {
         assert.deepEqual(child?.parent, res[2]);
     });
 
-    async function runCreateYarnDependencyTrees(componentsToScan: ProjectDetails[], parent: DependenciesTreeNode) {
+    async function runCreateYarnDependencyTrees(parent: DependenciesTreeNode) {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let yarnLocks: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Yarn);
         assert.isDefined(yarnLocks);
-        await YarnUtils.createDependenciesTrees(yarnLocks, componentsToScan, treesManager, parent, () => {
-            assert;
-        });
+        await YarnUtils.createDependenciesTrees(yarnLocks, treesManager.logManager, () => undefined, parent);
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 });

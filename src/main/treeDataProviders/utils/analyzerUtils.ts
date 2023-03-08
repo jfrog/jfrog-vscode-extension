@@ -18,6 +18,7 @@ import { ScanManager } from '../../scanLogic/scanManager';
 import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
 import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
 import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
+import { FileScanBundle } from '../../utils/scanUtils';
 
 export class AnalyzerUtils {
     /**
@@ -91,6 +92,56 @@ export class AnalyzerUtils {
             patterns.push(excludePattern + (excludePattern.endsWith('/**') ? '' : '/**'));
         }
         return patterns;
+    }
+
+    /**
+     * Run CVE applicable scan async task and populate the given bundle with the results.
+     * @param scanManager - the ScanManager that preforms the actual scans
+     * @param fileScanBundle - the file bundle that contains all the information on scan results
+     * @param abortController - the controller to abort the operation
+     */
+    public static async cveApplicableScanning(
+        scanManager: ScanManager,
+        fileScanBundle: FileScanBundle,
+        abortController: AbortController
+    ): Promise<void> {
+        let cvesToScan: Set<string> = new Set<string>();
+        if (!(fileScanBundle.dataNode instanceof DescriptorTreeNode)) {
+            return;
+        }
+        let descriptorIssues: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
+        fileScanBundle.dataNode.issues.forEach((issue: IssueTreeNode) => {
+            if (issue instanceof CveTreeNode && !issue.parent.indirect && issue.cve?.cve) {
+                cvesToScan.add(issue.cve.cve);
+            }
+        });
+        if (cvesToScan.size == 0) {
+            return;
+        }
+        scanManager.logManager.logMessage('Scanning descriptor ' + descriptorIssues.fullPath + ' for cve applicability issues', 'INFO');
+
+        let startApplicableTime: number = Date.now();
+        descriptorIssues.applicableIssues = await scanManager.scanApplicability(path.dirname(descriptorIssues.fullPath), abortController, cvesToScan);
+
+        if (descriptorIssues.applicableIssues && descriptorIssues.applicableIssues.applicableCve) {
+            descriptorIssues.applicableScanTimestamp = Date.now();
+            let applicableIssuesCount: number = AnalyzerUtils.populateApplicableIssues(
+                fileScanBundle.root,
+                fileScanBundle.dataNode,
+                descriptorIssues
+            );
+            scanManager.logManager.logMessage(
+                'Found ' +
+                    applicableIssuesCount +
+                    " applicable CVE issues in descriptor = '" +
+                    descriptorIssues.fullPath +
+                    "' (elapsed " +
+                    (Date.now() - startApplicableTime) / 1000 +
+                    ' seconds)',
+                'INFO'
+            );
+            fileScanBundle.root.apply();
+        }
     }
 
     /**

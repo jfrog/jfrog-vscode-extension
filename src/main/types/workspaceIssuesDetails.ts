@@ -10,10 +10,9 @@ import { PackageType } from './projectType';
  */
 export class ScanResults {
     private _descriptorsIssues: DependencyScanResults[] = [];
-    private _workspaceIssues: DependencyScanResults | undefined;
     private _eosScan: EosScanResponse = {} as EosScanResponse;
     private _eosScanTimestamp?: number;
-    private _failedFiles: FileIssuesData[] = [];
+    private _failedFiles: EntryIssuesData[] = [];
 
     constructor(private _path: string) {}
 
@@ -23,8 +22,8 @@ export class ScanResults {
         if (tmp._descriptorsIssues) {
             workspaceIssuesDetails.descriptorsIssues.push(...tmp._descriptorsIssues);
         }
-        workspaceIssuesDetails.issues = tmp._workspaceIssues;
         workspaceIssuesDetails.eosScan = tmp._eosScan;
+        workspaceIssuesDetails.eosScanTimestamp = tmp._eosScanTimestamp;
         if (tmp._failedFiles) {
             workspaceIssuesDetails.failedFiles.push(...tmp._failedFiles);
         }
@@ -47,19 +46,11 @@ export class ScanResults {
      * @returns true if at least one issue exists
      */
     public hasIssues(): boolean {
-        return this.descriptorsIssues.length > 0 || this.eosScan?.filesWithIssues?.length > 0 || !!this._workspaceIssues;
+        return this.descriptorsIssues.length > 0 || this.eosScan?.filesWithIssues?.length > 0;
     }
 
     get path(): string {
         return this._path;
-    }
-
-    get issues(): DependencyScanResults | undefined {
-        return this._workspaceIssues;
-    }
-
-    set issues(value: DependencyScanResults | undefined) {
-        this._workspaceIssues = value;
     }
 
     get descriptorsIssues(): DependencyScanResults[] {
@@ -86,11 +77,11 @@ export class ScanResults {
         this._eosScanTimestamp = value;
     }
 
-    get failedFiles(): FileIssuesData[] {
+    get failedFiles(): EntryIssuesData[] {
         return this._failedFiles;
     }
 
-    set failedFiles(value: FileIssuesData[]) {
+    set failedFiles(value: EntryIssuesData[]) {
         this._failedFiles = value;
     }
 
@@ -106,15 +97,16 @@ export class ScanResults {
 /**
  * Describes all the issue data for a specific file from Xray scan
  */
-export interface FileIssuesData {
+export interface EntryIssuesData {
     name: string;
     fullPath: string;
+    isEnvironment: boolean;
 }
 
 /**
  * Describes all the issues data for a specific descriptor from Xray scan
  */
-export interface DependencyScanResults extends FileIssuesData {
+export interface DependencyScanResults extends EntryIssuesData {
     type: PackageType;
     graphScanTimestamp: number;
     dependenciesGraphScan: IGraphResponse;

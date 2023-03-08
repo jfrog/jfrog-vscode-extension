@@ -1,5 +1,13 @@
 import * as vscode from 'vscode';
-import { ScanResults } from '../types/workspaceIssuesDetails';
+import { LogManager } from '../log/logManager';
+import { DescriptorTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
+import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
+import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
+import { AnalyzerUtils } from '../treeDataProviders/utils/analyzerUtils';
+import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
+import { DependencyScanResults, EntryIssuesData, ScanResults } from '../types/workspaceIssuesDetails';
+import { ProjectDependencyTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
+import { EnvironmentTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/environmentTreeNode';
 import { Utils } from '../utils/utils';
 
 /**
@@ -8,7 +16,7 @@ import { Utils } from '../utils/utils';
 export class IssuesCache {
     public static readonly CACHE_BASE_KEY: string = 'jfrog.cache.issues.';
 
-    constructor(public _cache: vscode.Memento) {}
+    constructor(public _cache: vscode.Memento, private _logManager: LogManager) {}
 
     /**
      * Get the unique key for this workspace
@@ -71,5 +79,51 @@ export class IssuesCache {
             return undefined;
         }
         return data;
+    }
+
+    /**
+     * Async task to load the issues from the last scan of a given workspace
+     * @param workspace - the workspace to load it's issues
+     * @returns - the workspace issues if the exists, undefined otherwise
+     */
+    public async loadIssues(workspace: vscode.WorkspaceFolder): Promise<IssuesRootTreeNode | undefined> {
+        // Check if data for the workspace exists in the cache
+        let scanResults: ScanResults | undefined = this.get(workspace);
+        if (!scanResults) {
+            return undefined;
+        }
+        this._logManager.logMessage("Loading issues from last scan for the workspace '" + workspace.name + "'", 'INFO');
+        let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace);
+        if (scanResults.failedFiles) {
+            // Load files that had error on the last scan and create tree node in the root
+            scanResults.failedFiles.forEach((file: EntryIssuesData) => {
+                this._logManager.logMessage("Loading file with scan error '" + file.name + "': '" + file.fullPath + "'", 'DEBUG');
+                let failed: FileTreeNode = FileTreeNode.createFailedScanNode(file.fullPath, file.name);
+                root.children.push(failed);
+            });
+        }
+        if (scanResults.descriptorsIssues) {
+            // Load descriptors issues and create tree node in the root
+            scanResults.descriptorsIssues.forEach((graphScanResult: DependencyScanResults) => {
+                let projectNode: ProjectDependencyTreeNode = this.createProjectNode(graphScanResult, root);
+                this._logManager.logMessage("Loading issues for '" + graphScanResult.fullPath + "'", 'DEBUG');
+                DependencyUtils.populateDependencyScanResults(projectNode, graphScanResult);
+                if (projectNode instanceof DescriptorTreeNode && graphScanResult.applicableIssues && graphScanResult.applicableIssues.scannedCve) {
+                    AnalyzerUtils.populateApplicableIssues(root, projectNode, graphScanResult);
+                }
+                root.children.push(projectNode);
+            });
+        }
+        if (scanResults.eosScan) {
+            root.eosScanTimeStamp = scanResults.eosScanTimestamp;
+            AnalyzerUtils.populateEosIssues(root, scanResults);
+        }
+        return root;
+    }
+
+    private createProjectNode(graphScanResult: DependencyScanResults, parent: IssuesRootTreeNode): ProjectDependencyTreeNode {
+        return graphScanResult.isEnvironment
+            ? new EnvironmentTreeNode(graphScanResult.fullPath, graphScanResult.type, parent)
+            : new DescriptorTreeNode(graphScanResult.fullPath, graphScanResult.type, parent);
     }
 }

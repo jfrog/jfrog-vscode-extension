@@ -1,17 +1,17 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
-import { TreesManager } from '../../treesManager';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { NpmGlobalScopes, ScopedNpmProject, NpmUtils } from '../../../utils/npmUtils';
-import { RootNode } from './rootTree';
+import { BuildTreeErrorType, RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
 import { Severity } from '../../../types/severity';
+import { LogManager } from '../../../log/logManager';
 
 export class NpmTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
 
-    constructor(fullPath: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
+    constructor(fullPath: string, private _logManager: LogManager, parent?: DependenciesTreeNode) {
         super(fullPath, PackageType.Npm, parent);
     }
 
@@ -23,28 +23,22 @@ export class NpmTreeNode extends RootNode {
             try {
                 scopedProject.loadProjectDetails(NpmUtils.runNpmLs(scopedProject.scope, this.workspaceFolder));
             } catch (error) {
-                this._treesManager.logManager.logError(<any>error, false);
+                this._logManager.logError(<any>error, false);
                 scopedProject.loadProjectDetailsFromFile(path.join(this.fullPath));
                 npmLsFailed = true;
             }
             this.populateDependenciesTree(this, scopedProject.dependencies, scopedProject.scope);
         });
         if (npmLsFailed) {
-            this._treesManager.logManager.logMessageAndToastErr(
+            this.topSeverity = Severity.Unknown;
+            this.buildError = BuildTreeErrorType.NotInstalled;
+            this._logManager.logMessageAndToastErr(
                 `Failed to scan npm project. Hint: Please make sure the commands 'npm install' or 'npm ci' run successfully in '${this.workspaceFolder}'`,
                 'ERR'
             );
         }
-        this.generalInfo = new GeneralInfo(
-            npmLsFailed ? (productionScope.projectName += ' [Not installed]') : productionScope.projectName,
-            productionScope.projectVersion,
-            [],
-            this.fullPath,
-            PackageType.Npm
-        );
-        if (npmLsFailed) {
-            this.topSeverity = Severity.Unknown;
-        }
+        this.generalInfo = new GeneralInfo(productionScope.projectName, productionScope.projectVersion, [], this.fullPath, PackageType.Npm);
+
         this.projectDetails.name = productionScope.projectName ? productionScope.projectName : this.fullPath;
         this.label = this.projectDetails.name;
     }

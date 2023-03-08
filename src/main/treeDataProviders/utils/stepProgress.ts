@@ -19,8 +19,8 @@ export class StepProgress {
         public onProgress: () => void = () => {
             //
         },
-        totalSteps?: number,
-        private _log?: LogManager
+        private _log?: LogManager,
+        totalSteps?: number
     ) {
         this._totalSteps = totalSteps ?? 1;
         this.abortController = new AbortController();
@@ -41,7 +41,7 @@ export class StepProgress {
         this.currentStepsDone++;
         this.currentStepMsg = msg + (this._totalSteps > 1 ? ' (' + this.currentStepsDone + '/' + this._totalSteps + ')' : '');
         this.currentSubstepsCount = subSteps && subSteps > 0 ? subSteps : undefined;
-        this._progress.report({ message: msg });
+        this._progress.report({ message: this.currentStepMsg });
         this.activateOnProgress();
     }
 
@@ -80,22 +80,31 @@ export class StepProgress {
      * @param scanName - the scan name that will be shown in the debug if logManager is provided
      * @returns XrayScanProgress to use in a scan
      */
-    public createScanProgress(scanName: string): XrayScanProgress {
-        return new (class implements XrayScanProgress {
-            private lastPercentage: number = 0;
-            constructor(private _progressManager: StepProgress, private _log?: LogManager) {}
-            /** @override */
-            public setPercentage(percentage: number): void {
-                if (percentage != this.lastPercentage && !this._progressManager.abortController.signal.aborted) {
-                    let inc: number = this._progressManager.getStepIncValue * ((percentage - this.lastPercentage) / 100);
-                    this._log?.logMessage(
-                        '[' + scanName + '] reported change in progress ' + this.lastPercentage + '% -> ' + percentage + '%',
-                        'DEBUG'
-                    );
-                    this._progressManager.reportProgress(inc);
-                }
-                this.lastPercentage = percentage;
-            }
-        })(this, this._log);
+    public createScanProgress(scanName: string, totalProgress: number): GraphScanProgress {
+        return new GraphScanProgress(scanName, this, totalProgress, this._log);
+    }
+}
+
+export class GraphScanProgress implements XrayScanProgress {
+    private lastPercentage: number = 0;
+    public readonly abortController: AbortController;
+    public readonly onProgress: () => void;
+
+    constructor(private _scanName: string, private _manager: StepProgress, private _totalProgress: number, private _log?: LogManager) {
+        this.abortController = this._manager.abortController;
+        this.onProgress = this._manager.activateOnProgress;
+    }
+
+    /** @override */
+    public setPercentage(percentage: number): void {
+        if (percentage != this.lastPercentage && !this.abortController.signal.aborted) {
+            let inc: number = this._totalProgress * ((percentage - this.lastPercentage) / 100);
+            this._log?.logMessage(
+                '[' + this._scanName + '] reported change in progress ' + this.lastPercentage + '% -> ' + percentage + '%',
+                'DEBUG'
+            );
+            this._manager.reportProgress(inc);
+        }
+        this.lastPercentage = percentage;
     }
 }

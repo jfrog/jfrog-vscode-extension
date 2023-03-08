@@ -1,15 +1,15 @@
 import * as vscode from 'vscode';
 import { GeneralInfo } from '../../../types/generalInfo';
 import { ScanUtils } from '../../../utils/scanUtils';
-import { TreesManager } from '../../treesManager';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
-import { RootNode } from './rootTree';
+import { BuildTreeErrorType, RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
 import { SemVer } from 'semver';
+import { LogManager } from '../../../log/logManager';
 
 export class GoTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'go://';
-    constructor(tmpFullPath: string, private _treesManager: TreesManager, parent?: DependenciesTreeNode) {
+    constructor(tmpFullPath: string, private _logManager: LogManager, parent?: DependenciesTreeNode) {
         super(tmpFullPath, PackageType.Go, parent);
     }
 
@@ -22,8 +22,9 @@ export class GoTreeNode extends RootNode {
             goModGraph = this.runGoModGraph();
             goList = this.runGoList(goVersion);
         } catch (error) {
-            this._treesManager.logManager.logError(<any>error);
-            this.label = this.workspaceFolder + ' [Not installed]';
+            this._logManager.logError(<any>error);
+            this.label = this.workspaceFolder;
+            this.buildError = BuildTreeErrorType.NotInstalled;
             this.generalInfo = new GeneralInfo(this.label, '', [], this.workspaceFolder, PackageType.Go);
             return;
         }
@@ -142,7 +143,7 @@ export class GoTreeNode extends RootNode {
         let parent: DependenciesTreeNode | undefined = dependenciesTreeNode.parent;
         while (parent) {
             if (parent.generalInfo?.getComponentId() === dependenciesTreeNode.generalInfo?.getComponentId()) {
-                this._treesManager.logManager.logMessage('Loop detected in ' + dependenciesTreeNode.generalInfo.artifactId, 'DEBUG');
+                this._logManager.logMessage('Loop detected in ' + dependenciesTreeNode.generalInfo.artifactId, 'DEBUG');
                 return true;
             }
             parent = parent.parent;

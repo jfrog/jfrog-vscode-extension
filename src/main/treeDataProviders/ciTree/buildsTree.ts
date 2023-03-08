@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { BuildGeneralInfo } from '../../../types/buildGeneralinfo';
-import { DependenciesTreeNode } from '../dependenciesTreeNode';
+import { BuildGeneralInfo } from '../../types/buildGeneralinfo';
+import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
 
 export class BuildsNode extends DependenciesTreeNode {
     constructor(bgi: BuildGeneralInfo, parent?: DependenciesTreeNode) {

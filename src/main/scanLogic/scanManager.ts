@@ -177,7 +177,11 @@ export class ScanManager implements ExtensionComponent {
      * @param cveToRun - the CVE list we want to run applicability scan on
      * @returns the applicability scan response
      */
-    public async scanApplicability(directory: string, abortController: AbortController, cveToRun: string[] = []): Promise<ApplicabilityScanResponse> {
+    public async scanApplicability(
+        directory: string,
+        abortController: AbortController,
+        cveToRun: Set<string> = new Set<string>()
+    ): Promise<ApplicabilityScanResponse> {
         let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(
             this._connectionManager,
             ScanManager.BINARY_ABORT_CHECK_INTERVAL_MILLISECS,

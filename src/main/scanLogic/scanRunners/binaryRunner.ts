@@ -4,7 +4,7 @@ import * as path from 'path';
 
 import { LogManager } from '../../log/logManager';
 import { Utils } from '../../utils/utils';
-import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
+import { NotEntitledError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { AnalyzerRequest, AnalyzerScanResponse, AnalyzerType, AnalyzeScanRequest } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { ConnectionUtils } from '../../connect/connectionUtils';
@@ -33,10 +33,6 @@ interface RunRequest {
     request: string;
     requestPath: string;
     responsePaths: string[];
-}
-
-export class NotEntitledError extends Error {
-    message: string = 'User is not entitled to run the binary';
 }
 
 /**

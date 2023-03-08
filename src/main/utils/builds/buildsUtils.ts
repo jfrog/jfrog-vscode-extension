@@ -4,7 +4,7 @@ import { BuildGeneralInfo, Status } from '../../types/buildGeneralinfo';
 import { GeneralInfo } from '../../types/generalInfo';
 import { Vcs } from '../../types/vcs';
 import { IconsPaths } from '../iconsPaths';
-import { CiTitleNode } from '../../treeDataProviders/dependenciesTree/ciNodes/ciTitleNode';
+import { CiTitleNode } from '../../treeDataProviders/ciTree/ciTitleNode';
 import { PackageType } from '../../types/projectType';
 
 export class BuildsUtils {

@@ -1,16 +1,16 @@
 import * as Collections from 'typescript-collections';
 import * as vscode from 'vscode';
-import { ScanCacheManager } from '../cache/scanCacheManager';
-import { BuildGeneralInfo, Status } from '../types/buildGeneralinfo';
-import { ILicenseCacheObject } from '../types/licenseCacheObject';
-import { ILicenseKey } from '../types/licenseKey';
-import { fromPackageType } from '../types/projectType';
-import { Consts } from '../utils/consts';
-import { IconsPaths } from '../utils/iconsPaths';
-import { BuildsNode } from './dependenciesTree/ciNodes/buildsTree';
-import { CiTitleNode } from './dependenciesTree/ciNodes/ciTitleNode';
-import { DependenciesTreeNode } from './dependenciesTree/dependenciesTreeNode';
-import { TreeDataHolder } from './utils/treeDataHolder';
+import { ScanCacheManager } from '../../cache/scanCacheManager';
+import { BuildGeneralInfo, Status } from '../../types/buildGeneralinfo';
+import { ILicenseCacheObject } from '../../types/licenseCacheObject';
+import { ILicenseKey } from '../../types/licenseKey';
+import { fromPackageType } from '../../types/projectType';
+import { Constants } from '../../utils/consts';
+import { IconsPaths } from '../../utils/iconsPaths';
+import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
+import { TreeDataHolder } from '../utils/treeDataHolder';
+import { BuildsNode } from './buildsTree';
+import { CiTitleNode } from './ciTitleNode';
 
 /**
  * The General section in the 'Dependency Details' panel.
@@ -146,6 +146,6 @@ export class LicensesNode extends vscode.TreeItem {
     }
 
     public isFullNameEmpty(license: ILicenseCacheObject) {
-        return !license.fullName || license.fullName === Consts.UNKNOWN_LICENSE_FULL_NAME;
+        return !license.fullName || license.fullName === Constants.UNKNOWN_LICENSE_FULL_NAME;
     }
 }

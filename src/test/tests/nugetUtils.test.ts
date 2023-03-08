@@ -81,7 +81,7 @@ describe('Nuget Utils Tests', async () => {
         assert.isDefined(node);
         assert.deepEqual(node?.children.length ?? 0, 1);
         // Assert dependency information
-        node = res.find(child => child.label === 'empty.sln [Not installed]');
+        node = res.find(child => child.label === 'empty.sln');
         assert.isDefined(node);
         assert.deepEqual(node?.children.length ?? 1, 0);
     });
@@ -91,7 +91,7 @@ describe('Nuget Utils Tests', async () => {
         let solutions: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Nuget);
         assert.isDefined(solutions);
         // eslint-disable-next-line @typescript-eslint/no-empty-function
-        await NugetUtils.createDependenciesTrees(solutions, treesManager, parent, () => {});
+        await NugetUtils.createDependenciesTrees(solutions, treesManager.logManager, () => {}, parent);
         let res: DependenciesTreeNode[] = parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
         for (let child of res) {
             child.children = child.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));

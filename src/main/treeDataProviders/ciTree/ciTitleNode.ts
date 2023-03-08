@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
-import { DependenciesTreeNode } from '../dependenciesTreeNode';
-import { GeneralInfo } from '../../../types/generalInfo';
+import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
+import { GeneralInfo } from '../../types/generalInfo';
 
 /**
  * This node is used in CI mode, to gather modules/artifacts/dependencies under.
