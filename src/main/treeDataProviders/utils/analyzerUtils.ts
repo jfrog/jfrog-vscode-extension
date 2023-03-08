@@ -95,10 +95,9 @@ export class AnalyzerUtils {
     }
 
     /**
-     * Run CVE applicable scan async task.
-     * @param root - the root node to generate the issues inside
-     * @param descriptorIssues - the workspace data to store the response inside
-     * @param descriptorNode - the descriptor node with the CVE to scan
+     * Run CVE applicable scan async task and populate the given bundle with the results.
+     * @param scanManager - the ScanManager that preforms the actual scans
+     * @param fileScanBundle - the file bundle that contains all the information on scan results
      * @param abortController - the controller to abort the operation
      */
     public static async cveApplicableScanning(
@@ -106,17 +105,17 @@ export class AnalyzerUtils {
         fileScanBundle: FileScanBundle,
         abortController: AbortController
     ): Promise<void> {
-        let cvesToScan: string[] = [];
+        let cvesToScan: Set<string> = new Set<string>();
         if (!(fileScanBundle.dataNode instanceof DescriptorTreeNode)) {
             return;
         }
         let descriptorIssues: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
-        fileScanBundle.dataNode.issues.forEach(issue => {
-            if (issue instanceof CveTreeNode && !issue.parent.indirect && issue.cve?.cve && !cvesToScan.includes(issue.cve?.cve)) {
-                cvesToScan.push(issue.cve.cve);
+        fileScanBundle.dataNode.issues.forEach((issue: IssueTreeNode) => {
+            if (issue instanceof CveTreeNode && !issue.parent.indirect && issue.cve?.cve) {
+                cvesToScan.add(issue.cve.cve);
             }
         });
-        if (cvesToScan.length == 0) {
+        if (cvesToScan.size == 0) {
             return;
         }
         scanManager.logManager.logMessage('Scanning descriptor ' + descriptorIssues.fullPath + ' for cve applicability issues', 'INFO');

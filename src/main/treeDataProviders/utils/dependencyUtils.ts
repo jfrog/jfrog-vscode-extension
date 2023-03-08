@@ -63,7 +63,6 @@ export class DependencyUtils {
         // Adjust progress value with 2 substeps and the new number of discovered project dependency tree items.
         let progressIncValue: number = (descriptorsPaths.length / packageDependenciesTree.children.length) * progressManager.getStepIncValue;
         for (let child of packageDependenciesTree.children) {
-            descriptorsParsed.add(child.generalInfo.path);
             if (child instanceof RootNode) {
                 // Create bundle for the scan
                 descriptorsParsed.add(child.fullPath);
@@ -72,15 +71,11 @@ export class DependencyUtils {
                     root: root,
                     data: child.createEmptyScanResultsObject()
                 };
-                if (child.buildError) {
+                if (this.isGraphHasBuildError(child, scanBundle, scanManager.logManager)) {
                     progressManager.reportProgress(progressIncValue);
-                    DependencyUtils.onFileScanError(
-                        new FileScanError('Project with descriptor file ' + child.fullPath + ' has error ' + child.buildError, child.buildError),
-                        scanManager.logManager,
-                        scanBundle
-                    );
                     continue;
-                } else if (child.children.length > 0) {
+                }
+                if (child.children.length > 0) {
                     scanBundle.dataNode = DependencyUtils.toProjectDependencyNode(child);
                     // Scan the descriptor
                     scansPromises.push(
@@ -95,6 +90,7 @@ export class DependencyUtils {
                 }
             }
             // Not root or have no dependencies
+            // Has to be at least after error checks because files with errors has no dependencies
             progressManager.reportProgress(progressIncValue);
             descriptorsParsed.add(child.generalInfo.path);
         }
@@ -102,11 +98,25 @@ export class DependencyUtils {
         await Promise.all(scansPromises);
     }
 
+    private static isGraphHasBuildError(child: RootNode, scanBundle: FileScanBundle, logManager: LogManager) {
+        if (child.buildError) {
+            DependencyUtils.onFileScanError(
+                new FileScanError('Project with descriptor file ' + child.fullPath + ' has error ' + child.buildError, child.buildError),
+                logManager,
+                scanBundle
+            );
+            return true;
+        }
+        return false;
+    }
+
     private static reportNotFoundDescriptors(descriptorsPaths: vscode.Uri[], descriptorsParsed: Set<string>, logManager: LogManager) {
         let notFoundDescriptors: string[] = descriptorsPaths
             .map(descriptorPath => descriptorPath.fsPath)
             .filter(descriptorPath => !descriptorsParsed.has(descriptorPath));
-        logManager.logMessage("Can't find descriptors graph for: " + notFoundDescriptors, 'DEBUG');
+        if (notFoundDescriptors.length > 0) {
+            logManager.logMessage("Can't find descriptors graph for: " + notFoundDescriptors, 'DEBUG');
+        }
     }
 
     private static async createDependenciesTree(
@@ -185,7 +195,7 @@ export class DependencyUtils {
             scanProgress,
             scanProgress.onProgress
         )
-            .then(issuesFound => {
+            .then((issuesFound: number) => {
                 foundIssues = issuesFound > 0;
                 if (foundIssues) {
                     // populate data and view
@@ -407,6 +417,7 @@ export class DependencyUtils {
      * @param issue - the issue to create the child node from
      * @param dependencyWithIssue - the parent of this issue
      * @param severity - the severity of this issue
+     * @param component - the specific component with this issue
      * @param impactedPath - the impacted path graph of this issue
      */
     private static populateDependencyIssue(
@@ -420,17 +431,17 @@ export class DependencyUtils {
         if (violationIssue && violationIssue.license_key) {
             // License violation
             dependencyWithIssue.issues.push(new LicenseIssueTreeNode(violationIssue, severity, dependencyWithIssue, impactedPath));
-        } else {
-            if (issue.cves) {
-                // CVE issue
-                for (let cveIssue of issue.cves) {
-                    dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, component, impactedPath, cveIssue));
-                }
-            } else {
-                // Xray issue
-                dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, component, impactedPath));
-            }
+            return;
         }
+        if (issue.cves) {
+            // CVE issue
+            for (let cveIssue of issue.cves) {
+                dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, component, impactedPath, cveIssue));
+            }
+            return;
+        }
+        // Xray issue
+        dependencyWithIssue.issues.push(new CveTreeNode(issue, severity, dependencyWithIssue, component, impactedPath));
     }
 
     /**

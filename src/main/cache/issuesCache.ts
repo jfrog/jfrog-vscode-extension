@@ -5,7 +5,7 @@ import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
 import { AnalyzerUtils } from '../treeDataProviders/utils/analyzerUtils';
 import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
-import { DependencyScanResults, ScanResults } from '../types/workspaceIssuesDetails';
+import { DependencyScanResults, EntryIssuesData, ScanResults } from '../types/workspaceIssuesDetails';
 import { ProjectDependencyTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
 import { EnvironmentTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/environmentTreeNode';
 import { Utils } from '../utils/utils';
@@ -96,15 +96,15 @@ export class IssuesCache {
         let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace);
         if (scanResults.failedFiles) {
             // Load files that had error on the last scan and create tree node in the root
-            scanResults.failedFiles.forEach(file => {
+            scanResults.failedFiles.forEach((file: EntryIssuesData) => {
                 this._logManager.logMessage("Loading file with scan error '" + file.name + "': '" + file.fullPath + "'", 'DEBUG');
                 let failed: FileTreeNode = FileTreeNode.createFailedScanNode(file.fullPath, file.name);
-                return root.children.push(failed);
+                root.children.push(failed);
             });
         }
         if (scanResults.descriptorsIssues) {
             // Load descriptors issues and create tree node in the root
-            scanResults.descriptorsIssues.forEach(graphScanResult => {
+            scanResults.descriptorsIssues.forEach((graphScanResult: DependencyScanResults) => {
                 let projectNode: ProjectDependencyTreeNode = this.createProjectNode(graphScanResult, root);
                 this._logManager.logMessage("Loading issues for '" + graphScanResult.fullPath + "'", 'DEBUG');
                 DependencyUtils.populateDependencyScanResults(projectNode, graphScanResult);

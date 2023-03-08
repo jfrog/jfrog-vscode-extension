@@ -59,13 +59,13 @@ export class ApplicabilityRunner extends BinaryRunner {
     public async scan(
         directory: string,
         abortController: AbortController,
-        cvesToRun: string[] = [],
+        cveToRun: Set<string> = new Set<string>(),
         skipFolders: string[] = []
     ): Promise<ApplicabilityScanResponse> {
         let request: ApplicabilityScanRequest = {
             type: 'analyze-applicability',
             roots: [directory],
-            cve_whitelist: cvesToRun,
+            cve_whitelist: Array.from(cveToRun),
             skipped_folders: skipFolders
         } as ApplicabilityScanRequest;
         return this.run(abortController, false, request).then(response => this.generateResponse(response?.runs[0]));
