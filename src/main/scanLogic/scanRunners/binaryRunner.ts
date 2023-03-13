@@ -141,15 +141,15 @@ export abstract class BinaryRunner {
             if (optional) {
                 let proxyConfig: IProxyConfig = <IProxyConfig>optional;
                 let proxyUrl: string = proxyConfig.host + (proxyConfig.port !== 0 ? ':' + proxyConfig.port : '');
-                proxyHttpUrl = 'http://' + proxyUrl;
-                proxyHttpsUrl = 'https://' + proxyUrl;
+                proxyHttpUrl = proxyUrl;
+                proxyHttpsUrl = proxyUrl;
             }
             // Proxy url
             if (proxyHttpUrl) {
-                binaryVars.HTTP_PROXY = this.addOptionalProxyAuthInformation(proxyHttpUrl);
+                binaryVars.HTTP_PROXY = 'http://' + this.addOptionalProxyAuthInformation(proxyHttpUrl);
             }
             if (proxyHttpsUrl) {
-                binaryVars.HTTPS_PROXY = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
+                binaryVars.HTTPS_PROXY = 'https://' + this.addOptionalProxyAuthInformation(proxyHttpsUrl);
             }
 
             return {
