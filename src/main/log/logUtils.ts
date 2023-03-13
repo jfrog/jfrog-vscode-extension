@@ -17,7 +17,8 @@ export class LogUtils {
             let logInfo: [string, number][] = logFiles.map(logPath => [logPath, fs.statSync(logPath).birthtime.getTime()]);
             logInfo.sort(([, lTime], [, rTime]) => lTime - rTime);
             while (removed < toRemoveCount) {
-                fs.rmSync(logFiles[removed]);
+                let [logPath] = logInfo[0];
+                fs.rmSync(logPath);
                 removed++;
             }
         }
