@@ -13,6 +13,14 @@ export class Utils {
     // Week
     private static readonly MAX_SCAN_CACHE_AGE_MILLISECS: number = 1000 * 60 * 60 * 24 * 7;
 
+    public static getExtensionId(): string {
+        return 'JFrog.jfrog-vscode-extension';
+    }
+
+    public static async openSettings(id?: string): Promise<void> {
+        await vscode.commands.executeCommand('workbench.action.openSettings', `@ext:${Utils.getExtensionId()}` + (id ? `.${id}` : ''));
+    }
+
     /**
      *  @returns the last segment of a path.
      * @param path
