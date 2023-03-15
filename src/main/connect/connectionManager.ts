@@ -18,9 +18,9 @@ import { ScanUtils } from '../utils/scanUtils';
 import { ContextKeys, SessionStatus } from '../constants/contextKeys';
 
 enum ConnectionMethod {
-    CLI = 'JFrog CLI',
-    EnvVar = 'Environment Variable',
-    Prompt = 'Enter Credentials'
+    CLI = 'Use the JFrog CLI credentials',
+    EnvVar = 'Load credentials from environment variables',
+    Prompt = 'Enter credentials'
 }
 
 /**
