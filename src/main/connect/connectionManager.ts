@@ -17,6 +17,12 @@ import { ConnectionUtils } from './connectionUtils';
 import { ScanUtils } from '../utils/scanUtils';
 import { ContextKeys, SessionStatus } from '../constants/contextKeys';
 
+enum ConnectionMethod {
+    CLI = 'JFrog CLI',
+    EnvVar = 'Environment Variable',
+    Prompt = 'Enter Credentials'
+}
+
 /**
  * Manage the JFrog Platform credentials and perform connection with JFrog Platform server.
  */
@@ -123,8 +129,8 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         }
     }
 
-    public async connect(): Promise<boolean> {
-        if (await this.populateCredentials(true)) {
+    public async connect(chooseMethod: boolean = false): Promise<boolean> {
+        if (chooseMethod ? await this.chooseAndPopulateCredentials() : await this.populateCredentials(true)) {
             await this.setConnectionStatus(SessionStatus.SignedIn);
             this.setConnectionView(SessionStatus.SignedIn);
             this.updateJfrogVersions();
@@ -152,6 +158,31 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     public areCompleteCredentialsSet(): boolean {
         return !!(this._xrayUrl && this._rtUrl && ((this._username && this._password) || this._accessToken));
+    }
+
+    public async chooseAndPopulateCredentials(): Promise<boolean> {
+        // Try keystore to use old credentials
+        if (await this.tryCredentialsFromKeyStore()) {
+            return true;
+        }
+        let options: string[] = Object.values(ConnectionMethod).filter(item => isNaN(Number(item)));
+        let choice: string | undefined = await vscode.window.showQuickPick(options, <vscode.QuickPickOptions>{
+            placeHolder: 'Pick connection method',
+            canPickMany: false
+        });
+        if (!!choice) {
+            this._logManager.logMessage('Option ' + choice + ' was chosen', 'INFO');
+            switch (choice) {
+                case ConnectionMethod.EnvVar:
+                    return await this.tryCredentialsFromEnv();
+                case ConnectionMethod.CLI:
+                    return await this.tryCredentialsFromJfrogCli();
+                case ConnectionMethod.Prompt:
+                    return await this.tryCredentialsFromPrompt();
+            }
+        }
+        this._logManager.logMessage("can't connect", 'INFO');
+        return false;
     }
 
     /**

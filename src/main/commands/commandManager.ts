@@ -34,7 +34,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.disconnect', () => this.doDisconnect(true));
         this.registerCommand(context, 'jfrog.xray.resetConnection', () => this.doDisconnect(false));
         this.registerCommand(context, 'jfrog.show.connectionStatus', () => this.showConnectionStatus());
-        this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
+        this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect(true));
         this.registerCommand(context, 'jfrog.xray.reConnect', () => this.doReconnect());
         // General
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
@@ -85,7 +85,7 @@ export class CommandManager implements ExtensionComponent {
                 )
                 .then(async action => {
                     if (action) {
-                        await this.doConnect();
+                        await this.doConnect(true);
                     }
                 });
             return false;
@@ -188,9 +188,10 @@ export class CommandManager implements ExtensionComponent {
 
     /**
      * Connect to JFrog Platform server. If the connection success, perform a quick scan.
+     * @param chooseMethod if true will open a quick pick to choose the connection method, false will try all the options
      */
-    private async doConnect() {
-        let credentialsSet: boolean = await this._connectionManager.connect();
+    private async doConnect(chooseMethod: boolean) {
+        let credentialsSet: boolean = await this._connectionManager.connect(chooseMethod);
         if (credentialsSet) {
             await this.doRefresh(false);
         }
@@ -202,7 +203,7 @@ export class CommandManager implements ExtensionComponent {
     private async doReconnect() {
         let ok: boolean = (await this._connectionManager.populateCredentials(false)) && (await this._connectionManager.verifyCredentials(false));
         if (ok) {
-            await this.doConnect();
+            await this.doConnect(false);
             vscode.window.showInformationMessage('✨ Successfully reconnected ✨');
             return;
         }
