@@ -14,6 +14,7 @@ export class Utils {
     private static readonly MAX_SCAN_CACHE_AGE_MILLISECS: number = 1000 * 60 * 60 * 24 * 7;
 
     public static getExtensionId(): string {
+        // publisher.name attributes from package.json
         return 'JFrog.jfrog-vscode-extension';
     }
 
@@ -23,8 +24,6 @@ export class Utils {
 
     /**
      *  @returns the last segment of a path.
-     * @param path
-     *
      */
     public static getLastSegment(path: string): string {
         if (path === '') {
