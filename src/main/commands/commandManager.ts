@@ -190,7 +190,7 @@ export class CommandManager implements ExtensionComponent {
      * Connect to JFrog Platform server. If the connection success, perform a quick scan.
      * @param chooseMethod if true will open a quick pick to choose the connection method, false will try all the options
      */
-    private async doConnect(chooseMethod: boolean) {
+    private async doConnect(chooseMethod: boolean = false) {
         let credentialsSet: boolean = await this._connectionManager.connect(chooseMethod);
         if (credentialsSet) {
             await this.doRefresh(false);
@@ -203,7 +203,7 @@ export class CommandManager implements ExtensionComponent {
     private async doReconnect() {
         let ok: boolean = (await this._connectionManager.populateCredentials(false)) && (await this._connectionManager.verifyCredentials(false));
         if (ok) {
-            await this.doConnect(false);
+            await this.doConnect();
             vscode.window.showInformationMessage('✨ Successfully reconnected ✨');
             return;
         }
