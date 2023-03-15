@@ -95,7 +95,7 @@ export class CommandManager implements ExtensionComponent {
         if (!Configuration.getBuildsPattern()) {
             vscode.window.showErrorMessage('CI integration disabled - build name pattern is not set.', ...['Set Build Name Pattern']).then(action => {
                 if (action) {
-                    vscode.commands.executeCommand('workbench.action.openSettings', 'jfrog.xray.ciIntegration.buildNamePattern');
+                    Utils.openSettings('jfrog.xray.ciIntegration.buildNamePattern');
                 }
             });
             return false;

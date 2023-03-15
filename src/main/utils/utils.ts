@@ -19,7 +19,7 @@ export class Utils {
     }
 
     public static async openSettings(id?: string): Promise<void> {
-        await vscode.commands.executeCommand('workbench.action.openSettings', `@ext:${Utils.getExtensionId()}` + (id ? `.${id}` : ''));
+        await vscode.commands.executeCommand('workbench.action.openSettings', `@ext:${Utils.getExtensionId()}` + (id ? ` ${id}` : ''));
     }
 
     /**
