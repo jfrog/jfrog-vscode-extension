@@ -171,7 +171,6 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             canPickMany: false
         });
         if (!!choice) {
-            this._logManager.logMessage('Option ' + choice + ' was chosen', 'INFO');
             switch (choice) {
                 case ConnectionMethod.EnvVar:
                     return await this.tryCredentialsFromEnv();
@@ -181,7 +180,6 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                     return await this.tryCredentialsFromPrompt();
             }
         }
-        this._logManager.logMessage("can't connect", 'INFO');
         return false;
     }
 
