@@ -8,8 +8,8 @@ import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesT
 import { createDependency } from './utils/treeNodeUtils.test';
 import { PackageType } from '../../main/types/projectType';
 
-describe('GraphScanLogic Tests', async () => {
-    describe('flatten root components', async () => {
+describe('GraphScanLogic Tests', () => {
+    describe('flatten root components', () => {
         let scanLogic: GraphScanLogic = new GraphScanLogic({} as ConnectionManager);
         it('no dependencies', async () => {
             let root: RootNode = new RootNode('', PackageType.Unknown);
