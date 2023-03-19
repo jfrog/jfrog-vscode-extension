@@ -74,7 +74,7 @@ describe('Dependency Utils Tests', () => {
 
     function getExpectedImpactedTree(root: RootNode): Map<string, IImpactGraph> {
         let map: Map<string, IImpactGraph> = new Map<string, IImpactGraph>();
-        // issue XRAY-191882, for components A:1.0.0, C:2.0.0
+        // issue XRAY-191882, for components [A:1.0.0, C:2.0.0]
         map.set('XRAY-191882' + 'A:1.0.0', {
             name: root.componentId,
             children: [{ name: 'A:1.0.0' } as IImpactGraph, { name: 'C:2.0.0', children: [{ name: 'A:1.0.0' } as IImpactGraph] } as IImpactGraph]
@@ -88,7 +88,7 @@ describe('Dependency Utils Tests', () => {
             name: root.componentId,
             children: [{ name: 'B:1.0.0' } as IImpactGraph]
         } as IImpactGraph);
-        // issue XRAY-142007, for components A:1.0.1, C:2.0.0
+        // issue XRAY-142007, for components [A:1.0.1, C:2.0.0]
         map.set('XRAY-142007' + 'A:1.0.1', {
             name: root.componentId,
             children: [{ name: 'B:1.0.0', children: [{ name: 'A:1.0.1' } as IImpactGraph] } as IImpactGraph]
