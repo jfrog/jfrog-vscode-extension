@@ -153,7 +153,7 @@ describe('Dependency Utils Tests', () => {
 
     [
         {
-            name: 'no bundle',
+            name: 'No bundle',
             err: new Error(),
             withBundle: false,
             // Expected to throw error since no file information provided
@@ -161,7 +161,7 @@ describe('Dependency Utils Tests', () => {
             expectedNodeName: undefined
         },
         {
-            name: 'general error',
+            name: 'General error',
             err: new Error(),
             withBundle: true,
             // Expected not to throw and to create failed scan node with default reason
@@ -169,7 +169,7 @@ describe('Dependency Utils Tests', () => {
             expectedNodeName: DependencyUtils.FAIL_TO_SCAN
         },
         {
-            name: 'not installed error',
+            name: 'Not installed error',
             err: new FileScanError(BuildTreeErrorType.NotInstalled, BuildTreeErrorType.NotInstalled),
             withBundle: true,
             // Expected not to throw and to create failed scan node with specific reason
@@ -177,7 +177,7 @@ describe('Dependency Utils Tests', () => {
             expectedNodeName: BuildTreeErrorType.NotInstalled
         },
         {
-            name: 'not supported error',
+            name: 'Not supported error',
             err: new FileScanError(BuildTreeErrorType.NotSupported, BuildTreeErrorType.NotSupported),
             withBundle: true,
             // Expected not to throw and to create failed scan node with specific reason
@@ -185,7 +185,7 @@ describe('Dependency Utils Tests', () => {
             expectedNodeName: BuildTreeErrorType.NotSupported
         },
         {
-            name: 'cancel error',
+            name: 'Cancel error',
             err: new ScanCancellationError(),
             withBundle: true,
             // Expected to throw error to cancel the whole scan
@@ -193,7 +193,7 @@ describe('Dependency Utils Tests', () => {
             expectedNodeName: undefined
         },
         {
-            name: 'not-entitled error',
+            name: 'Not-entitled error',
             err: new NotEntitledError(),
             withBundle: true,
             // Expected not to throw and not to create failed scan node
