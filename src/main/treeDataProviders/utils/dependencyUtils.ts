@@ -306,7 +306,7 @@ export class DependencyUtils {
      * @param response - the scan result issues and the dependency components for each of them
      * @returns map from (issue_id+componentId) to IImpactedPath for the given tree root
      */
-    private static createImpactedPaths(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactGraph> {
+    public static createImpactedPaths(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactGraph> {
         let paths: Map<string, IImpactGraph> = new Map<string, IImpactGraph>();
         let issues: IVulnerability[] = response.violations || response.vulnerabilities;
         if (!issues) {
