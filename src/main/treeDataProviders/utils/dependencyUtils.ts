@@ -32,6 +32,8 @@ import { GeneralInfo } from '../../types/generalInfo';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
 
 export class DependencyUtils {
+    public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
+
     /**
      * Scan all the dependencies of a given package for security issues and populate the given data and view objects with the information.
      * @param scanManager - the scanManager that preforms the actual scans
@@ -290,7 +292,7 @@ export class DependencyUtils {
             if (error instanceof FileScanError) {
                 failReason = error.reason;
             } else {
-                failReason = '[Fail to scan]';
+                failReason = DependencyUtils.FAIL_TO_SCAN;
             }
             fileScanBundle.data.name = failReason;
             // Populate failed data
@@ -306,10 +308,12 @@ export class DependencyUtils {
      * @param response - the scan result issues and the dependency components for each of them
      * @returns map from (issue_id+componentId) to IImpactedPath for the given tree root
      */
-    private static createImpactedPaths(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactGraph> {
+    public static createImpactedPaths(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactGraph> {
         let paths: Map<string, IImpactGraph> = new Map<string, IImpactGraph>();
         let issues: IVulnerability[] = response.violations || response.vulnerabilities;
-
+        if (!issues) {
+            return paths;
+        }
         for (let i: number = 0; i < issues.length; i++) {
             let issue: IVulnerability = issues[i];
             for (let [componentId, component] of Object.entries(issue.components)) {
@@ -368,6 +372,9 @@ export class DependencyUtils {
         // Get the information from data
         let graphResponse: IGraphResponse = dependencyScanResults.dependenciesGraphScan;
         projectNode.dependencyScanTimeStamp = dependencyScanResults.graphScanTimestamp;
+        if (!graphResponse.vulnerabilities && !graphResponse.violations) {
+            return 0;
+        }
         let impactedPaths: Map<string, IImpactGraph> = new Map<string, IImpactGraph>(Object.entries(dependencyScanResults.impactTreeData));
         let directComponents: Set<string> = this.getDirectComponents(impactedPaths);
         let issues: IVulnerability[] | IViolation[] = graphResponse.violations || graphResponse.vulnerabilities;

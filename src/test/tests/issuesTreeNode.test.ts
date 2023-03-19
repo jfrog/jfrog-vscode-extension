@@ -117,7 +117,7 @@ describe('Issues Root Node Tests', () => {
 
     it('Title and description test', () => {
         // No title
-        let testNode: IssuesRootTreeNode = new IssuesRootTreeNode({ uri: { fsPath: path.join('root') } as vscode.Uri } as vscode.WorkspaceFolder);
+        let testNode: IssuesRootTreeNode = createRootTestNode(path.join('root'));
         testNode.apply();
         assert.equal(testNode.description, '');
         assert.notInclude(testNode.tooltip, 'Status:');

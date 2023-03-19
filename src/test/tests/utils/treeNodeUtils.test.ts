@@ -1,6 +1,7 @@
 import { IComponent, IGraphCve, IVulnerability } from 'jfrog-client-js';
 import { IImpactGraph } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
+import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { CveTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 import { DependencyIssuesTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { DescriptorTreeNode } from '../../../main/treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
@@ -8,6 +9,8 @@ import { ProjectDependencyTreeNode } from '../../../main/treeDataProviders/issue
 import { FileTreeNode } from '../../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../../../main/treeDataProviders/issuesTree/issueTreeNode';
+import { GeneralInfo } from '../../../main/types/generalInfo';
+import { PackageType } from '../../../main/types/projectType';
 import { Severity, SeverityUtils } from '../../../main/types/severity';
 
 export interface FileNodeTestCase {
@@ -49,6 +52,13 @@ export function createRootTestNode(pathOfWorkspace: string): IssuesRootTreeNode 
             fsPath: pathOfWorkspace
         } as vscode.Uri
     } as vscode.WorkspaceFolder);
+}
+
+export function createDependency(artifactId: string, version: string, parent?: DependenciesTreeNode): DependenciesTreeNode {
+    let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo(artifactId, version, [], '', PackageType.Unknown));
+    dependenciesTreeNode.dependencyId = artifactId + ':' + version;
+    parent?.addChild(dependenciesTreeNode);
+    return dependenciesTreeNode;
 }
 
 /**
