@@ -335,7 +335,9 @@ After your builds were fetched from Artifactory, press on the Builds ![Builds](r
 
 ## Extension Settings
 
-To open the extension settings, use the following VS Code menu command:
+To open the extension settings, use the extension settings icon: 
+![Open_Settings](resources/readme/preview/openSettings.png)
+Or use the following VS Code menu command:
 
 -   On Windows/Linux - File > Preferences > Settings > Extensions > JFrog
 -   On macOS - Code > Preferences > Settings > Extensions > JFrog

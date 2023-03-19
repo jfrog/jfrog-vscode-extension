@@ -120,6 +120,12 @@
         },
         "commands": [
             {
+                "command": "jfrog.open.settings",
+                "title": "Open extension settings",
+                "icon": "$(extensions-manage)",
+                "category": "JFrog"
+            },
+            {
                 "command": "jfrog.xray.refresh",
                 "title": "Refresh",
                 "icon": {
@@ -228,6 +234,11 @@
                     "command": "jfrog.xray.builds",
                     "when": "view == jfrog.xray.ci.issues && isCi",
                     "group": "navigation@4"
+                },
+                {
+                    "command": "jfrog.open.settings",
+                    "when": "view == jfrog.xray.ci.issues || view == jfrog.issues",
+                    "group": "navigation@5"
                 }
             ],
             "view/item/context": [

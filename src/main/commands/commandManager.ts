@@ -14,6 +14,7 @@ import { DiagnosticsManager } from '../diagnostics/diagnosticsManager';
 import { IDependencyPage, IEosPage } from 'jfrog-ide-webview';
 import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
+import { Utils } from '../utils/utils';
 
 /**
  * Register and execute all commands in the extension.
@@ -37,6 +38,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
         this.registerCommand(context, 'jfrog.xray.reConnect', () => this.doReconnect());
         // General
+        this.registerCommand(context, 'jfrog.open.settings', () => Utils.openSettings());
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
@@ -93,7 +95,7 @@ export class CommandManager implements ExtensionComponent {
         if (!Configuration.getBuildsPattern()) {
             vscode.window.showErrorMessage('CI integration disabled - build name pattern is not set.', ...['Set Build Name Pattern']).then(action => {
                 if (action) {
-                    vscode.commands.executeCommand('workbench.action.openSettings', 'jfrog.xray.ciIntegration.buildNamePattern');
+                    Utils.openSettings('jfrog.xray.ciIntegration.buildNamePattern');
                 }
             });
             return false;
