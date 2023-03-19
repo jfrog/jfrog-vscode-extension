@@ -58,7 +58,7 @@ export class DependencyUtils {
             root.workSpace,
             type,
             descriptorsPaths,
-            progressManager,
+            () => progressManager.onProgress,
             scanManager.logManager
         );
         progressManager.reportProgress();
@@ -125,28 +125,28 @@ export class DependencyUtils {
         workspace: vscode.WorkspaceFolder,
         packageType: PackageType,
         descriptors: vscode.Uri[],
-        progressManager: StepProgress,
+        onProgress: () => void,
         log: LogManager,
         parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('', '', [], '', PackageType.Unknown))
     ): Promise<DependenciesTreeNode> {
         switch (packageType) {
             case PackageType.Go:
-                await GoUtils.createDependenciesTrees(descriptors, log, progressManager.activateOnProgress, parent);
+                await GoUtils.createDependenciesTrees(descriptors, log, onProgress, parent);
                 break;
             case PackageType.Maven:
-                await MavenUtils.createDependenciesTrees(descriptors, log, progressManager.activateOnProgress, parent);
+                await MavenUtils.createDependenciesTrees(descriptors, log, onProgress, parent);
                 break;
             case PackageType.Npm:
-                await NpmUtils.createDependenciesTrees(descriptors, log, progressManager.activateOnProgress, parent);
+                await NpmUtils.createDependenciesTrees(descriptors, log, onProgress, parent);
                 break;
             case PackageType.Python:
-                await PypiUtils.createDependenciesTrees(descriptors, workspace, log, progressManager.activateOnProgress, parent);
+                await PypiUtils.createDependenciesTrees(descriptors, workspace, log, onProgress, parent);
                 break;
             case PackageType.Yarn:
-                await YarnUtils.createDependenciesTrees(descriptors, log, progressManager.activateOnProgress, parent);
+                await YarnUtils.createDependenciesTrees(descriptors, log, onProgress, parent);
                 break;
             case PackageType.Nuget:
-                await NugetUtils.createDependenciesTrees(descriptors, log, progressManager.activateOnProgress, parent);
+                await NugetUtils.createDependenciesTrees(descriptors, log, onProgress, parent);
                 break;
         }
         // flatten parent to contain all sub RootNode in package to be also direct children for projects with sub modules
@@ -205,13 +205,15 @@ export class DependencyUtils {
                     fileScanBundle.root.addChildAndApply(fileScanBundle.dataNode);
                 }
             })
-            .catch(error => DependencyUtils.onFileScanError(error, scanManager.logManager, fileScanBundle));
+            .catch(error => DependencyUtils.onFileScanError(error, scanManager.logManager, fileScanBundle))
+            .finally(() => scanProgress.onProgress());
+
         // Applicable scan task
         if (!scanManager.isApplicableSupported() || !foundIssues) {
             return;
         }
         if (fileScanBundle.dataNode instanceof DescriptorTreeNode) {
-            await AnalyzerUtils.cveApplicableScanning(scanManager, fileScanBundle, scanProgress.abortController).catch(err =>
+            await AnalyzerUtils.cveApplicableScanning(scanManager, fileScanBundle, scanProgress).catch(err =>
                 ScanUtils.onScanError(err, scanManager.logManager, true)
             );
         }

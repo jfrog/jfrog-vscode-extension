@@ -21,6 +21,8 @@ export class ScanUtils {
 
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
+    // 5 min
+    public static readonly ANALYZER_TIMEOUT_MILLISECS: number = 1000 * 60 * 5;
 
     public static async scanWithProgress(
         scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => Promise<void>,
@@ -245,7 +247,7 @@ export class ScanUtils {
             logger.logMessage(error.message, 'INFO');
             return undefined;
         }
-        if (handle) {
+        if (handle || error instanceof ScanTimeoutError) {
             logger.logError(error, true);
             return undefined;
         }
@@ -280,4 +282,10 @@ export class FileScanError extends Error {
 
 export class ScanCancellationError extends Error {
     message: string = 'Scan was cancelled';
+}
+
+export class ScanTimeoutError extends Error {
+    constructor(scan: string, public time_millisecs: number) {
+        super(`Task ${scan} timed out after ${time_millisecs}ms`);
+    }
 }

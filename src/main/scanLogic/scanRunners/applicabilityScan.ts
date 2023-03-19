@@ -38,8 +38,8 @@ export class ApplicabilityRunner extends BinaryRunner {
     }
 
     /** @override */
-    public async runBinary(abortSignal: AbortSignal, yamlConfigPath: string, executionLogDirectory: string): Promise<void> {
-        await this.executeBinary(abortSignal, ['ca', yamlConfigPath], executionLogDirectory);
+    public async runBinary(checkCancel: () => void, yamlConfigPath: string, executionLogDirectory: string): Promise<void> {
+        await this.executeBinary(checkCancel, ['ca', yamlConfigPath], executionLogDirectory);
     }
 
     /** @override */
@@ -51,14 +51,14 @@ export class ApplicabilityRunner extends BinaryRunner {
     /**
      * Scan for applicability issues
      * @param directory - the directory the scan will perform on its files
-     * @param abortController - the controller that signals abort for the operation
+     * @param checkCancel - check if cancel
      * @param cvesToRun - the CVEs to run the scan on
      * @param skipFolders - the subfolders inside the directory to exclude from the scan
      * @returns the response generated from the scan
      */
     public async scan(
         directory: string,
-        abortController: AbortController,
+        checkCancel: () => void,
         cveToRun: Set<string> = new Set<string>(),
         skipFolders: string[] = []
     ): Promise<ApplicabilityScanResponse> {
@@ -68,7 +68,7 @@ export class ApplicabilityRunner extends BinaryRunner {
             cve_whitelist: Array.from(cveToRun),
             skipped_folders: skipFolders
         } as ApplicabilityScanRequest;
-        return this.run(abortController, false, request).then(response => this.generateResponse(response?.runs[0]));
+        return this.run(checkCancel, false, request).then(response => this.generateResponse(response?.runs[0]));
     }
 
     /**

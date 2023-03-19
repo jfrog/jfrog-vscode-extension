@@ -12,7 +12,7 @@ import { FileTreeNode } from '../issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { PackageType } from '../../types/projectType';
-import { StepProgress } from './stepProgress';
+import { GraphScanProgress, StepProgress } from './stepProgress';
 import { EosIssue, EosIssueLocation, EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
 import { ScanManager } from '../../scanLogic/scanManager';
 import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
@@ -98,12 +98,12 @@ export class AnalyzerUtils {
      * Run CVE applicable scan async task and populate the given bundle with the results.
      * @param scanManager - the ScanManager that preforms the actual scans
      * @param fileScanBundle - the file bundle that contains all the information on scan results
-     * @param abortController - the controller to abort the operation
+     * @param scanProgress - the progress for the given scan
      */
     public static async cveApplicableScanning(
         scanManager: ScanManager,
         fileScanBundle: FileScanBundle,
-        abortController: AbortController
+        scanProgress: GraphScanProgress
     ): Promise<void> {
         let cvesToScan: Set<string> = new Set<string>();
         if (!(fileScanBundle.dataNode instanceof DescriptorTreeNode)) {
@@ -121,7 +121,11 @@ export class AnalyzerUtils {
         scanManager.logManager.logMessage('Scanning descriptor ' + descriptorIssues.fullPath + ' for cve applicability issues', 'INFO');
 
         let startApplicableTime: number = Date.now();
-        descriptorIssues.applicableIssues = await scanManager.scanApplicability(path.dirname(descriptorIssues.fullPath), abortController, cvesToScan);
+        descriptorIssues.applicableIssues = await scanManager.scanApplicability(
+            path.dirname(descriptorIssues.fullPath),
+            scanProgress.onProgress,
+            cvesToScan
+        );
 
         if (descriptorIssues.applicableIssues && descriptorIssues.applicableIssues.applicableCve) {
             descriptorIssues.applicableScanTimestamp = Date.now();
@@ -300,9 +304,7 @@ export class AnalyzerUtils {
         }
         // Run
         let startTime: number = Date.now();
-        workspaceData.eosScan = await scanManager
-            .scanEos(progressManager.abortController, ...requests)
-            .finally(() => progressManager.reportProgress());
+        workspaceData.eosScan = await scanManager.scanEos(progressManager.onProgress, ...requests).finally(() => progressManager.reportProgress());
         if (workspaceData.eosScan) {
             workspaceData.eosScanTimestamp = Date.now();
             let applicableIssuesCount: number = AnalyzerUtils.populateEosIssues(root, workspaceData);
@@ -318,7 +320,7 @@ export class AnalyzerUtils {
             );
 
             root.apply();
-            progressManager.activateOnProgress();
+            progressManager.onProgress();
         }
     }
 
