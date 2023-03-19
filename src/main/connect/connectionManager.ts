@@ -476,9 +476,9 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     private hasRequiredCredentialsInEnv(): boolean {
         return (
-            process.env[ConnectionManager.URL_ENV] !== undefined &&
-            ((process.env[ConnectionManager.USERNAME_ENV] !== undefined && process.env[ConnectionManager.PASSWORD_ENV] !== undefined) ||
-                process.env[ConnectionManager.ACCESS_TOKEN_ENV] !== undefined)
+            !!process.env[ConnectionManager.URL_ENV] &&
+            ((!!process.env[ConnectionManager.USERNAME_ENV] && !!process.env[ConnectionManager.PASSWORD_ENV]) ||
+                !!process.env[ConnectionManager.ACCESS_TOKEN_ENV])
         );
     }
 
