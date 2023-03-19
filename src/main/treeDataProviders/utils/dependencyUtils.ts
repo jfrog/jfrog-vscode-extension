@@ -32,6 +32,8 @@ import { GeneralInfo } from '../../types/generalInfo';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
 
 export class DependencyUtils {
+    public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
+
     /**
      * Scan all the dependencies of a given package for security issues and populate the given data and view objects with the information.
      * @param scanManager - the scanManager that preforms the actual scans
@@ -290,7 +292,7 @@ export class DependencyUtils {
             if (error instanceof FileScanError) {
                 failReason = error.reason;
             } else {
-                failReason = '[Fail to scan]';
+                failReason = DependencyUtils.FAIL_TO_SCAN;
             }
             fileScanBundle.data.name = failReason;
             // Populate failed data
