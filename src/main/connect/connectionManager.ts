@@ -165,11 +165,14 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         if (await this.tryCredentialsFromKeyStore()) {
             return true;
         }
-        let options: string[] = Object.values(ConnectionMethod).filter(item => isNaN(Number(item)));
-        let choice: string | undefined = await vscode.window.showQuickPick(options, <vscode.QuickPickOptions>{
-            placeHolder: 'Pick connection method',
-            canPickMany: false
-        });
+        let options: string[] = await this.getValidConnectionMethods();
+        let choice: string | undefined =
+            options.length === 1
+                ? options[0]
+                : await vscode.window.showQuickPick(options, <vscode.QuickPickOptions>{
+                      placeHolder: 'Pick connection method',
+                      canPickMany: false
+                  });
         if (!!choice) {
             switch (choice) {
                 case ConnectionMethod.EnvVar:
@@ -181,6 +184,19 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             }
         }
         return false;
+    }
+
+    private async getValidConnectionMethods(): Promise<string[]> {
+        let options: string[] = [ConnectionMethod.Prompt];
+
+        if (await this.verifyJfrogCliInstalledAndVersion()) {
+            options.push(ConnectionMethod.CLI);
+        }
+        if (this.hasRequiredCredentialsInEnv()) {
+            options.push(ConnectionMethod.EnvVar);
+        }
+
+        return options;
     }
 
     /**
@@ -456,6 +472,14 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         }
         await this.storeConnection();
         return true;
+    }
+
+    private hasRequiredCredentialsInEnv(): boolean {
+        return (
+            process.env[ConnectionManager.URL_ENV] !== undefined &&
+            ((process.env[ConnectionManager.USERNAME_ENV] !== undefined && process.env[ConnectionManager.PASSWORD_ENV] !== undefined) ||
+                process.env[ConnectionManager.ACCESS_TOKEN_ENV] !== undefined)
+        );
     }
 
     public async getCredentialsFromEnv(): Promise<boolean> {
