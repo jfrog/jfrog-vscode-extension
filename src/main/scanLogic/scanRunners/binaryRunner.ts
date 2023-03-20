@@ -91,10 +91,9 @@ export abstract class BinaryRunner {
      * @param executionLogDirectory - the directory to save the execution log in
      */
     protected async executeBinary(checkCancel: () => void, args: string[], executionLogDirectory: string): Promise<void> {
-        await RunUtils.runWithTimeout(
-            this._abortCheckInterval,
-            checkCancel,
-            ScanUtils.executeCmdAsync(
+        await RunUtils.runWithTimeout(this._abortCheckInterval, checkCancel, {
+            title: this._binary.name,
+            task: ScanUtils.executeCmdAsync(
                 '"' + this._binary.fullPath + '" ' + args.join(' '),
                 this._runDirectory,
                 this.createEnvForRun(executionLogDirectory)
@@ -106,7 +105,7 @@ export abstract class BinaryRunner {
                     this._logManager.logMessage("Done executing '" + this._binary.name + "' with error, error log:\n" + std.stderr, 'ERR');
                 }
             })
-        );
+        });
     }
 
     /**

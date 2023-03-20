@@ -186,7 +186,10 @@ export class ScanManager implements ExtensionComponent {
             return {} as ApplicabilityScanResponse;
         }
         let skipFiles: string[] = AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern());
-        this._logManager.logMessage('Scanning directory ' + directory + ', for CVE issues: ' + cveToRun + ', skipping files: ' + skipFiles, 'DEBUG');
+        this._logManager.logMessage(
+            'Scanning directory ' + directory + ', for CVE issues: ' + Array.from(cveToRun.values()) + ', skipping files: ' + skipFiles,
+            'DEBUG'
+        );
         return applicableRunner.scan(directory, checkCancel, cveToRun, skipFiles);
     }
 

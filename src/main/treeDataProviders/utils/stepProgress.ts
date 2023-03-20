@@ -85,7 +85,7 @@ export class GraphScanProgress implements XrayScanProgress {
 
     /** @override */
     public setPercentage(percentage: number): void {
-        if (percentage != this.lastPercentage) {
+        if (percentage != this.lastPercentage && percentage < 100) {
             let inc: number = this._totalProgress * ((percentage - this.lastPercentage) / 100);
             this._log?.logMessage(
                 '[' + this._scanName + '] reported change in progress ' + this.lastPercentage + '% -> ' + percentage + '%',
