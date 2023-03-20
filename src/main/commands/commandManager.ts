@@ -188,7 +188,7 @@ export class CommandManager implements ExtensionComponent {
 
     /**
      * Connect to JFrog Platform server. If the connection success, perform a quick scan.
-     * @param chooseMethod if true will open a quick pick to choose the connection method, false will try all the options
+     * @param chooseMethod if true, a quick pick UI is shown, to choose the connection method. If false, all the connection methods are attempted.
      */
     private async doConnect(chooseMethod: boolean = false) {
         let credentialsSet: boolean = await this._connectionManager.connect(chooseMethod);
