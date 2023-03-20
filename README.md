@@ -127,13 +127,21 @@ The commands will do the following:
 Connect to your JFrog environment by clicking on the green Connect ![Connect](resources/readme/connect.png) button or the provided button in the JFrog extension tab:
 ![Connect](resources/readme/preview/connect.png)
 
-You can leave the platform URL empty, to enter the separate URLs for Artifactory and Xray.
+You can choose the method that the extension will get your credentials:
 
-**Note**: If the credentials is configured and used by JFrog CLI the extension will try to read and use them to connect.
+**JFrog CLI**
 
-The extension also supports connecting to your JFrog environment using environment variables. You may provide basic auth credentials or access token as follows:
+Try to get and use the credentials that is used by JFrog CLI, if installed and configured.
 
-**Note**: For security reasons, it is recommended to unset the environment variables after launching VS Code.
+**Enter credentials**
+
+Enter your JFrog platform information manually and provide the needed credentials (username + password / access token).
+
+**Note**: You can leave the platform URL empty, to enter the separate URLs for Artifactory and Xray.
+
+**Environment Variables**
+
+You may provide basic auth credentials or access token as follows:
 
 -   `JFROG_IDE_URL` - JFrog URL
 -   `JFROG_IDE_USERNAME` - JFrog username
@@ -141,7 +149,7 @@ The extension also supports connecting to your JFrog environment using environme
 -   `JFROG_IDE_ACCESS_TOKEN` - JFrog access token
 -   `JFROG_IDE_STORE_CONNECTION` - Set the value of this environment variable to **true**, if you'd like VS Code to store the connection details after reading them from the environment variables.
 
-
+**Note**: For security reasons, it is recommended to unset the environment variables after launching VS Code.
 
 ## Using the Extension
 

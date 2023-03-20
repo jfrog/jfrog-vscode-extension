@@ -17,6 +17,12 @@ import { ConnectionUtils } from './connectionUtils';
 import { ScanUtils } from '../utils/scanUtils';
 import { ContextKeys, SessionStatus } from '../constants/contextKeys';
 
+enum ConnectionMethod {
+    CLI = 'Use the JFrog CLI credentials',
+    EnvVar = 'Load credentials from environment variables',
+    Prompt = 'Enter credentials'
+}
+
 /**
  * Manage the JFrog Platform credentials and perform connection with JFrog Platform server.
  */
@@ -123,8 +129,8 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         }
     }
 
-    public async connect(): Promise<boolean> {
-        if (await this.populateCredentials(true)) {
+    public async connect(chooseMethod: boolean = false): Promise<boolean> {
+        if (chooseMethod ? await this.chooseAndPopulateCredentials() : await this.populateCredentials(true)) {
             await this.setConnectionStatus(SessionStatus.SignedIn);
             this.setConnectionView(SessionStatus.SignedIn);
             this.updateJfrogVersions();
@@ -152,6 +158,45 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     public areCompleteCredentialsSet(): boolean {
         return !!(this._xrayUrl && this._rtUrl && ((this._username && this._password) || this._accessToken));
+    }
+
+    public async chooseAndPopulateCredentials(): Promise<boolean> {
+        // Try keystore to use old credentials
+        if (await this.tryCredentialsFromKeyStore()) {
+            return true;
+        }
+        let options: string[] = await this.getValidConnectionMethods();
+        let choice: string | undefined =
+            options.length === 1
+                ? options[0]
+                : await vscode.window.showQuickPick(options, <vscode.QuickPickOptions>{
+                      placeHolder: 'Pick connection method',
+                      canPickMany: false
+                  });
+        if (!!choice) {
+            switch (choice) {
+                case ConnectionMethod.EnvVar:
+                    return await this.tryCredentialsFromEnv();
+                case ConnectionMethod.CLI:
+                    return await this.tryCredentialsFromJfrogCli();
+                case ConnectionMethod.Prompt:
+                    return await this.tryCredentialsFromPrompt();
+            }
+        }
+        return false;
+    }
+
+    private async getValidConnectionMethods(): Promise<string[]> {
+        let options: string[] = [ConnectionMethod.Prompt];
+
+        if (await this.verifyJfrogCliInstalledAndVersion()) {
+            options.push(ConnectionMethod.CLI);
+        }
+        if (this.hasRequiredCredentialsInEnv()) {
+            options.push(ConnectionMethod.EnvVar);
+        }
+
+        return options;
     }
 
     /**
@@ -427,6 +472,14 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         }
         await this.storeConnection();
         return true;
+    }
+
+    private hasRequiredCredentialsInEnv(): boolean {
+        return (
+            !!process.env[ConnectionManager.URL_ENV] &&
+            ((!!process.env[ConnectionManager.USERNAME_ENV] && !!process.env[ConnectionManager.PASSWORD_ENV]) ||
+                !!process.env[ConnectionManager.ACCESS_TOKEN_ENV])
+        );
     }
 
     public async getCredentialsFromEnv(): Promise<boolean> {
