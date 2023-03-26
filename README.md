@@ -17,6 +17,8 @@
 -   [Getting Started](#getting-started)
     -   [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
     -   [Connecting VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
+        -   [Severity Icons](#severity-icons)
+
     -   [Using the extension](#using-the-extension)
         -   [Severity Icons](#severity-icons)
 -   [The Local View](#the-local-view)
@@ -146,7 +148,7 @@ You may set the connection details using the following environment variables. VS
 -   `JFROG_IDE_USERNAME` - JFrog username
 -   `JFROG_IDE_PASSWORD` - JFrog password
 -   `JFROG_IDE_ACCESS_TOKEN` - JFrog access token
--   `JFROG_IDE_STORE_CONNECTION` - Set the value of this environment variable to **true**, if you'd like VS Code to store the connection details after 
+-   `JFROG_IDE_STORE_CONNECTION` - Set the value of this environment variable to **true**, if you'd like VS Code to store the connection details after reading them from the environment variables.
 
 **Note**: For security reasons, it is recommended to unset the environment variables after launching VS Code.
 
