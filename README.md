@@ -17,6 +17,8 @@
 -   [Getting Started](#getting-started)
     -   [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
     -   [Connecting VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
+        -   [Severity Icons](#severity-icons)
+
     -   [Using the extension](#using-the-extension)
         -   [Severity Icons](#severity-icons)
 -   [The Local View](#the-local-view)
@@ -101,9 +103,8 @@ The extension is available to install from the VS Code extensions marketplace. a
 
 ## Connecting VS Code to Your JFrog Environment
 
-### Set Up a FREE JFrog Environment in the Cloud
 <details>
-<summary>Run one of the following commands in your terminal.</summary>
+<summary>If you don't have a JFrog Platform instance, create a free instance in the cloud by running one of the following commands in your terminal.</summary>
 
 **MacOS and Linux using cUrl**
 
@@ -124,24 +125,24 @@ The commands will do the following:
 </details>
 <br>
 
-Connect to your JFrog environment by clicking on the green Connect ![Connect](resources/readme/connect.png) button or the provided button in the JFrog extension tab:
+Connect VS Code to your JFrog Platform instance by clicking on the green Connect ![Connect](resources/readme/connect.png) button or the provided button in the JFrog extension tab:
 ![Connect](resources/readme/preview/connect.png)
 
-You can choose the method that the extension will get your credentials:
+You can choose one of the following methods to provide VS Code with the JFrog Platform connections details.
 
-**JFrog CLI**
+### Use the JFrog CLI Credentials
 
-Try to get and use the credentials that is used by JFrog CLI, if installed and configured.
+If JFrog CLI is installed on your machibe, and is configured with the JFrog Platform's connection details, use those details to connect VS Code to the JFrog Platform.
 
-**Enter credentials**
+### Enter Connection
 
-Enter your JFrog platform information manually and provide the needed credentials (username + password / access token).
+Enter your JFrog platform connection details manually.
 
-**Note**: You can leave the platform URL empty, to enter the separate URLs for Artifactory and Xray.
+**Note**: You can leave the JFrog Platform URL empty, to enter the URLs of Artifactory and Xray separately.
 
-**Environment Variables**
+### Environment Variables
 
-You may provide basic auth credentials or access token as follows:
+You may set the connection details using the following environment variables. VS Code will read them after it is launched.
 
 -   `JFROG_IDE_URL` - JFrog URL
 -   `JFROG_IDE_USERNAME` - JFrog username
