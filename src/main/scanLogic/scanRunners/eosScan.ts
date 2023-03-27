@@ -45,6 +45,7 @@ export class EosRunner extends BinaryRunner {
             connectionManager,
             abortCheckInterval,
             logManager,
+            'analyze-codebase',
             new Resource('', path.join(ScanUtils.getHomePath(), EosRunner.BINARY_FOLDER, EosRunner.getBinaryName()), logManager)
         );
     }

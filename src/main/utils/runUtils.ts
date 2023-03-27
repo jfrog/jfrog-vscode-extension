@@ -26,7 +26,7 @@ export class RunUtils {
                 // Add task from argument
                 !(task instanceof Promise) && task.task ? task.task : task,
                 // Add task to check if cancel was requested from the user or reached timeout
-                this.checkCancelAndTimeoutTask(!(task instanceof Promise) && task.title ? task.title : '' + index + 1, timeout, checkCancel)
+                this.checkCancelAndTimeoutTask(!(task instanceof Promise) && task.title ? task.title : '' + (index + 1), timeout, checkCancel)
             ]);
             results.push(result);
         });
@@ -40,9 +40,10 @@ export class RunUtils {
      * @param tasksBundle - an object that holds the information about the active async tasks count and the abort signal for them
      */
     private static async checkCancelAndTimeoutTask(title: string, timeout: number, checkCancel: () => void): Promise<void> {
-        for (let elapsed: number = 0; elapsed < timeout; elapsed += RunUtils.CHECK_INTERVAL_MILLISECS) {
+        let checkInterval: number = timeout < RunUtils.CHECK_INTERVAL_MILLISECS ? timeout : RunUtils.CHECK_INTERVAL_MILLISECS;
+        for (let elapsed: number = 0; elapsed < timeout; elapsed += checkInterval) {
             checkCancel();
-            await this.delay(RunUtils.CHECK_INTERVAL_MILLISECS);
+            await this.delay(checkInterval);
         }
         throw new ScanTimeoutError(title, timeout);
     }

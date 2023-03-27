@@ -33,8 +33,10 @@ export interface CveApplicableDetails {
  * Describes a runner for the Applicability scan executable file.
  */
 export class ApplicabilityRunner extends BinaryRunner {
+    private static readonly NAME: string = 'analyze-applicability';
+
     constructor(connectionManager: ConnectionManager, abortCheckInterval: number, logManager: LogManager) {
-        super(connectionManager, abortCheckInterval, logManager);
+        super(connectionManager, abortCheckInterval, logManager, ApplicabilityRunner.NAME);
     }
 
     /** @override */
@@ -63,7 +65,7 @@ export class ApplicabilityRunner extends BinaryRunner {
         skipFolders: string[] = []
     ): Promise<ApplicabilityScanResponse> {
         let request: ApplicabilityScanRequest = {
-            type: 'analyze-applicability',
+            type: ApplicabilityRunner.NAME,
             roots: [directory],
             cve_whitelist: Array.from(cveToRun),
             skipped_folders: skipFolders

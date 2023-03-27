@@ -40,9 +40,17 @@ interface RunRequest {
 export abstract class BinaryRunner {
     protected _runDirectory: string;
 
-    private static readonly RUNNER_NAME: string = 'analyzerManager';
+    public static readonly RUNNER_NAME: string = 'analyzerManager';
 
-    private static readonly NOT_ENTITLED: number = 31;
+    public static readonly NOT_ENTITLED: number = 31;
+
+    public static readonly ENV_PLATFORM_URL: string = 'JF_PLATFORM_URL';
+    public static readonly ENV_TOKEN: string = 'JF_TOKEN';
+    public static readonly ENV_USER: string = 'JF_USER';
+    public static readonly ENV_PASSWORD: string = 'JF_PASS';
+    public static readonly ENV_LOG_DIR: string = 'AM_LOG_DIRECTORY';
+    public static readonly ENV_HTTP_PROXY: string = 'HTTP_PROXY';
+    public static readonly ENV_HTTPS_PROXY: string = 'HTTPS_PROXY';
 
     private static readonly DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/[RELEASE]/';
 
@@ -50,6 +58,7 @@ export abstract class BinaryRunner {
         protected _connectionManager: ConnectionManager,
         protected _abortCheckInterval: number,
         protected _logManager: LogManager,
+        protected _name?: string,
         protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager)
     ) {
         this._runDirectory = path.dirname(this._binary.fullPath);
@@ -99,10 +108,13 @@ export abstract class BinaryRunner {
                 this.createEnvForRun(executionLogDirectory)
             ).then(std => {
                 if (std.stdout && std.stdout.length > 0) {
-                    this._logManager.logMessage("Done executing '" + this._binary.name + "' with log, log:\n" + std.stdout, 'DEBUG');
+                    this._logManager.logMessage("Done executing '" + this._name ?? this._binary.name + "' with log, log:\n" + std.stdout, 'DEBUG');
                 }
                 if (std.stderr && std.stderr.length > 0) {
-                    this._logManager.logMessage("Done executing '" + this._binary.name + "' with error, error log:\n" + std.stderr, 'ERR');
+                    this._logManager.logMessage(
+                        "Done executing '" + this._name ?? this._binary.name + "' with error, error log:\n" + std.stderr,
+                        'ERR'
+                    );
                 }
             })
         });
@@ -113,27 +125,22 @@ export abstract class BinaryRunner {
      * @param executionLogDirectory - the directory that the log will be written into, if not provided the log will be written in stdout/stderr
      * @returns list of environment variables to use while executing the runner or unidentified if credential not set
      */
-    private createEnvForRun(executionLogDirectory?: string): NodeJS.ProcessEnv | undefined {
+    public createEnvForRun(executionLogDirectory?: string): NodeJS.ProcessEnv | undefined {
         if (this._connectionManager.areXrayCredentialsSet()) {
+            let binaryVars: NodeJS.ProcessEnv = { JFROG_CLI_LOG_LEVEL: Translators.toAnalyzerLogLevel(Configuration.getLogLevel()) };
             // Platform information
-            let binaryVars: NodeJS.ProcessEnv = {
-                JF_PLATFORM_URL: this._connectionManager.url
-            };
+            binaryVars[BinaryRunner.ENV_PLATFORM_URL] = this._connectionManager.url;
+            // Credentials information
             if (this._connectionManager.accessToken) {
-                binaryVars.JF_TOKEN = this._connectionManager.accessToken;
+                binaryVars[BinaryRunner.ENV_TOKEN] = this._connectionManager.accessToken;
             } else {
-                binaryVars.JF_USER = this._connectionManager.username;
-                binaryVars.JF_PASS = this._connectionManager.password;
+                binaryVars[BinaryRunner.ENV_USER] = this._connectionManager.username;
+                binaryVars[BinaryRunner.ENV_PASSWORD] = this._connectionManager.password;
             }
-            // Log information
-            binaryVars.JFROG_CLI_LOG_LEVEL = Translators.toAnalyzerLogLevel(Configuration.getLogLevel());
-            if (executionLogDirectory) {
-                binaryVars.AM_LOG_DIRECTORY = executionLogDirectory;
-            }
-            // Proxy information - environment variable
+            // Optional proxy information - environment variable
             let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
             let proxyHttpsUrl: string | undefined = process.env['HTTPS_PROXY'];
-            // Proxy information - vscode configuration override
+            // Optional proxy information - vscode configuration override
             let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
             if (optional) {
                 let proxyConfig: IProxyConfig = <IProxyConfig>optional;
@@ -141,12 +148,15 @@ export abstract class BinaryRunner {
                 proxyHttpUrl = 'http://' + proxyUrl;
                 proxyHttpsUrl = 'https://' + proxyUrl;
             }
-            // Proxy url
             if (proxyHttpUrl) {
-                binaryVars.HTTP_PROXY = this.addOptionalProxyAuthInformation(proxyHttpUrl);
+                binaryVars[BinaryRunner.ENV_HTTP_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpUrl);
             }
             if (proxyHttpsUrl) {
-                binaryVars.HTTPS_PROXY = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
+                binaryVars[BinaryRunner.ENV_HTTPS_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
+            }
+            // Optional log destination
+            if (executionLogDirectory) {
+                binaryVars.AM_LOG_DIRECTORY = executionLogDirectory;
             }
 
             return {
@@ -241,7 +251,6 @@ export abstract class BinaryRunner {
         let args: RunArgs = {
             directory: ScanUtils.createTmpDir(),
             split: split,
-            activeTasks: 0,
             requests: []
         } as RunArgs;
         let validRequest: AnalyzeScanRequest | undefined = this.prepareRequests(args, ...requests);
@@ -331,7 +340,7 @@ export abstract class BinaryRunner {
      * @param responsePaths - the path of the response for each request in the run
      * @returns the response from all the binary runs
      */
-    private async runRequest(
+    public async runRequest(
         checkCancel: () => void,
         request: string,
         requestPath: string,
@@ -346,7 +355,7 @@ export abstract class BinaryRunner {
                 if (error.code === BinaryRunner.NOT_ENTITLED) {
                     throw new NotEntitledError();
                 }
-                this._logManager.logMessage("Binary '" + this._binary.name + "' task ended with status code: " + error.code, 'ERR');
+                this._logManager.logMessage("Binary '" + this._name ?? this._binary.name + "' task ended with status code: " + error.code, 'ERR');
             }
             throw error;
         });
@@ -354,7 +363,7 @@ export abstract class BinaryRunner {
         let analyzerScanResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (const responsePath of responsePaths) {
             if (!fs.existsSync(responsePath)) {
-                throw new Error("Running '" + this._binary.name + "' binary didn't produce response.\nRequest: " + request);
+                throw new Error("Running '" + this._name ?? this._binary.name + "' binary didn't produce response.\nRequest: " + request);
             }
             // Load result and parse as response
             let result: AnalyzerScanResponse = JSON.parse(fs.readFileSync(responsePath, 'utf8').toString());
