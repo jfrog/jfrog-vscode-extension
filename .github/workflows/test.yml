@@ -27,10 +27,6 @@ jobs:
             - name: Install
               run: npm i
               # Make sure no new dependencies were installed after running 'npm i'
-            - name: Setup Maven v3.8.7
-              uses: stCarolas/setup-maven@v4.5
-              with:
-                maven-version: 3.8.7
             - name: Make sure branch is clean
               run: git diff --exit-code
             - name: Lint
@@ -43,6 +39,6 @@ jobs:
               run: npm t
               if: runner.os != 'Linux'
             - name: Tests on Linux
-              # Run tests with Virtual framebuffer to allow running VS-Code without a display
+              # Run tests with Virtual frame buffer to allow running VS-Code without a display
               run: xvfb-run npm t
               if: runner.os == 'Linux'
