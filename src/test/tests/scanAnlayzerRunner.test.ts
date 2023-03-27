@@ -14,6 +14,7 @@ import { RunUtils } from '../../main/utils/runUtils';
 describe('Analyzer BinaryRunner tests', async () => {
     let logManager: LogManager = new LogManager().activate();
     let connectionManager: ConnectionManager = createBinaryRunnerConnectionManager('url', 'username', 'pass', 'token');
+    const dummyName: string = "dummyName";
 
     function createBinaryRunnerConnectionManager(inputUrl: string, user: string, pass: string, token: string): ConnectionManager {
         return {
@@ -51,7 +52,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             ): Promise<void> {
                 await RunUtils.runWithTimeout(timeout, checkCancel, dummyAction());
             }
-        })(connection, timeout, logManager);
+        })(connection, timeout, logManager, dummyName);
     }
 
     [
@@ -195,7 +196,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             timeout: ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
             createDummyResponse: false,
             shouldAbort: false,
-            expectedErr: new Error("Running '" + BinaryRunner.RUNNER_NAME + "' binary didn't produce response.\nRequest: request data")
+            expectedErr: new Error("Running '" + dummyName + "' binary didn't produce response.\nRequest: request data")
         }
     ].forEach(async test => {
         it('Run request - ' + test.name, async () => {

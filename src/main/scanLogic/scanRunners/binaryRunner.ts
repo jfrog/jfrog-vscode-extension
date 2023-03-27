@@ -363,7 +363,7 @@ export abstract class BinaryRunner {
         let analyzerScanResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (const responsePath of responsePaths) {
             if (!fs.existsSync(responsePath)) {
-                throw new Error("Running '" + this._name ?? this._binary.name + "' binary didn't produce response.\nRequest: " + request);
+                throw new Error("Running '" + (this._name ?? this._binary.name) + "' binary didn't produce response.\nRequest: " + request);
             }
             // Load result and parse as response
             let result: AnalyzerScanResponse = JSON.parse(fs.readFileSync(responsePath, 'utf8').toString());
