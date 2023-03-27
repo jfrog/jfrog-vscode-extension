@@ -167,7 +167,7 @@ export class ScanManager implements ExtensionComponent {
     /**
      * Scan CVE in files for applicability issues.
      * @param directory - the directory that will be scan
-     * @param checkCancel - check if cancel
+     * @param checkCancel - check if should cancel
      * @param cveToRun - the CVE list we want to run applicability scan on
      * @returns the applicability scan response
      */
