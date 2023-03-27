@@ -25,8 +25,6 @@ interface RunArgs {
     directory: string;
     // The requests for the run
     requests: RunRequest[];
-    // The signal to abort the operation
-    signal: AbortSignal;
 }
 
 interface RunRequest {
@@ -72,11 +70,11 @@ export abstract class BinaryRunner {
 
     /**
      * Run the executeBinary method with the provided request path
-     * @param abortSignal - signal to abort the operation
+     * @param checkCancel - check if cancel
      * @param yamlConfigPath - the path to the request
      * @param executionLogDirectory - og file will be written to the dir
      */
-    public abstract runBinary(abortSignal: AbortSignal, yamlConfigPath: string, executionLogDirectory: string): Promise<void>;
+    public abstract runBinary(checkCancel: () => void, yamlConfigPath: string, executionLogDirectory: string): Promise<void>;
 
     /**
      * Validates that the binary exists and can run
@@ -88,15 +86,14 @@ export abstract class BinaryRunner {
 
     /**
      * Execute the cmd command to run the binary with given arguments and an option to abort the operation.
-     * Checks every this._abortCheckInterval to see if the abort signal was given
-     * @param abortSignal - the signal to abort the operation
-     * @param args - the arguments for the command
+     * @param checkCancel - check if cancel
+     * @param args  - the arguments for the command
+     * @param executionLogDirectory - the directory to save the execution log in
      */
-    protected async executeBinary(abortSignal: AbortSignal, args: string[], executionLogDirectory: string): Promise<void> {
-        await RunUtils.withAbortSignal(
-            abortSignal,
-            this._abortCheckInterval,
-            ScanUtils.executeCmdAsync(
+    protected async executeBinary(checkCancel: () => void, args: string[], executionLogDirectory: string): Promise<void> {
+        await RunUtils.runWithTimeout(this._abortCheckInterval, checkCancel, {
+            title: this._binary.name,
+            task: ScanUtils.executeCmdAsync(
                 '"' + this._binary.fullPath + '" ' + args.join(' '),
                 this._runDirectory,
                 this.createEnvForRun(executionLogDirectory)
@@ -108,7 +105,7 @@ export abstract class BinaryRunner {
                     this._logManager.logMessage("Done executing '" + this._binary.name + "' with error, error log:\n" + std.stderr, 'ERR');
                 }
             })
-        );
+        });
     }
 
     /**
@@ -231,12 +228,12 @@ export abstract class BinaryRunner {
 
     /**
      * Run the runner async, and perform the given run requests using this binary.
-     * @param abortController - the abort controller that signals on a cancel/abort request
+     * @param checkCancel - check if cancel
      * @param split - if true the runner will be run separately for all the requests otherwise all the requests will be performed together
      * @param requests - the request to perform using this binary
      * @returns - the binary analyzer scan response after running for all the request
      */
-    public async run(abortController: AbortController, split: boolean, ...requests: AnalyzeScanRequest[]): Promise<AnalyzerScanResponse | undefined> {
+    public async run(checkCancel: () => void, split: boolean, ...requests: AnalyzeScanRequest[]): Promise<AnalyzerScanResponse | undefined> {
         // Prepare and validate
         if (!this.validateSupported()) {
             return undefined;
@@ -245,8 +242,7 @@ export abstract class BinaryRunner {
             directory: ScanUtils.createTmpDir(),
             split: split,
             activeTasks: 0,
-            requests: [],
-            signal: abortController.signal
+            requests: []
         } as RunArgs;
         let validRequest: AnalyzeScanRequest | undefined = this.prepareRequests(args, ...requests);
         if (args.requests.length == 0 || !validRequest) {
@@ -255,7 +251,7 @@ export abstract class BinaryRunner {
         }
         // Run
         let runs: Promise<any>[] = [];
-        let aggResponse: AnalyzerScanResponse = this.populateRunTasks(args, runs);
+        let aggResponse: AnalyzerScanResponse = this.populateRunTasks(checkCancel, args, runs);
         let hadError: boolean = false;
         await Promise.all(runs)
             .catch(err => {
@@ -275,11 +271,11 @@ export abstract class BinaryRunner {
         return aggResponse;
     }
 
-    private populateRunTasks(args: RunArgs, runs: Promise<any>[]): AnalyzerScanResponse {
+    private populateRunTasks(checkCancel: () => void, args: RunArgs, runs: Promise<any>[]): AnalyzerScanResponse {
         let aggResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (let i: number = 0; i < args.requests.length; i++) {
             runs.push(
-                this.runRequest(args.signal, args.requests[i].request, args.requests[i].requestPath, ...args.requests[i].responsePaths)
+                this.runRequest(checkCancel, args.requests[i].request, args.requests[i].requestPath, ...args.requests[i].responsePaths)
                     .then(response => {
                         if (response && response.runs) {
                             aggResponse.runs.push(...response.runs);
@@ -329,14 +325,14 @@ export abstract class BinaryRunner {
      * 1. Save the request in a given path
      * 2. Run the binary
      * 3. Collect the responses for each run in the request
-     * @param abortSignal - signal to abort the operation
+     * @param checkCancel - check if cancel
      * @param request - the request to perform in YAML format
      * @param requestPath - the path that the request will be
      * @param responsePaths - the path of the response for each request in the run
      * @returns the response from all the binary runs
      */
     private async runRequest(
-        abortSignal: AbortSignal,
+        checkCancel: () => void,
         request: string,
         requestPath: string,
         ...responsePaths: string[]
@@ -344,7 +340,7 @@ export abstract class BinaryRunner {
         // 1. Save requests as yaml file in folder
         fs.writeFileSync(requestPath, request);
         // 2. Run the binary
-        await this.runBinary(abortSignal, requestPath, path.dirname(requestPath)).catch(error => {
+        await this.runBinary(checkCancel, requestPath, path.dirname(requestPath)).catch(error => {
             if (error.code) {
                 // Not entitled to run binary
                 if (error.code === BinaryRunner.NOT_ENTITLED) {

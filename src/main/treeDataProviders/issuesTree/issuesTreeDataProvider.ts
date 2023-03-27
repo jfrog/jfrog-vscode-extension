@@ -174,8 +174,10 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         let progressManager: StepProgress = new StepProgress(
             progress,
             () => {
-                this.onChangeFire();
                 checkCanceled();
+            },
+            () => {
+                this.onChangeFire();
             },
             this._logManager
         );

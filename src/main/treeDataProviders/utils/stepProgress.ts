@@ -1,8 +1,6 @@
 import { XrayScanProgress } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { LogManager } from '../../log/logManager';
-import { ScanCancellationError } from '../../utils/scanUtils';
-
 /**
  * Manage the vscode.Progress with steps and substeps if needed
  */
@@ -12,22 +10,26 @@ export class StepProgress {
     private currentStepMsg?: string;
     private currentStepsDone: number = 0;
     private currentSubstepsCount?: number;
-    public abortController: AbortController;
 
     constructor(
         private _progress: vscode.Progress<{ message?: string; increment?: number }>,
-        public onProgress: () => void = () => {
-            //
-        },
+        public checkCancel: () => void = () => undefined,
+        private activateOnProgress?: () => void,
         private _log?: LogManager,
         totalSteps?: number
     ) {
         this._totalSteps = totalSteps ?? 1;
-        this.abortController = new AbortController();
     }
 
     public get totalSteps(): number | undefined {
         return this._totalSteps;
+    }
+
+    public onProgress() {
+        this.checkCancel();
+        if (this.activateOnProgress) {
+            this.activateOnProgress();
+        }
     }
 
     /**
@@ -41,19 +43,7 @@ export class StepProgress {
         this.currentStepsDone++;
         this.currentStepMsg = msg + (this._totalSteps > 1 ? ' (' + this.currentStepsDone + '/' + this._totalSteps + ')' : '');
         this.currentSubstepsCount = subSteps && subSteps > 0 ? subSteps : undefined;
-        this._progress.report({ message: this.currentStepMsg });
-        this.activateOnProgress();
-    }
-
-    public activateOnProgress() {
-        try {
-            this.onProgress();
-        } catch (error) {
-            if (error instanceof ScanCancellationError) {
-                this.abortController.abort();
-                throw error;
-            }
-        }
+        this.reportProgress(0);
     }
 
     /**
@@ -71,8 +61,8 @@ export class StepProgress {
     public reportProgress(inc: number = this.getStepIncValue) {
         if (this.currentStepMsg) {
             this._progress.report({ message: this.currentStepMsg, increment: inc });
-            this.activateOnProgress();
         }
+        this.onProgress();
     }
 
     /**
@@ -87,17 +77,15 @@ export class StepProgress {
 
 export class GraphScanProgress implements XrayScanProgress {
     private lastPercentage: number = 0;
-    public readonly abortController: AbortController;
     public readonly onProgress: () => void;
 
     constructor(private _scanName: string, private _manager: StepProgress, private _totalProgress: number, private _log?: LogManager) {
-        this.abortController = this._manager.abortController;
-        this.onProgress = this._manager.activateOnProgress;
+        this.onProgress = this._manager.checkCancel;
     }
 
     /** @override */
     public setPercentage(percentage: number): void {
-        if (percentage != this.lastPercentage && !this.abortController.signal.aborted) {
+        if (percentage != this.lastPercentage && percentage < 100) {
             let inc: number = this._totalProgress * ((percentage - this.lastPercentage) / 100);
             this._log?.logMessage(
                 '[' + this._scanName + '] reported change in progress ' + this.lastPercentage + '% -> ' + percentage + '%',

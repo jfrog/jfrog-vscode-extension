@@ -72,21 +72,21 @@ export class EosRunner extends BinaryRunner {
     }
 
     /** @override */
-    public async runBinary(abortSignal: AbortSignal, yamlConfigPath: string, executionLogDirectory: string): Promise<void> {
-        await this.executeBinary(abortSignal, ['analyze', 'config', yamlConfigPath], executionLogDirectory);
+    public async runBinary(checkCancel: () => void, yamlConfigPath: string, executionLogDirectory: string): Promise<void> {
+        await this.executeBinary(checkCancel, ['analyze', 'config', yamlConfigPath], executionLogDirectory);
     }
 
     /**
      * Scan for EOS issues
-     * @param abortController - the controller that signals abort for the operation
+     * @param checkCancel - check if cancel
      * @param requests - requests to run
      * @returns the response generated from the scan
      */
-    public async scan(abortController: AbortController, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
+    public async scan(checkCancel: () => void, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
         for (const request of requests) {
             request.type = 'analyze-codebase';
         }
-        return await this.run(abortController, true, ...requests).then(runResult => this.generateScanResponse(runResult));
+        return await this.run(checkCancel, true, ...requests).then(runResult => this.generateScanResponse(runResult));
     }
 
     /**

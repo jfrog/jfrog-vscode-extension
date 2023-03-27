@@ -23,8 +23,6 @@ import { Utils } from '../utils/utils';
  * Manage all the Xray scans
  */
 export class ScanManager implements ExtensionComponent {
-    // every 1 sec
-    private static readonly BINARY_ABORT_CHECK_INTERVAL_MILLISECS: number = 1000;
     // every day
     private static readonly RESOURCE_CHECK_UPDATE_INTERVAL_MILLISECS: number = 1000 * 60 * 60 * 24;
 
@@ -142,18 +140,14 @@ export class ScanManager implements ExtensionComponent {
      * Validate if the applicable-scan is supported
      */
     public isApplicableSupported(): boolean {
-        return new ApplicabilityRunner(
-            this._connectionManager,
-            ScanManager.BINARY_ABORT_CHECK_INTERVAL_MILLISECS,
-            this._logManager
-        ).validateSupported();
+        return new ApplicabilityRunner(this._connectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, this._logManager).validateSupported();
     }
 
     /**
      * Validate if the eos-scan is supported
      */
     public isEosSupported(): boolean {
-        return new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL_MILLISECS, this._logManager).validateSupported();
+        return new EosRunner(this._connectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, this._logManager).validateSupported();
     }
 
     /**
@@ -173,18 +167,18 @@ export class ScanManager implements ExtensionComponent {
     /**
      * Scan CVE in files for applicability issues.
      * @param directory - the directory that will be scan
-     * @param abortController - the abort controller for cancel request
+     * @param checkCancel - check if should cancel
      * @param cveToRun - the CVE list we want to run applicability scan on
      * @returns the applicability scan response
      */
     public async scanApplicability(
         directory: string,
-        abortController: AbortController,
+        checkCancel: () => void,
         cveToRun: Set<string> = new Set<string>()
     ): Promise<ApplicabilityScanResponse> {
         let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(
             this._connectionManager,
-            ScanManager.BINARY_ABORT_CHECK_INTERVAL_MILLISECS,
+            ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
             this._logManager
         );
         if (!applicableRunner.validateSupported()) {
@@ -192,12 +186,15 @@ export class ScanManager implements ExtensionComponent {
             return {} as ApplicabilityScanResponse;
         }
         let skipFiles: string[] = AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern());
-        this._logManager.logMessage('Scanning directory ' + directory + ', for CVE issues: ' + cveToRun + ', skipping files: ' + skipFiles, 'DEBUG');
-        return applicableRunner.scan(directory, abortController, cveToRun, skipFiles);
+        this._logManager.logMessage(
+            'Scanning directory ' + directory + ', for CVE issues: ' + Array.from(cveToRun.values()) + ', skipping files: ' + skipFiles,
+            'DEBUG'
+        );
+        return applicableRunner.scan(directory, checkCancel, cveToRun, skipFiles);
     }
 
-    public async scanEos(abortController: AbortController, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
-        let eosRunner: EosRunner = new EosRunner(this._connectionManager, ScanManager.BINARY_ABORT_CHECK_INTERVAL_MILLISECS, this._logManager);
+    public async scanEos(checkCancel: () => void, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
+        let eosRunner: EosRunner = new EosRunner(this._connectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, this._logManager);
         if (!eosRunner.validateSupported()) {
             this._logManager.logMessage('Eos scan is not supported', 'DEBUG');
             return {} as EosScanResponse;
@@ -212,6 +209,6 @@ export class ScanManager implements ExtensionComponent {
             }
         }
         this._logManager.logMessage('Scanning for Eos issues, roots: ' + eosRequests.map(request => request.roots.join()).join(), 'DEBUG');
-        return eosRunner.scan(abortController, ...eosRequests);
+        return eosRunner.scan(checkCancel, ...eosRequests);
     }
 }
