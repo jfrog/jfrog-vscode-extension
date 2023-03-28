@@ -19,8 +19,6 @@ import { LogUtils } from '../../log/logUtils';
  * Arguments for running binary async
  */
 interface RunArgs {
-    // Should split the requests to multiple runs
-    split: boolean;
     // The directory that the requests/responses are expected
     directory: string;
     // The requests for the run
@@ -30,6 +28,7 @@ interface RunArgs {
 interface RunRequest {
     request: string;
     requestPath: string;
+    rawRequests: AnalyzeScanRequest[];
     responsePaths: string[];
 }
 
@@ -57,8 +56,8 @@ export abstract class BinaryRunner {
     constructor(
         protected _connectionManager: ConnectionManager,
         protected _abortCheckInterval: number,
+        protected _type: AnalyzerType,
         protected _logManager: LogManager,
-        protected _name?: string,
         protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager)
     ) {
         this._runDirectory = path.dirname(this._binary.fullPath);
@@ -95,7 +94,7 @@ export abstract class BinaryRunner {
 
     /**
      * Execute the cmd command to run the binary with given arguments and an option to abort the operation.
-     * @param checkCancel - check if cancel
+     * @param checkCancel - check if should cancel
      * @param args  - the arguments for the command
      * @param executionLogDirectory - the directory to save the execution log in
      */
@@ -108,13 +107,10 @@ export abstract class BinaryRunner {
                 this.createEnvForRun(executionLogDirectory)
             ).then(std => {
                 if (std.stdout && std.stdout.length > 0) {
-                    this._logManager.logMessage("Done executing '" + this._name ?? this._binary.name + "' with log, log:\n" + std.stdout, 'DEBUG');
+                    this._logManager.logMessage("Done executing '" + this._type + "' with log, log:\n" + std.stdout, 'DEBUG');
                 }
                 if (std.stderr && std.stderr.length > 0) {
-                    this._logManager.logMessage(
-                        "Done executing '" + this._name ?? this._binary.name + "' with error, error log:\n" + std.stderr,
-                        'ERR'
-                    );
+                    this._logManager.logMessage("Done executing '" + this._type + "' with error, error log:\n" + std.stderr, 'ERR');
                 }
             })
         });
@@ -186,6 +182,71 @@ export abstract class BinaryRunner {
         return url;
     }
 
+    public async run(checkCancel: () => void, ...requests: AnalyzeScanRequest[]): Promise<AnalyzerScanResponse | undefined> {
+        // Prepare and validate
+        if (!this.validateSupported()) {
+            return undefined;
+        }
+        let args: RunArgs = this.createRunArguments(...requests);
+        try {
+            if (args.requests.length == 0) {
+                return undefined;
+            }
+
+            let runs: Promise<any>[] = [];
+            let aggResponse: AnalyzerScanResponse = this.populateRunTasks(checkCancel, args, runs);
+            let hadError: boolean = false;
+
+            await Promise.all(runs)
+                .catch(err => {
+                    hadError = true;
+                    throw err;
+                })
+                // Collect log if exist
+                .finally(() => this.copyRunLogToFolder(args, hadError));
+
+            return aggResponse;
+        } finally {
+            ScanUtils.removeFolder(args.directory);
+        }
+    }
+
+    /**
+     * Populate the run arguments based on the given requests information
+     * @param requests - the run requests information
+     * @return run arguments for the given requests
+     */
+    private createRunArguments(...requests: AnalyzeScanRequest[]): RunArgs {
+        let args: RunArgs = {
+            directory: ScanUtils.createTmpDir(),
+            split: false,
+            requests: []
+        } as RunArgs;
+
+        let actualRequest: { requests: AnalyzeScanRequest[]; responsePaths: string[] } = { requests: [], responsePaths: [] };
+        let processedRoots: Set<string> = new Set<string>();
+
+        for (const request of requests) {
+            if (request.roots.length > 0 && request.roots.every(root => !processedRoots.has(root))) {
+                // Prepare request information and insert as an actual request
+                const requestPath: string = path.join(args.directory, 'request_' + actualRequest.requests.length);
+                const responsePath: string = path.join(args.directory, 'response_' + actualRequest.requests.length);
+                request.output = responsePath;
+                request.type = this._type;
+                request.roots.forEach(root => processedRoots.add(root));
+                // Add request to run
+                args.requests.push({
+                    request: this.asAnalyzerRequestString(request),
+                    requestPath: requestPath,
+                    rawRequests: [request],
+                    responsePaths: [responsePath]
+                } as RunRequest);
+            }
+        }
+
+        return args;
+    }
+
     /**
      * Translate the run requests to a single analyze request in yaml format
      * @param requests - run requests
@@ -195,89 +256,6 @@ export abstract class BinaryRunner {
         return yaml.dump({
             scans: requests
         } as AnalyzerRequest);
-    }
-
-    /**
-     * Populate the args requests arguments based on the given requests information
-     * @param args - the run requests to populate
-     * @param requests - the run requests information
-     * @return the first valid request from the given request
-     */
-    private prepareRequests(args: RunArgs, ...requests: AnalyzeScanRequest[]): AnalyzeScanRequest | undefined {
-        let actualRequest: { requests: AnalyzeScanRequest[]; responsePaths: string[] } = { requests: [], responsePaths: [] };
-        for (const request of requests) {
-            if (request.roots.length > 0) {
-                // Prepare request information and insert as an actual request
-                const requestPath: string = path.join(args.directory, 'request_' + args.requests.length);
-                const responsePath: string = path.join(args.directory, 'response_' + args.requests.length);
-                request.output = responsePath;
-                if (args.split) {
-                    // Insert as actual request to args request
-                    args.requests.push({
-                        request: this.asAnalyzerRequestString(request),
-                        requestPath: requestPath,
-                        responsePaths: [responsePath]
-                    } as RunRequest);
-                } else {
-                    // Insert to actual requests
-                    actualRequest.requests.push(request);
-                    actualRequest.responsePaths.push(responsePath);
-                }
-            }
-        }
-        // In case the split parameter is false insert the actual requests as a single request to the args
-        if (!args.split && actualRequest.requests.length > 0) {
-            args.requests.push({
-                request: this.asAnalyzerRequestString(...actualRequest.requests),
-                requestPath: path.join(args.directory, 'request'),
-                responsePaths: actualRequest.responsePaths
-            } as RunRequest);
-        }
-        return actualRequest.requests.length > 0 ? actualRequest.requests[0] : undefined;
-    }
-
-    /**
-     * Run the runner async, and perform the given run requests using this binary.
-     * @param checkCancel - check if cancel
-     * @param split - if true the runner will be run separately for all the requests otherwise all the requests will be performed together
-     * @param requests - the request to perform using this binary
-     * @returns - the binary analyzer scan response after running for all the request
-     */
-    public async run(checkCancel: () => void, split: boolean, ...requests: AnalyzeScanRequest[]): Promise<AnalyzerScanResponse | undefined> {
-        // Prepare and validate
-        if (!this.validateSupported()) {
-            return undefined;
-        }
-        let args: RunArgs = {
-            directory: ScanUtils.createTmpDir(),
-            split: split,
-            requests: []
-        } as RunArgs;
-        let validRequest: AnalyzeScanRequest | undefined = this.prepareRequests(args, ...requests);
-        if (args.requests.length == 0 || !validRequest) {
-            ScanUtils.removeFolder(args.directory);
-            return undefined;
-        }
-        // Run
-        let runs: Promise<any>[] = [];
-        let aggResponse: AnalyzerScanResponse = this.populateRunTasks(checkCancel, args, runs);
-        let hadError: boolean = false;
-        await Promise.all(runs)
-            .catch(err => {
-                hadError = true;
-                throw err;
-            })
-            .finally(() => {
-                if (!validRequest) {
-                    return;
-                }
-                // Collect log if exist
-                let requestType: AnalyzerType = validRequest.type;
-                let requestRootName: string = Utils.getLastSegment(validRequest.roots[0]);
-                this.copyRunLogToFolder(args.directory, requestType, requestRootName, hadError);
-                ScanUtils.removeFolder(args.directory);
-            });
-        return aggResponse;
     }
 
     private populateRunTasks(checkCancel: () => void, args: RunArgs, runs: Promise<any>[]): AnalyzerScanResponse {
@@ -303,24 +281,27 @@ export abstract class BinaryRunner {
 
     /**
      * Copy a file that includes 'log' in its name from a given folder to the logs folder
-     * @param logsSrcFolder - the directory that the log file exists in
-     * @param requestType - the type of runner request of the log, will be part of it's name
-     * @param rootName - the type of runner request of the log, will be part of it's name
+     * @param arg - the run arguments that related this log
      * @param hadError - if true, will log result as error, otherwise success.
      */
-    private copyRunLogToFolder(logsSrcFolder: string, requestType: AnalyzerType, rootName: string, hadError: boolean) {
-        let logFile: string | undefined = fs.readdirSync(logsSrcFolder).find(fileName => fileName.toLowerCase().includes('log'));
+    private copyRunLogToFolder(args: RunArgs, hadError: boolean) {
+        let logFile: string | undefined = fs.readdirSync(args.directory).find(fileName => fileName.toLowerCase().includes('log'));
         if (!logFile) {
             return;
         }
+
+        let roots: Set<string> = new Set<string>();
+        args.requests.forEach(request => request.rawRequests.forEach(raw => raw.roots.forEach(root => roots.add(Utils.getLastSegment(root)))));
+        let name: string = Array.from(roots).join('_');
+        let logFinalPath: string = path.join(ScanUtils.getLogsPath(), LogUtils.getLogFileName(name, this._type, '' + Date.now()));
+
+        fs.copyFileSync(path.join(args.directory, logFile), logFinalPath);
         LogUtils.cleanUpOldLogs();
-        let logFinalPath: string = path.join(ScanUtils.getLogsPath(), LogUtils.getLogFileName(rootName, requestType, '' + Date.now()));
-        fs.copyFileSync(path.join(logsSrcFolder, logFile), logFinalPath);
         this._logManager.logMessage(
             'AnalyzerManager run ' +
-                requestType +
+                this._type +
                 ' on ' +
-                rootName +
+                Array.from(roots) +
                 ' ended ' +
                 (hadError ? 'with error' : 'successfully') +
                 ', scan log was generated at ' +
@@ -355,7 +336,7 @@ export abstract class BinaryRunner {
                 if (error.code === BinaryRunner.NOT_ENTITLED) {
                     throw new NotEntitledError();
                 }
-                this._logManager.logMessage("Binary '" + this._name ?? this._binary.name + "' task ended with status code: " + error.code, 'ERR');
+                this._logManager.logMessage("Binary '" + this._type + "' task ended with status code: " + error.code, 'ERR');
             }
             throw error;
         });
@@ -363,7 +344,7 @@ export abstract class BinaryRunner {
         let analyzerScanResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (const responsePath of responsePaths) {
             if (!fs.existsSync(responsePath)) {
-                throw new Error("Running '" + (this._name ?? this._binary.name) + "' binary didn't produce response.\nRequest: " + request);
+                throw new Error("Running '" + this._type + "' binary didn't produce response.\nRequest: " + request);
             }
             // Load result and parse as response
             let result: AnalyzerScanResponse = JSON.parse(fs.readFileSync(responsePath, 'utf8').toString());

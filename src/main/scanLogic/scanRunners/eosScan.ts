@@ -44,8 +44,8 @@ export class EosRunner extends BinaryRunner {
         super(
             connectionManager,
             abortCheckInterval,
-            logManager,
             'analyze-codebase',
+            logManager,
             new Resource('', path.join(ScanUtils.getHomePath(), EosRunner.BINARY_FOLDER, EosRunner.getBinaryName()), logManager)
         );
     }
@@ -87,7 +87,7 @@ export class EosRunner extends BinaryRunner {
         for (const request of requests) {
             request.type = 'analyze-codebase';
         }
-        return await this.run(checkCancel, true, ...requests).then(runResult => this.generateScanResponse(runResult));
+        return await this.run(checkCancel, ...requests).then(runResult => this.generateScanResponse(runResult));
     }
 
     /**

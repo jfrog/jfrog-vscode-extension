@@ -1,6 +1,6 @@
 import { LogManager } from '../../log/logManager';
 import { BinaryRunner } from './binaryRunner';
-import { AnalyzeIssue, AnalyzeLocation, AnalyzerScanRun, AnalyzeScanRequest, FileIssues } from './analyzerModels';
+import { AnalyzeIssue, AnalyzeLocation, AnalyzerScanRun, AnalyzerType, AnalyzeScanRequest, FileIssues } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 
 /**
@@ -33,10 +33,10 @@ export interface CveApplicableDetails {
  * Describes a runner for the Applicability scan executable file.
  */
 export class ApplicabilityRunner extends BinaryRunner {
-    private static readonly NAME: string = 'analyze-applicability';
+    private static readonly NAME: AnalyzerType = 'analyze-applicability';
 
     constructor(connectionManager: ConnectionManager, abortCheckInterval: number, logManager: LogManager) {
-        super(connectionManager, abortCheckInterval, logManager, ApplicabilityRunner.NAME);
+        super(connectionManager, abortCheckInterval, ApplicabilityRunner.NAME, logManager);
     }
 
     /** @override */
@@ -70,7 +70,7 @@ export class ApplicabilityRunner extends BinaryRunner {
             cve_whitelist: Array.from(cveToRun),
             skipped_folders: skipFolders
         } as ApplicabilityScanRequest;
-        return this.run(checkCancel, false, request).then(response => this.generateResponse(response?.runs[0]));
+        return this.run(checkCancel, request).then(response => this.generateResponse(response?.runs[0]));
     }
 
     /**

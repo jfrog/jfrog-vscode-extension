@@ -14,7 +14,7 @@ import { RunUtils } from '../../main/utils/runUtils';
 describe('Analyzer BinaryRunner tests', async () => {
     let logManager: LogManager = new LogManager().activate();
     let connectionManager: ConnectionManager = createBinaryRunnerConnectionManager('url', 'username', 'pass', 'token');
-    const dummyName: string = "dummyName";
+    const dummyName: AnalyzerType = 'analyze-applicability';
 
     function createBinaryRunnerConnectionManager(inputUrl: string, user: string, pass: string, token: string): ConnectionManager {
         return {
@@ -52,7 +52,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             ): Promise<void> {
                 await RunUtils.runWithTimeout(timeout, checkCancel, dummyAction());
             }
-        })(connection, timeout, logManager, dummyName);
+        })(connection, timeout, dummyName, logManager);
     }
 
     [
