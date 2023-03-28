@@ -2,7 +2,7 @@ import { assert } from 'chai';
 import * as path from 'path';
 import * as fs from 'fs';
 import { Flag, NpmCmd } from '../../main/utils/cmds/npm';
-import { unsetSkipDevDependencies, setSkipDevDependencies } from './FilterNpmDependencies.test';
+import { unsetSkipDevDependencies, setSkipDevDependencies } from './filterNpmDependencies.test';
 
 const outsideProjectRoot: string = path.join(__dirname, '..', 'resources', 'npm');
 const projectRoot: string = path.join(outsideProjectRoot, 'project-4');

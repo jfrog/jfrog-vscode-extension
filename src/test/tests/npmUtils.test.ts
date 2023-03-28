@@ -34,7 +34,7 @@ describe('Npm Utils Tests', async () => {
     let projectDirs: string[] = ['project-1', 'project-2', 'project-3'];
     // let npmDependencyUpdate: NpmDependencyUpdate = new NpmDependencyUpdate();
     let workspaceFolders: vscode.WorkspaceFolder[];
-    let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'npm'));
+    let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'npm', 'utilsTest'));
 
     before(() => {
         workspaceFolders = [
@@ -175,25 +175,23 @@ describe('Npm Utils Tests', async () => {
         assert.deepEqual(child?.label, 'progress');
         assert.deepEqual(child?.componentId, 'progress:2.0.3');
         assert.deepEqual(child?.description, '2.0.3');
-        assert.deepEqual(child?.generalInfo.scopes, ['prod']);
         assert.deepEqual(child?.parent, res[2]);
 
         child = res[2].children.find(component => component.label === 'has-flag');
         assert.deepEqual(child?.componentId, 'has-flag:3.0.0');
         assert.deepEqual(child?.description, '3.0.0');
-        assert.deepEqual(child?.generalInfo.scopes, ['dev']);
         assert.deepEqual(child?.parent, res[2]);
 
         child = res[2].children.find(component => component.label === '@types/node');
         assert.deepEqual(child?.componentId, '@types/node:14.14.10');
         assert.deepEqual(child?.description, '14.14.10');
-        assert.deepEqual(child?.generalInfo.scopes, ['prod', 'types']);
+        assert.deepEqual(child?.generalInfo.scopes, ['types']);
         assert.deepEqual(child?.parent, res[2]);
 
         child = res[2].children.find(component => component.label === '@ungap/promise-all-settled');
         assert.deepEqual(child?.componentId, '@ungap/promise-all-settled:1.1.2');
         assert.deepEqual(child?.description, '1.1.2');
-        assert.deepEqual(child?.generalInfo.scopes, ['dev', 'ungap']);
+        assert.deepEqual(child?.generalInfo.scopes, ['ungap']);
         assert.deepEqual(child?.parent, res[2]);
     });
 

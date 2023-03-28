@@ -26,22 +26,22 @@ describe('Filter npm dependencies', async () => {
         });
 
         it('Check that dev dependencies do not exist after filtering dev dependencies', async () => {
-            AssertNoDevDependencies(await createNpmTree());
+            assertNoDevDependencies(await createNpmTree());
         });
 
         it('Check that prod dependencies exist after filtering dev dependencies', async () => {
-            AssertProdDependenciesExist(await createNpmTree());
+            assertProdDependenciesExist(await createNpmTree());
         });
     });
 
-    async function AssertNoDevDependencies(deps: DependenciesTreeNode[]) {
+    async function assertNoDevDependencies(deps: DependenciesTreeNode[]) {
         const devDeps: string[] = ['has-flag', '@ungap/promise-all-settled'];
         for (const dep of deps) {
             assert.isFalse(devDeps.includes(dep.generalInfo.artifactId));
         }
     }
 
-    async function AssertProdDependenciesExist(deps: DependenciesTreeNode[]) {
+    async function assertProdDependenciesExist(deps: DependenciesTreeNode[]) {
         const prodDeps: string[] = ['progress', '@types/node'];
         for (const dep of deps) {
             assert.isTrue(prodDeps.includes(dep.generalInfo.artifactId));
@@ -63,7 +63,7 @@ async function createNpmTree() {
     );
     const workspaceFolders: vscode.WorkspaceFolder[] = [
         {
-            uri: vscode.Uri.file(path.join(__dirname, '..', 'resources', 'npm', 'project-4')),
+            uri: vscode.Uri.file(path.join(__dirname, '..', 'resources', 'npm', 'filterDevDepsTest')),
             name: '',
 
             index: 0
