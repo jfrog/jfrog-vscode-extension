@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { GeneralInfo } from '../../../types/generalInfo';
-import { NpmUtils, ScopedNpmProject } from '../../../utils/npmUtils';
+import { NpmUtils, ProjectDetails } from '../../../utils/npmUtils';
 import { ScanUtils } from '../../../utils/scanUtils';
 import { YarnUtils } from '../../../utils/yarnUtils';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
@@ -30,7 +30,7 @@ export class YarnTreeNode extends RootNode {
             this.buildError = BuildTreeErrorType.NotInstalled;
         }
 
-        const yarnProject: ScopedNpmProject = YarnUtils.getYarnProjectDetails(this.workspaceFolder);
+        const yarnProject: ProjectDetails = YarnUtils.getYarnProjectDetails(this.workspaceFolder);
         this.generalInfo = new GeneralInfo(yarnProject.projectName, yarnProject.projectVersion, [], this.workspaceFolder, PackageType.Yarn);
         this.projectDetails.name = yarnProject.projectName || path.join(this.workspaceFolder, 'yarn.lock');
         this.label = this.projectDetails.name;

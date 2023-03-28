@@ -1,0 +1,16 @@
+{
+  "name": "package-name3",
+  "version": "0.0.1",
+  "private": true,
+  "scripts": {
+    "start": "node app"
+  },
+  "devDependencies": {
+    "has-flag": "3.0.0",
+    "@ungap/promise-all-settled": "1.1.2"
+  },
+  "dependencies": {
+    "progress": "2.0.3",
+    "@types/node": "14.14.10"
+  }
+}
