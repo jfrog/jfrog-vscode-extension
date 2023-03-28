@@ -39,7 +39,7 @@ interface RunRequest {
 export abstract class BinaryRunner {
     protected _runDirectory: string;
 
-    public static readonly RUNNER_NAME: string = 'analyzerManager';
+    private static readonly RUNNER_NAME: string = 'analyzerManager';
 
     public static readonly NOT_ENTITLED: number = 31;
 
