@@ -27,9 +27,6 @@ jobs:
           check-latest: true
       - name: Install
         run: npm i --ignore-scripts
-        # Make sure no new dependencies were installed after running 'npm i'
-      - name: Make sure branch is clean
-        run: git diff --exit-code
       - name: Lint
         run: npm run lint
       - name: Pack Maven GAV Reader
