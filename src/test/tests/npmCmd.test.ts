@@ -5,7 +5,7 @@ import { Flag, NpmCmd } from '../../main/utils/cmds/npm';
 import { unsetSkipDevDependencies, setSkipDevDependencies } from './filterNpmDependencies.test';
 
 const outsideProjectRoot: string = path.join(__dirname, '..', 'resources', 'npm');
-const projectRoot: string = path.join(outsideProjectRoot, 'project-4');
+const projectRoot: string = path.join(outsideProjectRoot, 'filterDevDepsTest');
 describe('npm cmds', async () => {
     it('Check npm version', async () => {
         assert.isNotEmpty(NpmCmd.runNpmVersion());
