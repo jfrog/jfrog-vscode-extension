@@ -7,20 +7,20 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: true
       - name: Config Github
         run: git config --global user.name ${{ github.actor }}
       - name: Setup NodeJS
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: "16"
           check-latest: true
 
       # Install and update version
       - name: Install
-        run: npm i
+        run: npm ci --ignore-scripts
       - name: Lint
         run: npm run lint
       - name: Update version
