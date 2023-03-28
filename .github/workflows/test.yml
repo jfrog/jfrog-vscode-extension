@@ -23,16 +23,24 @@ jobs:
       - name: Setup NodeJS
         uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node }}
+          node-version: 16
           check-latest: true
       - name: Install
         run: npm i --ignore-scripts
+        # Make sure no new dependencies were installed after running 'npm i'
+      - name: Make sure branch is clean
+        run: git diff --exit-code
       - name: Lint
         run: npm run lint
       - name: Pack Maven GAV Reader
         run: mvn clean package -f resources/maven-gav-reader/pom.xml -B
       - name: Install JFrog CLI for connectionManager tests
         run: curl -fL https://install-cli.jfrog.io | sh && jf -v
+      - name: Setup NodeJS for tests
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
       - name: Tests on macOS, Windows
         run: npm t
         if: runner.os != 'Linux'
