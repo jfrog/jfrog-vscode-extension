@@ -1,44 +1,47 @@
 name: Test
-
-on: [push, pull_request_target]
-
+on:
+  push:
+  # Triggers the workflow on labeled PRs only.
+  pull_request_target:
+    types: [labeled]
 jobs:
-    test:
-        runs-on: ${{ matrix.os }}
-        strategy:
-            fail-fast: false
-            matrix:
-                os: [ubuntu-latest, windows-latest, macOS-latest]
-        steps:
-            - uses: actions/checkout@v3
-              with:
-                submodules: true
-                ref: ${{ github.event.pull_request.head.sha }}
-            - name: Setup macOS
-              # Fix 'nvm is not compatible with the npm config "prefix" option' error on macOS
-              run: unset npm_config_prefix
-              if: runner.os == 'macOS'
-            - uses: actions/setup-python@v1
-            - name: Setup NodeJS
-              uses: actions/setup-node@v2
-              with:
-                  node-version: '16'
-                  check-latest: true
-            - name: Install
-              run: npm i
-              # Make sure no new dependencies were installed after running 'npm i'
-            - name: Make sure branch is clean
-              run: git diff --exit-code
-            - name: Lint
-              run: npm run lint
-            - name: Pack Maven GAV Reader
-              run: mvn clean package -f resources/maven-gav-reader/pom.xml -B
-            - name: Install JFrog CLI for connectionManager tests
-              run: curl -fL https://install-cli.jfrog.io | sh && jf -v
-            - name: Tests on macOS, Windows
-              run: npm t
-              if: runner.os != 'Linux'
-            - name: Tests on Linux
-              # Run tests with Virtual frame buffer to allow running VS-Code without a display
-              run: xvfb-run npm t
-              if: runner.os == 'Linux'
+  test:
+    if: contains(github.event.pull_request.labels.*.name, 'safe to test') || github.event_name == 'push'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Setup macOS
+        # Fix 'nvm is not compatible with the npm config "prefix" option' error on macOS
+        run: unset npm_config_prefix
+        if: runner.os == 'macOS'
+      - uses: actions/setup-python@v1
+      - name: Setup NodeJS
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+          check-latest: true
+      - name: Install
+        run: npm i
+        # Make sure no new dependencies were installed after running 'npm i'
+      - name: Make sure branch is clean
+        run: git diff --exit-code
+      - name: Lint
+        run: npm run lint
+      - name: Pack Maven GAV Reader
+        run: mvn clean package -f resources/maven-gav-reader/pom.xml -B
+      - name: Install JFrog CLI for connectionManager tests
+        run: curl -fL https://install-cli.jfrog.io | sh && jf -v
+      - name: Tests on macOS, Windows
+        run: npm t
+        if: runner.os != 'Linux'
+      - name: Tests on Linux
+        # Run tests with Virtual frame buffer to allow running VS-Code without a display
+        run: xvfb-run npm t
+        if: runner.os == 'Linux'
