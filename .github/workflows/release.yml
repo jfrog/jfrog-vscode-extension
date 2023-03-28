@@ -19,7 +19,7 @@ jobs:
           check-latest: true
 
       # Install and update version
-      - name: Install
+      - name: Clean install
         run: npm ci --ignore-scripts
       - name: Lint
         run: npm run lint
