@@ -25,7 +25,7 @@ jobs:
         env:
           # [Mandatory]
           # The command that installs the dependencies
-          JF_INSTALL_DEPS_CMD: "npm i"
+          JF_INSTALL_DEPS_CMD: "npm ci --ignore-scripts"
 
           # [Mandatory]
           # JFrog platform URL (This functionality requires version 3.29.0 or above of Xray)

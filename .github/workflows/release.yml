@@ -42,6 +42,6 @@ jobs:
       - name: Build
         run: npx vsce package
       - name: Upload asset
-        run: cd releaseScripts && npm i && node uploadAsset.js
+        run: cd releaseScripts && npm ci --ignore-scripts && node uploadAsset.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
