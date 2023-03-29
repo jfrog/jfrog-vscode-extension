@@ -14,7 +14,7 @@ import { RunUtils } from '../../main/utils/runUtils';
 describe('Analyzer BinaryRunner tests', async () => {
     let logManager: LogManager = new LogManager().activate();
     let connectionManager: ConnectionManager = createBinaryRunnerConnectionManager('url', 'username', 'pass', 'token');
-    const dummyName: AnalyzerType = 'analyze-applicability';
+    const dummyName: AnalyzerType = AnalyzerType.ContextualAnalysis;
 
     function createBinaryRunnerConnectionManager(inputUrl: string, user: string, pass: string, token: string): ConnectionManager {
         return {
@@ -154,7 +154,7 @@ describe('Analyzer BinaryRunner tests', async () => {
         });
     });
 
-    function getAnalyzeScanRequest(roots: string[], scanType: AnalyzerType = 'analyze-applicability'): AnalyzeScanRequest {
+    function getAnalyzeScanRequest(roots: string[], scanType: AnalyzerType = AnalyzerType.ContextualAnalysis): AnalyzeScanRequest {
         return {
             type: scanType,
             output: '/path/to/output.json',
