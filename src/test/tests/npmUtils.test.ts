@@ -15,6 +15,8 @@ import { PackageType } from '../../main/types/projectType';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { FocusType } from '../../main/constants/contextKeys';
+import { NpmCmd } from '../../main/utils/cmds/npm';
+import * as fs from 'fs';
 
 /**
  * Test functionality of @class NpmUtils.
@@ -151,48 +153,71 @@ describe('Npm Utils Tests', async () => {
         assert.deepEqual(dependencyPos[0].end, new vscode.Position(12, 23));
     });
 
-    /**
-     * Test NpmUtils.createNpmDependenciesTrees.
-     */
-    it('Create npm Dependencies Trees', async () => {
-        let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
-        let res: DependenciesTreeNode[] = await runCreateNpmDependenciesTrees(parent);
+    describe('Dependencies Trees', async () => {
+        before(() => {
+            setUp();
+        });
 
-        // Check labels
-        assert.deepEqual(res[0].label, 'package-name1');
-        assert.deepEqual(res[1].label, 'package-name2');
-        assert.deepEqual(res[2].label, 'package-name3');
+        after(() => {
+            tearDown();
+        });
 
-        // Check parents
-        assert.deepEqual(res[0].parent, parent);
-        assert.deepEqual(res[1].parent, parent);
-        assert.deepEqual(res[2].parent, parent);
+        it('Check the tree of the npm dependency tree build', async () => {
+            let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
+            let res: DependenciesTreeNode[] = await runCreateNpmDependenciesTrees(parent);
 
-        // Check children
-        assert.lengthOf(res[1].children, 1);
-        assert.lengthOf(res[2].children, 4);
-        let child: DependenciesTreeNode | undefined = res[2].children.find(component => component.label === 'progress');
-        assert.deepEqual(child?.label, 'progress');
-        assert.deepEqual(child?.componentId, 'progress:2.0.3');
-        assert.deepEqual(child?.description, '2.0.3');
-        assert.deepEqual(child?.parent, res[2]);
+            // Check labels
+            assert.deepEqual(res[0].label, 'package-name1');
+            assert.deepEqual(res[1].label, 'package-name2');
+            assert.deepEqual(res[2].label, 'package-name3');
 
-        child = res[2].children.find(component => component.label === 'has-flag');
-        assert.deepEqual(child?.componentId, 'has-flag:3.0.0');
-        assert.deepEqual(child?.description, '3.0.0');
-        assert.deepEqual(child?.parent, res[2]);
+            // Check parents
+            assert.deepEqual(res[0].parent, parent);
+            assert.deepEqual(res[1].parent, parent);
+            assert.deepEqual(res[2].parent, parent);
 
-        child = res[2].children.find(component => component.label === '@types/node');
-        assert.deepEqual(child?.componentId, '@types/node:14.14.10');
-        assert.deepEqual(child?.description, '14.14.10');
-        assert.deepEqual(child?.generalInfo.scopes, ['types']);
-        assert.deepEqual(child?.parent, res[2]);
+            // Check children
+            assert.lengthOf(res[1].children, 1);
+            assert.lengthOf(res[2].children, 4);
+            let child: DependenciesTreeNode | undefined = res[2].children.find(component => component.label === 'progress');
+            assert.deepEqual(child?.label, 'progress');
+            assert.deepEqual(child?.componentId, 'progress:2.0.3');
+            assert.deepEqual(child?.description, '2.0.3');
+            assert.deepEqual(child?.parent, res[2]);
 
-        child = res[2].children.find(component => component.label === '@ungap/promise-all-settled');
-        assert.deepEqual(child?.componentId, '@ungap/promise-all-settled:1.1.2');
-        assert.deepEqual(child?.description, '1.1.2');
-        assert.deepEqual(child?.generalInfo.scopes, ['ungap']);
-        assert.deepEqual(child?.parent, res[2]);
+            child = res[2].children.find(component => component.label === 'has-flag');
+            assert.deepEqual(child?.componentId, 'has-flag:3.0.0');
+            assert.deepEqual(child?.description, '3.0.0');
+            assert.deepEqual(child?.parent, res[2]);
+
+            child = res[2].children.find(component => component.label === '@types/node');
+            assert.deepEqual(child?.componentId, '@types/node:14.14.10');
+            assert.deepEqual(child?.description, '14.14.10');
+            assert.deepEqual(child?.generalInfo.scopes, ['types']);
+            assert.deepEqual(child?.parent, res[2]);
+
+            child = res[2].children.find(component => component.label === '@ungap/promise-all-settled');
+            assert.deepEqual(child?.componentId, '@ungap/promise-all-settled:1.1.2');
+            assert.deepEqual(child?.description, '1.1.2');
+            assert.deepEqual(child?.generalInfo.scopes, ['ungap']);
+            assert.deepEqual(child?.parent, res[2]);
+        });
+
+        function setUp() {
+            if (NpmCmd.isLegacyNpmVersion()) {
+                // npm v6 does not have the flag '--package-lock-only' so we have to install each test project before building the dependencies tree
+                projectDirs.forEach(projectDir => {
+                    NpmCmd.runNpmCi(path.join(tmpDir.fsPath, projectDir));
+                });
+            }
+        }
+        function tearDown() {
+            if (NpmCmd.isLegacyNpmVersion()) {
+                projectDirs.forEach(projectDir => {
+                    fs.rmdirSync(path.join(tmpDir.fsPath, projectDir), { recursive: true });
+                });
+            }
+        }
     });
 
     async function runCreateNpmDependenciesTrees(parent: DependenciesTreeNode) {

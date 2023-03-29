@@ -16,45 +16,48 @@ export enum Flag {
 }
 
 export class NpmCmd {
-    public static runNpmCi(workspaceFolder: string): any {
-        ScanUtils.executeCmd('npm ci', workspaceFolder);
+    public static runNpmCi(projectRoot: string): any {
+        ScanUtils.executeCmd('npm ci', projectRoot);
     }
 
-    public static runNpmLs(workspaceFolder: string): any {
-        return JSON.parse(ScanUtils.executeCmd('npm ls' + this.getNpmLsArgs(workspaceFolder), workspaceFolder).toString());
+    public static runNpmLs(projectRoot: string): any {
+        return JSON.parse(ScanUtils.executeCmd('npm ls' + this.getNpmLsArgs(projectRoot), projectRoot).toString());
     }
 
     public static runNpmVersion(): string {
         return execSync(`npm ${Flag.Version}`).toString();
     }
 
-    protected static isLegacyNpmVersion(): boolean {
+    public static isLegacyNpmVersion(): boolean {
         let version: string = this.runNpmVersion();
         let npmSemver: semver.SemVer = new semver.SemVer(version);
         return npmSemver.compare('7.0.0') === -1;
     }
 
-    protected static getNpmLsArgs(workspaceFolder: string): string {
+    protected static getNpmLsArgs(projectRoot: string): string {
         let args: string = `${Flag.Json} ${Flag.All}`;
-        args += this.getSkipDevDependenciesFlag(this.isLegacyNpmVersion());
-        return args + this.getPackageLockOnlyFlag(workspaceFolder);
+        args += this.getSkipDevDependenciesFlag();
+        return args + this.getPackageLockOnlyFlag(projectRoot);
     }
 
-    protected static getSkipDevDependenciesFlag(isLegacyNpm: boolean) {
+    protected static getSkipDevDependenciesFlag() {
         if (!Configuration.excludeDevDependencies()) {
             return '';
         }
-        return isLegacyNpm ? Flag.LegacySkipDevDependencies : Flag.SkipDevDependencies;
+        return this.isLegacyNpmVersion() ? Flag.LegacySkipDevDependencies : Flag.SkipDevDependencies;
     }
 
-    protected static getPackageLockOnlyFlag(workspaceFolder: string) {
-        if (!this.isNodeModulesExists(workspaceFolder)) {
-            return Flag.PackageLockOnly;
+    protected static getPackageLockOnlyFlag(projectRoot: string) {
+        if (this.isNodeModulesExists(projectRoot)) {
+            return '';
         }
-        return '';
+        if (this.isLegacyNpmVersion()) {
+            return '';
+        }
+        return Flag.PackageLockOnly;
     }
 
-    protected static isNodeModulesExists(workspaceFolder: string) {
-        return fs.existsSync(path.join(workspaceFolder, 'node_modules'));
+    protected static isNodeModulesExists(projectRoot: string) {
+        return fs.existsSync(path.join(projectRoot, 'node_modules'));
     }
 }
