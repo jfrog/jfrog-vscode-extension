@@ -122,45 +122,51 @@ export abstract class BinaryRunner {
      * @returns list of environment variables to use while executing the runner or unidentified if credential not set
      */
     public createEnvForRun(executionLogDirectory?: string): NodeJS.ProcessEnv | undefined {
-        if (this._connectionManager.areXrayCredentialsSet()) {
-            let binaryVars: NodeJS.ProcessEnv = { JFROG_CLI_LOG_LEVEL: Translators.toAnalyzerLogLevel(Configuration.getLogLevel()) };
-            // Platform information
-            binaryVars[BinaryRunner.ENV_PLATFORM_URL] = this._connectionManager.url;
-            // Credentials information
-            if (this._connectionManager.accessToken) {
-                binaryVars[BinaryRunner.ENV_TOKEN] = this._connectionManager.accessToken;
-            } else {
-                binaryVars[BinaryRunner.ENV_USER] = this._connectionManager.username;
-                binaryVars[BinaryRunner.ENV_PASSWORD] = this._connectionManager.password;
-            }
-            // Optional proxy information - environment variable
-            let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
-            let proxyHttpsUrl: string | undefined = process.env['HTTPS_PROXY'];
-            // Optional proxy information - vscode configuration override
-            let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
-            if (optional) {
-                let proxyConfig: IProxyConfig = <IProxyConfig>optional;
-                let proxyUrl: string = proxyConfig.host + (proxyConfig.port !== 0 ? ':' + proxyConfig.port : '');
-                proxyHttpUrl = 'http://' + proxyUrl;
-                proxyHttpsUrl = 'https://' + proxyUrl;
-            }
-            if (proxyHttpUrl) {
-                binaryVars[BinaryRunner.ENV_HTTP_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpUrl);
-            }
-            if (proxyHttpsUrl) {
-                binaryVars[BinaryRunner.ENV_HTTPS_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
-            }
-            // Optional log destination
-            if (executionLogDirectory) {
-                binaryVars.AM_LOG_DIRECTORY = executionLogDirectory;
-            }
-
-            return {
-                ...process.env,
-                ...binaryVars
-            };
+        if (!this._connectionManager.areXrayCredentialsSet()) {
+            return undefined;
         }
-        return undefined;
+
+        let binaryVars: NodeJS.ProcessEnv = { JFROG_CLI_LOG_LEVEL: Translators.toAnalyzerLogLevel(Configuration.getLogLevel()) };
+        // Platform information
+        binaryVars[BinaryRunner.ENV_PLATFORM_URL] = this._connectionManager.url;
+        // Credentials information
+        if (this._connectionManager.accessToken) {
+            binaryVars[BinaryRunner.ENV_TOKEN] = this._connectionManager.accessToken;
+        } else {
+            binaryVars[BinaryRunner.ENV_USER] = this._connectionManager.username;
+            binaryVars[BinaryRunner.ENV_PASSWORD] = this._connectionManager.password;
+        }
+
+        this.populateOptionalInformation(binaryVars, executionLogDirectory);
+
+        return {
+            ...process.env,
+            ...binaryVars
+        };
+    }
+
+    private populateOptionalInformation(binaryVars: NodeJS.ProcessEnv, executionLogDirectory?: string) {
+        // Optional proxy information - environment variable
+        let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
+        let proxyHttpsUrl: string | undefined = process.env['HTTPS_PROXY'];
+        // Optional proxy information - vscode configuration override
+        let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
+        if (optional) {
+            let proxyConfig: IProxyConfig = <IProxyConfig>optional;
+            let proxyUrl: string = proxyConfig.host + (proxyConfig.port !== 0 ? ':' + proxyConfig.port : '');
+            proxyHttpUrl = 'http://' + proxyUrl;
+            proxyHttpsUrl = 'https://' + proxyUrl;
+        }
+        if (proxyHttpUrl) {
+            binaryVars[BinaryRunner.ENV_HTTP_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpUrl);
+        }
+        if (proxyHttpsUrl) {
+            binaryVars[BinaryRunner.ENV_HTTPS_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
+        }
+        // Optional log destination
+        if (executionLogDirectory) {
+            binaryVars.AM_LOG_DIRECTORY = executionLogDirectory;
+        }
     }
 
     /**
@@ -183,7 +189,6 @@ export abstract class BinaryRunner {
     }
 
     public async run(checkCancel: () => void, ...requests: AnalyzeScanRequest[]): Promise<AnalyzerScanResponse | undefined> {
-        // Prepare and validate
         if (!this.validateSupported()) {
             return undefined;
         }
@@ -192,20 +197,7 @@ export abstract class BinaryRunner {
             if (args.requests.length == 0) {
                 return undefined;
             }
-
-            let runs: Promise<any>[] = [];
-            let aggResponse: AnalyzerScanResponse = this.populateRunTasks(checkCancel, args, runs);
-            let hadError: boolean = false;
-
-            await Promise.all(runs)
-                .catch(err => {
-                    hadError = true;
-                    throw err;
-                })
-                // Collect log if exist
-                .finally(() => this.copyRunLogToFolder(args, hadError));
-
-            return aggResponse;
+            return await this.runTasks(args, checkCancel);
         } finally {
             ScanUtils.removeFolder(args.directory);
         }
@@ -258,7 +250,8 @@ export abstract class BinaryRunner {
         } as AnalyzerRequest);
     }
 
-    private populateRunTasks(checkCancel: () => void, args: RunArgs, runs: Promise<any>[]): AnalyzerScanResponse {
+    private async runTasks(args: RunArgs, checkCancel: () => void): Promise<AnalyzerScanResponse> {
+        let runs: Promise<any>[] = [];
         let aggResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (let i: number = 0; i < args.requests.length; i++) {
             runs.push(
@@ -276,6 +269,14 @@ export abstract class BinaryRunner {
                     })
             );
         }
+        let hadError: boolean = false;
+        await Promise.all(runs)
+            .catch(err => {
+                hadError = true;
+                throw err;
+            })
+            // Collect log if exist
+            .finally(() => this.copyRunLogToFolder(args, hadError));
         return aggResponse;
     }
 
