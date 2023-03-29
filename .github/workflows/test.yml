@@ -17,15 +17,15 @@ jobs:
         # Fix 'nvm is not compatible with the npm config "prefix" option' error on macOS
         run: unset npm_config_prefix
         if: runner.os == 'macOS'
-      - uses: actions/setup-python@v1
+      - uses: actions/setup-python@v4
       - name: Setup NodeJS
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: "16"
           check-latest: true
-      - name: Install
-        run: npm i --ignore-scripts
-        # Make sure no new dependencies were installed after running 'npm i'
+      - name: Clean install
+        run: npm ci --ignore-scripts
+        # Make sure no new dependencies were installed after running 'npm ci'
       - name: Make sure branch is clean
         run: git diff --exit-code
       - name: Lint

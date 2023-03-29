@@ -43,7 +43,7 @@ pipelines:
             - jf npmc --repo-resolve ecosys-npm-remote
 
             # Install and audit
-            - jf npm install
+            - jf npm ci --ignore-scripts
             - jf audit --fail=false
 
             # Set version
