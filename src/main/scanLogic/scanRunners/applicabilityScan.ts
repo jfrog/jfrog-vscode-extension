@@ -1,12 +1,12 @@
 import { LogManager } from '../../log/logManager';
 import { BinaryRunner } from './binaryRunner';
-import { AnalyzeIssue, AnalyzeLocation, AnalyzerScanRun, AnalyzeScanRequest, FileIssues } from './analyzerModels';
+import { AnalyzeIssue, AnalyzeLocation, AnalyzerScanRun, AnalyzerType, AnalyzeScanRequest, FileIssues } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 
 /**
  * The request that is sent to the binary to scan applicability
  */
-export interface ApplicabilityScanRequest extends AnalyzeScanRequest {
+export interface ApplicabilityScanArgs extends AnalyzeScanRequest {
     // Not used
     grep_disable: boolean;
     // Must have at least one item, the CVE to search for in scan
@@ -39,7 +39,7 @@ export interface CveApplicableDetails {
  */
 export class ApplicabilityRunner extends BinaryRunner {
     constructor(connectionManager: ConnectionManager, timeout: number, logManager: LogManager) {
-        super(connectionManager, timeout, logManager);
+        super(connectionManager, timeout, AnalyzerType.ContextualAnalysis, logManager);
     }
 
     /** @override */
@@ -48,8 +48,8 @@ export class ApplicabilityRunner extends BinaryRunner {
     }
 
     /** @override */
-    public asAnalyzerRequestString(...requests: AnalyzeScanRequest[]): string {
-        let str: string = super.asAnalyzerRequestString(...requests);
+    public requestsToYaml(...requests: AnalyzeScanRequest[]): string {
+        let str: string = super.requestsToYaml(...requests);
         return str.replace('cve_whitelist', 'cve-whitelist').replace('skipped_folders', 'skipped-folders');
     }
 
@@ -67,13 +67,13 @@ export class ApplicabilityRunner extends BinaryRunner {
         cveToRun: Set<string> = new Set<string>(),
         skipFolders: string[] = []
     ): Promise<ApplicabilityScanResponse> {
-        let request: ApplicabilityScanRequest = {
-            type: 'analyze-applicability',
+        const request: ApplicabilityScanArgs = {
+            type: AnalyzerType.ContextualAnalysis,
             roots: [directory],
             cve_whitelist: Array.from(cveToRun),
             skipped_folders: skipFolders
-        } as ApplicabilityScanRequest;
-        return this.run(checkCancel, false, request).then(response => this.generateResponse(response?.runs[0]));
+        } as ApplicabilityScanArgs;
+        return await this.run(checkCancel, request).then(response => this.generateResponse(response?.runs[0]));
     }
 
     /**

@@ -2,11 +2,12 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { GeneralInfo } from '../../../types/generalInfo';
-import { NpmGlobalScopes, ScopedNpmProject, NpmUtils } from '../../../utils/npmUtils';
+import { ProjectDetails, NpmUtils } from '../../../utils/npmUtils';
 import { BuildTreeErrorType, RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
 import { Severity } from '../../../types/severity';
 import { LogManager } from '../../../log/logManager';
+import { NpmCmd } from '../../../utils/cmds/npm';
 
 export class NpmTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
@@ -16,19 +17,16 @@ export class NpmTreeNode extends RootNode {
     }
 
     public async refreshDependencies() {
-        const productionScope: ScopedNpmProject = new ScopedNpmProject(NpmGlobalScopes.PRODUCTION);
-        const developmentScope: ScopedNpmProject = new ScopedNpmProject(NpmGlobalScopes.DEVELOPMENT);
+        const projectDetails: ProjectDetails = new ProjectDetails();
         let npmLsFailed: boolean = false;
-        [productionScope, developmentScope].forEach(scopedProject => {
-            try {
-                scopedProject.loadProjectDetails(NpmUtils.runNpmLs(scopedProject.scope, this.workspaceFolder));
-            } catch (error) {
-                this._logManager.logError(<any>error, false);
-                scopedProject.loadProjectDetailsFromFile(path.join(this.fullPath));
-                npmLsFailed = true;
-            }
-            this.populateDependenciesTree(this, scopedProject.dependencies, scopedProject.scope);
-        });
+        try {
+            projectDetails.loadProjectDetails(NpmCmd.runNpmLs(this.workspaceFolder));
+        } catch (error) {
+            this._logManager.logError(<any>error, false);
+            projectDetails.loadProjectDetailsFromFile(path.join(this.fullPath));
+            npmLsFailed = true;
+        }
+        this.populateDependenciesTree(this, projectDetails.dependencies);
         if (npmLsFailed) {
             this.topSeverity = Severity.Unknown;
             this.buildError = BuildTreeErrorType.NotInstalled;
@@ -37,13 +35,13 @@ export class NpmTreeNode extends RootNode {
                 'ERR'
             );
         }
-        this.generalInfo = new GeneralInfo(productionScope.projectName, productionScope.projectVersion, [], this.fullPath, PackageType.Npm);
+        this.generalInfo = new GeneralInfo(projectDetails.projectName, projectDetails.projectVersion, [], this.fullPath, PackageType.Npm);
 
-        this.projectDetails.name = productionScope.projectName ? productionScope.projectName : this.fullPath;
+        this.projectDetails.name = projectDetails.projectName ? projectDetails.projectName : this.fullPath;
         this.label = this.projectDetails.name;
     }
 
-    private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any, globalScope: string) {
+    private populateDependenciesTree(dependenciesTreeNode: DependenciesTreeNode, dependencies: any) {
         if (!dependencies) {
             return;
         }
@@ -53,8 +51,7 @@ export class NpmTreeNode extends RootNode {
             if (version) {
                 let childDependencies: any = dependency.dependencies;
                 const scope: string = NpmUtils.getDependencyScope(key);
-                const currentDependencyScope: string[] = scope !== '' ? [globalScope, scope] : [globalScope];
-                let generalInfo: GeneralInfo = new GeneralInfo(key, version, currentDependencyScope, '', PackageType.Npm);
+                let generalInfo: GeneralInfo = new GeneralInfo(key, version, [scope], '', PackageType.Npm);
                 let treeCollapsibleState: vscode.TreeItemCollapsibleState = childDependencies
                     ? vscode.TreeItemCollapsibleState.Collapsed
                     : vscode.TreeItemCollapsibleState.None;
@@ -62,7 +59,7 @@ export class NpmTreeNode extends RootNode {
                 let componentId: string = key + ':' + version;
                 this.projectDetails.addDependency(NpmTreeNode.COMPONENT_PREFIX + componentId);
                 child.dependencyId = NpmTreeNode.COMPONENT_PREFIX + componentId;
-                this.populateDependenciesTree(child, childDependencies, globalScope);
+                this.populateDependenciesTree(child, childDependencies);
             }
         }
     }

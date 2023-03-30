@@ -18,18 +18,23 @@ import { LogUtils } from '../../log/logUtils';
 /**
  * Arguments for running binary async
  */
-interface RunArgs {
-    // Should split the requests to multiple runs
-    split: boolean;
-    // The directory that the requests/responses are expected
-    directory: string;
+class RunArgs {
     // The requests for the run
-    requests: RunRequest[];
+    public requests: RunRequest[] = [];
+    // The directory that the requests/responses are expected
+    constructor(public readonly directory: string) {}
+
+    public getRoots(): string[] {
+        let roots: Set<string> = new Set<string>();
+        this.requests.forEach(request => request.roots.forEach(root => roots.add(root)));
+        return Array.from(roots);
+    }
 }
 
 interface RunRequest {
     request: string;
     requestPath: string;
+    roots: string[];
     responsePaths: string[];
 }
 
@@ -42,13 +47,22 @@ export abstract class BinaryRunner {
 
     private static readonly RUNNER_NAME: string = 'analyzerManager';
 
-    private static readonly NOT_ENTITLED: number = 31;
+    public static readonly NOT_ENTITLED: number = 31;
+
+    public static readonly ENV_PLATFORM_URL: string = 'JF_PLATFORM_URL';
+    public static readonly ENV_TOKEN: string = 'JF_TOKEN';
+    public static readonly ENV_USER: string = 'JF_USER';
+    public static readonly ENV_PASSWORD: string = 'JF_PASS';
+    public static readonly ENV_LOG_DIR: string = 'AM_LOG_DIRECTORY';
+    public static readonly ENV_HTTP_PROXY: string = 'HTTP_PROXY';
+    public static readonly ENV_HTTPS_PROXY: string = 'HTTPS_PROXY';
 
     private static readonly DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/[RELEASE]/';
 
     constructor(
         protected _connectionManager: ConnectionManager,
         protected _abortCheckInterval: number,
+        protected _type: AnalyzerType,
         protected _logManager: LogManager,
         protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager)
     ) {
@@ -86,7 +100,7 @@ export abstract class BinaryRunner {
 
     /**
      * Execute the cmd command to run the binary with given arguments and an option to abort the operation.
-     * @param checkCancel - check if cancel
+     * @param checkCancel - check if should cancel
      * @param args  - the arguments for the command
      * @param executionLogDirectory - the directory to save the execution log in
      */
@@ -99,10 +113,10 @@ export abstract class BinaryRunner {
                 this.createEnvForRun(executionLogDirectory)
             ).then(std => {
                 if (std.stdout && std.stdout.length > 0) {
-                    this._logManager.logMessage("Done executing '" + this._binary.name + "' with log, log:\n" + std.stdout, 'DEBUG');
+                    this._logManager.logMessage("Done executing '" + this._type + "' with log, log:\n" + std.stdout, 'DEBUG');
                 }
                 if (std.stderr && std.stderr.length > 0) {
-                    this._logManager.logMessage("Done executing '" + this._binary.name + "' with error, error log:\n" + std.stderr, 'ERR');
+                    this._logManager.logMessage("Done executing '" + this._type + "' with error, error log:\n" + std.stderr, 'ERR');
                 }
             })
         });
@@ -113,48 +127,52 @@ export abstract class BinaryRunner {
      * @param executionLogDirectory - the directory that the log will be written into, if not provided the log will be written in stdout/stderr
      * @returns list of environment variables to use while executing the runner or unidentified if credential not set
      */
-    private createEnvForRun(executionLogDirectory?: string): NodeJS.ProcessEnv | undefined {
-        if (this._connectionManager.areXrayCredentialsSet()) {
-            // Platform information
-            let binaryVars: NodeJS.ProcessEnv = {
-                JF_PLATFORM_URL: this._connectionManager.url
-            };
-            if (this._connectionManager.accessToken) {
-                binaryVars.JF_TOKEN = this._connectionManager.accessToken;
-            } else {
-                binaryVars.JF_USER = this._connectionManager.username;
-                binaryVars.JF_PASS = this._connectionManager.password;
-            }
-            // Log information
-            binaryVars.JFROG_CLI_LOG_LEVEL = Translators.toAnalyzerLogLevel(Configuration.getLogLevel());
-            if (executionLogDirectory) {
-                binaryVars.AM_LOG_DIRECTORY = executionLogDirectory;
-            }
-            // Proxy information - environment variable
-            let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
-            let proxyHttpsUrl: string | undefined = process.env['HTTPS_PROXY'];
-            // Proxy information - vscode configuration override
-            let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
-            if (optional) {
-                let proxyConfig: IProxyConfig = <IProxyConfig>optional;
-                let proxyUrl: string = proxyConfig.host + (proxyConfig.port !== 0 ? ':' + proxyConfig.port : '');
-                proxyHttpUrl = 'http://' + proxyUrl;
-                proxyHttpsUrl = 'https://' + proxyUrl;
-            }
-            // Proxy url
-            if (proxyHttpUrl) {
-                binaryVars.HTTP_PROXY = this.addOptionalProxyAuthInformation(proxyHttpUrl);
-            }
-            if (proxyHttpsUrl) {
-                binaryVars.HTTPS_PROXY = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
-            }
-
-            return {
-                ...process.env,
-                ...binaryVars
-            };
+    public createEnvForRun(executionLogDirectory?: string): NodeJS.ProcessEnv | undefined {
+        if (!this._connectionManager.areXrayCredentialsSet()) {
+            return undefined;
         }
-        return undefined;
+
+        let binaryVars: NodeJS.ProcessEnv = { JFROG_CLI_LOG_LEVEL: Translators.toAnalyzerLogLevel(Configuration.getLogLevel()) };
+        // Platform information
+        binaryVars[BinaryRunner.ENV_PLATFORM_URL] = this._connectionManager.url;
+        // Credentials information
+        if (this._connectionManager.accessToken) {
+            binaryVars[BinaryRunner.ENV_TOKEN] = this._connectionManager.accessToken;
+        } else {
+            binaryVars[BinaryRunner.ENV_USER] = this._connectionManager.username;
+            binaryVars[BinaryRunner.ENV_PASSWORD] = this._connectionManager.password;
+        }
+
+        this.populateOptionalInformation(binaryVars, executionLogDirectory);
+
+        return {
+            ...process.env,
+            ...binaryVars
+        };
+    }
+
+    private populateOptionalInformation(binaryVars: NodeJS.ProcessEnv, executionLogDirectory?: string) {
+        // Optional proxy information - environment variable
+        let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
+        let proxyHttpsUrl: string | undefined = process.env['HTTPS_PROXY'];
+        // Optional proxy information - vscode configuration override
+        let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
+        if (optional) {
+            let proxyConfig: IProxyConfig = <IProxyConfig>optional;
+            let proxyUrl: string = proxyConfig.host + (proxyConfig.port !== 0 ? ':' + proxyConfig.port : '');
+            proxyHttpUrl = 'http://' + proxyUrl;
+            proxyHttpsUrl = 'https://' + proxyUrl;
+        }
+        if (proxyHttpUrl) {
+            binaryVars[BinaryRunner.ENV_HTTP_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpUrl);
+        }
+        if (proxyHttpsUrl) {
+            binaryVars[BinaryRunner.ENV_HTTPS_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
+        }
+        // Optional log destination
+        if (executionLogDirectory) {
+            binaryVars.AM_LOG_DIRECTORY = executionLogDirectory;
+        }
     }
 
     /**
@@ -176,102 +194,64 @@ export abstract class BinaryRunner {
         return url;
     }
 
+    public async run(checkCancel: () => void, ...requests: AnalyzeScanRequest[]): Promise<AnalyzerScanResponse | undefined> {
+        if (!this.validateSupported()) {
+            return undefined;
+        }
+        let args: RunArgs = this.createRunArguments(...requests);
+        try {
+            if (args.requests.length == 0) {
+                return undefined;
+            }
+            return await this.runTasks(args, checkCancel);
+        } finally {
+            ScanUtils.removeFolder(args.directory);
+        }
+    }
+
+    /**
+     * Populate the run arguments based on the given requests information
+     * @param requests - the run requests information
+     * @return run arguments for the given requests
+     */
+    private createRunArguments(...requests: AnalyzeScanRequest[]): RunArgs {
+        let args: RunArgs = new RunArgs(ScanUtils.createTmpDir());
+        let processedRoots: Set<string> = new Set<string>();
+
+        for (const request of requests) {
+            if (request.roots.length > 0 && request.roots.every(root => !processedRoots.has(root))) {
+                // Prepare request information and insert as an actual request
+                const requestPath: string = path.join(args.directory, 'request_' + args.requests.length);
+                const responsePath: string = path.join(args.directory, 'response_' + args.requests.length);
+                request.output = responsePath;
+                request.type = this._type;
+                request.roots.forEach(root => processedRoots.add(root));
+                // Add request to run
+                args.requests.push({
+                    request: this.requestsToYaml(request),
+                    requestPath: requestPath,
+                    roots: request.roots,
+                    responsePaths: [responsePath]
+                } as RunRequest);
+            }
+        }
+
+        return args;
+    }
+
     /**
      * Translate the run requests to a single analyze request in yaml format
      * @param requests - run requests
      * @returns analyze request in YAML format
      */
-    public asAnalyzerRequestString(...requests: AnalyzeScanRequest[]): string {
+    public requestsToYaml(...requests: AnalyzeScanRequest[]): string {
         return yaml.dump({
             scans: requests
         } as AnalyzerRequest);
     }
 
-    /**
-     * Populate the args requests arguments based on the given requests information
-     * @param args - the run requests to populate
-     * @param requests - the run requests information
-     * @return the first valid request from the given request
-     */
-    private prepareRequests(args: RunArgs, ...requests: AnalyzeScanRequest[]): AnalyzeScanRequest | undefined {
-        let actualRequest: { requests: AnalyzeScanRequest[]; responsePaths: string[] } = { requests: [], responsePaths: [] };
-        for (const request of requests) {
-            if (request.roots.length > 0) {
-                // Prepare request information and insert as an actual request
-                const requestPath: string = path.join(args.directory, 'request_' + args.requests.length);
-                const responsePath: string = path.join(args.directory, 'response_' + args.requests.length);
-                request.output = responsePath;
-                if (args.split) {
-                    // Insert as actual request to args request
-                    args.requests.push({
-                        request: this.asAnalyzerRequestString(request),
-                        requestPath: requestPath,
-                        responsePaths: [responsePath]
-                    } as RunRequest);
-                } else {
-                    // Insert to actual requests
-                    actualRequest.requests.push(request);
-                    actualRequest.responsePaths.push(responsePath);
-                }
-            }
-        }
-        // In case the split parameter is false insert the actual requests as a single request to the args
-        if (!args.split && actualRequest.requests.length > 0) {
-            args.requests.push({
-                request: this.asAnalyzerRequestString(...actualRequest.requests),
-                requestPath: path.join(args.directory, 'request'),
-                responsePaths: actualRequest.responsePaths
-            } as RunRequest);
-        }
-        return actualRequest.requests.length > 0 ? actualRequest.requests[0] : undefined;
-    }
-
-    /**
-     * Run the runner async, and perform the given run requests using this binary.
-     * @param checkCancel - check if cancel
-     * @param split - if true the runner will be run separately for all the requests otherwise all the requests will be performed together
-     * @param requests - the request to perform using this binary
-     * @returns - the binary analyzer scan response after running for all the request
-     */
-    public async run(checkCancel: () => void, split: boolean, ...requests: AnalyzeScanRequest[]): Promise<AnalyzerScanResponse | undefined> {
-        // Prepare and validate
-        if (!this.validateSupported()) {
-            return undefined;
-        }
-        let args: RunArgs = {
-            directory: ScanUtils.createTmpDir(),
-            split: split,
-            activeTasks: 0,
-            requests: []
-        } as RunArgs;
-        let validRequest: AnalyzeScanRequest | undefined = this.prepareRequests(args, ...requests);
-        if (args.requests.length == 0 || !validRequest) {
-            ScanUtils.removeFolder(args.directory);
-            return undefined;
-        }
-        // Run
+    private async runTasks(args: RunArgs, checkCancel: () => void): Promise<AnalyzerScanResponse> {
         let runs: Promise<any>[] = [];
-        let aggResponse: AnalyzerScanResponse = this.populateRunTasks(checkCancel, args, runs);
-        let hadError: boolean = false;
-        await Promise.all(runs)
-            .catch(err => {
-                hadError = true;
-                throw err;
-            })
-            .finally(() => {
-                if (!validRequest) {
-                    return;
-                }
-                // Collect log if exist
-                let requestType: AnalyzerType = validRequest.type;
-                let requestRootName: string = Utils.getLastSegment(validRequest.roots[0]);
-                this.copyRunLogToFolder(args.directory, requestType, requestRootName, hadError);
-                ScanUtils.removeFolder(args.directory);
-            });
-        return aggResponse;
-    }
-
-    private populateRunTasks(checkCancel: () => void, args: RunArgs, runs: Promise<any>[]): AnalyzerScanResponse {
         let aggResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (let i: number = 0; i < args.requests.length; i++) {
             runs.push(
@@ -289,29 +269,42 @@ export abstract class BinaryRunner {
                     })
             );
         }
+        let hadError: boolean = false;
+        await Promise.all(runs)
+            .catch(err => {
+                hadError = true;
+                throw err;
+            })
+            // Collect log if exist
+            .finally(() => this.copyRunLogToFolder(args, hadError));
         return aggResponse;
     }
 
     /**
      * Copy a file that includes 'log' in its name from a given folder to the logs folder
-     * @param logsSrcFolder - the directory that the log file exists in
-     * @param requestType - the type of runner request of the log, will be part of it's name
-     * @param rootName - the type of runner request of the log, will be part of it's name
+     * @param arg - the run arguments that related this log
      * @param hadError - if true, will log result as error, otherwise success.
+     * @param copyToDirectory - optional destination to copy the log
      */
-    private copyRunLogToFolder(logsSrcFolder: string, requestType: AnalyzerType, rootName: string, hadError: boolean) {
-        let logFile: string | undefined = fs.readdirSync(logsSrcFolder).find(fileName => fileName.toLowerCase().includes('log'));
+    private copyRunLogToFolder(args: RunArgs, hadError: boolean, copyToDirectory: string = ScanUtils.getLogsPath()) {
+        let logFile: string | undefined = fs.readdirSync(args.directory).find(fileName => fileName.toLowerCase().includes('log'));
         if (!logFile) {
             return;
         }
+
+        let roots: string[] = args.getRoots();
+        let logFinalPath: string = path.join(
+            copyToDirectory,
+            LogUtils.getLogFileName(roots.map(root => Utils.getLastSegment(root)).join('_'), this._type, '' + Date.now())
+        );
+
+        fs.copyFileSync(path.join(args.directory, logFile), logFinalPath);
         LogUtils.cleanUpOldLogs();
-        let logFinalPath: string = path.join(ScanUtils.getLogsPath(), LogUtils.getLogFileName(rootName, requestType, '' + Date.now()));
-        fs.copyFileSync(path.join(logsSrcFolder, logFile), logFinalPath);
         this._logManager.logMessage(
             'AnalyzerManager run ' +
-                requestType +
+                this._type +
                 ' on ' +
-                rootName +
+                roots +
                 ' ended ' +
                 (hadError ? 'with error' : 'successfully') +
                 ', scan log was generated at ' +
@@ -331,7 +324,7 @@ export abstract class BinaryRunner {
      * @param responsePaths - the path of the response for each request in the run
      * @returns the response from all the binary runs
      */
-    private async runRequest(
+    public async runRequest(
         checkCancel: () => void,
         request: string,
         requestPath: string,
@@ -346,7 +339,7 @@ export abstract class BinaryRunner {
                 if (error.code === BinaryRunner.NOT_ENTITLED) {
                     throw new NotEntitledError();
                 }
-                this._logManager.logMessage("Binary '" + this._binary.name + "' task ended with status code: " + error.code, 'ERR');
+                this._logManager.logMessage("Binary '" + this._type + "' task ended with status code: " + error.code, 'ERR');
             }
             throw error;
         });
@@ -354,7 +347,7 @@ export abstract class BinaryRunner {
         let analyzerScanResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (const responsePath of responsePaths) {
             if (!fs.existsSync(responsePath)) {
-                throw new Error("Running '" + this._binary.name + "' binary didn't produce response.\nRequest: " + request);
+                throw new Error("Running '" + this._type + "' binary didn't produce response.\nRequest: " + request);
             }
             // Load result and parse as response
             let result: AnalyzerScanResponse = JSON.parse(fs.readFileSync(responsePath, 'utf8').toString());
