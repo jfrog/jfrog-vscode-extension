@@ -1,11 +1,10 @@
-import { execSync } from 'child_process';
 import * as vscode from 'vscode';
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import * as fs from 'fs';
-import { ScanUtils } from './scanUtils';
 import { FocusType } from '../constants/contextKeys';
 import { LogManager } from '../log/logManager';
+import { NpmCmd } from './cmds/npm';
 
 export class NpmUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/package.json' };
@@ -82,7 +81,7 @@ export class NpmUtils {
 
     public static verifyNpmInstalled(): boolean {
         try {
-            execSync('npm --version');
+            NpmCmd.runNpmVersion();
         } catch (error) {
             return false;
         }
@@ -95,21 +94,12 @@ export class NpmUtils {
         }
         return '';
     }
-
-    public static runNpmLs(scope: NpmGlobalScopes, workspaceFolder: string): any {
-        return JSON.parse(ScanUtils.executeCmd('npm ls --json --all --package-lock-only --' + scope, workspaceFolder).toString());
-    }
 }
 
-export class ScopedNpmProject {
+export class ProjectDetails {
     private _projectName: string = '';
     private _projectVersion: string = '';
     private _dependencies: any;
-    private _scope: NpmGlobalScopes;
-
-    constructor(scope: NpmGlobalScopes) {
-        this._scope = scope;
-    }
 
     public get projectName(): string {
         return this._projectName;
@@ -143,14 +133,4 @@ export class ScopedNpmProject {
         this._projectName = fileData.name;
         this._projectVersion = fileData.version;
     }
-
-    public get scope(): NpmGlobalScopes {
-        return this._scope;
-    }
-}
-
-// For compatibility with npm 6,7,8, scope must be one of: 'dev' or 'prod'!
-export enum NpmGlobalScopes {
-    PRODUCTION = 'prod',
-    DEVELOPMENT = 'dev'
 }

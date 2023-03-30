@@ -85,6 +85,11 @@
                     "scope": "resource",
                     "markdownDescription": "A wildcards pattern, to match the name of builds published to Artifactory. Only builds which match the pattern are visible under the CI tab."
                 },
+                "jfrog.excludeDevDependencies": {
+                    "type": "boolean",
+                    "scope": "application",
+                    "markdownDescription": "Exclude development dependencies during the scan. Currently, only NPM is supported."
+                },
                 "jfrog.projectKey": {
                     "type": "string",
                     "scope": "application",

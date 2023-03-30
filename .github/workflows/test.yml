@@ -4,10 +4,12 @@ on: [push, pull_request]
 
 jobs:
   test:
+    name: ${{ matrix.os }}, node ${{ matrix.node }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        node: [14, 16]
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
       - uses: actions/checkout@v3
@@ -23,9 +25,9 @@ jobs:
         with:
           node-version: "16"
           check-latest: true
-      - name: Clean install
-        run: npm ci --ignore-scripts
-        # Make sure no new dependencies were installed after running 'npm ci'
+      - name: Install
+        run: npm i --ignore-scripts
+        # Make sure no new dependencies were installed after running 'npm i'
       - name: Make sure branch is clean
         run: git diff --exit-code
       - name: Lint
@@ -34,6 +36,11 @@ jobs:
         run: mvn clean package -f resources/maven-gav-reader/pom.xml -B
       - name: Install JFrog CLI for connectionManager tests
         run: curl -fL https://install-cli.jfrog.io | sh && jf -v
+      - name: Setup NodeJS for tests
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
       - name: Tests on macOS, Windows
         run: npm t
         if: runner.os != 'Linux'
