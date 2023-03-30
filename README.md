@@ -372,7 +372,7 @@ If however your policies are referenced through an Xray Watch or Watches, follow
 By default, paths containing the words `test`, `venv` and `node_modules` are excluded from Xray scan.
 The exclude pattern can be configured in the [Extension Settings](#extension-settings).
 
-### Exclude development dependencies during the scan
+### Exclude Development Dependencies During Scan
 
 Development dependencies are scanned by default. You can skip it by choosing `Exclude Dev Dependencies` under Settings.
 
