@@ -79,7 +79,7 @@ To learn more, see [here](https://www.jfrog.com/confluence/display/JFROG/Vulnera
 | SCA                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | Upgrade vulnerable dependencies to fixed versions |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | Contextual Analysis                               |  ❌  |   ❌   |   ✅    |  ✅  |    ✅    |   ❌    |
-| Skip Development Dependencies scan                |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |
+| Exclude dev dependencies                |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |
 
 #### Additional Perks
 * Security issues are easily visible inline.
