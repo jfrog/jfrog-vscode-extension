@@ -30,6 +30,7 @@
         -   [Go Projects](#go-projects)
         -   [Maven Projects](#maven-projects)
         -   [Npm Projects](#npm-projects)
+            -   [Exclude Development Dependencies During Scan](#exclude-development-dependencies-during-scan)
         -   [Yarn v1 Projects](#yarn-v1-projects)
         -   [Pypi Projects](#pypi-projects)
         -   [.NET Projects](#net-projects)
@@ -260,6 +261,10 @@ Important:
 To have your project dependencies scanned by JFrog Xray, make sure the npm CLI is installed on your local machine and that it is in your system PATH.
 In addition, the project dependencies must be installed using `npm install`.
 
+### Exclude Development Dependencies During Scan
+
+Development dependencies are scanned by default. You can exclude them by choosing `Exclude Dev Dependencies` in the [Extension Settings](#extension-settings). Currently, only npm is supported.
+
 ### Yarn v1 Projects
 
 Behind the scenes, the extension builds the Yarn dependencies tree by running `yarn list`. View licenses and top issue severities directly from the yarn.lock.
@@ -370,10 +375,6 @@ If however your policies are referenced through an Xray Watch or Watches, follow
 
 By default, paths containing the words `test`, `venv` and `node_modules` are excluded from Xray scan.
 The exclude pattern can be configured in the [Extension Settings](#extension-settings).
-
-### Exclude Development Dependencies During Scan
-
-Development dependencies are scanned by default. You can skip it by choosing `Exclude Dev Dependencies` under Settings.
 
 ### Proxy Configuration
 
