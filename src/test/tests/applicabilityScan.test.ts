@@ -4,7 +4,7 @@ import { assert } from 'chai';
 
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
-import { ApplicabilityRunner, ApplicabilityScanRequest, ApplicabilityScanResponse } from '../../main/scanLogic/scanRunners/applicabilityScan';
+import { ApplicabilityRunner, ApplicabilityScanArgs, ApplicabilityScanResponse } from '../../main/scanLogic/scanRunners/applicabilityScan';
 import { PackageType } from '../../main/types/projectType';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { AnalyzerScanResponse } from '../../main/scanLogic/scanRunners/analyzerModels';
@@ -29,14 +29,14 @@ describe('Contextual Analysis Scan Tests', async () => {
         }
     ].forEach(test => {
         it('Generate Yaml request - ' + test.name, () => {
-            let request: ApplicabilityScanRequest = getApplicabilityScanRequest(test.roots, test.cves, test.skip);
+            let request: ApplicabilityScanArgs = getApplicabilityScanRequest(test.roots, test.cves, test.skip);
             let expected: string = 'scans:\n' + '  - type: ' + request.type + '\n' + '    output: ' + request.output + '\n' + '    roots:\n';
             for (let root of test.roots) {
                 expected += '      - ' + root + '\n';
             }
             expected += '    cve-whitelist: ' + request.cve_whitelist + '\n';
             expected += '    skipped-folders: ' + request.skipped_folders + '\n';
-            assert.deepEqual(new DummyApplicabilityRunner().asAnalyzerRequestString(request), expected);
+            assert.deepEqual(new DummyApplicabilityRunner().requestsToYaml(request), expected);
         });
     });
 
@@ -60,14 +60,14 @@ describe('Contextual Analysis Scan Tests', async () => {
         });
     });
 
-    function getApplicabilityScanRequest(roots: string[], cves: string[], skipFolders: string[]): ApplicabilityScanRequest {
+    function getApplicabilityScanRequest(roots: string[], cves: string[], skipFolders: string[]): ApplicabilityScanArgs {
         return {
             type: 'analyze-applicability',
             output: '/path/to/output.json',
             roots: roots,
             cve_whitelist: cves,
             skipped_folders: skipFolders
-        } as ApplicabilityScanRequest;
+        } as ApplicabilityScanArgs;
     }
 });
 
