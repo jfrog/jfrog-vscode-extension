@@ -88,7 +88,7 @@
                 "jfrog.excludeDevDependencies": {
                     "type": "boolean",
                     "scope": "application",
-                    "markdownDescription": "Exclude development dependencies during the scan. Currently, only NPM is supported."
+                    "markdownDescription": "Exclude development dependencies during the scan. Currently, only npm is supported."
                 },
                 "jfrog.projectKey": {
                     "type": "string",
