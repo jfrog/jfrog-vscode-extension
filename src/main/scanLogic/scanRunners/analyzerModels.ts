@@ -2,7 +2,11 @@ export interface AnalyzerRequest {
     scans: AnalyzeScanRequest[];
 }
 
-export type AnalyzerType = 'analyze-applicability' | 'analyze-codebase';
+export enum AnalyzerType {
+    ContextualAnalysis = 'analyze-applicability',
+    Eos = 'analyze-codebase'
+}
+
 export type ResultKind = 'pass' | 'fail';
 
 export interface AnalyzeScanRequest {
