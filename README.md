@@ -197,10 +197,10 @@ Clicking a vulnerability in the list will open the location with the issue in th
 For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team. Prioritize the CVEs based on:
 
 * JFrog Severity: The severity given by the JFrog Security Research team after the manual analysis of the CVE by the team. CVEs with the highest JFrog security severity are the most likely to be used by real-world attackers. This means that you should put effort into fixing them as soon as possible.
-* Research Summary: The summary that is based on JFrog's security analysis of the security issue provides detailed technical information on the specific conditions for the CVE to be applicable. 
+* Research Summary: The summary that is based on JFrog's security analysis of the security issue provides detailed technical information on the specific conditions for the CVE to be applicable.
 Remediation: Detailed fix and mitigation options for the CVEs
 
-Check out what our research team is up to and stay updated on newly discovered issues by clicking on this [link](https://research.jfrog.com). 
+Check out what our research team is up to and stay updated on newly discovered issues by clicking on this [link](https://research.jfrog.com).
 
 ![JFrog_Research](resources/readme/preview/research.png)
 
@@ -344,7 +344,7 @@ After your builds were fetched from Artifactory, press on the Builds ![Builds](r
 
 ## Extension Settings
 
-To open the extension settings, use the extension settings icon: 
+To open the extension settings, use the extension settings icon:
 ![Open_Settings](resources/readme/preview/openSettings.png)
 Or use the following VS Code menu command:
 
@@ -371,6 +371,10 @@ If however your policies are referenced through an Xray Watch or Watches, follow
 
 By default, paths containing the words `test`, `venv` and `node_modules` are excluded from Xray scan.
 The exclude pattern can be configured in the [Extension Settings](#extension-settings).
+
+### Exclude development dependencies during the scan
+
+Development dependencies are scanned by default. You can skip it by choosing `Exclude Dev Dependencies` under Settings.
 
 ### Proxy Configuration
 
