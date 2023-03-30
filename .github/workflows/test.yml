@@ -36,6 +36,11 @@ jobs:
         run: mvn clean package -f resources/maven-gav-reader/pom.xml -B
       - name: Install JFrog CLI for connectionManager tests
         run: curl -fL https://install-cli.jfrog.io | sh && jf -v
+      - name: Setup Maven v3.8.7
+        uses: stCarolas/setup-maven@v4.5
+        with:
+          maven-version: 3.8.7
+        if: runner.os == 'macOS'
       - name: Setup NodeJS for tests
         uses: actions/setup-node@v3
         with:
