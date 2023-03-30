@@ -98,13 +98,14 @@ describe('npm cmds', async () => {
                 assert.isFalse(NpmCmdTestWrapper.isNodeModulesExists(outsideProjectRoot));
             });
 
-            it('Check package-lock-only flag is not return', async () => {
+            it('Check package-lock-only flag is return', async () => {
                 assert.equal(NpmCmdTestWrapper.getPackageLockOnlyFlag(outsideProjectRoot), Flag.PackageLockOnly);
             });
         });
     });
 });
 
+// To use in tests, NpmCmdTestWrapper exposes protected APIs in NpmCmd as public APIs
 class NpmCmdTestWrapper extends NpmCmd {
     public static isNodeModulesExists(workspaceFolder: string) {
         return NpmCmd.isNodeModulesExists(workspaceFolder);
