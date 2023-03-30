@@ -57,17 +57,7 @@ describe('Analyzer BinaryRunner tests', async () => {
 
     [
         {
-            name: 'Credentials are not set',
-            shouldFail: true,
-            url: '',
-            user: '',
-            pass: '',
-            token: '',
-            proxy: undefined,
-            logPath: undefined
-        },
-        {
-            name: 'Password credentials',
+            name: 'With password credentials',
             shouldFail: false,
             url: 'platformUrl',
             user: 'username',
@@ -77,7 +67,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             logPath: undefined
         },
         {
-            name: 'Access token credentials',
+            name: 'With access token credentials',
             shouldFail: false,
             url: 'platformUrl',
             user: '',
@@ -105,9 +95,19 @@ describe('Analyzer BinaryRunner tests', async () => {
             token: 'access-token',
             proxy: 'proxyUrlEnvVarValue',
             logPath: undefined
+        },
+        {
+            name: 'Without Credentials - Error',
+            shouldFail: true,
+            url: '',
+            user: '',
+            pass: '',
+            token: '',
+            proxy: undefined,
+            logPath: undefined
         }
     ].forEach(test => {
-        it('Create environment variables for binary execution - ' + test.name, () => {
+        it('Create environment variables for execution - ' + test.name, () => {
             //
             let runner: BinaryRunner = createDummyBinaryRunner(createBinaryRunnerConnectionManager(test.url, test.user, test.pass, test.token));
             process.env['HTTP_PROXY'] = test.proxy;
@@ -150,7 +150,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             for (let root of test.roots) {
                 expected += '      - ' + root + '\n';
             }
-            assert.deepEqual(createDummyBinaryRunner().asAnalyzerRequestString(request), expected);
+            assert.deepEqual(createDummyBinaryRunner().requestsToYaml(request), expected);
         });
     });
 

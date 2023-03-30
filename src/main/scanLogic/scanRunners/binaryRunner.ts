@@ -18,17 +18,23 @@ import { LogUtils } from '../../log/logUtils';
 /**
  * Arguments for running binary async
  */
-interface RunArgs {
-    // The directory that the requests/responses are expected
-    directory: string;
+class RunArgs {
     // The requests for the run
-    requests: RunRequest[];
+    public requests: RunRequest[] = [];
+    // The directory that the requests/responses are expected
+    constructor(public readonly directory: string) {}
+
+    public getRoots(): string[] {
+        let roots: Set<string> = new Set<string>();
+        this.requests.forEach(request => request.roots.forEach(root => roots.add(root)));
+        return Array.from(roots);
+    }
 }
 
 interface RunRequest {
     request: string;
     requestPath: string;
-    rawRequests: AnalyzeScanRequest[];
+    roots: string[];
     responsePaths: string[];
 }
 
@@ -209,28 +215,22 @@ export abstract class BinaryRunner {
      * @return run arguments for the given requests
      */
     private createRunArguments(...requests: AnalyzeScanRequest[]): RunArgs {
-        let args: RunArgs = {
-            directory: ScanUtils.createTmpDir(),
-            split: false,
-            requests: []
-        } as RunArgs;
-
-        let actualRequest: { requests: AnalyzeScanRequest[]; responsePaths: string[] } = { requests: [], responsePaths: [] };
+        let args: RunArgs = new RunArgs(ScanUtils.createTmpDir());
         let processedRoots: Set<string> = new Set<string>();
 
         for (const request of requests) {
             if (request.roots.length > 0 && request.roots.every(root => !processedRoots.has(root))) {
                 // Prepare request information and insert as an actual request
-                const requestPath: string = path.join(args.directory, 'request_' + actualRequest.requests.length);
-                const responsePath: string = path.join(args.directory, 'response_' + actualRequest.requests.length);
+                const requestPath: string = path.join(args.directory, 'request_' + args.requests.length);
+                const responsePath: string = path.join(args.directory, 'response_' + args.requests.length);
                 request.output = responsePath;
                 request.type = this._type;
                 request.roots.forEach(root => processedRoots.add(root));
                 // Add request to run
                 args.requests.push({
-                    request: this.asAnalyzerRequestString(request),
+                    request: this.requestsToYaml(request),
                     requestPath: requestPath,
-                    rawRequests: [request],
+                    roots: request.roots,
                     responsePaths: [responsePath]
                 } as RunRequest);
             }
@@ -244,7 +244,7 @@ export abstract class BinaryRunner {
      * @param requests - run requests
      * @returns analyze request in YAML format
      */
-    public asAnalyzerRequestString(...requests: AnalyzeScanRequest[]): string {
+    public requestsToYaml(...requests: AnalyzeScanRequest[]): string {
         return yaml.dump({
             scans: requests
         } as AnalyzerRequest);
@@ -284,17 +284,19 @@ export abstract class BinaryRunner {
      * Copy a file that includes 'log' in its name from a given folder to the logs folder
      * @param arg - the run arguments that related this log
      * @param hadError - if true, will log result as error, otherwise success.
+     * @param copyToDirectory - optional destination to copy the log
      */
-    private copyRunLogToFolder(args: RunArgs, hadError: boolean) {
+    private copyRunLogToFolder(args: RunArgs, hadError: boolean, copyToDirectory: string = ScanUtils.getLogsPath()) {
         let logFile: string | undefined = fs.readdirSync(args.directory).find(fileName => fileName.toLowerCase().includes('log'));
         if (!logFile) {
             return;
         }
 
-        let roots: Set<string> = new Set<string>();
-        args.requests.forEach(request => request.rawRequests.forEach(raw => raw.roots.forEach(root => roots.add(Utils.getLastSegment(root)))));
-        let name: string = Array.from(roots).join('_');
-        let logFinalPath: string = path.join(ScanUtils.getLogsPath(), LogUtils.getLogFileName(name, this._type, '' + Date.now()));
+        let roots: string[] = args.getRoots();
+        let logFinalPath: string = path.join(
+            copyToDirectory,
+            LogUtils.getLogFileName(roots.map(root => Utils.getLastSegment(root)).join('_'), this._type, '' + Date.now())
+        );
 
         fs.copyFileSync(path.join(args.directory, logFile), logFinalPath);
         LogUtils.cleanUpOldLogs();
@@ -302,7 +304,7 @@ export abstract class BinaryRunner {
             'AnalyzerManager run ' +
                 this._type +
                 ' on ' +
-                Array.from(roots) +
+                roots +
                 ' ended ' +
                 (hadError ? 'with error' : 'successfully') +
                 ', scan log was generated at ' +

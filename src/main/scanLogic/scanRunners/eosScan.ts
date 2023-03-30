@@ -93,9 +93,7 @@ export class EosRunner extends BinaryRunner {
      * @returns the response generated from the scan
      */
     public async scan(checkCancel: () => void, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
-        for (const request of requests) {
-            request.type = AnalyzerType.Eos;
-        }
+        requests.forEach(request => (request.type = AnalyzerType.Eos));
         return await this.run(checkCancel, ...requests).then(runResult => this.generateScanResponse(runResult));
     }
 

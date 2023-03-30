@@ -6,7 +6,7 @@ import { ConnectionManager } from '../../connect/connectionManager';
 /**
  * The request that is sent to the binary to scan applicability
  */
-export interface ApplicabilityScanRequest extends AnalyzeScanRequest {
+export interface ApplicabilityScanArgs extends AnalyzeScanRequest {
     grep_disable: boolean; // alway false for now -> build option for it
     cve_whitelist: string[]; // can be always empty but should contain optional to reduce time
     skipped_folders: string[]; // empty but make sure there is option, for now its list of folder but should be pattern in future
@@ -43,8 +43,8 @@ export class ApplicabilityRunner extends BinaryRunner {
     }
 
     /** @override */
-    public asAnalyzerRequestString(...requests: AnalyzeScanRequest[]): string {
-        let str: string = super.asAnalyzerRequestString(...requests);
+    public requestsToYaml(...requests: AnalyzeScanRequest[]): string {
+        let str: string = super.requestsToYaml(...requests);
         return str.replace('cve_whitelist', 'cve-whitelist').replace('skipped_folders', 'skipped-folders');
     }
 
@@ -62,12 +62,12 @@ export class ApplicabilityRunner extends BinaryRunner {
         cveToRun: Set<string> = new Set<string>(),
         skipFolders: string[] = []
     ): Promise<ApplicabilityScanResponse> {
-        const request: ApplicabilityScanRequest = {
+        const request: ApplicabilityScanArgs = {
             type: AnalyzerType.ContextualAnalysis,
             roots: [directory],
             cve_whitelist: Array.from(cveToRun),
             skipped_folders: skipFolders
-        } as ApplicabilityScanRequest;
+        } as ApplicabilityScanArgs;
         return await this.run(checkCancel, request).then(response => this.generateResponse(response?.runs[0]));
     }
 
