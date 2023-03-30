@@ -17,7 +17,6 @@
 -   [Getting Started](#getting-started)
     -   [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
     -   [Connecting VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
-        -   [Severity Icons](#severity-icons)
 
     -   [Using the extension](#using-the-extension)
         -   [Severity Icons](#severity-icons)
