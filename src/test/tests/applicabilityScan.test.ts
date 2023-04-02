@@ -24,7 +24,7 @@ import { CveTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorT
 import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
-
+import { ApplicableTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/applicableTreeNode';
 
 let logManager: LogManager = new LogManager().activate();
 
@@ -65,7 +65,7 @@ describe('Contextual Analysis Scan Tests', () => {
         });
     });
 
-    let testCases: any [] = [
+    let testCases: any[] = [
         {
             name: 'No applicable issues',
             file: path.join(scanResponses, 'scanNotApplicable.json'),
@@ -113,7 +113,6 @@ describe('Contextual Analysis Scan Tests', () => {
             expectedCves: [],
             expectedEvidence: []
         }
-
     ].forEach(test => {
         it('Generate response - ' + test.name, () => {
             let response: ApplicabilityScanResponse = getDummyRunner().generateResponse(getAnalyzerScanRun(test.file));
@@ -146,7 +145,19 @@ describe('Contextual Analysis Scan Tests', () => {
                                     fileLocation.startColumn === locationEvidence.location[2] &&
                                     fileLocation.endColumn === locationEvidence.location[3]
                             );
-                            assert.isDefined(location);
+                            assert.isDefined(
+                                location,
+                                'expected evidence for text ' +
+                                    locationEvidence.text +
+                                    ' at location: Start(' +
+                                    locationEvidence.location[0] +
+                                    ',' +
+                                    locationEvidence.location[2] +
+                                    ') End(' +
+                                    locationEvidence.location[1] +
+                                    ',' +
+                                    locationEvidence.location[3]
+                            );
                         }
                     }
                 }
@@ -157,47 +168,60 @@ describe('Contextual Analysis Scan Tests', () => {
         });
     });
 
-    
     testCases.forEach(test => {
-        it('Populate Applicable Issues - ' + test.name, async () => {
+        it('Populate Applicable Issues - ' + test.name, () => {
+            // Prepare test
             let testRoot: IssuesRootTreeNode = createRootTestNode(path.join('root'));
             let testDescriptor: DescriptorTreeNode = new DescriptorTreeNode('path', PackageType.Unknown, testRoot);
             let testDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '9.9.9', testDescriptor);
             let cves: CveTreeNode[] = [];
             for (let cve of test.expectedCves) {
-                cves.push(createDummyCveIssue(Severity.Unknown, testDependency, cve, cve));
+                cves.push(createDummyCveIssue(Severity.Medium, testDependency, cve, cve));
             }
             let scanResult: DependencyScanResults = {
                 applicableScanTimestamp: 1,
                 applicableIssues: getDummyRunner().generateResponse(getAnalyzerScanRun(test.file))
             } as DependencyScanResults;
-
-            assert.equal(AnalyzerUtils.populateApplicableIssues(testRoot,testDescriptor,scanResult), test.expectedIssueCount);
+            // Test
+            assert.equal(AnalyzerUtils.populateApplicableIssues(testRoot, testDescriptor, scanResult), test.expectedIssueCount);
             assert.equal(scanResult.applicableScanTimestamp, testDescriptor.applicableScanTimeStamp);
-            
-            assert.lengthOf(testRoot.children, test.expectedTotalIssueCount + test.expectedCves.length);
             for (let cveIssue of test.expectedEvidence) {
                 for (let fileEvidence of cveIssue.files) {
-                    let fileNode: FileTreeNode | undefined = testRoot.getFileTreeNode(fileEvidence.file);
+                    let fileNode: FileTreeNode | undefined = testRoot.getFileTreeNode(AnalyzerUtils.parseLocationFilePath(fileEvidence.file));
                     if (!(fileNode instanceof CodeFileTreeNode)) {
-                        assert.fail('expected node to be CodeFileTreeNode, node: ' + fileNode);
+                        assert.fail('expected node to be CodeFileTreeNode for file ' + fileEvidence.file + ', node: ' + fileNode);
                     }
-                    let codeFileNode: CodeFileTreeNode = <CodeFileTreeNode> fileNode;
+                    let codeFileNode: CodeFileTreeNode = <CodeFileTreeNode>fileNode;
                     assert.equal(codeFileNode.issues.length, fileEvidence.locations.length);
                     for (let location of fileEvidence.locations) {
-                        let issueLocation: CodeIssueTreeNode | undefined = codeFileNode.issues.find(issue => issue.regionWithIssue.start.line === location[0] && issue.regionWithIssue.end.line === location[1] && issue.regionWithIssue.start.character === location[2] && issue.regionWithIssue.end.character === location[3])
+                        let issueLocation: CodeIssueTreeNode | undefined = codeFileNode.issues.find(
+                            issue =>
+                                // Location in vscode start from 0, in scanners location starts from 1
+                                issue.regionWithIssue.start.line === location.location[0] - 1 &&
+                                issue.regionWithIssue.end.line === location.location[1] - 1 &&
+                                issue.regionWithIssue.start.character === location.location[2] - 1 &&
+                                issue.regionWithIssue.end.character === location.location[3] - 1
+                        );
                         if (!(issueLocation instanceof ApplicableTreeNode)) {
-                            assert.fail('expected node to be ApplicableTreeNode, node: ' + issueLocation);
+                            assert.fail('expected node to be ApplicableTreeNode for ' + location.location + ', node: ' + issueLocation);
                         }
-                        // TODO finish tests
+                        let applicableIssue: ApplicableTreeNode = <ApplicableTreeNode>issueLocation;
+                        // Test cve is marked as applicable in applicableDetails and in descriptor
+                        assert.isDefined(testDescriptor.applicableCve?.get(applicableIssue.issueId));
+                        assert.isTrue(applicableIssue.cveNode.applicableDetails?.isApplicable);
                     }
                 }
             }
-            // TODO: for not applicable -> change severity
+            // Test cve marked as not applicable with changed severity
+            let notApplicable: string[] = Array.from(testDescriptor.scannedCve ?? []).filter(cve => !testDescriptor.applicableCve?.has(cve));
+            notApplicable.forEach(cve => {
+                let node: CveTreeNode | undefined = cves.find(cveItem => cveItem.issueId === cve);
+                assert.isDefined(node);
+                assert.isFalse(node?.applicableDetails?.isApplicable);
+                assert.equal(node?.severity, Severity.NotApplicableMedium);
+            });
         });
     });
-
-    
 
     function getApplicabilityScanRequest(roots: string[], cves: string[], skipFolders: string[]): ApplicabilityScanArgs {
         return {
