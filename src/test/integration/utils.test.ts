@@ -29,10 +29,22 @@ export class BaseIntegrationEnv {
     public async initialize() {
         // Initialize connection manager
         this._connectionManager = await createTestConnectionManager(this.logManager);
-        if (!(await this._connectionManager.getCredentialsFromEnv())) {
-            assert.fail(
-                `Failed to load JFrog platform credentials.\n Looking for Environment variables ${BaseIntegrationEnv.ENV_PLATFORM_URL} and ${BaseIntegrationEnv.ENV_ACCESS_TOKEN}\n Or installed JFrog CLI with configured server.`
-            );
+        // Don't override existing connection details
+        process.env[ConnectionManager.STORE_CONNECTION_ENV] = 'FALSE';
+        let tempUrl: string | undefined = process.env[ConnectionManager.URL_ENV];
+        process.env[ConnectionManager.URL_ENV] = process.env[BaseIntegrationEnv.ENV_PLATFORM_URL];
+        let tempAccess: string | undefined = process.env[ConnectionManager.ACCESS_TOKEN_ENV];
+        process.env[ConnectionManager.ACCESS_TOKEN_ENV] = process.env[BaseIntegrationEnv.ENV_ACCESS_TOKEN];
+        // Try to get credentials
+        try {
+            if (!(await this._connectionManager.getCredentialsFromEnv())) {
+                assert.fail(
+                    `Failed to load JFrog platform credentials.\n Looking for Environment variables ${BaseIntegrationEnv.ENV_PLATFORM_URL} and ${BaseIntegrationEnv.ENV_ACCESS_TOKEN}\n Or installed JFrog CLI with configured server.`
+                );
+            }
+        } finally {
+            process.env[ConnectionManager.URL_ENV] = tempUrl;
+            process.env[ConnectionManager.ACCESS_TOKEN_ENV] = tempAccess;
         }
     }
 
