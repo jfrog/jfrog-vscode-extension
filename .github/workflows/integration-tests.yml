@@ -53,12 +53,12 @@ jobs:
         env:
           JFROG_IDE_PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
           JFROG_IDE_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
-        run: npm run integrationTest
+        run: node ./out/test/runTest.js --integration
         if: runner.os != 'Linux'
       - name: Integration Tests on Linux
         env:
           JFROG_IDE_PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
           JFROG_IDE_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
         # Run tests with Virtual frame buffer to allow running VS-Code without a display
-        run: xvfb-run npm run integrationTest
+        run: xvfb-run node ./out/test/runTest.js --integration
         if: runner.os == 'Linux'
