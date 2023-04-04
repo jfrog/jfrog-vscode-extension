@@ -39,7 +39,7 @@ export class BaseIntegrationEnv {
         try {
             if (!(await this._connectionManager.getCredentialsFromEnv())) {
                 assert.fail(
-                    `Failed to load JFrog platform credentials.\n Looking for Environment variables ${BaseIntegrationEnv.ENV_PLATFORM_URL} and ${BaseIntegrationEnv.ENV_ACCESS_TOKEN}\n Or installed JFrog CLI with configured server.`
+                    `Failed to load JFrog platform credentials.\n Looking for Environment variables ${BaseIntegrationEnv.ENV_PLATFORM_URL} and ${BaseIntegrationEnv.ENV_ACCESS_TOKEN}.`
                 );
             }
         } finally {
