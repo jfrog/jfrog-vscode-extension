@@ -7,7 +7,7 @@ import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
 import { ILicenseKey } from '../../main/types/licenseKey';
 import { INodeInfo } from '../../main/types/nodeInfo';
 import { ProjectComponents } from '../../main/types/projectComponents';
-import { createScanCacheManager } from './utils/utils.test';
+import { createScanCacheManager } from '../utils/utils.test';
 
 /**
  * Test functionality of @class ScanCacheManager`.

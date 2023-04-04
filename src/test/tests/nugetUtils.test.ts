@@ -12,7 +12,7 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { PackageType } from '../../main/types/projectType';
 import { NugetUtils } from '../../main/utils/nugetUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
-import { createScanCacheManager, isWindows } from './utils/utils.test';
+import { createScanCacheManager, isWindows } from '../utils/utils.test';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
 

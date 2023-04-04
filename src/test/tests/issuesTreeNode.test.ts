@@ -10,7 +10,7 @@ import {
     createRootTestNode,
     FileNodeTestData,
     RootNodeTestCase
-} from './utils/treeNodeUtils.test';
+} from '../utils/treeNodeUtils.test';
 
 /**
  * Test functionality of @class IssuesRootTreeNode.

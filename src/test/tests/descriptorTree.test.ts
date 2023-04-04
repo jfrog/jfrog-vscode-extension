@@ -13,7 +13,7 @@ import {
     createDummyDependencyIssues,
     createDummyIssue,
     FileNodeTestCase
-} from './utils/treeNodeUtils.test';
+} from '../utils/treeNodeUtils.test';
 
 describe('Descriptor Tree Tests', () => {
     let dependencyTestCases: any[] = [

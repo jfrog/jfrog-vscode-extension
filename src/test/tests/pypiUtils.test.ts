@@ -13,7 +13,7 @@ import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { PypiUtils } from '../../main/utils/pypiUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
-import { createScanCacheManager } from './utils/utils.test';
+import { createScanCacheManager } from '../utils/utils.test';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { PackageType } from '../../main/types/projectType';
 import { PipDepTree } from '../../main/types/pipDepTree';

@@ -9,7 +9,7 @@ import { IIssueKey } from '../../main/types/issueKey';
 import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
 import * as issueSeverity from '../../main/types/severity';
 import { Severity } from '../../main/types/severity';
-import { TestMemento } from './utils/testMemento.test';
+import { TestMemento } from '../utils/testMemento.test';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { DependencyDetailsProvider } from '../../main/treeDataProviders/ciTree/dependencyDetailsProvider';
 import { PackageType } from '../../main/types/projectType';

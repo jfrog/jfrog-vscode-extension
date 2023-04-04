@@ -22,18 +22,18 @@
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
-            "args": ["${workspaceRoot}/out/test/resources","--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test" ],
+            "args": ["${workspaceRoot}/out/test/resources","--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test/tests" ],
             "outFiles":  [
                 "${workspaceRoot}/out/**/*.js"
             ],
             "preLaunchTask": "npm: watch"
         },
         {
-            "name": "Launch Tests runTest",
+            "name": "Launch Integration Tests",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
-            "args": ["${workspaceRoot}/out/test/resources","--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test/runTest.js" ],
+            "args": ["${workspaceRoot}/out/test/resources","--extensionDevelopmentPath=${workspaceRoot}", "--extensionTestsPath=${workspaceRoot}/out/test/integration", "--integration" ],
             "outFiles":  [
                 "${workspaceRoot}/out/**/*.js"
             ],

@@ -278,6 +278,7 @@
         "lint": "eslint -c .eslintrc.js --ext .ts src",
         "pretest": "npm run compile",
         "test": "node ./out/test/runTest.js",
+        "integrationTest": "node ./out/test/runTest.js --integration",
         "package": "vsce package"
     },
     "dependencies": {

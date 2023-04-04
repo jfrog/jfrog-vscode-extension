@@ -1,0 +1,64 @@
+name: "Integration Tests"
+
+on:
+  push:
+  # Triggers the workflow on labeled PRs only.
+  pull_request:
+    types: [ labeled ]
+  schedule:
+    - cron: '0 6 * * *' # Runs every day at 6:00 AM GMT
+
+jobs:
+  test:
+    name: ${{ matrix.os }}, node ${{ matrix.node }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [14, 16]
+        os: [ ubuntu-latest, windows-latest, macOS-latest ]
+    steps:
+        # Install required tools
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+      - name: Setup macOS
+        # Fix 'nvm is not compatible with the npm config "prefix" option' error on macOS
+        run: unset npm_config_prefix
+        if: runner.os == 'macOS'
+      - uses: actions/setup-python@v4
+      - name: Setup NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: "16"
+          check-latest: true
+      - name: Install
+        run: npm i --ignore-scripts
+        # Make sure no new dependencies were installed after running 'npm i'
+      - name: Make sure branch is clean
+        run: git diff --exit-code
+      - name: Lint
+        run: npm run lint
+      - name: Pack Maven GAV Reader
+        run: mvn clean package -f resources/maven-gav-reader/pom.xml -B
+      - name: Install JFrog CLI for connectionManager tests
+        run: curl -fL https://install-cli.jfrog.io | sh && jf -v
+      - name: Setup NodeJS for tests
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node }}
+          check-latest: true
+        # Run integration tests
+      - name: Integration Tests on macOS, Windows
+        env:
+          JFROG_IDE_PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+          JFROG_IDE_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
+        run: npm t
+        if: runner.os != 'Linux'
+      - name: Integration Tests on Linux
+        env:
+          JFROG_IDE_PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+          JFROG_IDE_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
+        # Run tests with Virtual frame buffer to allow running VS-Code without a display
+        run: xvfb-run npm t
+        if: runner.os == 'Linux'

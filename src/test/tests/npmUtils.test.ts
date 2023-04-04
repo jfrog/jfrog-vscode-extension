@@ -10,7 +10,7 @@ import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { NpmUtils } from '../../main/utils/npmUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
-import { createScanCacheManager } from './utils/utils.test';
+import { createScanCacheManager } from '../utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';

@@ -6,7 +6,7 @@ import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesT
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { ILicenseCacheObject } from '../../main/types/licenseCacheObject';
 import { ILicenseKey } from '../../main/types/licenseKey';
-import { createScanCacheManager } from './utils/utils.test';
+import { createScanCacheManager } from '../utils/utils.test';
 import { DependencyDetailsProvider } from '../../main/treeDataProviders/ciTree/dependencyDetailsProvider';
 import { TreeDataHolder } from '../../main/treeDataProviders/utils/treeDataHolder';
 import { PackageType } from '../../main/types/projectType';

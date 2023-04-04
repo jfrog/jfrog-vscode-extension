@@ -1,10 +1,12 @@
 import * as os from 'os';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
-import { ConnectionManager } from '../../../main/connect/connectionManager';
-import { ScanCacheManager } from '../../../main/cache/scanCacheManager';
-import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { ConnectionManager } from '../../main/connect/connectionManager';
+import { ScanCacheManager } from '../../main/cache/scanCacheManager';
+import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { TestMemento } from './testMemento.test';
+import { LogManager } from '../../main/log/logManager';
+import { ContextKeys, SessionStatus } from '../../main/constants/contextKeys';
 
 export function isWindows(): boolean {
     return os.platform() === 'win32';
@@ -33,8 +35,22 @@ export function createScanCacheManager(): ScanCacheManager {
     } as vscode.ExtensionContext);
 }
 
-export function createConnectionManager(): ConnectionManager {
-    return {} as ConnectionManager;
+export async function createTestConnectionManager(logManager: LogManager = new LogManager().activate()): Promise<ConnectionManager> {
+    return await new ConnectionManager(logManager).activate({
+        globalState: {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            get(key: string) {
+                if (key == ContextKeys.SESSION_STATUS) {
+                    return SessionStatus.SignedOut;
+                }
+                return;
+            },
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            update(key: string, value: any) {
+                return;
+            }
+        } as vscode.Memento
+    } as vscode.ExtensionContext);
 }
 
 export function getCliHomeDir(): string {

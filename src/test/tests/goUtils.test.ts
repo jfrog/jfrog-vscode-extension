@@ -11,7 +11,7 @@ import { TreesManager } from '../../main/treeDataProviders/treesManager';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { GoUtils } from '../../main/utils/goUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
-import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
+import { createScanCacheManager, getNodeByArtifactId } from '../utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
 import { ProjectComponents } from '../../main/types/projectComponents';
 import { ScanManager } from '../../main/scanLogic/scanManager';

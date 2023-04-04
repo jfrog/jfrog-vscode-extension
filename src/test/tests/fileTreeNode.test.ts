@@ -11,7 +11,7 @@ import {
     createRootTestNode,
     FileNodeTestCase,
     FileNodeTestData
-} from './utils/treeNodeUtils.test';
+} from '../utils/treeNodeUtils.test';
 import { Utils } from '../../main/utils/utils';
 import { IssueTreeNode } from '../../main/treeDataProviders/issuesTree/issueTreeNode';
 

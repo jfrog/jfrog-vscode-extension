@@ -5,7 +5,7 @@ import { ConnectionManager } from '../../main/connect/connectionManager';
 import { GraphScanLogic } from '../../main/scanLogic/scanGraphLogic';
 import { RootNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { createDependency } from './utils/treeNodeUtils.test';
+import { createDependency } from '../utils/treeNodeUtils.test';
 import { PackageType } from '../../main/types/projectType';
 
 describe('GraphScanLogic Tests', () => {

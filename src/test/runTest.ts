@@ -14,7 +14,11 @@ async function main() {
         const extensionDevelopmentPath: string = path.join(__dirname, '..', '..');
 
         // The path to test runner
-        const extensionTestsPath: string = path.join(__dirname, 'index');
+        const extensionTestsPath: string = path.join(
+            __dirname,
+            process.argv.some(arg => arg.includes('integration')) ? 'integration' : 'tests',
+            'index'
+        );
 
         // Download VS Code, unzip it and run the integration tests
         await runTests({

@@ -2,6 +2,7 @@ import { LogManager } from '../../log/logManager';
 import { BinaryRunner } from './binaryRunner';
 import { AnalyzeIssue, AnalyzeLocation, AnalyzerScanRun, AnalyzerType, AnalyzeScanRequest, FileIssues } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
+import { Resource } from '../../utils/resource';
 
 /**
  * The request that is sent to the binary to scan applicability
@@ -33,8 +34,8 @@ export interface CveApplicableDetails {
  * Describes a runner for the Applicability scan executable file.
  */
 export class ApplicabilityRunner extends BinaryRunner {
-    constructor(connectionManager: ConnectionManager, abortCheckInterval: number, logManager: LogManager) {
-        super(connectionManager, abortCheckInterval, AnalyzerType.ContextualAnalysis, logManager);
+    constructor(connectionManager: ConnectionManager, abortCheckInterval: number, logManager: LogManager, binary?: Resource) {
+        super(connectionManager, abortCheckInterval, AnalyzerType.ContextualAnalysis, logManager, binary);
     }
 
     /** @override */

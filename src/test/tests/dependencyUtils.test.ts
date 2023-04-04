@@ -13,7 +13,7 @@ import { FileScanBundle, FileScanError, NotEntitledError, ScanCancellationError 
 import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { LogManager } from '../../main/log/logManager';
 import { PackageType } from '../../main/types/projectType';
-import { createDependency, createRootTestNode } from './utils/treeNodeUtils.test';
+import { createDependency, createRootTestNode } from '../utils/treeNodeUtils.test';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { IssueTreeNode } from '../../main/treeDataProviders/issuesTree/issueTreeNode';
