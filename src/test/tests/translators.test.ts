@@ -4,6 +4,8 @@ import { ICve as WebICve, IApplicableDetails } from 'jfrog-ide-webview';
 import { LogLevel } from '../../main/log/logManager';
 import { IIssueCacheObject } from '../../main/types/issueCacheObject';
 import { Translators } from '../../main/utils/translators';
+import { Severity } from '../../main/types/severity';
+import { SeverityLevel } from '../../main/scanLogic/scanRunners/analyzerModels';
 
 /**
  * Test functionality of @class Translators.
@@ -17,6 +19,17 @@ describe('Translators Tests', () => {
             { inputLevel: 'ERR', expectedLevel: 'error' }
         ].forEach(test => {
             assert.equal(test.expectedLevel, Translators.toAnalyzerLogLevel(<LogLevel>test.inputLevel));
+        });
+    });
+
+    it('levelToSeverity', async () => {
+        [
+            { inputLevel: 'none', expectedLevel: Severity.Unknown },
+            { inputLevel: 'note', expectedLevel: Severity.Low },
+            { inputLevel: 'warning', expectedLevel: Severity.Medium },
+            { inputLevel: 'error', expectedLevel: Severity.High }
+        ].forEach(test => {
+            assert.equal(test.expectedLevel, Translators.levelToSeverity(<SeverityLevel>test.inputLevel));
         });
     });
 
