@@ -19,7 +19,10 @@ jobs:
         # Fix 'nvm is not compatible with the npm config "prefix" option' error on macOS
         run: unset npm_config_prefix
         if: runner.os == 'macOS'
-      - uses: actions/setup-python@v4
+      - name: Setup Python3
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
       - name: Setup NodeJS
         uses: actions/setup-node@v3
         with:
