@@ -1,8 +1,0 @@
-- params:
-    git:
-      repoName: jfrog-vscode-extension
-      branches:
-        - master
-    scan:
-      projects:
-        - installCommand: npm ci --ignore-scripts
