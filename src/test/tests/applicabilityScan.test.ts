@@ -23,31 +23,285 @@ import { Severity } from '../../main/types/severity';
 import { CveTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
 import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
+import { IEvidence } from 'jfrog-ide-webview';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { ApplicableTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/applicableTreeNode';
 
 let logManager: LogManager = new LogManager().activate();
 
-describe('Contextual Analysis Scan Tests', () => {
-    const scanResponses: string = path.join(__dirname, '..', 'resources', 'scanResponses');
+describe.only('Contextual Analysis Scan Tests', () => {
+    const scanApplicable: string = path.join(__dirname, '..', 'resources', 'applicableScan');
 
     [
         {
             name: 'One root',
+            file: path.join(scanApplicable, 'requestOneRoot.yaml'),
             roots: ['/path/to/root'],
             cves: ['CVE-2021-3918'],
             skip: []
         },
         {
             name: 'Multiple roots',
+            file: path.join(scanApplicable, 'requestMultipleRoots.yaml'),
             roots: ['/path/to/root', '/path/to/other'],
             cves: ['CVE-2021-3918', 'CVE-2021-3807', 'CVE-2022-25878'],
-            skip: ['/path/to/root']
+            skip: ['/path/to/skip']
         }
     ].forEach(test => {
-        it('Generate Yaml request - ' + test.name, () => {
+        it('Check generated Yaml request - ' + test.name, () => {
             let request: ApplicabilityScanArgs = getApplicabilityScanRequest(test.roots, test.cves, test.skip);
-            assert.deepEqual(getDummyRunner().requestsToYaml(request), getExpectedYaml(request));
+            assert.deepEqual(getDummyRunner().requestsToYaml(request), fs.readFileSync(test.file).toString());
+        });
+    });
+
+    describe('Analyzer run fail tests', () => {
+        let response: ApplicabilityScanResponse;
+
+        before(() => {
+            response = getDummyRunner().generateResponse(undefined);
+        });
+
+        it('Check response defined', () => {
+            assert.isDefined(response);
+        });
+
+        it('Check response attributes', () => {
+            assert.isUndefined(response.scannedCve);
+            assert.isUndefined(response.applicableCve);
+        });
+    });
+
+    describe('Populate applicable information tests', () => {
+        const testRoot: IssuesRootTreeNode = createRootTestNode(path.join('root'));
+        const testDescriptor: DescriptorTreeNode = new DescriptorTreeNode('path', PackageType.Unknown, testRoot);
+        const testDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '9.9.9', testDescriptor);
+        let testCves: CveTreeNode[] = [];
+
+        let scanResult: DependencyScanResults;
+        let populatedIssues: number;
+
+        before(() => {
+            // Read test data and populate scanResult and dummy Cve nodes in test dependency
+            let response: ApplicabilityScanResponse = getDummyRunner().generateResponse(
+                getAnalyzerScanRun(path.join(scanApplicable, 'analyzerResponse.json'))
+            );
+            for (let cve of response.scannedCve) {
+                testCves.push(createDummyCveIssue(Severity.Medium, testDependency, cve, cve));
+            }
+            scanResult = {
+                applicableScanTimestamp: 1,
+                applicableIssues: response
+            } as DependencyScanResults;
+            // Populate scan result information to the test dummy nodes
+            populatedIssues = AnalyzerUtils.populateApplicableIssues(testRoot, testDescriptor, scanResult);
+        });
+
+        function getTestCveNode(cve: string): CveTreeNode | undefined {
+            return testCves.find(cveItem => cveItem.issueId === cve);
+        }
+
+        it('Check issue count returned from method', () => {
+            assert.equal(populatedIssues, 2);
+        });
+
+        it('Check timestamp transferred from data to node', () => {
+            assert.equal(scanResult.applicableScanTimestamp, testDescriptor.applicableScanTimeStamp);
+        });
+
+        describe('Not applicable Cve tests', () => {
+            let notApplicable: string[];
+
+            before(() => {
+                notApplicable = Array.from(testDescriptor.scannedCve ?? []).filter(cve => !testDescriptor.applicableCve?.has(cve));
+            });
+
+            it('Check node exists in scannedCve and not in applicableCve', () => {
+                notApplicable.forEach((cve: string) => {
+                    assert.isDefined(getTestCveNode(cve), 'Expected to find ' + cve + ' in ' + notApplicable);
+                });
+            });
+
+            it('Check applicableDetails created for the Cve nodes', () => {
+                notApplicable.forEach((cve: string) => {
+                    assert.isDefined(getTestCveNode(cve)?.applicableDetails, 'Expected to find applicableDetails for ' + cve);
+                });
+            });
+
+            it('Check description transferred to applicableDetails', () => {
+                notApplicable.forEach((cve: string) => {
+                    let node: CveTreeNode | undefined = getTestCveNode(cve);
+                    assert.isDefined(node?.applicableDetails?.searchTarget);
+                });
+            });
+
+            it('Check Cve node marked as not applicable', () => {
+                notApplicable.forEach((cve: string) => {
+                    let node: CveTreeNode | undefined = getTestCveNode(cve);
+                    assert.isFalse(node?.applicableDetails?.isApplicable, 'Cve node ' + cve + ' marked as ' + node?.applicableDetails?.isApplicable);
+                });
+            });
+
+            it('Check Severity changed to not applicable level for related Cve node', () => {
+                notApplicable.forEach((cve: string) => {
+                    let node: CveTreeNode | undefined = getTestCveNode(cve);
+                    assert.equal(node?.severity, Severity.NotApplicableMedium, 'Cve node ' + cve + ' severity ' + node?.severity);
+                });
+            });
+        });
+
+        describe('Applicable Cve tests', () => {
+            let applicableCve: Map<string, CveApplicableDetails>;
+            let expectedFilesWithIssues: FileIssues[] = [];
+
+            before(() => {
+                applicableCve = new Map<string, CveApplicableDetails>(Object.entries(scanResult.applicableIssues.applicableCve));
+                // Collect all the locations from the test data with issues under the same file to be together under the same data
+                Array.from(applicableCve.values()).forEach((details: CveApplicableDetails) => {
+                    details.fileEvidences.forEach((fileEvidence: FileIssues) => {
+                        let fileIssues: FileIssues | undefined = expectedFilesWithIssues.find(
+                            (fileIssues: FileIssues) => fileIssues.full_path === fileEvidence.full_path
+                        );
+                        if (!fileIssues) {
+                            expectedFilesWithIssues.push({
+                                full_path: fileEvidence.full_path,
+                                locations: [...fileEvidence.locations]
+                            } as FileIssues);
+                            return;
+                        }
+                        fileIssues.locations.push(...fileEvidence.locations);
+                    });
+                });
+            });
+
+            describe('Data transferred to Cve nodes', () => {
+                it('Check applicableDetails created', () => {
+                    Array.from(applicableCve.keys()).forEach((cve: string) => {
+                        assert.isDefined(getTestCveNode(cve)?.applicableDetails, 'Expected to find applicableDetails for ' + cve);
+                    });
+                });
+
+                it('Check Cve node marked as applicable', () => {
+                    Array.from(applicableCve.keys()).forEach((cve: string) => {
+                        let node: CveTreeNode | undefined = getTestCveNode(cve);
+                        assert.isTrue(
+                            node?.applicableDetails?.isApplicable,
+                            'Cve node ' + cve + ' marked as ' + node?.applicableDetails?.isApplicable
+                        );
+                    });
+                });
+
+                it('Check description transferred to applicableDetails', () => {
+                    applicableCve.forEach((details: CveApplicableDetails, cve: string) => {
+                        let node: CveTreeNode | undefined = getTestCveNode(cve);
+                        assert.equal(node?.applicableDetails?.searchTarget, details.fullDescription);
+                    });
+                });
+
+                it('Check evidences created at applicableDetails', () => {
+                    applicableCve.forEach((details: CveApplicableDetails, cve: string) => {
+                        let relatedEvidence: IEvidence[] | undefined = getTestCveNode(cve)?.applicableDetails?.evidence;
+                        assert.isDefined(relatedEvidence);
+                        let expectedEvidenceCount: number = details.fileEvidences
+                            .map((fileEvidence: FileIssues) => fileEvidence.locations.length)
+                            .reduce((agg, prev) => agg + prev);
+                        assert.equal(relatedEvidence?.length ?? 0, expectedEvidenceCount);
+                    });
+                });
+
+                it('Check reason transferred to evidences', () => {
+                    applicableCve.forEach((details: CveApplicableDetails, cve: string) => {
+                        let relatedEvidence: IEvidence[] | undefined = getTestCveNode(cve)?.applicableDetails?.evidence;
+                        relatedEvidence?.forEach((evidence: IEvidence) => assert.equal(evidence.reason, details.fixReason));
+                    });
+                });
+            });
+
+            describe('Data populated as CodeFileTreeNode nodes', () => {
+                function getTestCodeFileNode(fileIssues: FileIssues): CodeFileTreeNode {
+                    let fileNode: FileTreeNode | undefined = testRoot.getFileTreeNode(AnalyzerUtils.parseLocationFilePath(fileIssues.full_path));
+                    if (!(fileNode instanceof CodeFileTreeNode)) {
+                        assert.fail('expected node to be CodeFileTreeNode for file ' + fileIssues.full_path + ', node: ' + fileNode);
+                    }
+                    return <CodeFileTreeNode>fileNode;
+                }
+
+                it('Check file nodes created for each file with issues', () => {
+                    expectedFilesWithIssues.forEach((fileIssues: FileIssues) => {
+                        assert.isDefined(getTestCodeFileNode(fileIssues));
+                    });
+                });
+
+                it('Check number of file nodes populated as root children', () => {
+                    assert.equal(
+                        testRoot.children.length,
+                        expectedFilesWithIssues.length,
+                        'files populated: ' + testRoot.children.map(child => child.label)
+                    );
+                });
+
+                describe('Issues populated as ApplicableTreeNode nodes', () => {
+                    //
+                    function getTestIssueNode(fileNode: CodeFileTreeNode, location: FileRegion): ApplicableTreeNode {
+                        let issueLocation: CodeIssueTreeNode | undefined = fileNode.issues.find(
+                            issue =>
+                                // Location in vscode start from 0, in scanners location starts from 1
+                                issue.regionWithIssue.start.line === location.startLine - 1 &&
+                                issue.regionWithIssue.end.line === location.endLine - 1 &&
+                                issue.regionWithIssue.start.character === location.startColumn - 1 &&
+                                issue.regionWithIssue.end.character === location.endColumn - 1
+                        );
+                        if (!(issueLocation instanceof ApplicableTreeNode)) {
+                            assert.fail('expected node to be ApplicableTreeNode issue for location ' + location + ' in node: ' + issueLocation);
+                        }
+                        return <ApplicableTreeNode>issueLocation;
+                    }
+
+                    it('Check Applicable location nodes created in file nodes', () => {
+                        expectedFilesWithIssues.forEach((expectedFileIssues: FileIssues) => {
+                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(expectedFileIssues);
+                            expectedFileIssues.locations.forEach((expectedLocation: FileRegion) => {
+                                assert.isDefined(getTestIssueNode(fileNode, expectedLocation));
+                            });
+                        });
+                    });
+
+                    it('Check number of issues populated in file', () => {
+                        expectedFilesWithIssues.forEach((fileIssues: FileIssues) => {
+                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(fileIssues);
+                            assert.equal(fileNode.issues.length, fileIssues.locations.length);
+                        });
+                    });
+
+                    it('Check applicable information reference created in descriptor', () => {
+                        expectedFilesWithIssues.forEach((expectedFileIssues: FileIssues) => {
+                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(expectedFileIssues);
+                            expectedFileIssues.locations.forEach((expectedLocation: FileRegion) => {
+                                assert.isDefined(testDescriptor.applicableCve?.get(getTestIssueNode(fileNode, expectedLocation).issueId));
+                            });
+                        });
+                    });
+
+                    it('Check ApplicableTreeNode node severity match Cve severity', () => {
+                        expectedFilesWithIssues.forEach((expectedFileIssues: FileIssues) => {
+                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(expectedFileIssues);
+                            expectedFileIssues.locations.forEach((expectedLocation: FileRegion) => {
+                                let applicableIssue: ApplicableTreeNode = getTestIssueNode(fileNode, expectedLocation);
+                                assert.equal(applicableIssue.severity, applicableIssue.cveNode.severity);
+                            });
+                        });
+                    });
+
+                    it('Check Cve node reference exists', () => {
+                        expectedFilesWithIssues.forEach((expectedFileIssues: FileIssues) => {
+                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(expectedFileIssues);
+                            expectedFileIssues.locations.forEach((expectedLocation: FileRegion) => {
+                                let applicableIssue: ApplicableTreeNode = getTestIssueNode(fileNode, expectedLocation);
+                                assert.isDefined(getTestCveNode(applicableIssue.cveNode.issueId));
+                            });
+                        });
+                    });
+                });
+            });
         });
     });
 
@@ -60,295 +314,6 @@ describe('Contextual Analysis Scan Tests', () => {
             skipped_folders: skipFolders
         } as ApplicabilityScanArgs;
     }
-
-    function getExpectedYaml(request: ApplicabilityScanArgs): string {
-        let expected: string = 'scans:\n' + '  - type: ' + request.type + '\n' + '    output: ' + request.output + '\n';
-        expected += '    roots:\n';
-        for (let root of request.roots) {
-            expected += '      - ' + root + '\n';
-        }
-        expected += '    cve-whitelist:\n';
-        for (let cve of request.cve_whitelist) {
-            expected += '      - ' + cve + '\n';
-        }
-        expected += '    skipped-folders:' + (request.skipped_folders.length === 0 ? ' []' : '') + '\n';
-        for (let skip of request.skipped_folders) {
-            expected += '      - ' + skip + '\n';
-        }
-        return expected;
-    }
-
-    let testCases: any[] = [
-        {
-            name: 'No applicable issues',
-            file: path.join(scanResponses, 'scanNotApplicable.json'),
-            expectedIssueCount: 0,
-            expectedCves: ['CVE-2021-3918'],
-            expectedEvidence: []
-        },
-        {
-            name: 'With applicable issues',
-            file: path.join(scanResponses, 'scanApplicable.json'),
-            expectedIssueCount: 2,
-            expectedCves: ['CVE-2021-3918', 'CVE-2021-3807', 'CVE-2022-25878'],
-            expectedEvidence: [
-                {
-                    cve: 'CVE-2022-25878',
-                    reason:
-                        'The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load is called',
-                    descriptionPartial: 'The scanner checks whether any of the following vulnerable functions are called',
-                    files: [
-                        {
-                            file: 'file:///examples/applic-demo/../applic-demo/index.js',
-                            locations: [
-                                {
-                                    // start-line,end-line,start-col,end-col
-                                    location: [21, 21, 1, 18],
-                                    text: 'protobuf.parse(p)'
-                                },
-                                {
-                                    location: [23, 23, 1, 74],
-                                    text: 'protobuf.load("/path/to/untrusted.proto", function(err, root) { return })'
-                                }
-                            ]
-                        }
-                    ]
-                }
-            ]
-        }
-    ];
-
-    [
-        ...testCases,
-        {
-            name: 'Analyzer run fails',
-            file: undefined,
-            expectedCves: [],
-            expectedEvidence: []
-        }
-    ].forEach(test => {
-        describe('Generate response - ' + test.name, () => {
-            let response: ApplicabilityScanResponse;
-            let applicableCve: Map<string, CveApplicableDetails>;
-
-            before(() => {
-                response = getDummyRunner().generateResponse(getAnalyzerScanRun(test.file));
-                if (test.file) {
-                    applicableCve = new Map<string, CveApplicableDetails>(Object.entries(response.applicableCve));
-                }
-            });
-
-            it('Check response definition', () => {
-                assert.isDefined(response);
-                if (test.file) {
-                    assert.isDefined(response.applicableCve);
-                    assert.isDefined(response.scannedCve);
-                    assert.sameDeepMembers(test.expectedCves, response.scannedCve);
-                } else {
-                    assert.isUndefined(response.scannedCve);
-                    assert.isUndefined(response.applicableCve);
-                }
-            });
-
-            if (test.file) {
-                it('Check number of applicable Cve in response', () => {
-                    assert.equal(applicableCve.size, test.expectedEvidence.length);
-                });
-
-                for (let evidence of test.expectedEvidence) {
-                    describe('Check ' + evidence.cve + ' applicable evidences', () => {
-                        let details: CveApplicableDetails | undefined;
-
-                        before(() => {
-                            details = applicableCve.get(evidence.cve);
-                        });
-
-                        it('Check Cve exists in scannedCve', () => {
-                            assert.include(response.scannedCve, evidence.cve);
-                        });
-
-                        it('Check Cve exists in applicableCve', () => {
-                            assert.isDefined(details, 'expected applicable cve contained in: ' + Array.from(applicableCve.keys()));
-                        });
-
-                        it('Check all evidences information exists', () => {
-                            assert.equal(details?.fixReason, evidence.reason);
-                            assert.include(details?.fullDescription, evidence.descriptionPartial);
-                            assert.equal(details?.fileEvidences.length, evidence.files.length);
-                        });
-
-                        for (let fileEvidence of evidence.files) {
-                            describe('Check evidence locations in file', () => {
-                                let fileIssue: FileIssues | undefined;
-
-                                before(() => {
-                                    fileIssue = details?.fileEvidences.find(fileIssue => fileIssue.full_path === fileEvidence.file);
-                                });
-
-                                it('Check evidence exists', () => {
-                                    assert.isDefined(
-                                        fileIssue,
-                                        'expected evidence for file ' + fileEvidence.file + ' in: ' + details?.fileEvidences.map(f => f.full_path)
-                                    );
-                                    assert.equal(fileIssue?.locations.length, fileEvidence.locations.length);
-                                });
-
-                                it('Check evidences in all locations exists', () => {
-                                    for (let locationEvidence of fileEvidence.locations) {
-                                        let location: FileRegion | undefined = fileIssue?.locations.find(
-                                            fileLocation =>
-                                                fileLocation.snippet?.text === locationEvidence.text &&
-                                                fileLocation.startLine === locationEvidence.location[0] &&
-                                                fileLocation.endLine === locationEvidence.location[1] &&
-                                                fileLocation.startColumn === locationEvidence.location[2] &&
-                                                fileLocation.endColumn === locationEvidence.location[3]
-                                        );
-                                        assert.isDefined(
-                                            location,
-                                            'expected evidence for text ' +
-                                                locationEvidence.text +
-                                                ' at location: Start(' +
-                                                locationEvidence.location[0] +
-                                                ',' +
-                                                locationEvidence.location[2] +
-                                                ') End(' +
-                                                locationEvidence.location[1] +
-                                                ',' +
-                                                locationEvidence.location[3]
-                                        );
-                                    }
-                                });
-                            });
-                        }
-                    });
-                }
-            }
-        });
-    });
-
-    testCases.forEach(test => {
-        describe('Populate Applicable Issues - ' + test.name, () => {
-            let testRoot: IssuesRootTreeNode = createRootTestNode(path.join('root'));
-            let testDescriptor: DescriptorTreeNode = new DescriptorTreeNode('path', PackageType.Unknown, testRoot);
-            let testDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '9.9.9', testDescriptor);
-            let scanResult: DependencyScanResults;
-            let cves: CveTreeNode[] = [];
-
-            before(() => {
-                // Prepare
-                for (let cve of test.expectedCves) {
-                    cves.push(createDummyCveIssue(Severity.Medium, testDependency, cve, cve));
-                }
-                scanResult = {
-                    applicableScanTimestamp: 1,
-                    applicableIssues: getDummyRunner().generateResponse(getAnalyzerScanRun(test.file))
-                } as DependencyScanResults;
-                // Run
-                let issuePopulated: number = AnalyzerUtils.populateApplicableIssues(testRoot, testDescriptor, scanResult);
-
-                it('Check issue count returned from method', () => {
-                    assert.equal(issuePopulated, test.expectedIssueCount);
-                });
-            });
-
-            it('Check timestamp transferred from data to node', () => {
-                assert.equal(scanResult.applicableScanTimestamp, testDescriptor.applicableScanTimeStamp);
-            });
-
-            describe('Check Not applicable Cve data transfer', () => {
-                let notApplicable: string[] = Array.from(testDescriptor.scannedCve ?? []).filter(cve => !testDescriptor.applicableCve?.has(cve));
-                notApplicable.forEach(cve => {
-                    describe('Check not applicable Cve - ' + cve, () => {
-                        let node: CveTreeNode | undefined;
-
-                        before(() => {
-                            cves.find(cveItem => cveItem.issueId === cve);
-                        });
-
-                        it('Check node exists in scannedCve and not in applicableCve', () => {
-                            assert.isDefined(node);
-                        });
-
-                        it('Check Cve marked as not applicable', () => {
-                            assert.isFalse(node?.applicableDetails?.isApplicable);
-                        });
-
-                        it('Check Severity changed to not applicable level', () => {
-                            assert.equal(node?.severity, Severity.NotApplicableMedium);
-                        });
-                    });
-                });
-            });
-
-            describe('Check applicable issues populated', () => {
-                for (let cveIssue of test.expectedEvidence) {
-                    for (let fileEvidence of cveIssue.files) {
-                        let filePath: string = AnalyzerUtils.parseLocationFilePath(fileEvidence.file);
-                        describe('Check evidences in file ' + filePath, () => {
-                            let codeFileNode: CodeFileTreeNode;
-
-                            before(() => {
-                                let fileNode: FileTreeNode | undefined = testRoot.getFileTreeNode(filePath);
-                                it('Check file node created', () => {
-                                    assert.isDefined(fileNode);
-                                    if (!(fileNode instanceof CodeFileTreeNode)) {
-                                        assert.fail('expected node to be CodeFileTreeNode for file ' + filePath + ', node: ' + fileNode);
-                                    }
-                                });
-                                codeFileNode = <CodeFileTreeNode>fileNode;
-                            });
-
-                            it('Check number of evidences in file', () => {
-                                assert.equal(codeFileNode.issues.length, fileEvidence.locations.length);
-                            });
-
-                            for (let location of fileEvidence.locations) {
-                                describe('Check evidence location' + location.text, () => {
-                                    let applicableIssue: ApplicableTreeNode;
-
-                                    before(() => {
-                                        let issueLocation: CodeIssueTreeNode | undefined = codeFileNode.issues.find(
-                                            issue =>
-                                                // Location in vscode start from 0, in scanners location starts from 1
-                                                issue.regionWithIssue.start.line === location.location[0] - 1 &&
-                                                issue.regionWithIssue.end.line === location.location[1] - 1 &&
-                                                issue.regionWithIssue.start.character === location.location[2] - 1 &&
-                                                issue.regionWithIssue.end.character === location.location[3] - 1
-                                        );
-                                        it('Check applicable location node created', () => {
-                                            assert.isDefined(issueLocation);
-                                            if (!(issueLocation instanceof ApplicableTreeNode)) {
-                                                assert.fail(
-                                                    'expected node to be ApplicableTreeNode for ' + location.location + ', node: ' + issueLocation
-                                                );
-                                            }
-                                        });
-                                        applicableIssue = <ApplicableTreeNode>issueLocation;
-                                    });
-
-                                    it('Check Cve node reference exists', () => {
-                                        assert.equal(applicableIssue.cveNode.issueId, cveIssue.cve);
-                                    });
-
-                                    it('Check location Cve node marked as applicable', () => {
-                                        assert.isTrue(applicableIssue.cveNode.applicableDetails?.isApplicable);
-                                    });
-
-                                    it('Check applicable information reference created in descriptor', () => {
-                                        assert.isDefined(testDescriptor.applicableCve?.get(applicableIssue.issueId));
-                                    });
-
-                                    it('Check location node severity', () => {
-                                        assert.equal(applicableIssue.severity, applicableIssue.cveNode.severity);
-                                    });
-                                });
-                            }
-                        });
-                    }
-                }
-            });
-        });
-    });
 
     function getDummyRunner(): ApplicabilityRunner {
         return new ApplicabilityRunner({} as ConnectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, logManager);
