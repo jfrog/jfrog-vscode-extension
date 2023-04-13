@@ -29,7 +29,7 @@ import { ApplicableTreeNode } from '../../main/treeDataProviders/issuesTree/code
 
 let logManager: LogManager = new LogManager().activate();
 
-describe('Contextual Analysis Scan Tests', () => {
+describe.only('Contextual Analysis Scan Tests', () => {
     const scanApplicable: string = path.join(__dirname, '..', 'resources', 'applicableScan');
 
     [
@@ -50,15 +50,7 @@ describe('Contextual Analysis Scan Tests', () => {
     ].forEach(test => {
         it('Check generated Yaml request - ' + test.name, () => {
             let request: ApplicabilityScanArgs = getApplicabilityScanRequest(test.roots, test.cves, test.skip);
-            assert.deepEqual(
-                getDummyRunner()
-                    .requestsToYaml(request)
-                    .trim(),
-                fs
-                    .readFileSync(test.file)
-                    .toString()
-                    .trim()
-            );
+            assert.deepEqual(getDummyRunner().requestsToYaml(request), fs.readFileSync(test.file).toString());
         });
     });
 
@@ -241,7 +233,6 @@ describe('Contextual Analysis Scan Tests', () => {
                 });
 
                 describe('Issues populated as ApplicableTreeNode nodes', () => {
-                    //
                     function getTestIssueNode(fileNode: CodeFileTreeNode, location: FileRegion): ApplicableTreeNode {
                         let issueLocation: CodeIssueTreeNode | undefined = fileNode.issues.find(
                             issue =>
