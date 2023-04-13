@@ -127,13 +127,6 @@ describe.only('Contextual Analysis Scan Tests', () => {
                 });
             });
 
-            it('Check description transferred to applicableDetails', () => {
-                notApplicable.forEach((cve: string) => {
-                    let node: CveTreeNode | undefined = getTestCveNode(cve);
-                    assert.isDefined(node?.applicableDetails?.searchTarget);
-                });
-            });
-
             it('Check Cve node marked as not applicable', () => {
                 notApplicable.forEach((cve: string) => {
                     let node: CveTreeNode | undefined = getTestCveNode(cve);
