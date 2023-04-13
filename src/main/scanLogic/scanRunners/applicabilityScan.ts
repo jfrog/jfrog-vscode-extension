@@ -50,10 +50,7 @@ export class ApplicabilityRunner extends BinaryRunner {
     /** @override */
     public requestsToYaml(...requests: AnalyzeScanRequest[]): string {
         let str: string = super.requestsToYaml(...requests);
-        return str
-            .replace('cve_whitelist', 'cve-whitelist')
-            .replace('skipped_folders', 'skipped-folders')
-            .trim();
+        return str.replace('cve_whitelist', 'cve-whitelist').replace('skipped_folders', 'skipped-folders');
     }
 
     /**
