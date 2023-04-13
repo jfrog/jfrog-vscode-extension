@@ -29,7 +29,7 @@ import { ApplicableTreeNode } from '../../main/treeDataProviders/issuesTree/code
 
 let logManager: LogManager = new LogManager().activate();
 
-describe.only('Contextual Analysis Scan Tests', () => {
+describe('Contextual Analysis Scan Tests', () => {
     const scanApplicable: string = path.join(__dirname, '..', 'resources', 'applicableScan');
 
     [
