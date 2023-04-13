@@ -51,7 +51,9 @@ describe.only('Contextual Analysis Scan Tests', () => {
         it('Check generated Yaml request - ' + test.name, () => {
             let request: ApplicabilityScanArgs = getApplicabilityScanRequest(test.roots, test.cves, test.skip);
             assert.deepEqual(
-                getDummyRunner().requestsToYaml(request),
+                getDummyRunner()
+                    .requestsToYaml(request)
+                    .trim(),
                 fs
                     .readFileSync(test.file)
                     .toString()
