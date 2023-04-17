@@ -26,6 +26,7 @@ import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFi
 import { IEvidence } from 'jfrog-ide-webview';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { ApplicableTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/applicableTreeNode';
+import { removeWindowsWhiteSpace } from './utils/utils.test';
 
 let logManager: LogManager = new LogManager().activate();
 
@@ -52,8 +53,8 @@ describe.only('Contextual Analysis Scan Tests', () => {
         it('Check generated Yaml request - ' + test.name, () => {
             let request: ApplicabilityScanArgs = getApplicabilityScanRequest(test.roots, test.cves, test.skip);
             let actualPath: string = path.join(tempFolder, test.name);
-            fs.writeFileSync(actualPath, getDummyRunner().requestsToYaml(request));
-            assert.deepEqual(fs.readFileSync(actualPath), fs.readFileSync(test.file));
+            fs.writeFileSync(actualPath,getDummyRunner().requestsToYaml(request));
+            assert.deepEqual(fs.readFileSync(actualPath, 'utf-8').toString(), removeWindowsWhiteSpace(fs.readFileSync(test.file, 'utf-8').toString()));
         });
     });
 

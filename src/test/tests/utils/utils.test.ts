@@ -10,6 +10,10 @@ export function isWindows(): boolean {
     return os.platform() === 'win32';
 }
 
+export function removeWindowsWhiteSpace(text: string): string {
+    return text.replace(/\r/g, '');
+}
+
 export function getNodeByArtifactId(root: DependenciesTreeNode, artifactId: string): DependenciesTreeNode | null {
     if (root === null) {
         return null;
