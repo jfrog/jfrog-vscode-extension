@@ -2,7 +2,7 @@
     "name": "jfrog-vscode-extension",
     "displayName": "JFrog",
     "description": "JFrog Xray scanning of Go, npm, Pypi, Maven and NuGet project dependencies.",
-    "version": "2.1.0",
+    "version": "2.2.0",
     "license": "Apache-2.0",
     "icon": "resources/extensionIcon.png",
     "repository": {
@@ -88,7 +88,7 @@
                 "jfrog.excludeDevDependencies": {
                     "type": "boolean",
                     "scope": "application",
-                    "markdownDescription": "Exclude development dependencies during the scan. Currently, only NPM is supported."
+                    "markdownDescription": "Exclude development dependencies during the scan. Currently, only npm is supported."
                 },
                 "jfrog.projectKey": {
                     "type": "string",
@@ -283,7 +283,7 @@
     "dependencies": {
         "adm-zip": "~0.5.9",
         "fs-extra": "~10.1.0",
-        "jfrog-client-js": "^2.6.3",
+        "jfrog-client-js": "^2.6.4",
         "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.1.21.tgz",
         "js-yaml": "^4.1.0",
         "json2csv": "~5.0.7",

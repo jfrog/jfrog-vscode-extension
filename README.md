@@ -8,6 +8,7 @@
 ![JFrog Extension Marketplace Installs](https://img.shields.io/open-vsx/dt/JFrog/jfrog-vscode-extension?label=Eclipse%20Theia%20installs&color=blue&style=for-the-badge)
 
 [![Visual Studio Marketplace](https://vsmarketplacebadges.dev/version/JFrog.jfrog-vscode-extension.png)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension) [![Open VSX Registry](https://img.shields.io/open-vsx/v/jfrog/jfrog-vscode-extension?label=Open%20VSX%20Registry)](https://open-vsx.org/extension/JFrog/jfrog-vscode-extension)
+[![Scanned by Frogbot](https://raw.github.com/jfrog/frogbot/master/images/frogbot-badge.svg)](https://github.com/jfrog/frogbot#readme)
 [![Test](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml/badge.svg)](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml)
 
 </div>
@@ -17,7 +18,6 @@
 -   [Getting Started](#getting-started)
     -   [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
     -   [Connecting VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
-        -   [Severity Icons](#severity-icons)
 
     -   [Using the extension](#using-the-extension)
         -   [Severity Icons](#severity-icons)
@@ -31,6 +31,7 @@
         -   [Go Projects](#go-projects)
         -   [Maven Projects](#maven-projects)
         -   [Npm Projects](#npm-projects)
+            -   [Exclude Development Dependencies During Scan](#exclude-development-dependencies-during-scan)
         -   [Yarn v1 Projects](#yarn-v1-projects)
         -   [Pypi Projects](#pypi-projects)
         -   [.NET Projects](#net-projects)
@@ -79,6 +80,7 @@ To learn more, see [here](https://www.jfrog.com/confluence/display/JFROG/Vulnera
 | SCA                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | Upgrade vulnerable dependencies to fixed versions |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | Contextual Analysis                               |  ❌  |   ❌   |   ✅    |  ✅  |    ✅    |   ❌    |
+| Exclude dev dependencies                |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |
 
 #### Additional Perks
 * Security issues are easily visible inline.
@@ -197,10 +199,10 @@ Clicking a vulnerability in the list will open the location with the issue in th
 For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team. Prioritize the CVEs based on:
 
 * JFrog Severity: The severity given by the JFrog Security Research team after the manual analysis of the CVE by the team. CVEs with the highest JFrog security severity are the most likely to be used by real-world attackers. This means that you should put effort into fixing them as soon as possible.
-* Research Summary: The summary that is based on JFrog's security analysis of the security issue provides detailed technical information on the specific conditions for the CVE to be applicable. 
+* Research Summary: The summary that is based on JFrog's security analysis of the security issue provides detailed technical information on the specific conditions for the CVE to be applicable.
 Remediation: Detailed fix and mitigation options for the CVEs
 
-Check out what our research team is up to and stay updated on newly discovered issues by clicking on this [link](https://research.jfrog.com). 
+Check out what our research team is up to and stay updated on newly discovered issues by clicking on this [link](https://research.jfrog.com).
 
 ![JFrog_Research](resources/readme/preview/research.png)
 
@@ -260,6 +262,10 @@ Behind the scenes, the extension builds the npm dependencies tree by running `np
 Important:
 To have your project dependencies scanned by JFrog Xray, make sure the npm CLI is installed on your local machine and that it is in your system PATH.
 In addition, the project dependencies must be installed using `npm install`.
+
+### Exclude Development Dependencies During Scan
+
+Development dependencies are scanned by default. You can exclude them by choosing `Exclude Dev Dependencies` in the [Extension Settings](#extension-settings). Currently, only npm is supported.
 
 ### Yarn v1 Projects
 
@@ -344,7 +350,7 @@ After your builds were fetched from Artifactory, press on the Builds ![Builds](r
 
 ## Extension Settings
 
-To open the extension settings, use the extension settings icon: 
+To open the extension settings, use the extension settings icon:
 ![Open_Settings](resources/readme/preview/openSettings.png)
 Or use the following VS Code menu command:
 
