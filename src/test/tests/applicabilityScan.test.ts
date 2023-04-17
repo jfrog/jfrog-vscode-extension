@@ -53,8 +53,11 @@ describe.only('Contextual Analysis Scan Tests', () => {
         it('Check generated Yaml request - ' + test.name, () => {
             let request: ApplicabilityScanArgs = getApplicabilityScanRequest(test.roots, test.cves, test.skip);
             let actualPath: string = path.join(tempFolder, test.name);
-            fs.writeFileSync(actualPath,getDummyRunner().requestsToYaml(request));
-            assert.deepEqual(fs.readFileSync(actualPath, 'utf-8').toString(), removeWindowsWhiteSpace(fs.readFileSync(test.file, 'utf-8').toString()));
+            fs.writeFileSync(actualPath, getDummyRunner().requestsToYaml(request));
+            assert.deepEqual(
+                fs.readFileSync(actualPath, 'utf-8').toString(),
+                removeWindowsWhiteSpace(fs.readFileSync(test.file, 'utf-8').toString())
+            );
         });
     });
 
