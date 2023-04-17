@@ -31,6 +31,7 @@ let logManager: LogManager = new LogManager().activate();
 
 describe.only('Contextual Analysis Scan Tests', () => {
     const scanApplicable: string = path.join(__dirname, '..', 'resources', 'applicableScan');
+    let tempFolder: string = ScanUtils.createTmpDir();
 
     [
         {
@@ -50,8 +51,9 @@ describe.only('Contextual Analysis Scan Tests', () => {
     ].forEach(test => {
         it('Check generated Yaml request - ' + test.name, () => {
             let request: ApplicabilityScanArgs = getApplicabilityScanRequest(test.roots, test.cves, test.skip);
-            const testData: string = fs.readFileSync(test.file, 'utf-8').toString();
-            assert.deepEqual(getDummyRunner().requestsToYaml(request), testData);
+            let actualPath: string = path.join(tempFolder, test.name);
+            fs.writeFileSync(actualPath, getDummyRunner().requestsToYaml(request));
+            assert.deepEqual(fs.readFileSync(actualPath), fs.readFileSync(test.file));
         });
     });
 
