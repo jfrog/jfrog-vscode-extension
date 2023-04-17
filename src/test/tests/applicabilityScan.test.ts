@@ -50,13 +50,8 @@ describe.only('Contextual Analysis Scan Tests', () => {
     ].forEach(test => {
         it('Check generated Yaml request - ' + test.name, () => {
             let request: ApplicabilityScanArgs = getApplicabilityScanRequest(test.roots, test.cves, test.skip);
-            assert.deepEqual(
-                getDummyRunner().requestsToYaml(request),
-                fs
-                    .readFileSync(test.file)
-                    .toString()
-                    .replace(/\n\s*\n/g, '\n')
-            );
+            const testData: string = fs.readFileSync(test.file, 'utf-8').toString();
+            assert.deepEqual(getDummyRunner().requestsToYaml(request), testData);
         });
     });
 
