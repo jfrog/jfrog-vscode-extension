@@ -30,38 +30,38 @@ import { removeWindowsWhiteSpace } from './utils/utils.test';
 
 let logManager: LogManager = new LogManager().activate();
 
-describe('Contextual Analysis Scan Tests', () => {
+describe('Applicability Scan Tests', () => {
     const scanApplicable: string = path.join(__dirname, '..', 'resources', 'applicableScan');
     let tempFolder: string = ScanUtils.createTmpDir();
 
     [
         {
             name: 'One root',
-            file: path.join(scanApplicable, 'requestOneRoot.yaml'),
+            expectedYaml: path.join(scanApplicable, 'requestOneRoot.yaml'),
             roots: ['/path/to/root'],
             cves: ['CVE-2021-3918'],
             skip: []
         },
         {
             name: 'Multiple roots',
-            file: path.join(scanApplicable, 'requestMultipleRoots.yaml'),
+            expectedYaml: path.join(scanApplicable, 'requestMultipleRoots.yaml'),
             roots: ['/path/to/root', '/path/to/other'],
             cves: ['CVE-2021-3918', 'CVE-2021-3807', 'CVE-2022-25878'],
             skip: ['/path/to/skip']
         }
     ].forEach(test => {
-        it('Check generated Yaml request - ' + test.name, () => {
+        it('Check generated Yaml request for - ' + test.name, () => {
             let request: ApplicabilityScanArgs = getApplicabilityScanRequest(test.roots, test.cves, test.skip);
-            let actualPath: string = path.join(tempFolder, test.name);
-            fs.writeFileSync(actualPath, getDummyRunner().requestsToYaml(request));
+            let actualYaml: string = path.join(tempFolder, test.name);
+            fs.writeFileSync(actualYaml, getDummyRunner().requestsToYaml(request));
             assert.deepEqual(
-                fs.readFileSync(actualPath, 'utf-8').toString(),
-                removeWindowsWhiteSpace(fs.readFileSync(test.file, 'utf-8').toString())
+                fs.readFileSync(actualYaml, 'utf-8').toString(),
+                removeWindowsWhiteSpace(fs.readFileSync(test.expectedYaml, 'utf-8').toString())
             );
         });
     });
 
-    describe('Analyzer run fail tests', () => {
+    describe('Applicability scan fails', () => {
         let response: ApplicabilityScanResponse;
 
         before(() => {
@@ -72,7 +72,7 @@ describe('Contextual Analysis Scan Tests', () => {
             assert.isDefined(response);
         });
 
-        it('Check response attributes', () => {
+        it('Check response attributes are not exist', () => {
             assert.isUndefined(response.scannedCve);
             assert.isUndefined(response.applicableCve);
         });
@@ -83,7 +83,6 @@ describe('Contextual Analysis Scan Tests', () => {
         const testDescriptor: DescriptorTreeNode = new DescriptorTreeNode('path', PackageType.Unknown, testRoot);
         const testDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '9.9.9', testDescriptor);
         let testCves: CveTreeNode[] = [];
-
         let scanResult: DependencyScanResults;
         let populatedIssues: number;
 
