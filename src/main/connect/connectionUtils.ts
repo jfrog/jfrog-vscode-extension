@@ -260,7 +260,9 @@ export class ConnectionUtils {
         xrayUrl: string,
         username: string,
         password: string,
-        accessToken: string
+        accessToken: string,
+        retries?: number,
+        timeout?: number
     ): JfrogClient {
         let clientConfig: IJfrogClientConfig = {
             platformUrl: platformUrl,
@@ -271,8 +273,8 @@ export class ConnectionUtils {
             accessToken: accessToken,
             headers: {},
             proxy: ConnectionUtils.getProxyConfig(),
-            retries: Configuration.getConnectionRetries(),
-            timeout: Configuration.getConnectionTimeout()
+            retries: retries ?? Configuration.getConnectionRetries(),
+            timeout: timeout ?? Configuration.getConnectionTimeout()
         } as IJfrogClientConfig;
         ConnectionUtils.addUserAgentHeader(clientConfig);
         ConnectionUtils.addProxyAuthHeader(clientConfig);
