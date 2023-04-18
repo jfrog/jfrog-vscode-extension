@@ -164,6 +164,7 @@ The two modes can be toggled by pressing on their respective buttons that will a
 
 ### Severity Icons
 The icon demonstrates the top severity issue of a selected component and its transitive dependencies. The following table describes the severities from highest to lowest:
+
 | Icon                                                          | Severity  | Description                      |
 |:---------------------------------------------------------------:|:---------:|:--------------------------------:|
 | <img src="resources/readme/severities/Critical.png" width="20">  |  Critical |   Issue with critical severity   |
