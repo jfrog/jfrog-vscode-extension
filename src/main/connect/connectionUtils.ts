@@ -271,7 +271,8 @@ export class ConnectionUtils {
             accessToken: accessToken,
             headers: {},
             proxy: ConnectionUtils.getProxyConfig(),
-            retries: Configuration.getConnectionRetries()
+            retries: Configuration.getConnectionRetries(),
+            timeout: Configuration.getConnectionTimeout()
         } as IJfrogClientConfig;
         ConnectionUtils.addUserAgentHeader(clientConfig);
         ConnectionUtils.addProxyAuthHeader(clientConfig);

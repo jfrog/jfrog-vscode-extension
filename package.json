@@ -120,6 +120,12 @@
                     "default": 3,
                     "scope": "application",
                     "markdownDescription": "Maximum connection retry attempts"
+                },
+                "jfrog.connectionTimeout": {
+                    "type": "number",
+                    "default": 10000,
+                    "scope": "application",
+                    "markdownDescription": "Time in milliseconds before a request times out"
                 }
             }
         },
