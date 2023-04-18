@@ -6,31 +6,14 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
-import { ContextKeys, SessionStatus } from '../../main/constants/contextKeys';
-import { LogManager } from '../../main/log/logManager';
-import { getCliHomeDir, setCliHomeDir } from './utils/utils.test';
+import { createTestConnectionManager, getCliHomeDir, setCliHomeDir } from './utils/utils.test';
 
-describe('Connection Manager Tests', () => {
+describe.only('Connection Manager Tests', () => {
     let connectionManager: ConnectionManager;
     before(async () => {
         // Don't override existing connection details
         process.env[ConnectionManager.STORE_CONNECTION_ENV] = 'FALSE';
-
-        connectionManager = await new ConnectionManager(new LogManager().activate()).activate({
-            globalState: {
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                get(key: string) {
-                    if (key == ContextKeys.SESSION_STATUS) {
-                        return SessionStatus.SignedOut;
-                    }
-                    return;
-                },
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                update(key: string, value: any) {
-                    return;
-                }
-            } as vscode.Memento
-        } as vscode.ExtensionContext);
+        connectionManager = await createTestConnectionManager();
     });
 
     it('User agent header', () => {
