@@ -7,17 +7,22 @@ import { ConnectionManager } from '../../connect/connectionManager';
  * The request that is sent to the binary to scan applicability
  */
 export interface ApplicabilityScanArgs extends AnalyzeScanRequest {
-    grep_disable: boolean; // alway false for now -> build option for it
-    cve_whitelist: string[]; // can be always empty but should contain optional to reduce time
-    skipped_folders: string[]; // empty but make sure there is option, for now its list of folder but should be pattern in future
+    // Not used
+    grep_disable: boolean;
+    // Must have at least one item, the CVE to search for in scan
+    cve_whitelist: string[];
+    // Glob Pattern represent the files (not folders) that should be skipped
+    skipped_folders: string[];
 }
 
 /**
  * The response that is generated from the binary after scanning applicability
  */
 export interface ApplicabilityScanResponse {
-    scannedCve: string[]; // not applicable if key in here but not in below
-    applicableCve: { [cve_id: string]: CveApplicableDetails }; // is applicable if key in here
+    // All the cve that were scanned (have data about them in analyzer)
+    scannedCve: string[];
+    // All the cve that have applicable issues
+    applicableCve: { [cve_id: string]: CveApplicableDetails };
 }
 
 /**
@@ -33,8 +38,8 @@ export interface CveApplicableDetails {
  * Describes a runner for the Applicability scan executable file.
  */
 export class ApplicabilityRunner extends BinaryRunner {
-    constructor(connectionManager: ConnectionManager, abortCheckInterval: number, logManager: LogManager) {
-        super(connectionManager, abortCheckInterval, AnalyzerType.ContextualAnalysis, logManager);
+    constructor(connectionManager: ConnectionManager, timeout: number, logManager: LogManager) {
+        super(connectionManager, timeout, AnalyzerType.ContextualAnalysis, logManager);
     }
 
     /** @override */

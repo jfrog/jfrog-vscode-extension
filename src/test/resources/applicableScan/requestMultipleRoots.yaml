@@ -1,0 +1,12 @@
+scans:
+  - type: analyze-applicability
+    output: /path/to/output.json
+    roots:
+      - /path/to/root
+      - /path/to/other
+    cve-whitelist:
+      - CVE-2021-3918
+      - CVE-2021-3807
+      - CVE-2022-25878
+    skipped-folders:
+      - /path/to/skip
