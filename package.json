@@ -123,9 +123,9 @@
                 },
                 "jfrog.connectionTimeout": {
                     "type": "number",
-                    "default": 10000,
+                    "default": 60,
                     "scope": "application",
-                    "markdownDescription": "Time in milliseconds before a request times out"
+                    "markdownDescription": "Time in seconds before a request times out"
                 }
             }
         },
