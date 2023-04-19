@@ -66,7 +66,7 @@ export class Configuration {
     }
 
     /**
-     * @returns the time in milliseconds before a request times out
+     * @returns timeout in milliseconds
      */
     public static getConnectionTimeout(): number {
         return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('connectionTimeout', 60) * 1000;

@@ -125,7 +125,7 @@
                     "type": "number",
                     "default": 60,
                     "scope": "application",
-                    "markdownDescription": "Time in seconds before a request times out"
+                    "markdownDescription": "Timeout period before the connection is terminated in seconds"
                 }
             }
         },
