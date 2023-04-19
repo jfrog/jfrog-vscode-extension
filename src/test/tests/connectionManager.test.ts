@@ -8,7 +8,7 @@ import { ConnectionManager } from '../../main/connect/connectionManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
 import { createTestConnectionManager, getCliHomeDir, setCliHomeDir } from './utils/utils.test';
 
-describe.only('Connection Manager Tests', () => {
+describe('Connection Manager Tests', () => {
     let connectionManager: ConnectionManager;
     before(async () => {
         // Don't override existing connection details

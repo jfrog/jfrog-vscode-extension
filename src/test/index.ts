@@ -3,7 +3,7 @@ import { existsSync, writeFileSync } from 'fs-extra';
 import glob from 'glob';
 import Mocha, { MochaOptions } from 'mocha';
 import * as path from 'path';
-import { cleanUpIntegrationTests, initializeIntegrationTests } from './tests/integration/testIntegration.test';
+import { cleanUpIntegrationTests, initializeIntegrationTests } from './tests/utils/testIntegration.test';
 
 /**
  * Run extension integration tests with Mocha. All tests must be under 'test/tests/' folder.

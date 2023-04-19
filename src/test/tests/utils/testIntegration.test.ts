@@ -3,7 +3,7 @@ import { assert } from 'chai';
 import { ConnectionManager } from '../../../main/connect/connectionManager';
 import { LogManager } from '../../../main/log/logManager';
 import { ScanUtils } from '../../../main/utils/scanUtils';
-import { createTestConnectionManager } from '../utils/utils.test';
+import { createTestConnectionManager } from './utils.test';
 import { Resource } from '../../../main/utils/resource';
 import { BinaryRunner } from '../../../main/scanLogic/scanRunners/binaryRunner';
 
@@ -42,18 +42,20 @@ export class BaseIntegrationEnv {
         // Initialize connection manager
         this._connectionManager = await createTestConnectionManager(this.logManager);
         // Don't override existing connection details
-        process.env[ConnectionManager.STORE_CONNECTION_ENV] = 'FALSE';
         let tempUrl: string | undefined = process.env[ConnectionManager.URL_ENV];
-        process.env[ConnectionManager.URL_ENV] = process.env[BaseIntegrationEnv.ENV_PLATFORM_URL];
         let tempAccess: string | undefined = process.env[ConnectionManager.ACCESS_TOKEN_ENV];
+        process.env[ConnectionManager.STORE_CONNECTION_ENV] = 'FALSE';
+        process.env[ConnectionManager.URL_ENV] = process.env[BaseIntegrationEnv.ENV_PLATFORM_URL];
         process.env[ConnectionManager.ACCESS_TOKEN_ENV] = process.env[BaseIntegrationEnv.ENV_ACCESS_TOKEN];
         // Try to get credentials
         try {
-            if (!(await this._connectionManager.getCredentialsFromEnv())) {
-                assert.fail(
-                    `Failed to load JFrog platform credentials.\n Looking for Environment variables ${BaseIntegrationEnv.ENV_PLATFORM_URL} and ${BaseIntegrationEnv.ENV_ACCESS_TOKEN}.`
-                );
+            if (await this._connectionManager.tryCredentialsFromEnv()) {
+                return;
             }
+            if (await this._connectionManager.tryCredentialsFromJfrogCli()) {
+                return;
+            }
+            assert.fail(`Failed to load JFrog platform credentials from CLI or Environment variables '${BaseIntegrationEnv.ENV_PLATFORM_URL}' and '${BaseIntegrationEnv.ENV_ACCESS_TOKEN}'`);
         } finally {
             process.env[ConnectionManager.URL_ENV] = tempUrl;
             process.env[ConnectionManager.ACCESS_TOKEN_ENV] = tempAccess;
