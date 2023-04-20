@@ -2,7 +2,7 @@
     "name": "jfrog-vscode-extension",
     "displayName": "JFrog",
     "description": "JFrog Xray scanning of Go, npm, Pypi, Maven and NuGet project dependencies.",
-    "version": "2.2.0",
+    "version": "2.3.0",
     "license": "Apache-2.0",
     "icon": "resources/extensionIcon.png",
     "repository": {
@@ -120,6 +120,12 @@
                     "default": 3,
                     "scope": "application",
                     "markdownDescription": "Maximum connection retry attempts"
+                },
+                "jfrog.connectionTimeout": {
+                    "type": "number",
+                    "default": 60,
+                    "scope": "application",
+                    "markdownDescription": "Timeout period before the connection is terminated in seconds"
                 }
             }
         },

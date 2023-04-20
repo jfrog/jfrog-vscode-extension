@@ -6,6 +6,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
+import { LogManager } from '../../main/log/logManager';
 import { createTestConnectionManager, getCliHomeDir, setCliHomeDir } from './utils/utils.test';
 
 describe('Connection Manager Tests', () => {
@@ -13,7 +14,8 @@ describe('Connection Manager Tests', () => {
     before(async () => {
         // Don't override existing connection details
         process.env[ConnectionManager.STORE_CONNECTION_ENV] = 'FALSE';
-        connectionManager = await createTestConnectionManager();
+
+        connectionManager = await createTestConnectionManager(new LogManager().activate(), 60, 60000);
     });
 
     it('User agent header', () => {
