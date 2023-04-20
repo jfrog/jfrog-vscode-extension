@@ -9,7 +9,7 @@
             "fixReason": "The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load is called",
             "fileEvidences": [
                 {
-                    "full_path": "file:///examples/applic-demo/../applic-demo/index.js",
+                    "full_path": "index.js",
                     "locations": [
                         {
                             "endColumn": 18,
