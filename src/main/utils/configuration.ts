@@ -66,6 +66,13 @@ export class Configuration {
     }
 
     /**
+     * @returns timeout in milliseconds
+     */
+    public static getConnectionTimeout(): number {
+        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('connectionTimeout', 60) * 1000;
+    }
+
+    /**
      * @returns the encoded proxy authorization if exists
      */
     public static getProxyAuth(): string | undefined {

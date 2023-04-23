@@ -13,6 +13,10 @@ export class ApplicableTreeNode extends CodeIssueTreeNode {
         super(_node.labelId, parent, regionWithIssue, severity);
     }
 
+    public get cveNode(): CveTreeNode {
+        return this._node;
+    }
+
     /**
      * Get the CVE details page of the issue
      */
