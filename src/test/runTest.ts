@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
 import path from 'path';
-import { runTests } from 'vscode-test';
-import { TestOptions } from 'vscode-test/out/runTest';
+import { runTests } from '@vscode/test-electron';
+import { TestOptions } from '@vscode/test-electron/out/runTest';
 
 let targetResourcesDir: string = path.join(__dirname, 'resources');
 
