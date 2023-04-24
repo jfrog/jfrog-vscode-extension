@@ -1,0 +1,135 @@
+{
+    "runs": [
+        {
+            "tool": {
+                "driver": {
+                    "name": "JFrog Terraform scanner",
+                    "rules": [
+                        {
+                            "id": "aws_cloudfront_tls_only",
+                            "fullDescription": {
+                                "text": "Resource `aws_cloudfront_distribution` should have `viewer_protocol_policy=https-only` or `viewer_protocol_policy=redirect-to-https`\n\nVulnerable example -\n```\nresource \"aws_cloudfront_distribution\" \"vulnerable_example\" {\n  default_cache_behavior {\n    viewer_protocol_policy = \"allow-all\"\n  }\n}\n```\n\nSecure example -\n```\nresource \"aws_cloudfront_distribution\" \"secure_example\" {\n  default_cache_behavior {\n    viewer_protocol_policy = \"https-only\"\n  }\n}\n```",
+                                "markdown": "Resource `aws_cloudfront_distribution` should have `viewer_protocol_policy=https-only` or `viewer_protocol_policy=redirect-to-https`\n\nVulnerable example -\n```\nresource \"aws_cloudfront_distribution\" \"vulnerable_example\" {\n  default_cache_behavior {\n    viewer_protocol_policy = \"allow-all\"\n  }\n}\n```\n\nSecure example -\n```\nresource \"aws_cloudfront_distribution\" \"secure_example\" {\n  default_cache_behavior {\n    viewer_protocol_policy = \"https-only\"\n  }\n}\n```"
+                            },
+                            "shortDescription": {
+                                "text": "Scanner for aws_cloudfront_tls_only"
+                            }
+                        },
+                        {
+                            "id": "aws_cloudfront_tls_version",
+                            "fullDescription": {
+                                "text": "Resource `aws_cloudfront_distribution` should have `viewer_certificate.minimum_protocol_version = 'TLSv1.2*'` or `viewer_certificate.minimum_protocol_version = 'TLSv1.3*'`\n\nVulnerable example -\n```\nresource \"aws_cloudfront_distribution\" \"vulnerable_example\" {\n  viewer_certificate {\n    minimum_protocol_version  = \"TLSv1\"\n  }\n}\n```\n\nSecure example -\n```\nresource \"aws_cloudfront_distribution\" \"secure_example\" {\n  viewer_certificate {\n    minimum_protocol_version  = \"TLSv1.2_2019\"\n  }\n}\n\n```",
+                                "markdown": "Resource `aws_cloudfront_distribution` should have `viewer_certificate.minimum_protocol_version = 'TLSv1.2*'` or `viewer_certificate.minimum_protocol_version = 'TLSv1.3*'`\n\nVulnerable example -\n```\nresource \"aws_cloudfront_distribution\" \"vulnerable_example\" {\n  viewer_certificate {\n    minimum_protocol_version  = \"TLSv1\"\n  }\n}\n```\n\nSecure example -\n```\nresource \"aws_cloudfront_distribution\" \"secure_example\" {\n  viewer_certificate {\n    minimum_protocol_version  = \"TLSv1.2_2019\"\n  }\n}\n\n```"
+                            },
+                            "shortDescription": {
+                                "text": "Scanner for aws_cloudfront_tls_version"
+                            }
+                        },
+                        {
+                            "id": "aws_cloudtrail_encrypt",
+                            "fullDescription": {
+                                "text": "Resource `aws_cloudtrail` should have key `kms_key_id`\n\nVulnerable example -\n```\nresource \"aws_cloudtrail\" \"vulnerable_example\" {\n  # kms_key_id is not set\n}\n```\n\nSecure example -\n```\nresource \"aws_cloudtrail\" \"secure_example\" {\n  kms_key_id = aws_kms_key.example.arn\n}\n```",
+                                "markdown": "Resource `aws_cloudtrail` should have key `kms_key_id`\n\nVulnerable example -\n```\nresource \"aws_cloudtrail\" \"vulnerable_example\" {\n  # kms_key_id is not set\n}\n```\n\nSecure example -\n```\nresource \"aws_cloudtrail\" \"secure_example\" {\n  kms_key_id = aws_kms_key.example.arn\n}\n```"
+                            },
+                            "shortDescription": {
+                                "text": "Scanner for aws_cloudtrail_encrypt"
+                            }
+                        }
+                    ],
+                    "version": ""
+                }
+            },
+            "invocations": [
+                {
+                    "executionSuccessful": true,
+                    "arguments": [
+                        "iac_scanner/tf_scanner",
+                        "scan",
+                        "test.yaml"
+                    ],
+                    "workingDirectory": {
+                        "uri": "file:///Users/user/.jfrog-vscode-extension/issues/analyzerManager"
+                    }
+                }
+            ],
+            "results": [
+                {
+                    "message": {
+                        "text": "Deprecated TLS version was detected"
+                    },
+                    "level": "note",
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "file:///examples/iac-demo/../req_sw_terraform_aws_cloudfront_tls_only.tf"
+                                },
+                                "region": {
+                                    "endColumn": 2,
+                                    "endLine": 22,
+                                    "snippet": {
+                                        "text": "vulnerable_example"
+                                    },
+                                    "startColumn": 1,
+                                    "startLine": 1
+                                }
+                            }
+                        }
+                    ],
+                    "ruleId": "aws_cloudfront_tls_version"
+                },
+                {
+                    "message": {
+                        "text": "viewer_protocol_policy='allow-all' was detected"
+                    },
+                    "level": "error",
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "file:///examples/iac-demo/../req_sw_terraform_aws_cloudfront_tls_only.tf"
+                                },
+                                "region": {
+                                    "endColumn": 27,
+                                    "endLine": 3,
+                                    "snippet": {
+                                        "text": "viewer_protocol_policy"
+                                    },
+                                    "startColumn": 5,
+                                    "startLine": 3
+                                }
+                            }
+                        }
+                    ],
+                    "ruleId": "aws_cloudfront_tls_only"
+                },
+                {
+                    "message": {
+                        "text": "kms_key_id='' was detected"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "file:///examples/iac-demo/../req_sw_terraform_aws_cloudtrail_encrypt.tf"
+                                },
+                                "region": {
+                                    "endColumn": 2,
+                                    "endLine": 5,
+                                    "snippet": {
+                                        "text": "vulnerable_example"
+                                    },
+                                    "startColumn": 1,
+                                    "startLine": 1
+                                }
+                            }
+                        }
+                    ],
+                    "ruleId": "aws_cloudtrail_encrypt"
+                }
+            ]
+        }
+    ],
+    "version": "2.1.0",
+    "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos02/schemas/sarif-schema-2.1.0.json"
+}

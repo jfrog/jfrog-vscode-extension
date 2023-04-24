@@ -20,6 +20,12 @@ import { StepProgress } from '../treeDataProviders/utils/stepProgress';
 import { Utils } from '../utils/utils';
 import { IacRunner, IacScanResponse } from './scanRunners/iacScan';
 
+export interface SupportedScans {
+    graphScan: boolean;
+    applicable: boolean;
+    iac: boolean;
+}
+
 /**
  * Manage all the Xray scans
  */
@@ -149,7 +155,7 @@ export class ScanManager implements ExtensionComponent {
     }
 
     /**
-     * Get all the entitlement statuses of each type of scan the manager offers
+     * Get all the entitlement status for each type of scan the manager offers
      */
     public async getSupportedScans(): Promise<SupportedScans> {
         let supportedScans: SupportedScans = { graphScan: false, applicable: false, iac: false };
@@ -245,10 +251,4 @@ export class ScanManager implements ExtensionComponent {
         this._logManager.logMessage('Scanning for Eos issues, roots: ' + eosRequests.map(request => request.roots.join()).join(), 'DEBUG');
         return eosRunner.scan(checkCancel, ...eosRequests);
     }
-}
-
-export interface SupportedScans {
-    graphScan: boolean;
-    applicable: boolean;
-    iac: boolean;
 }

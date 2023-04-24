@@ -46,7 +46,9 @@ export class AnalyzerUtils {
      */
     public static parseLocationFilePath(filePath: string): string {
         if (os.platform() === 'win32') {
-            return decodeURI((filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath).replace(/['/']/g, '\\'));
+            let toDecode: string = filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath;
+            toDecode = toDecode.includes('file://') ? filePath.substring('file://'.length) : toDecode;
+            return decodeURI(toDecode.replace(/['/']/g, '\\'));
         }
         return decodeURI(filePath.includes('file://') ? filePath.substring('file://'.length) : filePath);
     }

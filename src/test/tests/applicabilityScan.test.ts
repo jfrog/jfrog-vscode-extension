@@ -11,7 +11,7 @@ import {
     ApplicabilityScanResponse
 } from '../../main/scanLogic/scanRunners/applicabilityScan';
 import { ScanUtils } from '../../main/utils/scanUtils';
-import { AnalyzerScanResponse, AnalyzerScanRun, FileIssues, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
+import { FileIssues, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { createDummyCveIssue, createDummyDependencyIssues, createRootTestNode } from './utils/treeNodeUtils.test';
 import { DescriptorTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
@@ -26,7 +26,7 @@ import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFi
 import { IEvidence } from 'jfrog-ide-webview';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { ApplicableTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/applicableTreeNode';
-import { removeWindowsWhiteSpace } from './utils/utils.test';
+import { getAnalyzerScanResponse, removeWindowsWhiteSpace } from './utils/utils.test';
 
 let logManager: LogManager = new LogManager().activate();
 
@@ -89,7 +89,7 @@ describe('Applicability Scan Tests', () => {
         before(() => {
             // Read test data and populate scanResult and dummy Cve nodes in test dependency
             let response: ApplicabilityScanResponse = getDummyRunner().generateResponse(
-                getAnalyzerScanRun(path.join(scanApplicable, 'analyzerResponse.json'))
+                getAnalyzerScanResponse(path.join(scanApplicable, 'analyzerResponse.json'))?.runs[0]
             );
             for (let cve of response.scannedCve) {
                 testCves.push(createDummyCveIssue(Severity.Medium, testDependency, cve, cve));
@@ -315,13 +315,5 @@ describe('Applicability Scan Tests', () => {
 
     function getDummyRunner(): ApplicabilityRunner {
         return new ApplicabilityRunner({} as ConnectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, logManager);
-    }
-
-    function getAnalyzerScanRun(filePath: string | undefined): AnalyzerScanRun | undefined {
-        if (!filePath || !fs.existsSync(filePath)) {
-            return undefined;
-        }
-        let result: AnalyzerScanResponse = JSON.parse(fs.readFileSync(filePath, 'utf8').toString());
-        return result.runs[0];
     }
 });
