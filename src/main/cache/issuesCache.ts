@@ -114,6 +114,9 @@ export class IssuesCache {
                 root.children.push(projectNode);
             });
         }
+        if (scanResults.iacScan?.filesWithIssues) {
+            AnalyzerUtils.populateEosIssues(root, scanResults);
+        }
         if (scanResults.eosScan) {
             root.eosScanTimeStamp = scanResults.eosScanTimestamp;
             AnalyzerUtils.populateEosIssues(root, scanResults);

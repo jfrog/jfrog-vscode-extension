@@ -42,6 +42,7 @@ export class DependencyUtils {
      * @param type - Package type to scan it's dependencies
      * @param descriptorsPaths - the paths for all the descriptors of the package type
      * @param progressManager - the progress manager of the workspace scan
+     * @param contextualScan - if true (default), will apply contextual analysis scan if Cve detected
      */
     public static async scanPackageDependencies(
         scanManager: ScanManager,
@@ -49,7 +50,8 @@ export class DependencyUtils {
         root: IssuesRootTreeNode,
         type: PackageType,
         descriptorsPaths: vscode.Uri[],
-        progressManager: StepProgress
+        progressManager: StepProgress,
+        contextualScan: boolean = true
     ): Promise<any> {
         let scansPromises: Promise<any>[] = [];
         let descriptorsParsed: Set<string> = new Set<string>();
@@ -85,7 +87,8 @@ export class DependencyUtils {
                             scanManager,
                             scanBundle,
                             child,
-                            progressManager.createScanProgress(child.fullPath, progressIncValue / 2)
+                            progressManager.createScanProgress(child.fullPath, progressIncValue / 2),
+                            contextualScan
                         ).finally(() => progressManager.reportProgress(progressIncValue / 2))
                     );
                     continue;
@@ -176,13 +179,14 @@ export class DependencyUtils {
      * @param fileScanBundle - the bundle for the scan that contains dataNode as ProjectDependencyTreeNode instance
      * @param rootGraph - the descriptor dependencies graph
      * @param scanProgress - the progress manager for the scan
-     * @returns
+     * @param contextualScan - if true (default), will apply contextual analysis scan if Cve detected
      */
     private static async createDependencyScanTask(
         scanManager: ScanManager,
         fileScanBundle: FileScanBundle,
         rootGraph: RootNode,
-        scanProgress: GraphScanProgress
+        scanProgress: GraphScanProgress,
+        contextualScan: boolean = true
     ): Promise<void> {
         if (!(fileScanBundle.dataNode instanceof ProjectDependencyTreeNode)) {
             return;
@@ -209,7 +213,7 @@ export class DependencyUtils {
             .finally(() => scanProgress.onProgress());
 
         // Applicable scan task
-        if (!scanManager.isApplicableSupported() || !foundIssues) {
+        if (!contextualScan || !foundIssues) {
             return;
         }
         if (fileScanBundle.dataNode instanceof DescriptorTreeNode) {

@@ -4,7 +4,7 @@ import * as path from 'path';
 
 import { LogManager } from '../../log/logManager';
 import { Utils } from '../../utils/utils';
-import { NotEntitledError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
+import { NotEntitledError, NotSupportedError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { AnalyzerRequest, AnalyzerScanResponse, AnalyzerType, AnalyzeScanRequest } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { ConnectionUtils } from '../../connect/connectionUtils';
@@ -48,6 +48,7 @@ export abstract class BinaryRunner {
     private static readonly RUNNER_NAME: string = 'analyzerManager';
 
     public static readonly NOT_ENTITLED: number = 31;
+    public static readonly NOT_SUPPORTED: number = 13;
 
     public static readonly ENV_PLATFORM_URL: string = 'JF_PLATFORM_URL';
     public static readonly ENV_TOKEN: string = 'JF_TOKEN';
@@ -262,7 +263,7 @@ export abstract class BinaryRunner {
                         }
                     })
                     .catch(err => {
-                        if (err instanceof ScanCancellationError || err instanceof NotEntitledError) {
+                        if (err instanceof ScanCancellationError || err instanceof NotEntitledError || err instanceof NotSupportedError) {
                             throw err;
                         }
                         this._logManager.logError(err);
@@ -338,6 +339,9 @@ export abstract class BinaryRunner {
                 // Not entitled to run binary
                 if (error.code === BinaryRunner.NOT_ENTITLED) {
                     throw new NotEntitledError();
+                }
+                if (error.code === BinaryRunner.NOT_SUPPORTED) {
+                    throw new NotSupportedError(this._type);
                 }
                 this._logManager.logMessage("Binary '" + this._type + "' task ended with status code: " + error.code, 'ERR');
             }

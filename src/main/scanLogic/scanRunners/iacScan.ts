@@ -29,8 +29,8 @@ export interface IacIssue {
  * Describes a runner for the 'Infrastructure As Code' (Iac) scan executable file.
  */
 export class IacRunner extends BinaryRunner {
-    constructor(connectionManager: ConnectionManager, abortCheckInterval: number, logManager: LogManager) {
-        super(connectionManager, abortCheckInterval, AnalyzerType.Iac, logManager);
+    constructor(connectionManager: ConnectionManager, timeout: number, logManager: LogManager) {
+        super(connectionManager, timeout, AnalyzerType.Iac, logManager);
     }
 
     /** @override */

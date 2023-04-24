@@ -243,7 +243,7 @@ export class ScanUtils {
         if (error instanceof ScanCancellationError) {
             throw error;
         }
-        if (error instanceof NotEntitledError) {
+        if (error instanceof NotEntitledError || error instanceof NotSupportedError) {
             logger.logMessage(error.message, 'INFO');
             return undefined;
         }
@@ -268,6 +268,12 @@ export interface FileScanBundle {
 
 export class NotEntitledError extends Error {
     message: string = 'User is not entitled to run the binary';
+}
+
+export class NotSupportedError extends Error {
+    constructor(typeNotSupported: string) {
+        super(typeNotSupported + ' is not supported in the current version');
+    }
 }
 
 /**

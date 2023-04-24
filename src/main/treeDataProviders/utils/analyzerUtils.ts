@@ -19,6 +19,8 @@ import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerMode
 import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
 import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
 import { FileScanBundle } from '../../utils/scanUtils';
+import { IacIssue } from '../../scanLogic/scanRunners/iacScan';
+import { IacTreeNode } from '../issuesTree/codeFileTree/iacTreeNode';
 
 export interface GeneralScanResponse {
     filesWithIssues: FileWithSecurityIssues[];
@@ -260,6 +262,63 @@ export class AnalyzerUtils {
                 issuesCount++;
             }
         });
+        return issuesCount;
+    }
+
+    /**
+     * Run Infrastructure As Code (Iac) scan async task and populate the given bundle with the results.
+     * @param scanResults - the data object that will be populated with the results
+     * @param root - the view object that will be populated with the results
+     * @param scanManager - the ScanManager that preforms the actual scans
+     * @param progressManager - the progress for the given scan
+     */
+    public static async runIac(
+        scanResults: ScanResults,
+        root: IssuesRootTreeNode,
+        scanManager: ScanManager,
+        progressManager: StepProgress
+    ): Promise<void> {
+        let startIacTime: number = Date.now();
+        scanResults.iacScan = await scanManager.scanIac(root.workSpace.uri.fsPath, progressManager.checkCancel);
+        if (scanResults.iacScan) {
+            scanResults.iacScanTimestamp = Date.now();
+            let issuesCount: number = AnalyzerUtils.populateIacIssues(root, scanResults);
+            scanManager.logManager.logMessage(
+                'Found ' +
+                    issuesCount +
+                    " Iac issues in workspace = '" +
+                    scanResults.path +
+                    "' (elapsed " +
+                    (scanResults.iacScanTimestamp - startIacTime) / 1000 +
+                    ' seconds)',
+                'INFO'
+            );
+            root.apply();
+        }
+        progressManager.reportProgress();
+    }
+
+    /**
+     * Populate Iac information in
+     * @param root - root node to populate data inside
+     * @param workspaceData - data to populate on node
+     * @returns number of Iac issues populated
+     */
+    public static populateIacIssues(root: IssuesRootTreeNode, workspaceData: ScanResults): number {
+        root.iacScanTimeStamp = workspaceData.iacScanTimestamp;
+        let issuesCount: number = 0;
+        if (workspaceData.iacScan && workspaceData.iacScan.filesWithIssues) {
+            workspaceData.iacScan.filesWithIssues.forEach(fileWithIssues => {
+                let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
+                fileWithIssues.issues.forEach((issue: IacIssue) => {
+                    issue.locations.forEach((location: FileRegion) => {
+                        fileNode.issues.push(new IacTreeNode(issue, location, fileNode));
+                        issuesCount++;
+                    });
+                });
+            });
+        }
+
         return issuesCount;
     }
 

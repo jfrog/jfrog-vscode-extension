@@ -18,6 +18,7 @@ import { BinaryRunner } from './scanRunners/binaryRunner';
 import { ScanUtils } from '../utils/scanUtils';
 import { StepProgress } from '../treeDataProviders/utils/stepProgress';
 import { Utils } from '../utils/utils';
+import { IacRunner, IacScanResponse } from './scanRunners/iacScan';
 
 /**
  * Manage all the Xray scans
@@ -117,10 +118,11 @@ export class ScanManager implements ExtensionComponent {
 
     private async getResources(): Promise<Resource[]> {
         let resources: Resource[] = [];
-        if (await this.isAnalyzerManagerSupported()) {
+        let supported: SupportedScans = await this.getSupportedScans();
+        if (supported.applicable || supported.iac) {
             resources.push(BinaryRunner.getAnalyzerManagerResource(this._logManager));
         } else {
-            this.logManager.logMessage('You are not entitled to run contextual analysis scans', 'DEBUG');
+            this.logManager.logMessage('You are not entitled to run Advanced Scans', 'DEBUG');
         }
         return resources;
     }
@@ -132,15 +134,31 @@ export class ScanManager implements ExtensionComponent {
         return await ConnectionUtils.testXrayVersionForScanGraph(this._connectionManager.createJfrogClient(), this._logManager);
     }
 
-    public async isAnalyzerManagerSupported(): Promise<boolean> {
+    /**
+     * Check if Contextual Analysis (Applicability) is supported for the user
+     */
+    public async isApplicableSupported(): Promise<boolean> {
         return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), 'contextual_analysis');
     }
 
     /**
-     * Validate if the applicable-scan is supported
+     * Check if Infrastructure As Code (Iac) is supported for the user
      */
-    public isApplicableSupported(): boolean {
-        return new ApplicabilityRunner(this._connectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, this._logManager).validateSupported();
+    public async isIacSupported(): Promise<boolean> {
+        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), 'iac_scanners');
+    }
+
+    /**
+     * Get all the entitlement statuses of each type of scan the manager offers
+     */
+    public async getSupportedScans(): Promise<SupportedScans> {
+        let supportedScans: SupportedScans = { graphScan: false, applicable: false, iac: false };
+        let requests: Promise<boolean>[] = [];
+        requests.push(this.validateGraphSupported().then(res => (supportedScans.graphScan = res)));
+        requests.push(this.isApplicableSupported().then(res => (supportedScans.applicable = res)));
+        requests.push(this.isIacSupported().then(res => (supportedScans.iac = res)));
+        await Promise.all(requests);
+        return supportedScans;
     }
 
     /**
@@ -161,7 +179,7 @@ export class ScanManager implements ExtensionComponent {
      */
     public async scanDependencyGraph(progress: XrayScanProgress, graphRoot: RootNode, checkCanceled: () => void): Promise<IGraphResponse> {
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
-        return scanLogic.scan(graphRoot, progress, checkCanceled);
+        return await scanLogic.scan(graphRoot, progress, checkCanceled);
     }
 
     /**
@@ -190,7 +208,23 @@ export class ScanManager implements ExtensionComponent {
             'Scanning directory ' + directory + ', for CVE issues: ' + Array.from(cveToRun.values()) + ', skipping files: ' + skipFiles,
             'DEBUG'
         );
-        return applicableRunner.scan(directory, checkCancel, cveToRun, skipFiles);
+        return await applicableRunner.scan(directory, checkCancel, cveToRun, skipFiles);
+    }
+
+    /**
+     * Scan directory for 'Infrastructure As Code' (Iac) issues.
+     * @param directory - the directory that will be scan
+     * @param checkCancel - check if should cancel
+     * @returns the Iac scan response
+     */
+    public async scanIac(directory: string, checkCancel: () => void): Promise<IacScanResponse> {
+        let iacRunner: IacRunner = new IacRunner(this._connectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, this.logManager);
+        if (!iacRunner.validateSupported()) {
+            this._logManager.logMessage('Iac runner could not find binary to run', 'DEBUG');
+            return {} as IacScanResponse;
+        }
+        this._logManager.logMessage('Scanning directory ' + directory + ', for Iac issues', 'DEBUG');
+        return await iacRunner.scan(directory, checkCancel);
     }
 
     public async scanEos(checkCancel: () => void, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
@@ -211,4 +245,10 @@ export class ScanManager implements ExtensionComponent {
         this._logManager.logMessage('Scanning for Eos issues, roots: ' + eosRequests.map(request => request.roots.join()).join(), 'DEBUG');
         return eosRunner.scan(checkCancel, ...eosRequests);
     }
+}
+
+export interface SupportedScans {
+    graphScan: boolean;
+    applicable: boolean;
+    iac: boolean;
 }
