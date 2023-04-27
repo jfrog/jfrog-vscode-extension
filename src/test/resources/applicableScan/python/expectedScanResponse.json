@@ -1,0 +1,29 @@
+{
+    "scannedCve": [
+        "CVE-2021-3918",
+        "CVE-2019-15605",
+        "CVE-2019-20907"
+    ],
+    "applicableCve": {
+        "CVE-2019-20907": {
+            "fixReason": "The vulnerable function tarfile.open is called with external input",
+            "fileEvidences": [
+                {
+                    "full_path": "main.py",
+                    "locations": [
+                        {
+                            "endColumn": 25,
+                            "endLine": 17,
+                            "snippet": {
+                                "text": "tarfile.open(name)"
+                            },
+                            "startColumn": 7,
+                            "startLine": 17
+                        }
+                    ]
+                }
+            ],
+            "fullDescription": "The scanner checks whether the vulnerable function `open` is called with external input to its 1st (`name`) argument."
+        }
+    }
+}

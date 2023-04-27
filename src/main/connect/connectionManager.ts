@@ -425,7 +425,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return true;
     }
 
-    private async tryCredentialsFromEnv(): Promise<boolean> {
+    public async tryCredentialsFromEnv(): Promise<boolean> {
         if (!(await this.getCredentialsFromEnv())) {
             this.deleteCredentialsFromMemory();
             return false;
@@ -441,7 +441,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return true;
     }
 
-    private async tryCredentialsFromJfrogCli(): Promise<boolean> {
+    public async tryCredentialsFromJfrogCli(): Promise<boolean> {
         this._logManager.logMessage('Trying to read credentials from JFrog CLI...', 'DEBUG');
         if (!(await this.readCredentialsFromJfrogCli())) {
             this.deleteCredentialsFromMemory();
