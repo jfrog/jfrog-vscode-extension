@@ -1,6 +1,7 @@
 import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
 import { Severity } from '../../types/severity';
+import { Resource } from '../../utils/resource';
 import { Translators } from '../../utils/translators';
 import { AnalyzeIssue, AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerType, FileRegion } from './analyzerModels';
 import { BinaryRunner } from './binaryRunner';
@@ -29,8 +30,8 @@ export interface IacIssue {
  * Describes a runner for the 'Infrastructure As Code' (Iac) scan executable file.
  */
 export class IacRunner extends BinaryRunner {
-    constructor(connectionManager: ConnectionManager, timeout: number, logManager: LogManager) {
-        super(connectionManager, timeout, AnalyzerType.Iac, logManager);
+    constructor(connectionManager: ConnectionManager, timeout: number, logManager: LogManager, binary?: Resource) {
+        super(connectionManager, timeout, AnalyzerType.Iac, logManager, binary);
     }
 
     /** @override */
