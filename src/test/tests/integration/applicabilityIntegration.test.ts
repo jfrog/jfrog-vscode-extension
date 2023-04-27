@@ -68,7 +68,7 @@ describe('Applicability Integration Tests', async () => {
 
                 before(() => {
                     expectedApplicableCves = new Map<string, CveApplicableDetails>(Object.entries(expectedContent.applicableCve ?? []));
-                    assert.isTrue(expectedApplicableCves.size > 0);
+                    assert.isNotEmpty(expectedApplicableCves);
                     responseApplicableCves = new Map<string, CveApplicableDetails>(Object.entries(response.applicableCve ?? []));
                 });
 
