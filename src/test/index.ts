@@ -3,11 +3,12 @@ import { existsSync, writeFileSync } from 'fs-extra';
 import glob from 'glob';
 import Mocha, { MochaOptions } from 'mocha';
 import * as path from 'path';
+import { cleanUpIntegrationTests, initializeIntegrationTests } from './tests/utils/testIntegration.test';
 
 /**
  * Run extension integration tests with Mocha. All tests must be under 'test/tests/' folder.
  */
-export function run(): Promise<void> {
+export async function run(): Promise<void> {
     // Create the mocha test
     const mocha: Mocha = new Mocha({
         color: true,
@@ -15,8 +16,9 @@ export function run(): Promise<void> {
     } as MochaOptions);
 
     deleteWebviewJs();
+    await initializeIntegrationTests();
     const testsRoot: string = path.join(__dirname, 'tests');
-    return new Promise((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
         glob('**/*.test.js', { cwd: testsRoot } as glob.IOptions, (err: Error | null, testFiles: string[]) => {
             if (err) {
                 return reject(err);
@@ -30,7 +32,7 @@ export function run(): Promise<void> {
                 reject(err);
             }
         });
-    });
+    }).finally(async () => await cleanUpIntegrationTests());
 }
 
 /**

@@ -1,0 +1,38 @@
+{
+    "scannedCve": [
+        "CVE-2022-25878",
+        "CVE-2021-3807",
+        "CVE-2021-3918"
+    ],
+    "applicableCve": {
+        "CVE-2022-25878": {
+            "fixReason": "The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load is called",
+            "fileEvidences": [
+                {
+                    "full_path": "index.js",
+                    "locations": [
+                        {
+                            "endColumn": 18,
+                            "endLine": 21,
+                            "snippet": {
+                                "text": "protobuf.parse(p)"
+                            },
+                            "startColumn": 1,
+                            "startLine": 21
+                        },
+                        {
+                            "endColumn": 74,
+                            "endLine": 23,
+                            "snippet": {
+                                "text": "protobuf.load(\"/path/to/untrusted.proto\", function(err, root) { return })"
+                            },
+                            "startColumn": 1,
+                            "startLine": 23
+                        }
+                    ]
+                }
+            ],
+            "fullDescription": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`"
+        }
+    }
+}

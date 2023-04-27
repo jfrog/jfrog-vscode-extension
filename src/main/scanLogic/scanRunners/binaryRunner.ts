@@ -74,12 +74,16 @@ export abstract class BinaryRunner {
         }
     }
 
-    public static getAnalyzerManagerResource(logManager: LogManager): Resource {
-        return new Resource(
-            Utils.addZipSuffix(BinaryRunner.DOWNLOAD_URL + Utils.getArchitecture() + '/' + BinaryRunner.RUNNER_NAME),
-            Utils.addWinSuffixIfNeeded(path.join(ScanUtils.getIssuesPath(), BinaryRunner.RUNNER_NAME, BinaryRunner.RUNNER_NAME)),
-            logManager
-        );
+    public static getDefaultAnalyzerManagerSourceUrl(): string {
+        return Utils.addZipSuffix(BinaryRunner.DOWNLOAD_URL + Utils.getArchitecture() + '/' + BinaryRunner.RUNNER_NAME);
+    }
+
+    public static getDefaultAnalyzerManagerTargetPath(baseDirectory?: string): string {
+        return Utils.addWinSuffixIfNeeded(path.join(baseDirectory ?? ScanUtils.getIssuesPath(), BinaryRunner.RUNNER_NAME, BinaryRunner.RUNNER_NAME));
+    }
+
+    public static getAnalyzerManagerResource(logManager: LogManager, targetPath?: string): Resource {
+        return new Resource(this.getDefaultAnalyzerManagerSourceUrl(), targetPath ?? this.getDefaultAnalyzerManagerTargetPath(), logManager);
     }
 
     /**
