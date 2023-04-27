@@ -15,7 +15,7 @@ describe('Connection Manager Tests', () => {
         // Don't override existing connection details
         process.env[ConnectionManager.STORE_CONNECTION_ENV] = 'FALSE';
 
-        connectionManager = await createTestConnectionManager(new LogManager().activate(), 90000, 100);
+        connectionManager = await createTestConnectionManager(new LogManager().activate(), 45000, 100);
     });
 
     it('User agent header', () => {
