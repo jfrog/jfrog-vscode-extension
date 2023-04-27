@@ -4,6 +4,8 @@ import { FileRegion } from '../../../scanLogic/scanRunners/analyzerModels';
 import { IacIssue } from '../../../scanLogic/scanRunners/iacScan';
 import { CodeFileTreeNode } from './codeFileTreeNode';
 import { CodeIssueTreeNode } from './codeIssueTreeNode';
+import { IAnalysisStep, IIaCPage, PageType } from 'jfrog-ide-webview';
+import { SeverityUtils } from '../../../types/severity';
 
 /**
  * Describe a Infrastructure As Code (Iac) issue
@@ -35,21 +37,21 @@ export class IacTreeNode extends CodeIssueTreeNode {
         return this._fullDescription;
     }
 
-    // /**
-    //  * Get the details page of the issue
-    //  */
-    // public getDetailsPage(): IIaCPage {
-    //     return {
-    //         pageType: PageType.IaC,
-    //         header: this.label,
-    //         severity: SeverityUtils.toWebviewSeverity(this.severity),
-    //         location: {
-    //             file: this.parent.fileFullPath,
-    //             snippet: this._snippet,
-    //             row: this.regionWithIssue.start.line,
-    //             column: this.regionWithIssue.start.character
-    //         } as IAnalysisStep,
-    //         description: this._fullDescription
-    //     } as IIaCPage;
-    // }
+    /**
+     * Get the details page of the issue
+     */
+    public getDetailsPage(): IIaCPage {
+        return {
+            pageType: PageType.IaC,
+            header: this.label,
+            severity: SeverityUtils.toWebviewSeverity(this.severity),
+            location: {
+                file: this.parent.projectFilePath,
+                snippet: this._snippet,
+                row: this.regionWithIssue.start.line,
+                column: this.regionWithIssue.start.character
+            } as IAnalysisStep,
+            description: this._fullDescription
+        } as IIaCPage;
+    }
 }

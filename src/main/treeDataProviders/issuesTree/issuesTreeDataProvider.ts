@@ -24,6 +24,7 @@ import { EnvironmentTreeNode } from './descriptorTree/environmentTreeNode';
 import { ProjectDependencyTreeNode } from './descriptorTree/projectDependencyTreeNode';
 import { ScanResults, DependencyScanResults } from '../../types/workspaceIssuesDetails';
 import { AnalyzerUtils } from '../utils/analyzerUtils';
+import { IacTreeNode } from './codeFileTree/iacTreeNode';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -379,7 +380,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 element.command = Utils.createNodeCommand('jfrog.view.details.page', 'Show details', [element.getDetailsPage()]);
             }
             // Source code issues nodes
-            if (element instanceof ApplicableTreeNode || element instanceof EosTreeNode) {
+            if (element instanceof ApplicableTreeNode || element instanceof EosTreeNode || element instanceof IacTreeNode) {
                 element.command = Utils.createNodeCommand('jfrog.issues.file.open.details', 'Open file location and show details', [
                     element.parent.projectFilePath,
                     element.regionWithIssue,
