@@ -36,7 +36,7 @@ export class IacTreeNode extends CodeIssueTreeNode {
     }
 
     // /**
-    //  * Get the CVE details page of the issue
+    //  * Get the details page of the issue
     //  */
     // public getDetailsPage(): IIaCPage {
     //     return {
@@ -46,7 +46,7 @@ export class IacTreeNode extends CodeIssueTreeNode {
     //         location: {
     //             file: this.parent.fileFullPath,
     //             snippet: this._snippet,
-    //             row: this.regionWithIssue.start.line + 1,
+    //             row: this.regionWithIssue.start.line,
     //             column: this.regionWithIssue.start.character
     //         } as IAnalysisStep,
     //         description: this._fullDescription

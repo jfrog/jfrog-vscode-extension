@@ -12,6 +12,9 @@ import { IssueTreeNode } from '../../../main/treeDataProviders/issuesTree/issueT
 import { GeneralInfo } from '../../../main/types/generalInfo';
 import { PackageType } from '../../../main/types/projectType';
 import { Severity, SeverityUtils } from '../../../main/types/severity';
+import { CodeFileTreeNode } from '../../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
+import { AnalyzerUtils } from '../../../main/treeDataProviders/utils/analyzerUtils';
+import { assert } from 'chai';
 
 export interface FileNodeTestCase {
     test: string;
@@ -227,4 +230,12 @@ export function createDummyCveIssue(
     );
     parent.issues.push(node);
     return node;
+}
+
+export function getTestCodeFileNode(root: IssuesRootTreeNode, pathToFile: string): CodeFileTreeNode {
+    let fileNode: FileTreeNode | undefined = root.getFileTreeNode(AnalyzerUtils.parseLocationFilePath(pathToFile));
+    if (!(fileNode instanceof CodeFileTreeNode)) {
+        assert.fail('expected node to be CodeFileTreeNode for file ' + pathToFile + ', node: ' + fileNode);
+    }
+    return <CodeFileTreeNode>fileNode;
 }
