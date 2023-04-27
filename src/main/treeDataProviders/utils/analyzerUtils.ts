@@ -19,8 +19,10 @@ import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerMode
 import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
 import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
 import { FileScanBundle } from '../../utils/scanUtils';
-import { IacIssue } from '../../scanLogic/scanRunners/iacScan';
+import { IacFileIssues, IacIssue } from '../../scanLogic/scanRunners/iacScan';
 import { IacTreeNode } from '../issuesTree/codeFileTree/iacTreeNode';
+import { SecretsFileIssues, SecretsIssue } from '../../scanLogic/scanRunners/secretsScan';
+import { SecretTreeNode } from '../issuesTree/codeFileTree/secretsTreeNode';
 
 export interface GeneralScanResponse {
     filesWithIssues: FileWithSecurityIssues[];
@@ -301,7 +303,7 @@ export class AnalyzerUtils {
     }
 
     /**
-     * Populate Iac information in
+     * Populate Iac information in the given node
      * @param root - root node to populate data inside
      * @param workspaceData - data to populate on node
      * @returns number of Iac issues populated
@@ -310,11 +312,68 @@ export class AnalyzerUtils {
         root.iacScanTimeStamp = workspaceData.iacScanTimestamp;
         let issuesCount: number = 0;
         if (workspaceData.iacScan && workspaceData.iacScan.filesWithIssues) {
-            workspaceData.iacScan.filesWithIssues.forEach(fileWithIssues => {
+            workspaceData.iacScan.filesWithIssues.forEach((fileWithIssues: IacFileIssues) => {
                 let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
                 fileWithIssues.issues.forEach((issue: IacIssue) => {
                     issue.locations.forEach((location: FileRegion) => {
                         fileNode.issues.push(new IacTreeNode(issue, location, fileNode));
+                        issuesCount++;
+                    });
+                });
+            });
+        }
+
+        return issuesCount;
+    }
+
+    /**
+     * Run Secrets scan async task and populate the given bundle with the results.
+     * @param scanResults - the data object that will be populated with the results
+     * @param root - the view object that will be populated with the results
+     * @param scanManager - the ScanManager that preforms the actual scans
+     * @param progressManager - the progress for the given scan
+     */
+    public static async runSecrets(
+        scanResults: ScanResults,
+        root: IssuesRootTreeNode,
+        scanManager: ScanManager,
+        progressManager: StepProgress
+    ): Promise<void> {
+        let startSecretsTime: number = Date.now();
+        scanResults.secretsScan = await scanManager.scanSecrets(root.workSpace.uri.fsPath, progressManager.checkCancel);
+        if (scanResults.secretsScan) {
+            scanResults.secretsScanTimestamp = Date.now();
+            let issuesCount: number = AnalyzerUtils.populateSecretsIssues(root, scanResults);
+            scanManager.logManager.logMessage(
+                'Found ' +
+                    issuesCount +
+                    " Secret issues in workspace = '" +
+                    scanResults.path +
+                    "' (elapsed " +
+                    (scanResults.secretsScanTimestamp - startSecretsTime) / 1000 +
+                    ' seconds)',
+                'INFO'
+            );
+            root.apply();
+        }
+        progressManager.reportProgress();
+    }
+
+    /**
+     * Populate Secrets information in the given node
+     * @param root - root node to populate data inside
+     * @param workspaceData - data to populate on node
+     * @returns number of Secret issues populated
+     */
+    public static populateSecretsIssues(root: IssuesRootTreeNode, workspaceData: ScanResults): number {
+        root.secretsScanTimeStamp = workspaceData.secretsScanTimestamp;
+        let issuesCount: number = 0;
+        if (workspaceData.secretsScan && workspaceData.secretsScan.filesWithIssues) {
+            workspaceData.secretsScan.filesWithIssues.forEach((fileWithIssues: SecretsFileIssues) => {
+                let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
+                fileWithIssues.issues.forEach((issue: SecretsIssue) => {
+                    issue.locations.forEach((location: FileRegion) => {
+                        fileNode.issues.push(new SecretTreeNode(issue, location, fileNode));
                         issuesCount++;
                     });
                 });

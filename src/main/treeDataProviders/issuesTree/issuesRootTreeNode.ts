@@ -11,6 +11,7 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
     private _title: string = '';
     private _eosScanTimeStamp?: number | undefined;
     private _iacScanTimeStamp?: number | undefined;
+    private _secretsScanTimeStamp?: number | undefined;
 
     constructor(private readonly _workSpace: vscode.WorkspaceFolder, title?: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
         super(_workSpace.name, collapsibleState ?? vscode.TreeItemCollapsibleState.Expanded);
@@ -92,11 +93,24 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
         this._iacScanTimeStamp = value;
     }
 
+    public get secretsScanTimeStamp(): number | undefined {
+        return this._secretsScanTimeStamp;
+    }
+
+    public set secretsScanTimeStamp(value: number | undefined) {
+        this._secretsScanTimeStamp = value;
+    }
+
     /**
      * Get the oldest timestamp from all its children
      */
     public get oldestScanTimestamp(): number | undefined {
-        return Utils.getOldestTimeStamp(...this.children.map(file => file.timeStamp), this._iacScanTimeStamp, this._eosScanTimeStamp);
+        return Utils.getOldestTimeStamp(
+            ...this.children.map(file => file.timeStamp),
+            this._iacScanTimeStamp,
+            this._secretsScanTimeStamp,
+            this._eosScanTimeStamp
+        );
     }
 
     /**

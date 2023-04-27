@@ -11,7 +11,7 @@ import { Configuration } from '../utils/configuration';
 import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
 import { ScanUtils } from '../utils/scanUtils';
 import { DiagnosticsManager } from '../diagnostics/diagnosticsManager';
-import { IDependencyPage, IEosPage } from 'jfrog-ide-webview';
+import { IDependencyPage, IEosPage, IIaCPage, ISecretsPage } from 'jfrog-ide-webview';
 import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
 import { Utils } from '../utils/utils';
@@ -174,7 +174,7 @@ export class CommandManager implements ExtensionComponent {
      * Open webpage with the given data
      * @param page - data to show in webpage
      */
-    public doShowDetailsPage(page: IDependencyPage | IEosPage) {
+    public doShowDetailsPage(page: IDependencyPage | IEosPage | IIaCPage | ISecretsPage) {
         vscode.commands.executeCommand('jfrog.view.details.page', page);
     }
 
@@ -184,7 +184,7 @@ export class CommandManager implements ExtensionComponent {
      * @param fileRegion - range inside the file to select
      * @param page - the data to show in the open page
      */
-    public async doOpenFileAndDetailsPage(filePath: string, fileRegion: vscode.Range, page: IDependencyPage | IEosPage) {
+    public async doOpenFileAndDetailsPage(filePath: string, fileRegion: vscode.Range, page: IDependencyPage | IEosPage | IIaCPage | ISecretsPage) {
         ScanUtils.openFile(filePath, fileRegion).then(() => this.doShowDetailsPage(page));
     }
 

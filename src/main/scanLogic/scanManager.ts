@@ -19,11 +19,13 @@ import { ScanUtils } from '../utils/scanUtils';
 import { StepProgress } from '../treeDataProviders/utils/stepProgress';
 import { Utils } from '../utils/utils';
 import { IacRunner, IacScanResponse } from './scanRunners/iacScan';
+import { SecretsRunner, SecretsScanResponse } from './scanRunners/secretsScan';
 
 export interface SupportedScans {
     graphScan: boolean;
     applicable: boolean;
     iac: boolean;
+    secrets: boolean;
 }
 
 /**
@@ -155,14 +157,22 @@ export class ScanManager implements ExtensionComponent {
     }
 
     /**
+     * Check if Secrets scan is supported for the user
+     */
+    public async isSecretsSupported(): Promise<boolean> {
+        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), 'secrets_detection');
+    }
+
+    /**
      * Get all the entitlement status for each type of scan the manager offers
      */
     public async getSupportedScans(): Promise<SupportedScans> {
-        let supportedScans: SupportedScans = { graphScan: false, applicable: false, iac: false };
+        let supportedScans: SupportedScans = { graphScan: false, applicable: false, iac: false, secrets: false };
         let requests: Promise<boolean>[] = [];
         requests.push(this.validateGraphSupported().then(res => (supportedScans.graphScan = res)));
         requests.push(this.isApplicableSupported().then(res => (supportedScans.applicable = res)));
         requests.push(this.isIacSupported().then(res => (supportedScans.iac = res)));
+        requests.push(this.isSecretsSupported().then(res => (supportedScans.secrets = res)));
         await Promise.all(requests);
         return supportedScans;
     }
@@ -231,6 +241,22 @@ export class ScanManager implements ExtensionComponent {
         }
         this._logManager.logMessage('Scanning directory ' + directory + ', for Iac issues', 'DEBUG');
         return await iacRunner.scan(directory, checkCancel);
+    }
+
+    /**
+     * Scan directory for Secrets issues.
+     * @param directory - the directory that will be scan
+     * @param checkCancel - check if should cancel
+     * @returns the Secrets scan response
+     */
+    public async scanSecrets(directory: string, checkCancel: () => void): Promise<SecretsScanResponse> {
+        let secretsRunner: SecretsRunner = new SecretsRunner(this._connectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, this.logManager);
+        if (!secretsRunner.validateSupported()) {
+            this._logManager.logMessage('Secrets runner could not find binary to run', 'DEBUG');
+            return {} as SecretsScanResponse;
+        }
+        this._logManager.logMessage('Scanning directory ' + directory + ', for Secrets issues', 'DEBUG');
+        return await secretsRunner.scan(directory, checkCancel);
     }
 
     public async scanEos(checkCancel: () => void, ...requests: EosScanRequest[]): Promise<EosScanResponse> {

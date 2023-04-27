@@ -5,7 +5,8 @@ export interface AnalyzerRequest {
 export enum AnalyzerType {
     ContextualAnalysis = 'analyze-applicability',
     Iac = 'iac-scan-modules',
-    Eos = 'analyze-codebase'
+    Eos = 'analyze-codebase',
+    Secrets = 'secrets-scan'
 }
 
 export type SeverityLevel = 'none' | 'note' | 'warning' | 'error';
