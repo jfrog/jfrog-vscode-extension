@@ -93,25 +93,21 @@ describe('Applicability Integration Tests', async () => {
                     });
                 });
 
-                function getExpectedFilePath(fileName: string): string {
-                    return 'file://' + path.join(directoryToScan, fileName);
-                }
-
                 it('Check all expected evidence files exists', () => {
                     expectedApplicableCves.forEach((expectedDetails: CveApplicableDetails, cve: string) => {
                         assert.includeDeepMembers(
-                            getResponseApplicableDetails(cve).fileEvidences.map(evidence => evidence.full_path),
-                            expectedDetails.fileEvidences.map(evidence => getExpectedFilePath(evidence.full_path))
+                            getResponseApplicableDetails(cve).fileEvidences.map(evidence => AnalyzerUtils.parseLocationFilePath(evidence.full_path)),
+                            expectedDetails.fileEvidences.map(evidence => path.join(directoryToScan, evidence.full_path))
                         );
                     });
                 });
 
                 describe('Applicable Evidences data', () => {
                     function getResponseLocation(cve: string, filePath: string, location: FileRegion): FileRegion {
-                        let actualPath: string = getExpectedFilePath(filePath);
+                        let actualPath: string = path.join(directoryToScan, filePath);
                         let actualDetails: CveApplicableDetails = getResponseApplicableDetails(cve);
                         let fileIssues: FileIssues | undefined = actualDetails.fileEvidences.find(
-                            actualFileIssues => actualFileIssues.full_path === actualPath
+                            actualFileIssues => AnalyzerUtils.parseLocationFilePath(actualFileIssues.full_path) === actualPath
                         );
                         if (!fileIssues) {
                             assert.fail('Expected ' + cve + ' should contain applicable evidence in file ' + actualPath);
