@@ -72,10 +72,19 @@ export class IssuesCache {
      * @param workspace - the workspace to search it's data
      * @returns ScanResults if there are stored and relevant, undefined otherwise.
      */
-    public getOrClearIfNotRelevant(workspace: vscode.WorkspaceFolder): ScanResults | undefined {
+    public async getOrClearIfNotRelevant(workspace: vscode.WorkspaceFolder): Promise<ScanResults | undefined> {
         let data: ScanResults | undefined = this.get(workspace);
         if (data && Utils.isIssueCacheIntervalPassed(data.oldestScanTimestamp)) {
             this.remove(workspace);
+            const answer: string | undefined = await vscode.window.showInformationMessage(
+                "Last scan on workspace '" +
+                    workspace.name +
+                    "' was preformed a week ago and will be removed because it is not relevant any more, do you want to rescan the workspace now?",
+                ...['Yes']
+            );
+            if (answer === 'Yes') {
+                vscode.commands.executeCommand('jfrog.xray.refresh');
+            }
             return undefined;
         }
         return data;
@@ -88,7 +97,7 @@ export class IssuesCache {
      */
     public async loadIssues(workspace: vscode.WorkspaceFolder): Promise<IssuesRootTreeNode | undefined> {
         // Check if data for the workspace exists in the cache
-        let scanResults: ScanResults | undefined = this.get(workspace);
+        let scanResults: ScanResults | undefined = await this.getOrClearIfNotRelevant(workspace);
         if (!scanResults) {
             return undefined;
         }
