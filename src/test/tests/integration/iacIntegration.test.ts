@@ -38,6 +38,7 @@ describe('Iac Integration Tests', async () => {
             if (err instanceof NotSupportedError) {
                 this.skip();
             }
+            throw err;
         }
     });
 

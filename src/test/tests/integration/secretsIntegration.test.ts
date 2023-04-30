@@ -38,15 +38,12 @@ describe('Secrets Scan Integration Tests', async () => {
             if (err instanceof NotSupportedError) {
                 this.skip();
             }
+            throw err;
         }
     });
 
-    function getExpectedFilePath(fileName: string): string {
-        return 'file://' + path.join(testDataRoot, fileName);
-    }
-
     function getTestFileIssues(filePath: string): SecretsFileIssues {
-        let actualPath: string = getExpectedFilePath(filePath);
+        let actualPath: string = AnalyzerUtils.parseLocationFilePath(filePath);
         let potential: SecretsFileIssues | undefined = response.filesWithIssues.find(fileWithIssues => fileWithIssues.full_path === actualPath);
         if (!potential) {
             assert.fail('Response should contain file with issues at path ' + actualPath);
@@ -95,17 +92,17 @@ describe('Secrets Scan Integration Tests', async () => {
 
     it('Check all expected issues detected', () => {
         expectedContent.filesWithIssues.forEach((expectedFileWithIssues: SecretsFileIssues) => {
-            expectedFileWithIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                assert.isDefined(getTestIssue(expectedFileWithIssues.full_path, expectedIacIssues.ruleId));
+            expectedFileWithIssues.issues.forEach((expectedSecretsIssues: SecretsIssue) => {
+                assert.isDefined(getTestIssue(expectedFileWithIssues.full_path, expectedSecretsIssues.ruleId));
             });
         });
     });
 
     it('Check all expected locations detected', () => {
         expectedContent.filesWithIssues.forEach((expectedFileWithIssues: SecretsFileIssues) => {
-            expectedFileWithIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                expectedIacIssues.locations.forEach((expectedLocation: FileRegion) => {
-                    assert.isDefined(getTestLocation(expectedFileWithIssues.full_path, expectedIacIssues.ruleId, expectedLocation));
+            expectedFileWithIssues.issues.forEach((expectedSecretsIssues: SecretsIssue) => {
+                expectedSecretsIssues.locations.forEach((expectedLocation: FileRegion) => {
+                    assert.isDefined(getTestLocation(expectedFileWithIssues.full_path, expectedSecretsIssues.ruleId, expectedLocation));
                 });
             });
         });
@@ -114,18 +111,21 @@ describe('Secrets Scan Integration Tests', async () => {
     describe('Detected issues validations', () => {
         it('Check rule-name', () => {
             expectedContent.filesWithIssues.forEach((expectedFileWithIssues: SecretsFileIssues) => {
-                expectedFileWithIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                    assert.deepEqual(getTestIssue(expectedFileWithIssues.full_path, expectedIacIssues.ruleId).ruleName, expectedIacIssues.ruleName);
+                expectedFileWithIssues.issues.forEach((expectedSecretsIssues: SecretsIssue) => {
+                    assert.deepEqual(
+                        getTestIssue(expectedFileWithIssues.full_path, expectedSecretsIssues.ruleId).ruleName,
+                        expectedSecretsIssues.ruleName
+                    );
                 });
             });
         });
 
         it('Check rule full description', () => {
             expectedContent.filesWithIssues.forEach((expectedFileWithIssues: SecretsFileIssues) => {
-                expectedFileWithIssues.issues.forEach((expectedIacIssues: IacIssue) => {
+                expectedFileWithIssues.issues.forEach((expectedSecretsIssues: SecretsIssue) => {
                     assert.deepEqual(
-                        getTestIssue(expectedFileWithIssues.full_path, expectedIacIssues.ruleId).fullDescription,
-                        expectedIacIssues.fullDescription
+                        getTestIssue(expectedFileWithIssues.full_path, expectedSecretsIssues.ruleId).fullDescription,
+                        expectedSecretsIssues.fullDescription
                     );
                 });
             });
@@ -133,18 +133,21 @@ describe('Secrets Scan Integration Tests', async () => {
 
         it('Check severity', () => {
             expectedContent.filesWithIssues.forEach((expectedFileWithIssues: SecretsFileIssues) => {
-                expectedFileWithIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                    assert.deepEqual(getTestIssue(expectedFileWithIssues.full_path, expectedIacIssues.ruleId).severity, expectedIacIssues.severity);
+                expectedFileWithIssues.issues.forEach((expectedSecretsIssues: SecretsIssue) => {
+                    assert.deepEqual(
+                        getTestIssue(expectedFileWithIssues.full_path, expectedSecretsIssues.ruleId).severity,
+                        expectedSecretsIssues.severity
+                    );
                 });
             });
         });
 
         it('Check snippet', () => {
             expectedContent.filesWithIssues.forEach((expectedFileWithIssues: SecretsFileIssues) => {
-                expectedFileWithIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                    expectedIacIssues.locations.forEach((expectedLocation: FileRegion) => {
+                expectedFileWithIssues.issues.forEach((expectedSecretsIssues: SecretsIssue) => {
+                    expectedSecretsIssues.locations.forEach((expectedLocation: FileRegion) => {
                         assert.deepEqual(
-                            getTestLocation(expectedFileWithIssues.full_path, expectedIacIssues.ruleId, expectedLocation).snippet?.text,
+                            getTestLocation(expectedFileWithIssues.full_path, expectedSecretsIssues.ruleId, expectedLocation).snippet?.text,
                             expectedLocation.snippet?.text
                         );
                     });

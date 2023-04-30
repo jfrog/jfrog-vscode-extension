@@ -78,7 +78,9 @@ describe('Secrets Scan Tests', () => {
                         expectedFilesWithIssues.push(fileIssues);
                     }
                     fileWithIssue.issues.forEach((issue: SecretsIssue) => {
-                        let secretIssue: SecretsIssue | undefined = fileIssues?.issues.find((secretIssue: SecretsIssue) => secretIssue.ruleId === issue.ruleId);
+                        let secretIssue: SecretsIssue | undefined = fileIssues?.issues.find(
+                            (secretIssue: SecretsIssue) => secretIssue.ruleId === issue.ruleId
+                        );
                         if (!secretIssue) {
                             secretIssue = {
                                 ruleId: issue.ruleId,
