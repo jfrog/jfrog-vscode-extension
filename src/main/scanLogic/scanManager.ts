@@ -216,7 +216,7 @@ export class ScanManager implements ExtensionComponent {
             this._logManager
         );
         if (!applicableRunner.validateSupported()) {
-            this._logManager.logMessage('Applicability scan is not supported', 'DEBUG');
+            this._logManager.logMessage('Applicability runner could not find binary to run', 'DEBUG');
             return {} as ApplicabilityScanResponse;
         }
         let skipFiles: string[] = AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern());

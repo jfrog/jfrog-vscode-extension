@@ -1,0 +1,46 @@
+{
+    "filesWithIssues": [
+        {
+            "full_path": "applicable_base64.js",
+            "issues": [
+                {
+                    "ruleId": "entropy",
+                    "severity": 10,
+                    "ruleName": "Hardcoded secrets were found in source files",
+                    "locations": [
+                        {
+                            "endColumn": 118,
+                            "endLine": 1,
+                            "snippet": {
+                                "text": "2VTHzn1mKZ/n9apD5P6nxsajSQh8QhmyyKvUIRoZWAHCB8lSbBm3YWx5nOdZ1zPEOaA0zIZy1eFgHgfB2HkfAdVrbQj19kagXDVe"
+                            },
+                            "startColumn": 18,
+                            "startLine": 1
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "full_path": "not_applicable.ini",
+            "issues": [
+                {
+                    "ruleId": "heuristic",
+                    "severity": 10,
+                    "ruleName": "Suspected hardcoded passwords were found",
+                    "locations": [
+                        {
+                            "endColumn": 31,
+                            "endLine": 1,
+                            "snippet": {
+                                "text": "password=\"VeryStrongPassword!\""
+                            },
+                            "startColumn": 1,
+                            "startLine": 1
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
