@@ -41,12 +41,8 @@ describe('Iac Integration Tests', async () => {
         }
     });
 
-    function getExpectedFilePath(fileName: string): string {
-        return 'file://' + path.join(testDataRoot, fileName);
-    }
-
     function getTestFileIssues(filePath: string): IacFileIssues {
-        let actualPath: string = getExpectedFilePath(filePath);
+        let actualPath: string = AnalyzerUtils.parseLocationFilePath(filePath);
         let potential: IacFileIssues | undefined = response.filesWithIssues.find(fileWithIssues => fileWithIssues.full_path === actualPath);
         if (!potential) {
             assert.fail('Response should contain file with issues at path ' + actualPath);
