@@ -67,27 +67,20 @@ export class IssuesCache {
     }
 
     /**
-     * Get a scan results stored in the cache base on a given workspace and make sure the results are relevant.
-     * If the results are not relevant (the store interval period has passed) it will be removed them from the cache
+     * Get a scan results stored in the cache base on a given workspace and make sure the results are not expired.
+     * If the results are not expired (the store interval period has passed) it will be removed them from the cache
      * @param workspace - the workspace to search it's data
-     * @returns ScanResults if there are stored and relevant, undefined otherwise.
+     * @returns ScanResults if there are stored and not expired, undefined otherwise.
      */
-    public async getOrClearIfNotRelevant(workspace: vscode.WorkspaceFolder): Promise<ScanResults | undefined> {
+    public async getOrClearIfExpired(workspace: vscode.WorkspaceFolder): Promise<ScanResults | undefined> {
         let data: ScanResults | undefined = this.get(workspace);
         if (data && Utils.isIssueCacheIntervalPassed(data.oldestScanTimestamp)) {
             this.remove(workspace);
-            vscode.window
-                .showInformationMessage(
-                    "Last scan on workspace '" +
-                        workspace.name +
-                        "' was preformed a week ago and will be removed because it is not relevant any more, do you want to rescan the workspace now?",
-                    ...['Yes']
-                )
-                .then(answer => {
-                    if (answer === 'Yes') {
-                        vscode.commands.executeCommand('jfrog.xray.refresh');
-                    }
-                });
+            vscode.window.showInformationMessage("JFrog: Scan results for '" + workspace.name + "' have expired.", ...['Rescan']).then(answer => {
+                if (answer === 'Rescan') {
+                    vscode.commands.executeCommand('jfrog.xray.refresh');
+                }
+            });
             return undefined;
         }
         return data;
@@ -100,7 +93,7 @@ export class IssuesCache {
      */
     public async loadIssues(workspace: vscode.WorkspaceFolder): Promise<IssuesRootTreeNode | undefined> {
         // Check if data for the workspace exists in the cache
-        let scanResults: ScanResults | undefined = await this.getOrClearIfNotRelevant(workspace);
+        let scanResults: ScanResults | undefined = await this.getOrClearIfExpired(workspace);
         if (!scanResults) {
             return undefined;
         }
