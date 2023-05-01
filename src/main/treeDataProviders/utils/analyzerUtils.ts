@@ -13,9 +13,9 @@ import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { PackageType } from '../../types/projectType';
 import { GraphScanProgress, StepProgress } from './stepProgress';
-import { EosIssue, EosIssueLocation, EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
+import { EosIssue, EosIssueLocation, EosRunner, EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
 import { ScanManager } from '../../scanLogic/scanManager';
-import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
+import { AnalyzeScanRequest, FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
 import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
 import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
 import { FileScanBundle } from '../../utils/scanUtils';
@@ -23,6 +23,7 @@ import { IacFileIssues, IacIssue } from '../../scanLogic/scanRunners/iacScan';
 import { IacTreeNode } from '../issuesTree/codeFileTree/iacTreeNode';
 import { SecretsFileIssues, SecretsIssue } from '../../scanLogic/scanRunners/secretsScan';
 import { SecretTreeNode } from '../issuesTree/codeFileTree/secretsTreeNode';
+import { Translators } from '../../utils/translators';
 
 export interface GeneralScanResponse {
     filesWithIssues: FileWithSecurityIssues[];
@@ -115,6 +116,25 @@ export class AnalyzerUtils {
             patterns.push(excludePattern + (excludePattern.endsWith('/**') ? '' : '/**'));
         }
         return patterns;
+    }
+
+    /**
+     * Calculate a unique list of all the directories of the given paths.
+     * Adds the directories to the given request unique roots list.
+     * In the result there are no two roots that starts with the same path.
+     * @param request - the request we want to update it's roots attribute
+     * @param paths - the paths that will be transformed into a dir and will be added to the roots
+     * @returns list of all the unique directories after adding the given path's directories
+     */
+    private static addUniqueDirectories(request: AnalyzeScanRequest, ...paths: vscode.Uri[]): string[] {
+        let roots: Set<string> = new Set<string>(request.roots ?? []);
+        paths.forEach(filePath => {
+            if (Object.values(roots).every(root => !filePath.fsPath.startsWith(root))) {
+                roots.add(path.dirname(filePath.fsPath));
+            }
+        });
+        request.roots = Array.from(roots.values());
+        return request.roots;
     }
 
     /**
@@ -384,64 +404,63 @@ export class AnalyzerUtils {
     }
 
     /**
-     *  Run eos scan async task
+     * Create Eos scan request base on the given descriptors, one scan request per package type.
+     * All the descriptors under the same type will be transformed into their directory path and will be aggregated to unique set.
+     * @param workspaceDescriptors - the workspace descriptors
+     * @returns list of Eos requests, one per package type
+     */
+    private static createEosRequests(workspaceDescriptors: Map<PackageType, vscode.Uri[]>): EosScanRequest[] {
+        let requestMap: Map<string, EosScanRequest> = new Map<string, EosScanRequest>();
+        for (const [type, descriptorPaths] of workspaceDescriptors) {
+            let language: string | undefined = Translators.toLanguageType(type);
+            if (language) {
+                let request: EosScanRequest | undefined = requestMap.get(language);
+                if (!request) {
+                    request = {
+                        language: language
+                    } as EosScanRequest;
+                    requestMap.set(language, request);
+                }
+                AnalyzerUtils.addUniqueDirectories(request, ...descriptorPaths);
+            }
+        }
+        return Array.from(requestMap.values());
+    }
+
+    private static createDefaultEosRequests(root: IssuesRootTreeNode): EosScanRequest[] {
+        let requests: EosScanRequest[] = [];
+        for (let language of EosRunner.supportedLanguages()) {
+            requests.push({
+                language: language,
+                roots: [root.workSpace.uri.fsPath]
+            } as EosScanRequest);
+        }
+        return requests;
+    }
+
+    /**
+     *  Run Eos scan async task
      * @param workspaceData - the issues data for the workspace
      * @param root - the root node of the workspace
      * @param workspaceDescriptors - the descriptors of the workspace to get roots to scan from
      * @param scanManager - the scan manager to use for scan
      * @param progressManager - the progress manager of the process for abort control
-     * @param splitRequests - if true each request will be preformed on a different run, false all at once
      */
     public static async runEos(
         workspaceData: ScanResults,
         root: IssuesRootTreeNode,
         workspaceDescriptors: Map<PackageType, vscode.Uri[]>,
         scanManager: ScanManager,
-        progressManager: StepProgress,
-        splitRequests: boolean = true
+        progressManager: StepProgress
     ): Promise<any> {
-        if (!scanManager.isEosSupported()) {
-            progressManager.reportProgress();
-            return;
-        }
-        // Prepare
-        let requests: EosScanRequest[] = [];
-        for (const [type, descriptorPaths] of workspaceDescriptors) {
-            let language: string | undefined;
-            switch (type) {
-                case PackageType.Python:
-                    language = 'python';
-                    break;
-            }
-            if (language) {
-                let roots: Set<string> = new Set<string>();
-                for (const descriptorPath of descriptorPaths) {
-                    let directory: string = path.dirname(descriptorPath.fsPath);
-                    if (!roots.has(directory)) {
-                        roots.add(directory);
-                        if (splitRequests) {
-                            requests.push({
-                                language: language,
-                                roots: [directory]
-                            } as EosScanRequest);
-                        }
-                    }
-                }
-                if (!splitRequests && roots.size > 0) {
-                    requests.push({
-                        language: language,
-                        roots: Array.from(roots)
-                    } as EosScanRequest);
-                }
-            }
-        }
-        if (requests.length == 0) {
-            progressManager.reportProgress();
-            return;
+        let requests: EosScanRequest[] = this.createEosRequests(workspaceDescriptors);
+        if (requests.length === 0) {
+            // In case there are no descriptors to extract language from, add all.
+            requests = this.createDefaultEosRequests(root);
         }
         // Run
         let startTime: number = Date.now();
-        workspaceData.eosScan = await scanManager.scanEos(progressManager.onProgress, ...requests).finally(() => progressManager.reportProgress());
+        workspaceData.eosScan = await scanManager.scanEos(progressManager.checkCancel, ...requests);
         if (workspaceData.eosScan) {
             workspaceData.eosScanTimestamp = Date.now();
             let applicableIssuesCount: number = AnalyzerUtils.populateEosIssues(root, workspaceData);
@@ -451,13 +470,13 @@ export class AnalyzerUtils {
                     " Eos issues in workspace = '" +
                     workspaceData.path +
                     "' (elapsed " +
-                    (Date.now() - startTime) / 1000 +
+                    (workspaceData.eosScanTimestamp - startTime) / 1000 +
                     ' seconds)',
                 'INFO'
             );
 
             root.apply();
-            progressManager.onProgress();
+            progressManager.reportProgress();
         }
     }
 

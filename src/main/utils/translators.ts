@@ -18,9 +18,10 @@ import { IIssueCacheObject } from '../types/issueCacheObject';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
 import { FileLocation, SeverityLevel } from '../scanLogic/scanRunners/analyzerModels';
-import { toPackageType } from '../types/projectType';
+import { PackageType, toPackageType } from '../types/projectType';
 import { Utils } from './utils';
 import { LogLevel } from '../log/logManager';
+import { LanguageType } from '../scanLogic/scanRunners/eosScan';
 
 export class Translators {
     public static toAnalyzerLogLevel(logLevel: LogLevel): string {
@@ -28,6 +29,15 @@ export class Translators {
             return 'error';
         }
         return logLevel.toLowerCase();
+    }
+
+    public static toLanguageType(type: PackageType): LanguageType | undefined {
+        switch (type) {
+            case PackageType.Python:
+                return 'python';
+            default:
+                return undefined;
+        }
     }
 
     public static levelToSeverity(level?: SeverityLevel): Severity {
@@ -170,6 +180,7 @@ export class Translators {
                 codeFlow.push({
                     fileName: Utils.getLastSegment(location.artifactLocation.uri),
                     file: location.artifactLocation.uri,
+                    snippet: location.region.snippet?.text,
                     row: location.region.startLine,
                     column: location.region.startColumn
                 } as IAnalysisStep);

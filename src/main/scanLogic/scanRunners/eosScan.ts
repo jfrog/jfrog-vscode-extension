@@ -1,9 +1,5 @@
-import * as path from 'path';
-import * as os from 'os';
-
 import { LogManager } from '../../log/logManager';
 import { BinaryRunner } from './binaryRunner';
-import { ScanUtils } from '../../utils/scanUtils';
 import {
     AnalyzeIssue,
     AnalyzerScanResponse,
@@ -17,6 +13,8 @@ import {
 import { ConnectionManager } from '../../connect/connectionManager';
 import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
 import { Resource } from '../../utils/resource';
+import { Severity } from '../../types/severity';
+import { Translators } from '../../utils/translators';
 
 export interface EosScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
@@ -35,6 +33,7 @@ export interface EosFileIssues {
 
 export interface EosIssue {
     ruleId: string;
+    severity: Severity;
     ruleName: string;
     fullDescription?: string;
     locations: EosIssueLocation[];
@@ -46,44 +45,17 @@ export interface EosIssueLocation {
 }
 
 export class EosRunner extends BinaryRunner {
-    private static readonly BINARY_FOLDER: string = 'eos';
-    private static readonly BINARY_NAME: string = 'eos_scanner';
-
-    constructor(connectionManager: ConnectionManager, abortCheckInterval: number, logManager: LogManager) {
-        super(
-            connectionManager,
-            abortCheckInterval,
-            AnalyzerType.Eos,
-            logManager,
-            new Resource('', path.join(ScanUtils.getHomePath(), EosRunner.BINARY_FOLDER, EosRunner.getBinaryName()), logManager)
-        );
+    constructor(connectionManager: ConnectionManager, timeout: number, logManager: LogManager, binary?: Resource) {
+        super(connectionManager, timeout, AnalyzerType.Eos, logManager, binary);
     }
 
-    public validateSupported(): boolean {
-        if (os.platform() !== 'linux' && os.platform() !== 'darwin' && os.platform() !== 'win32') {
-            this._logManager.logMessage("Eos scan is not supported on '" + os.platform() + "' os", 'DEBUG');
-            return false;
-        }
-        return super.validateSupported();
-    }
-
-    /** @override */
-    protected static getBinaryName(): string {
-        let name: string = EosRunner.BINARY_NAME;
-        switch (os.platform()) {
-            case 'linux':
-                return name + '_ubuntu';
-            case 'darwin':
-                return name + '_macos';
-            case 'win32':
-                return name + '.exe';
-        }
-        return name;
+    public static supportedLanguages(): LanguageType[] {
+        return ['python'];
     }
 
     /** @override */
     public async runBinary(checkCancel: () => void, yamlConfigPath: string, executionLogDirectory: string): Promise<void> {
-        await this.executeBinary(checkCancel, ['analyze', 'config', yamlConfigPath], executionLogDirectory);
+        await this.executeBinary(checkCancel, ['zd', yamlConfigPath], executionLogDirectory);
     }
 
     /**
@@ -106,7 +78,6 @@ export class EosRunner extends BinaryRunner {
         if (!response) {
             return {} as EosScanResponse;
         }
-
         let eosResponse: EosScanResponse = {
             filesWithIssues: []
         } as EosScanResponse;
@@ -120,7 +91,13 @@ export class EosRunner extends BinaryRunner {
                 }
             }
             // Generate response data
-            run.results?.forEach(analyzeIssue => this.generateIssueData(eosResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId)));
+            run.results?.forEach((analyzeIssue: AnalyzeIssue) => {
+                if (analyzeIssue.suppressions && analyzeIssue.suppressions.length > 0) {
+                    // Suppress issue
+                    return;
+                }
+                this.generateIssueData(eosResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId));
+            });
         }
         return eosResponse;
     }
@@ -204,6 +181,7 @@ export class EosRunner extends BinaryRunner {
         }
         let fileIssue: EosIssue = {
             ruleId: analyzeIssue.ruleId,
+            severity: Translators.levelToSeverity(analyzeIssue.level),
             ruleName: analyzeIssue.message.text,
             fullDescription: fullDescription,
             locations: []
