@@ -49,18 +49,18 @@ export class IacRunner extends BinaryRunner {
 
     /**
      * Generate response from the run results
-     * @param run - the run results generated from the binary
+     * @param analyzerScanResponse - the run results generated from the binary
      * @returns the response generated from the scan run
      */
-    public generateScanResponse(response?: AnalyzerScanResponse): IacScanResponse {
-        if (!response) {
+    public generateScanResponse(analyzerScanResponse?: AnalyzerScanResponse): IacScanResponse {
+        if (!analyzerScanResponse) {
             return {} as IacScanResponse;
         }
         let iacResponse: IacScanResponse = {
             filesWithIssues: []
         } as IacScanResponse;
 
-        for (const run of response.runs) {
+        for (const run of analyzerScanResponse.runs) {
             // Get the full descriptions of all rules
             let rulesFullDescription: Map<string, string> = new Map<string, string>();
             for (const rule of run.tool.driver.rules) {

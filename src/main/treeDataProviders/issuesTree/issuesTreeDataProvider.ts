@@ -178,13 +178,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         progress.report({ message: '👷 Preparing workspace' });
         let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
         checkCanceled();
-        DependencyUtils.sendUsageReport(workspaceDescriptors, this._treesManager.connectionManager);
         let supportedScans: SupportedScans = await this._scanManager.getSupportedScans();
         let subStepsCount: number =
             (supportedScans.iac ? 1 : 0) +
             (supportedScans.graphScan
                 ? workspaceDescriptors.size + Array.from(workspaceDescriptors.values()).reduce((acc, val) => acc + val.length, 0)
                 : 0);
+        DependencyUtils.sendUsageReport(supportedScans, workspaceDescriptors, this._treesManager.connectionManager);
         checkCanceled();
         // Scan workspace
         let scansPromises: Promise<any>[] = [];
@@ -200,7 +200,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                         type,
                         descriptorsPaths,
                         progressManager,
-                        supportedScans.applicable
+                        supportedScans.applicability
                     ).catch(err => ScanUtils.onScanError(err, this._logManager, true))
                 );
             }

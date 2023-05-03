@@ -38,41 +38,39 @@ describe('Iac Integration Tests', async () => {
             if (err instanceof NotSupportedError) {
                 this.skip();
             }
+            throw err;
         }
     });
 
     function getTestFileIssues(filePath: string): IacFileIssues {
-        let actualPath: string = AnalyzerUtils.parseLocationFilePath(filePath);
-        let potential: IacFileIssues | undefined = response.filesWithIssues.find(fileWithIssues => fileWithIssues.full_path === actualPath);
-        if (!potential) {
-            assert.fail('Response should contain file with issues at path ' + actualPath);
-        }
-        return potential;
+        let actualPath: string = path.join(testDataRoot, filePath);
+        let potential: IacFileIssues | undefined = response.filesWithIssues.find(
+            fileWithIssues => AnalyzerUtils.parseLocationFilePath(fileWithIssues.full_path) === actualPath
+        );
+        assert.isDefined(potential, 'Response should contain file with issues at path ' + actualPath);
+        return potential!;
     }
 
     function getTestIssue(filePath: string, ruleId: string): IacIssue {
         let fileWithIssues: IacFileIssues = getTestFileIssues(filePath);
         let potential: IacIssue | undefined = fileWithIssues.issues.find(issue => issue.ruleId === ruleId);
-        if (!potential) {
-            assert.fail('Expected ' + ruleId + ' should be contain detected as issues of file ' + filePath);
-        }
-        return potential;
+        assert.isDefined(potential, 'Expected ' + ruleId + ' should be contain detected as issues of file ' + filePath);
+        return potential!;
     }
 
     function getTestLocation(filePath: string, ruleId: string, location: FileRegion): FileRegion {
         let issue: IacIssue = getTestIssue(filePath, ruleId);
         let potential: FileRegion | undefined = issue.locations.find(actualLocation => AnalyzerUtils.isSameRegion(location, actualLocation));
-        if (!potential) {
-            assert.fail(
-                'Expected file ' +
-                    filePath +
-                    ' should contain evidence for issue ' +
-                    ruleId +
-                    ' in location ' +
-                    [location.startLine, location.endLine, location.startColumn, location.endColumn]
-            );
-        }
-        return potential;
+        assert.isDefined(
+            potential,
+            'Expected file ' +
+                filePath +
+                ' should contain evidence for issue ' +
+                ruleId +
+                ' in location ' +
+                [location.startLine, location.endLine, location.startColumn, location.endColumn]
+        );
+        return potential!;
     }
 
     it('Check response defined', () => {

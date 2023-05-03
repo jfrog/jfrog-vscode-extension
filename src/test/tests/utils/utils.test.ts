@@ -24,8 +24,7 @@ export function getAnalyzerScanResponse(filePath: string | undefined): AnalyzerS
     if (!filePath || !fs.existsSync(filePath)) {
         return undefined;
     }
-    let result: AnalyzerScanResponse = JSON.parse(fs.readFileSync(filePath, 'utf8').toString());
-    return result;
+    return JSON.parse(fs.readFileSync(filePath, 'utf8').toString());
 }
 
 export function getNodeByArtifactId(root: DependenciesTreeNode, artifactId: string): DependenciesTreeNode | null {

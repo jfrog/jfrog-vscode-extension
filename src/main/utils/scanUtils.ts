@@ -243,8 +243,12 @@ export class ScanUtils {
         if (error instanceof ScanCancellationError) {
             throw error;
         }
-        if (error instanceof NotEntitledError || error instanceof NotSupportedError) {
+        if (error instanceof NotEntitledError) {
             logger.logMessage(error.message, 'INFO');
+            return undefined;
+        }
+        if (error instanceof NotSupportedError) {
+            logger.logMessage(error.message, 'DEBUG');
             return undefined;
         }
         if (handle || error instanceof ScanTimeoutError) {
@@ -272,7 +276,7 @@ export class NotEntitledError extends Error {
 
 export class NotSupportedError extends Error {
     constructor(typeNotSupported: string) {
-        super(typeNotSupported + ' is not supported in the current version');
+        super(typeNotSupported + ' is not supported in the current Analyzer Manager version');
     }
 }
 

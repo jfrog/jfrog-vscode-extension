@@ -5,7 +5,7 @@ import { LogLevel } from '../../main/log/logManager';
 import { IIssueCacheObject } from '../../main/types/issueCacheObject';
 import { Translators } from '../../main/utils/translators';
 import { Severity } from '../../main/types/severity';
-import { SeverityLevel } from '../../main/scanLogic/scanRunners/analyzerModels';
+import { AnalyzerManagerSeverityLevel } from '../../main/scanLogic/scanRunners/analyzerModels';
 
 /**
  * Test functionality of @class Translators.
@@ -29,7 +29,7 @@ describe('Translators Tests', () => {
             { inputLevel: 'warning', expectedLevel: Severity.Medium },
             { inputLevel: 'error', expectedLevel: Severity.High }
         ].forEach(test => {
-            assert.equal(test.expectedLevel, Translators.levelToSeverity(<SeverityLevel>test.inputLevel));
+            assert.equal(test.expectedLevel, Translators.levelToSeverity(<AnalyzerManagerSeverityLevel>test.inputLevel));
         });
     });
 

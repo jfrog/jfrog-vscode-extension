@@ -22,8 +22,13 @@ import { IacRunner, IacScanResponse } from './scanRunners/iacScan';
 
 export interface SupportedScans {
     graphScan: boolean;
-    applicable: boolean;
+    applicability: boolean;
     iac: boolean;
+}
+
+enum EntitlementScanFeature {
+    Applicability = 'contextual_analysis',
+    Iac = 'iac_scanners'
 }
 
 /**
@@ -125,10 +130,10 @@ export class ScanManager implements ExtensionComponent {
     private async getResources(): Promise<Resource[]> {
         let resources: Resource[] = [];
         let supported: SupportedScans = await this.getSupportedScans();
-        if (supported.applicable || supported.iac) {
+        if (supported.applicability || supported.iac) {
             resources.push(BinaryRunner.getAnalyzerManagerResource(this._logManager));
         } else {
-            this.logManager.logMessage('You are not entitled to run Advanced Scans', 'DEBUG');
+            this.logManager.logMessage('You are not entitled to run Advanced Security scans', 'DEBUG');
         }
         return resources;
     }
@@ -143,25 +148,25 @@ export class ScanManager implements ExtensionComponent {
     /**
      * Check if Contextual Analysis (Applicability) is supported for the user
      */
-    public async isApplicableSupported(): Promise<boolean> {
-        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), 'contextual_analysis');
+    public async isApplicabilitySupported(): Promise<boolean> {
+        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Applicability);
     }
 
     /**
      * Check if Infrastructure As Code (Iac) is supported for the user
      */
     public async isIacSupported(): Promise<boolean> {
-        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), 'iac_scanners');
+        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Iac);
     }
 
     /**
      * Get all the entitlement status for each type of scan the manager offers
      */
     public async getSupportedScans(): Promise<SupportedScans> {
-        let supportedScans: SupportedScans = { graphScan: false, applicable: false, iac: false };
+        let supportedScans: SupportedScans = {} as SupportedScans;
         let requests: Promise<boolean>[] = [];
         requests.push(this.validateGraphSupported().then(res => (supportedScans.graphScan = res)));
-        requests.push(this.isApplicableSupported().then(res => (supportedScans.applicable = res)));
+        requests.push(this.isApplicabilitySupported().then(res => (supportedScans.applicability = res)));
         requests.push(this.isIacSupported().then(res => (supportedScans.iac = res)));
         await Promise.all(requests);
         return supportedScans;
