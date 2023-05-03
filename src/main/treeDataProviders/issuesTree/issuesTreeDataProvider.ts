@@ -242,9 +242,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         if (supportedScans.eos) {
             // Scan the workspace for Eos issues
             scansPromises.push(
-                AnalyzerUtils.runEos(scanResults, root, workspaceDescriptors, this._scanManager, progressManager).catch(err =>
-                    ScanUtils.onScanError(err, this._logManager, true)
-                )
+                AnalyzerUtils.runEos(
+                    scanResults,
+                    root,
+                    Array.from(workspaceDescriptors.keys() ?? []),
+                    this._scanManager,
+                    progressManager
+                ).catch(err => ScanUtils.onScanError(err, this._logManager, true))
             );
         }
 
