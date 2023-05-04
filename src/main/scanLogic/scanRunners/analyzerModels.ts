@@ -4,9 +4,11 @@ export interface AnalyzerRequest {
 
 export enum AnalyzerType {
     ContextualAnalysis = 'analyze-applicability',
+    Iac = 'iac-scan-modules',
     Eos = 'analyze-codebase'
 }
 
+export type AnalyzerManagerSeverityLevel = 'none' | 'note' | 'warning' | 'error';
 export type ResultKind = 'pass' | 'fail';
 
 export interface AnalyzeScanRequest {
@@ -41,9 +43,10 @@ export interface AnalyzerRule {
 
 export interface AnalyzeIssue {
     ruleId: string;
-    kind?: ResultKind;
     message: ResultContent;
     locations: AnalyzeLocation[];
+    kind?: ResultKind;
+    level?: AnalyzerManagerSeverityLevel;
     codeFlows?: CodeFlow[];
 }
 

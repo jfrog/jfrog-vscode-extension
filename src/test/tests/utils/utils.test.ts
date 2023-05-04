@@ -1,6 +1,7 @@
 import * as os from 'os';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
+import * as fs from 'fs';
 import { ConnectionManager } from '../../../main/connect/connectionManager';
 import { ScanCacheManager } from '../../../main/cache/scanCacheManager';
 import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
@@ -9,6 +10,7 @@ import { LogManager } from '../../../main/log/logManager';
 import { ContextKeys, SessionStatus } from '../../../main/constants/contextKeys';
 import { ConnectionUtils } from '../../../main/connect/connectionUtils';
 import { JfrogClient } from 'jfrog-client-js';
+import { AnalyzerScanResponse } from '../../../main/scanLogic/scanRunners/analyzerModels';
 
 export function isWindows(): boolean {
     return os.platform() === 'win32';
@@ -16,6 +18,13 @@ export function isWindows(): boolean {
 
 export function removeWindowsWhiteSpace(text: string): string {
     return text.replace(/\r/g, '');
+}
+
+export function getAnalyzerScanResponse(filePath: string | undefined): AnalyzerScanResponse | undefined {
+    if (!filePath || !fs.existsSync(filePath)) {
+        return undefined;
+    }
+    return JSON.parse(fs.readFileSync(filePath, 'utf8').toString());
 }
 
 export function getNodeByArtifactId(root: DependenciesTreeNode, artifactId: string): DependenciesTreeNode | null {

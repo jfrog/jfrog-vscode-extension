@@ -25,11 +25,12 @@ import { GraphScanProgress, StepProgress } from './stepProgress';
 import { AnalyzerUtils } from './analyzerUtils';
 import { DescriptorTreeNode } from '../issuesTree/descriptorTree/descriptorTreeNode';
 import { VirtualEnvPypiTree } from '../dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
-import { ScanManager } from '../../scanLogic/scanManager';
+import { ScanManager, SupportedScans } from '../../scanLogic/scanManager';
 import { FileScanBundle, FileScanError, ScanUtils } from '../../utils/scanUtils';
 import { LogManager } from '../../log/logManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
+import { AnalyzerType } from '../../scanLogic/scanRunners/analyzerModels';
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
@@ -42,6 +43,7 @@ export class DependencyUtils {
      * @param type - Package type to scan it's dependencies
      * @param descriptorsPaths - the paths for all the descriptors of the package type
      * @param progressManager - the progress manager of the workspace scan
+     * @param contextualScan - if true (default), will apply contextual analysis scan if Cve detected
      */
     public static async scanPackageDependencies(
         scanManager: ScanManager,
@@ -49,7 +51,8 @@ export class DependencyUtils {
         root: IssuesRootTreeNode,
         type: PackageType,
         descriptorsPaths: vscode.Uri[],
-        progressManager: StepProgress
+        progressManager: StepProgress,
+        contextualScan: boolean = true
     ): Promise<any> {
         let scansPromises: Promise<any>[] = [];
         let descriptorsParsed: Set<string> = new Set<string>();
@@ -85,7 +88,8 @@ export class DependencyUtils {
                             scanManager,
                             scanBundle,
                             child,
-                            progressManager.createScanProgress(child.fullPath, progressIncValue / 2)
+                            progressManager.createScanProgress(child.fullPath, progressIncValue / 2),
+                            contextualScan
                         ).finally(() => progressManager.reportProgress(progressIncValue / 2))
                     );
                     continue;
@@ -176,13 +180,14 @@ export class DependencyUtils {
      * @param fileScanBundle - the bundle for the scan that contains dataNode as ProjectDependencyTreeNode instance
      * @param rootGraph - the descriptor dependencies graph
      * @param scanProgress - the progress manager for the scan
-     * @returns
+     * @param contextualScan - if true (default), will apply contextual analysis scan if a CVE was detected
      */
     private static async createDependencyScanTask(
         scanManager: ScanManager,
         fileScanBundle: FileScanBundle,
         rootGraph: RootNode,
-        scanProgress: GraphScanProgress
+        scanProgress: GraphScanProgress,
+        contextualScan: boolean = true
     ): Promise<void> {
         if (!(fileScanBundle.dataNode instanceof ProjectDependencyTreeNode)) {
             return;
@@ -209,7 +214,7 @@ export class DependencyUtils {
             .finally(() => scanProgress.onProgress());
 
         // Applicable scan task
-        if (!scanManager.isApplicableSupported() || !foundIssues) {
+        if (!contextualScan || !foundIssues) {
             return;
         }
         if (fileScanBundle.dataNode instanceof DescriptorTreeNode) {
@@ -537,18 +542,34 @@ export class DependencyUtils {
     }
 
     /**
-     * Sends usage report for all techs we found project descriptors of.
+     * Sends usage report for all techs we found project descriptors of and for each advance scan that was preformed.
+     * @param supportedScans - the entitlement for each scan
      * @param projectDescriptors - map of all project descriptors by their tech.
      * @param connectionManager - manager containing Artifactory details if configured.
      */
-    public static async sendUsageReport(projectDescriptors: Map<PackageType, vscode.Uri[]>, connectionManager: ConnectionManager) {
+    public static async sendUsageReport(
+        supportedScans: SupportedScans,
+        projectDescriptors: Map<PackageType, vscode.Uri[]>,
+        connectionManager: ConnectionManager
+    ) {
         let featureArray: IUsageFeature[] = [];
-        for (const [techEnum, descriptors] of projectDescriptors.entries()) {
-            // Only add to usage if found descriptors for tech.
-            if (!!descriptors) {
-                const featureName: string = PackageType[techEnum].toLowerCase() + '-deps';
-                featureArray.push({ featureId: featureName });
+        if (supportedScans.graphScan) {
+            for (const [techEnum, descriptors] of projectDescriptors.entries()) {
+                // Only add to usage if found descriptors for tech.
+                if (!!descriptors) {
+                    const featureName: string = PackageType[techEnum].toLowerCase() + '-deps';
+                    featureArray.push({ featureId: featureName });
+                }
             }
+        }
+        if (supportedScans.applicability) {
+            featureArray.push({ featureId: AnalyzerType.ContextualAnalysis });
+        }
+        if (supportedScans.iac) {
+            featureArray.push({ featureId: AnalyzerType.Iac });
+        }
+        if (featureArray.length === 0) {
+            return;
         }
         await connectionManager.sendUsageReport(featureArray);
     }

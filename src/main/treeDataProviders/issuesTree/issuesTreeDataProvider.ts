@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ScanManager } from '../../scanLogic/scanManager';
+import { ScanManager, SupportedScans } from '../../scanLogic/scanManager';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { IssuesRootTreeNode } from './issuesRootTreeNode';
 import { FileTreeNode } from './fileTreeNode';
@@ -23,6 +23,8 @@ import { EosTreeNode } from './codeFileTree/eosTreeNode';
 import { EnvironmentTreeNode } from './descriptorTree/environmentTreeNode';
 import { ProjectDependencyTreeNode } from './descriptorTree/projectDependencyTreeNode';
 import { ScanResults, DependencyScanResults } from '../../types/workspaceIssuesDetails';
+import { AnalyzerUtils } from '../utils/analyzerUtils';
+import { IacTreeNode } from './codeFileTree/iacTreeNode';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -171,31 +173,23 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void
     ): Promise<IssuesRootTreeNode> {
-        let progressManager: StepProgress = new StepProgress(
-            progress,
-            () => {
-                checkCanceled();
-            },
-            () => {
-                this.onChangeFire();
-            },
-            this._logManager
-        );
+        let progressManager: StepProgress = new StepProgress(progress, checkCanceled, () => this.onChangeFire(), this._logManager);
         // Prepare the needed information for the scans
         progress.report({ message: '👷 Preparing workspace' });
         let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
         checkCanceled();
-        DependencyUtils.sendUsageReport(workspaceDescriptors, this._treesManager.connectionManager);
-        let graphSupported: boolean = await this._scanManager.validateGraphSupported();
-        let advanceSecSupported: boolean = await this._scanManager.isAnalyzerManagerSupported();
-        let subStepsCount: number = graphSupported
-            ? workspaceDescriptors.size + Array.from(workspaceDescriptors.values()).reduce((acc, val) => acc + val.length, 0)
-            : 0;
+        let supportedScans: SupportedScans = await this._scanManager.getSupportedScans();
+        let subStepsCount: number =
+            (supportedScans.iac ? 1 : 0) +
+            (supportedScans.graphScan
+                ? workspaceDescriptors.size + Array.from(workspaceDescriptors.values()).reduce((acc, val) => acc + val.length, 0)
+                : 0);
+        DependencyUtils.sendUsageReport(supportedScans, workspaceDescriptors, this._treesManager.connectionManager);
         checkCanceled();
         // Scan workspace
         let scansPromises: Promise<any>[] = [];
         progressManager.startStep('🔎 Scanning for issues', subStepsCount);
-        if (graphSupported) {
+        if (supportedScans.graphScan) {
             // Dependency graph and applicability scans for each package
             for (const [type, descriptorsPaths] of workspaceDescriptors) {
                 scansPromises.push(
@@ -205,18 +199,19 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                         root,
                         type,
                         descriptorsPaths,
-                        progressManager
+                        progressManager,
+                        supportedScans.applicability
                     ).catch(err => ScanUtils.onScanError(err, this._logManager, true))
                 );
             }
         }
-
-        if (advanceSecSupported) {
-            // scansPromises.push(
-            //     AnalyzerUtils.runEos(scanResults, root, workspaceDescriptors, this._scanManager, progressManager).catch(err =>
-            //         ScanUtils.onScanError(err, this._logManager, true)
-            //     )
-            // );
+        if (supportedScans.iac) {
+            // Scan the workspace for Infrastructure As Code (Iac) issues
+            scansPromises.push(
+                AnalyzerUtils.runIac(scanResults, root, this._scanManager, progressManager).catch(err =>
+                    ScanUtils.onScanError(err, this._logManager, true)
+                )
+            );
         }
 
         await Promise.all(scansPromises);
@@ -385,7 +380,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 element.command = Utils.createNodeCommand('jfrog.view.details.page', 'Show details', [element.getDetailsPage()]);
             }
             // Source code issues nodes
-            if (element instanceof ApplicableTreeNode || element instanceof EosTreeNode) {
+            if (element instanceof ApplicableTreeNode || element instanceof EosTreeNode || element instanceof IacTreeNode) {
                 element.command = Utils.createNodeCommand('jfrog.issues.file.open.details', 'Open file location and show details', [
                     element.parent.projectFilePath,
                     element.regionWithIssue,

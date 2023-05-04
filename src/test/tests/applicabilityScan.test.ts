@@ -11,9 +11,9 @@ import {
     ApplicabilityScanResponse
 } from '../../main/scanLogic/scanRunners/applicabilityScan';
 import { ScanUtils } from '../../main/utils/scanUtils';
-import { AnalyzerScanResponse, AnalyzerScanRun, FileIssues, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
+import { FileIssues, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
-import { createDummyCveIssue, createDummyDependencyIssues, createRootTestNode } from './utils/treeNodeUtils.test';
+import { createDummyCveIssue, createDummyDependencyIssues, createRootTestNode, getTestCodeFileNode } from './utils/treeNodeUtils.test';
 import { DescriptorTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
 import { PackageType } from '../../main/types/projectType';
 import { DependencyScanResults } from '../../main/types/workspaceIssuesDetails';
@@ -21,12 +21,11 @@ import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils'
 import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { Severity } from '../../main/types/severity';
 import { CveTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
-import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
 import { IEvidence } from 'jfrog-ide-webview';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { ApplicableTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/applicableTreeNode';
-import { removeWindowsWhiteSpace } from './utils/utils.test';
+import { getAnalyzerScanResponse, removeWindowsWhiteSpace } from './utils/utils.test';
 
 let logManager: LogManager = new LogManager().activate();
 
@@ -89,7 +88,7 @@ describe('Applicability Scan Tests', () => {
         before(() => {
             // Read test data and populate scanResult and dummy Cve nodes in test dependency
             let response: ApplicabilityScanResponse = getDummyRunner().generateResponse(
-                getAnalyzerScanRun(path.join(scanApplicable, 'analyzerResponse.json'))
+                getAnalyzerScanResponse(path.join(scanApplicable, 'analyzerResponse.json'))?.runs[0]
             );
             for (let cve of response.scannedCve) {
                 testCves.push(createDummyCveIssue(Severity.Medium, testDependency, cve, cve));
@@ -216,17 +215,9 @@ describe('Applicability Scan Tests', () => {
             });
 
             describe('Data populated as CodeFileTreeNode nodes', () => {
-                function getTestCodeFileNode(fileIssues: FileIssues): CodeFileTreeNode {
-                    let fileNode: FileTreeNode | undefined = testRoot.getFileTreeNode(AnalyzerUtils.parseLocationFilePath(fileIssues.full_path));
-                    if (!(fileNode instanceof CodeFileTreeNode)) {
-                        assert.fail('expected node to be CodeFileTreeNode for file ' + fileIssues.full_path + ', node: ' + fileNode);
-                    }
-                    return <CodeFileTreeNode>fileNode;
-                }
-
                 it('Check file nodes created for each file with issues', () => {
                     expectedFilesWithIssues.forEach((fileIssues: FileIssues) => {
-                        assert.isDefined(getTestCodeFileNode(fileIssues));
+                        assert.isDefined(getTestCodeFileNode(testRoot, fileIssues.full_path));
                     });
                 });
 
@@ -256,7 +247,7 @@ describe('Applicability Scan Tests', () => {
 
                     it('Check Applicable location nodes created in file nodes', () => {
                         expectedFilesWithIssues.forEach((expectedFileIssues: FileIssues) => {
-                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(expectedFileIssues);
+                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
                             expectedFileIssues.locations.forEach((expectedLocation: FileRegion) => {
                                 assert.isDefined(getTestIssueNode(fileNode, expectedLocation));
                             });
@@ -265,14 +256,14 @@ describe('Applicability Scan Tests', () => {
 
                     it('Check number of issues populated in file', () => {
                         expectedFilesWithIssues.forEach((fileIssues: FileIssues) => {
-                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(fileIssues);
+                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, fileIssues.full_path);
                             assert.equal(fileNode.issues.length, fileIssues.locations.length);
                         });
                     });
 
                     it('Check applicable information reference created in descriptor', () => {
                         expectedFilesWithIssues.forEach((expectedFileIssues: FileIssues) => {
-                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(expectedFileIssues);
+                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
                             expectedFileIssues.locations.forEach((expectedLocation: FileRegion) => {
                                 assert.isDefined(testDescriptor.applicableCve?.get(getTestIssueNode(fileNode, expectedLocation).issueId));
                             });
@@ -281,7 +272,7 @@ describe('Applicability Scan Tests', () => {
 
                     it('Check ApplicableTreeNode node severity match Cve severity', () => {
                         expectedFilesWithIssues.forEach((expectedFileIssues: FileIssues) => {
-                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(expectedFileIssues);
+                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
                             expectedFileIssues.locations.forEach((expectedLocation: FileRegion) => {
                                 let applicableIssue: ApplicableTreeNode = getTestIssueNode(fileNode, expectedLocation);
                                 assert.equal(applicableIssue.severity, applicableIssue.cveNode.severity);
@@ -291,7 +282,7 @@ describe('Applicability Scan Tests', () => {
 
                     it('Check Cve node reference exists', () => {
                         expectedFilesWithIssues.forEach((expectedFileIssues: FileIssues) => {
-                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(expectedFileIssues);
+                            let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
                             expectedFileIssues.locations.forEach((expectedLocation: FileRegion) => {
                                 let applicableIssue: ApplicableTreeNode = getTestIssueNode(fileNode, expectedLocation);
                                 assert.isDefined(getTestCveNode(applicableIssue.cveNode.issueId));
@@ -315,13 +306,5 @@ describe('Applicability Scan Tests', () => {
 
     function getDummyRunner(): ApplicabilityRunner {
         return new ApplicabilityRunner({} as ConnectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, logManager);
-    }
-
-    function getAnalyzerScanRun(filePath: string | undefined): AnalyzerScanRun | undefined {
-        if (!filePath || !fs.existsSync(filePath)) {
-            return undefined;
-        }
-        let result: AnalyzerScanResponse = JSON.parse(fs.readFileSync(filePath, 'utf8').toString());
-        return result.runs[0];
     }
 });

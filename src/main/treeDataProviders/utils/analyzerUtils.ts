@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
 import { CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
-import { SeverityUtils } from '../../types/severity';
+import { Severity, SeverityUtils } from '../../types/severity';
 import { ApplicableTreeNode } from '../issuesTree/codeFileTree/applicableTreeNode';
 import { CodeFileTreeNode } from '../issuesTree/codeFileTree/codeFileTreeNode';
 import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
@@ -19,17 +19,44 @@ import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerMode
 import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
 import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
 import { FileScanBundle } from '../../utils/scanUtils';
+import { IacIssue } from '../../scanLogic/scanRunners/iacScan';
+import { IacTreeNode } from '../issuesTree/codeFileTree/iacTreeNode';
+
+export interface GeneralScanResponse {
+    filesWithIssues: FileWithSecurityIssues[];
+}
+
+export interface FileWithSecurityIssues {
+    full_path: string;
+    issues: SecurityIssue[];
+}
+
+export interface SecurityIssue {
+    ruleId: string;
+    ruleName: string;
+    fullDescription?: string;
+    severity: Severity;
+    locations: FileRegion[];
+}
 
 export class AnalyzerUtils {
     /**
-     * Remove the prefix 'file://' and decode the encoded path from binary result
+     * The paths that returns from the analyzerManager follows the SARIF format and are encoded, with prefix and fixed (not os depended).
+     * This method will parse a given path and will fix it to match the actual path expected by the vscode
+     * * Remove the prefix 'file:///' for windows or 'file://' if exists
+     * * replaces '/' with '\\' for windows
+     * * decode the encoded path
      * @param filePath - path to remove prefix and decode
      */
     public static parseLocationFilePath(filePath: string): string {
-        if (os.platform() === 'win32') {
-            return decodeURI((filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath).replace(/['/']/g, '\\'));
+        let isWindows: boolean = os.platform() === 'win32';
+        if (isWindows) {
+            filePath = filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath;
+            filePath = filePath.replace(/['/']/g, '\\');
+        } else {
+            filePath = filePath.includes('file://') ? filePath.substring('file://'.length) : filePath;
         }
-        return decodeURI(filePath.includes('file://') ? filePath.substring('file://'.length) : filePath);
+        return decodeURI(filePath);
     }
 
     /**
@@ -247,6 +274,63 @@ export class AnalyzerUtils {
     }
 
     /**
+     * Run Infrastructure As Code (Iac) scan async task and populate the given bundle with the results.
+     * @param scanResults - the data object that will be populated with the results
+     * @param root - the view object that will be populated with the results
+     * @param scanManager - the ScanManager that preforms the actual scans
+     * @param progressManager - the progress for the given scan
+     */
+    public static async runIac(
+        scanResults: ScanResults,
+        root: IssuesRootTreeNode,
+        scanManager: ScanManager,
+        progressManager: StepProgress
+    ): Promise<void> {
+        let startIacTime: number = Date.now();
+        scanResults.iacScan = await scanManager.scanIac(root.workSpace.uri.fsPath, progressManager.checkCancel);
+        if (scanResults.iacScan) {
+            scanResults.iacScanTimestamp = Date.now();
+            let issuesCount: number = AnalyzerUtils.populateIacIssues(root, scanResults);
+            scanManager.logManager.logMessage(
+                'Found ' +
+                    issuesCount +
+                    " Iac issues in workspace = '" +
+                    scanResults.path +
+                    "' (elapsed " +
+                    (scanResults.iacScanTimestamp - startIacTime) / 1000 +
+                    ' seconds)',
+                'INFO'
+            );
+            root.apply();
+        }
+        progressManager.reportProgress();
+    }
+
+    /**
+     * Populate Iac information in the given view root
+     * @param root - root node to populate data inside
+     * @param workspaceData - data to populate on node
+     * @returns number of Iac issues populated
+     */
+    public static populateIacIssues(root: IssuesRootTreeNode, workspaceData: ScanResults): number {
+        root.iacScanTimeStamp = workspaceData.iacScanTimestamp;
+        let issuesCount: number = 0;
+        if (workspaceData.iacScan && workspaceData.iacScan.filesWithIssues) {
+            workspaceData.iacScan.filesWithIssues.forEach(fileWithIssues => {
+                let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
+                fileWithIssues.issues.forEach((issue: IacIssue) => {
+                    issue.locations.forEach((location: FileRegion) => {
+                        fileNode.issues.push(new IacTreeNode(issue, location, fileNode));
+                        issuesCount++;
+                    });
+                });
+            });
+        }
+
+        return issuesCount;
+    }
+
+    /**
      *  Run eos scan async task
      * @param workspaceData - the issues data for the workspace
      * @param root - the root node of the workspace
@@ -325,7 +409,7 @@ export class AnalyzerUtils {
     }
 
     /**
-     * Populate eos information in
+     * Populate eos information in the view
      * @param root - root node to populate data inside
      * @param workspaceData - data to populate on node
      * @returns number of eos issues populated

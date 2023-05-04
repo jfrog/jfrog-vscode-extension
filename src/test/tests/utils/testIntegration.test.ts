@@ -60,8 +60,10 @@ export class BaseIntegrationEnv {
 export class AnalyzerManagerIntegrationEnv extends BaseIntegrationEnv {
     public static readonly ENV_BINARY_DOWNLOAD_URL: string = 'JFROG_IDE_ANALYZER_MANAGER_DOWNLOAD_URL';
     public static readonly ENV_DOWNLOAD_FROM_PLATFORM: string = 'JFROG_IDE_DOWNLOAD_FROM_PLATFORM';
+    public static readonly ENV_BINARY_FROM_DIRECTORY: string = 'JFROG_IDE_ANALYZER_MANAGER_DIRECTORY';
 
     private _resource!: Resource;
+    private _localPath?: string;
 
     /** @override */
     public async initialize() {
@@ -69,6 +71,7 @@ export class AnalyzerManagerIntegrationEnv extends BaseIntegrationEnv {
 
         let downloadPlatformUrl: string | undefined = process.env[AnalyzerManagerIntegrationEnv.ENV_DOWNLOAD_FROM_PLATFORM];
         let baseDownloadUrl: string | undefined = process.env[AnalyzerManagerIntegrationEnv.ENV_BINARY_DOWNLOAD_URL];
+        this._localPath = process.env[AnalyzerManagerIntegrationEnv.ENV_BINARY_FROM_DIRECTORY];
 
         // Initialize analyzerManager resource for testing
         if (downloadPlatformUrl || baseDownloadUrl) {
@@ -82,9 +85,13 @@ export class AnalyzerManagerIntegrationEnv extends BaseIntegrationEnv {
             // Run on latest from Releases
             this._resource = BinaryRunner.getAnalyzerManagerResource(
                 this.logManager,
-                BinaryRunner.getDefaultAnalyzerManagerTargetPath(BaseIntegrationEnv.directory)
+                BinaryRunner.getDefaultAnalyzerManagerTargetPath(this._localPath ?? BaseIntegrationEnv.directory)
             );
         }
+    }
+
+    public get localPath(): string | undefined {
+        return this._localPath;
     }
 
     public get resource(): Resource {
@@ -97,19 +104,21 @@ export async function initializeIntegrationTests() {
     BaseIntegrationEnv.directory = ScanUtils.createTmpDir();
     let integration: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
     await integration.initialize();
-    // Get the analyzerManager (once) to the integration directory for all the scanners to use in the integration tests
-    for (let i: number = 0; i < BaseIntegrationEnv.RETRIES; i++) {
-        if (await integration.resource.update()) {
-            return;
+    if (!integration.localPath) {
+        // Get the analyzerManager (once) to the integration directory for all the scanners to use in the integration tests
+        for (let i: number = 0; i < BaseIntegrationEnv.RETRIES; i++) {
+            if (await integration.resource.update()) {
+                return;
+            }
         }
+        assert.fail(
+            'Failed to download analyzerManager from ' +
+                (process.env[AnalyzerManagerIntegrationEnv.ENV_BINARY_DOWNLOAD_URL] ?? 'latest version') +
+                ' Url from ' +
+                (process.env[AnalyzerManagerIntegrationEnv.ENV_DOWNLOAD_FROM_PLATFORM] ?? 'releases') +
+                'platform'
+        );
     }
-    assert.fail(
-        'Failed to download analyzerManager from ' +
-            (process.env[AnalyzerManagerIntegrationEnv.ENV_BINARY_DOWNLOAD_URL] ?? 'latest version') +
-            ' Url from ' +
-            (process.env[AnalyzerManagerIntegrationEnv.ENV_DOWNLOAD_FROM_PLATFORM] ?? 'releases') +
-            'platform'
-    );
 }
 
 export async function cleanUpIntegrationTests() {
