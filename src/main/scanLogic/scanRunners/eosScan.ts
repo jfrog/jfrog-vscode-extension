@@ -18,6 +18,7 @@ import { Translators } from '../../utils/translators';
 
 export interface EosScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
+    exclude_patterns: string[];
 }
 
 export type LanguageType = 'python';
@@ -64,8 +65,11 @@ export class EosRunner extends BinaryRunner {
      * @param requests - requests to run
      * @returns the response generated from the scan
      */
-    public async scan(checkCancel: () => void, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
-        requests.forEach(request => (request.type = AnalyzerType.Eos));
+    public async scan(checkCancel: () => void, skipFiles: string[], ...requests: EosScanRequest[]): Promise<EosScanResponse> {
+        requests.forEach(request => {
+            request.type = AnalyzerType.Eos;
+            request.exclude_patterns = skipFiles;
+        });
         return await this.run(checkCancel, ...requests).then(runResult => this.generateScanResponse(runResult));
     }
 

@@ -277,10 +277,11 @@ export class ScanManager implements ExtensionComponent {
             this._logManager.logMessage('Eos runner must receive at least one request to run', 'ERR');
             return {} as EosScanResponse;
         }
+        let skipFiles: string[] = AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern());
         this._logManager.logMessage(
-            'Scanning for Eos issues in ' + requests.map(request => `(Language '${request.language}', roots: [${request.roots.join()}])`),
+            'Scanning for Eos issues in ' + requests.map(request => `(Language '${request.language}', roots: [${request.roots.join()}])`) + ', skipping files: ' + skipFiles,
             'DEBUG'
         );
-        return eosRunner.scan(checkCancel, ...requests);
+        return eosRunner.scan(checkCancel, skipFiles, ...requests);
     }
 }
