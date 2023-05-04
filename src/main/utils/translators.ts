@@ -17,7 +17,7 @@ import { GeneralInfo } from '../types/generalInfo';
 import { IIssueCacheObject } from '../types/issueCacheObject';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
-import { FileLocation, SeverityLevel } from '../scanLogic/scanRunners/analyzerModels';
+import { FileLocation, AnalyzerManagerSeverityLevel } from '../scanLogic/scanRunners/analyzerModels';
 import { toPackageType } from '../types/projectType';
 import { Utils } from './utils';
 import { LogLevel } from '../log/logManager';
@@ -30,7 +30,7 @@ export class Translators {
         return logLevel.toLowerCase();
     }
 
-    public static levelToSeverity(level?: SeverityLevel): Severity {
+    public static levelToSeverity(level?: AnalyzerManagerSeverityLevel): Severity {
         switch (level) {
             case 'none':
                 return Severity.Unknown;

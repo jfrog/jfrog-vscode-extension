@@ -36,7 +36,7 @@ describe('Iac Scan Tests', () => {
     });
 
     describe('Populate Iac information tests', () => {
-        const testRoot: IssuesRootTreeNode = createRootTestNode(path.join('root'));
+        const testRoot: IssuesRootTreeNode = createRootTestNode('root');
         let expectedScanResult: ScanResults;
         let populatedIssues: number;
 
@@ -118,9 +118,11 @@ describe('Iac Scan Tests', () => {
                             issue.regionWithIssue.start.character === location.startColumn - 1 &&
                             issue.regionWithIssue.end.character === location.endColumn - 1
                     );
-                    if (!(issueLocation instanceof IacTreeNode)) {
-                        assert.fail('expected node to be IacTreeNode issue for location ' + location + ' in node: ' + issueLocation);
-                    }
+                    assert.instanceOf(
+                        issueLocation,
+                        IacTreeNode,
+                        'expected node to be IacTreeNode issue for location ' + location + ' in node: ' + issueLocation
+                    );
                     return <IacTreeNode>issueLocation;
                 }
 

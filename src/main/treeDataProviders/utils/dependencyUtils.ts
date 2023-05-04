@@ -25,11 +25,12 @@ import { GraphScanProgress, StepProgress } from './stepProgress';
 import { AnalyzerUtils } from './analyzerUtils';
 import { DescriptorTreeNode } from '../issuesTree/descriptorTree/descriptorTreeNode';
 import { VirtualEnvPypiTree } from '../dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
-import { ScanManager } from '../../scanLogic/scanManager';
+import { ScanManager, SupportedScans } from '../../scanLogic/scanManager';
 import { FileScanBundle, FileScanError, ScanUtils } from '../../utils/scanUtils';
 import { LogManager } from '../../log/logManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
+import { AnalyzerType } from '../../scanLogic/scanRunners/analyzerModels';
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
@@ -179,7 +180,7 @@ export class DependencyUtils {
      * @param fileScanBundle - the bundle for the scan that contains dataNode as ProjectDependencyTreeNode instance
      * @param rootGraph - the descriptor dependencies graph
      * @param scanProgress - the progress manager for the scan
-     * @param contextualScan - if true (default), will apply contextual analysis scan if Cve detected
+     * @param contextualScan - if true (default), will apply contextual analysis scan if a CVE was detected
      */
     private static async createDependencyScanTask(
         scanManager: ScanManager,
@@ -541,18 +542,34 @@ export class DependencyUtils {
     }
 
     /**
-     * Sends usage report for all techs we found project descriptors of.
+     * Sends usage report for all techs we found project descriptors of and for each advance scan that was preformed.
+     * @param supportedScans - the entitlement for each scan
      * @param projectDescriptors - map of all project descriptors by their tech.
      * @param connectionManager - manager containing Artifactory details if configured.
      */
-    public static async sendUsageReport(projectDescriptors: Map<PackageType, vscode.Uri[]>, connectionManager: ConnectionManager) {
+    public static async sendUsageReport(
+        supportedScans: SupportedScans,
+        projectDescriptors: Map<PackageType, vscode.Uri[]>,
+        connectionManager: ConnectionManager
+    ) {
         let featureArray: IUsageFeature[] = [];
-        for (const [techEnum, descriptors] of projectDescriptors.entries()) {
-            // Only add to usage if found descriptors for tech.
-            if (!!descriptors) {
-                const featureName: string = PackageType[techEnum].toLowerCase() + '-deps';
-                featureArray.push({ featureId: featureName });
+        if (supportedScans.graphScan) {
+            for (const [techEnum, descriptors] of projectDescriptors.entries()) {
+                // Only add to usage if found descriptors for tech.
+                if (!!descriptors) {
+                    const featureName: string = PackageType[techEnum].toLowerCase() + '-deps';
+                    featureArray.push({ featureId: featureName });
+                }
             }
+        }
+        if (supportedScans.applicability) {
+            featureArray.push({ featureId: AnalyzerType.ContextualAnalysis });
+        }
+        if (supportedScans.iac) {
+            featureArray.push({ featureId: AnalyzerType.Iac });
+        }
+        if (featureArray.length === 0) {
+            return;
         }
         await connectionManager.sendUsageReport(featureArray);
     }

@@ -9,7 +9,7 @@ export enum AnalyzerType {
     Secrets = 'secrets-scan'
 }
 
-export type SeverityLevel = 'none' | 'note' | 'warning' | 'error';
+export type AnalyzerManagerSeverityLevel = 'none' | 'note' | 'warning' | 'error';
 export type ResultKind = 'pass' | 'fail';
 
 export interface AnalyzeScanRequest {
@@ -47,7 +47,7 @@ export interface AnalyzeIssue {
     message: ResultContent;
     locations: AnalyzeLocation[];
     kind?: ResultKind;
-    level?: SeverityLevel;
+    level?: AnalyzerManagerSeverityLevel;
     codeFlows?: CodeFlow[];
 }
 

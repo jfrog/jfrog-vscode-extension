@@ -76,13 +76,11 @@ To learn more, see [here](https://www.jfrog.com/confluence/display/JFROG/Vulnera
 
 #### Supported Packages
 | Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
-|---------------------------------------------------|:----:|:----:|:----:|:----:|:----:|:----:|
-| SCA                                               |  ✅  |  ✅  |  ✅  |  ✅  |  ✅  | ✅  |
-| Upgrade vulnerable dependencies to fixed versions |  ✅  |  ✅  |  ✅  |  ✅  |  ✅  | ✅  |
-| Infrastructure As Code (Iac)                      |  ✅  |  ✅  |  ✅  |  ✅  |  ✅  | ✅  |
-| Secrets scan                                      |  ✅  |  ✅  |  ✅  |  ✅  |  ✅  | ✅  |
-| Contextual Analysis                               |  ❌  |  ❌  |  ✅  |  ✅  |  ✅  | ❌  |
-| Exclude dev dependencies                          |  ❌  |  ❌  |  ✅  |  ❌  |  ❌  | ❌  |
+|---------------------------------------------------|:----:|:------:|:-------:|:----:|:--------:|:-------:|
+| SCA                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
+| Upgrade vulnerable dependencies to fixed versions |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
+| Contextual Analysis                               |  ❌  |   ❌   |   ✅    |  ✅  |    ✅    |   ❌    |
+| Exclude dev dependencies                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |
 
 #### Additional Perks
 * Security issues are easily visible inline.

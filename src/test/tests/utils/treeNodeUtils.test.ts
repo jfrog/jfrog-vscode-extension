@@ -234,8 +234,6 @@ export function createDummyCveIssue(
 
 export function getTestCodeFileNode(root: IssuesRootTreeNode, pathToFile: string): CodeFileTreeNode {
     let fileNode: FileTreeNode | undefined = root.getFileTreeNode(AnalyzerUtils.parseLocationFilePath(pathToFile));
-    if (!(fileNode instanceof CodeFileTreeNode)) {
-        assert.fail('expected node to be CodeFileTreeNode for file ' + pathToFile + ', node: ' + fileNode);
-    }
+    assert.instanceOf(fileNode, CodeFileTreeNode, 'expected node to be CodeFileTreeNode for file ' + pathToFile + ', node: ' + fileNode);
     return <CodeFileTreeNode>fileNode;
 }

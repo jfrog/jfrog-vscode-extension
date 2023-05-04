@@ -43,16 +43,22 @@ export interface SecurityIssue {
 
 export class AnalyzerUtils {
     /**
-     * Remove the prefix 'file://' and decode the encoded path from binary result
+     * The paths that returns from the analyzerManager follows the SARIF format and are encoded, with prefix and fixed (not os depended).
+     * This method will parse a given path and will fix it to match the actual path expected by the vscode
+     * * Remove the prefix 'file:///' for windows or 'file://' if exists
+     * * replaces '/' with '\\' for windows
+     * * decode the encoded path
      * @param filePath - path to remove prefix and decode
      */
     public static parseLocationFilePath(filePath: string): string {
-        if (os.platform() === 'win32') {
-            let toDecode: string = filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath;
-            toDecode = toDecode.includes('file://') ? filePath.substring('file://'.length) : toDecode;
-            return decodeURI(toDecode.replace(/['/']/g, '\\'));
+        let isWindows: boolean = os.platform() === 'win32';
+        if (isWindows) {
+            filePath = filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath;
+            filePath = filePath.replace(/['/']/g, '\\');
+        } else {
+            filePath = filePath.includes('file://') ? filePath.substring('file://'.length) : filePath;
         }
-        return decodeURI(filePath.includes('file://') ? filePath.substring('file://'.length) : filePath);
+        return decodeURI(filePath);
     }
 
     /**
@@ -462,7 +468,7 @@ export class AnalyzerUtils {
     }
 
     /**
-     * Populate eos information in
+     * Populate eos information in the view
      * @param root - root node to populate data inside
      * @param workspaceData - data to populate on node
      * @returns number of eos issues populated
