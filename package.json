@@ -33,12 +33,12 @@
             },
             {
                 "view": "jfrog.issues",
-                "contents": "Your project is ready to be scanned for security issues.\nIf your JFrog subscription includes Advanced DevSecOps enabled, we will also run Contextual Analysis scans for CVE applicability, to determine whether your code is actually impacted by the vulnerable dependency, to learn more about this feature, see [Xray Advanced Scans](https://www.jfrog.com/confluence/display/JFROG/Xray+Advanced+Scans).\n[Scan](command:jfrog.xray.refresh)",
+                "contents": "Your project is ready to be scanned for security issues.\nIf your JFrog subscription includes Advanced DevSecOps enabled, we will also run Contextual Analysis scans for CVE applicability, to determine whether your code is actually impacted by the vulnerable dependency, to learn more about this feature, see [Xray Advanced Scans](https://www.jfrog.com/confluence/display/JFROG/Xray+Advanced+Scans).\n[Scan](command:jfrog.scan.refresh)",
                 "when": "jfrog.connection.status == signedIn && jfrog.firstScanInWorkspace"
             },
             {
                 "view": "jfrog.issues",
-                "contents": "Your project was scanned and we didn't find any security issues.\n[Rescan](command:jfrog.xray.refresh)",
+                "contents": "Your project was scanned and we didn't find any security issues.\n[Rescan](command:jfrog.scan.refresh)",
                 "when": "jfrog.connection.status == signedIn && !jfrog.firstScanInWorkspace"
             }
         ],
@@ -137,7 +137,7 @@
                 "category": "JFrog"
             },
             {
-                "command": "jfrog.xray.refresh",
+                "command": "jfrog.scan.refresh",
                 "title": "Refresh",
                 "icon": {
                     "light": "resources/light/refresh.png",
@@ -222,7 +222,7 @@
                     "group": "navigation@0"
                 },
                 {
-                    "command": "jfrog.xray.refresh",
+                    "command": "jfrog.scan.refresh",
                     "when": "view == jfrog.xray.ci.issues || view == jfrog.issues",
                     "group": "navigation@1"
                 },
