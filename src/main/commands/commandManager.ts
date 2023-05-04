@@ -41,7 +41,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.open.settings', () => Utils.openSettings());
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
-        this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
+        this.registerCommand(context, 'jfrog.scan.refresh', () => this.doRefresh());
         this.registerCommand(context, 'jfrog.xray.update.dependency', () => this.doRefresh());
         // Local state
         this.registerCommand(context, 'jfrog.issues.open.ignore', issue => vscode.env.openExternal(vscode.Uri.parse(issue.ignoreUrl)));

@@ -78,7 +78,7 @@ export class IssuesCache {
             this.remove(workspace);
             vscode.window.showInformationMessage("JFrog: Scan results for '" + workspace.name + "' have expired.", ...['Rescan']).then(answer => {
                 if (answer === 'Rescan') {
-                    vscode.commands.executeCommand('jfrog.xray.refresh');
+                    vscode.commands.executeCommand('jfrog.scan.refresh');
                 }
             });
             return undefined;
