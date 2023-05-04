@@ -30,7 +30,8 @@ export interface SupportedScans {
 
 enum EntitlementScanFeature {
     Applicability = 'contextual_analysis',
-    Iac = 'iac_scanners'
+    Iac = 'iac_scanners',
+    Secrets = 'secrets_detection'
 }
 
 /**
@@ -59,13 +60,14 @@ export class ScanManager implements ExtensionComponent {
 
     /**
      * Updates all the resources that are outdated
+     * @param supportedScans - the supported scan to get the needed resources
      * @returns true if all the outdated resources updated successfully, false otherwise
      */
-    public async updateResources(): Promise<boolean> {
+    public async updateResources(supportedScans: SupportedScans): Promise<boolean> {
         let result: boolean = true;
         await ScanUtils.backgroundTask(async (progress: vscode.Progress<{ message?: string; increment?: number }>) => {
             progress.report({ message: 'Checking for outdated scanners' });
-            let resources: Resource[] = await this.getOutdatedResources();
+            let resources: Resource[] = await this.getOutdatedResources(supportedScans);
             if (resources.length === 0) {
                 return;
             }
@@ -97,7 +99,7 @@ export class ScanManager implements ExtensionComponent {
         return result;
     }
 
-    private async getOutdatedResources(): Promise<Resource[]> {
+    private async getOutdatedResources(supportedScans: SupportedScans): Promise<Resource[]> {
         if (!this.shouldCheckOutdated()) {
             return [];
         }
@@ -105,7 +107,7 @@ export class ScanManager implements ExtensionComponent {
         ScanManager.lastOutdatedCheck = Date.now();
         let promises: Promise<boolean>[] = [];
         let outdatedResources: Resource[] = [];
-        for (const resource of await this.getResources()) {
+        for (const resource of this.getResources(supportedScans)) {
             promises.push(
                 resource
                     .isOutdated()
@@ -129,10 +131,9 @@ export class ScanManager implements ExtensionComponent {
         return !ScanManager.lastOutdatedCheck || Date.now() - ScanManager.lastOutdatedCheck > ScanManager.RESOURCE_CHECK_UPDATE_INTERVAL_MILLISECS;
     }
 
-    private async getResources(): Promise<Resource[]> {
+    private getResources(supportedScans: SupportedScans): Resource[] {
         let resources: Resource[] = [];
-        let supported: SupportedScans = await this.getSupportedScans();
-        if (supported.applicability || supported.iac) {
+        if (supportedScans.applicability || supportedScans.iac || supportedScans.secrets) {
             resources.push(BinaryRunner.getAnalyzerManagerResource(this._logManager));
         } else {
             this.logManager.logMessage('You are not entitled to run Advanced Security scans', 'DEBUG');
@@ -165,7 +166,7 @@ export class ScanManager implements ExtensionComponent {
      * Check if Secrets scan is supported for the user
      */
      public async isSecretsSupported(): Promise<boolean> {
-        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), 'secrets_detection');
+        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Secrets);
     }
 
     /**

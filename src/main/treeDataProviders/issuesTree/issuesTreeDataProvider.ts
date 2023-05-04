@@ -43,6 +43,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
     private _workspaceToRoot: Map<vscode.WorkspaceFolder, IssuesRootTreeNode | undefined> = new Map<vscode.WorkspaceFolder, IssuesRootTreeNode>();
     private _scanInProgress: boolean = false;
+    private _supportedScans: SupportedScans = {} as SupportedScans;
 
     constructor(
         protected _workspaceFolders: vscode.WorkspaceFolder[],
@@ -84,7 +85,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         // Prepare
         this.scanInProgress = true;
         this._logManager.showOutput();
-        await this._scanManager.updateResources();
+        this._supportedScans = await this._scanManager.getSupportedScans();
+        await this._scanManager.updateResources(this._supportedScans);
         // Scan
         this._logManager.logMessage('Refresh: starting workspace scans 🐸', 'INFO');
         this.clearTree();
@@ -169,7 +171,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * @param descriptors - all the descriptors in the workspace
      * @returns the number of tasks that will be preformed async and report to the progress bar
      */
-    private getNumberOfTasksInScan(supportedScans: SupportedScans, descriptors: Map<PackageType, vscode.Uri[]>): number {
+    private getNumberOfTasksInRepopulate(supportedScans: SupportedScans, descriptors: Map<PackageType, vscode.Uri[]>): number {
         return (
             (supportedScans.iac ? 1 : 0) +
             (supportedScans.secrets ? 1 : 0) +
@@ -197,15 +199,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         progress.report({ message: '👷 Preparing workspace' });
         let progressManager: StepProgress = new StepProgress(progress, checkCanceled, () => this.onChangeFire(), this._logManager);
         let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
+        let subStepsCount: number = this.getNumberOfTasksInRepopulate(this._supportedScans, workspaceDescriptors);
         checkCanceled();
-        let supportedScans: SupportedScans = await this._scanManager.getSupportedScans();
-        let subStepsCount: number = this.getNumberOfTasksInScan(supportedScans, workspaceDescriptors);
-        DependencyUtils.sendUsageReport(supportedScans, workspaceDescriptors, this._treesManager.connectionManager);
-        checkCanceled();
+        DependencyUtils.sendUsageReport(this._supportedScans, workspaceDescriptors, this._treesManager.connectionManager);
         // Scan workspace
         let scansPromises: Promise<any>[] = [];
         progressManager.startStep('🔎 Scanning for issues', subStepsCount);
-        if (supportedScans.graphScan) {
+        if (this._supportedScans.graphScan) {
             // Dependency graph and applicability scans for each package
             for (const [type, descriptorsPaths] of workspaceDescriptors) {
                 scansPromises.push(
@@ -216,12 +216,12 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                         type,
                         descriptorsPaths,
                         progressManager,
-                        supportedScans.applicability
+                        this._supportedScans.applicability
                     ).catch(err => ScanUtils.onScanError(err, this._logManager, true))
                 );
             }
         }
-        if (supportedScans.iac) {
+        if (this._supportedScans.iac) {
             // Scan the workspace for Infrastructure As Code (Iac) issues
             scansPromises.push(
                 AnalyzerUtils.runIac(scanResults, root, this._scanManager, progressManager).catch(err =>
@@ -229,7 +229,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 )
             );
         }
-        if (supportedScans.secrets) {
+        if (this._supportedScans.secrets) {
             // Scan the workspace for Secrets issues
             scansPromises.push(
                 AnalyzerUtils.runSecrets(scanResults, root, this._scanManager, progressManager).catch(err =>

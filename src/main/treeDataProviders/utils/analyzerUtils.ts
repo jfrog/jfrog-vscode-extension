@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
 import { CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
-import { Severity, SeverityUtils } from '../../types/severity';
+import { SeverityUtils } from '../../types/severity';
 import { ApplicableTreeNode } from '../issuesTree/codeFileTree/applicableTreeNode';
 import { CodeFileTreeNode } from '../issuesTree/codeFileTree/codeFileTreeNode';
 import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
@@ -23,23 +23,6 @@ import { IacFileIssues, IacIssue } from '../../scanLogic/scanRunners/iacScan';
 import { IacTreeNode } from '../issuesTree/codeFileTree/iacTreeNode';
 import { SecretsFileIssues, SecretsIssue } from '../../scanLogic/scanRunners/secretsScan';
 import { SecretTreeNode } from '../issuesTree/codeFileTree/secretsTreeNode';
-
-export interface GeneralScanResponse {
-    filesWithIssues: FileWithSecurityIssues[];
-}
-
-export interface FileWithSecurityIssues {
-    full_path: string;
-    issues: SecurityIssue[];
-}
-
-export interface SecurityIssue {
-    ruleId: string;
-    ruleName: string;
-    fullDescription?: string;
-    severity: Severity;
-    locations: FileRegion[];
-}
 
 export class AnalyzerUtils {
     /**

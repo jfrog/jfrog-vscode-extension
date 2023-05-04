@@ -1,3 +1,4 @@
+import * as path from 'path';
 import { assert } from 'chai';
 import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils';
 
@@ -34,14 +35,12 @@ describe('Analyzer Utils Tests', async () => {
     });
 
     [
-        {
-            filePath: '',
-            expected: ''
-        }
+        path.join('file'),
+        path.join('somewhere','folder','file')
     ].forEach(testCase => {
-        it('Parse location file path test - ' + testCase.filePath, () => {
-            let result: string = AnalyzerUtils.parseLocationFilePath(testCase.filePath);
-            assert.deepEqual(result, testCase.expected);
+        it('Parse location file path test - ' + testCase, () => {
+            let result: string = AnalyzerUtils.parseLocationFilePath(`file://${testCase.replace(/['\\']/g, '/')}`);
+            assert.deepEqual(result, testCase);
         });
     });
 });

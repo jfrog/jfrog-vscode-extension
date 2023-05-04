@@ -568,6 +568,9 @@ export class DependencyUtils {
         if (supportedScans.iac) {
             featureArray.push({ featureId: AnalyzerType.Iac });
         }
+        if (supportedScans.secrets) {
+            featureArray.push({ featureId: AnalyzerType.Secrets });
+        }
         if (featureArray.length === 0) {
             return;
         }
