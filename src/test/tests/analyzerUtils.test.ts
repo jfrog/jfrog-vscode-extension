@@ -32,4 +32,16 @@ describe('Analyzer Utils Tests', async () => {
             assert.sameMembers(testCase.results, results);
         });
     });
+
+    [
+        {
+            filePath: '',
+            expected: ''
+        }
+    ].forEach(testCase => {
+        it('Parse location file path test - ' + testCase.filePath, () => {
+            let result: string = AnalyzerUtils.parseLocationFilePath(testCase.filePath);
+            assert.deepEqual(result, testCase.expected);
+        });
+    });
 });

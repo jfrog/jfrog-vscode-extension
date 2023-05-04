@@ -247,6 +247,10 @@ export class ScanUtils {
             logger.logMessage(error.message, 'INFO');
             return undefined;
         }
+        if (error instanceof NotSupportedError) {
+            logger.logMessage(error.message, 'DEBUG');
+            return undefined;
+        }
         if (handle || error instanceof ScanTimeoutError) {
             logger.logError(error, true);
             return undefined;
@@ -268,6 +272,12 @@ export interface FileScanBundle {
 
 export class NotEntitledError extends Error {
     message: string = 'User is not entitled to run the binary';
+}
+
+export class NotSupportedError extends Error {
+    constructor(typeNotSupported: string) {
+        super(typeNotSupported + ' is not supported in the current Analyzer Manager version');
+    }
 }
 
 /**
