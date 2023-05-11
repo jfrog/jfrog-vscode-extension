@@ -8,8 +8,8 @@ import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issu
 import { createRootTestNode, getTestCodeFileNode } from './utils/treeNodeUtils.test';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
 import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils';
-import { getAnalyzerScanResponse } from './utils/utils.test';
-import { AnalyzerScanResponse, AnalyzerScanRun, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
+import { getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
+import { FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { IacTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/iacTreeNode';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
@@ -38,7 +38,7 @@ describe('Iac Scan Tests', () => {
         let response: IacScanResponse;
 
         before(() => {
-            response = getDummyRunner().convertResponse({ runs: [{} as AnalyzerScanRun] } as AnalyzerScanResponse);
+            response = getDummyRunner().convertResponse(getEmptyAnalyzerScanResponse());
         });
 
         it('Check response defined', () => {

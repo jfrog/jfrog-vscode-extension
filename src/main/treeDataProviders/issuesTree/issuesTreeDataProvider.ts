@@ -164,7 +164,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * Calculate the number of tasks that will be preformed in the workspace scan.
      * Components:
      * 1. Build Dependency Tree = task for each package type that exists in the workspace
-     * 2. Dependency scan = task for each descriptor in the workspace
+     * 2. Dependency scan = task for each descriptor in the workspace (Applicability is optional sub task of dependency)
      * 3. Iac scan = one task for all the workspace
      * 4. Secrets scan = one task for all the workspace
      * @param supportedScans - the details about the entitlements of the user

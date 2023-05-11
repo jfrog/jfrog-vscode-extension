@@ -23,12 +23,12 @@ describe('Issues Tree Data Provider Tests', () => {
         {
             test: 'With dependencies scan',
             supported: { dependencies: true } as SupportedScans,
-            expected: 3
+            expected: 5
         },
         {
             test: 'With advance scan',
             supported: { dependencies: true, applicability: true, iac: true, secrets: true } as SupportedScans,
-            expected: 5
+            expected: 7
         }
     ].forEach(testCase => {
         it('Get number of tasks in repopulate - ' + testCase.test, () => {
@@ -40,6 +40,7 @@ describe('Issues Tree Data Provider Tests', () => {
         let descriptors: Map<PackageType, Uri[]> = new Map<PackageType, Uri[]>();
         descriptors.set(PackageType.Unknown, [Uri.parse('/somewhere/file'), Uri.parse('/somewhere/other')]);
         descriptors.set(PackageType.Npm, [Uri.parse('/somewhere/other')]);
+        // 2 package types + 3 files = 5 tasks
         return descriptors;
     }
 

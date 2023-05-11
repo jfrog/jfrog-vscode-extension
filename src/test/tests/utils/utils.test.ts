@@ -10,7 +10,7 @@ import { LogManager } from '../../../main/log/logManager';
 import { ContextKeys, SessionStatus } from '../../../main/constants/contextKeys';
 import { ConnectionUtils } from '../../../main/connect/connectionUtils';
 import { JfrogClient } from 'jfrog-client-js';
-import { AnalyzerScanResponse } from '../../../main/scanLogic/scanRunners/analyzerModels';
+import { AnalyzerDriver, AnalyzerScanResponse, AnalyzerScanRun } from '../../../main/scanLogic/scanRunners/analyzerModels';
 
 export function isWindows(): boolean {
     return os.platform() === 'win32';
@@ -25,6 +25,10 @@ export function getAnalyzerScanResponse(filePath: string | undefined): AnalyzerS
         return undefined;
     }
     return JSON.parse(fs.readFileSync(filePath, 'utf8').toString());
+}
+
+export function getEmptyAnalyzerScanResponse(): AnalyzerScanResponse {
+    return { runs: [{ tool: { driver: {} as AnalyzerDriver } } as AnalyzerScanRun] } as AnalyzerScanResponse;
 }
 
 export function getNodeByArtifactId(root: DependenciesTreeNode, artifactId: string): DependenciesTreeNode | null {
