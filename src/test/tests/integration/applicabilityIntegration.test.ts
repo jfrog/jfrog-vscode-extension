@@ -3,7 +3,6 @@ import * as fs from 'fs';
 import { assert } from 'chai';
 
 import { ApplicabilityRunner, ApplicabilityScanResponse, CveApplicableDetails } from '../../../main/scanLogic/scanRunners/applicabilityScan';
-import { ScanUtils } from '../../../main/utils/scanUtils';
 
 import { AnalyzerManagerIntegrationEnv } from '../utils/testIntegration.test';
 import { FileIssues, FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
@@ -18,12 +17,7 @@ describe('Applicability Integration Tests', async () => {
     before(async () => {
         await integrationManager.initialize();
         // Must be created after integration initialization
-        runner = new ApplicabilityRunner(
-            integrationManager.connectionManager,
-            ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
-            integrationManager.logManager,
-            integrationManager.resource
-        );
+        runner = new ApplicabilityRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
     });
 

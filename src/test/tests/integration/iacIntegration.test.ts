@@ -2,11 +2,18 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { assert } from 'chai';
 
-import { IacFileIssues, IacIssue, IacRunner, IacScanResponse } from '../../../main/scanLogic/scanRunners/iacScan';
-import { AnalyzerManagerIntegrationEnv } from '../utils/testIntegration.test';
-import { NotSupportedError, ScanUtils } from '../../../main/utils/scanUtils';
-import { FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
-import { AnalyzerUtils } from '../../../main/treeDataProviders/utils/analyzerUtils';
+import { IacRunner, IacScanResponse } from '../../../main/scanLogic/scanRunners/iacScan';
+import {
+    AnalyzerManagerIntegrationEnv,
+    assertFileIssuesExist,
+    assertIssuesExist,
+    assertIssuesFullDescriptionExist,
+    assertIssuesLocationSnippetsExist,
+    assertIssuesLocationsExist,
+    assertIssuesRuleNameExist,
+    assertIssuesSeverityExist
+} from '../utils/testIntegration.test';
+import { NotSupportedError } from '../../../main/utils/scanUtils';
 
 describe('Iac Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -19,12 +26,7 @@ describe('Iac Integration Tests', async () => {
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        runner = new IacRunner(
-            integrationManager.connectionManager,
-            ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
-            integrationManager.logManager,
-            integrationManager.resource
-        );
+        runner = new IacRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
         // Get expected partial result that the scan should contain
         let dataPath: string = path.join(testDataRoot, 'expectedScanResponse.json');
@@ -42,40 +44,6 @@ describe('Iac Integration Tests', async () => {
         }
     });
 
-    function getTestFileIssues(filePath: string): IacFileIssues {
-        let actualPath: string = AnalyzerUtils.parseLocationFilePath(filePath);
-        let potential: IacFileIssues | undefined = response.filesWithIssues.find(fileWithIssues => fileWithIssues.full_path === actualPath);
-        if (!potential) {
-            assert.fail('Response should contain file with issues at path ' + actualPath);
-        }
-        return potential;
-    }
-
-    function getTestIssue(filePath: string, ruleId: string): IacIssue {
-        let fileWithIssues: IacFileIssues = getTestFileIssues(filePath);
-        let potential: IacIssue | undefined = fileWithIssues.issues.find(issue => issue.ruleId === ruleId);
-        if (!potential) {
-            assert.fail('Expected ' + ruleId + ' should be contain detected as issues of file ' + filePath);
-        }
-        return potential;
-    }
-
-    function getTestLocation(filePath: string, ruleId: string, location: FileRegion): FileRegion {
-        let issue: IacIssue = getTestIssue(filePath, ruleId);
-        let potential: FileRegion | undefined = issue.locations.find(actualLocation => AnalyzerUtils.isSameRegion(location, actualLocation));
-        if (!potential) {
-            assert.fail(
-                'Expected file ' +
-                    filePath +
-                    ' should contain evidence for issue ' +
-                    ruleId +
-                    ' in location ' +
-                    [location.startLine, location.endLine, location.startColumn, location.endColumn]
-            );
-        }
-        return potential;
-    }
-
     it('Check response defined', () => {
         assert.isDefined(response);
     });
@@ -84,69 +52,22 @@ describe('Iac Integration Tests', async () => {
         assert.isDefined(response.filesWithIssues);
     });
 
-    it('Check all expected files with issues detected', () => {
-        expectedContent.filesWithIssues.forEach((expectedFileWithIssues: IacFileIssues) => {
-            assert.isDefined(getTestFileIssues(expectedFileWithIssues.full_path));
-        });
-    });
+    it('Check all expected files with issues detected', () =>
+        assertFileIssuesExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
 
-    it('Check all expected issues detected', () => {
-        expectedContent.filesWithIssues.forEach((expectedFileWithIssues: IacFileIssues) => {
-            expectedFileWithIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                assert.isDefined(getTestIssue(expectedFileWithIssues.full_path, expectedIacIssues.ruleId));
-            });
-        });
-    });
+    it('Check all expected issues detected', () => assertIssuesExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
 
-    it('Check all expected locations detected', () => {
-        expectedContent.filesWithIssues.forEach((expectedFileWithIssues: IacFileIssues) => {
-            expectedFileWithIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                expectedIacIssues.locations.forEach((expectedLocation: FileRegion) => {
-                    assert.isDefined(getTestLocation(expectedFileWithIssues.full_path, expectedIacIssues.ruleId, expectedLocation));
-                });
-            });
-        });
-    });
+    it('Check all expected locations detected', () =>
+        assertIssuesLocationsExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
 
     describe('Detected issues validations', () => {
-        it('Check rule-name', () => {
-            expectedContent.filesWithIssues.forEach((expectedFileWithIssues: IacFileIssues) => {
-                expectedFileWithIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                    assert.deepEqual(getTestIssue(expectedFileWithIssues.full_path, expectedIacIssues.ruleId).ruleName, expectedIacIssues.ruleName);
-                });
-            });
-        });
+        it('Check rule-name', () => assertIssuesRuleNameExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
 
-        it('Check rule full description', () => {
-            expectedContent.filesWithIssues.forEach((expectedFileWithIssues: IacFileIssues) => {
-                expectedFileWithIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                    assert.deepEqual(
-                        getTestIssue(expectedFileWithIssues.full_path, expectedIacIssues.ruleId).fullDescription,
-                        expectedIacIssues.fullDescription
-                    );
-                });
-            });
-        });
+        it('Check rule full description', () =>
+            assertIssuesFullDescriptionExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
 
-        it('Check severity', () => {
-            expectedContent.filesWithIssues.forEach((expectedFileWithIssues: IacFileIssues) => {
-                expectedFileWithIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                    assert.deepEqual(getTestIssue(expectedFileWithIssues.full_path, expectedIacIssues.ruleId).severity, expectedIacIssues.severity);
-                });
-            });
-        });
+        it('Check severity', () => assertIssuesSeverityExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
 
-        it('Check snippet', () => {
-            expectedContent.filesWithIssues.forEach((expectedFileWithIssues: IacFileIssues) => {
-                expectedFileWithIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                    expectedIacIssues.locations.forEach((expectedLocation: FileRegion) => {
-                        assert.deepEqual(
-                            getTestLocation(expectedFileWithIssues.full_path, expectedIacIssues.ruleId, expectedLocation).snippet?.text,
-                            expectedLocation.snippet?.text
-                        );
-                    });
-                });
-            });
-        });
+        it('Check snippet', () => assertIssuesLocationSnippetsExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
     });
 });

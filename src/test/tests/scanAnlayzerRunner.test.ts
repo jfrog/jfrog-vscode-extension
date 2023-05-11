@@ -5,7 +5,7 @@ import { describe } from 'mocha';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 
-import { AnalyzerScanResponse, AnalyzerType, AnalyzeScanRequest } from '../../main/scanLogic/scanRunners/analyzerModels';
+import { AnalyzerScanResponse, ScanType, AnalyzeScanRequest } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { BinaryRunner } from '../../main/scanLogic/scanRunners/binaryRunner';
 import { NotEntitledError, ScanCancellationError, ScanTimeoutError, ScanUtils } from '../../main/utils/scanUtils';
 import { RunUtils } from '../../main/utils/runUtils';
@@ -14,7 +14,7 @@ import { RunUtils } from '../../main/utils/runUtils';
 describe('Analyzer BinaryRunner tests', async () => {
     let logManager: LogManager = new LogManager().activate();
     let connectionManager: ConnectionManager = createBinaryRunnerConnectionManager('url', 'username', 'pass', 'token');
-    const dummyName: AnalyzerType = AnalyzerType.ContextualAnalysis;
+    const dummyName: ScanType = ScanType.ContextualAnalysis;
 
     function createBinaryRunnerConnectionManager(inputUrl: string, user: string, pass: string, token: string): ConnectionManager {
         return {
@@ -44,11 +44,11 @@ describe('Analyzer BinaryRunner tests', async () => {
         return new (class extends BinaryRunner {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             async runBinary(
-                checkCancel: () => void,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 _yamlConfigPath: string,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                _executionLogDirectory: string
+                _executionLogDirectory: string,
+                checkCancel: () => void
             ): Promise<void> {
                 await RunUtils.runWithTimeout(timeout, checkCancel, dummyAction());
             }
@@ -154,7 +154,7 @@ describe('Analyzer BinaryRunner tests', async () => {
         });
     });
 
-    function getAnalyzeScanRequest(roots: string[], scanType: AnalyzerType = AnalyzerType.ContextualAnalysis): AnalyzeScanRequest {
+    function getAnalyzeScanRequest(roots: string[], scanType: ScanType = ScanType.ContextualAnalysis): AnalyzeScanRequest {
         return {
             type: scanType,
             output: '/path/to/output.json',

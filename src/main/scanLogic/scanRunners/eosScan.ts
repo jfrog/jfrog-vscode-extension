@@ -8,7 +8,7 @@ import {
     FileRegion,
     FileLocation,
     CodeFlow,
-    AnalyzerType
+    ScanType
 } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
@@ -47,7 +47,7 @@ export interface EosIssueLocation {
 
 export class EosRunner extends BinaryRunner {
     constructor(connectionManager: ConnectionManager, timeout: number, logManager: LogManager, binary?: Resource) {
-        super(connectionManager, timeout, AnalyzerType.Eos, logManager, binary);
+        super(connectionManager, timeout, ScanType.Eos, logManager, binary);
     }
 
     public static supportedLanguages(): LanguageType[] {
@@ -55,7 +55,7 @@ export class EosRunner extends BinaryRunner {
     }
 
     /** @override */
-    public async runBinary(checkCancel: () => void, yamlConfigPath: string, executionLogDirectory: string): Promise<void> {
+    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string, checkCancel: () => void): Promise<void> {
         await this.executeBinary(checkCancel, ['zd', yamlConfigPath], executionLogDirectory);
     }
 
@@ -67,7 +67,7 @@ export class EosRunner extends BinaryRunner {
      */
     public async scan(checkCancel: () => void, skipFiles: string[], ...requests: EosScanRequest[]): Promise<EosScanResponse> {
         requests.forEach(request => {
-            request.type = AnalyzerType.Eos;
+            request.type = ScanType.Eos;
             request.exclude_patterns = skipFiles;
         });
         return await this.run(checkCancel, ...requests).then(runResult => this.generateScanResponse(runResult));

@@ -11,10 +11,10 @@ import { Configuration } from '../utils/configuration';
 import { ContextKeys, ExtensionMode } from '../constants/contextKeys';
 import { ScanUtils } from '../utils/scanUtils';
 import { DiagnosticsManager } from '../diagnostics/diagnosticsManager';
-import { IDependencyPage, IEosPage, IIaCPage, ISecretsPage } from 'jfrog-ide-webview';
 import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
 import { Utils } from '../utils/utils';
+import { IWebviewPage } from '../webviews/detailsWebView';
 
 /**
  * Register and execute all commands in the extension.
@@ -41,7 +41,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.open.settings', () => Utils.openSettings());
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
-        this.registerCommand(context, 'jfrog.xray.refresh', () => this.doRefresh());
+        this.registerCommand(context, 'jfrog.scan.refresh', () => this.doRefresh());
         this.registerCommand(context, 'jfrog.xray.update.dependency', () => this.doRefresh());
         // Local state
         this.registerCommand(context, 'jfrog.issues.open.ignore', issue => vscode.env.openExternal(vscode.Uri.parse(issue.ignoreUrl)));
@@ -174,7 +174,7 @@ export class CommandManager implements ExtensionComponent {
      * Open webpage with the given data
      * @param page - data to show in webpage
      */
-    public doShowDetailsPage(page: IDependencyPage | IEosPage | IIaCPage | ISecretsPage) {
+    public doShowDetailsPage(page: IWebviewPage) {
         vscode.commands.executeCommand('jfrog.view.details.page', page);
     }
 
@@ -184,7 +184,7 @@ export class CommandManager implements ExtensionComponent {
      * @param fileRegion - range inside the file to select
      * @param page - the data to show in the open page
      */
-    public async doOpenFileAndDetailsPage(filePath: string, fileRegion: vscode.Range, page: IDependencyPage | IEosPage | IIaCPage | ISecretsPage) {
+    public async doOpenFileAndDetailsPage(filePath: string, fileRegion: vscode.Range, page: IWebviewPage) {
         ScanUtils.openFile(filePath, fileRegion).then(() => this.doShowDetailsPage(page));
     }
 

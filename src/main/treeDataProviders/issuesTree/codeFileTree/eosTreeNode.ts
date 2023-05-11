@@ -44,9 +44,6 @@ export class EosTreeNode extends CodeIssueTreeNode {
         return this._snippet;
     }
 
-    /**
-     * Get the CVE details page of the issue
-     */
     public getDetailsPage(): IEosPage {
         return {
             header: this.label,

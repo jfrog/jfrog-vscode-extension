@@ -2,19 +2,20 @@ export interface AnalyzerRequest {
     scans: AnalyzeScanRequest[];
 }
 
-export enum AnalyzerType {
+export enum ScanType {
     ContextualAnalysis = 'analyze-applicability',
     Iac = 'iac-scan-modules',
     Eos = 'analyze-codebase',
     Secrets = 'secrets-scan'
 }
 
-export type SeverityLevel = 'none' | 'note' | 'warning' | 'error';
+export type AnalyzerManagerSeverityLevel = 'none' | 'note' | 'warning' | 'error';
+
 export type ResultKind = 'pass' | 'fail';
 
 export interface AnalyzeScanRequest {
     // What type of scan
-    type: AnalyzerType;
+    type: ScanType;
     // The path that the response will be written to
     output: string;
     // List of path to folders that scan will run inside
@@ -47,7 +48,7 @@ export interface AnalyzeIssue {
     message: ResultContent;
     locations: AnalyzeLocation[];
     kind?: ResultKind;
-    level?: SeverityLevel;
+    level?: AnalyzerManagerSeverityLevel;
     suppressions?: AnalyzeSuppression[];
     codeFlows?: CodeFlow[];
 }

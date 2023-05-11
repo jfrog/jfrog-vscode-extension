@@ -3,17 +3,28 @@ import * as path from 'path';
 import { assert } from 'chai';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
-import { IacFileIssues, IacIssue, IacRunner, IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
-import { ScanUtils } from '../../main/utils/scanUtils';
+import { IacRunner, IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
-import { createRootTestNode, getTestCodeFileNode } from './utils/treeNodeUtils.test';
+import { createRootTestNode } from './utils/treeNodeUtils.test';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
-import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils';
-import { getAnalyzerScanResponse } from './utils/utils.test';
+import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
+import { getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
 import { FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { IacTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/iacTreeNode';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
+import {
+    assertFileNodesCreated,
+    assertIssueNodesCreated,
+    assertIssuesFullDescription,
+    assertNodeLabelRuleName,
+    assertNodesSeverity,
+    assertIssuesSnippet,
+    assertSameNumberOfFileNodes,
+    assertSameNumberOfIssueNodes,
+    findLocationNode,
+    groupFiles
+} from './utils/testAnalyzer.test';
 
 describe('Iac Scan Tests', () => {
     const scanIac: string = path.join(__dirname, '..', 'resources', 'iacScan');
@@ -23,7 +34,7 @@ describe('Iac Scan Tests', () => {
         let response: IacScanResponse;
 
         before(() => {
-            response = getDummyRunner().generateScanResponse(undefined);
+            response = getDummyRunner().convertResponse(undefined);
         });
 
         it('Check response defined', () => {
@@ -35,16 +46,32 @@ describe('Iac Scan Tests', () => {
         });
     });
 
-    describe('Populate Iac information tests', () => {
-        const testRoot: IssuesRootTreeNode = createRootTestNode(path.join('root'));
+    describe('Iac scan no issues found', () => {
+        let response: IacScanResponse;
+
+        before(() => {
+            response = getDummyRunner().convertResponse(getEmptyAnalyzerScanResponse());
+        });
+
+        it('Check response defined', () => {
+            assert.isDefined(response);
+        });
+
+        it('Check response attributes exist', () => {
+            assert.isDefined(response.filesWithIssues);
+        });
+    });
+
+    describe('Iac scan success', () => {
+        const testRoot: IssuesRootTreeNode = createRootTestNode('root');
         let expectedScanResult: ScanResults;
+        let expectedFilesWithIssues: FileWithSecurityIssues[] = [];
         let populatedIssues: number;
 
         before(() => {
             // Read test data and populate scanResult
-            let response: IacScanResponse = getDummyRunner().generateScanResponse(
-                getAnalyzerScanResponse(path.join(scanIac, 'analyzerResponse.json'))
-            );
+            let response: IacScanResponse = getDummyRunner().convertResponse(getAnalyzerScanResponse(path.join(scanIac, 'analyzerResponse.json')));
+            expectedFilesWithIssues = groupFiles(response);
             expectedScanResult = {
                 iacScanTimestamp: 11,
                 iacScan: response
@@ -62,136 +89,37 @@ describe('Iac Scan Tests', () => {
         });
 
         describe('Data populated as CodeFileTreeNode nodes', () => {
-            let expectedFilesWithIssues: IacFileIssues[] = [];
-
-            before(() => {
-                // Collect all the locations from the test data with issues under the same file to be together under the same data
-                expectedScanResult.iacScan.filesWithIssues.forEach((fileWithIssue: IacFileIssues) => {
-                    let fileIssues: IacFileIssues | undefined = expectedFilesWithIssues.find(
-                        (fileIssues: IacFileIssues) => fileIssues.full_path === fileWithIssue.full_path
-                    );
-                    if (!fileIssues) {
-                        fileIssues = {
-                            full_path: fileWithIssue.full_path,
-                            issues: []
-                        } as IacFileIssues;
-                        expectedFilesWithIssues.push(fileIssues);
-                    }
-                    fileWithIssue.issues.forEach((issue: IacIssue) => {
-                        let iacIssue: IacIssue | undefined = fileIssues?.issues.find((iacIssue: IacIssue) => iacIssue.ruleId === issue.ruleId);
-                        if (!iacIssue) {
-                            iacIssue = {
-                                ruleId: issue.ruleId,
-                                fullDescription: issue.fullDescription,
-                                ruleName: issue.ruleName,
-                                severity: issue.severity,
-                                locations: []
-                            } as IacIssue;
-                            fileIssues?.issues.push(iacIssue);
-                        }
-                        iacIssue?.locations.push(...issue.locations);
-                    });
-                });
-            });
-
-            it('Check file nodes created for each file with issues', () => {
-                expectedFilesWithIssues.forEach((fileIssues: IacFileIssues) => {
-                    assert.isDefined(getTestCodeFileNode(testRoot, fileIssues.full_path));
-                });
-            });
-
-            it('Check number of file nodes populated as root children', () => {
-                assert.equal(
-                    testRoot.children.length,
-                    expectedFilesWithIssues.length,
-                    'files populated: ' + testRoot.children.map(child => child.label)
+            function getTestIssueNode(fileNode: CodeFileTreeNode, location: FileRegion): IacTreeNode {
+                let issueLocation: CodeIssueTreeNode | undefined = findLocationNode(location, fileNode);
+                assert.instanceOf(
+                    issueLocation,
+                    IacTreeNode,
+                    'expected node to be IacTreeNode issue for location ' + location + ' in node: ' + issueLocation
                 );
-            });
+                return <IacTreeNode>issueLocation;
+            }
 
-            describe('Issues populated as IacTreeNode nodes', () => {
-                function getTestIssueNode(fileNode: CodeFileTreeNode, location: FileRegion): IacTreeNode {
-                    let issueLocation: CodeIssueTreeNode | undefined = fileNode.issues.find(
-                        issue =>
-                            // Location in vscode start from 0, in scanners location starts from 1
-                            issue.regionWithIssue.start.line === location.startLine - 1 &&
-                            issue.regionWithIssue.end.line === location.endLine - 1 &&
-                            issue.regionWithIssue.start.character === location.startColumn - 1 &&
-                            issue.regionWithIssue.end.character === location.endColumn - 1
-                    );
-                    if (!(issueLocation instanceof IacTreeNode)) {
-                        assert.fail('expected node to be IacTreeNode issue for location ' + location + ' in node: ' + issueLocation);
-                    }
-                    return <IacTreeNode>issueLocation;
-                }
+            it('Check file nodes created for each file with issues', () => assertFileNodesCreated(testRoot, expectedFilesWithIssues));
 
-                it('Check number of issues populated in file', () => {
-                    expectedFilesWithIssues.forEach((expectedFileIssues: IacFileIssues) => {
-                        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                        expectedFileIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                            assert.equal(fileNode.getIssueById(expectedIacIssues.ruleId).length, expectedIacIssues.locations.length);
-                        });
-                    });
-                });
+            it('Check number of file nodes populated as root children', () => assertSameNumberOfFileNodes(testRoot, expectedFilesWithIssues));
 
-                it('Check Iac issue in location nodes created in the file node', () => {
-                    expectedFilesWithIssues.forEach((expectedFileIssues: IacFileIssues) => {
-                        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                        expectedFileIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                            expectedIacIssues.locations.forEach((expectedLocation: FileRegion) => {
-                                assert.isDefined(getTestIssueNode(fileNode, expectedLocation));
-                            });
-                        });
-                    });
-                });
+            describe('Issues populated as nodes', () => {
+                it('Check number of issues populated in file', () => assertSameNumberOfIssueNodes(testRoot, expectedFilesWithIssues));
 
-                it('Check rule names transferred as label of the issues', () => {
-                    expectedFilesWithIssues.forEach((expectedFileIssues: IacFileIssues) => {
-                        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                        expectedFileIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                            expectedIacIssues.locations.forEach((expectedLocation: FileRegion) => {
-                                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).label, expectedIacIssues.ruleName);
-                            });
-                        });
-                    });
-                });
+                it('Check issue nodes created in the file node', () => assertIssueNodesCreated(testRoot, expectedFilesWithIssues, getTestIssueNode));
 
-                it('Check rule full description transferred', () => {
-                    expectedFilesWithIssues.forEach((expectedFileIssues: IacFileIssues) => {
-                        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                        expectedFileIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                            expectedIacIssues.locations.forEach((expectedLocation: FileRegion) => {
-                                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).fullDescription, expectedIacIssues.fullDescription);
-                            });
-                        });
-                    });
-                });
+                it('Check rule names transferred as labels', () => assertNodeLabelRuleName(testRoot, expectedFilesWithIssues, getTestIssueNode));
 
-                it('Check snippet text at location with issue transferred', () => {
-                    expectedFilesWithIssues.forEach((expectedFileIssues: IacFileIssues) => {
-                        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                        expectedFileIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                            expectedIacIssues.locations.forEach((expectedLocation: FileRegion) => {
-                                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).snippet, expectedLocation.snippet?.text);
-                            });
-                        });
-                    });
-                });
+                it('Check issue severity transferred', () => assertNodesSeverity(testRoot, expectedFilesWithIssues, getTestIssueNode));
 
-                it('Check issue severity transferred', () => {
-                    expectedFilesWithIssues.forEach((expectedFileIssues: IacFileIssues) => {
-                        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                        expectedFileIssues.issues.forEach((expectedIacIssues: IacIssue) => {
-                            expectedIacIssues.locations.forEach((expectedLocation: FileRegion) => {
-                                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).severity, expectedIacIssues.severity);
-                            });
-                        });
-                    });
-                });
+                it('Check rule full description transferred', () => assertIssuesFullDescription(testRoot, expectedFilesWithIssues, getTestIssueNode));
+
+                it('Check snippet text at location transferred', () => assertIssuesSnippet(testRoot, expectedFilesWithIssues, getTestIssueNode));
             });
         });
     });
 
     function getDummyRunner(): IacRunner {
-        return new IacRunner({} as ConnectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, logManager);
+        return new IacRunner({} as ConnectionManager, logManager);
     }
 });

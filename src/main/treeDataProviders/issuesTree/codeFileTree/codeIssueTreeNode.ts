@@ -4,7 +4,7 @@ import { Severity } from '../../../types/severity';
 import { IssueTreeNode } from '../issueTreeNode';
 import { CodeFileTreeNode } from './codeFileTreeNode';
 
-export class CodeIssueTreeNode extends IssueTreeNode {
+export abstract class CodeIssueTreeNode extends IssueTreeNode {
     private _regionWithIssue: vscode.Range;
 
     constructor(issueId: string, private _parent: CodeFileTreeNode, region: vscode.Range, severity?: Severity, label?: string) {

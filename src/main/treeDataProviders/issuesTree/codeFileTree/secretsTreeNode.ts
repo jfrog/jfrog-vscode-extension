@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 
 import { FileRegion } from '../../../scanLogic/scanRunners/analyzerModels';
-import { SecretsIssue } from '../../../scanLogic/scanRunners/secretsScan';
 import { CodeFileTreeNode } from './codeFileTreeNode';
 import { CodeIssueTreeNode } from './codeIssueTreeNode';
 import { IAnalysisStep, ISecretsPage, PageType } from 'jfrog-ide-webview';
 import { SeverityUtils } from '../../../types/severity';
+import { SecurityIssue } from '../../utils/analyzerUtils';
 
 /**
  * Describe a Secret issue
@@ -14,7 +14,7 @@ export class SecretTreeNode extends CodeIssueTreeNode {
     private _fullDescription?: string;
     private _snippet?: string;
 
-    constructor(issue: SecretsIssue, location: FileRegion, parent: CodeFileTreeNode) {
+    constructor(issue: SecurityIssue, location: FileRegion, parent: CodeFileTreeNode) {
         super(
             issue.ruleId,
             parent,
@@ -37,9 +37,6 @@ export class SecretTreeNode extends CodeIssueTreeNode {
         return this._fullDescription;
     }
 
-    /**
-     * Get the details page of the issue
-     */
     public getDetailsPage(): ISecretsPage {
         return {
             pageType: PageType.Secrets,
