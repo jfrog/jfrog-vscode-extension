@@ -5,8 +5,9 @@ import { Uri } from 'vscode';
 import { PackageType } from '../../main/types/projectType';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
 import { DependencyScanResults } from '../../main/types/workspaceIssuesDetails';
-import { IacFileIssues, IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
-import { SecretsFileIssues, SecretsScanResponse } from '../../main/scanLogic/scanRunners/secretsScan';
+import { IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
+import { SecretsScanResponse } from '../../main/scanLogic/scanRunners/secretsScan';
+import { FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
 
 /**
  * Test functionality of @class IssuesTreeDataProvider.
@@ -82,10 +83,10 @@ describe('Issues Tree Data Provider Tests', () => {
     }
 
     function addDummyIacIssue(scanResult: ScanResults) {
-        scanResult.iacScan = { filesWithIssues: [{} as IacFileIssues] } as IacScanResponse;
+        scanResult.iacScan = { filesWithIssues: [{} as FileWithSecurityIssues] } as IacScanResponse;
     }
 
     function addDummySecretsIssue(scanResult: ScanResults) {
-        scanResult.secretsScan = { filesWithIssues: [{} as SecretsFileIssues] } as SecretsScanResponse;
+        scanResult.secretsScan = { filesWithIssues: [{} as FileWithSecurityIssues] } as SecretsScanResponse;
     }
 });

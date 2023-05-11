@@ -28,7 +28,7 @@ export function getAnalyzerScanResponse(filePath: string | undefined): AnalyzerS
 }
 
 export function getEmptyAnalyzerScanResponse(): AnalyzerScanResponse {
-    return { runs: [{ tool: { driver: {} as AnalyzerDriver } } as AnalyzerScanRun] } as AnalyzerScanResponse;
+    return { runs: [{ tool: { driver: { name: 'dummy', rules: [] } as AnalyzerDriver } } as AnalyzerScanRun] } as AnalyzerScanResponse;
 }
 
 export function getNodeByArtifactId(root: DependenciesTreeNode, artifactId: string): DependenciesTreeNode | null {

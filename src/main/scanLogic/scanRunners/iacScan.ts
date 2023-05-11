@@ -1,27 +1,13 @@
 import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
-import { Severity } from '../../types/severity';
+import { AnalyzerUtils, FileWithSecurityIssues } from '../../treeDataProviders/utils/analyzerUtils';
 import { Resource } from '../../utils/resource';
 import { ScanUtils } from '../../utils/scanUtils';
-import { Translators } from '../../utils/translators';
-import { AnalyzeIssue, AnalyzeScanRequest, AnalyzerScanResponse, ScanType, FileRegion } from './analyzerModels';
+import { AnalyzeScanRequest, AnalyzerScanResponse, ScanType } from './analyzerModels';
 import { BinaryRunner } from './binaryRunner';
 
 export interface IacScanResponse {
-    filesWithIssues: IacFileIssues[];
-}
-
-export interface IacFileIssues {
-    full_path: string;
-    issues: IacIssue[];
-}
-
-export interface IacIssue {
-    ruleId: string;
-    severity: Severity;
-    ruleName: string;
-    fullDescription?: string;
-    locations: FileRegion[];
+    filesWithIssues: FileWithSecurityIssues[];
 }
 
 /**
@@ -72,65 +58,10 @@ export class IacRunner extends BinaryRunner {
                 }
             }
             // Generate response data
-            run.results?.forEach(analyzeIssue => this.generateIssueData(iacResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId)));
+            run.results?.forEach(analyzeIssue =>
+                AnalyzerUtils.generateIssueData(iacResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId))
+            );
         }
         return iacResponse;
-    }
-
-    /**
-     * Generate the data for a specific analyze issue (the file object, the issue in the file object and all the location objects of this issue).
-     * @param iacResponse - the response of the scan that holds all the file objects
-     * @param analyzeIssue - the issue to handle and generate information base on it
-     * @param fullDescription - the description of the analyzeIssue
-     */
-    private generateIssueData(iacResponse: IacScanResponse, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
-        analyzeIssue.locations.forEach(location => {
-            let fileWithIssues: IacFileIssues = this.getOrCreateIacFileIssues(iacResponse, location.physicalLocation.artifactLocation.uri);
-            let fileIssue: IacIssue = this.getOrCreateIacIssue(fileWithIssues, analyzeIssue, fullDescription);
-            fileIssue.locations.push(location.physicalLocation.region);
-        });
-    }
-
-    /**
-     * Get or create issue in a given file if not exists
-     * @param fileWithIssues - the file with the issues
-     * @param analyzeIssue - the issue to search or create
-     * @param fullDescription - the description of the issue
-     * @returns - the Iac issue
-     */
-    private getOrCreateIacIssue(fileWithIssues: IacFileIssues, analyzeIssue: AnalyzeIssue, fullDescription?: string): IacIssue {
-        let potential: IacIssue | undefined = fileWithIssues.issues.find(issue => issue.ruleId === analyzeIssue.ruleId);
-        if (potential) {
-            return potential;
-        }
-        let fileIssue: IacIssue = {
-            ruleId: analyzeIssue.ruleId,
-            severity: Translators.levelToSeverity(analyzeIssue.level),
-            ruleName: analyzeIssue.message.text,
-            fullDescription: fullDescription,
-            locations: []
-        } as IacIssue;
-        fileWithIssues.issues.push(fileIssue);
-        return fileIssue;
-    }
-
-    /**
-     * Get or create file with issues if not exists in the response
-     * @param response - the response that holds the files
-     * @param uri - the files to search or create
-     * @returns - file with issues
-     */
-    private getOrCreateIacFileIssues(response: IacScanResponse, uri: string): IacFileIssues {
-        let potential: IacFileIssues | undefined = response.filesWithIssues.find(fileWithIssues => fileWithIssues.full_path === uri);
-        if (potential) {
-            return potential;
-        }
-        let fileWithIssues: IacFileIssues = {
-            full_path: uri,
-            issues: []
-        } as IacFileIssues;
-        response.filesWithIssues.push(fileWithIssues);
-
-        return fileWithIssues;
     }
 }

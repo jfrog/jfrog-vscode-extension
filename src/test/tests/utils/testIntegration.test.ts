@@ -1,4 +1,5 @@
 import { assert } from 'chai';
+import * as path from 'path';
 
 import { ConnectionManager } from '../../../main/connect/connectionManager';
 import { LogManager } from '../../../main/log/logManager';
@@ -6,6 +7,8 @@ import { ScanUtils } from '../../../main/utils/scanUtils';
 import { createTestConnectionManager } from './utils.test';
 import { Resource } from '../../../main/utils/resource';
 import { BinaryRunner } from '../../../main/scanLogic/scanRunners/binaryRunner';
+import { AnalyzerUtils, FileWithSecurityIssues, SecurityIssue } from '../../../main/treeDataProviders/utils/analyzerUtils';
+import { FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
 
 export class BaseIntegrationEnv {
     public static readonly ENV_PLATFORM_URL: string = 'JFROG_IDE_PLATFORM_URL';
@@ -123,4 +126,115 @@ export async function initializeIntegrationTests() {
 
 export async function cleanUpIntegrationTests() {
     await ScanUtils.removeFolder(BaseIntegrationEnv.directory);
+}
+
+export function assertExpectedContentWithSecurityIssues(
+    testDataRoot: string,
+    response: { filesWithIssues: FileWithSecurityIssues[] },
+    expectedContent: { filesWithIssues: FileWithSecurityIssues[] }
+) {
+    function getTestFileIssues(filePath: string): FileWithSecurityIssues {
+        let actualPath: string = path.join(testDataRoot, filePath);
+        let potential: FileWithSecurityIssues | undefined = response.filesWithIssues.find(
+            (fileWithIssues: FileWithSecurityIssues) => AnalyzerUtils.parseLocationFilePath(fileWithIssues.full_path) === actualPath
+        );
+        assert.isDefined(potential, 'Response should contain file with issues at path ' + actualPath);
+        return potential!;
+    }
+
+    function getTestIssue(filePath: string, ruleId: string): SecurityIssue {
+        let fileWithIssues: FileWithSecurityIssues = getTestFileIssues(filePath);
+        let potential: SecurityIssue | undefined = fileWithIssues.issues.find(issue => issue.ruleId === ruleId);
+        assert.isDefined(potential, 'Expected ' + ruleId + ' should be contain detected as issues of file ' + filePath);
+        return potential!;
+    }
+
+    function getTestLocation(filePath: string, ruleId: string, location: FileRegion): FileRegion {
+        let issue: SecurityIssue = getTestIssue(filePath, ruleId);
+        let potential: FileRegion | undefined = issue.locations.find(actualLocation => AnalyzerUtils.isSameRegion(location, actualLocation));
+        assert.isDefined(
+            potential,
+            'Expected file ' +
+                filePath +
+                ' should contain evidence for issue ' +
+                ruleId +
+                ' in location ' +
+                [location.startLine, location.endLine, location.startColumn, location.endColumn]
+        );
+        return potential!;
+    }
+
+    it('Check response defined', () => {
+        assert.isDefined(response);
+    });
+
+    it('Check response attributes defined', () => {
+        assert.isDefined(response.filesWithIssues);
+    });
+
+    it('Check all expected files with issues detected', () => {
+        expectedContent.filesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+            assert.isDefined(getTestFileIssues(expectedFileWithIssues.full_path));
+        });
+    });
+
+    it('Check all expected issues detected', () => {
+        expectedContent.filesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+            expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+                assert.isDefined(getTestIssue(expectedFileWithIssues.full_path, expectedIssues.ruleId));
+            });
+        });
+    });
+
+    it('Check all expected locations detected', () => {
+        expectedContent.filesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+            expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+                expectedIssues.locations.forEach((expectedLocation: FileRegion) => {
+                    assert.isDefined(getTestLocation(expectedFileWithIssues.full_path, expectedIssues.ruleId, expectedLocation));
+                });
+            });
+        });
+    });
+
+    describe('Detected issues validations', () => {
+        it('Check rule-name', () => {
+            expectedContent.filesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+                expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+                    assert.deepEqual(getTestIssue(expectedFileWithIssues.full_path, expectedIssues.ruleId).ruleName, expectedIssues.ruleName);
+                });
+            });
+        });
+
+        it('Check rule full description', () => {
+            expectedContent.filesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+                expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+                    assert.deepEqual(
+                        getTestIssue(expectedFileWithIssues.full_path, expectedIssues.ruleId).fullDescription,
+                        expectedIssues.fullDescription
+                    );
+                });
+            });
+        });
+
+        it('Check severity', () => {
+            expectedContent.filesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+                expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+                    assert.deepEqual(getTestIssue(expectedFileWithIssues.full_path, expectedIssues.ruleId).severity, expectedIssues.severity);
+                });
+            });
+        });
+
+        it('Check snippet', () => {
+            expectedContent.filesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+                expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+                    expectedIssues.locations.forEach((expectedLocation: FileRegion) => {
+                        assert.deepEqual(
+                            getTestLocation(expectedFileWithIssues.full_path, expectedIssues.ruleId, expectedLocation).snippet?.text,
+                            expectedLocation.snippet?.text
+                        );
+                    });
+                });
+            });
+        });
+    });
 }

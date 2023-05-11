@@ -6,13 +6,14 @@ import { LogManager } from '../../main/log/logManager';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { createRootTestNode, getTestCodeFileNode } from './utils/treeNodeUtils.test';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
-import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils';
+import { AnalyzerUtils, FileWithSecurityIssues, SecurityIssue } from '../../main/treeDataProviders/utils/analyzerUtils';
 import { getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
 import { FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
-import { SecretsFileIssues, SecretsIssue, SecretsRunner, SecretsScanResponse } from '../../main/scanLogic/scanRunners/secretsScan';
+import { SecretsRunner, SecretsScanResponse } from '../../main/scanLogic/scanRunners/secretsScan';
 import { SecretTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/secretsTreeNode';
+import { groupFiles, testDataAndViewFromScanResponse } from './utils/testAnalyzer.test';
 
 describe('Secrets Scan Tests', () => {
     const scanSecrets: string = path.join(__dirname, '..', 'resources', 'secretsScan');
@@ -77,130 +78,45 @@ describe('Secrets Scan Tests', () => {
         });
 
         describe('Data populated as CodeFileTreeNode nodes', () => {
-            let expectedFilesWithIssues: SecretsFileIssues[] = [];
+            function getTestIssueNode(fileNode: CodeFileTreeNode, location: FileRegion): SecretTreeNode {
+                let issueLocation: CodeIssueTreeNode | undefined = fileNode.issues.find(
+                    issue =>
+                        // Location in vscode start from 0, in scanners location starts from 1
+                        issue.regionWithIssue.start.line === location.startLine - 1 &&
+                        issue.regionWithIssue.end.line === location.endLine - 1 &&
+                        issue.regionWithIssue.start.character === location.startColumn - 1 &&
+                        issue.regionWithIssue.end.character === location.endColumn - 1
+                );
+                if (!(issueLocation instanceof SecretTreeNode)) {
+                    assert.fail('expected node to be SecretTreeNode issue for location ' + location + ' in node: ' + issueLocation);
+                }
+                return <SecretTreeNode>issueLocation;
+            }
+
+            let expectedFilesWithIssues: FileWithSecurityIssues[] = [];
 
             before(() => {
-                // Collect all the locations from the test data with issues under the same file to be together under the same data
-                expectedScanResult.secretsScan.filesWithIssues.forEach((fileWithIssue: SecretsFileIssues) => {
-                    let fileIssues: SecretsFileIssues | undefined = expectedFilesWithIssues.find(
-                        (fileIssues: SecretsFileIssues) => fileIssues.full_path === fileWithIssue.full_path
-                    );
-                    if (!fileIssues) {
-                        fileIssues = {
-                            full_path: fileWithIssue.full_path,
-                            issues: []
-                        } as SecretsFileIssues;
-                        expectedFilesWithIssues.push(fileIssues);
-                    }
-                    fileWithIssue.issues.forEach((issue: SecretsIssue) => {
-                        let secretIssue: SecretsIssue | undefined = fileIssues?.issues.find(
-                            (secretIssue: SecretsIssue) => secretIssue.ruleId === issue.ruleId
-                        );
-                        if (!secretIssue) {
-                            secretIssue = {
-                                ruleId: issue.ruleId,
-                                fullDescription: issue.fullDescription,
-                                ruleName: issue.ruleName,
-                                severity: issue.severity,
-                                locations: []
-                            } as SecretsIssue;
-                            fileIssues?.issues.push(secretIssue);
-                        }
-                        secretIssue.locations.push(...issue.locations);
+                expectedFilesWithIssues = groupFiles(expectedScanResult.secretsScan);
+                testDataAndViewFromScanResponse(testRoot, expectedFilesWithIssues, getTestIssueNode);
+            });
+
+            it('Check rule full description transferred', () => {
+                expectedFilesWithIssues.forEach((expectedFileIssues: FileWithSecurityIssues) => {
+                    let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
+                    expectedFileIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+                        expectedIssues.locations.forEach((expectedLocation: FileRegion) => {
+                            assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).fullDescription, expectedIssues.fullDescription);
+                        });
                     });
                 });
             });
 
-            it('Check file nodes created for each file with issues', () => {
-                expectedFilesWithIssues.forEach((fileIssues: SecretsFileIssues) => {
-                    assert.isDefined(getTestCodeFileNode(testRoot, fileIssues.full_path));
-                });
-            });
-
-            it('Check number of file nodes populated as root children', () => {
-                assert.equal(
-                    testRoot.children.length,
-                    expectedFilesWithIssues.length,
-                    'files populated: ' + testRoot.children.map(child => child.label)
-                );
-            });
-
-            describe('Issues populated as SecretsTreeNode nodes', () => {
-                function getTestIssueNode(fileNode: CodeFileTreeNode, location: FileRegion): SecretTreeNode {
-                    let issueLocation: CodeIssueTreeNode | undefined = fileNode.issues.find(
-                        issue =>
-                            // Location in vscode start from 0, in scanners location starts from 1
-                            issue.regionWithIssue.start.line === location.startLine - 1 &&
-                            issue.regionWithIssue.end.line === location.endLine - 1 &&
-                            issue.regionWithIssue.start.character === location.startColumn - 1 &&
-                            issue.regionWithIssue.end.character === location.endColumn - 1
-                    );
-                    if (!(issueLocation instanceof SecretTreeNode)) {
-                        assert.fail('expected node to be SecretTreeNode issue for location ' + location + ' in node: ' + issueLocation);
-                    }
-                    return <SecretTreeNode>issueLocation;
-                }
-
-                it('Check number of issues populated in file', () => {
-                    expectedFilesWithIssues.forEach((expectedFileIssues: SecretsFileIssues) => {
-                        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                        expectedFileIssues.issues.forEach((expectedSecretIssues: SecretsIssue) => {
-                            assert.equal(fileNode.getIssueById(expectedSecretIssues.ruleId).length, expectedSecretIssues.locations.length);
-                        });
-                    });
-                });
-
-                it('Check Secret issue in location nodes created in the file node', () => {
-                    expectedFilesWithIssues.forEach((expectedFileIssues: SecretsFileIssues) => {
-                        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                        expectedFileIssues.issues.forEach((expectedSecretIssues: SecretsIssue) => {
-                            expectedSecretIssues.locations.forEach((expectedLocation: FileRegion) => {
-                                assert.isDefined(getTestIssueNode(fileNode, expectedLocation));
-                            });
-                        });
-                    });
-                });
-
-                it('Check rule names transferred as label of the issues', () => {
-                    expectedFilesWithIssues.forEach((expectedFileIssues: SecretsFileIssues) => {
-                        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                        expectedFileIssues.issues.forEach((expectedSecretIssues: SecretsIssue) => {
-                            expectedSecretIssues.locations.forEach((expectedLocation: FileRegion) => {
-                                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).label, expectedSecretIssues.ruleName);
-                            });
-                        });
-                    });
-                });
-
-                it('Check rule full description transferred', () => {
-                    expectedFilesWithIssues.forEach((expectedFileIssues: SecretsFileIssues) => {
-                        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                        expectedFileIssues.issues.forEach((expectedIacIssues: SecretsIssue) => {
-                            expectedIacIssues.locations.forEach((expectedLocation: FileRegion) => {
-                                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).fullDescription, expectedIacIssues.fullDescription);
-                            });
-                        });
-                    });
-                });
-
-                it('Check snippet text at location with issue transferred', () => {
-                    expectedFilesWithIssues.forEach((expectedFileIssues: SecretsFileIssues) => {
-                        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                        expectedFileIssues.issues.forEach((expectedIacIssues: SecretsIssue) => {
-                            expectedIacIssues.locations.forEach((expectedLocation: FileRegion) => {
-                                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).snippet, expectedLocation.snippet?.text);
-                            });
-                        });
-                    });
-                });
-
-                it('Check issue severity transferred', () => {
-                    expectedFilesWithIssues.forEach((expectedFileIssues: SecretsFileIssues) => {
-                        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                        expectedFileIssues.issues.forEach((expectedIacIssues: SecretsIssue) => {
-                            expectedIacIssues.locations.forEach((expectedLocation: FileRegion) => {
-                                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).severity, expectedIacIssues.severity);
-                            });
+            it('Check snippet text at location with issue transferred', () => {
+                expectedFilesWithIssues.forEach((expectedFileIssues: FileWithSecurityIssues) => {
+                    let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
+                    expectedFileIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+                        expectedIssues.locations.forEach((expectedLocation: FileRegion) => {
+                            assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).snippet, expectedLocation.snippet?.text);
                         });
                     });
                 });

@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 
 import { FileRegion } from '../../../scanLogic/scanRunners/analyzerModels';
-import { IacIssue } from '../../../scanLogic/scanRunners/iacScan';
 import { CodeFileTreeNode } from './codeFileTreeNode';
 import { CodeIssueTreeNode } from './codeIssueTreeNode';
 import { IAnalysisStep, IIaCPage, PageType } from 'jfrog-ide-webview';
 import { SeverityUtils } from '../../../types/severity';
+import { SecurityIssue } from '../../utils/analyzerUtils';
 
 /**
  * Describe a Infrastructure As Code (Iac) issue
@@ -14,7 +14,7 @@ export class IacTreeNode extends CodeIssueTreeNode {
     private _fullDescription?: string;
     private _snippet?: string;
 
-    constructor(issue: IacIssue, location: FileRegion, parent: CodeFileTreeNode) {
+    constructor(issue: SecurityIssue, location: FileRegion, parent: CodeFileTreeNode) {
         super(
             issue.ruleId,
             parent,
