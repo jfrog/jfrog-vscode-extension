@@ -182,7 +182,11 @@ export class ScanManager implements ExtensionComponent {
                 .then(res => (supportedScans.dependencies = res))
                 .catch(err => ScanUtils.onScanError(err, this._logManager, true))
         );
-        requests.push(this.isEosSupported().then(res => (supportedScans.eos = res)).catch(err => ScanUtils.onScanError(err, this._logManager, true)));
+        requests.push(
+            this.isEosSupported()
+                .then(res => (supportedScans.eos = res))
+                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
+        );
         requests.push(
             this.isApplicabilitySupported()
                 .then(res => (supportedScans.applicability = res))
@@ -291,7 +295,10 @@ export class ScanManager implements ExtensionComponent {
         }
         let skipFiles: string[] = AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern());
         this._logManager.logMessage(
-            'Scanning for Eos issues in ' + requests.map(request => `(Language '${request.language}', roots: [${request.roots.join()}])`) + ', skipping files: ' + skipFiles,
+            'Scanning for Eos issues in ' +
+                requests.map(request => `(Language '${request.language}', roots: [${request.roots.join()}])`) +
+                ', skipping files: ' +
+                skipFiles,
             'DEBUG'
         );
         return eosRunner.scan(checkCancel, skipFiles, ...requests);
