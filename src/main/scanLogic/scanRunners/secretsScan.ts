@@ -2,13 +2,11 @@ import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
 import { Severity } from '../../types/severity';
 import { Resource } from '../../utils/resource';
+import { ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
-import { AnalyzeIssue, AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerType, FileRegion } from './analyzerModels';
+import { AnalyzeIssue, AnalyzeScanRequest, AnalyzerScanResponse, ScanType, FileRegion } from './analyzerModels';
 import { BinaryRunner } from './binaryRunner';
 
-/**
- * The response that is generated from the binary after scanning Secrets
- */
 export interface SecretsScanResponse {
     filesWithIssues: SecretsFileIssues[];
 }
@@ -30,21 +28,26 @@ export interface SecretsIssue {
  * Describes a runner for the Secrets scan executable file.
  */
 export class SecretsRunner extends BinaryRunner {
-    constructor(connectionManager: ConnectionManager, timeout: number, logManager: LogManager, binary?: Resource) {
-        super(connectionManager, timeout, AnalyzerType.Secrets, logManager, binary);
+    constructor(
+        connectionManager: ConnectionManager,
+        logManager: LogManager,
+        binary?: Resource,
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
+    ) {
+        super(connectionManager, timeout, ScanType.Secrets, logManager, binary);
     }
 
     /** @override */
-    public async runBinary(checkCancel: () => void, yamlConfigPath: string, executionLogDirectory: string): Promise<void> {
+    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string, checkCancel: () => void): Promise<void> {
         await this.executeBinary(checkCancel, ['sec', yamlConfigPath], executionLogDirectory);
     }
 
     public async scan(directory: string, checkCancel: () => void): Promise<SecretsScanResponse> {
         let request: AnalyzeScanRequest = {
-            type: AnalyzerType.Secrets,
+            type: ScanType.Secrets,
             roots: [directory]
         } as AnalyzeScanRequest;
-        return await this.run(checkCancel, request).then(runResult => this.generateScanResponse(runResult));
+        return await this.run(checkCancel, request).then(runResult => this.convertResponse(runResult));
     }
 
     /**
@@ -52,7 +55,7 @@ export class SecretsRunner extends BinaryRunner {
      * @param run - the run results generated from the binary
      * @returns the response generated from the scan run
      */
-    public generateScanResponse(response?: AnalyzerScanResponse): SecretsScanResponse {
+    public convertResponse(response?: AnalyzerScanResponse): SecretsScanResponse {
         if (!response) {
             return {} as SecretsScanResponse;
         }
@@ -77,14 +80,17 @@ export class SecretsRunner extends BinaryRunner {
     }
 
     /**
-     * Generate the data for a specific analyze issue (the file object, the issue in the file object and all the location objects of this issue).
+     * Generate the data for a secrets issue (the file object, the issue in the file object and all the location objects of this issue).
      * @param secretsResponse - the response of the scan that holds all the file objects
      * @param analyzeIssue - the issue to handle and generate information base on it
      * @param fullDescription - the description of the analyzeIssue
      */
-    public generateIssueData(secretsResponse: SecretsScanResponse, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
+    private generateIssueData(secretsResponse: SecretsScanResponse, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
         analyzeIssue.locations.forEach(location => {
-            let fileWithIssues: SecretsFileIssues = this.getOrCreateIacFileIssues(secretsResponse, location.physicalLocation.artifactLocation.uri);
+            let fileWithIssues: SecretsFileIssues = this.getOrCreateSecretsFileIssues(
+                secretsResponse,
+                location.physicalLocation.artifactLocation.uri
+            );
             let fileIssue: SecretsIssue = this.getOrCreateSecretsIssue(fileWithIssues, analyzeIssue, fullDescription);
             fileIssue.locations.push(location.physicalLocation.region);
         });
@@ -119,7 +125,7 @@ export class SecretsRunner extends BinaryRunner {
      * @param uri - the files to search or create
      * @returns - file with issues
      */
-    private getOrCreateIacFileIssues(response: SecretsScanResponse, uri: string): SecretsFileIssues {
+    private getOrCreateSecretsFileIssues(response: SecretsScanResponse, uri: string): SecretsFileIssues {
         let potential: SecretsFileIssues | undefined = response.filesWithIssues.find(fileWithIssues => fileWithIssues.full_path === uri);
         if (potential) {
             return potential;

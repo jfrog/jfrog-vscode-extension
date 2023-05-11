@@ -171,11 +171,11 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * @param descriptors - all the descriptors in the workspace
      * @returns the number of tasks that will be preformed async and report to the progress bar
      */
-    private getNumberOfTasksInRepopulate(supportedScans: SupportedScans, descriptors: Map<PackageType, vscode.Uri[]>): number {
+    public static getNumberOfTasksInRepopulate(supportedScans: SupportedScans, descriptors: Map<PackageType, vscode.Uri[]>): number {
         return (
             (supportedScans.iac ? 1 : 0) +
             (supportedScans.secrets ? 1 : 0) +
-            (supportedScans.graphScan ? descriptors.size + Array.from(descriptors.values()).reduce((acc, val) => acc + val.length, 0) : 0)
+            (supportedScans.dependencies ? descriptors.size + Array.from(descriptors.values()).reduce((acc, val) => acc + val.length, 0) : 0)
         );
     }
 
@@ -199,13 +199,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         progress.report({ message: '👷 Preparing workspace' });
         let progressManager: StepProgress = new StepProgress(progress, checkCanceled, () => this.onChangeFire(), this._logManager);
         let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
-        let subStepsCount: number = this.getNumberOfTasksInRepopulate(this._supportedScans, workspaceDescriptors);
+        let subStepsCount: number = IssuesTreeDataProvider.getNumberOfTasksInRepopulate(this._supportedScans, workspaceDescriptors);
         checkCanceled();
         DependencyUtils.sendUsageReport(this._supportedScans, workspaceDescriptors, this._treesManager.connectionManager);
         // Scan workspace
         let scansPromises: Promise<any>[] = [];
         progressManager.startStep('🔎 Scanning for issues', subStepsCount);
-        if (this._supportedScans.graphScan) {
+        if (this._supportedScans.dependencies) {
             // Dependency graph and applicability scans for each package
             for (const [type, descriptorsPaths] of workspaceDescriptors) {
                 scansPromises.push(

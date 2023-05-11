@@ -1,8 +1,9 @@
 import { LogManager } from '../../log/logManager';
 import { BinaryRunner } from './binaryRunner';
-import { AnalyzeIssue, AnalyzeLocation, AnalyzerScanRun, AnalyzerType, AnalyzeScanRequest, FileIssues } from './analyzerModels';
+import { AnalyzeIssue, AnalyzeLocation, AnalyzerScanRun, ScanType, AnalyzeScanRequest, FileIssues } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { Resource } from '../../utils/resource';
+import { ScanUtils } from '../../utils/scanUtils';
 
 /**
  * The request that is sent to the binary to scan applicability
@@ -39,12 +40,17 @@ export interface CveApplicableDetails {
  * Describes a runner for the Applicability scan executable file.
  */
 export class ApplicabilityRunner extends BinaryRunner {
-    constructor(connectionManager: ConnectionManager, timeout: number, logManager: LogManager, binary?: Resource) {
-        super(connectionManager, timeout, AnalyzerType.ContextualAnalysis, logManager, binary);
+    constructor(
+        connectionManager: ConnectionManager,
+        logManager: LogManager,
+        binary?: Resource,
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
+    ) {
+        super(connectionManager, timeout, ScanType.ContextualAnalysis, logManager, binary);
     }
 
     /** @override */
-    public async runBinary(checkCancel: () => void, yamlConfigPath: string, executionLogDirectory: string): Promise<void> {
+    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string, checkCancel: () => void): Promise<void> {
         await this.executeBinary(checkCancel, ['ca', yamlConfigPath], executionLogDirectory);
     }
 
@@ -69,12 +75,12 @@ export class ApplicabilityRunner extends BinaryRunner {
         skipFolders: string[] = []
     ): Promise<ApplicabilityScanResponse> {
         const request: ApplicabilityScanArgs = {
-            type: AnalyzerType.ContextualAnalysis,
+            type: ScanType.ContextualAnalysis,
             roots: [directory],
             cve_whitelist: Array.from(cveToRun),
             skipped_folders: skipFolders
         } as ApplicabilityScanArgs;
-        return await this.run(checkCancel, request).then(response => this.generateResponse(response?.runs[0]));
+        return await this.run(checkCancel, request).then(response => this.convertResponse(response?.runs[0]));
     }
 
     /**
@@ -82,7 +88,7 @@ export class ApplicabilityRunner extends BinaryRunner {
      * @param run - the run results generated from the binary
      * @returns the response generated from the scan run
      */
-    public generateResponse(run: AnalyzerScanRun | undefined): ApplicabilityScanResponse {
+    public convertResponse(run: AnalyzerScanRun | undefined): ApplicabilityScanResponse {
         if (!run) {
             return {} as ApplicabilityScanResponse;
         }

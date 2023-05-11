@@ -37,9 +37,6 @@ export class SecretTreeNode extends CodeIssueTreeNode {
         return this._fullDescription;
     }
 
-    /**
-     * Get the details page of the issue
-     */
     public getDetailsPage(): ISecretsPage {
         return {
             pageType: PageType.Secrets,

@@ -5,7 +5,7 @@ import * as path from 'path';
 import { LogManager } from '../../log/logManager';
 import { Utils } from '../../utils/utils';
 import { NotEntitledError, NotSupportedError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
-import { AnalyzerRequest, AnalyzerScanResponse, AnalyzerType, AnalyzeScanRequest } from './analyzerModels';
+import { AnalyzerRequest, AnalyzerScanResponse, ScanType, AnalyzeScanRequest } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { ConnectionUtils } from '../../connect/connectionUtils';
 import { IProxyConfig } from 'jfrog-client-js';
@@ -63,7 +63,7 @@ export abstract class BinaryRunner {
     constructor(
         protected _connectionManager: ConnectionManager,
         protected _abortCheckInterval: number,
-        protected _type: AnalyzerType,
+        protected _type: ScanType,
         protected _logManager: LogManager,
         protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager)
     ) {
@@ -93,7 +93,7 @@ export abstract class BinaryRunner {
      * @param yamlConfigPath - the path to the request
      * @param executionLogDirectory - og file will be written to the dir
      */
-    public abstract runBinary(checkCancel: () => void, yamlConfigPath: string, executionLogDirectory: string): Promise<void>;
+    protected abstract runBinary(yamlConfigPath: string, executionLogDirectory: string, checkCancel: () => void): Promise<void>;
 
     /**
      * Validates that the binary exists and can run
@@ -338,7 +338,7 @@ export abstract class BinaryRunner {
         // 1. Save requests as yaml file in folder
         fs.writeFileSync(requestPath, request);
         // 2. Run the binary
-        await this.runBinary(checkCancel, requestPath, path.dirname(requestPath)).catch(error => {
+        await this.runBinary(requestPath, path.dirname(requestPath), checkCancel).catch(error => {
             if (error.code) {
                 // Not entitled to run binary
                 if (error.code === BinaryRunner.NOT_ENTITLED) {

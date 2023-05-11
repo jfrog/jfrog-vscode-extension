@@ -4,13 +4,12 @@ import { assert } from 'chai';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { IacFileIssues, IacIssue, IacRunner, IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
-import { ScanUtils } from '../../main/utils/scanUtils';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { createRootTestNode, getTestCodeFileNode } from './utils/treeNodeUtils.test';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
 import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils';
 import { getAnalyzerScanResponse } from './utils/utils.test';
-import { FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
+import { AnalyzerScanResponse, AnalyzerScanRun, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { IacTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/iacTreeNode';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
@@ -23,7 +22,7 @@ describe('Iac Scan Tests', () => {
         let response: IacScanResponse;
 
         before(() => {
-            response = getDummyRunner().generateScanResponse(undefined);
+            response = getDummyRunner().convertResponse(undefined);
         });
 
         it('Check response defined', () => {
@@ -35,16 +34,30 @@ describe('Iac Scan Tests', () => {
         });
     });
 
-    describe('Populate Iac information tests', () => {
+    describe('Iac scan no issues found', () => {
+        let response: IacScanResponse;
+
+        before(() => {
+            response = getDummyRunner().convertResponse({ runs: [{} as AnalyzerScanRun] } as AnalyzerScanResponse);
+        });
+
+        it('Check response defined', () => {
+            assert.isDefined(response);
+        });
+
+        it('Check response attributes exist', () => {
+            assert.isDefined(response.filesWithIssues);
+        });
+    });
+
+    describe('Iac scan success', () => {
         const testRoot: IssuesRootTreeNode = createRootTestNode('root');
         let expectedScanResult: ScanResults;
         let populatedIssues: number;
 
         before(() => {
             // Read test data and populate scanResult
-            let response: IacScanResponse = getDummyRunner().generateScanResponse(
-                getAnalyzerScanResponse(path.join(scanIac, 'analyzerResponse.json'))
-            );
+            let response: IacScanResponse = getDummyRunner().convertResponse(getAnalyzerScanResponse(path.join(scanIac, 'analyzerResponse.json')));
             expectedScanResult = {
                 iacScanTimestamp: 11,
                 iacScan: response
@@ -194,6 +207,6 @@ describe('Iac Scan Tests', () => {
     });
 
     function getDummyRunner(): IacRunner {
-        return new IacRunner({} as ConnectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, logManager);
+        return new IacRunner({} as ConnectionManager, logManager);
     }
 });

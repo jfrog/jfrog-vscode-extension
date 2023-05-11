@@ -2,13 +2,11 @@ import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
 import { Severity } from '../../types/severity';
 import { Resource } from '../../utils/resource';
+import { ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
-import { AnalyzeIssue, AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerType, FileRegion } from './analyzerModels';
+import { AnalyzeIssue, AnalyzeScanRequest, AnalyzerScanResponse, ScanType, FileRegion } from './analyzerModels';
 import { BinaryRunner } from './binaryRunner';
 
-/**
- * The response that is generated from the binary after scanning Iac
- */
 export interface IacScanResponse {
     filesWithIssues: IacFileIssues[];
 }
@@ -30,21 +28,26 @@ export interface IacIssue {
  * Describes a runner for the 'Infrastructure As Code' (Iac) scan executable file.
  */
 export class IacRunner extends BinaryRunner {
-    constructor(connectionManager: ConnectionManager, timeout: number, logManager: LogManager, binary?: Resource) {
-        super(connectionManager, timeout, AnalyzerType.Iac, logManager, binary);
+    constructor(
+        connectionManager: ConnectionManager,
+        logManager: LogManager,
+        binary?: Resource,
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
+    ) {
+        super(connectionManager, timeout, ScanType.Iac, logManager, binary);
     }
 
     /** @override */
-    public async runBinary(checkCancel: () => void, yamlConfigPath: string, executionLogDirectory: string): Promise<void> {
+    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string, checkCancel: () => void): Promise<void> {
         await this.executeBinary(checkCancel, ['iac', yamlConfigPath], executionLogDirectory);
     }
 
     public async scan(directory: string, checkCancel: () => void): Promise<IacScanResponse> {
         let request: AnalyzeScanRequest = {
-            type: AnalyzerType.Iac,
+            type: ScanType.Iac,
             roots: [directory]
         } as AnalyzeScanRequest;
-        return await this.run(checkCancel, request).then(runResult => this.generateScanResponse(runResult));
+        return await this.run(checkCancel, request).then(runResult => this.convertResponse(runResult));
     }
 
     /**
@@ -52,7 +55,7 @@ export class IacRunner extends BinaryRunner {
      * @param analyzerScanResponse - the run results generated from the binary
      * @returns the response generated from the scan run
      */
-    public generateScanResponse(analyzerScanResponse?: AnalyzerScanResponse): IacScanResponse {
+    public convertResponse(analyzerScanResponse?: AnalyzerScanResponse): IacScanResponse {
         if (!analyzerScanResponse) {
             return {} as IacScanResponse;
         }
@@ -80,7 +83,7 @@ export class IacRunner extends BinaryRunner {
      * @param analyzeIssue - the issue to handle and generate information base on it
      * @param fullDescription - the description of the analyzeIssue
      */
-    public generateIssueData(iacResponse: IacScanResponse, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
+    private generateIssueData(iacResponse: IacScanResponse, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
         analyzeIssue.locations.forEach(location => {
             let fileWithIssues: IacFileIssues = this.getOrCreateIacFileIssues(iacResponse, location.physicalLocation.artifactLocation.uri);
             let fileIssue: IacIssue = this.getOrCreateIacIssue(fileWithIssues, analyzeIssue, fullDescription);

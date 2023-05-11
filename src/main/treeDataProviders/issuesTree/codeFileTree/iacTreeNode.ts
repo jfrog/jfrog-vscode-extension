@@ -37,9 +37,6 @@ export class IacTreeNode extends CodeIssueTreeNode {
         return this._fullDescription;
     }
 
-    /**
-     * Get the details page of the issue
-     */
     public getDetailsPage(): IIaCPage {
         return {
             pageType: PageType.IaC,

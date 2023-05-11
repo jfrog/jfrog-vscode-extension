@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { assert } from 'chai';
 
 import { AnalyzerManagerIntegrationEnv } from '../utils/testIntegration.test';
-import { NotSupportedError, ScanUtils } from '../../../main/utils/scanUtils';
+import { NotSupportedError } from '../../../main/utils/scanUtils';
 import { FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
 import { AnalyzerUtils } from '../../../main/treeDataProviders/utils/analyzerUtils';
 import { SecretsFileIssues, SecretsIssue, SecretsRunner, SecretsScanResponse } from '../../../main/scanLogic/scanRunners/secretsScan';
@@ -19,12 +19,7 @@ describe('Secrets Scan Integration Tests', async () => {
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        runner = new SecretsRunner(
-            integrationManager.connectionManager,
-            ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
-            integrationManager.logManager,
-            integrationManager.resource
-        );
+        runner = new SecretsRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
         // Get expected partial result that the scan should contain
         let dataPath: string = path.join(testDataRoot, 'expectedScanResponse.json');
@@ -44,7 +39,9 @@ describe('Secrets Scan Integration Tests', async () => {
 
     function getTestFileIssues(filePath: string): SecretsFileIssues {
         let actualPath: string = path.join(testDataRoot, filePath);
-        let potential: SecretsFileIssues | undefined = response.filesWithIssues.find(fileWithIssues => AnalyzerUtils.parseLocationFilePath(fileWithIssues.full_path) === actualPath);
+        let potential: SecretsFileIssues | undefined = response.filesWithIssues.find(
+            fileWithIssues => AnalyzerUtils.parseLocationFilePath(fileWithIssues.full_path) === actualPath
+        );
         assert.isDefined(potential, 'Response should contain file with issues at path ' + actualPath);
         return potential!;
     }

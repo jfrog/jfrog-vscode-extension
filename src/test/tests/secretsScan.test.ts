@@ -3,13 +3,12 @@ import * as path from 'path';
 import { assert } from 'chai';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
-import { ScanUtils } from '../../main/utils/scanUtils';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { createRootTestNode, getTestCodeFileNode } from './utils/treeNodeUtils.test';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
 import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils';
 import { getAnalyzerScanResponse } from './utils/utils.test';
-import { FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
+import { AnalyzerScanResponse, AnalyzerScanRun, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
 import { SecretsFileIssues, SecretsIssue, SecretsRunner, SecretsScanResponse } from '../../main/scanLogic/scanRunners/secretsScan';
@@ -23,7 +22,7 @@ describe('Secrets Scan Tests', () => {
         let response: SecretsScanResponse;
 
         before(() => {
-            response = getDummyRunner().generateScanResponse(undefined);
+            response = getDummyRunner().convertResponse(undefined);
         });
 
         it('Check response defined', () => {
@@ -35,14 +34,30 @@ describe('Secrets Scan Tests', () => {
         });
     });
 
-    describe('Populate Secrets information tests', () => {
+    describe('Secrets scan no issues found', () => {
+        let response: SecretsScanResponse;
+
+        before(() => {
+            response = getDummyRunner().convertResponse({ runs: [{} as AnalyzerScanRun] } as AnalyzerScanResponse);
+        });
+
+        it('Check response defined', () => {
+            assert.isDefined(response);
+        });
+
+        it('Check response attributes exist', () => {
+            assert.isDefined(response.filesWithIssues);
+        });
+    });
+
+    describe('Secrets scan success', () => {
         const testRoot: IssuesRootTreeNode = createRootTestNode(path.join('root'));
         let expectedScanResult: ScanResults;
         let populatedIssues: number;
 
         before(() => {
             // Read test data and populate scanResult
-            let response: SecretsScanResponse = getDummyRunner().generateScanResponse(
+            let response: SecretsScanResponse = getDummyRunner().convertResponse(
                 getAnalyzerScanResponse(path.join(scanSecrets, 'analyzerResponse.json'))
             );
             expectedScanResult = {
@@ -194,6 +209,6 @@ describe('Secrets Scan Tests', () => {
     });
 
     function getDummyRunner(): SecretsRunner {
-        return new SecretsRunner({} as ConnectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, logManager);
+        return new SecretsRunner({} as ConnectionManager, logManager);
     }
 });

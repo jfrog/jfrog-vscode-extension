@@ -4,7 +4,7 @@ import { assert } from 'chai';
 
 import { IacFileIssues, IacIssue, IacRunner, IacScanResponse } from '../../../main/scanLogic/scanRunners/iacScan';
 import { AnalyzerManagerIntegrationEnv } from '../utils/testIntegration.test';
-import { NotSupportedError, ScanUtils } from '../../../main/utils/scanUtils';
+import { NotSupportedError } from '../../../main/utils/scanUtils';
 import { FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
 import { AnalyzerUtils } from '../../../main/treeDataProviders/utils/analyzerUtils';
 
@@ -19,12 +19,7 @@ describe('Iac Integration Tests', async () => {
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        runner = new IacRunner(
-            integrationManager.connectionManager,
-            ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
-            integrationManager.logManager,
-            integrationManager.resource
-        );
+        runner = new IacRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
         // Get expected partial result that the scan should contain
         let dataPath: string = path.join(testDataRoot, 'expectedScanResponse.json');
