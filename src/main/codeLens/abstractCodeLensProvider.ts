@@ -25,7 +25,7 @@ export abstract class AbstractCodeLensProvider implements vscode.CodeLensProvide
         let range: vscode.Range = new vscode.Range(dependenciesPos[0], dependenciesPos[1]);
         return [
             new vscode.CodeLens(range, {
-                command: 'jfrog.xray.refresh',
+                command: 'jfrog.scan.refresh',
                 title: 'Start Xray scan'
             } as vscode.Command)
         ];
