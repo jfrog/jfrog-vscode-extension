@@ -239,7 +239,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 )
             );
         }
-        if (supportedScans.eos) {
+        if (this._supportedScans.eos) {
             // Scan the workspace for Eos issues
             scansPromises.push(
                 AnalyzerUtils.runEos(

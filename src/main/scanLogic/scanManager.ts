@@ -284,7 +284,7 @@ export class ScanManager implements ExtensionComponent {
      * @returns the scan response
      */
     public async scanEos(checkCancel: () => void, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
-        let eosRunner: EosRunner = new EosRunner(this._connectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, this._logManager);
+        let eosRunner: EosRunner = new EosRunner(this._connectionManager, this._logManager);
         if (!eosRunner.validateSupported()) {
             this._logManager.logMessage('Eos runner could not find binary to run', 'DEBUG');
             return {} as EosScanResponse;

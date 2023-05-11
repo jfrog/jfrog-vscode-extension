@@ -15,6 +15,7 @@ import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
 import { Resource } from '../../utils/resource';
 import { Severity } from '../../types/severity';
 import { Translators } from '../../utils/translators';
+import { ScanUtils } from '../../utils/scanUtils';
 
 export interface EosScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
@@ -46,7 +47,12 @@ export interface EosIssueLocation {
 }
 
 export class EosRunner extends BinaryRunner {
-    constructor(connectionManager: ConnectionManager, timeout: number, logManager: LogManager, binary?: Resource) {
+    constructor(
+        connectionManager: ConnectionManager,
+        logManager: LogManager,
+        binary?: Resource,
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
+    ) {
         super(connectionManager, timeout, ScanType.Eos, logManager, binary);
     }
 
@@ -131,7 +137,7 @@ export class EosRunner extends BinaryRunner {
      * @param issueLocation - the issue in a location to search code flows that belongs to it
      * @param codeFlows - all the code flows for this issue
      */
-    public generateCodeFlowData(filePath: string, issueLocation: EosIssueLocation, codeFlows: CodeFlow[]) {
+    private generateCodeFlowData(filePath: string, issueLocation: EosIssueLocation, codeFlows: CodeFlow[]) {
         // Check if exists flows for the current location in this issue
         for (const codeFlow of codeFlows) {
             for (const threadFlow of codeFlow.threadFlows) {
