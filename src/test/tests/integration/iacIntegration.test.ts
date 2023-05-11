@@ -3,7 +3,16 @@ import * as fs from 'fs';
 import { assert } from 'chai';
 
 import { IacRunner, IacScanResponse } from '../../../main/scanLogic/scanRunners/iacScan';
-import { AnalyzerManagerIntegrationEnv, assertExpectedContentWithSecurityIssues } from '../utils/testIntegration.test';
+import {
+    AnalyzerManagerIntegrationEnv,
+    assertFileIssuesExist,
+    assertIssuesExist,
+    assertIssuesFullDescriptionExist,
+    assertIssuesLocationSnippetsExist,
+    assertIssuesLocationsExist,
+    assertIssuesRuleNameExist,
+    assertIssuesSeverityExist
+} from '../utils/testIntegration.test';
 import { NotSupportedError } from '../../../main/utils/scanUtils';
 
 describe('Iac Integration Tests', async () => {
@@ -33,7 +42,32 @@ describe('Iac Integration Tests', async () => {
             }
             throw err;
         }
+    });
 
-        assertExpectedContentWithSecurityIssues(testDataRoot, expectedContent, response);
+    it('Check response defined', () => {
+        assert.isDefined(response);
+    });
+
+    it('Check response attributes defined', () => {
+        assert.isDefined(response.filesWithIssues);
+    });
+
+    it('Check all expected files with issues detected', () =>
+        assertFileIssuesExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
+
+    it('Check all expected issues detected', () => assertIssuesExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
+
+    it('Check all expected locations detected', () =>
+        assertIssuesLocationsExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
+
+    describe('Detected issues validations', () => {
+        it('Check rule-name', () => assertIssuesRuleNameExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
+
+        it('Check rule full description', () =>
+            assertIssuesFullDescriptionExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
+
+        it('Check severity', () => assertIssuesSeverityExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
+
+        it('Check snippet', () => assertIssuesLocationSnippetsExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
     });
 });

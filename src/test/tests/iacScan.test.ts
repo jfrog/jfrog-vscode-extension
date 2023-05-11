@@ -5,15 +5,26 @@ import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { IacRunner, IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
-import { createRootTestNode, getTestCodeFileNode } from './utils/treeNodeUtils.test';
+import { createRootTestNode } from './utils/treeNodeUtils.test';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
-import { AnalyzerUtils, FileWithSecurityIssues, SecurityIssue } from '../../main/treeDataProviders/utils/analyzerUtils';
+import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
 import { getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
 import { FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { IacTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/iacTreeNode';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
-import { groupFiles, testDataAndViewFromScanResponse } from './utils/testAnalyzer.test';
+import {
+    assertFileNodesCreated,
+    assertIssueNodesCreated,
+    assertIssuesFullDescription,
+    assertNodeLabelRuleName,
+    assertNodesSeverity,
+    assertIssuesSnippet,
+    assertSameNumberOfFileNodes,
+    assertSameNumberOfIssueNodes,
+    findLocationNode,
+    groupFiles
+} from './utils/testAnalyzer.test';
 
 describe('Iac Scan Tests', () => {
     const scanIac: string = path.join(__dirname, '..', 'resources', 'iacScan');
@@ -54,11 +65,13 @@ describe('Iac Scan Tests', () => {
     describe('Iac scan success', () => {
         const testRoot: IssuesRootTreeNode = createRootTestNode('root');
         let expectedScanResult: ScanResults;
+        let expectedFilesWithIssues: FileWithSecurityIssues[] = [];
         let populatedIssues: number;
 
         before(() => {
             // Read test data and populate scanResult
             let response: IacScanResponse = getDummyRunner().convertResponse(getAnalyzerScanResponse(path.join(scanIac, 'analyzerResponse.json')));
+            expectedFilesWithIssues = groupFiles(response);
             expectedScanResult = {
                 iacScanTimestamp: 11,
                 iacScan: response
@@ -77,14 +90,7 @@ describe('Iac Scan Tests', () => {
 
         describe('Data populated as CodeFileTreeNode nodes', () => {
             function getTestIssueNode(fileNode: CodeFileTreeNode, location: FileRegion): IacTreeNode {
-                let issueLocation: CodeIssueTreeNode | undefined = fileNode.issues.find(
-                    issue =>
-                        // Location in vscode start from 0, in scanners location starts from 1
-                        issue.regionWithIssue.start.line === location.startLine - 1 &&
-                        issue.regionWithIssue.end.line === location.endLine - 1 &&
-                        issue.regionWithIssue.start.character === location.startColumn - 1 &&
-                        issue.regionWithIssue.end.character === location.endColumn - 1
-                );
+                let issueLocation: CodeIssueTreeNode | undefined = findLocationNode(location, fileNode);
                 assert.instanceOf(
                     issueLocation,
                     IacTreeNode,
@@ -93,33 +99,22 @@ describe('Iac Scan Tests', () => {
                 return <IacTreeNode>issueLocation;
             }
 
-            let expectedFilesWithIssues: FileWithSecurityIssues[] = [];
+            it('Check file nodes created for each file with issues', () => assertFileNodesCreated(testRoot, expectedFilesWithIssues));
 
-            before(() => {
-                expectedFilesWithIssues = groupFiles(expectedScanResult.secretsScan);
-                testDataAndViewFromScanResponse(testRoot, expectedFilesWithIssues, getTestIssueNode);
-            });
+            it('Check number of file nodes populated as root children', () => assertSameNumberOfFileNodes(testRoot, expectedFilesWithIssues));
 
-            it('Check rule full description transferred', () => {
-                expectedFilesWithIssues.forEach((expectedFileIssues: FileWithSecurityIssues) => {
-                    let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                    expectedFileIssues.issues.forEach((expectedIssues: SecurityIssue) => {
-                        expectedIssues.locations.forEach((expectedLocation: FileRegion) => {
-                            assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).fullDescription, expectedIssues.fullDescription);
-                        });
-                    });
-                });
-            });
+            describe('Issues populated as nodes', () => {
+                it('Check number of issues populated in file', () => assertSameNumberOfIssueNodes(testRoot, expectedFilesWithIssues));
 
-            it('Check snippet text at location with issue transferred', () => {
-                expectedFilesWithIssues.forEach((expectedFileIssues: FileWithSecurityIssues) => {
-                    let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
-                    expectedFileIssues.issues.forEach((expectedIssues: SecurityIssue) => {
-                        expectedIssues.locations.forEach((expectedLocation: FileRegion) => {
-                            assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).snippet, expectedLocation.snippet?.text);
-                        });
-                    });
-                });
+                it('Check issue nodes created in the file node', () => assertIssueNodesCreated(testRoot, expectedFilesWithIssues, getTestIssueNode));
+
+                it('Check rule names transferred as labels', () => assertNodeLabelRuleName(testRoot, expectedFilesWithIssues, getTestIssueNode));
+
+                it('Check issue severity transferred', () => assertNodesSeverity(testRoot, expectedFilesWithIssues, getTestIssueNode));
+
+                it('Check rule full description transferred', () => assertIssuesFullDescription(testRoot, expectedFilesWithIssues, getTestIssueNode));
+
+                it('Check snippet text at location transferred', () => assertIssuesSnippet(testRoot, expectedFilesWithIssues, getTestIssueNode));
             });
         });
     });
