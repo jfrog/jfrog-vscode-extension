@@ -104,18 +104,19 @@ export class AnalyzerUtils {
     /**
      * The paths that returns from the analyzerManager follows the SARIF format and are encoded, with prefix and fixed (not os depended).
      * This method will parse a given path and will fix it to match the actual path expected by the vscode
-     * * Remove the prefix 'file:///' for windows or 'file://' if exists
-     * * replaces '/' with '\\' for windows
-     * * decode the encoded path
+     * * Remove the prefix 'file:///' for windows or 'file://' if exists.
+     * * replaces '/' with '\\' for windows.
+     * * decode the encoded path.
      * @param filePath - path to remove prefix and decode
      */
     public static parseLocationFilePath(filePath: string): string {
         let isWindows: boolean = os.platform() === 'win32';
         if (isWindows) {
             filePath = filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath;
+        }
+        filePath = filePath.includes('file://') ? filePath.substring('file://'.length) : filePath;
+        if (isWindows) {
             filePath = filePath.replace(/['/']/g, '\\');
-        } else {
-            filePath = filePath.includes('file://') ? filePath.substring('file://'.length) : filePath;
         }
         return decodeURI(filePath);
     }
