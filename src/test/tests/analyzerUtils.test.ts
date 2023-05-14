@@ -34,9 +34,10 @@ describe('Analyzer Utils Tests', async () => {
         });
     });
 
-    [path.join('somewhere', 'file'), path.join('somewhere', 'folder', 'file')].forEach(testCase => {
+    [path.join('somewhere', 'file'), path.join('somewhere', 'folder', 'file'), path.join(__dirname,'file')].forEach(testCase => {
         it('Parse location file path test - ' + testCase, () => {
-            let result: string = AnalyzerUtils.parseLocationFilePath(`file://${testCase.replace(/['\\']/g, '/')}`);
+            let input: string = testCase.replace(/['\\']/g, '/');
+            let result: string = AnalyzerUtils.parseLocationFilePath(`file://${input}`);
             assert.deepEqual(result, testCase);
         });
     });
