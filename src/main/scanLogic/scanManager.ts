@@ -37,6 +37,7 @@ export class ScanManager implements ExtensionComponent {
     private static readonly RESOURCE_CHECK_UPDATE_INTERVAL_MILLISECS: number = 1000 * 60 * 60 * 24;
 
     private static lastOutdatedCheck: number;
+    private _supportedScans: SupportedScans = {} as SupportedScans;
 
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
@@ -53,24 +54,28 @@ export class ScanManager implements ExtensionComponent {
         return this._connectionManager;
     }
 
+    public get supportedScans(): SupportedScans {
+        return this._supportedScans;
+    }
+
     /**
-     * Updates all the resources that are outdated
-     * @param supportedScans - the supported scan to get the needed resources
+     * Updates all the resources that are outdated.
+     * @param supportedScans - the supported scan to get the needed resources. if default, should call getSupportedScans before calling this method.
      * @returns true if all the outdated resources updated successfully, false otherwise
      */
-    public async updateResources(supportedScans: SupportedScans): Promise<boolean> {
+    public async updateResources(supportedScans: SupportedScans = this._supportedScans): Promise<boolean> {
         let result: boolean = true;
         await ScanUtils.backgroundTask(async (progress: vscode.Progress<{ message?: string; increment?: number }>) => {
-            progress.report({ message: 'Checking for outdated scanners' });
+            progress.report({ message: 'Checking for updates' });
             let resources: Resource[] = await this.getOutdatedResources(supportedScans);
             if (resources.length === 0) {
                 return;
             }
             let progressManager: StepProgress = new StepProgress(progress);
-            progressManager.startStep('Updating scanners', resources.length);
+            progressManager.startStep('Updating extension', resources.length);
             this._logManager.logMessage(
                 'Updating outdated resources (' + resources.length + '): ' + resources.map(resource => resource.name).join(),
-                'INFO'
+                'DEBUG'
             );
             let updatePromises: Promise<any>[] = [];
             resources.forEach(async (resource: Resource) =>
@@ -85,10 +90,7 @@ export class ScanManager implements ExtensionComponent {
                 )
             );
             await Promise.all(updatePromises);
-            this._logManager.logMessage(
-                'Updating outdated extension resources finished ' + (result ? 'successfully' : 'with errors'),
-                result ? 'INFO' : 'ERR'
-            );
+            this._logManager.logMessage('Updating extension finished ' + (result ? 'successfully' : 'with errors'), result ? 'INFO' : 'ERR');
         });
 
         return result;
@@ -98,7 +100,7 @@ export class ScanManager implements ExtensionComponent {
         if (!this.shouldCheckOutdated()) {
             return [];
         }
-        this._logManager.logMessage('Checking for outdated scanners', 'INFO');
+        this._logManager.logMessage('Checking for updates', 'INFO');
         ScanManager.lastOutdatedCheck = Date.now();
         let promises: Promise<boolean>[] = [];
         let outdatedResources: Resource[] = [];
@@ -175,16 +177,10 @@ export class ScanManager implements ExtensionComponent {
      * Get all the entitlement status for each type of scan the manager offers
      */
     public async getSupportedScans(): Promise<SupportedScans> {
-        let supportedScans: SupportedScans = {} as SupportedScans;
         let requests: Promise<any>[] = [];
         requests.push(
             this.validateGraphSupported()
                 .then(res => (supportedScans.dependencies = res))
-                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
-        );
-        requests.push(
-            this.isEosSupported()
-                .then(res => (supportedScans.eos = res))
                 .catch(err => ScanUtils.onScanError(err, this._logManager, true))
         );
         requests.push(
@@ -202,7 +198,9 @@ export class ScanManager implements ExtensionComponent {
                 .then(res => (supportedScans.secrets = res))
                 .catch(err => ScanUtils.onScanError(err, this._logManager, true))
         );
+        requests.push(this.isIacSupported().then(res => (supportedScans.iac = res)));
         await Promise.all(requests);
+        this._supportedScans = supportedScans;
         return supportedScans;
     }
 
@@ -260,7 +258,6 @@ export class ScanManager implements ExtensionComponent {
         this._logManager.logMessage('Scanning directory ' + directory + ', for Iac issues', 'DEBUG');
         return await iacRunner.scan(directory, checkCancel);
     }
-
     /**
      * Scan directory for secrets issues.
      * @param directory - the directory that will be scan
