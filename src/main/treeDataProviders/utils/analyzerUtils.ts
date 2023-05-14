@@ -113,9 +113,10 @@ export class AnalyzerUtils {
         let isWindows: boolean = os.platform() === 'win32';
         if (isWindows) {
             filePath = filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath;
+        }
+        filePath = filePath.includes('file://') ? filePath.substring('file://'.length) : filePath;
+        if (isWindows) {
             filePath = filePath.replace(/['/']/g, '\\');
-        } else {
-            filePath = filePath.includes('file://') ? filePath.substring('file://'.length) : filePath;
         }
         return decodeURI(filePath);
     }
