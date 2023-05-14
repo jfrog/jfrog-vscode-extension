@@ -104,9 +104,9 @@ export class AnalyzerUtils {
     /**
      * The paths that returns from the analyzerManager follows the SARIF format and are encoded, with prefix and fixed (not os depended).
      * This method will parse a given path and will fix it to match the actual path expected by the vscode
-     * * Remove the prefix 'file:///' for windows or 'file://' if exists
-     * * replaces '/' with '\\' for windows
-     * * decode the encoded path
+     * * Remove the prefix 'file:///' for windows or 'file://' if exists.
+     * * replaces '/' with '\\' for windows.
+     * * decode the encoded path.
      * @param filePath - path to remove prefix and decode
      */
     public static parseLocationFilePath(filePath: string): string {
