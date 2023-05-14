@@ -34,9 +34,6 @@ export class EosTreeNode extends CodeIssueTreeNode {
         return this._codeFlows;
     }
 
-    /**
-     * Get the CVE details page of the issue
-     */
     public getDetailsPage(): IEosPage {
         return {
             header: this.label,

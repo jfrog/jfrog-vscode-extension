@@ -6,31 +6,31 @@ import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeScanRequest, AnalyzerScanResponse, ScanType } from './analyzerModels';
 import { BinaryRunner } from './binaryRunner';
 
-export interface IacScanResponse {
+export interface SecretsScanResponse {
     filesWithIssues: FileWithSecurityIssues[];
 }
 
 /**
- * Describes a runner for the 'Infrastructure As Code' (Iac) scan executable file.
+ * Describes a runner for the Secrets scan executable file.
  */
-export class IacRunner extends BinaryRunner {
+export class SecretsRunner extends BinaryRunner {
     constructor(
         connectionManager: ConnectionManager,
         logManager: LogManager,
         binary?: Resource,
         timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
     ) {
-        super(connectionManager, timeout, ScanType.Iac, logManager, binary);
+        super(connectionManager, timeout, ScanType.Secrets, logManager, binary);
     }
 
     /** @override */
     protected async runBinary(yamlConfigPath: string, executionLogDirectory: string, checkCancel: () => void): Promise<void> {
-        await this.executeBinary(checkCancel, ['iac', yamlConfigPath], executionLogDirectory);
+        await this.executeBinary(checkCancel, ['sec', yamlConfigPath], executionLogDirectory);
     }
 
-    public async scan(directory: string, checkCancel: () => void): Promise<IacScanResponse> {
+    public async scan(directory: string, checkCancel: () => void): Promise<SecretsScanResponse> {
         let request: AnalyzeScanRequest = {
-            type: ScanType.Iac,
+            type: ScanType.Secrets,
             roots: [directory]
         } as AnalyzeScanRequest;
         return await this.run(checkCancel, request).then(runResult => this.convertResponse(runResult));
@@ -38,18 +38,18 @@ export class IacRunner extends BinaryRunner {
 
     /**
      * Generate response from the run results
-     * @param analyzerScanResponse - the run results generated from the binary
+     * @param run - the run results generated from the binary
      * @returns the response generated from the scan run
      */
-    public convertResponse(analyzerScanResponse?: AnalyzerScanResponse): IacScanResponse {
-        if (!analyzerScanResponse) {
-            return {} as IacScanResponse;
+    public convertResponse(response?: AnalyzerScanResponse): SecretsScanResponse {
+        if (!response) {
+            return {} as SecretsScanResponse;
         }
-        let iacResponse: IacScanResponse = {
+        let secretsResponse: SecretsScanResponse = {
             filesWithIssues: []
-        } as IacScanResponse;
+        } as SecretsScanResponse;
 
-        for (const run of analyzerScanResponse.runs) {
+        for (const run of response.runs) {
             // Get the full descriptions of all rules
             let rulesFullDescription: Map<string, string> = new Map<string, string>();
             for (const rule of run.tool.driver.rules) {
@@ -59,9 +59,9 @@ export class IacRunner extends BinaryRunner {
             }
             // Generate response data
             run.results?.forEach(analyzeIssue =>
-                AnalyzerUtils.generateIssueData(iacResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId))
+                AnalyzerUtils.generateIssueData(secretsResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId))
             );
         }
-        return iacResponse;
+        return secretsResponse;
     }
 }

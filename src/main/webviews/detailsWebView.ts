@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import fs from 'fs-extra';
-import { IDependencyPage, IEosPage } from 'jfrog-ide-webview';
+import { IDependencyPage, IEosPage, IIaCPage, ISecretsPage } from 'jfrog-ide-webview';
 import { LogManager } from '../log/logManager';
+
+export type IWebviewPage = IDependencyPage | IEosPage | IIaCPage | ISecretsPage;
 
 /**
  * Show a webview panel with details about objects in the project
@@ -15,7 +17,7 @@ export class DetailsWebView {
 
     public async activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(
-            vscode.commands.registerCommand('jfrog.view.details.page', (page: IDependencyPage | IEosPage) => this.updateWebview(page, context))
+            vscode.commands.registerCommand('jfrog.view.details.page', (page: IWebviewPage) => this.updateWebview(page, context))
         );
     }
 

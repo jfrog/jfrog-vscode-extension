@@ -4,7 +4,7 @@ import { ExtensionComponent } from '../extensionComponent';
 
 import { LogManager } from '../log/logManager';
 import { ConnectionManager } from '../connect/connectionManager';
-import { ConnectionUtils } from '../connect/connectionUtils';
+import { ConnectionUtils, EntitlementScanFeature } from '../connect/connectionUtils';
 
 import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { IGraphResponse, XrayScanProgress } from 'jfrog-client-js';
@@ -19,16 +19,13 @@ import { ScanUtils } from '../utils/scanUtils';
 import { StepProgress } from '../treeDataProviders/utils/stepProgress';
 import { Utils } from '../utils/utils';
 import { IacRunner, IacScanResponse } from './scanRunners/iacScan';
+import { SecretsRunner, SecretsScanResponse } from './scanRunners/secretsScan';
 
 export interface SupportedScans {
-    graphScan: boolean;
+    dependencies: boolean;
     applicability: boolean;
     iac: boolean;
-}
-
-enum EntitlementScanFeature {
-    Applicability = 'contextual_analysis',
-    Iac = 'iac_scanners'
+    secrets: boolean;
 }
 
 /**
@@ -39,6 +36,7 @@ export class ScanManager implements ExtensionComponent {
     private static readonly RESOURCE_CHECK_UPDATE_INTERVAL_MILLISECS: number = 1000 * 60 * 60 * 24;
 
     private static lastOutdatedCheck: number;
+    private _supportedScans: SupportedScans = {} as SupportedScans;
 
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
@@ -55,23 +53,28 @@ export class ScanManager implements ExtensionComponent {
         return this._connectionManager;
     }
 
+    public get supportedScans(): SupportedScans {
+        return this._supportedScans;
+    }
+
     /**
-     * Updates all the resources that are outdated
+     * Updates all the resources that are outdated.
+     * @param supportedScans - the supported scan to get the needed resources. if default, should call getSupportedScans before calling this method.
      * @returns true if all the outdated resources updated successfully, false otherwise
      */
-    public async updateResources(): Promise<boolean> {
+    public async updateResources(supportedScans: SupportedScans = this._supportedScans): Promise<boolean> {
         let result: boolean = true;
         await ScanUtils.backgroundTask(async (progress: vscode.Progress<{ message?: string; increment?: number }>) => {
-            progress.report({ message: 'Checking for outdated scanners' });
-            let resources: Resource[] = await this.getOutdatedResources();
+            progress.report({ message: 'Checking for updates' });
+            let resources: Resource[] = await this.getOutdatedResources(supportedScans);
             if (resources.length === 0) {
                 return;
             }
             let progressManager: StepProgress = new StepProgress(progress);
-            progressManager.startStep('Updating scanners', resources.length);
+            progressManager.startStep('Updating extension', resources.length);
             this._logManager.logMessage(
                 'Updating outdated resources (' + resources.length + '): ' + resources.map(resource => resource.name).join(),
-                'INFO'
+                'DEBUG'
             );
             let updatePromises: Promise<any>[] = [];
             resources.forEach(async (resource: Resource) =>
@@ -86,24 +89,21 @@ export class ScanManager implements ExtensionComponent {
                 )
             );
             await Promise.all(updatePromises);
-            this._logManager.logMessage(
-                'Updating outdated extension resources finished ' + (result ? 'successfully' : 'with errors'),
-                result ? 'INFO' : 'ERR'
-            );
+            this._logManager.logMessage('Updating extension finished ' + (result ? 'successfully' : 'with errors'), result ? 'INFO' : 'ERR');
         });
 
         return result;
     }
 
-    private async getOutdatedResources(): Promise<Resource[]> {
+    private async getOutdatedResources(supportedScans: SupportedScans): Promise<Resource[]> {
         if (!this.shouldCheckOutdated()) {
             return [];
         }
-        this._logManager.logMessage('Checking for outdated scanners', 'INFO');
+        this._logManager.logMessage('Checking for updates', 'INFO');
         ScanManager.lastOutdatedCheck = Date.now();
         let promises: Promise<boolean>[] = [];
         let outdatedResources: Resource[] = [];
-        for (const resource of await this.getResources()) {
+        for (const resource of this.getResources(supportedScans)) {
             promises.push(
                 resource
                     .isOutdated()
@@ -127,10 +127,9 @@ export class ScanManager implements ExtensionComponent {
         return !ScanManager.lastOutdatedCheck || Date.now() - ScanManager.lastOutdatedCheck > ScanManager.RESOURCE_CHECK_UPDATE_INTERVAL_MILLISECS;
     }
 
-    private async getResources(): Promise<Resource[]> {
+    private getResources(supportedScans: SupportedScans): Resource[] {
         let resources: Resource[] = [];
-        let supported: SupportedScans = await this.getSupportedScans();
-        if (supported.applicability || supported.iac) {
+        if (supportedScans.applicability || supportedScans.iac || supportedScans.secrets) {
             resources.push(BinaryRunner.getAnalyzerManagerResource(this._logManager));
         } else {
             this.logManager.logMessage('You are not entitled to run Advanced Security scans', 'DEBUG');
@@ -160,15 +159,40 @@ export class ScanManager implements ExtensionComponent {
     }
 
     /**
+     * Check if Secrets scan is supported for the user
+     */
+    public async isSecretsSupported(): Promise<boolean> {
+        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Secrets);
+    }
+
+    /**
      * Get all the entitlement status for each type of scan the manager offers
      */
     public async getSupportedScans(): Promise<SupportedScans> {
         let supportedScans: SupportedScans = {} as SupportedScans;
-        let requests: Promise<boolean>[] = [];
-        requests.push(this.validateGraphSupported().then(res => (supportedScans.graphScan = res)));
-        requests.push(this.isApplicabilitySupported().then(res => (supportedScans.applicability = res)));
-        requests.push(this.isIacSupported().then(res => (supportedScans.iac = res)));
+        let requests: Promise<any>[] = [];
+        requests.push(
+            this.validateGraphSupported()
+                .then(res => (supportedScans.dependencies = res))
+                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
+        );
+        requests.push(
+            this.isApplicabilitySupported()
+                .then(res => (supportedScans.applicability = res))
+                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
+        );
+        requests.push(
+            this.isIacSupported()
+                .then(res => (supportedScans.iac = res))
+                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
+        );
+        requests.push(
+            this.isSecretsSupported()
+                .then(res => (supportedScans.secrets = res))
+                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
+        );
         await Promise.all(requests);
+        this._supportedScans = supportedScans;
         return supportedScans;
     }
 
@@ -205,13 +229,9 @@ export class ScanManager implements ExtensionComponent {
         checkCancel: () => void,
         cveToRun: Set<string> = new Set<string>()
     ): Promise<ApplicabilityScanResponse> {
-        let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(
-            this._connectionManager,
-            ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
-            this._logManager
-        );
+        let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(this._connectionManager, this._logManager);
         if (!applicableRunner.validateSupported()) {
-            this._logManager.logMessage('Applicability scan is not supported', 'DEBUG');
+            this._logManager.logMessage('Applicability runner could not find binary to run', 'DEBUG');
             return {} as ApplicabilityScanResponse;
         }
         let skipFiles: string[] = AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern());
@@ -229,13 +249,29 @@ export class ScanManager implements ExtensionComponent {
      * @returns the Iac scan response
      */
     public async scanIac(directory: string, checkCancel: () => void): Promise<IacScanResponse> {
-        let iacRunner: IacRunner = new IacRunner(this._connectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, this.logManager);
+        let iacRunner: IacRunner = new IacRunner(this._connectionManager, this.logManager);
         if (!iacRunner.validateSupported()) {
             this._logManager.logMessage('Iac runner could not find binary to run', 'DEBUG');
             return {} as IacScanResponse;
         }
         this._logManager.logMessage('Scanning directory ' + directory + ', for Iac issues', 'DEBUG');
         return await iacRunner.scan(directory, checkCancel);
+    }
+
+    /**
+     * Scan directory for secrets issues.
+     * @param directory - the directory that will be scan
+     * @param checkCancel - check if should cancel
+     * @returns the Secrets scan response
+     */
+    public async scanSecrets(directory: string, checkCancel: () => void): Promise<SecretsScanResponse> {
+        let secretsRunner: SecretsRunner = new SecretsRunner(this._connectionManager, this.logManager);
+        if (!secretsRunner.validateSupported()) {
+            this._logManager.logMessage('Secrets runner could not find binary to run', 'DEBUG');
+            return {} as SecretsScanResponse;
+        }
+        this._logManager.logMessage('Scanning directory ' + directory + ', for Secrets issues', 'DEBUG');
+        return await secretsRunner.scan(directory, checkCancel);
     }
 
     public async scanEos(checkCancel: () => void, ...requests: EosScanRequest[]): Promise<EosScanResponse> {

@@ -243,7 +243,7 @@ export class ScanUtils {
         if (error instanceof ScanCancellationError) {
             throw error;
         }
-        if (error instanceof NotEntitledError) {
+        if (error instanceof NotEntitledError || error instanceof NotSupportedError) {
             logger.logMessage(error.message, 'INFO');
             return undefined;
         }

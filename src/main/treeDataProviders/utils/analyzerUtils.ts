@@ -15,16 +15,13 @@ import { PackageType } from '../../types/projectType';
 import { GraphScanProgress, StepProgress } from './stepProgress';
 import { EosIssue, EosIssueLocation, EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
 import { ScanManager } from '../../scanLogic/scanManager';
-import { FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
+import { AnalyzeIssue, FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
 import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
 import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
 import { FileScanBundle } from '../../utils/scanUtils';
-import { IacIssue } from '../../scanLogic/scanRunners/iacScan';
 import { IacTreeNode } from '../issuesTree/codeFileTree/iacTreeNode';
-
-export interface GeneralScanResponse {
-    filesWithIssues: FileWithSecurityIssues[];
-}
+import { SecretTreeNode } from '../issuesTree/codeFileTree/secretsTreeNode';
+import { Translators } from '../../utils/translators';
 
 export interface FileWithSecurityIssues {
     full_path: string;
@@ -34,12 +31,76 @@ export interface FileWithSecurityIssues {
 export interface SecurityIssue {
     ruleId: string;
     ruleName: string;
-    fullDescription?: string;
     severity: Severity;
+    fullDescription?: string;
     locations: FileRegion[];
 }
 
 export class AnalyzerUtils {
+    /**
+     * Get or create issue in a given file if not exists
+     * @param fileWithIssues - the file with the issues
+     * @param analyzeIssue - the issue to search or create
+     * @param fullDescription - the description of the issue
+     * @returns - the issue created
+     */
+    public static getOrCreateSecurityIssue(
+        fileWithIssues: FileWithSecurityIssues,
+        analyzeIssue: AnalyzeIssue,
+        fullDescription?: string
+    ): SecurityIssue {
+        let potential: SecurityIssue | undefined = fileWithIssues.issues.find(issue => issue.ruleId === analyzeIssue.ruleId);
+        if (potential) {
+            return potential;
+        }
+        let fileIssue: SecurityIssue = {
+            ruleId: analyzeIssue.ruleId,
+            severity: Translators.levelToSeverity(analyzeIssue.level),
+            ruleName: analyzeIssue.message.text,
+            fullDescription: fullDescription,
+            locations: []
+        } as SecurityIssue;
+        fileWithIssues.issues.push(fileIssue);
+        return fileIssue;
+    }
+
+    /**
+     * Get or create file with issues if not exists in the response
+     * @param response - the response that holds the files
+     * @param uri - the files to search or create
+     * @returns - file with issues
+     */
+    public static getOrCreateFileWithSecurityIssues(response: { filesWithIssues: FileWithSecurityIssues[] }, uri: string): FileWithSecurityIssues {
+        let potential: FileWithSecurityIssues | undefined = response.filesWithIssues.find(fileWithIssues => fileWithIssues.full_path === uri);
+        if (potential) {
+            return potential;
+        }
+        let fileWithIssues: FileWithSecurityIssues = {
+            full_path: uri,
+            issues: []
+        } as FileWithSecurityIssues;
+        response.filesWithIssues.push(fileWithIssues);
+
+        return fileWithIssues;
+    }
+
+    /**
+     * Generate the data for a specific analyze issue (the file object, the issue in the file object and all the location objects of this issue).
+     * @param iacResponse - the response of the scan that holds all the file objects
+     * @param analyzeIssue - the issue to handle and generate information base on it
+     * @param fullDescription - the description of the analyzeIssue
+     */
+    public static generateIssueData(response: { filesWithIssues: FileWithSecurityIssues[] }, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
+        analyzeIssue.locations.forEach(location => {
+            let fileWithIssues: FileWithSecurityIssues = AnalyzerUtils.getOrCreateFileWithSecurityIssues(
+                response,
+                location.physicalLocation.artifactLocation.uri
+            );
+            let fileIssue: SecurityIssue = AnalyzerUtils.getOrCreateSecurityIssue(fileWithIssues, analyzeIssue, fullDescription);
+            fileIssue.locations.push(location.physicalLocation.region);
+        });
+    }
+
     /**
      * The paths that returns from the analyzerManager follows the SARIF format and are encoded, with prefix and fixed (not os depended).
      * This method will parse a given path and will fix it to match the actual path expected by the vscode
@@ -307,7 +368,7 @@ export class AnalyzerUtils {
     }
 
     /**
-     * Populate Iac information in the given view root
+     * Populate Iac information in the given node
      * @param root - root node to populate data inside
      * @param workspaceData - data to populate on node
      * @returns number of Iac issues populated
@@ -316,11 +377,68 @@ export class AnalyzerUtils {
         root.iacScanTimeStamp = workspaceData.iacScanTimestamp;
         let issuesCount: number = 0;
         if (workspaceData.iacScan && workspaceData.iacScan.filesWithIssues) {
-            workspaceData.iacScan.filesWithIssues.forEach(fileWithIssues => {
+            workspaceData.iacScan.filesWithIssues.forEach((fileWithIssues: FileWithSecurityIssues) => {
                 let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
-                fileWithIssues.issues.forEach((issue: IacIssue) => {
+                fileWithIssues.issues.forEach((issue: SecurityIssue) => {
                     issue.locations.forEach((location: FileRegion) => {
                         fileNode.issues.push(new IacTreeNode(issue, location, fileNode));
+                        issuesCount++;
+                    });
+                });
+            });
+        }
+
+        return issuesCount;
+    }
+
+    /**
+     * Run Secrets scan async task and populate the given bundle with the results.
+     * @param scanResults - the data object that will be populated with the results
+     * @param root - the view object that will be populated with the results
+     * @param scanManager - the ScanManager that preforms the actual scans
+     * @param progressManager - the progress for the given scan
+     */
+    public static async runSecrets(
+        scanResults: ScanResults,
+        root: IssuesRootTreeNode,
+        scanManager: ScanManager,
+        progressManager: StepProgress
+    ): Promise<void> {
+        let startSecretsTime: number = Date.now();
+        scanResults.secretsScan = await scanManager.scanSecrets(root.workSpace.uri.fsPath, progressManager.checkCancel);
+        if (scanResults.secretsScan) {
+            scanResults.secretsScanTimestamp = Date.now();
+            let issuesCount: number = AnalyzerUtils.populateSecretsIssues(root, scanResults);
+            scanManager.logManager.logMessage(
+                'Found ' +
+                    issuesCount +
+                    " Secret issues in workspace = '" +
+                    scanResults.path +
+                    "' (elapsed " +
+                    (scanResults.secretsScanTimestamp - startSecretsTime) / 1000 +
+                    ' seconds)',
+                'INFO'
+            );
+            root.apply();
+        }
+        progressManager.reportProgress();
+    }
+
+    /**
+     * Populate Secrets information in the given node
+     * @param root - root node to populate data inside
+     * @param workspaceData - data to populate on node
+     * @returns number of Secret issues populated
+     */
+    public static populateSecretsIssues(root: IssuesRootTreeNode, workspaceData: ScanResults): number {
+        root.secretsScanTimeStamp = workspaceData.secretsScanTimestamp;
+        let issuesCount: number = 0;
+        if (workspaceData.secretsScan && workspaceData.secretsScan.filesWithIssues) {
+            workspaceData.secretsScan.filesWithIssues.forEach((fileWithIssues: FileWithSecurityIssues) => {
+                let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
+                fileWithIssues.issues.forEach((issue: SecurityIssue) => {
+                    issue.locations.forEach((location: FileRegion) => {
+                        fileNode.issues.push(new SecretTreeNode(issue, location, fileNode));
                         issuesCount++;
                     });
                 });

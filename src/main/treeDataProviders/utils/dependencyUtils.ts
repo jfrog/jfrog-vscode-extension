@@ -30,7 +30,7 @@ import { FileScanBundle, FileScanError, ScanUtils } from '../../utils/scanUtils'
 import { LogManager } from '../../log/logManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
-import { AnalyzerType } from '../../scanLogic/scanRunners/analyzerModels';
+import { ScanType } from '../../scanLogic/scanRunners/analyzerModels';
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
@@ -553,7 +553,7 @@ export class DependencyUtils {
         connectionManager: ConnectionManager
     ) {
         let featureArray: IUsageFeature[] = [];
-        if (supportedScans.graphScan) {
+        if (supportedScans.dependencies) {
             for (const [techEnum, descriptors] of projectDescriptors.entries()) {
                 // Only add to usage if found descriptors for tech.
                 if (!!descriptors) {
@@ -563,10 +563,13 @@ export class DependencyUtils {
             }
         }
         if (supportedScans.applicability) {
-            featureArray.push({ featureId: AnalyzerType.ContextualAnalysis });
+            featureArray.push({ featureId: ScanType.ContextualAnalysis });
         }
         if (supportedScans.iac) {
-            featureArray.push({ featureId: AnalyzerType.Iac });
+            featureArray.push({ featureId: ScanType.Iac });
+        }
+        if (supportedScans.secrets) {
+            featureArray.push({ featureId: ScanType.Secrets });
         }
         if (featureArray.length === 0) {
             return;

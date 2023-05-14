@@ -1,4 +1,5 @@
 import { assert } from 'chai';
+import * as path from 'path';
 
 import { ConnectionManager } from '../../../main/connect/connectionManager';
 import { LogManager } from '../../../main/log/logManager';
@@ -6,6 +7,8 @@ import { ScanUtils } from '../../../main/utils/scanUtils';
 import { createTestConnectionManager } from './utils.test';
 import { Resource } from '../../../main/utils/resource';
 import { BinaryRunner } from '../../../main/scanLogic/scanRunners/binaryRunner';
+import { AnalyzerUtils, FileWithSecurityIssues, SecurityIssue } from '../../../main/treeDataProviders/utils/analyzerUtils';
+import { FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
 
 export class BaseIntegrationEnv {
     public static readonly ENV_PLATFORM_URL: string = 'JFROG_IDE_PLATFORM_URL';
@@ -123,4 +126,145 @@ export async function initializeIntegrationTests() {
 
 export async function cleanUpIntegrationTests() {
     await ScanUtils.removeFolder(BaseIntegrationEnv.directory);
+}
+
+function getTestFileIssues(filePath: string, filesWithIssues: FileWithSecurityIssues[]): FileWithSecurityIssues {
+    let potential: FileWithSecurityIssues | undefined = filesWithIssues.find(
+        (fileWithIssues: FileWithSecurityIssues) => AnalyzerUtils.parseLocationFilePath(fileWithIssues.full_path) === filePath
+    );
+    assert.isDefined(potential, 'Response should contain file with issues at path ' + filePath);
+    return potential!;
+}
+
+function getTestIssue(filePath: string, filesWithIssues: FileWithSecurityIssues[], ruleId: string): SecurityIssue {
+    let fileWithIssues: FileWithSecurityIssues = getTestFileIssues(filePath, filesWithIssues);
+    let potential: SecurityIssue | undefined = fileWithIssues.issues.find(issue => issue.ruleId === ruleId);
+    assert.isDefined(potential, 'Expected ' + ruleId + ' should be contain detected as issues of file ' + filePath);
+    return potential!;
+}
+
+function getTestLocation(filePath: string, filesWithIssues: FileWithSecurityIssues[], ruleId: string, location: FileRegion): FileRegion {
+    let issue: SecurityIssue = getTestIssue(filePath, filesWithIssues, ruleId);
+    let potential: FileRegion | undefined = issue.locations.find(actualLocation => AnalyzerUtils.isSameRegion(location, actualLocation));
+    assert.isDefined(
+        potential,
+        'Expected file ' +
+            filePath +
+            ' should contain evidence for issue ' +
+            ruleId +
+            ' in location ' +
+            [location.startLine, location.endLine, location.startColumn, location.endColumn]
+    );
+    return potential!;
+}
+
+export function assertFileIssuesExist(
+    testDataRoot: string,
+    responseFilesWithIssues: FileWithSecurityIssues[],
+    expectedFilesWithIssues: FileWithSecurityIssues[]
+) {
+    expectedFilesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+        assert.isDefined(getTestFileIssues(path.join(testDataRoot, expectedFileWithIssues.full_path), responseFilesWithIssues));
+    });
+}
+
+export function assertIssuesExist(
+    testDataRoot: string,
+    responseFilesWithIssues: FileWithSecurityIssues[],
+    expectedFilesWithIssues: FileWithSecurityIssues[]
+) {
+    expectedFilesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+        expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+            assert.isDefined(getTestIssue(path.join(testDataRoot, expectedFileWithIssues.full_path), responseFilesWithIssues, expectedIssues.ruleId));
+        });
+    });
+}
+
+export function assertIssuesLocationsExist(
+    testDataRoot: string,
+    responseFilesWithIssues: FileWithSecurityIssues[],
+    expectedFilesWithIssues: FileWithSecurityIssues[]
+) {
+    expectedFilesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+        expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+            expectedIssues.locations.forEach((expectedLocation: FileRegion) => {
+                assert.isDefined(
+                    getTestLocation(
+                        path.join(testDataRoot, expectedFileWithIssues.full_path),
+                        responseFilesWithIssues,
+                        expectedIssues.ruleId,
+                        expectedLocation
+                    )
+                );
+            });
+        });
+    });
+}
+
+export function assertIssuesRuleNameExist(
+    testDataRoot: string,
+    responseFilesWithIssues: FileWithSecurityIssues[],
+    expectedFilesWithIssues: FileWithSecurityIssues[]
+) {
+    expectedFilesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+        expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+            assert.deepEqual(
+                getTestIssue(path.join(testDataRoot, expectedFileWithIssues.full_path), responseFilesWithIssues, expectedIssues.ruleId).ruleName,
+                expectedIssues.ruleName
+            );
+        });
+    });
+}
+
+export function assertIssuesFullDescriptionExist(
+    testDataRoot: string,
+    responseFilesWithIssues: FileWithSecurityIssues[],
+    expectedFilesWithIssues: FileWithSecurityIssues[]
+) {
+    expectedFilesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+        expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+            assert.deepEqual(
+                getTestIssue(path.join(testDataRoot, expectedFileWithIssues.full_path), responseFilesWithIssues, expectedIssues.ruleId)
+                    .fullDescription,
+                expectedIssues.fullDescription
+            );
+        });
+    });
+}
+
+export function assertIssuesSeverityExist(
+    testDataRoot: string,
+    responseFilesWithIssues: FileWithSecurityIssues[],
+    expectedFilesWithIssues: FileWithSecurityIssues[]
+) {
+    expectedFilesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+        expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+            assert.deepEqual(
+                getTestIssue(path.join(testDataRoot, expectedFileWithIssues.full_path), responseFilesWithIssues, expectedIssues.ruleId).severity,
+                expectedIssues.severity
+            );
+        });
+    });
+}
+
+export function assertIssuesLocationSnippetsExist(
+    testDataRoot: string,
+    responseFilesWithIssues: FileWithSecurityIssues[],
+    expectedFilesWithIssues: FileWithSecurityIssues[]
+) {
+    expectedFilesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+        expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+            expectedIssues.locations.forEach((expectedLocation: FileRegion) => {
+                assert.deepEqual(
+                    getTestLocation(
+                        path.join(testDataRoot, expectedFileWithIssues.full_path),
+                        responseFilesWithIssues,
+                        expectedIssues.ruleId,
+                        expectedLocation
+                    ).snippet?.text,
+                    expectedLocation.snippet?.text
+                );
+            });
+        });
+    });
 }

@@ -5,6 +5,7 @@ import { EosScanResponse } from '../scanLogic/scanRunners/eosScan';
 import { Utils } from '../utils/utils';
 import { PackageType } from './projectType';
 import { IacScanResponse } from '../scanLogic/scanRunners/iacScan';
+import { SecretsScanResponse } from '../scanLogic/scanRunners/secretsScan';
 
 /**
  * Describes all the issue data for a specific workspace from Xray scan
@@ -15,6 +16,8 @@ export class ScanResults {
     private _eosScanTimestamp?: number;
     private _iacScan: IacScanResponse = {} as IacScanResponse;
     private _iacScanTimestamp?: number;
+    private _secretsScan: SecretsScanResponse = {} as SecretsScanResponse;
+    private _secretsScanTimestamp?: number;
     private _failedFiles: EntryIssuesData[] = [];
 
     constructor(private _path: string) {}
@@ -31,6 +34,9 @@ export class ScanResults {
         // Iac
         workspaceIssuesDetails.iacScan = tmp._iacScan;
         workspaceIssuesDetails.iacScanTimestamp = tmp._iacScanTimestamp;
+        // Secrets
+        workspaceIssuesDetails.secretsScan = tmp._secretsScan;
+        workspaceIssuesDetails.secretsScanTimestamp = tmp._secretsScanTimestamp;
         if (tmp._failedFiles) {
             workspaceIssuesDetails.failedFiles.push(...tmp._failedFiles);
         }
@@ -45,6 +51,7 @@ export class ScanResults {
             ...this._descriptorsIssues.map(descriptorIssues => descriptorIssues.graphScanTimestamp),
             ...this._descriptorsIssues.map(descriptorIssues => descriptorIssues.applicableScanTimestamp),
             this.iacScanTimestamp,
+            this.secretsScanTimestamp,
             this.eosScanTimestamp
         );
     }
@@ -54,7 +61,12 @@ export class ScanResults {
      * @returns true if at least one issue exists
      */
     public hasIssues(): boolean {
-        return this.descriptorsIssues.length > 0 || this.eosScan?.filesWithIssues?.length > 0 || this.iacScan?.filesWithIssues?.length > 0;
+        return (
+            this.descriptorsIssues.length > 0 ||
+            this.eosScan?.filesWithIssues?.length > 0 ||
+            this.iacScan?.filesWithIssues?.length > 0 ||
+            this.secretsScan?.filesWithIssues?.length > 0
+        );
     }
 
     get path(): string {
@@ -99,6 +111,22 @@ export class ScanResults {
 
     set iacScanTimestamp(value: number | undefined) {
         this._iacScanTimestamp = value;
+    }
+
+    get secretsScan(): SecretsScanResponse {
+        return this._secretsScan;
+    }
+
+    set secretsScan(value: SecretsScanResponse) {
+        this._secretsScan = value;
+    }
+
+    get secretsScanTimestamp(): number | undefined {
+        return this._secretsScanTimestamp;
+    }
+
+    set secretsScanTimestamp(value: number | undefined) {
+        this._secretsScanTimestamp = value;
     }
 
     get failedFiles(): EntryIssuesData[] {

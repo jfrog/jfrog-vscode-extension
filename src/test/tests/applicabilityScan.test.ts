@@ -64,7 +64,7 @@ describe('Applicability Scan Tests', () => {
         let response: ApplicabilityScanResponse;
 
         before(() => {
-            response = getDummyRunner().generateResponse(undefined);
+            response = getDummyRunner().convertResponse(undefined);
         });
 
         it('Check response defined', () => {
@@ -87,7 +87,7 @@ describe('Applicability Scan Tests', () => {
 
         before(() => {
             // Read test data and populate scanResult and dummy Cve nodes in test dependency
-            let response: ApplicabilityScanResponse = getDummyRunner().generateResponse(
+            let response: ApplicabilityScanResponse = getDummyRunner().convertResponse(
                 getAnalyzerScanResponse(path.join(scanApplicable, 'analyzerResponse.json'))?.runs[0]
             );
             for (let cve of response.scannedCve) {
@@ -305,6 +305,6 @@ describe('Applicability Scan Tests', () => {
     }
 
     function getDummyRunner(): ApplicabilityRunner {
-        return new ApplicabilityRunner({} as ConnectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, logManager);
+        return new ApplicabilityRunner({} as ConnectionManager, logManager);
     }
 });

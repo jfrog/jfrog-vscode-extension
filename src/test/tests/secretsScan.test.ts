@@ -3,16 +3,16 @@ import * as path from 'path';
 import { assert } from 'chai';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
-import { IacRunner, IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { createRootTestNode } from './utils/treeNodeUtils.test';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
 import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
 import { getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
 import { FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
-import { IacTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/iacTreeNode';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
+import { SecretsRunner, SecretsScanResponse } from '../../main/scanLogic/scanRunners/secretsScan';
+import { SecretTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/secretsTreeNode';
 import {
     assertFileNodesCreated,
     assertIssueNodesCreated,
@@ -26,12 +26,12 @@ import {
     groupFiles
 } from './utils/testAnalyzer.test';
 
-describe('Iac Scan Tests', () => {
-    const scanIac: string = path.join(__dirname, '..', 'resources', 'iacScan');
+describe('Secrets Scan Tests', () => {
+    const scanSecrets: string = path.join(__dirname, '..', 'resources', 'secretsScan');
     let logManager: LogManager = new LogManager().activate();
 
-    describe('Iac scan fails', () => {
-        let response: IacScanResponse;
+    describe('Secrets scan fails', () => {
+        let response: SecretsScanResponse;
 
         before(() => {
             response = getDummyRunner().convertResponse(undefined);
@@ -46,8 +46,8 @@ describe('Iac Scan Tests', () => {
         });
     });
 
-    describe('Iac scan no issues found', () => {
-        let response: IacScanResponse;
+    describe('Secrets scan no issues found', () => {
+        let response: SecretsScanResponse;
 
         before(() => {
             response = getDummyRunner().convertResponse(getEmptyAnalyzerScanResponse());
@@ -62,22 +62,24 @@ describe('Iac Scan Tests', () => {
         });
     });
 
-    describe('Iac scan success', () => {
-        const testRoot: IssuesRootTreeNode = createRootTestNode('root');
+    describe('Secrets scan success', () => {
+        const testRoot: IssuesRootTreeNode = createRootTestNode(path.join('root'));
         let expectedScanResult: ScanResults;
         let expectedFilesWithIssues: FileWithSecurityIssues[] = [];
         let populatedIssues: number;
 
         before(() => {
             // Read test data and populate scanResult
-            let response: IacScanResponse = getDummyRunner().convertResponse(getAnalyzerScanResponse(path.join(scanIac, 'analyzerResponse.json')));
+            let response: SecretsScanResponse = getDummyRunner().convertResponse(
+                getAnalyzerScanResponse(path.join(scanSecrets, 'analyzerResponse.json'))
+            );
             expectedFilesWithIssues = groupFiles(response);
             expectedScanResult = {
-                iacScanTimestamp: 11,
-                iacScan: response
+                secretsScanTimestamp: 22,
+                secretsScan: response
             } as ScanResults;
             // Populate scan result information to the test dummy node
-            populatedIssues = AnalyzerUtils.populateIacIssues(testRoot, expectedScanResult);
+            populatedIssues = AnalyzerUtils.populateSecretsIssues(testRoot, expectedScanResult);
         });
 
         it('Check issue count returned from method', () => {
@@ -85,18 +87,16 @@ describe('Iac Scan Tests', () => {
         });
 
         it('Check timestamp transferred from data to node', () => {
-            assert.equal(expectedScanResult.iacScanTimestamp, testRoot.iacScanTimeStamp);
+            assert.equal(expectedScanResult.secretsScanTimestamp, testRoot.secretsScanTimeStamp);
         });
 
         describe('Data populated as CodeFileTreeNode nodes', () => {
-            function getTestIssueNode(fileNode: CodeFileTreeNode, location: FileRegion): IacTreeNode {
+            function getTestIssueNode(fileNode: CodeFileTreeNode, location: FileRegion): SecretTreeNode {
                 let issueLocation: CodeIssueTreeNode | undefined = findLocationNode(location, fileNode);
-                assert.instanceOf(
-                    issueLocation,
-                    IacTreeNode,
-                    'expected node to be IacTreeNode issue for location ' + location + ' in node: ' + issueLocation
-                );
-                return <IacTreeNode>issueLocation;
+                if (!(issueLocation instanceof SecretTreeNode)) {
+                    assert.fail('expected node to be SecretTreeNode issue for location ' + location + ' in node: ' + issueLocation);
+                }
+                return <SecretTreeNode>issueLocation;
             }
 
             it('Check file nodes created for each file with issues', () => assertFileNodesCreated(testRoot, expectedFilesWithIssues));
@@ -119,7 +119,7 @@ describe('Iac Scan Tests', () => {
         });
     });
 
-    function getDummyRunner(): IacRunner {
-        return new IacRunner({} as ConnectionManager, logManager);
+    function getDummyRunner(): SecretsRunner {
+        return new SecretsRunner({} as ConnectionManager, logManager);
     }
 });

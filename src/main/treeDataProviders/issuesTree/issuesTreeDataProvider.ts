@@ -25,6 +25,7 @@ import { ProjectDependencyTreeNode } from './descriptorTree/projectDependencyTre
 import { ScanResults, DependencyScanResults } from '../../types/workspaceIssuesDetails';
 import { AnalyzerUtils } from '../utils/analyzerUtils';
 import { IacTreeNode } from './codeFileTree/iacTreeNode';
+import { SecretTreeNode } from './codeFileTree/secretsTreeNode';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -83,7 +84,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         // Prepare
         this.scanInProgress = true;
         this._logManager.showOutput();
-        await this._scanManager.updateResources();
+        await this._scanManager.updateResources(await this._scanManager.getSupportedScans());
         // Scan
         this._logManager.logMessage('Refresh: starting workspace scans 🐸', 'INFO');
         this.clearTree();
@@ -158,6 +159,25 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     }
 
     /**
+     * Calculate the number of tasks that will be preformed in the workspace scan.
+     * Components:
+     * 1. Build Dependency Tree = task for each package type that exists in the workspace
+     * 2. Dependency scan = task for each descriptor in the workspace (Applicability is optional sub task of dependency)
+     * 3. Iac scan = one task for all the workspace
+     * 4. Secrets scan = one task for all the workspace
+     * @param supportedScans - the details about the entitlements of the user
+     * @param descriptors - all the descriptors in the workspace
+     * @returns the number of tasks that will be preformed async and report to the progress bar
+     */
+    public static getNumberOfTasksInRepopulate(supportedScans: SupportedScans, descriptors: Map<PackageType, vscode.Uri[]>): number {
+        return (
+            (supportedScans.iac ? 1 : 0) +
+            (supportedScans.secrets ? 1 : 0) +
+            (supportedScans.dependencies ? descriptors.size + Array.from(descriptors.values()).reduce((acc, val) => acc + val.length, 0) : 0)
+        );
+    }
+
+    /**
      * Execute async scan task for the given workspace and populate the issues from the scan to the data and to the tree
      * Step 1: Build dependency tree step with two substeps (get the workspace descriptors and then build the tree for each of them)
      * Step 2: Run security scans on files in the workspace, async
@@ -173,23 +193,17 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         progress: vscode.Progress<{ message?: string; increment?: number }>,
         checkCanceled: () => void
     ): Promise<IssuesRootTreeNode> {
-        let progressManager: StepProgress = new StepProgress(progress, checkCanceled, () => this.onChangeFire(), this._logManager);
         // Prepare the needed information for the scans
         progress.report({ message: '👷 Preparing workspace' });
+        let progressManager: StepProgress = new StepProgress(progress, checkCanceled, () => this.onChangeFire(), this._logManager);
         let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
+        let subStepsCount: number = IssuesTreeDataProvider.getNumberOfTasksInRepopulate(this._scanManager.supportedScans, workspaceDescriptors);
         checkCanceled();
-        let supportedScans: SupportedScans = await this._scanManager.getSupportedScans();
-        let subStepsCount: number =
-            (supportedScans.iac ? 1 : 0) +
-            (supportedScans.graphScan
-                ? workspaceDescriptors.size + Array.from(workspaceDescriptors.values()).reduce((acc, val) => acc + val.length, 0)
-                : 0);
-        DependencyUtils.sendUsageReport(supportedScans, workspaceDescriptors, this._treesManager.connectionManager);
-        checkCanceled();
+        DependencyUtils.sendUsageReport(this._scanManager.supportedScans, workspaceDescriptors, this._treesManager.connectionManager);
         // Scan workspace
         let scansPromises: Promise<any>[] = [];
         progressManager.startStep('🔎 Scanning for issues', subStepsCount);
-        if (supportedScans.graphScan) {
+        if (this._scanManager.supportedScans.dependencies) {
             // Dependency graph and applicability scans for each package
             for (const [type, descriptorsPaths] of workspaceDescriptors) {
                 scansPromises.push(
@@ -200,15 +214,23 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                         type,
                         descriptorsPaths,
                         progressManager,
-                        supportedScans.applicability
+                        this._scanManager.supportedScans.applicability
                     ).catch(err => ScanUtils.onScanError(err, this._logManager, true))
                 );
             }
         }
-        if (supportedScans.iac) {
+        if (this._scanManager.supportedScans.iac) {
             // Scan the workspace for Infrastructure As Code (Iac) issues
             scansPromises.push(
                 AnalyzerUtils.runIac(scanResults, root, this._scanManager, progressManager).catch(err =>
+                    ScanUtils.onScanError(err, this._logManager, true)
+                )
+            );
+        }
+        if (this._scanManager.supportedScans.secrets) {
+            // Scan the workspace for Secrets issues
+            scansPromises.push(
+                AnalyzerUtils.runSecrets(scanResults, root, this._scanManager, progressManager).catch(err =>
                     ScanUtils.onScanError(err, this._logManager, true)
                 )
             );
@@ -380,7 +402,12 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 element.command = Utils.createNodeCommand('jfrog.view.details.page', 'Show details', [element.getDetailsPage()]);
             }
             // Source code issues nodes
-            if (element instanceof ApplicableTreeNode || element instanceof EosTreeNode || element instanceof IacTreeNode) {
+            if (
+                element instanceof ApplicableTreeNode ||
+                element instanceof EosTreeNode ||
+                element instanceof IacTreeNode ||
+                element instanceof SecretTreeNode
+            ) {
                 element.command = Utils.createNodeCommand('jfrog.issues.file.open.details', 'Open file location and show details', [
                     element.parent.projectFilePath,
                     element.regionWithIssue,

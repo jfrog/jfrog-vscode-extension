@@ -16,6 +16,12 @@ import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
 import { Configuration } from '../utils/configuration';
 
+export enum EntitlementScanFeature {
+    Applicability = 'contextual_analysis',
+    Iac = 'iac_scanners',
+    Secrets = 'secrets_detection'
+}
+
 export class ConnectionUtils {
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI: any = semver.coerce('3.21.2');
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED: any = semver.coerce('3.29.0');
@@ -180,7 +186,7 @@ export class ConnectionUtils {
         return true;
     }
 
-    public static async testXrayEntitlementForFeature(jfrogClient: JfrogClient, feature: string): Promise<boolean> {
+    public static async testXrayEntitlementForFeature(jfrogClient: JfrogClient, feature: EntitlementScanFeature): Promise<boolean> {
         return await jfrogClient
             .xray()
             .entitlements()

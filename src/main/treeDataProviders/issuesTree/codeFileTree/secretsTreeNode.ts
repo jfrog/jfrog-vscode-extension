@@ -3,14 +3,14 @@ import * as vscode from 'vscode';
 import { FileRegion } from '../../../scanLogic/scanRunners/analyzerModels';
 import { CodeFileTreeNode } from './codeFileTreeNode';
 import { CodeIssueTreeNode } from './codeIssueTreeNode';
-import { IAnalysisStep, IIaCPage, PageType } from 'jfrog-ide-webview';
+import { IAnalysisStep, ISecretsPage, PageType } from 'jfrog-ide-webview';
 import { SeverityUtils } from '../../../types/severity';
 import { SecurityIssue } from '../../utils/analyzerUtils';
 
 /**
- * Describe a Infrastructure As Code (Iac) issue
+ * Describe a Secret issue
  */
-export class IacTreeNode extends CodeIssueTreeNode {
+export class SecretTreeNode extends CodeIssueTreeNode {
     private _fullDescription?: string;
     private _snippet?: string;
 
@@ -37,9 +37,9 @@ export class IacTreeNode extends CodeIssueTreeNode {
         return this._fullDescription;
     }
 
-    public getDetailsPage(): IIaCPage {
+    public getDetailsPage(): ISecretsPage {
         return {
-            pageType: PageType.IaC,
+            pageType: PageType.Secrets,
             header: this.label,
             severity: SeverityUtils.toWebviewSeverity(this.severity),
             location: {
@@ -49,6 +49,6 @@ export class IacTreeNode extends CodeIssueTreeNode {
                 column: this.regionWithIssue.start.character
             } as IAnalysisStep,
             description: this._fullDescription
-        } as IIaCPage;
+        } as ISecretsPage;
     }
 }

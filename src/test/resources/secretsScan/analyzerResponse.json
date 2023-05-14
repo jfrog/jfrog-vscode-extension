@@ -1,0 +1,115 @@
+{
+    "runs": [
+        {
+            "tool": {
+                "driver": {
+                    "name": "JFrog Secrets scanner",
+                    "rules": [
+                        {
+                            "id": "entropy",
+                            "shortDescription": {
+                                "text": "Scanner for entropy"
+                            }
+                        },
+                        {
+                            "id": "heuristic",
+                            "shortDescription": {
+                                "text": "Scanner for heuristic"
+                            }
+                        }
+                    ],
+                    "version": ""
+                }
+            },
+            "invocations": [
+                {
+                    "executionSuccessful": true,
+                    "arguments": [
+                        "secrets_scanner/secrets_scanner",
+                        "scan",
+                        "test.yaml"
+                    ],
+                    "workingDirectory": {
+                        "uri": "file:///Users/user/.jfrog-vscode-extension/issues/analyzerManager"
+                    }
+                }
+            ],
+            "results": [
+                {
+                    "message": {
+                        "text": "Hardcoded secrets were found in source files"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "file:///examples/secrets-demo/../applicable_hex.js.approval.json"
+                                },
+                                "region": {
+                                    "endColumn": 215,
+                                    "endLine": 1,
+                                    "snippet": {
+                                        "text": "0159392e31dc912156e1cc6eab32a3d7df7154aecdf2ffe7d66f10da0d5706f7d9ba3183a366389112819b728b20026d04a4f6304da649beefc7fe49"
+                                    },
+                                    "startColumn": 95,
+                                    "startLine": 1
+                                }
+                            }
+                        }
+                    ],
+                    "ruleId": "entropy"
+                },
+                {
+                    "message": {
+                        "text": "Suspected hardcoded passwords were found"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "file:///examples/secrets-demo/../applicable.yaml"
+                                },
+                                "region": {
+                                    "endColumn": 16,
+                                    "endLine": 1,
+                                    "snippet": {
+                                        "text": "password: 12345"
+                                    },
+                                    "startColumn": 1,
+                                    "startLine": 1
+                                }
+                            }
+                        }
+                    ],
+                    "ruleId": "heuristic"
+                },
+                {
+                    "message": {
+                        "text": "Hardcoded secrets were found in source files"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "file:///examples/secrets-demo/../applicable_hex.py"
+                                },
+                                "region": {
+                                    "endColumn": 132,
+                                    "endLine": 1,
+                                    "snippet": {
+                                        "text": "0159392e31dc912156e1cc6eab32a3d7df7154aecdf2ffe7d66f10da0d5706f7d9ba3183a366389112819b728b20026d04a4f6304da649beefc7fe49"
+                                    },
+                                    "startColumn": 12,
+                                    "startLine": 1
+                                }
+                            }
+                        }
+                    ],
+                    "ruleId": "entropy"
+                }
+            ]
+        }
+    ],
+    "version": "2.1.0",
+    "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos02/schemas/sarif-schema-2.1.0.json"
+}

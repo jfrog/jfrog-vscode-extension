@@ -122,6 +122,9 @@ export class IssuesCache {
         if (scanResults.iacScan) {
             AnalyzerUtils.populateIacIssues(root, scanResults);
         }
+        if (scanResults.secretsScan) {
+            AnalyzerUtils.populateSecretsIssues(root, scanResults);
+        }
         if (scanResults.eosScan) {
             root.eosScanTimeStamp = scanResults.eosScanTimestamp;
             AnalyzerUtils.populateEosIssues(root, scanResults);
