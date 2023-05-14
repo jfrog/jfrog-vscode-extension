@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           submodules: true
-
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Setup macOS
         # Fix 'nvm is not compatible with the npm config "prefix" option' error on macOS
         run: unset npm_config_prefix
