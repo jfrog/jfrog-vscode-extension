@@ -177,6 +177,7 @@ export class ScanManager implements ExtensionComponent {
      * Get all the entitlement status for each type of scan the manager offers
      */
     public async getSupportedScans(): Promise<SupportedScans> {
+        let supportedScans: SupportedScans = {} as SupportedScans;
         let requests: Promise<any>[] = [];
         requests.push(
             this.validateGraphSupported()
@@ -198,7 +199,11 @@ export class ScanManager implements ExtensionComponent {
                 .then(res => (supportedScans.secrets = res))
                 .catch(err => ScanUtils.onScanError(err, this._logManager, true))
         );
-        requests.push(this.isIacSupported().then(res => (supportedScans.iac = res)));
+        requests.push(
+            this.isEosSupported()
+                .then(res => (supportedScans.iac = res))
+                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
+        );
         await Promise.all(requests);
         this._supportedScans = supportedScans;
         return supportedScans;
