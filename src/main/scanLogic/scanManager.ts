@@ -201,7 +201,7 @@ export class ScanManager implements ExtensionComponent {
         );
         requests.push(
             this.isEosSupported()
-                .then(res => (supportedScans.iac = res))
+                .then(res => (supportedScans.eos = res))
                 .catch(err => ScanUtils.onScanError(err, this._logManager, true))
         );
         await Promise.all(requests);
