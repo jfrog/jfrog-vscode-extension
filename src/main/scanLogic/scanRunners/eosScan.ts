@@ -1,9 +1,5 @@
-import * as path from 'path';
-import * as os from 'os';
-
 import { LogManager } from '../../log/logManager';
 import { BinaryRunner } from './binaryRunner';
-import { ScanUtils } from '../../utils/scanUtils';
 import {
     AnalyzeIssue,
     AnalyzerScanResponse,
@@ -17,9 +13,13 @@ import {
 import { ConnectionManager } from '../../connect/connectionManager';
 import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
 import { Resource } from '../../utils/resource';
+import { Severity } from '../../types/severity';
+import { Translators } from '../../utils/translators';
+import { ScanUtils } from '../../utils/scanUtils';
 
 export interface EosScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
+    exclude_patterns: string[];
 }
 
 export type LanguageType = 'python';
@@ -35,6 +35,7 @@ export interface EosFileIssues {
 
 export interface EosIssue {
     ruleId: string;
+    severity: Severity;
     ruleName: string;
     fullDescription?: string;
     locations: EosIssueLocation[];
@@ -46,44 +47,22 @@ export interface EosIssueLocation {
 }
 
 export class EosRunner extends BinaryRunner {
-    private static readonly BINARY_FOLDER: string = 'eos';
-    private static readonly BINARY_NAME: string = 'eos_scanner';
-
-    constructor(connectionManager: ConnectionManager, abortCheckInterval: number, logManager: LogManager) {
-        super(
-            connectionManager,
-            abortCheckInterval,
-            ScanType.Eos,
-            logManager,
-            new Resource('', path.join(ScanUtils.getHomePath(), EosRunner.BINARY_FOLDER, EosRunner.getBinaryName()), logManager)
-        );
+    constructor(
+        connectionManager: ConnectionManager,
+        logManager: LogManager,
+        binary?: Resource,
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
+    ) {
+        super(connectionManager, timeout, ScanType.Eos, logManager, binary);
     }
 
-    public validateSupported(): boolean {
-        if (os.platform() !== 'linux' && os.platform() !== 'darwin' && os.platform() !== 'win32') {
-            this._logManager.logMessage("Eos scan is not supported on '" + os.platform() + "' os", 'DEBUG');
-            return false;
-        }
-        return super.validateSupported();
-    }
-
-    /** @override */
-    protected static getBinaryName(): string {
-        let name: string = EosRunner.BINARY_NAME;
-        switch (os.platform()) {
-            case 'linux':
-                return name + '_ubuntu';
-            case 'darwin':
-                return name + '_macos';
-            case 'win32':
-                return name + '.exe';
-        }
-        return name;
+    public static supportedLanguages(): LanguageType[] {
+        return ['python'];
     }
 
     /** @override */
     protected async runBinary(yamlConfigPath: string, executionLogDirectory: string, checkCancel: () => void): Promise<void> {
-        await this.executeBinary(checkCancel, ['analyze', 'config', yamlConfigPath], executionLogDirectory);
+        await this.executeBinary(checkCancel, ['zd', yamlConfigPath], executionLogDirectory);
     }
 
     /**
@@ -92,8 +71,11 @@ export class EosRunner extends BinaryRunner {
      * @param requests - requests to run
      * @returns the response generated from the scan
      */
-    public async scan(checkCancel: () => void, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
-        requests.forEach(request => (request.type = ScanType.Eos));
+    public async scan(checkCancel: () => void, skipFiles: string[], ...requests: EosScanRequest[]): Promise<EosScanResponse> {
+        requests.forEach(request => {
+            request.type = ScanType.Eos;
+            request.exclude_patterns = skipFiles;
+        });
         return await this.run(checkCancel, ...requests).then(runResult => this.generateScanResponse(runResult));
     }
 
@@ -106,7 +88,6 @@ export class EosRunner extends BinaryRunner {
         if (!response) {
             return {} as EosScanResponse;
         }
-
         let eosResponse: EosScanResponse = {
             filesWithIssues: []
         } as EosScanResponse;
@@ -120,7 +101,13 @@ export class EosRunner extends BinaryRunner {
                 }
             }
             // Generate response data
-            run.results?.forEach(analyzeIssue => this.generateIssueData(eosResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId)));
+            run.results?.forEach((analyzeIssue: AnalyzeIssue) => {
+                if (analyzeIssue.suppressions && analyzeIssue.suppressions.length > 0) {
+                    // Suppress issue
+                    return;
+                }
+                this.generateIssueData(eosResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId));
+            });
         }
         return eosResponse;
     }
@@ -150,7 +137,7 @@ export class EosRunner extends BinaryRunner {
      * @param issueLocation - the issue in a location to search code flows that belongs to it
      * @param codeFlows - all the code flows for this issue
      */
-    public generateCodeFlowData(filePath: string, issueLocation: EosIssueLocation, codeFlows: CodeFlow[]) {
+    private generateCodeFlowData(filePath: string, issueLocation: EosIssueLocation, codeFlows: CodeFlow[]) {
         // Check if exists flows for the current location in this issue
         for (const codeFlow of codeFlows) {
             for (const threadFlow of codeFlow.threadFlows) {
@@ -204,6 +191,7 @@ export class EosRunner extends BinaryRunner {
         }
         let fileIssue: EosIssue = {
             ruleId: analyzeIssue.ruleId,
+            severity: Translators.levelToSeverity(analyzeIssue.level),
             ruleName: analyzeIssue.message.text,
             fullDescription: fullDescription,
             locations: []

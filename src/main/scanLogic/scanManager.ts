@@ -24,6 +24,7 @@ import { SecretsRunner, SecretsScanResponse } from './scanRunners/secretsScan';
 export interface SupportedScans {
     dependencies: boolean;
     applicability: boolean;
+    eos: boolean;
     iac: boolean;
     secrets: boolean;
 }
@@ -166,6 +167,13 @@ export class ScanManager implements ExtensionComponent {
     }
 
     /**
+     * Check if Eos scan is supported for the user
+     */
+    public async isEosSupported(): Promise<boolean> {
+        return true;
+    }
+
+    /**
      * Get all the entitlement status for each type of scan the manager offers
      */
     public async getSupportedScans(): Promise<SupportedScans> {
@@ -191,16 +199,14 @@ export class ScanManager implements ExtensionComponent {
                 .then(res => (supportedScans.secrets = res))
                 .catch(err => ScanUtils.onScanError(err, this._logManager, true))
         );
+        requests.push(
+            this.isEosSupported()
+                .then(res => (supportedScans.eos = res))
+                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
+        );
         await Promise.all(requests);
         this._supportedScans = supportedScans;
         return supportedScans;
-    }
-
-    /**
-     * Validate if the eos-scan is supported
-     */
-    public isEosSupported(): boolean {
-        return new EosRunner(this._connectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, this._logManager).validateSupported();
     }
 
     /**
@@ -257,7 +263,6 @@ export class ScanManager implements ExtensionComponent {
         this._logManager.logMessage('Scanning directory ' + directory + ', for Iac issues', 'DEBUG');
         return await iacRunner.scan(directory, checkCancel);
     }
-
     /**
      * Scan directory for secrets issues.
      * @param directory - the directory that will be scan
@@ -274,22 +279,30 @@ export class ScanManager implements ExtensionComponent {
         return await secretsRunner.scan(directory, checkCancel);
     }
 
+    /**
+     * Scan for Eos issues.
+     * @param checkCancel - check if should cancel
+     * @param requests - the Eos requests to run
+     * @returns the scan response
+     */
     public async scanEos(checkCancel: () => void, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
-        let eosRunner: EosRunner = new EosRunner(this._connectionManager, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, this._logManager);
+        let eosRunner: EosRunner = new EosRunner(this._connectionManager, this._logManager);
         if (!eosRunner.validateSupported()) {
-            this._logManager.logMessage('Eos scan is not supported', 'DEBUG');
+            this._logManager.logMessage('Eos runner could not find binary to run', 'DEBUG');
             return {} as EosScanResponse;
         }
-        let eosRequests: EosScanRequest[] = [];
-        for (const request of requests) {
-            if (request.roots.length > 0) {
-                eosRequests.push({
-                    language: request.language,
-                    roots: request.roots
-                } as EosScanRequest);
-            }
+        if (requests.length === 0) {
+            this._logManager.logMessage('Eos runner must receive at least one request to run', 'ERR');
+            return {} as EosScanResponse;
         }
-        this._logManager.logMessage('Scanning for Eos issues, roots: ' + eosRequests.map(request => request.roots.join()).join(), 'DEBUG');
-        return eosRunner.scan(checkCancel, ...eosRequests);
+        let skipFiles: string[] = AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern());
+        this._logManager.logMessage(
+            'Scanning for Eos issues in ' +
+                requests.map(request => `(Language '${request.language}', roots: [${request.roots.join()}])`) +
+                ', skipping files: ' +
+                skipFiles,
+            'DEBUG'
+        );
+        return eosRunner.scan(checkCancel, skipFiles, ...requests);
     }
 }

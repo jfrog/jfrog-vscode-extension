@@ -49,7 +49,12 @@ export interface AnalyzeIssue {
     locations: AnalyzeLocation[];
     kind?: ResultKind;
     level?: AnalyzerManagerSeverityLevel;
+    suppressions?: AnalyzeSuppression[];
     codeFlows?: CodeFlow[];
+}
+
+export interface AnalyzeSuppression {
+    kind: string;
 }
 
 export interface CodeFlow {

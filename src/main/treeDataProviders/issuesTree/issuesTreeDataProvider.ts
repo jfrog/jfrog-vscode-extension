@@ -165,12 +165,14 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * 2. Dependency scan = task for each descriptor in the workspace (Applicability is optional sub task of dependency)
      * 3. Iac scan = one task for all the workspace
      * 4. Secrets scan = one task for all the workspace
+     * 5. Eos scan = one task for all the workspace
      * @param supportedScans - the details about the entitlements of the user
      * @param descriptors - all the descriptors in the workspace
      * @returns the number of tasks that will be preformed async and report to the progress bar
      */
     public static getNumberOfTasksInRepopulate(supportedScans: SupportedScans, descriptors: Map<PackageType, vscode.Uri[]>): number {
         return (
+            (supportedScans.eos ? 1 : 0) +
             (supportedScans.iac ? 1 : 0) +
             (supportedScans.secrets ? 1 : 0) +
             (supportedScans.dependencies ? descriptors.size + Array.from(descriptors.values()).reduce((acc, val) => acc + val.length, 0) : 0)
@@ -233,6 +235,18 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 AnalyzerUtils.runSecrets(scanResults, root, this._scanManager, progressManager).catch(err =>
                     ScanUtils.onScanError(err, this._logManager, true)
                 )
+            );
+        }
+        if (this._scanManager.supportedScans.eos) {
+            // Scan the workspace for Eos issues
+            scansPromises.push(
+                AnalyzerUtils.runEos(
+                    scanResults,
+                    root,
+                    Array.from(workspaceDescriptors.keys() ?? []),
+                    this._scanManager,
+                    progressManager
+                ).catch(err => ScanUtils.onScanError(err, this._logManager, true))
             );
         }
 
