@@ -14,7 +14,7 @@ import { DiagnosticsManager } from '../diagnostics/diagnosticsManager';
 import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
 import { Utils } from '../utils/utils';
-import { IWebviewPage } from '../webviews/detailsWebView';
+import { WebviewPage } from 'jfrog-ide-webview';
 
 /**
  * Register and execute all commands in the extension.
@@ -174,7 +174,7 @@ export class CommandManager implements ExtensionComponent {
      * Open webpage with the given data
      * @param page - data to show in webpage
      */
-    public doShowDetailsPage(page: IWebviewPage) {
+    public doShowDetailsPage(page: WebviewPage) {
         vscode.commands.executeCommand('jfrog.view.details.page', page);
     }
 
@@ -184,7 +184,7 @@ export class CommandManager implements ExtensionComponent {
      * @param fileRegion - range inside the file to select
      * @param page - the data to show in the open page
      */
-    public async doOpenFileAndDetailsPage(filePath: string, fileRegion: vscode.Range, page: IWebviewPage) {
+    public async doOpenFileAndDetailsPage(filePath: string, fileRegion: vscode.Range, page: WebviewPage) {
         ScanUtils.openFile(filePath, fileRegion).then(() => this.doShowDetailsPage(page));
     }
 

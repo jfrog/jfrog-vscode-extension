@@ -10,7 +10,7 @@ import { LogManager } from './main/log/logManager';
 import { BuildsManager } from './main/builds/buildsManager';
 import { ScanManager } from './main/scanLogic/scanManager';
 import { CacheManager } from './main/cache/cacheManager';
-import { DetailsWebView } from './main/webviews/detailsWebView';
+import { WebView } from './main/webview/webview';
 import { DependencyUpdateManager } from './main/dependencyUpdate/dependencyUpdateManager';
 
 /**
@@ -37,7 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const buildsManager: BuildsManager = new BuildsManager(treesManager).activate();
     const dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager(logManager).activate();
     const diagnosticManager: DiagnosticsManager = new DiagnosticsManager(treesManager, dependencyUpdateManager).activate(context);
-    new DetailsWebView(logManager).activate(context);
+    new WebView(logManager).activate(context);
 
     new CodeLensManager().activate(context);
     new CommandManager(
