@@ -4,6 +4,7 @@ import { AnalyzeIssue, AnalyzeLocation, AnalyzerScanRun, ScanType, AnalyzeScanRe
 import { ConnectionManager } from '../../connect/connectionManager';
 import { Resource } from '../../utils/resource';
 import { ScanUtils } from '../../utils/scanUtils';
+import { PackageType } from '../../types/projectType';
 
 /**
  * The request that is sent to the binary to scan applicability
@@ -47,6 +48,10 @@ export class ApplicabilityRunner extends BinaryRunner {
         timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
     ) {
         super(connectionManager, timeout, ScanType.ContextualAnalysis, logManager, binary);
+    }
+
+    public static supportedPackageTypes(): PackageType[] {
+        return [PackageType.Npm, PackageType.Yarn, PackageType.Python];
     }
 
     /** @override */

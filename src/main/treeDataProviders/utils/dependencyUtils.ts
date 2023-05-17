@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { IComponent, IGraphResponse, IUsageFeature, IViolation, IVulnerability } from 'jfrog-client-js';
+import { IComponent, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
 import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
 import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
 import { Severity, SeverityUtils } from '../../types/severity';
@@ -19,13 +19,12 @@ import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesD
 import { EnvironmentTreeNode } from '../issuesTree/descriptorTree/environmentTreeNode';
 import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectDependencyTreeNode';
 import { NugetUtils } from '../../utils/nugetUtils';
-import { ConnectionManager } from '../../connect/connectionManager';
 import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { GraphScanProgress, StepProgress } from './stepProgress';
 import { AnalyzerUtils } from './analyzerUtils';
 import { DescriptorTreeNode } from '../issuesTree/descriptorTree/descriptorTreeNode';
 import { VirtualEnvPypiTree } from '../dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
-import { ScanManager, SupportedScans } from '../../scanLogic/scanManager';
+import { ScanManager } from '../../scanLogic/scanManager';
 import { FileScanBundle, FileScanError, ScanUtils } from '../../utils/scanUtils';
 import { LogManager } from '../../log/logManager';
 import { GeneralInfo } from '../../types/generalInfo';
@@ -538,47 +537,5 @@ export class DependencyUtils {
             default:
                 return [];
         }
-    }
-
-    private static getUsageFeaturesByExistTech(projectDescriptors: Map<PackageType, vscode.Uri[]>, scanSuffix: string): IUsageFeature[] {
-        let featureArray: IUsageFeature[] = [];
-        for (const [techEnum, descriptors] of projectDescriptors.entries()) {
-            // Only add to usage if found descriptors for tech.
-            if (!!descriptors) {
-                const featureName: string = PackageType[techEnum].toLowerCase() + '-' + scanSuffix;
-                featureArray.push({ featureId: featureName });
-            }
-        }
-        return featureArray;
-    }
-
-    /**
-     * Sends usage report for all techs we found project descriptors of and for each advance scan that was preformed.
-     * @param supportedScans - the entitlement for each scan
-     * @param projectDescriptors - map of all project descriptors by their tech.
-     * @param connectionManager - manager containing Artifactory details if configured.
-     */
-    public static async sendUsageReport(
-        supportedScans: SupportedScans,
-        projectDescriptors: Map<PackageType, vscode.Uri[]>,
-        connectionManager: ConnectionManager
-    ) {
-        let featureArray: IUsageFeature[] = [];
-        if (supportedScans.dependencies) {
-            featureArray.push(...this.getUsageFeaturesByExistTech(projectDescriptors, 'deps'));
-        }
-        if (supportedScans.applicability) {
-            featureArray.push(...this.getUsageFeaturesByExistTech(projectDescriptors, 'contextual'));
-        }
-        if (supportedScans.iac) {
-            featureArray.push({ featureId: 'iac' });
-        }
-        if (supportedScans.secrets) {
-            featureArray.push({ featureId: 'secrets' });
-        }
-        if (featureArray.length === 0) {
-            return;
-        }
-        await connectionManager.sendUsageReport(featureArray);
     }
 }
