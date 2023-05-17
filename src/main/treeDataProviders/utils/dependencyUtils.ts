@@ -29,6 +29,7 @@ import { FileScanBundle, FileScanError, ScanUtils } from '../../utils/scanUtils'
 import { LogManager } from '../../log/logManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
+import { ApplicabilityRunner } from '../../scanLogic/scanRunners/applicabilityScan';
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
@@ -191,10 +192,11 @@ export class DependencyUtils {
             return;
         }
         let foundIssues: boolean = false;
+        let dependencyScanResult: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
         // Dependency graph scan task
         await DependencyUtils.scanProjectDependencyGraph(
             scanManager,
-            <DependencyScanResults>fileScanBundle.data,
+            dependencyScanResult,
             fileScanBundle.dataNode,
             rootGraph,
             scanProgress,
@@ -204,7 +206,7 @@ export class DependencyUtils {
                 foundIssues = issuesFound > 0;
                 if (foundIssues) {
                     // populate data and view
-                    fileScanBundle.workspaceResults.descriptorsIssues.push(<DependencyScanResults>fileScanBundle.data);
+                    fileScanBundle.workspaceResults.descriptorsIssues.push(dependencyScanResult);
                     fileScanBundle.root.addChildAndApply(fileScanBundle.dataNode);
                 }
             })
@@ -212,7 +214,7 @@ export class DependencyUtils {
             .finally(() => scanProgress.onProgress());
 
         // Applicable scan task
-        if (!contextualScan || !foundIssues) {
+        if (!contextualScan || !foundIssues || !ApplicabilityRunner.supportedPackageTypes().includes(dependencyScanResult.type)) {
             return;
         }
         if (fileScanBundle.dataNode instanceof DescriptorTreeNode) {
