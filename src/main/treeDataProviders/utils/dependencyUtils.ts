@@ -541,6 +541,18 @@ export class DependencyUtils {
         }
     }
 
+    private static getUsageFeaturesByExistTech(projectDescriptors: Map<PackageType, vscode.Uri[]>, scanSuffix: string): IUsageFeature[] {
+        let featureArray: IUsageFeature[] = [];
+        for (const [techEnum, descriptors] of projectDescriptors.entries()) {
+            // Only add to usage if found descriptors for tech.
+            if (!!descriptors) {
+                const featureName: string = PackageType[techEnum].toLowerCase() + '-' + scanSuffix;
+                featureArray.push({ featureId: featureName });
+            }
+        }
+        return featureArray;
+    }
+
     /**
      * Sends usage report for all techs we found project descriptors of and for each advance scan that was preformed.
      * @param supportedScans - the entitlement for each scan
@@ -554,22 +566,16 @@ export class DependencyUtils {
     ) {
         let featureArray: IUsageFeature[] = [];
         if (supportedScans.dependencies) {
-            for (const [techEnum, descriptors] of projectDescriptors.entries()) {
-                // Only add to usage if found descriptors for tech.
-                if (!!descriptors) {
-                    const featureName: string = PackageType[techEnum].toLowerCase() + '-deps';
-                    featureArray.push({ featureId: featureName });
-                }
-            }
+            featureArray.push(...this.getUsageFeaturesByExistTech(projectDescriptors, 'deps'));
         }
         if (supportedScans.applicability) {
-            featureArray.push({ featureId: ScanType.ContextualAnalysis });
+            featureArray.push(...this.getUsageFeaturesByExistTech(projectDescriptors, 'contextual'));
         }
         if (supportedScans.iac) {
-            featureArray.push({ featureId: ScanType.Iac });
+            featureArray.push({ featureId: 'iac' });
         }
         if (supportedScans.secrets) {
-            featureArray.push({ featureId: ScanType.Secrets });
+            featureArray.push({ featureId: 'secrets' });
         }
         if (featureArray.length === 0) {
             return;
