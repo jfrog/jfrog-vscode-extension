@@ -26,6 +26,7 @@ import { ScanResults, DependencyScanResults } from '../../types/workspaceIssuesD
 import { AnalyzerUtils } from '../utils/analyzerUtils';
 import { IacTreeNode } from './codeFileTree/iacTreeNode';
 import { SecretTreeNode } from './codeFileTree/secretsTreeNode';
+import { UsageUtils } from '../../utils/usageUtils';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -201,7 +202,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
         let subStepsCount: number = IssuesTreeDataProvider.getNumberOfTasksInRepopulate(this._scanManager.supportedScans, workspaceDescriptors);
         checkCanceled();
-        DependencyUtils.sendUsageReport(this._scanManager.supportedScans, workspaceDescriptors, this._treesManager.connectionManager);
+        UsageUtils.sendUsageReport(this._scanManager.supportedScans, workspaceDescriptors, this._treesManager.connectionManager);
         // Scan workspace
         let scansPromises: Promise<any>[] = [];
         progressManager.startStep('🔎 Scanning for issues', subStepsCount);
