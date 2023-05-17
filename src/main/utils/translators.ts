@@ -181,8 +181,10 @@ export class Translators {
                     fileName: Utils.getLastSegment(location.artifactLocation.uri),
                     file: location.artifactLocation.uri,
                     snippet: location.region.snippet?.text,
-                    row: location.region.startLine,
-                    column: location.region.startColumn
+                    startRow: location.region.startLine,
+                    startColumn: location.region.startColumn,
+                    endRow: location.region.endLine,
+                    endColumn: location.region.endColumn
                 } as IAnalysisStep);
             }
             result.push(codeFlow);

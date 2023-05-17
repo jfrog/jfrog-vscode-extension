@@ -53,8 +53,10 @@ export class EosTreeNode extends CodeIssueTreeNode {
                 fileName: Utils.getLastSegment(this.parent.projectFilePath),
                 file: this.parent.projectFilePath,
                 snippet: this.snippet,
-                row: this.regionWithIssue.start.line,
-                column: this.regionWithIssue.start.character
+                startRow: this.regionWithIssue.start.line + 1,
+                startColumn: this.regionWithIssue.start.character + 1,
+                endRow: this.regionWithIssue.end.line + 1,
+                endColumn: this.regionWithIssue.end.character + 1
             } as IAnalysisStep,
             description: this._fullDescription,
             analysisStep: this._codeFlows.length > 0 ? this._codeFlows[0] : undefined

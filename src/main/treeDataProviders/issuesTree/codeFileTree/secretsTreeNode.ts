@@ -45,8 +45,10 @@ export class SecretTreeNode extends CodeIssueTreeNode {
             location: {
                 file: this.parent.projectFilePath,
                 snippet: this._snippet,
-                row: this.regionWithIssue.start.line,
-                column: this.regionWithIssue.start.character
+                startRow: this.regionWithIssue.start.line + 1,
+                startColumn: this.regionWithIssue.start.character + 1,
+                endRow: this.regionWithIssue.end.line + 1,
+                endColumn: this.regionWithIssue.end.character + 1
             } as IAnalysisStep,
             description: this._fullDescription
         } as ISecretsPage;
