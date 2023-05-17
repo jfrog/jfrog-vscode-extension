@@ -30,7 +30,6 @@ import { FileScanBundle, FileScanError, ScanUtils } from '../../utils/scanUtils'
 import { LogManager } from '../../log/logManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
-import { ScanType } from '../../scanLogic/scanRunners/analyzerModels';
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
