@@ -1,5 +1,6 @@
 [![](resources/readme/introduction.png)](#readme)
 
+
 <div align="center">
 
 # JFrog Extension for VS Code & Eclipse Theia
