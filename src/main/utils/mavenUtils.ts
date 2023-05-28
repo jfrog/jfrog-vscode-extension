@@ -404,7 +404,7 @@ export class MavenUtils {
      * Install Maven GAV Reader to maven local repository.
      */
     public static installMavenGavReader() {
-        ScanUtils.executeCmd('mvn org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file -Dfile=' + MavenUtils.MAVEN_GAV_READER);
+        ScanUtils.executeCmd(`mvn org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file -Dfile="${MavenUtils.MAVEN_GAV_READER}"`);
         MavenUtils.mavenGavReaderInstalled = true;
     }
 }
