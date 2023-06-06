@@ -150,6 +150,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             for (let root of test.roots) {
                 expected += '      - ' + root + '\n';
             }
+            expected += '    skipped-folders: []\n'
             assert.deepEqual(createDummyBinaryRunner().requestsToYaml(request), expected);
         });
     });
@@ -158,7 +159,8 @@ describe('Analyzer BinaryRunner tests', async () => {
         return {
             type: scanType,
             output: '/path/to/output.json',
-            roots: roots
+            roots: roots,
+            skipped_folders: []
         };
     }
 

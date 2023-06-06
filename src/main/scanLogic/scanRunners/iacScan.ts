@@ -28,10 +28,11 @@ export class IacRunner extends BinaryRunner {
         await this.executeBinary(checkCancel, ['iac', yamlConfigPath], executionLogDirectory);
     }
 
-    public async scan(directory: string, checkCancel: () => void): Promise<IacScanResponse> {
+    public async scan(directory: string, checkCancel: () => void, skipFolders: string[] = []): Promise<IacScanResponse> {
         let request: AnalyzeScanRequest = {
             type: ScanType.Iac,
-            roots: [directory]
+            roots: [directory],
+            skipped_folders: skipFolders
         } as AnalyzeScanRequest;
         return await this.run(checkCancel, request).then(runResult => this.convertResponse(runResult));
     }

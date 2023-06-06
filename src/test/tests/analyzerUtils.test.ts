@@ -28,8 +28,8 @@ describe('Analyzer Utils Tests', async () => {
             results: ['**/*test*/**', '**/*venv*/**', '**/*node_modules*/**', '**/*target*/**']
         }
     ].forEach(testCase => {
-        it('Get applicable exclude pattern test - ' + testCase.pattern, () => {
-            let results: string[] = AnalyzerUtils.getApplicableExcludePattern(testCase.pattern);
+        it('Get analyzer manager exclude pattern test - ' + testCase.pattern, () => {
+            let results: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(testCase.pattern);
             assert.sameMembers(testCase.results, results);
         });
     });
