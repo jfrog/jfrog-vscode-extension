@@ -86,7 +86,8 @@ describe('Connection Manager Tests', () => {
                 setCliHomeDir(path.resolve('/path/to/nowhere'));
 
                 // Check credentials not set.
-                await connectionManager.populateCredentials(false);
+                // await connectionManager.populateCredentials(false);
+                assert.isEmpty(await connectionManager.tryGetUrlFromJfrogCli());
                 assert.isFalse(connectionManager.areXrayCredentialsSet());
 
                 await populateCredsAndAssert(testCase, 'admin', 'password', '');
@@ -167,7 +168,7 @@ describe('Connection Manager Tests', () => {
                 setCliHomeDir('/path/to/nowhere');
 
                 // Assert credentials are empty.
-                await connectionManager.populateCredentials(false);
+                assert.isEmpty(await connectionManager.tryGetUrlFromJfrogCli());
                 assert.isFalse(connectionManager.areCompleteCredentialsSet());
 
                 // Set new home to test data.

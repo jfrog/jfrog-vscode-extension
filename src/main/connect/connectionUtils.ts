@@ -130,7 +130,7 @@ export class ConnectionUtils {
             } else if (prompt) {
                 vscode.window.showErrorMessage((<any>error).message || error, <vscode.MessageOptions>{ modal: true });
             } else {
-                logger.logMessage((<any>error).message, 'DEBUG');
+                logger.logMessage(<any>error, 'DEBUG');
             }
             return Promise.resolve(false);
         }

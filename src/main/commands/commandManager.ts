@@ -35,7 +35,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.disconnect', () => this.doDisconnect(true));
         this.registerCommand(context, 'jfrog.xray.resetConnection', () => this.doDisconnect(false));
         this.registerCommand(context, 'jfrog.show.connectionStatus', () => this.showConnectionStatus());
-        this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect(true));
+        this.registerCommand(context, 'jfrog.xray.connect', () => this.doConnect());
         this.registerCommand(context, 'jfrog.xray.reConnect', () => this.doReconnect());
         // General
         this.registerCommand(context, 'jfrog.open.settings', () => Utils.openSettings());
@@ -54,27 +54,35 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.issues.file.open.details', (file, fileRegion, details) =>
             this.doOpenFileAndDetailsPage(file, fileRegion, details)
         );
-        this.registerCommand(context, 'jfrog.xray.ci', () => this.doCi());
+        this.registerCommand(context, 'jfrog.view.ci', () => this.doCi());
         // CI state
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.filter', () => this.doFilter());
-        this.registerCommand(context, 'jfrog.xray.local', () => this.doLocal());
+        this.registerCommand(context, 'jfrog.view.local', () => this.doLocal());
         this.registerCommand(context, 'jfrog.xray.builds', () => this.doBuildSelected());
-
-        this.updateLocalCiIcons();
+        // Login state
+        this.registerCommand(context, 'jfrog.view.login', () => this.doLogin());
+        this._connectionManager.isSignedOut().then((signedOut: boolean) => (signedOut ? this.doLogin() : this.doLocal()));
     }
 
     public doLocal() {
-        this._treesManager.state = State.Local;
-        this.updateLocalCiIcons();
+        this.setViewType(State.Local, ExtensionMode.Local);
+    }
+
+    public doLogin() {
+        this.setViewType(State.Login, ExtensionMode.Login);
     }
 
     public doCi() {
         if (!this.areCiPreconditionsMet()) {
             return;
         }
-        this._treesManager.state = State.CI;
-        this.updateLocalCiIcons();
+        this.setViewType(State.CI, ExtensionMode.Ci);
+    }
+
+    private setViewType(state: State, extensionMode: ExtensionMode) {
+        this._treesManager.state = state;
+        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ContextKeys.VIEW_TYPE, extensionMode);
     }
 
     private areCiPreconditionsMet() {
@@ -87,7 +95,7 @@ export class CommandManager implements ExtensionComponent {
                 )
                 .then(async action => {
                     if (action) {
-                        await this.doConnect(true);
+                        await this.doConnect();
                     }
                 });
             return false;
@@ -95,17 +103,12 @@ export class CommandManager implements ExtensionComponent {
         if (!Configuration.getBuildsPattern()) {
             vscode.window.showErrorMessage('CI integration disabled - build name pattern is not set.', ...['Set Build Name Pattern']).then(action => {
                 if (action) {
-                    Utils.openSettings('jfrog.xray.ciIntegration.buildNamePattern');
+                    Utils.openSettings('jfrog.view.ciIntegration.buildNamePattern');
                 }
             });
             return false;
         }
         return true;
-    }
-
-    private updateLocalCiIcons() {
-        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ExtensionMode.Local, this._treesManager.isLocalState());
-        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ExtensionMode.Ci, this._treesManager.isCiState());
     }
 
     /**
@@ -198,10 +201,9 @@ export class CommandManager implements ExtensionComponent {
 
     /**
      * Connect to JFrog Platform server. If the connection success, perform a quick scan.
-     * @param chooseMethod if true, a quick pick UI is shown, to choose the connection method. If false, all the connection methods are attempted.
      */
-    private async doConnect(chooseMethod: boolean = false) {
-        let credentialsSet: boolean = await this._connectionManager.connect(chooseMethod);
+    private async doConnect() {
+        let credentialsSet: boolean = await this._connectionManager.connect();
         if (credentialsSet) {
             await this.doRefresh(false);
         }
@@ -211,9 +213,7 @@ export class CommandManager implements ExtensionComponent {
      * Reconnect to an existing JFrog Platform credentials.
      */
     private async doReconnect() {
-        let ok: boolean = (await this._connectionManager.populateCredentials(false)) && (await this._connectionManager.verifyCredentials(false));
-        if (ok) {
-            await this.doConnect();
+        if (await this._connectionManager.connect()) {
             vscode.window.showInformationMessage('✨ Successfully reconnected ✨');
             return;
         }

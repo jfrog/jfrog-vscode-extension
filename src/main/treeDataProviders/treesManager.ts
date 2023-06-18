@@ -15,8 +15,9 @@ import { IssueTreeNode } from './issuesTree/issueTreeNode';
 import { DependencyIssuesTreeNode } from './issuesTree/descriptorTree/dependencyIssuesTreeNode';
 
 export enum State {
-    Local = 0,
-    CI = 1
+    Login = 0,
+    CI = 1,
+    Local = 2
 }
 
 /**
@@ -48,7 +49,7 @@ export class TreesManager implements ExtensionComponent {
     }
 
     public async activate(context: vscode.ExtensionContext): Promise<TreesManager> {
-        this._ciTreeView = vscode.window.createTreeView('jfrog.xray.ci.issues', {
+        this._ciTreeView = vscode.window.createTreeView('jfrog.view.ci.issues', {
             treeDataProvider: this._buildsTreesProvider,
             showCollapseAll: true
         });
@@ -65,7 +66,7 @@ export class TreesManager implements ExtensionComponent {
         context.subscriptions.push(
             this._ciTreeView,
             this._issuesTreeView,
-            vscode.window.registerTreeDataProvider('jfrog.xray.ci.issues.details', this._dependencyDetailsProvider)
+            vscode.window.registerTreeDataProvider('jfrog.view.ci.issues.details', this._dependencyDetailsProvider)
         );
         return Promise.resolve(this).finally(() => this.issuesTreeDataProvider.refresh(false));
     }
@@ -88,7 +89,10 @@ export class TreesManager implements ExtensionComponent {
 
     public set state(value: State) {
         this._state = value;
-        if (this._state === State.Local) {
+        if (this.isLoginState()) {
+            return;
+        }
+        if (this.isLocalState()) {
             this.issuesTreeDataProvider.refresh(false);
         } else {
             this._buildsTreesProvider.stateChange();
@@ -101,6 +105,10 @@ export class TreesManager implements ExtensionComponent {
 
     public isLocalState(): boolean {
         return this._state === State.Local;
+    }
+
+    public isLoginState(): boolean {
+        return this._state === State.Login;
     }
 
     public isCiState(): boolean {

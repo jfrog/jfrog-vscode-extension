@@ -1,19 +1,15 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import fs from 'fs-extra';
-import { WebviewPage } from 'jfrog-ide-webview';
+import { EventManager } from './event/eventManager';
 import { LogManager } from '../log/logManager';
-import { WebviewEventManager } from './eventManager';
+import { WebviewPage } from 'jfrog-ide-webview';
 
-/**
- * Show a webview panel with details about objects in the project
- */
-export class WebView {
-    constructor(private _logManager: LogManager) {}
+export abstract class WebView {
+    protected eventManager?: EventManager;
+    protected currentPage?: WebviewPage;
 
-    private _webview: vscode.WebviewPanel | undefined;
-    private _eventManager: WebviewEventManager | undefined;
-    private _currentPage: WebviewPage | undefined;
+    constructor(protected _logManager: LogManager) {}
 
     public async activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(
@@ -82,11 +78,18 @@ export class WebView {
         return panel;
     }
 
-    private getHtmlForWebview(context: vscode.ExtensionContext, webview: vscode.Webview) {
+    protected getHtml(context: vscode.ExtensionContext, webview: vscode.Webview) {
         const data: string = fs.readFileSync(context.asAbsolutePath(path.join('dist', 'jfrog-ide-webview', 'index.html')), {
             encoding: 'utf8'
         });
         const webviewDataPath: vscode.Uri = webview.asWebviewUri(vscode.Uri.file(path.join(context.extensionPath, 'dist', 'jfrog-ide-webview')));
         return data.replace(/\.\/static/g, `${webviewDataPath}/static`);
+    }
+
+    public loadPage(page: WebviewPage) {
+        this.currentPage = page;
+        if (this.eventManager !== undefined) {
+            this.eventManager?.loadPage(this.currentPage);
+        }
     }
 }
