@@ -250,9 +250,11 @@ export abstract class BinaryRunner {
      * @returns analyze request in YAML format
      */
     public requestsToYaml(...requests: AnalyzeScanRequest[]): string {
-        return yaml.dump({
-            scans: requests
-        } as AnalyzerRequest);
+        return yaml
+            .dump({
+                scans: requests
+            } as AnalyzerRequest)
+            .replace('skipped_folders', 'skipped-folders');
     }
 
     private async runTasks(args: RunArgs, checkCancel: () => void): Promise<AnalyzerScanResponse> {

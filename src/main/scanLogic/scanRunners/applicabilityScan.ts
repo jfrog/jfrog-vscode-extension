@@ -14,8 +14,6 @@ export interface ApplicabilityScanArgs extends AnalyzeScanRequest {
     grep_disable: boolean;
     // Must have at least one item, the CVE to search for in scan
     cve_whitelist: string[];
-    // Glob Pattern represent the files (not folders) that should be skipped
-    skipped_folders: string[];
 }
 
 /**
@@ -62,7 +60,7 @@ export class ApplicabilityRunner extends BinaryRunner {
     /** @override */
     public requestsToYaml(...requests: AnalyzeScanRequest[]): string {
         let str: string = super.requestsToYaml(...requests);
-        return str.replace('cve_whitelist', 'cve-whitelist').replace('skipped_folders', 'skipped-folders');
+        return str.replace('cve_whitelist', 'cve-whitelist');
     }
 
     /**

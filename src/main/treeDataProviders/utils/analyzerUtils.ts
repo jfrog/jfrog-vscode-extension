@@ -155,15 +155,15 @@ export class AnalyzerUtils {
     }
 
     /**
-     * Transform the exclude pattern to patterns for the applicable scan.
+     * Transform the exclude pattern to patterns for the analyzer scans.
      * The following actions will be preformed to the pattern:
      * 1. If validation for the exclude pattern fails no exclude will be returned.
      * 2. If pattern contains {}, it will be splitted to multiple patterns, one for each option
      * 3. '/**' will be add at the suffix to convert the pattern to match files and not folders
      * @param excludePattern - the pattern to transform
-     * @returns the applicable pattern array
+     * @returns the transformed pattern array
      */
-    public static getApplicableExcludePattern(excludePattern?: string): string[] {
+    public static getAnalyzerManagerExcludePattern(excludePattern?: string): string[] {
         let patterns: string[] = [];
         if (!excludePattern) {
             return patterns;
