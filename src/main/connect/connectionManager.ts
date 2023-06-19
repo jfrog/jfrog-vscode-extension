@@ -458,8 +458,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     private async getWebLoginAccessToken(url: string, sessionId: string): Promise<string> {
         try {
-            this._logManager.logMessage('Start polling...', 'DEBUG');
-            const accessTokenData: AccessTokenResponse = await ConnectionUtils.createJfrogClient(url, '', '', '', '', '')
+            const accessTokenData: AccessTokenResponse = await ConnectionUtils.createJfrogClient(url, '', '', '', '', '',0, undefined,this._logManager)
                 .platform()
                 .WebLogin()
                 .waitForToken(sessionId);

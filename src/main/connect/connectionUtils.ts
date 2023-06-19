@@ -268,7 +268,8 @@ export class ConnectionUtils {
         password: string,
         accessToken: string,
         retries?: number,
-        timeout?: number
+        timeout?: number,
+        logger?: LogManager
     ): JfrogClient {
         let clientConfig: IJfrogClientConfig = {
             platformUrl: platformUrl,
@@ -278,6 +279,7 @@ export class ConnectionUtils {
             password: password,
             accessToken: accessToken,
             headers: {},
+            logger: logger,
             proxy: ConnectionUtils.getProxyConfig(),
             retries: retries ?? Configuration.getConnectionRetries(),
             timeout: timeout ?? Configuration.getConnectionTimeout()
