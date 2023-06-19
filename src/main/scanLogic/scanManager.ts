@@ -242,7 +242,7 @@ export class ScanManager implements ExtensionComponent {
         }
         let skipFiles: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
         this._logManager.logMessage(
-            'Scanning directory ' + directory + ', for CVE issues: ' + Array.from(cveToRun.values()) + ', skipping files: ' + skipFiles,
+            "Scanning directory '" + directory + "' for CVE issues: " + Array.from(cveToRun.values()) + '. Skipping files: ' + skipFiles,
             'DEBUG'
         );
         return await applicableRunner.scan(directory, checkCancel, cveToRun, skipFiles);
@@ -261,7 +261,7 @@ export class ScanManager implements ExtensionComponent {
             return {} as IacScanResponse;
         }
         let skipFiles: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
-        this._logManager.logMessage('Scanning directory ' + directory + ', for Iac issues', 'DEBUG');
+        this._logManager.logMessage("Scanning directory '" + directory + "', for Iac issues. Skipping files: " + skipFiles, 'DEBUG');
         return await iacRunner.scan(directory, checkCancel, skipFiles);
     }
     /**
@@ -277,7 +277,7 @@ export class ScanManager implements ExtensionComponent {
             return {} as SecretsScanResponse;
         }
         let skipFiles: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
-        this._logManager.logMessage('Scanning directory ' + directory + ', for Secrets issues', 'DEBUG');
+        this._logManager.logMessage("Scanning directory '" + directory + "', for Secrets issues. Skipping files: " + skipFiles, 'DEBUG');
         return await secretsRunner.scan(directory, checkCancel, skipFiles);
     }
 
@@ -301,7 +301,7 @@ export class ScanManager implements ExtensionComponent {
         this._logManager.logMessage(
             'Scanning for Eos issues in ' +
                 requests.map(request => `(Language '${request.language}', roots: [${request.roots.join()}])`) +
-                ', skipping files: ' +
+                '. Skipping files: ' +
                 skipFiles,
             'DEBUG'
         );
