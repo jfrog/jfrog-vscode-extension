@@ -149,7 +149,7 @@
             {
                 "command": "jfrog.xray.connect",
                 "title": "Connect",
-                "icon": "resources/readme/connect.png",
+                "icon": "resources/connect.png",
                 "category": "JFrog",
                 "enablement": "!jfrog.scanInProgress"
             },
