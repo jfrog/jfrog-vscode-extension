@@ -1,0 +1,34 @@
+name: Static Analysis
+
+on: [ push, pull_request ]
+
+jobs:
+  Static-Check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+          ref: ${{ github.event.pull_request.head.sha }}
+          # Full git history is needed to get a proper
+          # list of changed files within `super-linter`
+          fetch-depth: 0
+      - name: Static Code Analysis
+        uses: github/super-linter/slim@v5
+        env:
+          FILTER_REGEX_EXCLUDE: .*src/test/resources.*
+          # validations on code:
+          VALIDATE_TYPESCRIPT_ES: true
+          VALIDATE_TYPESCRIPT_STANDARD: true
+          VALIDATE_GO: true
+          VALIDATE_JAVA: true
+          VALIDATE_PYTHON: true
+          # validation on other files
+          VALIDATE_JSON: true
+          VALIDATE_MARKDOWN: true
+          VALIDATE_YAML: true
+          VALIDATE_XML: true
+          VALIDATE_GITHUB_ACTIONS: true
+          VALIDATE_GITLEAKS: true
+          VALIDATE_NATURAL_LANGUAGE: true
