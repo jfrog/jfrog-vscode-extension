@@ -276,7 +276,7 @@ export abstract class BinaryRunner {
                     })
             );
         }
-        let exeErr: Error | undefined = undefined;
+        let exeErr: Error | undefined;
         await Promise.all(runs)
             .catch(err => {
                 exeErr = err;
@@ -288,9 +288,9 @@ export abstract class BinaryRunner {
     }
 
     private handleExecutionLog(args: RunArgs, exeErr: Error | undefined) {
-        let logPath: string | undefined = this.copyRunLogToFolder(args, exeErr !== undefined);
+        let hadError: boolean = exeErr !== undefined;
+        let logPath: string | undefined = this.copyRunLogToFolder(args, hadError);
         if (logPath && !(exeErr instanceof NotSupportedError)) {
-            let hadError: boolean = exeErr !== undefined;
             this._logManager.logMessage(
                 'AnalyzerManager run ' +
                     this._type +
