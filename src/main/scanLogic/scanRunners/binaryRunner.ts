@@ -276,15 +276,33 @@ export abstract class BinaryRunner {
                     })
             );
         }
-        let hadError: boolean = false;
+        let exeErr: Error | undefined;
         await Promise.all(runs)
             .catch(err => {
-                hadError = true;
+                exeErr = err;
                 throw err;
             })
             // Collect log if exist
-            .finally(() => this.copyRunLogToFolder(args, hadError));
+            .finally(() => this.handleExecutionLog(args, exeErr));
         return aggResponse;
+    }
+
+    private handleExecutionLog(args: RunArgs, exeErr: Error | undefined) {
+        let hadError: boolean = exeErr !== undefined;
+        let logPath: string | undefined = this.copyRunLogToFolder(args, hadError);
+        if (logPath && !(exeErr instanceof NotSupportedError)) {
+            this._logManager.logMessage(
+                'AnalyzerManager run ' +
+                    this._type +
+                    ' on ' +
+                    args.getRoots() +
+                    ' ended ' +
+                    (hadError ? 'with error' : 'successfully') +
+                    ', scan log was generated at ' +
+                    logPath,
+                hadError ? 'ERR' : 'DEBUG'
+            );
+        }
     }
 
     /**
@@ -293,10 +311,10 @@ export abstract class BinaryRunner {
      * @param hadError - if true, will log result as error, otherwise success.
      * @param copyToDirectory - optional destination to copy the log
      */
-    private copyRunLogToFolder(args: RunArgs, hadError: boolean, copyToDirectory: string = ScanUtils.getLogsPath()) {
+    private copyRunLogToFolder(args: RunArgs, hadError: boolean, copyToDirectory: string = ScanUtils.getLogsPath()): string | undefined {
         let logFile: string | undefined = fs.readdirSync(args.directory).find(fileName => fileName.toLowerCase().includes('log'));
         if (!logFile) {
-            return;
+            return undefined;
         }
 
         let roots: string[] = args.getRoots();
@@ -307,17 +325,8 @@ export abstract class BinaryRunner {
 
         fs.copyFileSync(path.join(args.directory, logFile), logFinalPath);
         LogUtils.cleanUpOldLogs();
-        this._logManager.logMessage(
-            'AnalyzerManager run ' +
-                this._type +
-                ' on ' +
-                roots +
-                ' ended ' +
-                (hadError ? 'with error' : 'successfully') +
-                ', scan log was generated at ' +
-                logFinalPath,
-            hadError ? 'ERR' : 'DEBUG'
-        );
+
+        return logFinalPath;
     }
 
     /**
