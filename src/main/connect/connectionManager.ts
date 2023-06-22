@@ -7,7 +7,8 @@ import {
     IUsageFeature,
     JfrogClient,
     AccessTokenResponse,
-    XrayScanProgress
+    XrayScanProgress,
+    ClientUtils
 } from 'jfrog-client-js';
 import * as crypto from 'crypto';
 import * as keytar from 'keytar';
@@ -27,6 +28,7 @@ export enum LoginStatus {
     FailedTimeout = 'FAILED_TIMEOUT',
     FailedBadCredentials = 'FAILED_BAD_CREDENTIALS'
 }
+
 /**
  * Manage the JFrog Platform credentials and perform connection with JFrog Platform server.
  */
@@ -39,11 +41,13 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     // Service ID in the OS KeyStore to store and retrieve the password / access token
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
+
     // Key used for uniqueness when storing access token in KeyStore.
     private static readonly ACCESS_TOKEN_FS_KEY: string = 'vscode_jfrog_token';
 
     // Store connection details in file system after reading connection details from env
     public static readonly STORE_CONNECTION_ENV: string = 'JFROG_IDE_STORE_CONNECTION';
+
     // URL and credentials environment variables keys
     public static readonly USERNAME_ENV: string = 'JFROG_IDE_USERNAME';
     public static readonly PASSWORD_ENV: string = 'JFROG_IDE_PASSWORD';
@@ -458,7 +462,17 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     private async getWebLoginAccessToken(url: string, sessionId: string): Promise<string> {
         try {
-            const accessTokenData: AccessTokenResponse = await ConnectionUtils.createJfrogClient(url, '', '', '', '', '',0, undefined,this._logManager)
+            const accessTokenData: AccessTokenResponse = await ConnectionUtils.createJfrogClient(
+                url,
+                '',
+                '',
+                '',
+                '',
+                '',
+                0,
+                undefined,
+                this._logManager
+            )
                 .platform()
                 .WebLogin()
                 .waitForToken(sessionId);
@@ -469,7 +483,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         }
     }
 
-    private createWebLoginEndpoint(platformUrl: string, sessionId: string): vscode.Uri {
+    public createWebLoginEndpoint(platformUrl: string, sessionId: string): vscode.Uri {
         const endpoint: string = platformUrl + `ui/login?jfClientSession=${sessionId}&jfClientName=VS-Code`;
         this._logManager.logMessage('Open browser at ' + endpoint, 'INFO');
         return vscode.Uri.parse(endpoint);
@@ -668,7 +682,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return false;
     }
 
-    private deleteCredentialsFromMemory() {
+    public deleteCredentialsFromMemory() {
         this._accessToken = '';
         this._password = '';
         this._username = '';

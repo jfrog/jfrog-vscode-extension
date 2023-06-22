@@ -34,10 +34,10 @@ export class EventManager {
         webview.onDidReceiveMessage(
             async (message: WebviewSendEvent) => {
                 switch (message.type) {
-                    case WebviewSendEventType.JUMP_TO_CODE:
+                    case WebviewSendEventType.JumpToCode:
                         new JumpToCodeTask(message.data, this.logManager).run();
                         break;
-                    case WebviewSendEventType.LOGIN:
+                    case WebviewSendEventType.Login:
                         await new LoginTask(this.send, message.data, this.connectionManager, this.logManager).run();
                 }
             },
