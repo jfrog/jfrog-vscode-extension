@@ -17,12 +17,29 @@ async function main() {
         const extensionTestsPath: string = path.join(__dirname, 'index');
 
         // Download VS Code, unzip it and run the integration tests
-        await runTests({
-            version: 'insiders',
-            extensionDevelopmentPath,
-            extensionTestsPath,
-            launchArgs: ['--disable-extensions', '-n', targetResourcesDir]
-        } as TestOptions);
+        const maxRetries: number = 3;
+        let retryCount: number = 0;
+        
+        while (retryCount < maxRetries) {
+          try {
+            let exitCode: number = await runTests({
+              version: 'insiders',
+              extensionDevelopmentPath,
+              extensionTestsPath,
+              launchArgs: ['--disable-extensions', '-n', targetResourcesDir]
+            } as TestOptions);
+            console.log(`Test execution (runTests) finished with exit code: ${exitCode}.`);
+             // No error occurred, exit the loop
+            break;
+          } catch (error: any) {
+            if (error.toString().includes('read ECONN') || (error.message && error.message.includes('read ECONN'))) {
+              retryCount++;
+              console.log(`Error occurred: ${error}. Retrying (${retryCount}/${maxRetries})...`);
+            } else {
+              throw error;
+            }
+          }
+        }
     } catch (err) {
         console.error('Failed to run tests', err);
         process.exit(1);
