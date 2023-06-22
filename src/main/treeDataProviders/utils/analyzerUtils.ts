@@ -7,7 +7,6 @@ import { Severity, SeverityUtils } from '../../types/severity';
 import { ApplicableTreeNode } from '../issuesTree/codeFileTree/applicableTreeNode';
 import { CodeFileTreeNode } from '../issuesTree/codeFileTree/codeFileTreeNode';
 import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
-import { DescriptorTreeNode } from '../issuesTree/descriptorTree/descriptorTreeNode';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
@@ -22,6 +21,7 @@ import { FileScanBundle } from '../../utils/scanUtils';
 import { IacTreeNode } from '../issuesTree/codeFileTree/iacTreeNode';
 import { SecretTreeNode } from '../issuesTree/codeFileTree/secretsTreeNode';
 import { Translators } from '../../utils/translators';
+import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectDependencyTreeNode';
 
 export interface FileWithSecurityIssues {
     full_path: string;
@@ -195,7 +195,7 @@ export class AnalyzerUtils {
         scanProgress: GraphScanProgress
     ): Promise<void> {
         let cvesToScan: Set<string> = new Set<string>();
-        if (!(fileScanBundle.dataNode instanceof DescriptorTreeNode)) {
+        if (!(fileScanBundle.dataNode instanceof ProjectDependencyTreeNode)) {
             return;
         }
         let descriptorIssues: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
@@ -246,7 +246,7 @@ export class AnalyzerUtils {
      */
     public static populateApplicableIssues(
         root: IssuesRootTreeNode,
-        descriptorNode: DescriptorTreeNode,
+        descriptorNode: ProjectDependencyTreeNode,
         dependencyScanResults: DependencyScanResults
     ): number {
         // Populate descriptor node with data
