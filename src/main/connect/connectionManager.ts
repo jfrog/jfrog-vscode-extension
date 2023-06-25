@@ -8,7 +8,6 @@ import {
     JfrogClient,
     AccessTokenResponse,
     XrayScanProgress,
-    ClientUtils
 } from 'jfrog-client-js';
 import * as crypto from 'crypto';
 import * as keytar from 'keytar';
@@ -469,13 +468,13 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                 '',
                 '',
                 '',
-                0,
+                undefined,
                 undefined,
                 this._logManager
             )
                 .platform()
                 .WebLogin()
-                .waitForToken(sessionId);
+                .getToken(sessionId);
             return accessTokenData.access_token;
         } catch (error) {
             this._logManager.logMessage('Failed to get access token for SSO login at "' + url + '". Error:' + error, 'ERR');
