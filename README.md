@@ -126,20 +126,23 @@ The commands will do the following:
 </details>
 <br>
 
-Connect VS Code to your JFrog Platform instance by clicking on the green Connect ![Connect](resources/readme/connect.png) button or the provided button in the JFrog extension tab:
-![Connect](resources/readme/preview/connect.png)
+Once you installed, You can view the sigh in page by clicking on the Frog extension tab:
+![LoginPage](resources/readme/preview/sighInPage.png)
 
-You can choose one of the following methods to provide VS Code with the JFrog Platform connections details.
+
+Enter your JFrog platform connection details. Switching from Access token to Username and password can be done by clicking the 'Have Password?' button.
+
+**Note**: If you would like to use custom URLs for Artifactory or Xray, click on 'Advanced'
+
+There are other methods of providing your JFrog Platform credentials to VS Code than manually writing them in:
 
 ### Use the JFrog CLI Credentials
 
-If JFrog CLI is installed on your machibe, and is configured with the JFrog Platform's connection details, use those details to connect VS Code to the JFrog Platform.
+When JFrog CLI is installed and configured with JFrog Platform's connection details, the following popup will appear:
+![LoginPage](resources/readme/preview/sighInPageJFrogCli.png)
 
-### Enter Connection
 
-Enter your JFrog platform connection details manually.
 
-**Note**: You can leave the JFrog Platform URL empty, to enter the URLs of Artifactory and Xray separately.
 
 ### Environment Variables
 
