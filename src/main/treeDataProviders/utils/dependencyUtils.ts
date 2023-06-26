@@ -217,7 +217,7 @@ export class DependencyUtils {
         if (!contextualScan || !foundIssues || !ApplicabilityRunner.supportedPackageTypes().includes(dependencyScanResult.type)) {
             return;
         }
-        if (fileScanBundle.dataNode instanceof DescriptorTreeNode) {
+        if (fileScanBundle.dataNode instanceof ProjectDependencyTreeNode) {
             await AnalyzerUtils.cveApplicableScanning(scanManager, fileScanBundle, scanProgress).catch(err =>
                 ScanUtils.onScanError(err, scanManager.logManager, true)
             );
