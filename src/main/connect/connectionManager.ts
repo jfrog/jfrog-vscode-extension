@@ -436,7 +436,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             this._logManager.logMessage('Register session token ' + sessionId, 'DEBUG');
             await ConnectionUtils.createJfrogClient(url, '', '', '', '', '')
                 .platform()
-                .WebLogin()
+                .webLogin()
                 .registerSessionId(sessionId);
         } catch (error) {
             this._logManager.logMessage(JSON.stringify(error), 'ERR');
@@ -468,12 +468,14 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                 '',
                 '',
                 '',
+                20,
                 undefined,
-                undefined,
-                this._logManager
+                this._logManager,
+                [400],
+                15000
             )
                 .platform()
-                .WebLogin()
+                .webLogin()
                 .getToken(sessionId);
             return accessTokenData.access_token;
         } catch (error) {

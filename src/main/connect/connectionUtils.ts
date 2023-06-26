@@ -269,7 +269,9 @@ export class ConnectionUtils {
         accessToken: string,
         retries?: number,
         timeout?: number,
-        logger?: LogManager
+        logger?: LogManager,
+        retryOnStatusCode?: number[],
+        retryDelay?: number
     ): JfrogClient {
         let clientConfig: IJfrogClientConfig = {
             platformUrl: platformUrl,
@@ -282,7 +284,9 @@ export class ConnectionUtils {
             logger: logger,
             proxy: ConnectionUtils.getProxyConfig(),
             retries: retries ?? Configuration.getConnectionRetries(),
-            timeout: timeout ?? Configuration.getConnectionTimeout()
+            timeout: timeout ?? Configuration.getConnectionTimeout(),
+            retryOnStatusCode: retryOnStatusCode,
+            retryDelay: retryDelay
         } as IJfrogClientConfig;
         ConnectionUtils.addUserAgentHeader(clientConfig);
         ConnectionUtils.addProxyAuthHeader(clientConfig);
