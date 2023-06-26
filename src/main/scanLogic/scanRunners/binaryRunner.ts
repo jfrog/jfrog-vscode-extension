@@ -46,6 +46,8 @@ export abstract class BinaryRunner {
     protected _runDirectory: string;
 
     private static readonly RUNNER_NAME: string = 'analyzerManager';
+    private static readonly RUNNER_VERSION: string = '1.1.8.1784079';
+    private static readonly DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/';
 
     public static readonly NOT_ENTITLED: number = 31;
     public static readonly NOT_SUPPORTED: number = 13;
@@ -57,8 +59,6 @@ export abstract class BinaryRunner {
     public static readonly ENV_LOG_DIR: string = 'AM_LOG_DIRECTORY';
     public static readonly ENV_HTTP_PROXY: string = 'HTTP_PROXY';
     public static readonly ENV_HTTPS_PROXY: string = 'HTTPS_PROXY';
-
-    private static readonly DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/[RELEASE]/';
 
     constructor(
         protected _connectionManager: ConnectionManager,
@@ -75,8 +75,8 @@ export abstract class BinaryRunner {
         }
     }
 
-    public static getDefaultAnalyzerManagerSourceUrl(): string {
-        return Utils.addZipSuffix(BinaryRunner.DOWNLOAD_URL + Utils.getArchitecture() + '/' + BinaryRunner.RUNNER_NAME);
+    public static getDefaultAnalyzerManagerSourceUrl(version: string = '[RELEASE]'): string {
+        return Utils.addZipSuffix(BinaryRunner.DOWNLOAD_URL + '/' + version + '/' + Utils.getArchitecture() + '/' + BinaryRunner.RUNNER_NAME);
     }
 
     public static getDefaultAnalyzerManagerTargetPath(baseDirectory?: string): string {
@@ -84,7 +84,11 @@ export abstract class BinaryRunner {
     }
 
     public static getAnalyzerManagerResource(logManager: LogManager, targetPath?: string): Resource {
-        return new Resource(this.getDefaultAnalyzerManagerSourceUrl(), targetPath ?? this.getDefaultAnalyzerManagerTargetPath(), logManager);
+        return new Resource(
+            this.getDefaultAnalyzerManagerSourceUrl(BinaryRunner.RUNNER_VERSION),
+            targetPath ?? this.getDefaultAnalyzerManagerTargetPath(),
+            logManager
+        );
     }
 
     /**
