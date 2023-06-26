@@ -10,13 +10,13 @@ import {
     ApplicabilityScanArgs,
     ApplicabilityScanResponse
 } from '../../main/scanLogic/scanRunners/applicabilityScan';
-import { ScanUtils } from '../../main/utils/scanUtils';
+import { FileScanBundle, ScanUtils } from '../../main/utils/scanUtils';
 import { FileIssues, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { createDummyCveIssue, createDummyDependencyIssues, createRootTestNode, getTestCodeFileNode } from './utils/treeNodeUtils.test';
 import { DescriptorTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
 import { PackageType } from '../../main/types/projectType';
-import { DependencyScanResults } from '../../main/types/workspaceIssuesDetails';
+import { DependencyScanResults, ScanResults } from '../../main/types/workspaceIssuesDetails';
 import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils';
 import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { Severity } from '../../main/types/severity';
@@ -26,10 +26,14 @@ import { IEvidence } from 'jfrog-ide-webview';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { ApplicableTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/applicableTreeNode';
 import { getAnalyzerScanResponse, removeWindowsWhiteSpace } from './utils/utils.test';
+import { ScanManager } from '../../main/scanLogic/scanManager';
+import { GraphScanProgress } from '../../main/treeDataProviders/utils/stepProgress';
+import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
+import { EnvironmentTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/environmentTreeNode';
 
 let logManager: LogManager = new LogManager().activate();
 
-describe('Applicability Scan Tests', () => {
+describe.only('Applicability Scan Tests', () => {
     const scanApplicable: string = path.join(__dirname, '..', 'resources', 'applicableScan');
     let tempFolder: string = ScanUtils.createTmpDir();
 
@@ -74,6 +78,45 @@ describe('Applicability Scan Tests', () => {
         it('Check response attributes are not exist', () => {
             assert.isUndefined(response.scannedCve);
             assert.isUndefined(response.applicableCve);
+        });
+    });
+
+    describe('Run applicability scan', () => {
+        let scanManager: DummyScanManager;
+        const testRoot: IssuesRootTreeNode = createRootTestNode(path.join('root'));
+        const testDescriptor: ProjectDependencyTreeNode = new EnvironmentTreeNode('path', PackageType.Unknown, testRoot);
+
+        let expectedScannedCve: string[] = ['CVE-2021-3807', 'CVE-2021-3918'];
+
+        before(async () => {
+            scanManager = getDummyScanManager().activate();
+            // Create dummy cve
+            let testDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '9.9.9', testDescriptor);
+            for (let cve of new Set<string>(expectedScannedCve)) {
+                createDummyCveIssue(Severity.Medium, testDependency, cve, cve);
+            }
+            let notDirectDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '8.8.8', testDescriptor, true);
+            for (let cve of ['CVE-2022-25878']) {
+                createDummyCveIssue(Severity.Medium, notDirectDependency, cve, cve);
+            }
+            // Create dummy bundle for tests
+            let scanBundle: FileScanBundle = {
+                workspaceResults: {} as ScanResults,
+                root: testRoot,
+                data: { fullPath: 'some-path', applicableScanTimestamp: 1 } as DependencyScanResults,
+                dataNode: testDescriptor
+            } as FileScanBundle;
+            // Run scan
+            await AnalyzerUtils.cveApplicableScanning(scanManager, scanBundle, {} as GraphScanProgress);
+        });
+
+        it('Check Virtual Environment is scanned', () => {
+            assert.isTrue(scanManager.scanned);
+        });
+
+        it('Only scan direct cve', () => {
+            scanManager.cvesScanned.keys();
+            assert.sameMembers(expectedScannedCve, [...scanManager.cvesScanned]);
         });
     });
 
@@ -307,4 +350,31 @@ describe('Applicability Scan Tests', () => {
     function getDummyRunner(): ApplicabilityRunner {
         return new ApplicabilityRunner({} as ConnectionManager, logManager);
     }
+
+    function getDummyScanManager(): DummyScanManager {
+        return new DummyScanManager({} as ConnectionManager, logManager);
+    }
 });
+
+class DummyScanManager extends ScanManager {
+    scanned: boolean = false;
+    cvesScanned: Set<string> = new Set<string>();
+
+    constructor(connectionManager: ConnectionManager, logManager: LogManager) {
+        super(connectionManager, logManager);
+    }
+
+    /** @override */
+    public async scanApplicability(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        directory: string,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        checkCancel: () => void,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        cveToRun: Set<string>
+    ): Promise<ApplicabilityScanResponse> {
+        this.cvesScanned = new Set<string>(cveToRun);
+        this.scanned = true;
+        return {} as ApplicabilityScanResponse;
+    }
+}
