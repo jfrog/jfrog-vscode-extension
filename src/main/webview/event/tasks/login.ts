@@ -68,7 +68,7 @@ export class LoginTask {
                 case LoginConnectionType.Sso:
                     status = await this.connectionManager.startWebLogin(this.platformUrl, this.artifactoryUrl, this.xrayUrl);
                     break;
-                case LoginConnectionType.Default:
+                case LoginConnectionType.BasicAuthOrToken:
                     status = await this.connectionManager.tryStoreCredentials(
                         this.platformUrl,
                         this.artifactoryUrl,

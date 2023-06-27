@@ -35,16 +35,16 @@ export class WebviewManager {
             pageType: PageType.Login,
             status: LoginProgressStatus.Initial,
             url: '',
-            connectionType: LoginConnectionType.Default
+            connectionType: LoginConnectionType.BasicAuthOrToken
         };
         let url: string = await this.connectionManager.tryGetUrlFromJfrogCli();
         if (url !== '') {
-            return { ...page, status: LoginProgressStatus.AutoConnect, connectionType: LoginConnectionType.Cli };
+            return { ...page, status: LoginProgressStatus.AutoConnect, url:url, connectionType: LoginConnectionType.Cli };
         }
 
         url = await this.connectionManager.tryGetUrlFromEnv();
         if (url !== '') {
-            return { ...page, status: LoginProgressStatus.AutoConnect, connectionType: LoginConnectionType.EnvVars };
+            return { ...page, status: LoginProgressStatus.AutoConnect, url:url, connectionType: LoginConnectionType.EnvVars };
         }
         return page;
     }
