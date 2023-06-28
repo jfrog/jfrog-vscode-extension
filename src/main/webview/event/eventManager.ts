@@ -13,7 +13,7 @@ export class EventManager {
     protected send: EventSender;
 
     constructor(webview: vscode.Webview, private connectionManager: ConnectionManager, private logManager: LogManager) {
-        this.send = new EventSender(webview);
+        this.send = new EventSender(webview, logManager);
         this.setEventReceiver(webview);
     }
 

@@ -13,8 +13,8 @@ export abstract class WebView {
 
     public async activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(
-            vscode.commands.registerCommand('jfrog.view.details.page.open', (page: WebviewPage) => this.updateWebview(page, context)),
-            vscode.commands.registerCommand('jfrog.view.details.page.close', () => this.closeWebview())
+            vscode.commands.registerCommand('jfrog.webview.tab.open', (page: WebviewPage) => this.updateWebview(page, context)),
+            vscode.commands.registerCommand('jfrog.webview.tab.close', () => this.closeWebview())
         );
     }
 
@@ -89,7 +89,7 @@ export abstract class WebView {
     public loadPage(page: WebviewPage) {
         this.currentPage = page;
         if (this.eventManager !== undefined) {
-            this.eventManager?.loadPage(this.currentPage);
+            this.eventManager.loadPage(this.currentPage);
         }
     }
 }

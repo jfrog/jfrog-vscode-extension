@@ -15,6 +15,7 @@ import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descri
 import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateManager';
 import { Utils } from '../utils/utils';
 import { WebviewPage } from 'jfrog-ide-webview';
+import { WebviewManager } from '../webview/webviewManager';
 
 /**
  * Register and execute all commands in the extension.
@@ -27,7 +28,8 @@ export class CommandManager implements ExtensionComponent {
         private _filterManager: FilterManager,
         private _buildsManager: BuildsManager,
         private _diagnosticManager: DiagnosticsManager,
-        private _DependencyUpdateManager: DependencyUpdateManager
+        private _DependencyUpdateManager: DependencyUpdateManager,
+        private _webviewManager: WebviewManager
     ) {}
 
     public activate(context: vscode.ExtensionContext) {
@@ -54,8 +56,9 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.issues.file.open.details', (file, fileRegion, details) =>
             this.doOpenFileAndDetailsPage(file, fileRegion, details)
         );
-        this.registerCommand(context, 'jfrog.view.ci', () => this.doCi());
+        this.registerCommand(context, 'jfrog.webview.tab.open', (page: WebviewPage) => this._webviewManager.loadWebviewTab(page));
         // CI state
+        this.registerCommand(context, 'jfrog.view.ci', () => this.doCi());
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
         this.registerCommand(context, 'jfrog.xray.filter', () => this.doFilter());
         this.registerCommand(context, 'jfrog.view.local', () => this.doLocal());
@@ -70,6 +73,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     public doLogin() {
+        this._webviewManager.initializeWebviewSidebar();
         this.setViewType(State.Login, ExtensionMode.Login);
     }
 
@@ -179,14 +183,14 @@ export class CommandManager implements ExtensionComponent {
      * @param page - data to show in webpage
      */
     public doShowDetailsPage(page: WebviewPage) {
-        vscode.commands.executeCommand('jfrog.view.details.page.open', page);
+        vscode.commands.executeCommand('jfrog.webview.tab.open', page);
     }
 
     /**
      * Close current webpage if one is open
      */
     public doCloseDetailsPage() {
-        vscode.commands.executeCommand('jfrog.view.details.page.close');
+        vscode.commands.executeCommand('jfrog.webview.tab.close');
     }
 
     /**

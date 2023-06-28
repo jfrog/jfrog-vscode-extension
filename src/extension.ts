@@ -38,7 +38,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager(logManager).activate();
     const diagnosticManager: DiagnosticsManager = new DiagnosticsManager(treesManager, dependencyUpdateManager).activate(context);
 
-    new WebviewManager(logManager, connectionManager, context).activate();
+    const webviewManager: WebviewManager = await new WebviewManager(logManager, connectionManager, context).activate();
     new CodeLensManager().activate(context);
     new CommandManager(
         logManager,
@@ -47,6 +47,7 @@ export async function activate(context: vscode.ExtensionContext) {
         filterManager,
         buildsManager,
         diagnosticManager,
-        dependencyUpdateManager
+        dependencyUpdateManager,
+        webviewManager
     ).activate(context);
 }

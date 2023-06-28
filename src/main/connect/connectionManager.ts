@@ -296,7 +296,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             return false;
         }
     }
-    
+
     private getJfrogCliDefaultServerUrl(): string {
         let output: string = execSync('jf c export').toString();
         let confStr: string = Buffer.from(output, 'base64').toString('ascii');

@@ -12,7 +12,7 @@ export class WebviewTab extends WebView {
     constructor(logManager: LogManager, private connectionManager: ConnectionManager, private context: vscode.ExtensionContext) {
         super(logManager);
     }
-    private webview: vscode.WebviewPanel | undefined;
+    private panel: vscode.WebviewPanel | undefined;
 
     /**
      * Create if not exists or update the webview panel with the given page data and show it in the editor
@@ -20,16 +20,16 @@ export class WebviewTab extends WebView {
      * @param context - context of the extension
      */
     public resolveWebviewView() {
-        if (!this.webview) {
-            this.webview = this.createWebview();
-            this.eventManager = this.createEventManager(this.webview);
+        if (!this.panel) {
+            this.panel = this.createWebview();
+            this.eventManager = this.createEventManager(this.panel);
         } else {
-            this.webview.reveal();
+            this.panel.reveal();
         }
     }
 
     private createWebview(): vscode.WebviewPanel {
-        const webview: vscode.WebviewPanel = vscode.window.createWebviewPanel(
+        const panel: vscode.WebviewPanel = vscode.window.createWebviewPanel(
             'jfrog.issues.details',
             'Vulnerability Details',
             { viewColumn: vscode.ViewColumn.Beside, preserveFocus: false },
@@ -39,21 +39,22 @@ export class WebviewTab extends WebView {
                 enableCommandUris: true
             }
         );
-        webview.iconPath = vscode.Uri.file(this.context.asAbsolutePath(path.join('resources', 'extensionIcon.png')));
-        webview.onDidDispose(
+        panel.iconPath = vscode.Uri.file(this.context.asAbsolutePath(path.join('resources', 'extensionIcon.png')));
+        panel.onDidDispose(
             () => {
-                this.webview = undefined;
+                this.panel = undefined;
                 this.eventManager = undefined;
             },
             undefined,
             this.context.subscriptions
         );
-        return webview;
+        panel.webview.html = this.getHtml(this.context, panel.webview);
+        return panel;
     }
 
-    private createEventManager(webview: vscode.WebviewPanel) {
-        const eventManager: EventManager = new EventManager(webview.webview, this.connectionManager, this._logManager);
-        webview.onDidChangeViewState(() => {
+    private createEventManager(panel: vscode.WebviewPanel) {
+        const eventManager: EventManager = new EventManager(panel.webview, this.connectionManager, this._logManager);
+        panel.onDidChangeViewState(() => {
             if (this.currentPage) {
                 eventManager.loadPage(this.currentPage);
             }

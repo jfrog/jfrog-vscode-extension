@@ -11,21 +11,20 @@ import { LogManager } from '../log/logManager';
 export class WebviewManager {
     private webviewTab: WebviewTab;
     private webviewSidebar: WebviewSidebar;
-    constructor(logManager: LogManager, private connectionManager: ConnectionManager, private context: vscode.ExtensionContext) {
+    constructor(logManager: LogManager, private connectionManager: ConnectionManager, context: vscode.ExtensionContext) {
         this.webviewTab = new WebviewTab(logManager, connectionManager, context);
         this.webviewSidebar = new WebviewSidebar(logManager, connectionManager, context);
     }
 
     public async activate() {
-        await this.initializeWebviewSidebar();
-        this.context.subscriptions.push(vscode.commands.registerCommand('jfrog.webview.tab', (page: WebviewPage) => this.loadWebviewTab(page)));
+        return this;
     }
 
-    private async initializeWebviewSidebar() {
+    public async initializeWebviewSidebar() {
         this.webviewSidebar.loadPage(await this.createLoginPage());
     }
 
-    private loadWebviewTab(page: WebviewPage) {
+    public loadWebviewTab(page: WebviewPage) {
         this.webviewTab.resolveWebviewView();
         this.webviewTab.loadPage(page);
     }

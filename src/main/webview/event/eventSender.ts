@@ -1,11 +1,12 @@
 import { WebviewPage, WebviewReceiveEventType, WebviewReceiveEvent, ReceiveSetEmitterEvent, ReceiveShowPageEvent } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
+import { LogManager } from '../../log/logManager';
 
 /**
  * Sends events to the webview.
  */
 export class EventSender {
-    constructor(private webview: vscode.Webview) {
+    constructor(private webview: vscode.Webview, private logManager: LogManager) {
         this.setEventEmitter();
     }
 
@@ -23,7 +24,9 @@ export class EventSender {
      * Sends a loadPage event to the webview to display a specific page.
      */
     public async loadPage(page: WebviewPage): Promise<void> {
-        await this.sendEvent(this.webview, { type: WebviewReceiveEventType.ShowPage, pageData: page } as ReceiveShowPageEvent);
+        const request: ReceiveShowPageEvent = { type: WebviewReceiveEventType.ShowPage, pageData: page };
+        this.logManager.logMessage('Load webview with request data :\n' + JSON.stringify(request), 'DEBUG');
+        await this.sendEvent(this.webview, request);
     }
 
     /**
