@@ -42,7 +42,7 @@ export class WebviewManager {
             return { ...page, status: LoginProgressStatus.AutoConnect, url: url, connectionType: LoginConnectionType.Cli };
         }
 
-        url = await this.connectionManager.tryGetUrlFromEnv();
+        url = this.connectionManager.tryGetUrlFromEnv();
         if (url !== '') {
             return { ...page, status: LoginProgressStatus.AutoConnect, url: url, connectionType: LoginConnectionType.EnvVars };
         }

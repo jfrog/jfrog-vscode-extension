@@ -358,7 +358,7 @@ describe('Connection Manager Tests', () => {
             const getCredentialsFromEnvStub: sinon.SinonStub<any[], any> = sinon.stub(mockConnectionManager, 'getCredentialsFromEnv').resolves(false);
 
             // Call the function
-            const result: string = await mockConnectionManager.tryGetUrlFromEnv();
+            const result: string = mockConnectionManager.tryGetUrlFromEnv();
 
             // Check the return value and ensure that necessary methods are called
             assert.strictEqual(result, '');

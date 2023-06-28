@@ -211,21 +211,18 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
 
     public async tryGetUrlFromJfrogCli(): Promise<string> {
-        let url: string = '';
-        if ((await this.verifyJfrogCliInstalledAndVersion()) && (await this.getJfrogCliDefaultServerConfiguration())) {
-            url = this._url || this._rtUrl || this._xrayUrl;
+        try {
+            if (await this.verifyJfrogCliInstalledAndVersion()) {
+                return this.getJfrogCliDefaultServerUrl();
+            }
+        } catch (error) {
+            this._logManager.logMessage('Error encountered while reading platform URL from JFrog CLI: ' + error, 'DEBUG');
         }
-        this.deleteCredentialsFromMemory();
-        return url;
+        return '';
     }
 
-    public async tryGetUrlFromEnv(): Promise<string> {
-        let url: string = '';
-        if ((await this.getCredentialsFromEnv()) && (await this.verifyCredentials(false))) {
-            url = this._url || this._rtUrl || this._xrayUrl;
-        }
-        this.deleteCredentialsFromMemory();
-        return url;
+    public tryGetUrlFromEnv(): string {
+        return this.getPlatformUrlFromEnv();
     }
 
     private async verifyJfrogCliInstalledAndVersion(): Promise<boolean> {
@@ -275,7 +272,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             let confStr: string = Buffer.from(output, 'base64').toString('ascii');
             let conf: any = JSON.parse(confStr);
 
-            this._url = conf['url'] || '';
+            this._url = this.getJfrogCliDefaultServerUrl();
             this._xrayUrl = conf['xrayUrl'] || '';
             this._rtUrl = conf['artifactoryUrl'] || '';
 
@@ -298,6 +295,14 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             this._logManager.logMessage('Error encountered while reading credentials from JFrog CLI: ' + error, 'DEBUG');
             return false;
         }
+    }
+    
+    private getJfrogCliDefaultServerUrl(): string {
+        let output: string = execSync('jf c export').toString();
+        let confStr: string = Buffer.from(output, 'base64').toString('ascii');
+        let conf: any = JSON.parse(confStr);
+
+        return conf['url'] || '';
     }
 
     public get url() {
@@ -514,7 +519,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     public async getCredentialsFromEnv(): Promise<boolean> {
         this._logManager.logMessage('Trying to read credentials from env...', 'DEBUG');
-        this._url = process.env[ConnectionManager.URL_ENV] || '';
+        this._url = this.getPlatformUrlFromEnv();
         this._username = process.env[ConnectionManager.USERNAME_ENV] || '';
         this._password = process.env[ConnectionManager.PASSWORD_ENV] || '';
         this._accessToken = process.env[ConnectionManager.ACCESS_TOKEN_ENV] || '';
@@ -525,6 +530,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         }
         await this.resolveUrls();
         return true;
+    }
+
+    public getPlatformUrlFromEnv(): string {
+        return process.env[ConnectionManager.URL_ENV] || '';
     }
 
     private async setUrlsFromFilesystem(): Promise<boolean> {
