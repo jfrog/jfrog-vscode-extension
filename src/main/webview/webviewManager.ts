@@ -39,12 +39,12 @@ export class WebviewManager {
         };
         let url: string = await this.connectionManager.tryGetUrlFromJfrogCli();
         if (url !== '') {
-            return { ...page, status: LoginProgressStatus.AutoConnect, url:url, connectionType: LoginConnectionType.Cli };
+            return { ...page, status: LoginProgressStatus.AutoConnect, url: url, connectionType: LoginConnectionType.Cli };
         }
 
         url = await this.connectionManager.tryGetUrlFromEnv();
         if (url !== '') {
-            return { ...page, status: LoginProgressStatus.AutoConnect, url:url, connectionType: LoginConnectionType.EnvVars };
+            return { ...page, status: LoginProgressStatus.AutoConnect, url: url, connectionType: LoginConnectionType.EnvVars };
         }
         return page;
     }

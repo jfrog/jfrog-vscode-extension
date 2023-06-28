@@ -199,7 +199,7 @@ describe('Connection Manager Tests', () => {
         let setUsernameFromFilesystemStub: sinon.SinonStub<any, Promise<boolean>>;
         let setPasswordFromKeyStoreStub: sinon.SinonStub<any, Promise<boolean>>;
         let setAccessTokenFromKeyStoreStub: sinon.SinonStub<any, Promise<boolean>>;
-        let deleteCredentialsFromMemoryStub: sinon.SinonStub<any[], any>
+        let deleteCredentialsFromMemoryStub: sinon.SinonStub<any[], any>;
         let resolveUrlsStub: sinon.SinonStub<any, Promise<void>>;
         let onSuccessConnectStub: sinon.SinonStub<any, Promise<void>>;
 
@@ -216,7 +216,7 @@ describe('Connection Manager Tests', () => {
         });
 
         afterEach(() => {
-            sinon.restore()
+            sinon.restore();
         });
 
         it('should connect if username and password are set on key store', async () => {
@@ -298,7 +298,7 @@ describe('Connection Manager Tests', () => {
 
     describe('readCredentialsFromJfrogCli()', () => {
         afterEach(() => {
-            sinon.restore()
+            sinon.restore();
         });
         it('should return false if JFrog CLI is not installed or version is not valid', async () => {
             // Mock dependencies and setup necessary conditions
@@ -332,7 +332,7 @@ describe('Connection Manager Tests', () => {
 
     describe('tryGetUrlFromJfrogCli()', () => {
         afterEach(() => {
-            sinon.restore()
+            sinon.restore();
         });
         it('should return an empty string if JFrog CLI is not installed or default server configuration is not available', async () => {
             // Mock dependencies and setup necessary conditions
@@ -346,13 +346,12 @@ describe('Connection Manager Tests', () => {
             // Check the return value and ensure that necessary methods are called
             assert.strictEqual(result, '');
             sinon.assert.calledOnce(verifyJfrogCliInstalledAndVersionStub);
-
         });
     });
 
     describe('tryGetUrlFromEnv()', () => {
         afterEach(() => {
-            sinon.restore()
+            sinon.restore();
         });
         it('should return an empty string if credentials are not available in the environment', async () => {
             // Mock dependencies and setup necessary conditions
@@ -364,13 +363,12 @@ describe('Connection Manager Tests', () => {
             // Check the return value and ensure that necessary methods are called
             assert.strictEqual(result, '');
             sinon.assert.calledOnce(getCredentialsFromEnvStub);
-
         });
     });
 
     describe('startWebLogin()', () => {
         afterEach(() => {
-            sinon.restore()
+            sinon.restore();
         });
         it('should start web login and return the login status', async () => {
             // Mock dependencies and setup necessary conditions
@@ -391,7 +389,6 @@ describe('Connection Manager Tests', () => {
             sinon.assert.calledOnce(openBrowserStub);
             sinon.assert.calledOnce(getWebLoginAccessTokenStub);
             sinon.assert.calledWith(tryStoreCredentialsStub, 'mock-url', 'mock-artifactoryUrl', 'mock-xrayUrl', '', '', 'mock-access-token');
-
         });
     });
 

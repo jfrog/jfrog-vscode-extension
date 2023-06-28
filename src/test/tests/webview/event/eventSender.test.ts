@@ -33,7 +33,7 @@ describe('EventSender', () => {
             const mockPageData: WebviewPage = { id: 'XRAY-MOCK', extendedInformation: { shortDescription: 'mock-text' } } as IDependencyPage;
 
             await eventSender.loadPage(mockPageData);
-            
+
             // The first call in 'new EventSender' and the second in 'loadPage'
             sinon.assert.callCount(postMessageStub, 2);
             sinon.assert.calledWithMatch(postMessageStub, {

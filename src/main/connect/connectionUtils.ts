@@ -15,6 +15,7 @@ import { URL } from 'url';
 import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
 import { Configuration } from '../utils/configuration';
+import { RetryOnStatusCode } from 'jfrog-client-js/dist/model/ClientConfig';
 
 export enum EntitlementScanFeature {
     Applicability = 'contextual_analysis',
@@ -270,7 +271,7 @@ export class ConnectionUtils {
         retries?: number,
         timeout?: number,
         logger?: LogManager,
-        retryOnStatusCode?: number[],
+        retryOnStatusCode?: RetryOnStatusCode,
         retryDelay?: number
     ): JfrogClient {
         let clientConfig: IJfrogClientConfig = {

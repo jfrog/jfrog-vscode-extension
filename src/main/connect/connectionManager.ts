@@ -7,7 +7,7 @@ import {
     IUsageFeature,
     JfrogClient,
     AccessTokenResponse,
-    XrayScanProgress,
+    XrayScanProgress
 } from 'jfrog-client-js';
 import * as crypto from 'crypto';
 import * as keytar from 'keytar';
@@ -471,7 +471,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                 20,
                 undefined,
                 this._logManager,
-                [400],
+                (statusCode: number) => statusCode >= 500 || statusCode === 400,
                 15000
             )
                 .platform()
