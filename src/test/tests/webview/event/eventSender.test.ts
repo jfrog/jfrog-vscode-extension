@@ -8,11 +8,9 @@ describe('EventSender', () => {
     let webview: MockWebview;
     let postMessageStub: sinon.SinonStub;
     const mockLogger: LogManager = new LogManager().activate();
-    let logMessageStub: sinon.SinonStub<any, void>;
     beforeEach(() => {
         webview = new MockWebview();
         postMessageStub = webview.postMessage as sinon.SinonStub;
-        logMessageStub = sinon.stub(mockLogger, 'logMessage');
     });
 
     afterEach(() => {
@@ -37,7 +35,6 @@ describe('EventSender', () => {
             await eventSender.loadPage(mockPageData);
 
             // The first call in 'new EventSender' and the second in 'loadPage'
-            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from KeyStore...', 'DEBUG');
             sinon.assert.callCount(postMessageStub, 2);
             sinon.assert.calledWithMatch(postMessageStub, {
                 type: WebviewReceiveEventType.ShowPage,

@@ -7,7 +7,8 @@ import {
     IUsageFeature,
     JfrogClient,
     AccessTokenResponse,
-    XrayScanProgress
+    XrayScanProgress,
+    ClientUtils
 } from 'jfrog-client-js';
 import * as crypto from 'crypto';
 import * as keytar from 'keytar';
@@ -490,7 +491,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
 
     public createWebLoginEndpoint(platformUrl: string, sessionId: string): vscode.Uri {
-        const endpoint: string = platformUrl + `ui/login?jfClientSession=${sessionId}&jfClientName=VS-Code`;
+        const endpoint: string = ClientUtils.addTrailingSlashIfMissing(platformUrl) + `ui/login?jfClientSession=${sessionId}&jfClientName=VS-Code`;
         this._logManager.logMessage('Open browser at ' + endpoint, 'INFO');
         return vscode.Uri.parse(endpoint);
     }

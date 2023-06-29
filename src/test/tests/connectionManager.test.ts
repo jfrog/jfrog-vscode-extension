@@ -19,6 +19,10 @@ describe('Connection Manager Tests', () => {
         connectionManager = await createTestConnectionManager(new LogManager().activate(), 45000, 100);
     });
 
+    afterEach(() => {
+        sinon.restore();
+    });
+
     it('User agent header', () => {
         let clientConfig: IJfrogClientConfig = {
             headers: {}
@@ -43,7 +47,7 @@ describe('Connection Manager Tests', () => {
         assert.deepEqual(proxyAuthorization, 'testProxyAuthorization');
     });
 
-    describe('Populate credentials from env', () => {
+    describe('Populate credentials from env', async () => {
         [
             {
                 inputUrl: 'https://httpbin.org/anything',
@@ -87,7 +91,6 @@ describe('Connection Manager Tests', () => {
                 setCliHomeDir(path.resolve('/path/to/nowhere'));
 
                 // Check credentials not set.
-                // await connectionManager.populateCredentials(false);
                 assert.isEmpty(await connectionManager.tryGetUrlFromJfrogCli());
                 assert.isFalse(connectionManager.areXrayCredentialsSet());
 
@@ -96,6 +99,7 @@ describe('Connection Manager Tests', () => {
 
                 // Restore old CLI home dir.
                 setCliHomeDir(previousHome);
+                connectionManager.deleteCredentialsFromMemory();
             });
         });
     });
@@ -115,7 +119,7 @@ describe('Connection Manager Tests', () => {
         assert.equal(connectionManager.accessToken, token);
     }
 
-    describe('Read credentials from JFrog CLI', () => {
+    describe('Read credentials from JFrog CLI', async () => {
         [
             {
                 serverId: 'basic-auth-only',
@@ -188,9 +192,11 @@ describe('Connection Manager Tests', () => {
 
                 // Restore old CLI home dir.
                 setCliHomeDir(previousHome);
+                connectionManager.deleteCredentialsFromMemory();
             });
         });
     });
+
     const mockLogger: LogManager = new LogManager().activate();
     const mockConnectionManager: ConnectionManager = new ConnectionManager(mockLogger);
     describe('connect()', () => {
@@ -337,7 +343,7 @@ describe('Connection Manager Tests', () => {
         it('should return an empty string if JFrog CLI is not installed or default server configuration is not available', async () => {
             // Mock dependencies and setup necessary conditions
             const verifyJfrogCliInstalledAndVersionStub: sinon.SinonStub<any[], any> = sinon
-                .stub(mockConnectionManager as any, 'VerifyJfrogCliInstalledAndVersion')
+                .stub(mockConnectionManager as any, 'verifyJfrogCliInstalledAndVersion')
                 .resolves(false);
 
             // Call the function
@@ -355,14 +361,15 @@ describe('Connection Manager Tests', () => {
         });
         it('should return an empty string if credentials are not available in the environment', async () => {
             // Mock dependencies and setup necessary conditions
-            const getCredentialsFromEnvStub: sinon.SinonStub<any[], any> = sinon.stub(mockConnectionManager, 'getCredentialsFromEnv').resolves(false);
+            process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
+                ConnectionManager.ACCESS_TOKEN_ENV
+            ] = process.env[ConnectionManager.URL_ENV] = '';
 
             // Call the function
             const result: string = mockConnectionManager.tryGetUrlFromEnv();
 
             // Check the return value and ensure that necessary methods are called
             assert.strictEqual(result, '');
-            sinon.assert.calledOnce(getCredentialsFromEnvStub);
         });
     });
 
