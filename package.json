@@ -278,8 +278,8 @@
     "dependencies": {
         "adm-zip": "~0.5.9",
         "fs-extra": "~10.1.0",
-        "jfrog-client-js": "github:Or-Geva/jfrog-client-js#sso",
-        "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.1.25.tgz",
+        "jfrog-client-js": "^2.7.1",
+        "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.2.0.tgz",
         "js-yaml": "^4.1.0",
         "json2csv": "~5.0.7",
         "keytar": "~7.9.0",
