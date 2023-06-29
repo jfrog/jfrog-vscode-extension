@@ -130,7 +130,7 @@ Once you installed, You can view the sigh in page by clicking on the Frog extens
 ![LoginPage](resources/readme/preview/sighInPage.png)
 
 
-Enter your JFrog platform connection details. Switching from Access token to Username and password can be done by clicking the 'Have Password?' button.
+Enter your JFrog platform connection details. Switching from Access token to Username and password can be done by clicking the `Using Password` button.
 
 **Note**: If you would like to use custom URLs for Artifactory or Xray, click on 'Advanced'
 
