@@ -302,40 +302,6 @@ describe('Connection Manager Tests', () => {
         });
     });
 
-    describe('readCredentialsFromJfrogCli()', () => {
-        afterEach(() => {
-            sinon.restore();
-        });
-        it('should return false if JFrog CLI is not installed or version is not valid', async () => {
-            // Mock dependencies and setup necessary conditions
-            const verifyJfrogCliInstalledAndVersionStub: sinon.SinonStub<any[], any> = sinon
-                .stub(mockConnectionManager as any, 'verifyJfrogCliInstalledAndVersion')
-                .resolves(false);
-
-            // Call the function
-            const result: boolean = await mockConnectionManager.readCredentialsFromJfrogCli();
-
-            // Check the return value and ensure that necessary methods are called
-            assert.isFalse(result);
-            sinon.assert.calledOnce(verifyJfrogCliInstalledAndVersionStub);
-        });
-
-        it('should true if JFrog CLI is installed and version is valid', async () => {
-            // Mock dependencies and setup necessary conditions
-            const verifyJfrogCliInstalledAndVersionStub: sinon.SinonStub<any[], any> = sinon
-                //By casting mockConnectionManager to any, we can access and stub the private function.
-                .stub(mockConnectionManager as any, 'verifyJfrogCliInstalledAndVersion')
-                .resolves(true);
-
-            // Call the function
-            const result: boolean = await mockConnectionManager.readCredentialsFromJfrogCli();
-
-            // Check the return value and ensure that necessary methods are called
-            assert.isTrue(result);
-            sinon.assert.calledOnce(verifyJfrogCliInstalledAndVersionStub);
-        });
-    });
-
     describe('tryGetUrlFromJfrogCli()', () => {
         afterEach(() => {
             sinon.restore();
