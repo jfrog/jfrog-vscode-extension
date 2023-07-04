@@ -12,6 +12,7 @@ export enum Flag {
     Version = ' --version',
     Json = ' --json',
     All = ' --all',
+    Silent = ' --silent',
     PackageLockOnly = ' --package-lock-only',
     // Legacy for npm version 6
     LegacySkipDevDependencies = ' --prod',
@@ -46,7 +47,7 @@ export class NpmCmd {
     }
 
     protected static getNpmLsArgs(projectRoot: string): string {
-        let args: string = `${Flag.Json} ${Flag.All}`;
+        let args: string = `${Flag.Json} ${Flag.All} ${Flag.Silent}`;
         args += this.getSkipDevDependenciesFlag();
         return args + this.getPackageLockOnlyFlag(projectRoot);
     }
