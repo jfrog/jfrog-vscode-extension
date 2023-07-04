@@ -3,6 +3,7 @@ import * as exec from 'child_process';
 import { before } from 'mocha';
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as fs from 'fs-extra';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
@@ -19,6 +20,10 @@ import { PackageType } from '../../main/types/projectType';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { FocusType } from '../../main/constants/contextKeys';
+import { MavenDependencyUpdate } from '../../main/dependencyUpdate/mavenDependencyUpdate';
+import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
+import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
+import { IComponent } from 'jfrog-client-js';
 
 /**
  * Test functionality of Maven.
@@ -34,8 +39,6 @@ describe('Maven Tests', async () => {
         {} as CacheManager,
         logManager
     );
-    // let mavenExclusion: MavenExclusion = new MavenExclusion(treesManager);
-    // let mavenDependencyUpdate: MavenDependencyUpdate = new MavenDependencyUpdate();
     let projectDirs: string[] = ['dependency', 'empty', 'multiPomDependency'];
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
@@ -118,16 +121,6 @@ describe('Maven Tests', async () => {
         pomXmlsArray = await locatePomXmls(localWorkspaceFolders);
         got = MavenUtils.buildPrototypePomTree(pomXmlsArray!, treesManager.logManager);
         assert.deepEqual(got, want[1]);
-    });
-
-    /**
-     * Test getProjectInfo.
-     */
-    it('Get Project Info', async () => {
-        const [groupId, ArtifactId, version] = MavenUtils.getProjectInfo(' org.jfrog.test:multi2:jar:3.7-SNAPSHOT');
-        assert.equal(groupId, 'org.jfrog.test');
-        assert.equal(ArtifactId, 'multi2');
-        assert.equal(version, '3.7-SNAPSHOT');
     });
 
     /**
@@ -359,5 +352,62 @@ describe('Maven Tests', async () => {
                 ])
             ]
         ];
+    }
+
+    describe('Update to fixed version', async () => {
+        const expectedVersion: string = '3.0.16';
+
+        it('Without version property', async () => {
+            const [mavenDependencyUpdate, issueToUpdate, pomXmlPath] = await setupTestEnvironment('updateToFixVersion');
+
+            // Operate the test
+            mavenDependencyUpdate.update(issueToUpdate, expectedVersion);
+
+            // Check results
+            const fileContent: string = fs.readFileSync(pomXmlPath, 'utf-8');
+            assert.include(fileContent, `<version>${expectedVersion}</version>`);
+            assert.isFalse(fs.existsSync(path.join(__dirname, '..', 'resources', 'maven', 'updateToFixVersion', 'pom.xml.versionsBackup')));
+        });
+
+        it('With property', async () => {
+            const [mavenDependencyUpdate, issueToUpdate, pomXmlPath] = await setupTestEnvironment('updateToFixVersionWithProperty');
+
+            // Operate the test
+            mavenDependencyUpdate.update(issueToUpdate, expectedVersion);
+
+            // Check results
+            const fileContent: string = fs.readFileSync(pomXmlPath, 'utf-8');
+            assert.include(fileContent, `<lets.go.and.fix.this>${expectedVersion}</lets.go.and.fix.this>`);
+            assert.isFalse(
+                fs.existsSync(path.join(__dirname, '..', 'resources', 'maven', 'updateToFixVersionWithProperty', 'pom.xml.versionsBackup'))
+            );
+        });
+    });
+
+    async function setupTestEnvironment(projectDir: string): Promise<[MavenDependencyUpdate, DependencyIssuesTreeNode, string]> {
+        const mavenDependencyUpdate: MavenDependencyUpdate = new MavenDependencyUpdate();
+        const pomXmlPath: string = path.join(__dirname, '..', 'resources', 'maven', projectDir, 'pom.xml');
+
+        const localWorkspaceFolders: vscode.WorkspaceFolder[] = [
+            {
+                uri: vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven', projectDir)),
+                name: '',
+                index: 0
+            } as vscode.WorkspaceFolder
+        ];
+
+        const pomXmlsArray: vscode.Uri[] | undefined = await locatePomXmls(localWorkspaceFolders);
+
+        const parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
+
+        await MavenUtils.createDependenciesTrees(pomXmlsArray, treesManager.logManager, () => undefined, parent);
+
+        const issueToUpdate: DependencyIssuesTreeNode = new DependencyIssuesTreeNode(
+            'artifactId',
+            { package_type: 'MAVEN', package_name: 'org.codehaus.plexus:plexus-utils' } as IComponent,
+            false,
+            new ProjectDependencyTreeNode(pomXmlPath)
+        );
+        return [mavenDependencyUpdate, issueToUpdate, pomXmlPath];
     }
 });
