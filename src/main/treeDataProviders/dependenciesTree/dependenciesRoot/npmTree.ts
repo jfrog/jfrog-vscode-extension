@@ -21,19 +21,27 @@ export class NpmTreeNode extends RootNode {
         let npmLsFailed: boolean = false;
         try {
             projectDetails.loadProjectDetails(NpmCmd.runNpmLs(this.workspaceFolder));
-        } catch (error) {
+        } catch (error: any) {
             this._logManager.logError(<any>error, false);
+            projectDetails.loadProjectDetails(JSON.parse(error.stdout.toString()))
             projectDetails.loadProjectDetailsFromFile(path.join(this.fullPath));
             npmLsFailed = true;
         }
         this.populateDependenciesTree(this, projectDetails.dependencies);
         if (npmLsFailed) {
-            this.topSeverity = Severity.Unknown;
-            this.buildError = BuildTreeErrorType.NotInstalled;
-            this._logManager.logMessageAndToastErr(
-                `Failed to scan npm project. Hint: Please make sure the commands 'npm install' or 'npm ci' run successfully in '${this.workspaceFolder}'`,
-                'ERR'
-            );
+            if (this.children.length === 0){
+                this.topSeverity = Severity.Unknown;
+                this.buildError = BuildTreeErrorType.NotInstalled;
+                this._logManager.logMessageAndToastErr(
+                    `Failed to scan npm project. Hint: Please make sure the commands 'npm install' or 'npm ci' run successfully in '${this.workspaceFolder}'`,
+                    'ERR'
+                );
+            } else {
+                this._logManager.logMessageAndToastErr(
+                    `The npm project was partially scanned. Please ensure that there are no errors from the command 'npm ls' in the directory '${this.workspaceFolder}''`,
+                    'ERR'
+                );
+            }
         }
         this.generalInfo = new GeneralInfo(projectDetails.projectName, projectDetails.projectVersion, [], this.fullPath, PackageType.Npm);
 
