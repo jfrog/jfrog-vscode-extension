@@ -23,9 +23,10 @@ export enum Flag {
 export class NpmCmd {
     /**
      * @param projectRoot - The root npm project to run the command.
+     * @param flags - Optional flags to the 'npm ci' command.
      */
-    public static runNpmCi(projectRoot: string): any {
-        ScanUtils.executeCmd('npm ci', projectRoot);
+    public static runNpmCi(projectRoot: string, flags?: string[]): any {
+        ScanUtils.executeCmd('npm ci ' + flags?.join(' '), projectRoot);
     }
 
     /**

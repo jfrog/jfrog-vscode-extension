@@ -1,4 +1,3 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { GeneralInfo } from '../../../types/generalInfo';
@@ -18,22 +17,31 @@ export class NpmTreeNode extends RootNode {
 
     public async refreshDependencies() {
         const projectDetails: ProjectDetails = new ProjectDetails();
+        let npmLsResult: string;
         let npmLsFailed: boolean = false;
         try {
-            projectDetails.loadProjectDetails(NpmCmd.runNpmLs(this.workspaceFolder));
+            npmLsResult = NpmCmd.runNpmLs(this.workspaceFolder);
         } catch (error) {
             this._logManager.logError(<any>error, false);
-            projectDetails.loadProjectDetailsFromFile(path.join(this.fullPath));
+            npmLsResult = JSON.parse((<any>error).stdout.toString());
             npmLsFailed = true;
         }
+        projectDetails.loadProjectDetails(npmLsResult);
         this.populateDependenciesTree(this, projectDetails.dependencies);
         if (npmLsFailed) {
-            this.topSeverity = Severity.Unknown;
-            this.buildError = BuildTreeErrorType.NotInstalled;
-            this._logManager.logMessageAndToastErr(
-                `Failed to scan npm project. Hint: Please make sure the commands 'npm install' or 'npm ci' run successfully in '${this.workspaceFolder}'`,
-                'ERR'
-            );
+            if (this.children.length === 0) {
+                this.topSeverity = Severity.Unknown;
+                this.buildError = BuildTreeErrorType.NotInstalled;
+                this._logManager.logMessageAndToastErr(
+                    `Failed to scan npm project. Hint: Please make sure the commands 'npm install' or 'npm ci' run successfully in '${this.workspaceFolder}'`,
+                    'ERR'
+                );
+            } else {
+                this._logManager.logMessage(
+                    `An npm project was partially scanned. Hint: Ensure that there are no errors from the command 'npm ls --all' in the directory '${this.workspaceFolder}''`,
+                    'ERR'
+                );
+            }
         }
         this.generalInfo = new GeneralInfo(projectDetails.projectName, projectDetails.projectVersion, [], this.fullPath, PackageType.Npm);
 
