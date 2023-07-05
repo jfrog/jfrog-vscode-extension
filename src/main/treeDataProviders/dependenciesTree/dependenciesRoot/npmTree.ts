@@ -18,15 +18,16 @@ export class NpmTreeNode extends RootNode {
 
     public async refreshDependencies() {
         const projectDetails: ProjectDetails = new ProjectDetails();
+        let npmLsResult: string;
         let npmLsFailed: boolean = false;
         try {
-            projectDetails.loadProjectDetails(NpmCmd.runNpmLs(this.workspaceFolder));
+            npmLsResult = NpmCmd.runNpmLs(this.workspaceFolder);
         } catch (error) {
             this._logManager.logError(<any>error, false);
-            projectDetails.loadProjectDetails(JSON.parse((<any>error).stdout.toString()));
-            projectDetails.loadProjectDetailsFromFile(path.join(this.fullPath));
+            npmLsResult = JSON.parse((<any>error).stdout.toString());
             npmLsFailed = true;
         }
+        projectDetails.loadProjectDetails(npmLsResult);
         this.populateDependenciesTree(this, projectDetails.dependencies);
         if (npmLsFailed) {
             if (this.children.length === 0) {
@@ -37,8 +38,8 @@ export class NpmTreeNode extends RootNode {
                     'ERR'
                 );
             } else {
-                this._logManager.logMessageAndToastErr(
-                    `The npm project was partially scanned. Please ensure that there are no errors from the command 'npm ls' in the directory '${this.workspaceFolder}''`,
+                this._logManager.logMessage(
+                    `An npm project was partially scanned. Hint: Ensure that there are no errors from the command 'npm ls --all' in the directory '${this.workspaceFolder}''`,
                     'ERR'
                 );
             }
