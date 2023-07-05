@@ -34,7 +34,6 @@ describe('Npm Utils Tests', async () => {
         logManager
     );
     let projectDirs: string[] = ['project-1', 'project-2', 'project-3'];
-    // let npmDependencyUpdate: NpmDependencyUpdate = new NpmDependencyUpdate();
     let workspaceFolders: vscode.WorkspaceFolder[];
     let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'npm', 'utilsTest'));
 
@@ -222,7 +221,7 @@ describe('Npm Utils Tests', async () => {
 
     describe('Partial Dependencies Trees', async () => {
         it('Build partial build in case of "npm ls" error', async () => {
-            let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'npm', 'utilsTest', 'partialTree'));
+            let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'npm', 'partialTree'));
             NpmCmd.runNpmCi(tmpDir.fsPath, ['--legacy-peer-deps']);
 
             let parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
