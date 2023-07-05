@@ -33,7 +33,7 @@ import { EnvironmentTreeNode } from '../../main/treeDataProviders/issuesTree/des
 
 let logManager: LogManager = new LogManager().activate();
 
-describe.only('Applicability Scan Tests', () => {
+describe('Applicability Scan Tests', () => {
     const scanApplicable: string = path.join(__dirname, '..', 'resources', 'applicableScan');
     let tempFolder: string = ScanUtils.createTmpDir();
 
