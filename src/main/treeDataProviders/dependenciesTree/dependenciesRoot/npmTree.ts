@@ -21,15 +21,15 @@ export class NpmTreeNode extends RootNode {
         let npmLsFailed: boolean = false;
         try {
             projectDetails.loadProjectDetails(NpmCmd.runNpmLs(this.workspaceFolder));
-        } catch (error: any) {
+        } catch (error) {
             this._logManager.logError(<any>error, false);
-            projectDetails.loadProjectDetails(JSON.parse(error.stdout.toString()))
+            projectDetails.loadProjectDetails(JSON.parse((<any>error).stdout.toString()));
             projectDetails.loadProjectDetailsFromFile(path.join(this.fullPath));
             npmLsFailed = true;
         }
         this.populateDependenciesTree(this, projectDetails.dependencies);
         if (npmLsFailed) {
-            if (this.children.length === 0){
+            if (this.children.length === 0) {
                 this.topSeverity = Severity.Unknown;
                 this.buildError = BuildTreeErrorType.NotInstalled;
                 this._logManager.logMessageAndToastErr(
