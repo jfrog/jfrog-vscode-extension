@@ -1,4 +1,3 @@
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { GeneralInfo } from '../../../types/generalInfo';
