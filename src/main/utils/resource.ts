@@ -62,7 +62,7 @@ export class Resource {
      */
     public async copyToTarget(tempPath: string) {
         if (tempPath.endsWith('.zip')) {
-            await Utils.removeDirIfExists(this._targetDir);
+            await ScanUtils.removeFolder(this._targetDir);
             Utils.extractZip(tempPath, this._targetDir);
             // Copy zip file to folder to calculate checksum
             fs.copyFileSync(tempPath, this.getTargetPathAsZip());

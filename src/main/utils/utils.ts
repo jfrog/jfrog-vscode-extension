@@ -151,12 +151,6 @@ export class Utils {
         }
     }
 
-    public static async removeDirIfExists(dirPath: string) {
-        if (fs.existsSync(dirPath)) {
-            await ScanUtils.removeFolder(dirPath);
-        }
-    }
-
     public static removeFileIfExists(filePath: string) {
         if (fs.existsSync(filePath)) {
             fs.rmSync(filePath);
