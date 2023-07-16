@@ -318,17 +318,19 @@ export class AnalyzerUtils {
                     codeEvidence: location.snippet.text
                 } as IEvidence);
                 // Populate nodes
-                fileNode.issues.push(
-                    new ApplicableTreeNode(
-                        issueNode,
-                        fileNode,
-                        new vscode.Range(
-                            new vscode.Position(location.startLine, location.startColumn),
-                            new vscode.Position(location.endLine, location.endColumn)
-                        ),
-                        issueNode.severity
-                    )
-                );
+                if (fileNode.issues.find(issue => issue.issueId == issueNode.labelId) == undefined) {
+                    fileNode.issues.push(
+                        new ApplicableTreeNode(
+                            issueNode,
+                            fileNode,
+                            new vscode.Range(
+                                new vscode.Position(location.startLine, location.startColumn),
+                                new vscode.Position(location.endLine, location.endColumn)
+                            ),
+                            issueNode.severity
+                        )
+                    );
+                }
                 issuesCount++;
             }
         });
