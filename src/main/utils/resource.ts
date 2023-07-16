@@ -60,9 +60,9 @@ export class Resource {
      * if the given file is a binary, replace and copy it to the target path
      * @param tempPath - the file to copy into target
      */
-    public copyToTarget(tempPath: string) {
+    public async copyToTarget(tempPath: string) {
         if (tempPath.endsWith('.zip')) {
-            Utils.removeDirIfExists(this._targetDir);
+            await ScanUtils.removeFolder(this._targetDir);
             Utils.extractZip(tempPath, this._targetDir);
             // Copy zip file to folder to calculate checksum
             fs.copyFileSync(tempPath, this.getTargetPathAsZip());
@@ -82,7 +82,7 @@ export class Resource {
         let tmpFolder: string = ScanUtils.createTmpDir();
         try {
             this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this._artifactoryUrl + this.sourceUrl, 'DEBUG');
-            this.copyToTarget(await this.download(tmpFolder));
+            await this.copyToTarget(await this.download(tmpFolder));
             this._logManager.logMessage('Resource ' + this._name + ' was update successfully.', 'DEBUG');
             return true;
         } catch (error) {
