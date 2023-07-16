@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import * as os from 'os';
 import * as fs from 'fs';
 import AdmZip, { IZipEntry } from 'adm-zip';
-import { ScanUtils } from './scanUtils';
 
 export class Utils {
     private static readonly MAX_FILES_EXTRACTED_ZIP: number = 1000;
