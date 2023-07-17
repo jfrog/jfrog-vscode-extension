@@ -139,6 +139,16 @@ export class AnalyzerUtils {
     }
 
     /**
+     * Check if two ranges are equals
+     * @param region - first range
+     * @param other - second range
+     * @returns true if the ranges match false otherwise
+     */
+    public static isSameRange(range: vscode.Range, other: vscode.Range): boolean {
+        return range.start.isEqual(other.start) && range.end.isEqual(other.end);
+    }
+
+    /**
      * Get or create CodeFileNode object if not exists in root and update its severity if provided
      * @param root - the root to search the node inside
      * @param filePath - the file path to search
@@ -413,18 +423,12 @@ export class AnalyzerUtils {
                     codeEvidence: location.snippet.text
                 } as IEvidence);
                 // Populate nodes
-                if (fileNode.issues.find(issue => issue.issueId == issueNode.labelId) == undefined) {
-                    fileNode.issues.push(
-                        new ApplicableTreeNode(
-                            issueNode,
-                            fileNode,
-                            new vscode.Range(
-                                new vscode.Position(location.startLine, location.startColumn),
-                                new vscode.Position(location.endLine, location.endColumn)
-                            ),
-                            issueNode.severity
-                        )
-                    );
+                let range: vscode.Range = new vscode.Range(
+                    new vscode.Position(location.startLine, location.startColumn),
+                    new vscode.Position(location.endLine, location.endColumn)
+                );
+                if (fileNode.issues.find(issue => this.isSameRange(range, issue.regionWithIssue)) == undefined) {
+                    fileNode.issues.push(new ApplicableTreeNode(issueNode, fileNode, range, issueNode.severity));
                 }
                 issuesCount++;
             }
