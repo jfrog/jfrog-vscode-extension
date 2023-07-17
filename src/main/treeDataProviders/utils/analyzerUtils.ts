@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
-import { CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
+import { ApplicabilityScanResponse, CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { ApplicableTreeNode } from '../issuesTree/codeFileTree/applicableTreeNode';
 import { CodeFileTreeNode } from '../issuesTree/codeFileTree/codeFileTreeNode';
@@ -11,7 +11,7 @@ import { FileTreeNode } from '../issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { PackageType } from '../../types/projectType';
-import { GraphScanProgress, StepProgress } from './stepProgress';
+import { StepProgress } from './stepProgress';
 import { EosIssue, EosIssueLocation, EosRunner, EosScanRequest, LanguageType } from '../../scanLogic/scanRunners/eosScan';
 import { ScanManager } from '../../scanLogic/scanManager';
 import { AnalyzeIssue, FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
@@ -22,6 +22,8 @@ import { IacTreeNode } from '../issuesTree/codeFileTree/iacTreeNode';
 import { SecretTreeNode } from '../issuesTree/codeFileTree/secretsTreeNode';
 import { Translators } from '../../utils/translators';
 import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectDependencyTreeNode';
+import { LogManager } from '../../log/logManager';
+import { Utils } from '../../utils/utils';
 
 export interface FileWithSecurityIssues {
     full_path: string;
@@ -186,55 +188,148 @@ export class AnalyzerUtils {
     /**
      * Run CVE applicable scan async task and populate the given bundle with the results.
      * @param scanManager - the ScanManager that preforms the actual scans
-     * @param fileScanBundle - the file bundle that contains all the information on scan results
+     * @param fileScanBundles - the file bundles that contains all the information on scan results
      * @param scanProgress - the progress for the given scan
      */
     public static async cveApplicableScanning(
         scanManager: ScanManager,
-        fileScanBundle: FileScanBundle,
-        scanProgress: GraphScanProgress
+        fileScanBundles: FileScanBundle[],
+        progressManager: StepProgress
     ): Promise<void> {
-        let cvesToScan: Set<string> = new Set<string>();
-        if (!(fileScanBundle.dataNode instanceof ProjectDependencyTreeNode)) {
-            return;
-        }
-        let descriptorIssues: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
-        fileScanBundle.dataNode.issues.forEach((issue: IssueTreeNode) => {
-            if (issue instanceof CveTreeNode && !issue.parent.indirect && issue.cve?.cve) {
-                cvesToScan.add(issue.cve.cve);
-            }
-        });
-        if (cvesToScan.size == 0) {
-            return;
-        }
-        scanManager.logManager.logMessage('Scanning descriptor ' + descriptorIssues.fullPath + ' for cve applicability issues', 'INFO');
-
-        let startApplicableTime: number = Date.now();
-        descriptorIssues.applicableIssues = await scanManager.scanApplicability(
-            path.dirname(descriptorIssues.fullPath),
-            scanProgress.onProgress,
-            cvesToScan
+        let spaceToBundles: Map<string, Map<FileScanBundle, Set<string>>> = this.mapBundlesForApplicableScanning(
+            scanManager.logManager,
+            fileScanBundles
         );
+        if (spaceToBundles.size == 0) {
+            return;
+        }
+        for (let [spacePath, bundles] of spaceToBundles) {
+            let cveToScan: Set<string> = Utils.combineSets(Array.from(bundles.values()));
+            // Scan workspace for all cve in relevant bundles
+            let startApplicableTime: number = Date.now();
+            let applicableIssues: ApplicabilityScanResponse = await scanManager.scanApplicability(spacePath, progressManager.checkCancel, cveToScan);
+            if (applicableIssues && applicableIssues.applicableCve) {
+                let applicableScanTimestamp: number = Date.now();
+                AnalyzerUtils.transferApplicableResponseToBundles(
+                    applicableIssues,
+                    bundles,
+                    scanManager.logManager,
+                    applicableScanTimestamp,
+                    applicableScanTimestamp - startApplicableTime
+                );
+            }
+        }
+    }
 
-        if (descriptorIssues.applicableIssues && descriptorIssues.applicableIssues.applicableCve) {
-            descriptorIssues.applicableScanTimestamp = Date.now();
+    /**
+     * Create a mapping between a workspace and all the given bundles that relevant to it.
+     * In addition, filter not relevant bundles.
+     * @param logManager - logger to log added map
+     * @param fileScanBundles - bundles to map
+     * @returns mapped bundles to similar workspace
+     */
+    private static mapBundlesForApplicableScanning(
+        logManager: LogManager,
+        fileScanBundles: FileScanBundle[]
+    ): Map<string, Map<FileScanBundle, Set<string>>> {
+        let bundleMap: Map<string, Map<FileScanBundle, Set<string>>> = new Map<string, Map<FileScanBundle, Set<string>>>();
+
+        for (let fileScanBundle of fileScanBundles) {
+            if (!(fileScanBundle.dataNode instanceof ProjectDependencyTreeNode)) {
+                // Filter non dependencies projects
+                continue;
+            }
+            let descriptorIssues: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
+            // Map information
+            let cvesToScan: Set<string> = new Set<string>();
+            fileScanBundle.dataNode.issues.forEach((issue: IssueTreeNode) => {
+                if (issue instanceof CveTreeNode && !issue.parent.indirect && issue.cve?.cve) {
+                    // Only direct cve issues
+                    cvesToScan.add(issue.cve.cve);
+                }
+            });
+            if (cvesToScan.size == 0) {
+                // Nothing to do in bundle
+                continue;
+            }
+            let spacePath: string = path.dirname(descriptorIssues.fullPath);
+            if (!bundleMap.has(spacePath)) {
+                bundleMap.set(spacePath, new Map<FileScanBundle, Set<string>>());
+            }
+            bundleMap.get(spacePath)?.set(fileScanBundle, cvesToScan);
+            logManager.logMessage('Adding data from descriptor ' + descriptorIssues.fullPath + ' for cve applicability scan', 'INFO');
+        }
+
+        return bundleMap;
+    }
+
+    /**
+     * Transfer and populate information from a given applicable scan to each bundle
+     * @param applicableIssues - full scan response with information relevant to all the bundles
+     * @param bundles - the bundles that will be populated only with their relevant information
+     * @param logManager - logger to log information to the user
+     * @param applicableTimeStamp - ended time stamp for the applicable scan
+     * @param elapsedTimeInMillsSec - elapsed time that took the scan to run
+     */
+    private static transferApplicableResponseToBundles(
+        applicableIssues: ApplicabilityScanResponse,
+        bundles: Map<FileScanBundle, Set<string>>,
+        logManager: LogManager,
+        applicableTimeStamp: number,
+        elapsedTimeInMillsSec: number
+    ) {
+        for (let [bundle, relevantCve] of bundles) {
+            let descriptorIssues: DependencyScanResults = <DependencyScanResults>bundle.data;
+            // Filter only relevant information
+            descriptorIssues.applicableScanTimestamp = applicableTimeStamp;
+            descriptorIssues.applicableIssues = AnalyzerUtils.filterOnlyRelevantApplicableData(applicableIssues, relevantCve);
+            // Populate it in bundle
             let applicableIssuesCount: number = AnalyzerUtils.populateApplicableIssues(
-                fileScanBundle.root,
-                fileScanBundle.dataNode,
+                bundle.root,
+                <ProjectDependencyTreeNode>bundle.dataNode,
                 descriptorIssues
             );
-            scanManager.logManager.logMessage(
+            logManager.logMessage(
                 'Found ' +
                     applicableIssuesCount +
                     " applicable CVE issues in descriptor = '" +
                     descriptorIssues.fullPath +
                     "' (elapsed " +
-                    (Date.now() - startApplicableTime) / 1000 +
+                    elapsedTimeInMillsSec / 1000 +
                     ' seconds)',
                 'INFO'
             );
-            fileScanBundle.root.apply();
+            bundle.root.apply();
         }
+    }
+
+    /**
+     * Filter a given full applicable data to only relevant information base on a given cve list
+     * @param applicableIssues - all the applicable information
+     * @param relevantCve - cve list to filter information only for them
+     * @returns applicableIssues with information relevant only for the given relevantCve
+     */
+    private static filterOnlyRelevantApplicableData(
+        applicableIssues: ApplicabilityScanResponse,
+        relevantCve: Set<string>
+    ): ApplicabilityScanResponse {
+        let scanned: string[] = [];
+        let allApplicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(Object.entries(applicableIssues.applicableCve));
+        let applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
+
+        for (let scannedCve of applicableIssues.scannedCve) {
+            if (relevantCve.has(scannedCve)) {
+                scanned.push(scannedCve);
+                let potential: CveApplicableDetails | undefined = allApplicable.get(scannedCve);
+                if (potential) {
+                    applicable.set(scannedCve, potential);
+                }
+            }
+        }
+        return {
+            scannedCve: Array.from(scanned),
+            applicableCve: Object.fromEntries(applicable.entries())
+        } as ApplicabilityScanResponse;
     }
 
     /**

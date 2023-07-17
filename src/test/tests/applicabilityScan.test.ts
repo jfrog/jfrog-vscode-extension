@@ -27,7 +27,7 @@ import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeF
 import { ApplicableTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/applicableTreeNode';
 import { getAnalyzerScanResponse, removeWindowsWhiteSpace } from './utils/utils.test';
 import { ScanManager } from '../../main/scanLogic/scanManager';
-import { GraphScanProgress } from '../../main/treeDataProviders/utils/stepProgress';
+import { StepProgress } from '../../main/treeDataProviders/utils/stepProgress';
 import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
 import { EnvironmentTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/environmentTreeNode';
 
@@ -107,7 +107,7 @@ describe('Applicability Scan Tests', () => {
                 dataNode: testDescriptor
             } as FileScanBundle;
             // Run scan
-            await AnalyzerUtils.cveApplicableScanning(scanManager, scanBundle, {} as GraphScanProgress);
+            await AnalyzerUtils.cveApplicableScanning(scanManager, [scanBundle], {} as StepProgress);
         });
 
         it('Check Virtual Environment is scanned', () => {
