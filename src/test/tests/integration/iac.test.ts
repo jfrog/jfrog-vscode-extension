@@ -15,7 +15,7 @@ import {
 } from '../utils/testIntegration.test';
 import { NotSupportedError } from '../../../main/utils/scanUtils';
 
-describe('Iac Integration Tests', async () => {
+describe.only('Iac Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
     const testDataRoot: string = path.join(__dirname, '..', '..', 'resources', 'iacScan');
 

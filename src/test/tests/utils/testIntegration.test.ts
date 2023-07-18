@@ -132,7 +132,7 @@ function getTestFileIssues(filePath: string, filesWithIssues: FileWithSecurityIs
     let potential: FileWithSecurityIssues | undefined = filesWithIssues.find(
         (fileWithIssues: FileWithSecurityIssues) => AnalyzerUtils.parseLocationFilePath(fileWithIssues.full_path) === filePath
     );
-    assert.isDefined(potential, 'Response should contain file with issues at path ' + filePath);
+    assert.isDefined(potential, 'Response should contain file with issues at path ' + filePath + ' in:' + filesWithIssues.map(file => "\n'" + file.full_path + "' -> '" + AnalyzerUtils.parseLocationFilePath(file.full_path) + "'"));
     return potential!;
 }
 
