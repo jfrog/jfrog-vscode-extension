@@ -22,13 +22,7 @@ export class Utils {
     }
 
     public static combineSets(sets: Set<string>[]): Set<string> {
-        const combinedSet: Set<string> = new Set();
-        for (const set of sets) {
-            for (const value of set) {
-                combinedSet.add(value);
-            }
-        }
-        return combinedSet;
+        return new Set<string>(...sets);
     }
 
     /**

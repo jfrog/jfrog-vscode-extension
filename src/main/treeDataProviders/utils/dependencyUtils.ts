@@ -73,7 +73,7 @@ export class DependencyUtils {
                 descriptorsParsed.add(child.fullPath);
                 let scanBundle: FileScanBundle = {
                     workspaceResults: scanResults,
-                    root: root,
+                    rootNode: root,
                     data: child.createEmptyScanResultsObject()
                 };
                 if (this.isGraphHasBuildError(child, scanBundle, scanManager.logManager)) {
@@ -203,28 +203,32 @@ export class DependencyUtils {
         if (!(fileScanBundle.dataNode instanceof ProjectDependencyTreeNode)) {
             return 0;
         }
-        let issuesCount: number = 0;
         let dependencyScanResult: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
         // Dependency graph scan task
-        await DependencyUtils.scanProjectDependencyGraph(
-            scanManager,
-            dependencyScanResult,
-            fileScanBundle.dataNode,
-            rootGraph,
-            scanProgress,
-            scanProgress.onProgress
-        )
-            .then((issuesFound: number) => {
-                issuesCount = issuesFound;
-                if (issuesCount > 0) {
-                    // populate data and view
-                    fileScanBundle.workspaceResults.descriptorsIssues.push(dependencyScanResult);
-                    fileScanBundle.root.addChildAndApply(fileScanBundle.dataNode);
-                }
-            })
-            .catch(error => DependencyUtils.onFileScanError(error, scanManager.logManager, fileScanBundle))
-            .finally(() => scanProgress.onProgress());
-        return issuesCount;
+        try {
+            let issuesCount: number = await DependencyUtils.scanProjectDependencyGraph(
+                scanManager,
+                dependencyScanResult,
+                fileScanBundle.dataNode,
+                rootGraph,
+                scanProgress,
+                scanProgress.onProgress
+            );
+            if (issuesCount > 0) {
+                // populate data and view
+                fileScanBundle.workspaceResults.descriptorsIssues.push(dependencyScanResult);
+                fileScanBundle.rootNode.addChildAndApply(fileScanBundle.dataNode);
+            }
+            return issuesCount;
+        } catch (error) {
+            if (error instanceof Error) {
+                DependencyUtils.onFileScanError(error, scanManager.logManager, fileScanBundle);
+            }
+        } finally {
+            scanProgress.onProgress();
+        }
+
+        return 0;
     }
 
     /**
@@ -291,7 +295,7 @@ export class DependencyUtils {
         if (fileScanBundle) {
             logger.logMessage(
                 "Workspace '" +
-                    fileScanBundle.root.workSpace.name +
+                    fileScanBundle.rootNode.workSpace.name +
                     "' scan on file '" +
                     fileScanBundle.data.fullPath +
                     "' ended with error:\n" +
@@ -307,7 +311,7 @@ export class DependencyUtils {
             fileScanBundle.data.name = failReason;
             // Populate failed data
             fileScanBundle.workspaceResults.failedFiles.push(fileScanBundle.data);
-            return fileScanBundle.root.addChildAndApply(FileTreeNode.createFailedScanNode(fileScanBundle.data.fullPath, failReason));
+            return fileScanBundle.rootNode.addChildAndApply(FileTreeNode.createFailedScanNode(fileScanBundle.data.fullPath, failReason));
         }
         throw err;
     }

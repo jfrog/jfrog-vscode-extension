@@ -144,7 +144,7 @@ export class AnalyzerUtils {
      * @param other - second range
      * @returns true if the ranges match false otherwise
      */
-    public static isSameRange(range: vscode.Range, other: vscode.Range): boolean {
+    public static isEqualRange(range: vscode.Range, other: vscode.Range): boolean {
         return range.start.isEqual(other.start) && range.end.isEqual(other.end);
     }
 
@@ -206,9 +206,10 @@ export class AnalyzerUtils {
         fileScanBundles: FileScanBundle[],
         progressManager: StepProgress
     ): Promise<void> {
+        let filteredBundles: Map<FileScanBundle, Set<string>> = this.filterBundlesWithoutIssuesToScan(fileScanBundles);
         let spaceToBundles: Map<string, Map<FileScanBundle, Set<string>>> = this.mapBundlesForApplicableScanning(
             scanManager.logManager,
-            fileScanBundles
+            filteredBundles
         );
         if (spaceToBundles.size == 0) {
             return;
@@ -232,25 +233,18 @@ export class AnalyzerUtils {
     }
 
     /**
-     * Create a mapping between a workspace and all the given bundles that relevant to it.
-     * In addition, filter not relevant bundles.
-     * @param logManager - logger to log added map
-     * @param fileScanBundles - bundles to map
-     * @returns mapped bundles to similar workspace
+     * Filter bundles without direct cve issues, transform the bundle list to have its relevant cve to scan set.
+     * @param fileScanBundles - bundles to process and filter if needed
+     * @returns Map of bundles to their set of direct cves issues, with at least one for each bundle
      */
-    private static mapBundlesForApplicableScanning(
-        logManager: LogManager,
-        fileScanBundles: FileScanBundle[]
-    ): Map<string, Map<FileScanBundle, Set<string>>> {
-        let bundleMap: Map<string, Map<FileScanBundle, Set<string>>> = new Map<string, Map<FileScanBundle, Set<string>>>();
+    private static filterBundlesWithoutIssuesToScan(fileScanBundles: FileScanBundle[]): Map<FileScanBundle, Set<string>> {
+        let filtered: Map<FileScanBundle, Set<string>> = new Map<FileScanBundle, Set<string>>();
 
         for (let fileScanBundle of fileScanBundles) {
             if (!(fileScanBundle.dataNode instanceof ProjectDependencyTreeNode)) {
                 // Filter non dependencies projects
                 continue;
             }
-            let descriptorIssues: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
-            // Map information
             let cvesToScan: Set<string> = new Set<string>();
             fileScanBundle.dataNode.issues.forEach((issue: IssueTreeNode) => {
                 if (issue instanceof CveTreeNode && !issue.parent.indirect && issue.cve?.cve) {
@@ -262,15 +256,37 @@ export class AnalyzerUtils {
                 // Nothing to do in bundle
                 continue;
             }
+
+            filtered.set(fileScanBundle, cvesToScan);
+        }
+
+        return filtered;
+    }
+
+    /**
+     * Create a mapping between a workspace and all the given bundles that relevant to it.
+     * @param logManager - logger to log added map
+     * @param fileScanBundles - bundles to map
+     * @returns mapped bundles to similar workspace
+     */
+    private static mapBundlesForApplicableScanning(
+        logManager: LogManager,
+        filteredBundles: Map<FileScanBundle, Set<string>>
+    ): Map<string, Map<FileScanBundle, Set<string>>> {
+        let workspaceToScanBundles: Map<string, Map<FileScanBundle, Set<string>>> = new Map<string, Map<FileScanBundle, Set<string>>>();
+
+        for (let [fileScanBundle, cvesToScan] of filteredBundles) {
+            let descriptorIssues: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
+            // Map information to similar directory space
             let spacePath: string = path.dirname(descriptorIssues.fullPath);
-            if (!bundleMap.has(spacePath)) {
-                bundleMap.set(spacePath, new Map<FileScanBundle, Set<string>>());
+            if (!workspaceToScanBundles.has(spacePath)) {
+                workspaceToScanBundles.set(spacePath, new Map<FileScanBundle, Set<string>>());
             }
-            bundleMap.get(spacePath)?.set(fileScanBundle, cvesToScan);
+            workspaceToScanBundles.get(spacePath)?.set(fileScanBundle, cvesToScan);
             logManager.logMessage('Adding data from descriptor ' + descriptorIssues.fullPath + ' for cve applicability scan', 'INFO');
         }
 
-        return bundleMap;
+        return workspaceToScanBundles;
     }
 
     /**
@@ -292,10 +308,10 @@ export class AnalyzerUtils {
             let descriptorIssues: DependencyScanResults = <DependencyScanResults>bundle.data;
             // Filter only relevant information
             descriptorIssues.applicableScanTimestamp = applicableTimeStamp;
-            descriptorIssues.applicableIssues = AnalyzerUtils.filterOnlyRelevantApplicableData(applicableIssues, relevantCve);
+            descriptorIssues.applicableIssues = AnalyzerUtils.filterApplicabilityScanResponse(applicableIssues, relevantCve);
             // Populate it in bundle
             let applicableIssuesCount: number = AnalyzerUtils.populateApplicableIssues(
-                bundle.root,
+                bundle.rootNode,
                 <ProjectDependencyTreeNode>bundle.dataNode,
                 descriptorIssues
             );
@@ -309,36 +325,33 @@ export class AnalyzerUtils {
                     ' seconds)',
                 'INFO'
             );
-            bundle.root.apply();
+            bundle.rootNode.apply();
         }
     }
 
     /**
-     * Filter a given full applicable data to only relevant information base on a given cve list
-     * @param applicableIssues - all the applicable information
+     * For a given full ApplicableScanResponse scan results, filter the results to only contain information relevant to a given cve list
+     * @param responseToFilter - all the applicable information
      * @param relevantCve - cve list to filter information only for them
-     * @returns applicableIssues with information relevant only for the given relevantCve
+     * @returns ApplicableScanResponse with information relevant only for the given relevantCve
      */
-    private static filterOnlyRelevantApplicableData(
-        applicableIssues: ApplicabilityScanResponse,
-        relevantCve: Set<string>
-    ): ApplicabilityScanResponse {
-        let scanned: string[] = [];
-        let allApplicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(Object.entries(applicableIssues.applicableCve));
-        let applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
+    private static filterApplicabilityScanResponse(responseToFilter: ApplicabilityScanResponse, relevantCve: Set<string>): ApplicabilityScanResponse {
+        let allApplicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(Object.entries(responseToFilter.applicableCve));
+        let relevantScannedCve: string[] = [];
+        let relevantApplicableCve: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
 
-        for (let scannedCve of applicableIssues.scannedCve) {
+        for (let scannedCve of responseToFilter.scannedCve) {
             if (relevantCve.has(scannedCve)) {
-                scanned.push(scannedCve);
+                relevantScannedCve.push(scannedCve);
                 let potential: CveApplicableDetails | undefined = allApplicable.get(scannedCve);
                 if (potential) {
-                    applicable.set(scannedCve, potential);
+                    relevantApplicableCve.set(scannedCve, potential);
                 }
             }
         }
         return {
-            scannedCve: Array.from(scanned),
-            applicableCve: Object.fromEntries(applicable.entries())
+            scannedCve: Array.from(relevantScannedCve),
+            applicableCve: Object.fromEntries(relevantApplicableCve.entries())
         } as ApplicabilityScanResponse;
     }
 
@@ -427,7 +440,7 @@ export class AnalyzerUtils {
                     new vscode.Position(location.startLine, location.startColumn),
                     new vscode.Position(location.endLine, location.endColumn)
                 );
-                if (fileNode.issues.find(issue => this.isSameRange(range, issue.regionWithIssue)) == undefined) {
+                if (fileNode.issues.find(issue => this.isEqualRange(range, issue.regionWithIssue)) == undefined) {
                     fileNode.issues.push(new ApplicableTreeNode(issueNode, fileNode, range, issueNode.severity));
                 }
                 issuesCount++;

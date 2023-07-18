@@ -102,7 +102,7 @@ describe('Applicability Scan Tests', () => {
             // Create dummy bundle for tests
             let scanBundle: FileScanBundle = {
                 workspaceResults: {} as ScanResults,
-                root: testRoot,
+                rootNode: testRoot,
                 data: { fullPath: 'some-path', applicableScanTimestamp: 1 } as DependencyScanResults,
                 dataNode: testDescriptor
             } as FileScanBundle;
