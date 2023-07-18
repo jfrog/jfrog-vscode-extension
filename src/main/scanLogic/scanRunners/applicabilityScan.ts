@@ -49,7 +49,7 @@ export class ApplicabilityRunner extends BinaryRunner {
     }
 
     public static supportedPackageTypes(): PackageType[] {
-        return [PackageType.Npm, PackageType.Yarn, PackageType.Python];
+        return [PackageType.Npm, PackageType.Yarn, PackageType.Python, PackageType.Maven];
     }
 
     /** @override */
