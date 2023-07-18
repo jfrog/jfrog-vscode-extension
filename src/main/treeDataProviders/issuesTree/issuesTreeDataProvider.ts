@@ -414,7 +414,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             }
             // Descriptor issues nodes
             if (element instanceof CveTreeNode || element instanceof LicenseIssueTreeNode) {
-                element.command = Utils.createNodeCommand('jfrog.view.details.page', 'Show details', [element.getDetailsPage()]);
+                element.command = Utils.createNodeCommand('jfrog.view.details.page.open', 'Show details', [element.getDetailsPage()]);
             }
             // Source code issues nodes
             if (

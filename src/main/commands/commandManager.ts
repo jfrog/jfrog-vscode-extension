@@ -165,6 +165,7 @@ export class CommandManager implements ExtensionComponent {
      * @param scan - True to scan the workspace, false will load from cache
      */
     private async doRefresh(scan: boolean = true) {
+        this.doCloseDetailsPage();
         this._diagnosticManager.clearDiagnostics();
         await this._treesManager.refresh(scan);
         this._diagnosticManager.updateDiagnostics();
@@ -175,7 +176,14 @@ export class CommandManager implements ExtensionComponent {
      * @param page - data to show in webpage
      */
     public doShowDetailsPage(page: WebviewPage) {
-        vscode.commands.executeCommand('jfrog.view.details.page', page);
+        vscode.commands.executeCommand('jfrog.view.details.page.open', page);
+    }
+
+    /**
+     * Close current webpage if one is open
+     */
+    public doCloseDetailsPage() {
+        vscode.commands.executeCommand('jfrog.view.details.page.close');
     }
 
     /**
