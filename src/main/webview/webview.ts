@@ -17,8 +17,17 @@ export class WebView {
 
     public async activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(
-            vscode.commands.registerCommand('jfrog.view.details.page', (page: WebviewPage) => this.updateWebview(page, context))
+            vscode.commands.registerCommand('jfrog.view.details.page.open', (page: WebviewPage) => this.updateWebview(page, context)),
+            vscode.commands.registerCommand('jfrog.view.details.page.close', () => this.closeWebview())
         );
+    }
+
+    /**
+     * Close, if exists, an open webview page
+     */
+    public closeWebview() {
+        this._currentPage = undefined;
+        this._webview?.dispose();
     }
 
     /**
