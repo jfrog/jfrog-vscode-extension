@@ -90,13 +90,13 @@
                                     "uri": "file:///examples/iac-demo/../req_sw_terraform_aws_cloudfront_tls_only.tf"
                                 },
                                 "region": {
-                                    "endColumn": 27,
-                                    "endLine": 3,
+                                    "endColumn": 2,
+                                    "endLine": 22,
                                     "snippet": {
                                         "text": "viewer_protocol_policy"
                                     },
-                                    "startColumn": 5,
-                                    "startLine": 3
+                                    "startColumn": 1,
+                                    "startLine": 1
                                 }
                             }
                         }
