@@ -79,8 +79,6 @@ To learn more, see [here](https://www.jfrog.com/confluence/display/JFROG/Vulnera
 | SCA                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | Upgrade vulnerable dependencies to fixed versions |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | Contextual Analysis                               |  ❌  |   ✅   |   ✅    |  ✅  |    ✅    |   ❌    |
-| Secrets                                           |  ❌  |   ✅   |   ✅    |  ✅  |    ✅    |   ❌    |
-| Infrastructure As Code (Iac)                      |  ❌  |   ✅   |   ✅    |  ✅  |    ✅    |   ❌    |
 | Exclude dev dependencies                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |
 
 #### Additional Perks
