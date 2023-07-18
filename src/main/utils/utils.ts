@@ -21,6 +21,10 @@ export class Utils {
         await vscode.commands.executeCommand('workbench.action.openSettings', `@ext:${Utils.getExtensionId()}` + (id ? ` ${id}` : ''));
     }
 
+    public static combineSets(sets: Set<string>[]): Set<string> {
+        return new Set<string>(...sets);
+    }
+
     /**
      *  @returns the last segment of a path.
      */

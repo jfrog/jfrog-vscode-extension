@@ -262,10 +262,10 @@ export class ScanUtils {
 export interface FileScanBundle {
     // The results data of all the scans in the workspace
     workspaceResults: ScanResults;
-    // The root view node of the workspace
-    root: IssuesRootTreeNode;
-    // The results if exists if the scan
+    // The issues, if exists, found as a result of specific scan
     data: EntryIssuesData;
+    // The root view node of the workspace
+    rootNode: IssuesRootTreeNode;
     // The view node of the file if exists issues in data
     dataNode?: FileTreeNode;
 }

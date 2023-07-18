@@ -66,13 +66,14 @@ export class DependencyUtils {
         progressManager.reportProgress();
         // Adjust progress value with 2 substeps and the new number of discovered project dependency tree items.
         let progressIncValue: number = (descriptorsPaths.length / packageDependenciesTree.children.length) * progressManager.getStepIncValue;
+        let bundlesWithIssues: FileScanBundle[] = [];
         for (let child of packageDependenciesTree.children) {
             if (child instanceof RootNode) {
                 // Create bundle for the scan
                 descriptorsParsed.add(child.fullPath);
                 let scanBundle: FileScanBundle = {
                     workspaceResults: scanResults,
-                    root: root,
+                    rootNode: root,
                     data: child.createEmptyScanResultsObject()
                 };
                 if (this.isGraphHasBuildError(child, scanBundle, scanManager.logManager)) {
@@ -87,9 +88,14 @@ export class DependencyUtils {
                             scanManager,
                             scanBundle,
                             child,
-                            progressManager.createScanProgress(child.fullPath, progressIncValue / 2),
-                            contextualScan
-                        ).finally(() => progressManager.reportProgress(progressIncValue / 2))
+                            progressManager.createScanProgress(child.fullPath, progressIncValue / 2)
+                        )
+                            .then(issueCount => {
+                                if (issueCount > 0) {
+                                    bundlesWithIssues.push(scanBundle);
+                                }
+                            })
+                            .finally(() => progressManager.reportProgress(progressIncValue / 2))
                     );
                     continue;
                 }
@@ -100,7 +106,15 @@ export class DependencyUtils {
             descriptorsParsed.add(child.generalInfo.path);
         }
         this.reportNotFoundDescriptors(descriptorsPaths, descriptorsParsed, scanManager.logManager);
-        await Promise.all(scansPromises);
+        await Promise.all(scansPromises).then(async () => {
+            // Applicable scan task for the current type
+            if (!contextualScan || !ApplicabilityRunner.supportedPackageTypes().includes(type) || bundlesWithIssues.length == 0) {
+                return;
+            }
+            await AnalyzerUtils.cveApplicableScanning(scanManager, bundlesWithIssues, progressManager).catch(err =>
+                ScanUtils.onScanError(err, scanManager.logManager, true)
+            );
+        });
     }
 
     private static isGraphHasBuildError(child: RootNode, scanBundle: FileScanBundle, logManager: LogManager) {
@@ -179,49 +193,42 @@ export class DependencyUtils {
      * @param fileScanBundle - the bundle for the scan that contains dataNode as ProjectDependencyTreeNode instance
      * @param rootGraph - the descriptor dependencies graph
      * @param scanProgress - the progress manager for the scan
-     * @param contextualScan - if true (default), will apply contextual analysis scan if a CVE was detected
      */
     private static async createDependencyScanTask(
         scanManager: ScanManager,
         fileScanBundle: FileScanBundle,
         rootGraph: RootNode,
-        scanProgress: GraphScanProgress,
-        contextualScan: boolean = true
-    ): Promise<void> {
+        scanProgress: GraphScanProgress
+    ): Promise<number> {
         if (!(fileScanBundle.dataNode instanceof ProjectDependencyTreeNode)) {
-            return;
+            return 0;
         }
-        let foundIssues: boolean = false;
         let dependencyScanResult: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
         // Dependency graph scan task
-        await DependencyUtils.scanProjectDependencyGraph(
-            scanManager,
-            dependencyScanResult,
-            fileScanBundle.dataNode,
-            rootGraph,
-            scanProgress,
-            scanProgress.onProgress
-        )
-            .then((issuesFound: number) => {
-                foundIssues = issuesFound > 0;
-                if (foundIssues) {
-                    // populate data and view
-                    fileScanBundle.workspaceResults.descriptorsIssues.push(dependencyScanResult);
-                    fileScanBundle.root.addChildAndApply(fileScanBundle.dataNode);
-                }
-            })
-            .catch(error => DependencyUtils.onFileScanError(error, scanManager.logManager, fileScanBundle))
-            .finally(() => scanProgress.onProgress());
-
-        // Applicable scan task
-        if (!contextualScan || !foundIssues || !ApplicabilityRunner.supportedPackageTypes().includes(dependencyScanResult.type)) {
-            return;
-        }
-        if (fileScanBundle.dataNode instanceof ProjectDependencyTreeNode) {
-            await AnalyzerUtils.cveApplicableScanning(scanManager, fileScanBundle, scanProgress).catch(err =>
-                ScanUtils.onScanError(err, scanManager.logManager, true)
+        try {
+            let issuesCount: number = await DependencyUtils.scanProjectDependencyGraph(
+                scanManager,
+                dependencyScanResult,
+                fileScanBundle.dataNode,
+                rootGraph,
+                scanProgress,
+                scanProgress.onProgress
             );
+            if (issuesCount > 0) {
+                // populate data and view
+                fileScanBundle.workspaceResults.descriptorsIssues.push(dependencyScanResult);
+                fileScanBundle.rootNode.addChildAndApply(fileScanBundle.dataNode);
+            }
+            return issuesCount;
+        } catch (error) {
+            if (error instanceof Error) {
+                DependencyUtils.onFileScanError(error, scanManager.logManager, fileScanBundle);
+            }
+        } finally {
+            scanProgress.onProgress();
         }
+
+        return 0;
     }
 
     /**
@@ -288,7 +295,7 @@ export class DependencyUtils {
         if (fileScanBundle) {
             logger.logMessage(
                 "Workspace '" +
-                    fileScanBundle.root.workSpace.name +
+                    fileScanBundle.rootNode.workSpace.name +
                     "' scan on file '" +
                     fileScanBundle.data.fullPath +
                     "' ended with error:\n" +
@@ -304,7 +311,7 @@ export class DependencyUtils {
             fileScanBundle.data.name = failReason;
             // Populate failed data
             fileScanBundle.workspaceResults.failedFiles.push(fileScanBundle.data);
-            return fileScanBundle.root.addChildAndApply(FileTreeNode.createFailedScanNode(fileScanBundle.data.fullPath, failReason));
+            return fileScanBundle.rootNode.addChildAndApply(FileTreeNode.createFailedScanNode(fileScanBundle.data.fullPath, failReason));
         }
         throw err;
     }
