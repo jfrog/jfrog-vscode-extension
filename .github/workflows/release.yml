@@ -23,8 +23,8 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Lint
         run: npm run lint
-      - name: Update version
-        run: echo ${{ github.ref }} | cut -c 11- | xargs npm version
+      #- name: Update version
+      #  run: echo ${{ github.ref }} | cut -c 11- | xargs npm version
 
       # Publish to marketplaces
       #- name: Publish to VS marketplace
