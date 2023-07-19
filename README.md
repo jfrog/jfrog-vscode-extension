@@ -25,7 +25,7 @@
     -   [Viewing Vulnerabilities](#viewing-vulnerabilities)
         -   [Viewing Vulnerability Details](#viewing-vulnerability-details)
     -   [Updating Dependencies](#updating-dependencies)
-    -   [Ignore Rules](#ignore-rules)
+    -   [Creating Ignore Rules](#creating-ignore-rules)
     -   [Behind the Scenes](#behind-the-scenes)
         -   [Go Projects](#go-projects)
         -   [Maven Projects](#maven-projects)
@@ -70,28 +70,25 @@ Learn more about enriched CVEs in the [JFrog Security CVE Research and Enrichmen
 ####  Advanced
 *Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
 
-##### 🔍 Contextual Analysis
-[Contextual Analysis](#viewing-vulnerability-details), understand the applicability of CVEs in your application and utilize JFrog Security scanners to analyze the way you use 3rd party packages in your projects.
-Automatically validate some high-impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and reduce false positives and vulnerability noise with smart CVE analysis.
-
-To learn more, see [here](https://www.jfrog.com/confluence/display/JFROG/Vulnerability+Contextual+Analysis).
-
+##### 🔍 Vulnerability Contextual Analysis
+This feature uses the code context to eliminate false positive reports on vulnerable dependencies that are not applicable to the code. Vulnerability Contextual Analysis is currently supported for Python and JavaScript code.
 
 ##### 🏗️ Infrastructure as Code (IaC) Scan
 - Analyze Infrastructure as Code (IaC) files, such as Terraform, to identify security vulnerabilities and misconfigurations before deploying your cloud infrastructure.
 - Get actionable insights and recommendations for securing your IaC configurations.
 
-##### 🔐 Secrets Scan
+##### 🔐 Secrets Detection
 Detect and prevent the inclusion of sensitive information, such as credentials and API keys, in your codebase.
 
 #### 🛡️ Supported Packages
-| Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
-|---------------------------------------------------|:----:|:------:|:-------:|:----:|:--------:|:-------:|
-| [SCA](#-software-composition-analysis-sca)                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
-| [Upgrade vulnerable dependencies to fixed versions](#updating-dependencies) |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
-| [Contextual Analysis](#-contextual-analysis)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |
-| [Secrets Scan](#-secrets-scan)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
-| [Exclude dev dependencies](#exclude-development-dependencies-during-scan)                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |
+| Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) | [Terraform](#-infrastructure-as-code-(iac)-Scan) |
+|---------------------------------------------------|:----:|:------:|:-------:|:----:|:--------:|:-------:|:-------:|
+| [SCA](#-software-composition-analysis-sca)                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |   ❌    |
+| [Upgrade vulnerable dependencies to fixed versions](#updating-dependencies) |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |   ❌    |
+| [Vulnerability Contextual Analysis](#-vulnerability-contextual-analysis)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |   ❌    |
+| [Secrets Detection](#-secrets-detection)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |✅    |
+| [Exclude dev dependencies](#exclude-development-dependencies-during-scan)                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |   ❌    |
+| [Infrastructure as Code (IaC) Scan](#-infrastructure-as-code-(iac)-Scan)                          |  ❌  |   ❌   |   ❌    |  ❌  |    ❌    |   ❌    |   ✅     |
 
 #### 🌟 Additional Perks
 * Security issues are easily visible inline.
@@ -196,16 +193,24 @@ With this information, a developer can make an informed decision on whether to u
 scan your workspace by clicking the Scan/Rescan button, the <img src='resources/dark/refresh.png' height="15" width="15"> icon at the extension tab or click on Start Xray Scan from within the editor. The scan will create a list of files with vulnerabilities in the workspace.
 ![Refresh](resources/readme/preview/refresh.png)
 
-### Viewing vulnerabilities
-View all the discovered files with vulnerabilities in a tree.
-Each descriptor file (like pom.xml in Maven, go.mod in Go, etc.) in the list contains vulnerable dependencies, and each dependency contains the vulnerabilities themselves.
-Other source code files contains a list of vulnerabilities for each location at the file.
-In addition the locations with vulnerabilities will be marked in the editor and you can jump from vulnerable location in the editor to the matching entry at the tree by clicking on th light bulb.
+### Viewing Vulnerabilities
+The JFrog extension incorporates a file tree displaying all the vulnerabilities within the project. Each file that is infected with a vulnerability appears as a tree node.
+
+Descriptor file (e.g., pom.xml in Maven, go.mod in Go, etc.) has a special meaning that outlines the available direct dependencies for the project. The tree will show these descriptor files containing vulnerable dependencies.  In cases where a direct dependency is deemed secure but possesses vulnerable child dependencies, the tree will show the vulnerable child dependencies instead, denoting them with a '(indirect)' postfix.
+
+Furthermore, various types of vulnerability nodes, such as Contextual Analysis Vulnerabilities or hard-coded secrets, may be present in other source code files.
+
+Each file node in the tree is interactive,  click and expand it to view its children node and navigate to the corresponding file in the IDE for better visibility. Upon navigating to a file, the extension will highlight the vulnerable line, making it easier to locate the specific issue
+
+In addition the locations with vulnerabilities will be marked in the editor. By clicking on the light bulb icon next to a vulnerable location in the editor, we can instantly jump to the corresponding entry in the tree view.
+
 ![Tree view](resources/readme/preview/treeView.png)
 
+Clicking on a CVE in the list will open the location with the issue in the editor and a vulnerability details view. This view contains information about the vulnerability, the vulnerable component, fixed versions, impact paths and much more.
 
-### Viewing Vulnerability Details
-Clicking a vulnerability in the list will open the location with the issue in the editor and a vulnerability details view. This view contains information about the vulnerability, the vulnerable component, fixed versions, impact paths and much more.
+![Impact_Graph](resources/readme/preview/impactGraph.png)
+![Public_Resources](resources/readme/preview/publicDetails.png)
+
 <details>
 <summary>CVE Research and Enrichment</summary>
 For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team. Prioritize the CVEs based on:
@@ -221,11 +226,11 @@ Check out what our research team is up to and stay updated on newly discovered i
 </details>
 
 <details>
-<summary>Contextual Analysis Scan</summary>
-Xray automatically validates some high and very high impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and provides contextual analysis information for these vulnerabilities, to assist you in figuring out which vulnerabilities need to be fixed.  Contextual Analysis data includes:
+<summary>Vulnerability Contextual Analysis</summary>
+Xray automatically validates some high and very high impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and provides contextual analysis information for these vulnerabilities, to assist you in figuring out which vulnerabilities need to be fixed. Vulnerability Contextual Analysis data includes:
 
-* Contextual analysis status: Contextual analysis results indicating if a CVE was found applicable in your application or not applicable.
-* Contextual Analysis breakdown: An explanation provided by our research team as to why the CVE was found applicable or not applicable.
+* Vulnerability Contextual Analysis status: Vulnerability Contextual Analysis results indicating if a CVE was found applicable in your application or not applicable.
+* Vulnerability Contextual Analysis breakdown: An explanation provided by our research team as to why the CVE was found applicable or not applicable.
 * Remediation: Contextual mitigation steps and options provided by our research team that assist you with remediating the issues.
 
 ![Contextual_Analysis](resources/readme/preview/contextualDetails.png)
@@ -233,19 +238,19 @@ Xray automatically validates some high and very high impact vulnerabilities, suc
 </details>
 
 <details>
-<summary>Secret Scan</summary>
-*Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
+<summary>Secrets Detection</summary>
+* Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
 
 Detect any secrets left exposed inside the code. to prevent any accidental leak of internal tokens or credentials.
 
-![Secret_Scan](resources/readme/preview/secrets.png)
+![Secrets_Detection](resources/readme/preview/secrets.png)
 
 </details>
 
 <details>
 
 <summary>Infrastructure as Code (IaC) Scan</summary>
-*Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
+* Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
 
 Scan Infrastructure as Code (Terraform) files for early detection of cloud and infrastructure misconfigurations.
 
@@ -253,15 +258,12 @@ Scan Infrastructure as Code (Terraform) files for early detection of cloud and i
 
 </details>
 
-![Impact_Graph](resources/readme/preview/impactGraph.png)
-![Public_Resources](resources/readme/preview/publicDetails.png)
-
 ### Updating Dependencies
 Update a vulnerable direct dependency to a fixed version directly from the vulnerable location at the editor using quick fix
 ![Set_Fixed_Version](resources/readme/preview/updateQuickFix.png)
 
-### Ignore Rules
-If Xray watches are used, on an icon vulnerability line an closed eye icon will appear by clicking on it you can create an [Ignore Rule](https://www.jfrog.com/confluence/display/JFROG/Ignore+Rules) in Xray.
+### Creating Ignore Rules
+When Xray watches are enabled and a vulnerability is detected, a closed eye icon will appear next to the vulnerability line in the JFrog extension. By clicking on this icon, you can initiate the process of creating an [Ignore Rule](https://www.jfrog.com/confluence/display/JFROG/Ignore+Rules) in Xray.
 ![Ignore_Rule](resources/readme/preview/ignoreRule.png)
 
 ## Behind the Scenes
