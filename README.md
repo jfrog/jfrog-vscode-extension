@@ -71,7 +71,7 @@ Learn more about enriched CVEs in the [JFrog Security CVE Research and Enrichmen
 *Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
 
 ##### 🔍 Contextual Analysis
-[Contextual Analysis](#contextual-analysis), understand the applicability of CVEs in your application and utilize JFrog Security scanners to analyze the way you use 3rd party packages in your projects.
+[Contextual Analysis](#viewing-vulnerability-details), understand the applicability of CVEs in your application and utilize JFrog Security scanners to analyze the way you use 3rd party packages in your projects.
 Automatically validate some high-impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and reduce false positives and vulnerability noise with smart CVE analysis.
 
 To learn more, see [here](https://www.jfrog.com/confluence/display/JFROG/Vulnerability+Contextual+Analysis).
@@ -89,7 +89,7 @@ Detect and prevent the inclusion of sensitive information, such as credentials a
 |---------------------------------------------------|:----:|:------:|:-------:|:----:|:--------:|:-------:|
 | [SCA](#-software-composition-analysis-sca)                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | [Upgrade vulnerable dependencies to fixed versions](#updating-dependencies) |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
-| [Contextual Analysis](#-advanced-scans)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |
+| [Contextual Analysis](#-contextual-analysis)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |
 | [Secrets Scanning](#-secrets-scanning)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | [Exclude dev dependencies](#exclude-development-dependencies-during-scan)                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |
 
