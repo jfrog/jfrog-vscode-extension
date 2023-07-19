@@ -60,12 +60,20 @@ The extension allows developers to find and fix security vulnerabilities in thei
 about the status of their code by continuously scanning it locally with [JFrog Xray](https://jfrog.com/xray/).
 
 ### What security capabilities do we provide?
-#### Software Composition Analysis (SCA)
-Scan your project dependencies for security issues.
-For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team.
-To learn more about enriched CVEs, see [here](https://www.jfrog.com/confluence/display/JFROG/JFrog+Security+CVE+Research+and+Enrichment)
+#### 📦 Software Composition Analysis (SCA)
+- Scan project dependencies for security issues 
+- Access enriched CVE data provided by the JFrog Security Research team.
 
-#### Advanced Scans
+Learn more about enriched CVEs in the [JFrog Security CVE Research and Enrichment](https://www.jfrog.com/confluence/display/JFROG/JFrog+Security+CVE+Research+and+Enrichment) documentation.
+
+#### 🏗️ Infrastructure as Code (IaC) Scanning 
+- Analyze Infrastructure as Code (IaC) files, such as Terraform, to identify security vulnerabilities and misconfigurations before deploying your cloud infrastructure.
+- Get actionable insights and recommendations for securing your IaC configurations.
+
+#### 🔐 Secrets Scanning
+Detect and prevent the inclusion of sensitive information, such as credentials and API keys, in your codebase.
+
+#### 🔍 Advanced Scans
 *Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
 
 With advanced [**Contextual Analysis**](#contextual-analysis), understand the applicability of CVEs in your application and utilize JFrog Security scanners to analyze the way you use 3rd party packages in your projects.
@@ -73,15 +81,16 @@ Automatically validate some high-impact vulnerabilities, such as vulnerabilities
 
 To learn more, see [here](https://www.jfrog.com/confluence/display/JFROG/Vulnerability+Contextual+Analysis).
 
-#### Supported Packages
+#### 🛡️ Supported Packages
 | Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
 |---------------------------------------------------|:----:|:------:|:-------:|:----:|:--------:|:-------:|
-| SCA                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
+| [SCA](Software-Composition-Analysis-(SCA))                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | Upgrade vulnerable dependencies to fixed versions |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
-| Contextual Analysis                               |  ❌  |   ❌   |   ✅    |  ✅  |    ✅    |   ❌    |
+| [Contextual Analysis](Advanced-Scans)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |
+| [Secrets Scanning](Secrets-Scanning)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | Exclude dev dependencies                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |
 
-#### Additional Perks
+#### 🌟 Additional Perks
 * Security issues are easily visible inline.
 * The results show issues with context, impact, and remediation.
 * View all security issues in one place, in the JFrog tab.
