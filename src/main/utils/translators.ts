@@ -26,7 +26,7 @@ import { LanguageType } from '../scanLogic/scanRunners/eosScan';
 export class Translators {
     public static toAnalyzerLogLevel(logLevel: LogLevel): string {
         if (logLevel === 'WARN' || logLevel === 'ERR') {
-            return 'error';
+            return 'ERROR';
         }
         return logLevel.toUpperCase();
     }
