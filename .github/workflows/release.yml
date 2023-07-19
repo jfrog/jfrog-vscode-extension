@@ -23,6 +23,7 @@ jobs:
         run: npm ci --ignore-scripts
       - name: Lint
         run: npm run lint
+        
       - name: Update version
         run: echo ${{ github.ref }} | cut -c 11- | xargs npm version
 
