@@ -58,7 +58,7 @@
             "results": [
                 {
                     "message": {
-                        "text": "The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load is called"
+                        "text": "Prototype pollution `Object.freeze` remediation was not detected, The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load is called"
                     },
                     "locations": [
                         {
@@ -82,7 +82,7 @@
                 },
                 {
                     "message": {
-                        "text": "The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load is called"
+                        "text": "Prototype pollution `Object.freeze` remediation was not detected, The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load is called"
                     },
                     "locations": [
                         {

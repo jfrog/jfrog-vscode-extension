@@ -6,7 +6,7 @@
     ],
     "applicableCve": {
         "CVE-2022-25878": {
-            "fixReason": "The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load is called",
+            "fixReason": "Prototype pollution `Object.freeze` remediation was not detected, The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load is called",
             "fileEvidences": [
                 {
                     "full_path": "index.js",

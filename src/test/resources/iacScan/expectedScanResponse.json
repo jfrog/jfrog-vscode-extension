@@ -27,13 +27,13 @@
                     "fullDescription": "Resource `aws_cloudfront_distribution` should have `viewer_protocol_policy=https-only` or `viewer_protocol_policy=redirect-to-https`\n\nVulnerable example -\n```\nresource \"aws_cloudfront_distribution\" \"vulnerable_example\" {\n  default_cache_behavior {\n    viewer_protocol_policy = \"allow-all\"\n  }\n}\n```\n\nSecure example -\n```\nresource \"aws_cloudfront_distribution\" \"secure_example\" {\n  default_cache_behavior {\n    viewer_protocol_policy = \"https-only\"\n  }\n}\n```",
                     "locations": [
                         {
-                            "endColumn": 27,
-                            "endLine": 3,
+                            "endColumn": 2,
+                            "endLine": 22,
                             "snippet": {
-                                "text": "viewer_protocol_policy"
+                                "text": "vulnerable_example"
                             },
-                            "startColumn": 5,
-                            "startLine": 3
+                            "startColumn": 1,
+                            "startLine": 1
                         }
                     ]
                 }
