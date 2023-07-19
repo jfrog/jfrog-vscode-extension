@@ -51,9 +51,10 @@ export class EosRunner extends BinaryRunner {
         connectionManager: ConnectionManager,
         logManager: LogManager,
         binary?: Resource,
-        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
+        verbose: boolean = false
     ) {
-        super(connectionManager, timeout, ScanType.Eos, logManager, binary);
+        super(connectionManager, timeout, ScanType.Eos, logManager, binary, verbose);
     }
 
     public static supportedLanguages(): LanguageType[] {
@@ -61,7 +62,7 @@ export class EosRunner extends BinaryRunner {
     }
 
     /** @override */
-    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string, checkCancel: () => void): Promise<void> {
+    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string | undefined, checkCancel: () => void): Promise<void> {
         await this.executeBinary(checkCancel, ['zd', yamlConfigPath], executionLogDirectory);
     }
 

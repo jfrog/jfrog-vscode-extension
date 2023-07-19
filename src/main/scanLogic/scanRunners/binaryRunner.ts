@@ -65,7 +65,8 @@ export abstract class BinaryRunner {
         protected _abortCheckInterval: number,
         protected _type: ScanType,
         protected _logManager: LogManager,
-        protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager)
+        protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager),
+        protected _verbose: boolean = false
     ) {
         this._runDirectory = path.dirname(this._binary.fullPath);
 
@@ -97,7 +98,7 @@ export abstract class BinaryRunner {
      * @param yamlConfigPath - the path to the request
      * @param executionLogDirectory - og file will be written to the dir
      */
-    protected abstract runBinary(yamlConfigPath: string, executionLogDirectory: string, checkCancel: () => void): Promise<void>;
+    protected abstract runBinary(yamlConfigPath: string, executionLogDirectory: string | undefined, checkCancel: () => void): Promise<void>;
 
     /**
      * Validates that the binary exists and can run
@@ -113,7 +114,7 @@ export abstract class BinaryRunner {
      * @param args  - the arguments for the command
      * @param executionLogDirectory - the directory to save the execution log in
      */
-    protected async executeBinary(checkCancel: () => void, args: string[], executionLogDirectory: string): Promise<void> {
+    protected async executeBinary(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
         await RunUtils.runWithTimeout(this._abortCheckInterval, checkCancel, {
             title: this._binary.name,
             task: ScanUtils.executeCmdAsync(
@@ -122,9 +123,15 @@ export abstract class BinaryRunner {
                 this.createEnvForRun(executionLogDirectory)
             ).then(std => {
                 if (std.stdout && std.stdout.length > 0) {
+                    if (this._verbose) {
+                        console.log("Done executing '" + this._type + "' with log, log:\n" + std.stdout)
+                    }
                     this._logManager.logMessage("Done executing '" + this._type + "' with log, log:\n" + std.stdout, 'DEBUG');
                 }
                 if (std.stderr && std.stderr.length > 0) {
+                    if (this._verbose) {
+                        console.error("Done executing '" + this._type + "' with error, error log:\n" + std.stderr)
+                    }
                     this._logManager.logMessage("Done executing '" + this._type + "' with error, error log:\n" + std.stderr, 'ERR');
                 }
             })
@@ -353,7 +360,7 @@ export abstract class BinaryRunner {
         // 1. Save requests as yaml file in folder
         fs.writeFileSync(requestPath, request);
         // 2. Run the binary
-        await this.runBinary(requestPath, path.dirname(requestPath), checkCancel).catch(error => {
+        await this.runBinary(requestPath, this._verbose ? undefined : path.dirname(requestPath), checkCancel).catch(error => {
             if (error.code) {
                 // Not entitled to run binary
                 if (error.code === BinaryRunner.NOT_ENTITLED) {

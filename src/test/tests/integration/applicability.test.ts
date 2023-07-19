@@ -7,6 +7,7 @@ import { ApplicabilityRunner, ApplicabilityScanResponse, CveApplicableDetails } 
 import { AnalyzerManagerIntegrationEnv } from '../utils/testIntegration.test';
 import { FileIssues, FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
 import { AnalyzerUtils } from '../../../main/treeDataProviders/utils/analyzerUtils';
+import { ScanUtils } from '../../../main/utils/scanUtils';
 
 describe('Applicability Integration Tests', async () => {
     let integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -17,7 +18,7 @@ describe('Applicability Integration Tests', async () => {
     before(async () => {
         await integrationManager.initialize();
         // Must be created after integration initialization
-        runner = new ApplicabilityRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
+        runner = new ApplicabilityRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource, ScanUtils.ANALYZER_TIMEOUT_MILLISECS, true);
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
     });
 

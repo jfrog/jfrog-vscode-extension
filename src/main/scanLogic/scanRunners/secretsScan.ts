@@ -18,13 +18,14 @@ export class SecretsRunner extends BinaryRunner {
         connectionManager: ConnectionManager,
         logManager: LogManager,
         binary?: Resource,
-        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
+        verbose: boolean = false
     ) {
-        super(connectionManager, timeout, ScanType.Secrets, logManager, binary);
+        super(connectionManager, timeout, ScanType.Secrets, logManager, binary, verbose);
     }
 
     /** @override */
-    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string, checkCancel: () => void): Promise<void> {
+    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string | undefined, checkCancel: () => void): Promise<void> {
         await this.executeBinary(checkCancel, ['sec', yamlConfigPath], executionLogDirectory);
     }
 
