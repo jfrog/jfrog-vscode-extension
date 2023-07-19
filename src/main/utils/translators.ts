@@ -28,7 +28,7 @@ export class Translators {
         if (logLevel === 'WARN' || logLevel === 'ERR') {
             return 'error';
         }
-        return logLevel.toLowerCase();
+        return logLevel.toUpperCase();
     }
 
     public static toLanguageType(type: PackageType): LanguageType | undefined {
