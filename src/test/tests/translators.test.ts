@@ -10,7 +10,7 @@ import { AnalyzerManagerSeverityLevel } from '../../main/scanLogic/scanRunners/a
 /**
  * Test functionality of @class Translators.
  */
-describe.only('Translators Tests', () => {
+describe('Translators Tests', () => {
     it('toAnalyzerLogLevel', async () => {
         [
             { inputLevel: 'DEBUG', expectedLevel: 'DEBUG' },
