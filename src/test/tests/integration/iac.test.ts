@@ -50,6 +50,9 @@ describe('Iac Integration Tests', async () => {
 
     it('Check response attributes defined', () => {
         assert.isDefined(response.filesWithIssues);
+        console.log(response);
+        console.log(response.filesWithIssues)
+
     });
 
     it('Check all expected files with issues detected', () =>
