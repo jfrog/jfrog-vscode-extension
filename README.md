@@ -84,11 +84,11 @@ To learn more, see [here](https://www.jfrog.com/confluence/display/JFROG/Vulnera
 #### 🛡️ Supported Packages
 | Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
 |---------------------------------------------------|:----:|:------:|:-------:|:----:|:--------:|:-------:|
-| [SCA](Software-Composition-Analysis-(SCA))                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
-| Upgrade vulnerable dependencies to fixed versions |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
-| [Contextual Analysis](Advanced-Scans)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |
-| [Secrets Scanning](Secrets-Scanning)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
-| Exclude dev dependencies                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |
+| [SCA](#-software-composition-analysis-sca)                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
+| [Upgrade vulnerable dependencies to fixed versions](#updating-dependencies) |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
+| [Contextual Analysis](#-advanced-scans)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |
+| [Secrets Scanning](#-secrets-scanning)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
+| [Exclude dev dependencies](#exclude-development-dependencies-during-scan)                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |
 
 #### 🌟 Additional Perks
 * Security issues are easily visible inline.
