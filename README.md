@@ -77,11 +77,11 @@ Automatically validate some high-impact vulnerabilities, such as vulnerabilities
 To learn more, see [here](https://www.jfrog.com/confluence/display/JFROG/Vulnerability+Contextual+Analysis).
 
 
-##### 🏗️ Infrastructure as Code (IaC) Scanning
+##### 🏗️ Infrastructure as Code (IaC) Scan
 - Analyze Infrastructure as Code (IaC) files, such as Terraform, to identify security vulnerabilities and misconfigurations before deploying your cloud infrastructure.
 - Get actionable insights and recommendations for securing your IaC configurations.
 
-##### 🔐 Secrets Scanning
+##### 🔐 Secrets Scan
 Detect and prevent the inclusion of sensitive information, such as credentials and API keys, in your codebase.
 
 #### 🛡️ Supported Packages
@@ -90,7 +90,7 @@ Detect and prevent the inclusion of sensitive information, such as credentials a
 | [SCA](#-software-composition-analysis-sca)                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | [Upgrade vulnerable dependencies to fixed versions](#updating-dependencies) |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | [Contextual Analysis](#-contextual-analysis)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |
-| [Secrets Scanning](#-secrets-scanning)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
+| [Secrets Scan](#-secrets-scan)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
 | [Exclude dev dependencies](#exclude-development-dependencies-during-scan)                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |
 
 #### 🌟 Additional Perks
@@ -221,7 +221,7 @@ Check out what our research team is up to and stay updated on newly discovered i
 </details>
 
 <details>
-<summary>Contextual Analysis</summary>
+<summary>Contextual Analysis Scan</summary>
 Xray automatically validates some high and very high impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and provides contextual analysis information for these vulnerabilities, to assist you in figuring out which vulnerabilities need to be fixed.  Contextual Analysis data includes:
 
 * Contextual analysis status: Contextual analysis results indicating if a CVE was found applicable in your application or not applicable.
@@ -232,8 +232,29 @@ Xray automatically validates some high and very high impact vulnerabilities, suc
 
 </details>
 
-![Public_Resources](resources/readme/preview/publicDetails.png)
+<details>
+<summary>Secret Scan</summary>
+*Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
+
+Detect any secrets left exposed inside the code. to prevent any accidental leak of internal tokens or credentials.
+
+![Secret_Scan](resources/readme/preview/secrets.png)
+
+</details>
+
+<details>
+
+<summary>Infrastructure as Code (IaC) Scan</summary>
+*Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
+
+Scan Infrastructure as Code (Terraform) files for early detection of cloud and infrastructure misconfigurations.
+
+![iac_scan](resources/readme/preview/iac.png)
+
+</details>
+
 ![Impact_Graph](resources/readme/preview/impactGraph.png)
+![Public_Resources](resources/readme/preview/publicDetails.png)
 
 ### Updating Dependencies
 Update a vulnerable direct dependency to a fixed version directly from the vulnerable location at the editor using quick fix
