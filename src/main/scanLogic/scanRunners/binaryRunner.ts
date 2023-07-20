@@ -4,7 +4,7 @@ import * as path from 'path';
 
 import { LogManager } from '../../log/logManager';
 import { Utils } from '../../utils/utils';
-import { NotEntitledError, NotSupportedError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
+import { NotEntitledError, NotSupportedError, OsNotSupportedError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { AnalyzerRequest, AnalyzerScanResponse, ScanType, AnalyzeScanRequest } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { ConnectionUtils } from '../../connect/connectionUtils';
@@ -51,6 +51,7 @@ export abstract class BinaryRunner {
 
     public static readonly NOT_ENTITLED: number = 31;
     public static readonly NOT_SUPPORTED: number = 13;
+    public static readonly OS_NOT_SUPPORTED: number = 55;
 
     public static readonly ENV_PLATFORM_URL: string = 'JF_PLATFORM_URL';
     public static readonly ENV_TOKEN: string = 'JF_TOKEN';
@@ -361,6 +362,9 @@ export abstract class BinaryRunner {
                 }
                 if (error.code === BinaryRunner.NOT_SUPPORTED) {
                     throw new NotSupportedError(this._type);
+                }
+                if (error.code === BinaryRunner.OS_NOT_SUPPORTED) {
+                    throw new OsNotSupportedError(this._type);
                 }
                 this._logManager.logMessage("Binary '" + this._type + "' task ended with status code: " + error.code, 'ERR');
             }
