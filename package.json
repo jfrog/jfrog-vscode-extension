@@ -77,7 +77,7 @@
                     "type": "string",
                     "default": "**/*{test,venv,node_modules,target}*",
                     "scope": "resource",
-                    "pattern": "^\\*\\*/\\*\\{([^{},]+(?:,[^{},]+)*)(?!,)\\}\\*$",
+                    "pattern": "^\\*\\*/\\*\\{([^{},]+(,[^{},]+)*)\\}\\*$",
                     "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) used to exclude specific paths from being scanned by JFrog Xray. For example, go.mod files under directories named testdata will not be scanned."
                 },
                 "jfrog.xray.ciIntegration.buildNamePattern": {
