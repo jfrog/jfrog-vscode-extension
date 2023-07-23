@@ -1,0 +1,24 @@
+name: Detect Badge Pattern
+
+on:
+  pull_request:
+    paths:
+      - '**/README.md'
+  push:
+    paths:
+      - '**/README.md'
+
+jobs:
+  detect_badge:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Detect Badge Pattern
+      run: |
+        if grep -qE '\[\[[^\]]+\]\([^)]+\.svg\)\]' README.md; then
+          echo "Error: The forbidden badge pattern is detected in README.md"
+          exit 1
+        fi
