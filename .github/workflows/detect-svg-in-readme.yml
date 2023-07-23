@@ -1,0 +1,20 @@
+name: Detect SVG in readme
+
+on: [pull_request, push]
+
+jobs:
+  detect_badge:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Detect SVG in readme
+      run: |
+        if grep -E "\([^)]+\.svg\)" README.md; then
+          echo "Error: SVGs are restricted in README.md."
+          echo "Please usg PNG or remove the following badge pattern from the README.md file:"
+          grep -oE "\([^)]+\.svg\)" README.md
+          exit 1
+        fi
