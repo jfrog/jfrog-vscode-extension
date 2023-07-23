@@ -18,6 +18,7 @@ describe('Applicability Integration Tests', async () => {
         await integrationManager.initialize();
         // Must be created after integration initialization
         runner = new ApplicabilityRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
+        runner.verbose = true;
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
     });
 

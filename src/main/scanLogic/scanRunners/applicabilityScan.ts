@@ -53,7 +53,7 @@ export class ApplicabilityRunner extends BinaryRunner {
     }
 
     /** @override */
-    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string, checkCancel: () => void): Promise<void> {
+    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string | undefined, checkCancel: () => void): Promise<void> {
         await this.executeBinary(checkCancel, ['ca', yamlConfigPath], executionLogDirectory);
     }
 

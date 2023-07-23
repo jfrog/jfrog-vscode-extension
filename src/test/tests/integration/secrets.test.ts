@@ -27,6 +27,7 @@ describe('Secrets Scan Integration Tests', async () => {
         // Integration initialization
         await integrationManager.initialize();
         runner = new SecretsRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
+        runner.verbose = true;
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
         // Get expected partial result that the scan should contain
         let dataPath: string = path.join(testDataRoot, 'expectedScanResponse.json');

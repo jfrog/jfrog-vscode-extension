@@ -48,7 +48,7 @@ describe('Analyzer BinaryRunner tests', async () => {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 _yamlConfigPath: string,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                _executionLogDirectory: string,
+                _executionLogDirectory: string | undefined,
                 checkCancel: () => void
             ): Promise<void> {
                 await RunUtils.runWithTimeout(timeout, checkCancel, dummyAction());
