@@ -1,10 +1,10 @@
-name: Detect SVG in readme
+name: Readme
 
 on: [pull_request, push]
 
 jobs:
-  detect_badge:
-    runs-on: ubuntu-latest
+  detect_svg:
+    runs-on: macOS-latest
 
     steps:
     - name: Checkout code
@@ -12,9 +12,17 @@ jobs:
 
     - name: Detect SVG in readme
       run: |
-        if grep -E "\([^)]+\.svg\)" README.md; then
+        # Run grep command to match URLs containing .svg in the readme.md
+        svgs=$(grep -oE '\([^)]+\.svg\)' README.md)
+
+        # Define a whitelist of .svg
+        Whitelist="(https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml/badge.svg)"
+
+        # Check for any SVG images that are not included in the Whitelist.
+        if [[ ! -z $(echo "$svgs" | grep -vE "$Whitelist") ]]
+        then
           echo "Error: SVGs are restricted in README.md."
-          echo "Please usg PNG or remove the following badge pattern from the README.md file:"
-          grep -oE "\([^)]+\.svg\)" README.md
+          echo "Please use PNG instead, or remove the following line(s) from the README.md file:"
+          echo $(echo "$svgs" | grep -vE "$Whitelist")
           exit 1
         fi
