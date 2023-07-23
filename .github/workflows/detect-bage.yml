@@ -12,7 +12,7 @@ jobs:
 
     - name: Detect Badge Pattern
       run: |
-        if grep -qE '\[\[[^\]]+\]\([^)]+\.svg\)\]' README.md; then
+        if grep -E "\([^)]+\.svg\)" README.md; then
           echo "Error: The forbidden badge pattern is detected in README.md"
           exit 1
         fi
