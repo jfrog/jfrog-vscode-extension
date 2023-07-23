@@ -17,13 +17,26 @@ import { GeneralInfo } from '../types/generalInfo';
 import { IIssueCacheObject } from '../types/issueCacheObject';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
 import { Severity } from '../types/severity';
-import { FileLocation, AnalyzerManagerSeverityLevel } from '../scanLogic/scanRunners/analyzerModels';
+import { FileLocation, AnalyzerManagerSeverityLevel, ScanType } from '../scanLogic/scanRunners/analyzerModels';
 import { PackageType, toPackageType } from '../types/projectType';
 import { Utils } from './utils';
 import { LogLevel } from '../log/logManager';
 import { LanguageType } from '../scanLogic/scanRunners/eosScan';
 
 export class Translators {
+    public static toAnalyzerTypeString(type: ScanType): string {
+        switch (type) {
+            case ScanType.ContextualAnalysis:
+                return 'contextual-analysis';
+            case ScanType.Iac:
+                return 'iac-scan';
+            case ScanType.Secrets:
+                return 'secrets-detection';
+            default:
+                return type;
+        }
+    }
+
     public static toAnalyzerLogLevel(logLevel: LogLevel): string {
         if (logLevel === 'WARN' || logLevel === 'ERR') {
             return 'ERROR';

@@ -9,6 +9,7 @@ import { AnalyzerScanResponse, ScanType, AnalyzeScanRequest } from '../../main/s
 import { BinaryRunner } from '../../main/scanLogic/scanRunners/binaryRunner';
 import { NotEntitledError, ScanCancellationError, ScanTimeoutError, ScanUtils } from '../../main/utils/scanUtils';
 import { RunUtils } from '../../main/utils/runUtils';
+import { Translators } from '../../main/utils/translators';
 
 // binary runner
 describe('Analyzer BinaryRunner tests', async () => {
@@ -198,7 +199,9 @@ describe('Analyzer BinaryRunner tests', async () => {
             timeout: ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
             createDummyResponse: false,
             shouldAbort: false,
-            expectedErr: new Error("Running '" + dummyName + "' binary didn't produce response.\nRequest: request data")
+            expectedErr: new Error(
+                "Running '" + Translators.toAnalyzerTypeString(dummyName) + "' binary didn't produce response.\nRequest: request data"
+            )
         }
     ].forEach(async test => {
         it('Run request - ' + test.name, async () => {
