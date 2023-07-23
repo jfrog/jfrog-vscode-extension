@@ -1,12 +1,6 @@
 name: Detect Badge Pattern
 
-on:
-  pull_request:
-    paths:
-      - '**/README.md'
-  push:
-    paths:
-      - '**/README.md'
+on: [pull_request, push]
 
 jobs:
   detect_badge:
