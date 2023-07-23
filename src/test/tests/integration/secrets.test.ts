@@ -12,7 +12,7 @@ import {
     assertIssuesRuleNameExist,
     assertIssuesSeverityExist
 } from '../utils/testIntegration.test';
-import { NotSupportedError, ScanUtils } from '../../../main/utils/scanUtils';
+import { NotSupportedError } from '../../../main/utils/scanUtils';
 import { SecretsRunner, SecretsScanResponse } from '../../../main/scanLogic/scanRunners/secretsScan';
 
 describe('Secrets Scan Integration Tests', async () => {
@@ -26,12 +26,7 @@ describe('Secrets Scan Integration Tests', async () => {
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        runner = new SecretsRunner(
-            integrationManager.connectionManager,
-            integrationManager.logManager,
-            integrationManager.resource,
-            ScanUtils.ANALYZER_TIMEOUT_MILLISECS
-        );
+        runner = new SecretsRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
         runner.verbose = true;
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
         // Get expected partial result that the scan should contain

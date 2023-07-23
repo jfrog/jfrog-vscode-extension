@@ -13,7 +13,7 @@ import {
     assertIssuesRuleNameExist,
     assertIssuesSeverityExist
 } from '../utils/testIntegration.test';
-import { NotSupportedError, ScanUtils } from '../../../main/utils/scanUtils';
+import { NotSupportedError } from '../../../main/utils/scanUtils';
 
 describe('Iac Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -26,12 +26,7 @@ describe('Iac Integration Tests', async () => {
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        runner = new IacRunner(
-            integrationManager.connectionManager,
-            integrationManager.logManager,
-            integrationManager.resource,
-            ScanUtils.ANALYZER_TIMEOUT_MILLISECS
-        );
+        runner = new IacRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
         runner.verbose = true;
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
         // Get expected partial result that the scan should contain
