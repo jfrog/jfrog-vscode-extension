@@ -9,7 +9,7 @@
  [![Visual Studio Code Version](https://img.shields.io/visual-studio-marketplace/v/JFrog.jfrog-vscode-extension?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension)
 
 [![Visual Studio Marketplace](https://img.shields.io/badge/Visual%20Studio%20Code-Marketplace-blue.svg)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension)  [![Open VSX Registry](https://img.shields.io/badge/Open%20VSX%20Registry-Marketplace-blue.svg)](https://open-vsx.org/extension/JFrog/jfrog-vscode-extension)
-[![Scanned by Frogbot](https://raw.github.com/jfrog/frogbot/master/images/frogbot-badge.svg)](https://github.com/jfrog/frogbot#readme) [![Test](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml/badge.svg)](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml?branch=master)
+[![Scanned by Frogbot](https://raw.github.com/jfrog/frogbot/master/images/frogbot-badge.png)](https://github.com/jfrog/frogbot#readme) [![Test](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml/badge.svg)](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml?branch=master)
 
 </div>
 
