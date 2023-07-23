@@ -286,7 +286,7 @@ export class NotSupportedError extends Error {
 
 export class OsNotSupportedError extends Error {
     constructor(typeNotSupported: string) {
-        super(typeNotSupported + ' is not supported in your operating system');
+        super(typeNotSupported + ' is not supported for this operating system');
     }
 }
 
