@@ -51,10 +51,9 @@ export class EosRunner extends BinaryRunner {
         connectionManager: ConnectionManager,
         logManager: LogManager,
         binary?: Resource,
-        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
-        verbose: boolean = false
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
     ) {
-        super(connectionManager, timeout, ScanType.Eos, logManager, binary, verbose);
+        super(connectionManager, timeout, ScanType.Eos, logManager, binary);
     }
 
     public static supportedLanguages(): LanguageType[] {

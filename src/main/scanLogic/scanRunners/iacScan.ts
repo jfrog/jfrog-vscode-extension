@@ -18,10 +18,9 @@ export class IacRunner extends BinaryRunner {
         connectionManager: ConnectionManager,
         logManager: LogManager,
         binary?: Resource,
-        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
-        verbose: boolean = false
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
     ) {
-        super(connectionManager, timeout, ScanType.Iac, logManager, binary, verbose);
+        super(connectionManager, timeout, ScanType.Iac, logManager, binary);
     }
 
     /** @override */

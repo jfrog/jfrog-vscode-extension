@@ -18,10 +18,9 @@ export class SecretsRunner extends BinaryRunner {
         connectionManager: ConnectionManager,
         logManager: LogManager,
         binary?: Resource,
-        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
-        verbose: boolean = false
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
     ) {
-        super(connectionManager, timeout, ScanType.Secrets, logManager, binary, verbose);
+        super(connectionManager, timeout, ScanType.Secrets, logManager, binary);
     }
 
     /** @override */

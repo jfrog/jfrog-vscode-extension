@@ -44,6 +44,7 @@ interface RunRequest {
  */
 export abstract class BinaryRunner {
     protected _runDirectory: string;
+    protected _verbose: boolean = false;
 
     private static readonly RUNNER_NAME: string = 'analyzerManager';
     private static readonly RUNNER_VERSION: string = '1.2.4.1858388';
@@ -66,8 +67,7 @@ export abstract class BinaryRunner {
         protected _abortCheckInterval: number,
         protected _type: ScanType,
         protected _logManager: LogManager,
-        protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager),
-        protected _verbose: boolean = false
+        protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager)
     ) {
         this._runDirectory = path.dirname(this._binary.fullPath);
 
@@ -91,6 +91,14 @@ export abstract class BinaryRunner {
             targetPath ?? this.getDefaultAnalyzerManagerTargetPath(),
             logManager
         );
+    }
+
+    public get verbose(): boolean {
+        return this._verbose;
+    }
+
+    public set verbose(value: boolean) {
+        this._verbose = value;
     }
 
     /**
@@ -118,31 +126,35 @@ export abstract class BinaryRunner {
     protected async executeBinary(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
         await RunUtils.runWithTimeout(this._abortCheckInterval, checkCancel, {
             title: this._binary.name,
-            task: ScanUtils.executeCmdAsync(
-                '"' + this._binary.fullPath + '" ' + args.join(' '),
-                this._runDirectory,
-                this.createEnvForRun(executionLogDirectory)
-            ).then(std => {
-                if (std.stdout && std.stdout.length > 0) {
-                    if (this._verbose) {
-                        console.log("Done executing '" + this._type + "' with log, log:\n" + std.stdout)
-                    }
-                    this._logManager.logMessage(
-                        "Done executing '" + Translators.toAnalyzerTypeString(this._type) + "' with log, log:\n" + std.stdout,
-                        'DEBUG'
-                    );
-                }
-                if (std.stderr && std.stderr.length > 0) {
-                    if (this._verbose) {
-                        console.error("Done executing '" + this._type + "' with error, error log:\n" + std.stderr)
-                    }
-                    this._logManager.logMessage(
-                        "Done executing '" + Translators.toAnalyzerTypeString(this._type) + "' with error, error log:\n" + std.stderr,
-                        'ERR'
-                    );
-                }
-            })
+            task: this.executeBinaryTask(args, executionLogDirectory)
         });
+    }
+
+    /**
+     * Execute the cmd command to run the binary with given arguments
+     * @param args  - the arguments for the command
+     * @param executionLogDirectory - the directory to save the execution log in
+     */
+    private async executeBinaryTask(args: string[], executionLogDirectory?: string): Promise<any> {
+        let std: any = await ScanUtils.executeCmdAsync(
+            '"' + this._binary.fullPath + '" ' + args.join(' '),
+            this._runDirectory,
+            this.createEnvForRun(executionLogDirectory)
+        );
+        if (std.stdout && std.stdout.length > 0) {
+            this.logTaskResult(std.stdout, false);
+        }
+        if (std.stderr && std.stderr.length > 0) {
+            this.logTaskResult(std.stderr, true);
+        }
+    }
+
+    private logTaskResult(stdChannel: string, isErr: boolean) {
+        let text: string = "Done executing '" + Translators.toAnalyzerTypeString(this._type) + "' with log, log:\n" + stdChannel;
+        if (this._verbose) {
+            console.log(text);
+        }
+        this._logManager.logMessage(text, isErr ? 'ERR' : 'DEBUG');
     }
 
     /**

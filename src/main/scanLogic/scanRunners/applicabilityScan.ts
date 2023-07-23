@@ -43,10 +43,9 @@ export class ApplicabilityRunner extends BinaryRunner {
         connectionManager: ConnectionManager,
         logManager: LogManager,
         binary?: Resource,
-        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
-        verbose: boolean = false
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
     ) {
-        super(connectionManager, timeout, ScanType.ContextualAnalysis, logManager, binary, verbose);
+        super(connectionManager, timeout, ScanType.ContextualAnalysis, logManager, binary);
     }
 
     public static supportedPackageTypes(): PackageType[] {
