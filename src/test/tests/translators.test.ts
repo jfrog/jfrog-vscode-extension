@@ -13,10 +13,10 @@ import { AnalyzerManagerSeverityLevel } from '../../main/scanLogic/scanRunners/a
 describe('Translators Tests', () => {
     it('toAnalyzerLogLevel', async () => {
         [
-            { inputLevel: 'DEBUG', expectedLevel: 'debug' },
-            { inputLevel: 'INFO', expectedLevel: 'info' },
-            { inputLevel: 'WARN', expectedLevel: 'error' },
-            { inputLevel: 'ERR', expectedLevel: 'error' }
+            { inputLevel: 'DEBUG', expectedLevel: 'DEBUG' },
+            { inputLevel: 'INFO', expectedLevel: 'INFO' },
+            { inputLevel: 'WARN', expectedLevel: 'ERROR' },
+            { inputLevel: 'ERR', expectedLevel: 'ERROR' }
         ].forEach(test => {
             assert.equal(test.expectedLevel, Translators.toAnalyzerLogLevel(<LogLevel>test.inputLevel));
         });

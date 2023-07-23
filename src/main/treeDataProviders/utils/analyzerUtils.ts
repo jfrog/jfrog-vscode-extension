@@ -440,10 +440,9 @@ export class AnalyzerUtils {
                     new vscode.Position(location.startLine, location.startColumn),
                     new vscode.Position(location.endLine, location.endColumn)
                 );
-                if (fileNode.issues.find(issue => this.isEqualRange(range, issue.regionWithIssue)) == undefined) {
-                    fileNode.issues.push(new ApplicableTreeNode(issueNode, fileNode, range, issueNode.severity));
+                if (fileNode.addIssue(new ApplicableTreeNode(issueNode, fileNode, range, issueNode.severity))) {
+                    issuesCount++;
                 }
-                issuesCount++;
             }
         });
         return issuesCount;
@@ -496,8 +495,9 @@ export class AnalyzerUtils {
                 let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
                 fileWithIssues.issues.forEach((issue: SecurityIssue) => {
                     issue.locations.forEach((location: FileRegion) => {
-                        fileNode.issues.push(new IacTreeNode(issue, location, fileNode));
-                        issuesCount++;
+                        if (fileNode.addIssue(new IacTreeNode(issue, location, fileNode))) {
+                            issuesCount++;
+                        }
                     });
                 });
             });
@@ -553,8 +553,9 @@ export class AnalyzerUtils {
                 let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
                 fileWithIssues.issues.forEach((issue: SecurityIssue) => {
                     issue.locations.forEach((location: FileRegion) => {
-                        fileNode.issues.push(new SecretTreeNode(issue, location, fileNode));
-                        issuesCount++;
+                        if (fileNode.addIssue(new SecretTreeNode(issue, location, fileNode))) {
+                            issuesCount++;
+                        }
                     });
                 });
             });

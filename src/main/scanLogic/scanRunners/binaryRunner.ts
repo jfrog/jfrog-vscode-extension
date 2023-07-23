@@ -4,7 +4,7 @@ import * as path from 'path';
 
 import { LogManager } from '../../log/logManager';
 import { Utils } from '../../utils/utils';
-import { NotEntitledError, NotSupportedError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
+import { NotEntitledError, NotSupportedError, OsNotSupportedError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { AnalyzerRequest, AnalyzerScanResponse, ScanType, AnalyzeScanRequest } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { ConnectionUtils } from '../../connect/connectionUtils';
@@ -46,11 +46,12 @@ export abstract class BinaryRunner {
     protected _runDirectory: string;
 
     private static readonly RUNNER_NAME: string = 'analyzerManager';
-    private static readonly RUNNER_VERSION: string = '1.1.8.1784079';
+    private static readonly RUNNER_VERSION: string = '1.2.4.1858388';
     private static readonly DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/';
 
     public static readonly NOT_ENTITLED: number = 31;
     public static readonly NOT_SUPPORTED: number = 13;
+    public static readonly OS_NOT_SUPPORTED: number = 55;
 
     public static readonly ENV_PLATFORM_URL: string = 'JF_PLATFORM_URL';
     public static readonly ENV_TOKEN: string = 'JF_TOKEN';
@@ -126,13 +127,19 @@ export abstract class BinaryRunner {
                     if (this._verbose) {
                         console.log("Done executing '" + this._type + "' with log, log:\n" + std.stdout)
                     }
-                    this._logManager.logMessage("Done executing '" + this._type + "' with log, log:\n" + std.stdout, 'DEBUG');
+                    this._logManager.logMessage(
+                        "Done executing '" + Translators.toAnalyzerTypeString(this._type) + "' with log, log:\n" + std.stdout,
+                        'DEBUG'
+                    );
                 }
                 if (std.stderr && std.stderr.length > 0) {
                     if (this._verbose) {
                         console.error("Done executing '" + this._type + "' with error, error log:\n" + std.stderr)
                     }
-                    this._logManager.logMessage("Done executing '" + this._type + "' with error, error log:\n" + std.stderr, 'ERR');
+                    this._logManager.logMessage(
+                        "Done executing '" + Translators.toAnalyzerTypeString(this._type) + "' with error, error log:\n" + std.stderr,
+                        'ERR'
+                    );
                 }
             })
         });
@@ -304,7 +311,7 @@ export abstract class BinaryRunner {
         if (logPath && !(exeErr instanceof NotSupportedError)) {
             this._logManager.logMessage(
                 'AnalyzerManager run ' +
-                    this._type +
+                    Translators.toAnalyzerTypeString(this._type) +
                     ' on ' +
                     args.getRoots() +
                     ' ended ' +
@@ -331,7 +338,11 @@ export abstract class BinaryRunner {
         let roots: string[] = args.getRoots();
         let logFinalPath: string = path.join(
             copyToDirectory,
-            LogUtils.getLogFileName(roots.map(root => Utils.getLastSegment(root)).join('_'), this._type, '' + Date.now())
+            LogUtils.getLogFileName(
+                roots.map(root => Utils.getLastSegment(root)).join('_'),
+                Translators.toAnalyzerTypeString(this._type),
+                '' + Date.now()
+            )
         );
 
         fs.copyFileSync(path.join(args.directory, logFile), logFinalPath);
@@ -367,9 +378,15 @@ export abstract class BinaryRunner {
                     throw new NotEntitledError();
                 }
                 if (error.code === BinaryRunner.NOT_SUPPORTED) {
-                    throw new NotSupportedError(this._type);
+                    throw new NotSupportedError(Translators.toAnalyzerTypeString(this._type));
                 }
-                this._logManager.logMessage("Binary '" + this._type + "' task ended with status code: " + error.code, 'ERR');
+                if (error.code === BinaryRunner.OS_NOT_SUPPORTED) {
+                    throw new OsNotSupportedError(Translators.toAnalyzerTypeString(this._type));
+                }
+                this._logManager.logMessage(
+                    "Binary '" + Translators.toAnalyzerTypeString(this._type) + "' task ended with status code: " + error.code,
+                    'ERR'
+                );
             }
             throw error;
         });
@@ -377,7 +394,9 @@ export abstract class BinaryRunner {
         let analyzerScanResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         for (const responsePath of responsePaths) {
             if (!fs.existsSync(responsePath)) {
-                throw new Error("Running '" + this._type + "' binary didn't produce response.\nRequest: " + request);
+                throw new Error(
+                    "Running '" + Translators.toAnalyzerTypeString(this._type) + "' binary didn't produce response.\nRequest: " + request
+                );
             }
             // Load result and parse as response
             let result: AnalyzerScanResponse = JSON.parse(fs.readFileSync(responsePath, 'utf8').toString());

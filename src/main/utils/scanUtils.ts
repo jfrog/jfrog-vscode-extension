@@ -247,6 +247,10 @@ export class ScanUtils {
             logger.logMessage(error.message, 'INFO');
             return undefined;
         }
+        if (error instanceof OsNotSupportedError) {
+            logger.logMessage(error.message, 'WARN');
+            return undefined;
+        }
         if (error instanceof NotSupportedError) {
             logger.logMessage(error.message, 'DEBUG');
             return undefined;
@@ -277,6 +281,12 @@ export class NotEntitledError extends Error {
 export class NotSupportedError extends Error {
     constructor(typeNotSupported: string) {
         super(typeNotSupported + ' is not supported in the current Analyzer Manager version');
+    }
+}
+
+export class OsNotSupportedError extends Error {
+    constructor(typeNotSupported: string) {
+        super(typeNotSupported + ' is not supported for this operating system');
     }
 }
 
