@@ -11,7 +11,9 @@ jobs:
         with:
           submodules: true
       - name: Config Github
-        run: git config --global user.name ${{ github.actor }} --user.email eco-system@jfrog.com
+        run: |
+            git config --global user.name "jfrog-ecosystem"
+            git config --global user.email "eco-system@jfrog.com"
       - name: Setup NodeJS
         uses: actions/setup-node@v3
         with:
