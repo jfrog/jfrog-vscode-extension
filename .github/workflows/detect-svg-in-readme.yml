@@ -16,13 +16,13 @@ jobs:
         svgs=$(grep -oE '\([^)]+\.svg\)' README.md)
 
         # Define a whitelist of .svg
-        Whitelist="(https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml/badge.svg)"
+        whitelist="(https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml/badge.svg)"
 
-        # Check for any SVG images that are not included in the Whitelist.
-        if [[ ! -z $(echo "$svgs" | grep -vE "$Whitelist") ]]
+        # Check for any SVG images that are not included in the whitelist.
+        if [[ ! -z $(echo "$svgs" | grep -vE "$whitelist") ]]
         then
           echo "Error: SVGs are restricted in README.md."
           echo "Please use PNG instead, or remove the following line(s) from the README.md file:"
-          echo $(echo "$svgs" | grep -vE "$Whitelist")
+          echo $(echo "$svgs" | grep -vE "$whitelist")
           exit 1
         fi
