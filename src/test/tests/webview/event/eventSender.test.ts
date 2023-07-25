@@ -1,6 +1,6 @@
 import * as sinon from 'sinon';
 import { EventSender } from '../../../../main/webview/event/eventSender';
-import { IDependencyPage, WebviewPage, WebviewReceiveEventType } from 'jfrog-ide-webview';
+import { IDependencyPage, IdeEventType, WebviewPage } from 'jfrog-ide-webview';
 import { MockWebview } from '../mockWebview.test';
 import { LogManager } from '../../../../main/log/logManager';
 
@@ -37,7 +37,7 @@ describe('EventSender', () => {
             // The first call in 'new EventSender' and the second in 'loadPage'
             sinon.assert.callCount(postMessageStub, 2);
             sinon.assert.calledWithMatch(postMessageStub, {
-                type: WebviewReceiveEventType.ShowPage,
+                type: IdeEventType.ShowPage,
                 pageData: mockPageData
             });
         });

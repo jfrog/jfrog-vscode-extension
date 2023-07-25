@@ -1,4 +1,4 @@
-import { WebviewPage, WebviewSendEvent, WebviewSendEventType } from 'jfrog-ide-webview';
+import { WebviewEvent, WebviewEventType, WebviewPage } from 'jfrog-ide-webview';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { EventSender } from './eventSender';
 import * as vscode from 'vscode';
@@ -32,12 +32,12 @@ export class EventManager {
      */
     private async setEventReceiver(webview: vscode.Webview, disposables?: vscode.Disposable[]): Promise<void> {
         webview.onDidReceiveMessage(
-            async (message: WebviewSendEvent) => {
+            async (message: WebviewEvent) => {
                 switch (message.type) {
-                    case WebviewSendEventType.JumpToCode:
+                    case WebviewEventType.JumpToCode:
                         new JumpToCodeTask(message.data, this.logManager).run();
                         break;
-                    case WebviewSendEventType.Login:
+                    case WebviewEventType.Login:
                         await new LoginTask(this.send, message.data, this.connectionManager, this.logManager).run();
                 }
             },

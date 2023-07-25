@@ -1,4 +1,4 @@
-import { WebviewPage, WebviewReceiveEventType, WebviewReceiveEvent, ReceiveSetEmitterEvent, ReceiveShowPageEvent } from 'jfrog-ide-webview';
+import { IdeEvent, IdeEventSetEmitter, IdeEventShowPage, IdeEventType, WebviewPage } from 'jfrog-ide-webview';
 import * as vscode from 'vscode';
 import { LogManager } from '../../log/logManager';
 
@@ -15,16 +15,16 @@ export class EventSender {
      */
     public async setEventEmitter(): Promise<void> {
         await this.sendEvent(this.webview, {
-            type: WebviewReceiveEventType.SetEmitter,
-            emitterFunc: 'return acquireVsCodeApi().postMessage'
-        } as ReceiveSetEmitterEvent);
+            type: IdeEventType.SetEmitter,
+            data: 'return acquireVsCodeApi().postMessage'
+        } as IdeEventSetEmitter);
     }
 
     /**
      * Sends a loadPage event to the webview to display a specific page.
      */
     public async loadPage(page: WebviewPage): Promise<void> {
-        const request: ReceiveShowPageEvent = { type: WebviewReceiveEventType.ShowPage, pageData: page };
+        const request: IdeEventShowPage = { type: IdeEventType.ShowPage, data: page };
         this.logManager.logMessage('Load webview with request data :\n' + JSON.stringify(request), 'DEBUG');
         await this.sendEvent(this.webview, request);
     }
@@ -35,7 +35,7 @@ export class EventSender {
      * @param webview - The webview to which the event will be sent.
      * @param event - The event to be sent.
      */
-    private async sendEvent(webview: vscode.Webview, event: WebviewReceiveEvent): Promise<void> {
+    private async sendEvent(webview: vscode.Webview, event: IdeEvent): Promise<void> {
         await webview.postMessage(event);
     }
 }
