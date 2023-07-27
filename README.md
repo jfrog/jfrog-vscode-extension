@@ -17,7 +17,7 @@
 -   [About this Extension](#about-this-extension)
 -   [Getting Started](#getting-started)
     -   [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
-    -   [Connecting VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
+    -   [Connecting VS Code to Your JFrog Platform](#connecting-vs-code-to-your-jfrog-platform)
     -   [Using the extension](#using-the-extension)
         -   [Severity Icons](#severity-icons)
 -   [The Local View](#the-local-view)
@@ -102,7 +102,7 @@ The extension also applies [JFrog File Spec JSON schema](https://raw.githubuserc
 The extension is available to install from the VS Code extensions marketplace. after installing the JFrog extension tab <img src="resources/extensionIcon.png" width="30"> will appear in the activity bar
 ![Install](resources/readme/preview/install.png)
 
-## Connecting VS Code to Your JFrog Environment
+## Connecting VS Code to Your JFrog Platform
 
 <details>
 <summary>If you don't have a JFrog Platform instance, create a free instance in the cloud by running one of the following commands in your terminal.</summary>
@@ -126,25 +126,32 @@ The commands will do the following:
 </details>
 <br>
 
-Once you installed, You can view the sigh in page by clicking on the Frog extension tab:
-![LoginPage](resources/readme/preview/sighInPage.png)
+Once the JFrog Extension is installed in VS Code, click on the JFrog tab:
+
+![jfrogTab](resources/readme/preview/jfrogTab.png)
 
 
-Enter your JFrog platform connection details. Switching from Access token to Username and password can be done by clicking the `Using Password` button.
+This will open the Sign in page:
 
-**Note**: If you would like to use custom URLs for Artifactory or Xray, click on 'Advanced'
+![SighInPage](resources/readme/preview/sighInPage.png)
 
-There are other methods of providing your JFrog Platform credentials to VS Code than manually writing them in:
+Fill in your connection details and click on the `Sign In` button to start using the extension
 
-### Use the JFrog CLI Credentials
+**Note**: If you would like to use custom URLs for Artifactory or Xray, click on 'Advanced'.
 
-When JFrog CLI is installed and configured with JFrog Platform's connection details, the following popup will appear:
-![LoginPage](resources/readme/preview/sighInPageJFrogCli.png)
-
+You can also authenticate with your JFrog Platform instance by using the configured [JFrog CLI's Connection Details](#connect-using-jfrog-cli-connection-details) or by [Using Environment Variables](#connect-using-environment-variables).
 
 
+### Connect Using JFrog CLI Connection Details
 
-### Environment Variables
+If JFrog CLI is installed on your machine and is configured with your JFrog Platform connection details, then you should see the message popup in the Sigh in page:
+
+![LoginPageJfrogCli](resources/readme/preview/sighInPageJFrogCli.png)
+
+
+
+
+### Connect Using Environment Variables
 
 You may set the connection details using the following environment variables. VS Code will read them after it is launched.
 
@@ -153,6 +160,10 @@ You may set the connection details using the following environment variables. VS
 -   `JFROG_IDE_PASSWORD` - JFrog password
 -   `JFROG_IDE_ACCESS_TOKEN` - JFrog access token
 -   `JFROG_IDE_STORE_CONNECTION` - Set the value of this environment variable to **true**, if you'd like VS Code to store the connection details after reading them from the environment variables.
+
+Once the above environment variables are configured, you can expect to see a message popup in the Sigh in page:
+
+![LoginPageEnvVar](resources/readme/preview/sighInPageEnvVar.png)
 
 **Note**: For security reasons, it is recommended to unset the environment variables after launching VS Code.
 
