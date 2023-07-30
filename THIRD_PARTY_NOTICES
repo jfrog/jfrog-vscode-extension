@@ -6,5 +6,5 @@ JFrog
     This project incorporates various components from those projects listed below. JFrog is using such components under the following original copyright notices and the licenses
 
     1.  IconsMicrosoft/vscode-icons (https://github.com/microsoft/vscode-icons) - Copyright (c) Microsoft Corporation; Licensed under CC BY 4.0 International License (https://github.com/microsoft/vscode-icons/blob/master/LICENSE)
-    
-    2. Copyright (c) 2010-2017, Christian Johansen, <christian@cjohansen.no> All rights reserved.
+
+    2.  sinonjs/sinon (https://github.com/sinonjs/sinon) - Copyright (c) 2010-2017, Christian Johansen, <christian@cjohansen.no> All rights reserved.
