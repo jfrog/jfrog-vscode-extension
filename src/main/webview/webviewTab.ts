@@ -9,10 +9,11 @@ import { ConnectionManager } from '../connect/connectionManager';
  * Show a webview panel with details about objects in the project
  */
 export class WebviewTab extends WebView {
+    private panel: vscode.WebviewPanel | undefined;
+
     constructor(logManager: LogManager, private connectionManager: ConnectionManager, private context: vscode.ExtensionContext) {
         super(logManager);
     }
-    private panel: vscode.WebviewPanel | undefined;
 
     /**
      * Create if not exists or update the webview panel with the given page data and show it in the editor
