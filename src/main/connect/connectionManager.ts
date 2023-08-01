@@ -100,18 +100,15 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
 
     public async isSignedIn(): Promise<boolean> {
-        const status: SessionStatus | undefined = await this.getConnectionStatus();
-        return status === SessionStatus.SignedIn;
+        return (await this.getConnectionStatus()) === SessionStatus.SignedIn;
     }
 
     public async isSignedOut(): Promise<boolean> {
-        const status: SessionStatus | undefined = await this.getConnectionStatus();
-        return status === SessionStatus.SignedOut;
+        return (await this.getConnectionStatus()) === SessionStatus.SignedOut;
     }
 
     public async isConnectionLost(): Promise<boolean> {
-        const status: SessionStatus | undefined = await this.getConnectionStatus();
-        return status === SessionStatus.connectionLost;
+        return (await this.getConnectionStatus()) === SessionStatus.connectionLost;
     }
 
     private async handledSignedIn() {

@@ -102,14 +102,17 @@ export class LogManager implements ExtensionComponent, ILogger {
         }
     }
 
+    /** @override */
     public error(message: string) {
         this.logMessage(message, 'ERR');
     }
 
+    /** @override */
     public warn(message: string) {
         this.logMessage(message, 'WARN');
     }
 
+    /** @override */
     public debug(message: string) {
         this.logMessage(message, 'DEBUG');
     }

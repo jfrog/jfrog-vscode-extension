@@ -36,15 +36,17 @@ export class WebviewManager {
             url: '',
             connectionType: LoginConnectionType.BasicAuthOrToken
         };
-        let url: string = await this.connectionManager.tryGetUrlFromJfrogCli();
+
+        let url: string = this.connectionManager.tryGetUrlFromEnv();
+        if (url !== '') {
+            return { ...page, status: LoginProgressStatus.AutoConnect, url: url, connectionType: LoginConnectionType.EnvVars };
+        }
+
+        url = await this.connectionManager.tryGetUrlFromJfrogCli();
         if (url !== '') {
             return { ...page, status: LoginProgressStatus.AutoConnect, url: url, connectionType: LoginConnectionType.Cli };
         }
 
-        url = this.connectionManager.tryGetUrlFromEnv();
-        if (url !== '') {
-            return { ...page, status: LoginProgressStatus.AutoConnect, url: url, connectionType: LoginConnectionType.EnvVars };
-        }
         return page;
     }
 }
