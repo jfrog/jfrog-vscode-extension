@@ -208,7 +208,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return await this.getJfrogCliDefaultServerConfiguration();
     }
 
-    public async tryGetUrlFromJfrogCli(): Promise<string> {
+    public async tryGetUrlFromJFrogCli(): Promise<string> {
         try {
             if (await this.verifyJfrogCliInstalledAndVersion()) {
                 return this.getJfrogCliDefaultServerUrl();

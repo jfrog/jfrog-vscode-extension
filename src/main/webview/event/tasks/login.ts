@@ -48,9 +48,11 @@ export class LoginTask {
             await this.connectIde();
         }
     }
+
     /**
-     * Connects to the IDE after a successful login.
-     */
+    * Connects to the IDE after a successful login.
+    * Waits for 3 seconds to let the user see the 'success' animation and read the instructions.
+    */
     private async connectIde() {
         await new Promise(resolve =>
             setTimeout(() => {
@@ -58,6 +60,7 @@ export class LoginTask {
             }, 3000)
         );
     }
+
     /**
      * Performs the login operation based on the connection type.
      */
@@ -83,7 +86,6 @@ export class LoginTask {
                     break;
                 case LoginConnectionType.EnvVars:
                     status = await this.connectionManager.tryCredentialsFromEnv();
-                    break;
             }
             return this.toWebviewLoginStatus(status);
         } catch (error) {

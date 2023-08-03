@@ -31,7 +31,6 @@ export class EventSender {
 
     /**
      * Sends an event to the webview.
-     * @private
      * @param webview - The webview to which the event will be sent.
      * @param event - The event to be sent.
      */

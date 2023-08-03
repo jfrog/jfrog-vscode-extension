@@ -26,7 +26,6 @@ export class EventManager {
 
     /**
      * Sets up a listener for event notification messages coming from the webview.
-     * @private
      * @param webview - The webview associated with the event receiver.
      * @param disposables - An optional array of disposables to manage event handlers.
      */

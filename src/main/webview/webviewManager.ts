@@ -4,11 +4,12 @@ import { ConnectionManager } from '../connect/connectionManager';
 import { WebviewTab } from './webviewTab';
 import { WebviewSidebar } from './webviewSidebar';
 import { LogManager } from '../log/logManager';
+import { ExtensionComponent } from '../extensionComponent';
 
 /**
  * Manages the webview functionality for the extension.
  */
-export class WebviewManager {
+export class WebviewManager implements ExtensionComponent  {
     private webviewTab: WebviewTab;
     private webviewSidebar: WebviewSidebar;
     constructor(logManager: LogManager, private connectionManager: ConnectionManager, context: vscode.ExtensionContext) {
@@ -16,7 +17,7 @@ export class WebviewManager {
         this.webviewSidebar = new WebviewSidebar(logManager, connectionManager, context);
     }
 
-    public async activate() {
+    public activate() {
         return this;
     }
 
@@ -42,7 +43,7 @@ export class WebviewManager {
             return { ...page, status: LoginProgressStatus.AutoConnect, url: url, connectionType: LoginConnectionType.EnvVars };
         }
 
-        url = await this.connectionManager.tryGetUrlFromJfrogCli();
+        url = await this.connectionManager.tryGetUrlFromJFrogCli();
         if (url !== '') {
             return { ...page, status: LoginProgressStatus.AutoConnect, url: url, connectionType: LoginConnectionType.Cli };
         }

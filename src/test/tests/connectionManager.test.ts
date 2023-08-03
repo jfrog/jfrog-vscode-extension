@@ -91,7 +91,7 @@ describe('Connection Manager Tests', () => {
                 setCliHomeDir(path.resolve('/path/to/nowhere'));
 
                 // Check credentials not set.
-                assert.isEmpty(await connectionManager.tryGetUrlFromJfrogCli());
+                assert.isEmpty(await connectionManager.tryGetUrlFromJFrogCli());
                 assert.isFalse(connectionManager.areXrayCredentialsSet());
 
                 await populateCredsAndAssert(testCase, 'admin', 'password', '');
@@ -173,7 +173,7 @@ describe('Connection Manager Tests', () => {
                 setCliHomeDir('/path/to/nowhere');
 
                 // Assert credentials are empty.
-                assert.isEmpty(await connectionManager.tryGetUrlFromJfrogCli());
+                assert.isEmpty(await connectionManager.tryGetUrlFromJFrogCli());
                 assert.isFalse(connectionManager.areCompleteCredentialsSet());
 
                 // Set new home to test data.
@@ -313,7 +313,7 @@ describe('Connection Manager Tests', () => {
                 .resolves(false);
 
             // Call the function
-            const result: string = await mockConnectionManager.tryGetUrlFromJfrogCli();
+            const result: string = await mockConnectionManager.tryGetUrlFromJFrogCli();
 
             // Check the return value and ensure that necessary methods are called
             assert.strictEqual(result, '');
