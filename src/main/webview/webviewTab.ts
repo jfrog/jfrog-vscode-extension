@@ -29,6 +29,14 @@ export class WebviewTab extends WebView {
         }
     }
 
+    /**
+     * Close, if exists, an open webview page
+     */
+    public closeWebview() {
+        this.currentPage = undefined;
+        this.panel?.dispose();
+    }
+
     private createWebview(): vscode.WebviewPanel {
         const panel: vscode.WebviewPanel = vscode.window.createWebviewPanel(
             'jfrog.issues.details',

@@ -30,6 +30,10 @@ export class WebviewManager implements ExtensionComponent  {
         this.webviewTab.loadPage(page);
     }
 
+    public closeWebviewTab() {
+        this.webviewTab.closeWebview();
+    }
+
     private async createLoginPage(): Promise<ILoginPage> {
         let page: ILoginPage = {
             pageType: PageType.Login,

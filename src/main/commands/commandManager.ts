@@ -57,6 +57,7 @@ export class CommandManager implements ExtensionComponent {
             this.doOpenFileAndDetailsPage(file, fileRegion, details)
         );
         this.registerCommand(context, 'jfrog.webview.tab.open', (page: WebviewPage) => this._webviewManager.loadWebviewTab(page));
+        this.registerCommand(context, 'jfrog.webview.tab.close', () => this._webviewManager.closeWebviewTab());
         // CI state
         this.registerCommand(context, 'jfrog.view.ci', () => this.doCi());
         this.registerCommand(context, 'jfrog.xray.focus', dependenciesTreeNode => this.doFocus(dependenciesTreeNode));
