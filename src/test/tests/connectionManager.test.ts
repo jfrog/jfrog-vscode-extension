@@ -199,7 +199,7 @@ describe('Connection Manager Tests', () => {
 
     const mockLogger: LogManager = new LogManager().activate();
     const mockConnectionManager: ConnectionManager = new ConnectionManager(mockLogger);
-    describe('connect()', () => {
+    describe('Read from KeyStore', () => {
         let logMessageStub: sinon.SinonStub<any, void>;
         let setUrlsFromFilesystemStub: sinon.SinonStub<any, Promise<boolean>>;
         let setUsernameFromFilesystemStub: sinon.SinonStub<any, Promise<boolean>>;
@@ -225,7 +225,7 @@ describe('Connection Manager Tests', () => {
             sinon.restore();
         });
 
-        it('should connect if username and password are set on key store', async () => {
+        it('Read username and password', async () => {
             // Call the function
             const result: boolean = await mockConnectionManager.connect();
 
@@ -240,7 +240,7 @@ describe('Connection Manager Tests', () => {
             sinon.assert.calledOnce(resolveUrlsStub);
             sinon.assert.calledOnce(onSuccessConnectStub);
         });
-        it('should connect if access token is set on key store', async () => {
+        it('Read access token', async () => {
             setUsernameFromFilesystemStub.resolves(false);
             setPasswordFromKeyStoreStub.resolves(false);
             setAccessTokenFromKeyStoreStub.resolves(true);
@@ -260,7 +260,7 @@ describe('Connection Manager Tests', () => {
             sinon.assert.calledOnce(onSuccessConnectStub);
         });
 
-        it('should not connect if key store has no creds', async () => {
+        it('Empty KeyStore', async () => {
             setUrlsFromFilesystemStub.resolves(false);
             setUsernameFromFilesystemStub.resolves(false);
             setPasswordFromKeyStoreStub.resolves(false);
@@ -280,8 +280,7 @@ describe('Connection Manager Tests', () => {
         });
     });
 
-    describe('onSuccessConnect()', () => {
-        it('should set connection status, view, update JFrog versions, and execute JFrog view command', async () => {
+        it('Connect successfully', async () => {
             // Mock dependencies and setup necessary conditions
             const setConnectionStatusStub: sinon.SinonStub<any[], any> = sinon.stub(mockConnectionManager as any, 'setConnectionStatus').resolves();
             const setConnectionViewStub: sinon.SinonStub<any[], any> = sinon.stub(mockConnectionManager as any, 'setConnectionView').resolves(true);
@@ -300,13 +299,12 @@ describe('Connection Manager Tests', () => {
             sinon.assert.calledOnce(executeCommandStub);
             sinon.assert.calledWith(executeCommandStub, 'jfrog.view.local');
         });
-    });
 
-    describe('tryGetUrlFromJfrogCli()', () => {
+    describe('JFrog Cli', () => {
         afterEach(() => {
             sinon.restore();
         });
-        it('should return an empty string if JFrog CLI is not installed or default server configuration is not available', async () => {
+        it('Not installed', async () => {
             // Mock dependencies and setup necessary conditions
             const verifyJfrogCliInstalledAndVersionStub: sinon.SinonStub<any[], any> = sinon
                 .stub(mockConnectionManager as any, 'verifyJfrogCliInstalledAndVersion')
@@ -321,11 +319,11 @@ describe('Connection Manager Tests', () => {
         });
     });
 
-    describe('tryGetUrlFromEnv()', () => {
+    describe('Environment variables', () => {
         afterEach(() => {
             sinon.restore();
         });
-        it('should return an empty string if credentials are not available in the environment', async () => {
+        it('Not configured', async () => {
             // Mock dependencies and setup necessary conditions
             process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
                 ConnectionManager.ACCESS_TOKEN_ENV
@@ -339,11 +337,11 @@ describe('Connection Manager Tests', () => {
         });
     });
 
-    describe('startWebLogin()', () => {
+    describe('Web login', () => {
         afterEach(() => {
             sinon.restore();
         });
-        it('should start web login and return the login status', async () => {
+        it('Start session', async () => {
             // Mock dependencies and setup necessary conditions
             const logMessageStub: any = sinon.stub(mockLogger, 'logMessage');
             logMessageStub.withArgs('Start Web-Login with "mock-url"', 'DEBUG');
@@ -365,7 +363,7 @@ describe('Connection Manager Tests', () => {
         });
     });
 
-    it('should create the web login endpoint', () => {
+    it('Create endpoint', () => {
         // Mock dependencies and setup necessary conditions
         const platformUrl: string = 'mock-platform-url';
         const sessionId: string = 'mock-session-id';

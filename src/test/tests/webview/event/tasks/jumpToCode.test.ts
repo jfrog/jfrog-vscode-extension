@@ -5,10 +5,10 @@ import { LogManager } from '../../../../../main/log/logManager';
 import { ScanUtils } from '../../../../../main/utils/scanUtils';
 import { JumpToCodeTask } from '../../../../../main/webview/event/tasks/jumpToCode';
 
-describe('JumpToCodeTask', () => {
+describe('Webview Task JumpToCodeTask', () => {
     const logger: LogManager = new LogManager().activate();
 
-    it('should log a debug message and call ScanUtils.openFile with the correct arguments', () => {
+    it('Fire jump to code event', () => {
         const logMessageStub: any = sinon.stub(logger, 'logMessage');
         const openFileStub: any = sinon.stub(ScanUtils, 'openFile');
 

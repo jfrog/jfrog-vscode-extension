@@ -45,7 +45,7 @@ export class LoginTask {
 
         // Connect to the IDE if login is successful
         if (requestStatus === LoginProgressStatus.Success) {
-            await this.connectIde();
+            this.connectIde();
         }
     }
 

@@ -18,7 +18,7 @@ describe('EventSender', () => {
     });
 
     describe('setEventEmitter', () => {
-        it('should send a SetEmitter event to the webview', async () => {
+        it('Send event to the webview', async () => {
             new EventSender(webview, mockLogger);
             sinon.assert.callCount(postMessageStub, 1);
             sinon.assert.calledWithMatch(postMessageStub, {
@@ -29,7 +29,7 @@ describe('EventSender', () => {
     });
 
     describe('loadPage', () => {
-        it('should send a ShowPage event with the provided page data to the webview', async () => {
+        it('Send a ShowPage event', async () => {
             const eventSender: EventSender = new EventSender(webview, mockLogger);
             const mockPageData: WebviewPage = { id: 'XRAY-MOCK', extendedInformation: { shortDescription: 'mock-text' } } as IDependencyPage;
             await eventSender.loadPage(mockPageData);

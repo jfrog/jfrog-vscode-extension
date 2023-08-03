@@ -20,7 +20,7 @@ describe('EventManager', () => {
     });
 
     describe('loadPage', () => {
-        it('should call the send.loadPage method with the provided page data', () => {
+        it('Call loadPage with the provided page data', () => {
             const mockPageData: WebviewPage = { id: 'XRAY-MOCK1', extendedInformation: { shortDescription: 'mock-text1' } } as IDependencyPage;
 
             eventManager.loadPage(mockPageData);
