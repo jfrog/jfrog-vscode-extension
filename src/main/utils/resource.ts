@@ -6,6 +6,7 @@ import { ConnectionUtils } from '../connect/connectionUtils';
 import { LogManager } from '../log/logManager';
 import { Utils } from './utils';
 import { ScanUtils } from './scanUtils';
+import { Configuration } from './configuration';
 
 /**
  * Represent a resource file that is fetched (download) from a source URL and can be updated from it if outdated.
@@ -14,7 +15,6 @@ export class Resource {
     private static readonly DEFAULT_SERVER: string = 'https://releases.jfrog.io';
 
     private _connectionManager: JfrogClient;
-    private _artifactoryUrl: string;
     private _cacheRemoteSha256: string | undefined;
 
     private _targetDir: string;
@@ -24,12 +24,12 @@ export class Resource {
         public readonly sourceUrl: string,
         private _targetPath: string,
         private _logManager: LogManager,
-        connectionManager?: JfrogClient,
+        connectionManager: JfrogClient,
         private _mode: fs.Mode = '700'
     ) {
-        this._artifactoryUrl = Resource.DEFAULT_SERVER + '/artifactory';
-        this._connectionManager =
-            connectionManager ?? ConnectionUtils.createJfrogClient(Resource.DEFAULT_SERVER, this._artifactoryUrl, '', '', '', '');
+        this._connectionManager = Configuration.useAirGappedEnvironments()
+            ? connectionManager
+            : ConnectionUtils.createJfrogClient(Resource.DEFAULT_SERVER, Resource.DEFAULT_SERVER + '/artifactory', '', '', '', '');
         this._name = Utils.getLastSegment(this._targetPath);
         this._targetDir = path.dirname(this._targetPath);
     }
@@ -49,7 +49,7 @@ export class Resource {
             if (this._cacheRemoteSha256) {
                 throw Error('Local checksum is not match to the remote');
             } else {
-                this._logManager.logMessage("Can't get 'x-checksum-sha256' header from " + this._artifactoryUrl + this.sourceUrl, 'WARN');
+                this._logManager.logMessage("Can't get 'x-checksum-sha256' header from ", 'WARN');
             }
         }
         return resourcePath;
@@ -81,7 +81,7 @@ export class Resource {
     public async update(): Promise<boolean> {
         let tmpFolder: string = ScanUtils.createTmpDir();
         try {
-            this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this._artifactoryUrl + this.sourceUrl, 'DEBUG');
+            this._logManager.logMessage('Starting to update resource ' + this._name, 'DEBUG');
             await this.copyToTarget(await this.download(tmpFolder));
             this._logManager.logMessage('Resource ' + this._name + ' was update successfully.', 'DEBUG');
             return true;

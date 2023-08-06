@@ -592,8 +592,7 @@ export class AnalyzerUtils {
                     languages.push(language);
                 }
             });
-        }
-        if (languages.length === 0) {
+        } else {
             // In case there are no descriptors to extract language from, add all.
             languages = EosRunner.supportedLanguages();
         }
@@ -623,7 +622,11 @@ export class AnalyzerUtils {
         progressManager: StepProgress
     ): Promise<any> {
         let startTime: number = Date.now();
-        workspaceData.eosScan = await scanManager.scanEos(progressManager.checkCancel, ...this.createEosRequests(root, types));
+        workspaceData.eosScan = await scanManager.scanEos(
+            progressManager.checkCancel,
+            root.workSpace.uri.fsPath,
+            ...this.createEosRequests(root, types)
+        );
         if (workspaceData.eosScan) {
             workspaceData.eosScanTimestamp = Date.now();
             let applicableIssuesCount: number = AnalyzerUtils.populateEosIssues(root, workspaceData);

@@ -27,6 +27,10 @@ export class Configuration {
         return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('excludeDevDependencies');
     }
 
+    public static useAirGappedEnvironments(): boolean | undefined {
+        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('useAirGappedEnvironments');
+    }
+
     public static getBuildsPattern(): string {
         return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('xray.ciIntegration.buildNamePattern') || '';
     }

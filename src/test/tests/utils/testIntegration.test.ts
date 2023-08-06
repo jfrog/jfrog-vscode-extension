@@ -82,13 +82,15 @@ export class AnalyzerManagerIntegrationEnv extends BaseIntegrationEnv {
             this._resource = new Resource(
                 <string>process.env[AnalyzerManagerIntegrationEnv.ENV_BINARY_DOWNLOAD_URL],
                 BinaryRunner.getDefaultAnalyzerManagerTargetPath(BaseIntegrationEnv.directory),
-                this.logManager
+                this.logManager,
+                this.connectionManager.createJfrogClient()
             );
         } else {
             // Run on latest from Releases
             this._resource = BinaryRunner.getAnalyzerManagerResource(
                 this.logManager,
-                BinaryRunner.getDefaultAnalyzerManagerTargetPath(this._localPath ?? BaseIntegrationEnv.directory)
+                BinaryRunner.getDefaultAnalyzerManagerTargetPath(this._localPath ?? BaseIntegrationEnv.directory),
+                this.connectionManager.createJfrogClient()
             );
         }
     }

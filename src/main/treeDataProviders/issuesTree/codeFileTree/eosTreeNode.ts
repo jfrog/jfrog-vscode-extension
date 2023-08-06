@@ -49,6 +49,7 @@ export class EosTreeNode extends CodeIssueTreeNode {
             header: this.label,
             pageType: PageType.Eos,
             severity: SeverityUtils.toWebviewSeverity(this.severity),
+            ruleId: this.issueId,
             location: {
                 fileName: Utils.getLastSegment(this.parent.projectFilePath),
                 file: this.parent.projectFilePath,

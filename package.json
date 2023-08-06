@@ -2,7 +2,7 @@
     "name": "jfrog-vscode-extension",
     "displayName": "JFrog",
     "description": "Security scanning for your Go, npm, Pypi, Maven and NuGet projects.",
-    "version": "2.6.0",
+    "version": "2.6.0-beta.1",
     "license": "Apache-2.0",
     "icon": "resources/extensionIcon.png",
     "repository": {
@@ -90,6 +90,12 @@
                     "type": "boolean",
                     "scope": "application",
                     "markdownDescription": "Exclude development dependencies during the scan. Currently, only npm is supported."
+                },
+                "jfrog.useAirGappedEnvironments": {
+                    "type": "boolean",
+                    "scope": "application",
+                    "default": true,
+                    "markdownDescription": "By default, the JFrog extension uses the Advanced Capabilities needed from https://releases.jfrog.io. If there is no access to it, check this option to enable Air Gapped mode with your configured Artifactory instance."
                 },
                 "jfrog.projectKey": {
                     "type": "string",

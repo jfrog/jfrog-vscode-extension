@@ -32,6 +32,8 @@ export class Translators {
                 return 'iac-scan';
             case ScanType.Secrets:
                 return 'secrets-detection';
+            case ScanType.Eos:
+                return 'Eos';
             default:
                 return type;
         }
@@ -48,6 +50,12 @@ export class Translators {
         switch (type) {
             case PackageType.Python:
                 return 'python';
+            case PackageType.Npm:
+                return 'npm';
+            case PackageType.Yarn:
+                return 'yarn';
+            case PackageType.Maven:
+                return 'maven';
             default:
                 return undefined;
         }
