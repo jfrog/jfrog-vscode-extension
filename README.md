@@ -142,6 +142,23 @@ Fill in your connection details and click on the `Sign In` button to start using
 You can also authenticate with your JFrog Platform instance by using the configured [JFrog CLI's Connection Details](#connect-using-jfrog-cli-connection-details) or by [Using Environment Variables](#connect-using-environment-variables).
 
 
+### Connect Using SSO
+
+To sign in using Single Sign-On (SSO), follow these steps:
+
+1. On the sign-in page, click the 'Continue with SSO' button:
+
+![SighInSsoButton](resources/readme/preview/ssoButton.png)
+
+2. After entering your JFrog platform URL, click on 'Sign in With SSO':
+
+![SighInSsoPage](resources/readme/preview/ssoPage.png)
+
+
+3. The browser will take a few seconds to redirect you to the login page with SSO.
+
+4. Return to vscode, and you will find that you are now signed in.
+
 ### Connect Using JFrog CLI Connection Details
 
 If JFrog CLI is installed on your machine and is configured with your JFrog Platform connection details, then you should see the message popup in the Sigh in page:
