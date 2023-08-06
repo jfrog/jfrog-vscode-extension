@@ -23,7 +23,7 @@ describe('EventSender', () => {
             sinon.assert.callCount(postMessageStub, 1);
             sinon.assert.calledWithMatch(postMessageStub, {
                 type: 'SET_EMITTER',
-                emitterFunc: 'return acquireVsCodeApi().postMessage'
+                data: 'return acquireVsCodeApi().postMessage'
             });
         });
     });
