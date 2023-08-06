@@ -28,11 +28,6 @@
         "viewsWelcome": [
             {
                 "view": "jfrog.issues",
-                "contents": "🐸 Thank you for installing the JFrog VS Code extension 🐸\nWith this extension, you can scan your workspace for security issues.\nFeatures:\n* The project dependencies are scanned for security issues.\n* For Python, npm and yarn Xray's [Contextual Analysis](https://www.jfrog.com/confluence/display/JFROG/Vulnerability+Contextual+Analysis) scan will help you determine which security issues impact your code and which don't, by marking them as Applicable and Non Applicable.\n* The security issues are marked in the editor for easy visibility.\n* The entire list of security issues are displayed in the JFrog tab.\n* For security issues with a known fix version, the extension allows an upgrade to this version.\n* For some security issues, with Xray's CVE Research and Enrichment, get detailed technical information and enhanced analysis on CVEs to allow you to focus on the most important issues.\n* An Impact Graph is displayed for impacted project dependencies.\n* Displays the status of your project while it is being built and tested by the CI.\nLet's get started:\n[Enter your JFrog Platform connection details](command:jfrog.xray.connect)\n[Let us create a FREE JFrog Platform for you](https://github.com/jfrog/jfrog-vscode-extension/blob/master/README.md#connecting-vs-code-to-your-jfrog-environment)",
-                "when": "jfrog.connection.status == signedOut || !jfrog.connection.status"
-            },
-            {
-                "view": "jfrog.issues",
                 "contents": "Your project is ready to be scanned for security issues.\nIf your JFrog subscription includes Advanced DevSecOps enabled, we will also run Contextual Analysis scans for CVE applicability, to determine whether your code is actually impacted by the vulnerable dependency, to learn more about this feature, see [Xray Advanced Scans](https://www.jfrog.com/confluence/display/JFROG/Xray+Advanced+Scans).\n[Scan](command:jfrog.scan.refresh)",
                 "when": "jfrog.connection.status == signedIn && jfrog.firstScanInWorkspace"
             },
@@ -54,19 +49,25 @@
         "views": {
             "jfrog": [
                 {
-                    "id": "jfrog.xray.ci.issues",
+                    "id": "jfrog.view.ci.issues",
                     "name": "CI",
-                    "when": "isCi"
+                    "when": "jfrog.view.type == Ci"
                 },
                 {
-                    "id": "jfrog.xray.ci.issues.details",
+                    "id": "jfrog.view.ci.issues.details",
                     "name": "Details",
-                    "when": "isCi"
+                    "when": "jfrog.view.type == Ci"
                 },
                 {
                     "id": "jfrog.issues",
                     "name": "Issues",
-                    "when": "isLocal"
+                    "when": "jfrog.view.type == Local"
+                },
+                {
+                    "id": "jfrog.webview.sidebar",
+                    "type": "webview",
+                    "name": "Sign in",
+                    "when": "jfrog.view.type == Login"
                 }
             ]
         },
@@ -80,7 +81,7 @@
                     "pattern": "^\\*\\*/\\*\\{([^{},]+(,[^{},]+)*)\\}\\*$",
                     "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) used to exclude specific paths from being scanned by JFrog Xray. For example, go.mod files under directories named testdata will not be scanned."
                 },
-                "jfrog.xray.ciIntegration.buildNamePattern": {
+                "jfrog.view.ciIntegration.buildNamePattern": {
                     "type": "string",
                     "scope": "resource",
                     "markdownDescription": "A wildcards pattern, to match the name of builds published to Artifactory. Only builds which match the pattern are visible under the CI tab."
@@ -147,13 +148,6 @@
                 "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
             },
             {
-                "command": "jfrog.xray.connect",
-                "title": "Connect",
-                "icon": "resources/connect.png",
-                "category": "JFrog",
-                "enablement": "!jfrog.scanInProgress"
-            },
-            {
                 "command": "jfrog.xray.disconnect",
                 "title": "Disconnect",
                 "icon": "$(debug-disconnect)",
@@ -168,7 +162,7 @@
                     "dark": "resources/dark/filter.png"
                 },
                 "category": "JFrog",
-                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress && isCi"
+                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress"
             },
             {
                 "command": "jfrog.issues.open.ignore",
@@ -192,63 +186,58 @@
                 "enablement": "isCi"
             },
             {
-                "command": "jfrog.xray.local",
+                "command": "jfrog.view.local",
                 "title": "Switch to local mode",
                 "icon": "$(home)",
                 "category": "JFrog",
-                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress && isCi"
+                "enablement": "!jfrog.scanInProgress && jfrog.view.type == Ci"
             },
             {
-                "command": "jfrog.xray.ci",
+                "command": "jfrog.view.ci",
                 "title": "Switch to CI mode",
                 "icon": {
                     "light": "resources/light/ci.png",
                     "dark": "resources/dark/ci.png"
                 },
                 "category": "JFrog",
-                "enablement": "jfrog.connection.status == signedIn && !jfrog.scanInProgress && isLocal"
+                "enablement": "!jfrog.scanInProgress && jfrog.view.type == Local"
             }
         ],
         "menus": {
             "view/title": [
                 {
-                    "command": "jfrog.xray.connect",
-                    "when": "jfrog.connection.status != signedIn && view =~ /^jfrog.issues$|^jfrog.xray.ci.issues$/",
-                    "group": "navigation@0"
-                },
-                {
                     "command": "jfrog.xray.disconnect",
-                    "when": "jfrog.connection.status == signedIn && view =~ /^jfrog.issues$|^jfrog.xray.ci.issues$/",
+                    "when": "jfrog.connection.status == signedIn && view =~ /^jfrog.issues$|^jfrog.view.ci.issues$/",
                     "group": "navigation@0"
                 },
                 {
                     "command": "jfrog.scan.refresh",
-                    "when": "view == jfrog.xray.ci.issues || view == jfrog.issues",
+                    "when": "view == jfrog.view.ci.issues || view == jfrog.issues",
                     "group": "navigation@1"
                 },
                 {
                     "command": "jfrog.xray.filter",
-                    "when": "view == jfrog.xray.ci.issues",
+                    "when": "view == jfrog.view.ci.issues",
                     "group": "navigation@2"
                 },
                 {
-                    "command": "jfrog.xray.local",
-                    "when": "view == jfrog.xray.ci.issues && isCi",
+                    "command": "jfrog.view.local",
+                    "when": "view == jfrog.view.ci.issues",
                     "group": "navigation@3"
                 },
                 {
-                    "command": "jfrog.xray.ci",
-                    "when": "view == jfrog.issues && isLocal",
+                    "command": "jfrog.view.ci",
+                    "when": "view == jfrog.issues",
                     "group": "navigation@3"
                 },
                 {
                     "command": "jfrog.xray.builds",
-                    "when": "view == jfrog.xray.ci.issues && isCi",
+                    "when": "view == jfrog.view.ci.issues",
                     "group": "navigation@4"
                 },
                 {
                     "command": "jfrog.open.settings",
-                    "when": "view == jfrog.xray.ci.issues || view == jfrog.issues",
+                    "when": "view == jfrog.view.ci.issues || view == jfrog.issues",
                     "group": "navigation@5"
                 }
             ],
@@ -289,8 +278,8 @@
     "dependencies": {
         "adm-zip": "~0.5.9",
         "fs-extra": "~10.1.0",
-        "jfrog-client-js": "^2.6.5",
-        "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.1.25.tgz",
+        "jfrog-client-js": "^2.7.1",
+        "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.2.2.tgz",
         "js-yaml": "^4.1.0",
         "json2csv": "~5.0.7",
         "keytar": "~7.9.0",
@@ -313,6 +302,7 @@
         "@types/json2csv": "^5.0.3",
         "@types/mocha": "^9.1.1",
         "@types/semver": "^7.3.9",
+        "@types/sinon": "^10.0.15",
         "@types/tmp": "^0.2.3",
         "@types/vscode": "1.64.0",
         "@typescript-eslint/eslint-plugin": "^5.27.0",
@@ -325,6 +315,7 @@
         "nock": "^13.2.7",
         "ovsx": "^0.5.0",
         "prettier": "^1.19.1",
+        "sinon": "^15.2.0",
         "tmp": "^0.2.1",
         "ts-loader": "^9.3.0",
         "typescript": "^4.7.2",

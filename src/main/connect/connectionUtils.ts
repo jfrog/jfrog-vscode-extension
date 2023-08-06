@@ -15,6 +15,7 @@ import { URL } from 'url';
 import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
 import { Configuration } from '../utils/configuration';
+import { RetryOnStatusCode } from 'jfrog-client-js/dist/model/ClientConfig';
 
 export enum EntitlementScanFeature {
     Applicability = 'contextual_analysis',
@@ -130,7 +131,7 @@ export class ConnectionUtils {
             } else if (prompt) {
                 vscode.window.showErrorMessage((<any>error).message || error, <vscode.MessageOptions>{ modal: true });
             } else {
-                logger.logMessage((<any>error).message, 'DEBUG');
+                logger.logMessage(<any>error, 'DEBUG');
             }
             return Promise.resolve(false);
         }
@@ -268,7 +269,10 @@ export class ConnectionUtils {
         password: string,
         accessToken: string,
         retries?: number,
-        timeout?: number
+        timeout?: number,
+        logger?: LogManager,
+        retryOnStatusCode?: RetryOnStatusCode,
+        retryDelay?: number
     ): JfrogClient {
         let clientConfig: IJfrogClientConfig = {
             platformUrl: platformUrl,
@@ -278,9 +282,12 @@ export class ConnectionUtils {
             password: password,
             accessToken: accessToken,
             headers: {},
+            logger: logger,
             proxy: ConnectionUtils.getProxyConfig(),
             retries: retries ?? Configuration.getConnectionRetries(),
-            timeout: timeout ?? Configuration.getConnectionTimeout()
+            timeout: timeout ?? Configuration.getConnectionTimeout(),
+            retryOnStatusCode: retryOnStatusCode,
+            retryDelay: retryDelay
         } as IJfrogClientConfig;
         ConnectionUtils.addUserAgentHeader(clientConfig);
         ConnectionUtils.addProxyAuthHeader(clientConfig);

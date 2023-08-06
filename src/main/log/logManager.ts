@@ -3,13 +3,14 @@ import { ExtensionComponent } from '../extensionComponent';
 import { Configuration } from '../utils/configuration';
 import { ScanUtils } from '../utils/scanUtils';
 import { Utils } from '../utils/utils';
+import { ILogger } from 'jfrog-client-js';
 
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERR';
 
 /**
  * Log to the "OUTPUT" channel. Add date and log level.
  */
-export class LogManager implements ExtensionComponent {
+export class LogManager implements ExtensionComponent, ILogger {
     private _outputChannel!: vscode.OutputChannel;
 
     activate(): LogManager {
@@ -99,5 +100,20 @@ export class LogManager implements ExtensionComponent {
             case 'ERR':
                 return 3;
         }
+    }
+
+    /** @override */
+    public error(message: string) {
+        this.logMessage(message, 'ERR');
+    }
+
+    /** @override */
+    public warn(message: string) {
+        this.logMessage(message, 'WARN');
+    }
+
+    /** @override */
+    public debug(message: string) {
+        this.logMessage(message, 'DEBUG');
     }
 }
