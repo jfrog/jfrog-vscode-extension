@@ -131,7 +131,7 @@ export class ScanManager implements ExtensionComponent {
     private getResources(supportedScans: SupportedScans): Resource[] {
         let resources: Resource[] = [];
         if (supportedScans.applicability || supportedScans.iac || supportedScans.secrets) {
-            resources.push(BinaryRunner.getAnalyzerManagerResource(this._logManager));
+            resources.push(BinaryRunner.getAnalyzerManagerResource(this._logManager, undefined));
         } else {
             this.logManager.logMessage('You are not entitled to run Advanced Security scans', 'DEBUG');
         }
@@ -287,8 +287,8 @@ export class ScanManager implements ExtensionComponent {
      * @param requests - the Eos requests to run
      * @returns the scan response
      */
-    public async scanEos(checkCancel: () => void, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
-        let eosRunner: EosRunner = new EosRunner(this._connectionManager, this._logManager);
+    public async scanEos(checkCancel: () => void, runDirectory?: string, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
+        let eosRunner: EosRunner = new EosRunner(this._connectionManager, this._logManager, undefined, undefined, runDirectory);
         if (!eosRunner.validateSupported()) {
             this._logManager.logMessage('Eos runner could not find binary to run', 'WARN');
             return {} as EosScanResponse;
