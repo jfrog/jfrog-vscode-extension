@@ -38,7 +38,7 @@ describe('EventSender', () => {
             sinon.assert.callCount(postMessageStub, 2);
             sinon.assert.calledWithMatch(postMessageStub, {
                 type: IdeEventType.ShowPage,
-                pageData: mockPageData
+                data: mockPageData
             });
         });
     });
