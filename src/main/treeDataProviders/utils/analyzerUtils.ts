@@ -585,7 +585,7 @@ export class AnalyzerUtils {
      */
     private static createEosRequests(root: IssuesRootTreeNode, types?: PackageType[]): EosScanRequest[] {
         let languages: LanguageType[] = [];
-        if (types) {
+        if (types && types.length > 0) {
             types.forEach(type => {
                 let language: LanguageType | undefined = Translators.toLanguageType(type);
                 if (language) {
