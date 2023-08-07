@@ -17,7 +17,7 @@
 -   [About this Extension](#about-this-extension)
 -   [Getting Started](#getting-started)
     -   [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
-    -   [Connecting VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
+    -   [Connecting VS Code to Your JFrog Platform](#connecting-vs-code-to-your-jfrog-platform)
     -   [Using the extension](#using-the-extension)
         -   [Severity Icons](#severity-icons)
 -   [The Local View](#the-local-view)
@@ -111,7 +111,7 @@ The extension also applies [JFrog File Spec JSON schema](https://raw.githubuserc
 The extension is available to install from the VS Code extensions marketplace. after installing the JFrog extension tab <img src="resources/extensionIcon.png" width="30"> will appear in the activity bar
 ![Install](resources/readme/preview/install.png)
 
-## Connecting VS Code to Your JFrog Environment
+## Connecting VS Code to Your JFrog Platform
 
 <details>
 <summary>If you don't have a JFrog Platform instance, create a free instance in the cloud by running one of the following commands in your terminal.</summary>
@@ -135,22 +135,49 @@ The commands will do the following:
 </details>
 <br>
 
-Connect VS Code to your JFrog Platform instance by clicking on the green Connect ![Connect](resources/readme/connect.png) button or the provided button in the JFrog extension tab:
-![Connect](resources/readme/preview/connect.png)
+Once the JFrog Extension is installed in VS Code, click on the JFrog tab:
 
-You can choose one of the following methods to provide VS Code with the JFrog Platform connections details.
+![jfrogTab](resources/readme/preview/jfrogTab.png)
 
-### Use the JFrog CLI Credentials
 
-If JFrog CLI is installed on your machibe, and is configured with the JFrog Platform's connection details, use those details to connect VS Code to the JFrog Platform.
+This will open the Sign in page:
 
-### Enter Connection
+![SighInPage](resources/readme/preview/sighInPage.png)
 
-Enter your JFrog platform connection details manually.
+Fill in your connection details and click on the `Sign In` button to start using the extension
 
-**Note**: You can leave the JFrog Platform URL empty, to enter the URLs of Artifactory and Xray separately.
+**Note**: If you would like to use custom URLs for Artifactory or Xray, click on 'Advanced'.
 
-### Environment Variables
+You can also choose other option to authenticate with your JFrog Platform instance:
+1. [SSO](#connect-using-sso)
+2. [JFrog CLI's Connection Details](#connect-using-jfrog-cli-connection-details)
+3. [Using Environment Variables](#connect-using-environment-variables).
+
+
+### Connect Using SSO
+
+To sign in using SSO, follow these steps:
+
+1. On the sign-in page, click the `Continue with SSO` button:
+
+![SighInSsoButton](resources/readme/preview/ssoButton.png)
+
+2. After entering your JFrog platform URL, click on `Sign in With SSO`.
+
+3. It will take a few seconds for the browser to redirect you to the SSO sign in page.
+
+4. You should now be signed in in at vscode.
+
+### Connect Using JFrog CLI Connection Details
+
+If JFrog CLI is installed on your machine and is configured with your JFrog Platform connection details, then you should see the message popup in the Sigh in page:
+
+![LoginPageJfrogCli](resources/readme/preview/sighInPageJFrogCli.png)
+
+
+
+
+### Connect Using Environment Variables
 
 You may set the connection details using the following environment variables. VS Code will read them after it is launched.
 
@@ -159,6 +186,10 @@ You may set the connection details using the following environment variables. VS
 -   `JFROG_IDE_PASSWORD` - JFrog password
 -   `JFROG_IDE_ACCESS_TOKEN` - JFrog access token
 -   `JFROG_IDE_STORE_CONNECTION` - Set the value of this environment variable to **true**, if you'd like VS Code to store the connection details after reading them from the environment variables.
+
+Once the above environment variables are configured, you can expect to see a message popup in the Sigh in page:
+
+![LoginPageEnvVar](resources/readme/preview/sighInPageEnvVar.png)
 
 **Note**: For security reasons, it is recommended to unset the environment variables after launching VS Code.
 
