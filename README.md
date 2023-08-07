@@ -146,11 +146,11 @@ You can also authenticate with your JFrog Platform instance by using the configu
 
 To sign in using SSO, follow these steps:
 
-1. On the sign-in page, click the 'Continue with SSO' button:
+1. On the sign-in page, click the `Continue with SSO` button:
 
 ![SighInSsoButton](resources/readme/preview/ssoButton.png)
 
-2. After entering your JFrog platform URL, click on 'Sign in With SSO'.
+2. After entering your JFrog platform URL, click on `Sign in With SSO`.
 
 3. It will take a few seconds for the browser to redirect you to the SSO sign in page.
 
