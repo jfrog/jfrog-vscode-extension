@@ -139,7 +139,10 @@ Fill in your connection details and click on the `Sign In` button to start using
 
 **Note**: If you would like to use custom URLs for Artifactory or Xray, click on 'Advanced'.
 
-You can also authenticate with your JFrog Platform instance by using the configured [JFrog CLI's Connection Details](#connect-using-jfrog-cli-connection-details) or by [Using Environment Variables](#connect-using-environment-variables).
+You can also choose other option to authenticate with your JFrog Platform instance:
+1. [SSO](#connect-using-sso)
+2. [JFrog CLI's Connection Details](#connect-using-jfrog-cli-connection-details)
+3. [Using Environment Variables](#connect-using-environment-variables).
 
 
 ### Connect Using SSO
