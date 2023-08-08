@@ -7,7 +7,7 @@ import { DependencyScanResults, ScanResults } from '../../main/types/workspaceIs
 import { DependencyUtils } from '../../main/treeDataProviders/utils/dependencyUtils';
 import { DescriptorTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
 import { assert } from 'chai';
-import { IImpactGraph } from 'jfrog-ide-webview';
+import { IImpactGraph, IImpactGraphNode } from 'jfrog-ide-webview';
 import { BuildTreeErrorType, RootNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { FileScanBundle, FileScanError, NotEntitledError, ScanCancellationError } from '../../main/utils/scanUtils';
 import { FileTreeNode } from '../../main/treeDataProviders/issuesTree/fileTreeNode';
@@ -74,28 +74,50 @@ describe('Dependency Utils Tests', () => {
 
     function getExpectedImpactedTree(root: RootNode): Map<string, IImpactGraph> {
         let map: Map<string, IImpactGraph> = new Map<string, IImpactGraph>();
-        // issue XRAY-191882, for components [A:1.0.0, C:2.0.0]
         map.set('XRAY-191882' + 'A:1.0.0', {
-            name: root.componentId,
-            children: [{ name: 'A:1.0.0' } as IImpactGraph, { name: 'C:2.0.0', children: [{ name: 'A:1.0.0' } as IImpactGraph] } as IImpactGraph]
+            root: {
+                name: root.componentId,
+                children: [
+                    { name: 'A:1.0.0' } as IImpactGraphNode,
+                    { name: 'C:2.0.0', children: [{ name: 'A:1.0.0' } as IImpactGraphNode] } as IImpactGraphNode
+                ]
+            } as IImpactGraphNode,
+            pathsCount: 2,
+            pathsLimit: DependencyUtils.IMPACT_PATHS_LIMIT
         } as IImpactGraph);
         map.set('XRAY-191882' + 'C:2.0.0', {
-            name: root.componentId,
-            children: [{ name: 'C:2.0.0' } as IImpactGraph]
+            root: {
+                name: root.componentId,
+                children: [{ name: 'C:2.0.0' } as IImpactGraphNode]
+            },
+            pathsCount: 1,
+            pathsLimit: DependencyUtils.IMPACT_PATHS_LIMIT
         } as IImpactGraph);
         // issue XRAY-94201, for components B:1.0.0
         map.set('XRAY-94201' + 'B:1.0.0', {
-            name: root.componentId,
-            children: [{ name: 'B:1.0.0' } as IImpactGraph]
+            root: {
+                name: root.componentId,
+                children: [{ name: 'B:1.0.0' } as IImpactGraphNode]
+            },
+            pathsCount: 1,
+            pathsLimit: DependencyUtils.IMPACT_PATHS_LIMIT
         } as IImpactGraph);
         // issue XRAY-142007, for components [A:1.0.1, C:2.0.0]
         map.set('XRAY-142007' + 'A:1.0.1', {
-            name: root.componentId,
-            children: [{ name: 'B:1.0.0', children: [{ name: 'A:1.0.1' } as IImpactGraph] } as IImpactGraph]
+            root: {
+                name: root.componentId,
+                children: [{ name: 'B:1.0.0', children: [{ name: 'A:1.0.1' } as IImpactGraphNode] } as IImpactGraphNode]
+            },
+            pathsCount: 1,
+            pathsLimit: DependencyUtils.IMPACT_PATHS_LIMIT
         } as IImpactGraph);
         map.set('XRAY-142007' + 'C:2.0.0', {
-            name: root.componentId,
-            children: [{ name: 'C:2.0.0' } as IImpactGraph]
+            root: {
+                name: root.componentId,
+                children: [{ name: 'C:2.0.0' } as IImpactGraphNode]
+            },
+            pathsCount: 1,
+            pathsLimit: DependencyUtils.IMPACT_PATHS_LIMIT
         } as IImpactGraph);
         return map;
     }
@@ -107,7 +129,7 @@ describe('Dependency Utils Tests', () => {
 
     testCases.forEach(test => {
         it('Create impacted tree - ' + test.name, async () => {
-            let impactedTree: Map<string, IImpactGraph> = DependencyUtils.createImpactedPaths(root, test.response);
+            let impactedTree: Map<string, IImpactGraph> = DependencyUtils.createImpactedGraph(root, test.response);
             assert.deepEqual(test.expectedTree, Object.fromEntries(impactedTree.entries()));
             // Test get direct components
             let direct: Set<string> = DependencyUtils.getDirectComponents(impactedTree);

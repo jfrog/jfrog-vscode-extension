@@ -12,7 +12,7 @@ import { MavenUtils } from '../../utils/mavenUtils';
 import { NpmUtils } from '../../utils/npmUtils';
 import { PypiUtils } from '../../utils/pypiUtils';
 import { YarnUtils } from '../../utils/yarnUtils';
-import { IImpactGraph, ILicense } from 'jfrog-ide-webview';
+import { IImpactGraph, IImpactGraphNode, ILicense } from 'jfrog-ide-webview';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { FocusType } from '../../constants/contextKeys';
 import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
@@ -33,6 +33,7 @@ import { ApplicabilityRunner } from '../../scanLogic/scanRunners/applicabilitySc
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
+    public static readonly IMPACT_PATHS_LIMIT: number = 50;
 
     /**
      * Scan all the dependencies of a given package for security issues and populate the given data and view objects with the information.
@@ -261,7 +262,7 @@ export class DependencyUtils {
         }
         // Populate response
         dependencyIssues.impactTreeData = Object.fromEntries(
-            DependencyUtils.createImpactedPaths(descriptorGraph, dependencyIssues.dependenciesGraphScan).entries()
+            DependencyUtils.createImpactedGraph(descriptorGraph, dependencyIssues.dependenciesGraphScan).entries()
         );
         let issuesCount: number = DependencyUtils.populateDependencyScanResults(projectNode, dependencyIssues);
         scanManager.logManager.logMessage(
@@ -322,7 +323,7 @@ export class DependencyUtils {
      * @param response - the scan result issues and the dependency components for each of them
      * @returns map from (issue_id+componentId) to IImpactedPath for the given tree root
      */
-    public static createImpactedPaths(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactGraph> {
+    public static createImpactedGraph(descriptorGraph: RootNode, response: IGraphResponse): Map<string, IImpactGraph> {
         let paths: Map<string, IImpactGraph> = new Map<string, IImpactGraph>();
         let issues: IVulnerability[] = response.violations || response.vulnerabilities;
         if (!issues) {
@@ -331,9 +332,14 @@ export class DependencyUtils {
         for (let i: number = 0; i < issues.length; i++) {
             let issue: IVulnerability = issues[i];
             for (let [componentId, component] of Object.entries(issue.components)) {
+                const childGraph: IImpactGraph = this.getChildrenGraph(descriptorGraph, component, 0);
                 paths.set(issue.issue_id + componentId, {
-                    name: this.getGraphName(descriptorGraph),
-                    children: this.getChildrenImpact(descriptorGraph, component)
+                    root: {
+                        name: this.getGraphName(descriptorGraph),
+                        children: childGraph.root.children
+                    },
+                    pathsCount: childGraph.pathsCount,
+                    pathsLimit: DependencyUtils.IMPACT_PATHS_LIMIT
                 } as IImpactGraph);
             }
         }
@@ -352,28 +358,32 @@ export class DependencyUtils {
      * @param componentWithIssue - the component to generate the impact path for it
      * @returns array of impact paths one for each child if exists
      */
-    private static getChildrenImpact(root: DependenciesTreeNode, componentWithIssue: IComponent): IImpactGraph[] {
-        let impactPaths: IImpactGraph[] = [];
+    private static getChildrenGraph(root: DependenciesTreeNode, componentWithIssue: IComponent, size: number): IImpactGraph {
+        let impactPaths: IImpactGraphNode[] = [];
         for (let child of root.children) {
-            let impactChild: IImpactGraph | undefined = impactPaths.find(p => p.name === child.componentId);
+            let impactChild: IImpactGraphNode | undefined = impactPaths.find(p => p.name === child.componentId);
             if (!impactChild) {
                 if (child.componentId === componentWithIssue.package_name + ':' + componentWithIssue.package_version) {
                     // Direct impact
-                    impactPaths.push({
-                        name: child.componentId
-                    } as IImpactGraph);
+                    if (size < DependencyUtils.IMPACT_PATHS_LIMIT) {
+                        impactPaths.push({
+                            name: child.componentId
+                        } as IImpactGraphNode);
+                    }
+                    size++;
                 }
                 // indirect impact
-                let indirectImpact: IImpactGraph[] = this.getChildrenImpact(child, componentWithIssue);
-                if (indirectImpact.length > 0) {
+                let indirectImpact: IImpactGraph = this.getChildrenGraph(child, componentWithIssue, size);
+                if (!!indirectImpact.root.children?.length) {
                     impactPaths.push({
                         name: child.componentId,
-                        children: indirectImpact
-                    } as IImpactGraph);
+                        children: indirectImpact.root.children
+                    } as IImpactGraphNode);
+                    size = indirectImpact.pathsCount ?? 0;
                 }
             }
         }
-        return impactPaths;
+        return { root: { children: impactPaths }, pathsCount: size } as IImpactGraph;
     }
 
     /**
@@ -398,8 +408,8 @@ export class DependencyUtils {
             let severity: Severity = SeverityUtils.getSeverity(issue.severity);
             // Populate the issue for each dependency component
             for (let [artifactId, component] of Object.entries(issue.components)) {
-                let impactedPath: IImpactGraph | undefined = impactedPaths.get(issue.issue_id + artifactId);
-                if (!impactedPath) {
+                let impactGraph: IImpactGraph | undefined = impactedPaths.get(issue.issue_id + artifactId);
+                if (!impactGraph) {
                     continue;
                 }
                 let dependencyWithIssue: DependencyIssuesTreeNode = projectNode.addNode(
@@ -415,7 +425,7 @@ export class DependencyUtils {
                     // Xray will return component duplication (just watch_name different), combine those results
                     matchIssue.watchNames.push(violationIssue.watch_name);
                 } else if (!matchIssue) {
-                    this.populateDependencyIssue(issue, dependencyWithIssue, severity, component, impactedPath);
+                    this.populateDependencyIssue(issue, dependencyWithIssue, severity, component, impactGraph);
                 }
             }
         }
@@ -475,8 +485,8 @@ export class DependencyUtils {
         let result: Set<string> = new Set<string>();
 
         for (const impactedPath of impactedPaths.values()) {
-            if (impactedPath.children) {
-                for (const directPath of impactedPath.children) {
+            if (impactedPath.root.children) {
+                for (const directPath of impactedPath.root.children) {
                     result.add(directPath.name);
                 }
             }
@@ -501,7 +511,7 @@ export class DependencyUtils {
             let ranges: vscode.Range[] = [];
             let processed: Set<string> = new Set<string>();
             for (const issue of dependency.issues) {
-                let directDependencies: string[] | undefined = issue.impactedTree.children?.map(child => child.name);
+                let directDependencies: string[] | undefined = issue.impactGraph.root.children?.map(child => child.name);
                 if (directDependencies) {
                     for (const directDependency of directDependencies) {
                         if (!processed.has(directDependency)) {

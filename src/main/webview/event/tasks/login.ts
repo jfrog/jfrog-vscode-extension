@@ -50,9 +50,9 @@ export class LoginTask {
     }
 
     /**
-    * Connects to the IDE after a successful login.
-    * Waits for 3 seconds to let the user see the 'success' animation and read the instructions.
-    */
+     * Connects to the IDE after a successful login.
+     * Waits for 3 seconds to let the user see the 'success' animation and read the instructions.
+     */
     private async connectIde() {
         await new Promise(resolve =>
             setTimeout(() => {
