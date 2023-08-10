@@ -33,7 +33,7 @@ import { ApplicabilityRunner } from '../../scanLogic/scanRunners/applicabilitySc
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
-    public static readonly IMPACT_PATHS_LIMIT: number = 50;
+    public static IMPACT_PATHS_LIMIT: number = 50;
 
     /**
      * Scan all the dependencies of a given package for security issues and populate the given data and view objects with the information.
@@ -379,8 +379,8 @@ export class DependencyUtils {
                         name: child.componentId,
                         children: indirectImpact.root.children
                     } as IImpactGraphNode);
-                    size = indirectImpact.pathsCount ?? 0;
                 }
+                size = indirectImpact.pathsCount ?? size;
             }
         }
         return { root: { children: impactPaths }, pathsCount: size } as IImpactGraph;

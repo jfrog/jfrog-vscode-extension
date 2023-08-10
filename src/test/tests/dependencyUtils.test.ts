@@ -137,6 +137,20 @@ describe('Dependency Utils Tests', () => {
         });
     });
 
+    describe('Limit impacted graph', () => {
+        it('Set paths limit to 1', () => {
+            const ORIGIN_IMPACT_PATHS_LIMIT: number = DependencyUtils.IMPACT_PATHS_LIMIT;
+            DependencyUtils.IMPACT_PATHS_LIMIT = 1;
+
+            let impactedTree: Map<string, IImpactGraph> = DependencyUtils.createImpactedGraph(root, getGraphResponse('scanGraphVulnerabilities'));
+
+            assert.equal(impactedTree.get('XRAY-191882A:1.0.0')?.pathsCount, 2);
+            assert.equal(impactedTree.get('XRAY-191882A:1.0.0')?.root.children?.length, 1);
+
+            DependencyUtils.IMPACT_PATHS_LIMIT = ORIGIN_IMPACT_PATHS_LIMIT;
+        });
+    });
+
     testCases.forEach(test => {
         it('Populate DependencyScanResults - ' + test.name, async () => {
             let scanResult: DependencyScanResults = {
