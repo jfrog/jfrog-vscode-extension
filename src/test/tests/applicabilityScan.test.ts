@@ -82,17 +82,20 @@ describe('Applicability Scan Tests', () => {
     });
 
     describe('Run applicability scan', () => {
-        let scanManager: DummyScanManager;
+        let npmScanManager: DummyScanManager;
+        let pythonScanManager: DummyScanManager;
         const testRoot: IssuesRootTreeNode = createRootTestNode(path.join('root'));
         const testDescriptor: ProjectDependencyTreeNode = new EnvironmentTreeNode('path', PackageType.Unknown, testRoot);
 
-        let expectedScannedCve: string[] = ['CVE-2021-3807', 'CVE-2021-3918'];
+        let expectedNpmScannedCve: string[] = ['CVE-2021-3807', 'CVE-2021-3918'];
+        let expectedPythonScannedCve: string[] = ['CVE-2021-3807', 'CVE-2021-3918', 'CVE-2022-25878'];
 
         before(async () => {
-            scanManager = getDummyScanManager().activate();
+            npmScanManager = getDummyScanManager().activate();
+            pythonScanManager = getDummyScanManager().activate();
             // Create dummy cve
             let testDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '9.9.9', testDescriptor);
-            for (let cve of new Set<string>(expectedScannedCve)) {
+            for (let cve of new Set<string>(expectedNpmScannedCve)) {
                 createDummyCveIssue(Severity.Medium, testDependency, cve, cve);
             }
             let notDirectDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '8.8.8', testDescriptor, true);
@@ -107,16 +110,22 @@ describe('Applicability Scan Tests', () => {
                 dataNode: testDescriptor
             } as FileScanBundle;
             // Run scan
-            await AnalyzerUtils.cveApplicableScanning(scanManager, [scanBundle], {} as StepProgress);
+            await AnalyzerUtils.cveApplicableScanning(npmScanManager, [scanBundle], {} as StepProgress, PackageType.Npm);
+            await AnalyzerUtils.cveApplicableScanning(pythonScanManager, [scanBundle], {} as StepProgress, PackageType.Python);
         });
 
         it('Check Virtual Environment is scanned', () => {
-            assert.isTrue(scanManager.scanned);
+            assert.isTrue(pythonScanManager.scanned);
         });
 
         it('Only scan direct cve', () => {
-            scanManager.cvesScanned.keys();
-            assert.sameMembers(expectedScannedCve, [...scanManager.cvesScanned]);
+            npmScanManager.cvesScanned.keys();
+            assert.sameMembers(expectedNpmScannedCve, [...npmScanManager.cvesScanned]);
+        });
+        // For Python projects, we scan all CVEs.
+        it('All cve with python project', () => {
+            pythonScanManager.cvesScanned.keys();
+            assert.sameMembers(expectedPythonScannedCve, [...pythonScanManager.cvesScanned]);
         });
     });
 

@@ -29,7 +29,6 @@ import { FileScanBundle, FileScanError, ScanUtils } from '../../utils/scanUtils'
 import { LogManager } from '../../log/logManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
-import { ApplicabilityRunner } from '../../scanLogic/scanRunners/applicabilityScan';
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
@@ -107,12 +106,11 @@ export class DependencyUtils {
             descriptorsParsed.add(child.generalInfo.path);
         }
         this.reportNotFoundDescriptors(descriptorsPaths, descriptorsParsed, scanManager.logManager);
+        if (!contextualScan || bundlesWithIssues.length == 0) {
+            return;
+        }
         await Promise.all(scansPromises).then(async () => {
-            // Applicable scan task for the current type
-            if (!contextualScan || !ApplicabilityRunner.supportedPackageTypes().includes(type) || bundlesWithIssues.length == 0) {
-                return;
-            }
-            await AnalyzerUtils.cveApplicableScanning(scanManager, bundlesWithIssues, progressManager).catch(err =>
+            await AnalyzerUtils.cveApplicableScanning(scanManager, bundlesWithIssues, progressManager, type).catch(err =>
                 ScanUtils.onScanError(err, scanManager.logManager, true)
             );
         });
