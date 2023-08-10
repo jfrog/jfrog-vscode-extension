@@ -9,6 +9,7 @@ import { DependencyScanResults, EntryIssuesData, ScanResults } from '../types/wo
 import { ProjectDependencyTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
 import { EnvironmentTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/environmentTreeNode';
 import { Utils } from '../utils/utils';
+import { IImpactGraph } from 'jfrog-ide-webview';
 
 /**
  * Describes a cache that holds all the information from an Xray scan for a workspace
@@ -74,7 +75,7 @@ export class IssuesCache {
      */
     public async getOrClearIfExpired(workspace: vscode.WorkspaceFolder): Promise<ScanResults | undefined> {
         let data: ScanResults | undefined = this.get(workspace);
-        if (data && Utils.isIssueCacheIntervalPassed(data.oldestScanTimestamp)) {
+        if (this.isInvalidCache(data)) {
             this.remove(workspace);
             vscode.window.showInformationMessage("JFrog: Scan results for '" + workspace.name + "' have expired.", ...['Rescan']).then(answer => {
                 if (answer === 'Rescan') {
@@ -84,6 +85,33 @@ export class IssuesCache {
             return undefined;
         }
         return data;
+    }
+
+    /**
+     * Checks if the cache is invalid based on the provided scan results data.
+     * @param data - The scan results data to validate.
+     * @returns True if the cache is invalid, otherwise false.
+     */
+    public isInvalidCache(data: ScanResults | undefined): boolean {
+        if (!data) {
+            return true;
+        }
+        if (Utils.isIssueCacheIntervalPassed(data.oldestScanTimestamp)) {
+            return true;
+        }
+        return this.isOldImpactGraphObject(data);
+    }
+
+    /**
+     * Checks if the impact graph structure is old based on the provided scan results data.
+     * @param data - The scan results data to check.
+     * @returns True if the impact graph structure is old, otherwise false.
+     */
+    private isOldImpactGraphObject(data: ScanResults): boolean {
+        const firstKey: string = Object.keys(data.descriptorsIssues[0].impactTreeData)[0];
+        const impactGraph: IImpactGraph = data.descriptorsIssues[0].impactTreeData[firstKey];
+        // Check if the impactGraph is in the form of old struct (no root property)
+        return !('root' in impactGraph);
     }
 
     /**
