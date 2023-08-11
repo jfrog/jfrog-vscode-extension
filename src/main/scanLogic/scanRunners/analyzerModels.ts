@@ -20,6 +20,8 @@ export interface AnalyzeScanRequest {
     output: string;
     // List of path to folders that scan will run inside
     roots: string[];
+    // Glob Pattern represent the files (not folders) that should be skipped
+    skipped_folders: string[];
 }
 
 export interface AnalyzerScanResponse {

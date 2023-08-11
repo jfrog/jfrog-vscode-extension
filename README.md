@@ -6,11 +6,11 @@
 # JFrog Extension for VS Code & Eclipse Theia
 
 ![JFrog Extension Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/JFrog.jfrog-vscode-extension?label=VS%20Code%20installs&color=blue&style=for-the-badge)
-![JFrog Extension Marketplace Installs](https://img.shields.io/open-vsx/dt/JFrog/jfrog-vscode-extension?label=Eclipse%20Theia%20installs&color=blue&style=for-the-badge)
 
-[![Visual Studio Marketplace](https://vsmarketplacebadges.dev/version/JFrog.jfrog-vscode-extension.png)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension) [![Open VSX Registry](https://img.shields.io/open-vsx/v/jfrog/jfrog-vscode-extension?label=Open%20VSX%20Registry)](https://open-vsx.org/extension/JFrog/jfrog-vscode-extension)
-[![Scanned by Frogbot](https://raw.github.com/jfrog/frogbot/master/images/frogbot-badge.png)](https://github.com/jfrog/frogbot#readme)
-[![Test](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml/badge.svg)](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml?branch=master)
+ [![Visual Studio Code Version](https://img.shields.io/visual-studio-marketplace/v/JFrog.jfrog-vscode-extension?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension)
+
+[![Visual Studio Marketplace](https://img.shields.io/badge/Visual%20Studio%20Code-Marketplace-blue.png)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension)  [![Open VSX Registry](https://img.shields.io/badge/Open%20VSX%20Registry-Marketplace-blue.png)](https://open-vsx.org/extension/JFrog/jfrog-vscode-extension)
+[![Scanned by Frogbot](https://raw.github.com/jfrog/frogbot/master/images/frogbot-badge.png)](https://github.com/jfrog/frogbot#readme) [![Test](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml/badge.svg)](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml?branch=master)
 
 </div>
 
@@ -18,7 +18,7 @@
 -   [About this Extension](#about-this-extension)
 -   [Getting Started](#getting-started)
     -   [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
-    -   [Connecting VS Code to Your JFrog Environment](#connecting-vs-code-to-your-jfrog-environment)
+    -   [Connecting VS Code to Your JFrog Platform](#connecting-vs-code-to-your-jfrog-platform)
     -   [Using the extension](#using-the-extension)
         -   [Severity Icons](#severity-icons)
 -   [The Local View](#the-local-view)
@@ -26,7 +26,7 @@
     -   [Viewing Vulnerabilities](#viewing-vulnerabilities)
         -   [Viewing Vulnerability Details](#viewing-vulnerability-details)
     -   [Updating Dependencies](#updating-dependencies)
-    -   [Ignore Rules](#ignore-rules)
+    -   [Creating Ignore Rules](#creating-ignore-rules)
     -   [Behind the Scenes](#behind-the-scenes)
         -   [Go Projects](#go-projects)
         -   [Maven Projects](#maven-projects)
@@ -61,28 +61,37 @@ The extension allows developers to find and fix security vulnerabilities in thei
 about the status of their code by continuously scanning it locally with [JFrog Xray](https://jfrog.com/xray/).
 
 ### What security capabilities do we provide?
-#### Software Composition Analysis (SCA)
-Scan your project dependencies for security issues.
-For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team.
-To learn more about enriched CVEs, see [here](https://www.jfrog.com/confluence/display/JFROG/JFrog+Security+CVE+Research+and+Enrichment)
+####  Basic
+##### 📦 Software Composition Analysis (SCA)
+- Scan project dependencies for security issues
+- Access enriched CVE data provided by the JFrog Security Research team.
 
-#### Advanced Scans
+Learn more about enriched CVEs in the [JFrog Security CVE Research and Enrichment](https://www.jfrog.com/confluence/display/JFROG/JFrog+Security+CVE+Research+and+Enrichment) documentation.
+
+####  Advanced
 *Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
 
-With advanced [**Contextual Analysis**](#contextual-analysis), understand the applicability of CVEs in your application and utilize JFrog Security scanners to analyze the way you use 3rd party packages in your projects.
-Automatically validate some high-impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and reduce false positives and vulnerability noise with smart CVE analysis.
+##### 🔍 Vulnerability Contextual Analysis
+This feature uses the code context to eliminate false positive reports on vulnerable dependencies that are not applicable to the code. Vulnerability Contextual Analysis is currently supported for Python and JavaScript code.
 
-To learn more, see [here](https://www.jfrog.com/confluence/display/JFROG/Vulnerability+Contextual+Analysis).
+##### 🏗️ Infrastructure as Code (IaC) Scan
+- Analyze Infrastructure as Code (IaC) files, such as Terraform, to identify security vulnerabilities and misconfigurations before deploying your cloud infrastructure.
+- Get actionable insights and recommendations for securing your IaC configurations.
 
-#### Supported Packages
-| Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) |
-|---------------------------------------------------|:----:|:------:|:-------:|:----:|:--------:|:-------:|
-| SCA                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
-| Upgrade vulnerable dependencies to fixed versions |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |
-| Contextual Analysis                               |  ❌  |   ❌   |   ✅    |  ✅  |    ✅    |   ❌    |
-| Exclude dev dependencies                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |
+##### 🔐 Secrets Detection
+Detect and prevent the inclusion of sensitive information, such as credentials and API keys, in your codebase.
 
-#### Additional Perks
+#### 🛡️ Supported Packages
+| Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) | [Terraform](#-infrastructure-as-code-(iac)-Scan) |
+|---------------------------------------------------|:----:|:------:|:-------:|:----:|:--------:|:-------:|:-------:|
+| [SCA](#-software-composition-analysis-sca)                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |   ❌    |
+| [Upgrade vulnerable dependencies to fixed versions](#updating-dependencies) |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |   ❌    |
+| [Vulnerability Contextual Analysis](#-vulnerability-contextual-analysis)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |   ❌    |
+| [Secrets Detection](#-secrets-detection)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |✅    |
+| [Exclude dev dependencies](#exclude-development-dependencies-during-scan)                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |   ❌    |
+| [Infrastructure as Code (IaC) Scan](#-infrastructure-as-code-(iac)-Scan)                          |  ❌  |   ❌   |   ❌    |  ❌  |    ❌    |   ❌    |   ✅     |
+
+#### 🌟 Additional Perks
 * Security issues are easily visible inline.
 * The results show issues with context, impact, and remediation.
 * View all security issues in one place, in the JFrog tab.
@@ -103,7 +112,7 @@ The extension also applies [JFrog File Spec JSON schema](https://raw.githubuserc
 The extension is available to install from the VS Code extensions marketplace. after installing the JFrog extension tab <img src="resources/extensionIcon.png" width="30"> will appear in the activity bar
 ![Install](resources/readme/preview/install.png)
 
-## Connecting VS Code to Your JFrog Environment
+## Connecting VS Code to Your JFrog Platform
 
 <details>
 <summary>If you don't have a JFrog Platform instance, create a free instance in the cloud by running one of the following commands in your terminal.</summary>
@@ -127,22 +136,49 @@ The commands will do the following:
 </details>
 <br>
 
-Connect VS Code to your JFrog Platform instance by clicking on the green Connect ![Connect](resources/readme/connect.png) button or the provided button in the JFrog extension tab:
-![Connect](resources/readme/preview/connect.png)
+Once the JFrog Extension is installed in VS Code, click on the JFrog tab:
 
-You can choose one of the following methods to provide VS Code with the JFrog Platform connections details.
+![jfrogTab](resources/readme/preview/jfrogTab.png)
 
-### Use the JFrog CLI Credentials
 
-If JFrog CLI is installed on your machibe, and is configured with the JFrog Platform's connection details, use those details to connect VS Code to the JFrog Platform.
+This will open the Sign in page:
 
-### Enter Connection
+![SighInPage](resources/readme/preview/sighInPage.png)
 
-Enter your JFrog platform connection details manually.
+Fill in your connection details and click on the `Sign In` button to start using the extension
 
-**Note**: You can leave the JFrog Platform URL empty, to enter the URLs of Artifactory and Xray separately.
+**Note**: If you would like to use custom URLs for Artifactory or Xray, click on 'Advanced'.
 
-### Environment Variables
+You can also choose other option to authenticate with your JFrog Platform instance:
+1. [SSO](#connect-using-sso)
+2. [JFrog CLI's Connection Details](#connect-using-jfrog-cli-connection-details)
+3. [Using Environment Variables](#connect-using-environment-variables).
+
+
+### Connect Using SSO
+
+To sign in using SSO, follow these steps:
+
+1. On the sign-in page, click the `Continue with SSO` button:
+
+![SighInSsoButton](resources/readme/preview/ssoButton.png)
+
+2. After entering your JFrog platform URL, click on `Sign in With SSO`.
+
+3. It will take a few seconds for the browser to redirect you to the SSO sign in page.
+
+4. You should now be signed in in at vscode.
+
+### Connect Using JFrog CLI Connection Details
+
+If JFrog CLI is installed on your machine and is configured with your JFrog Platform connection details, then you should see the message popup in the Sigh in page:
+
+![LoginPageJfrogCli](resources/readme/preview/sighInPageJFrogCli.png)
+
+
+
+
+### Connect Using Environment Variables
 
 You may set the connection details using the following environment variables. VS Code will read them after it is launched.
 
@@ -151,6 +187,10 @@ You may set the connection details using the following environment variables. VS
 -   `JFROG_IDE_PASSWORD` - JFrog password
 -   `JFROG_IDE_ACCESS_TOKEN` - JFrog access token
 -   `JFROG_IDE_STORE_CONNECTION` - Set the value of this environment variable to **true**, if you'd like VS Code to store the connection details after reading them from the environment variables.
+
+Once the above environment variables are configured, you can expect to see a message popup in the Sigh in page:
+
+![LoginPageEnvVar](resources/readme/preview/sighInPageEnvVar.png)
 
 **Note**: For security reasons, it is recommended to unset the environment variables after launching VS Code.
 
@@ -185,16 +225,24 @@ With this information, a developer can make an informed decision on whether to u
 scan your workspace by clicking the Scan/Rescan button, the <img src='resources/dark/refresh.png' height="15" width="15"> icon at the extension tab or click on Start Xray Scan from within the editor. The scan will create a list of files with vulnerabilities in the workspace.
 ![Refresh](resources/readme/preview/refresh.png)
 
-### Viewing vulnerabilities
-View all the discovered files with vulnerabilities in a tree.
-Each descriptor file (like pom.xml in Maven, go.mod in Go, etc.) in the list contains vulnerable dependencies, and each dependency contains the vulnerabilities themselves.
-Other source code files contains a list of vulnerabilities for each location at the file.
-In addition the locations with vulnerabilities will be marked in the editor and you can jump from vulnerable location in the editor to the matching entry at the tree by clicking on th light bulb.
+### Viewing Vulnerabilities
+The JFrog extension incorporates a file tree displaying all the vulnerabilities within the project. Each file that is infected with a vulnerability appears as a tree node.
+
+Descriptor file (e.g., pom.xml in Maven, go.mod in Go, etc.) has a special meaning that outlines the available direct dependencies for the project. The tree will show these descriptor files containing vulnerable dependencies.  In cases where a direct dependency contains vulnerable child dependencies, the tree will show the vulnerable child dependencies instead, denoting them with a '(indirect)' postfix.
+
+Furthermore, various types of vulnerability nodes, such as Contextual Analysis Vulnerabilities or hard-coded secrets, may be present in other source code files.
+
+Each file node in the tree is interactive,  click and expand it to view its children node and navigate to the corresponding file in the IDE for better visibility. Upon navigating to a file, the extension will highlight the vulnerable line, making it easier to locate the specific issue
+
+In addition the locations with vulnerabilities will be marked in the editor. By clicking on the light bulb icon next to a vulnerable location in the editor, we can instantly jump to the corresponding entry in the tree view.
+
 ![Tree view](resources/readme/preview/treeView.png)
 
+Clicking on a CVE in the list will open the location with the issue in the editor and a vulnerability details view. This view contains information about the vulnerability, the vulnerable component, fixed versions, impact paths and much more.
 
-### Viewing Vulnerability Details
-Clicking a vulnerability in the list will open the location with the issue in the editor and a vulnerability details view. This view contains information about the vulnerability, the vulnerable component, fixed versions, impact paths and much more.
+![Impact_Graph](resources/readme/preview/impactGraph.png)
+![Public_Resources](resources/readme/preview/publicDetails.png)
+
 <details>
 <summary>CVE Research and Enrichment</summary>
 For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team. Prioritize the CVEs based on:
@@ -210,26 +258,44 @@ Check out what our research team is up to and stay updated on newly discovered i
 </details>
 
 <details>
-<summary>Contextual Analysis</summary>
-Xray automatically validates some high and very high impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and provides contextual analysis information for these vulnerabilities, to assist you in figuring out which vulnerabilities need to be fixed.  Contextual Analysis data includes:
+<summary>Vulnerability Contextual Analysis</summary>
+Xray automatically validates some high and very high impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and provides contextual analysis information for these vulnerabilities, to assist you in figuring out which vulnerabilities need to be fixed. Vulnerability Contextual Analysis data includes:
 
-* Contextual analysis status: Contextual analysis results indicating if a CVE was found applicable in your application or not applicable.
-* Contextual Analysis breakdown: An explanation provided by our research team as to why the CVE was found applicable or not applicable.
+* Vulnerability Contextual Analysis status: Vulnerability Contextual Analysis results indicating if a CVE was found applicable in your application or not applicable.
+* Vulnerability Contextual Analysis breakdown: An explanation provided by our research team as to why the CVE was found applicable or not applicable.
 * Remediation: Contextual mitigation steps and options provided by our research team that assist you with remediating the issues.
 
 ![Contextual_Analysis](resources/readme/preview/contextualDetails.png)
 
 </details>
 
-![Public_Resources](resources/readme/preview/publicDetails.png)
-![Impact_Graph](resources/readme/preview/impactGraph.png)
+<details>
+<summary>Secrets Detection</summary>
+* Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
+
+Detect any secrets left exposed inside the code. to prevent any accidental leak of internal tokens or credentials.
+
+![Secrets_Detection](resources/readme/preview/secrets.png)
+
+</details>
+
+<details>
+
+<summary>Infrastructure as Code (IaC) Scan</summary>
+* Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
+
+Scan Infrastructure as Code (Terraform) files for early detection of cloud and infrastructure misconfigurations.
+
+![iac_scan](resources/readme/preview/iac.png)
+
+</details>
 
 ### Updating Dependencies
 Update a vulnerable direct dependency to a fixed version directly from the vulnerable location at the editor using quick fix
 ![Set_Fixed_Version](resources/readme/preview/updateQuickFix.png)
 
-### Ignore Rules
-If Xray watches are used, on an icon vulnerability line an closed eye icon will appear by clicking on it you can create an [Ignore Rule](https://www.jfrog.com/confluence/display/JFROG/Ignore+Rules) in Xray.
+### Creating Ignore Rules
+When Xray watches are enabled and a vulnerability is detected, a closed eye icon will appear next to the vulnerability line in the JFrog extension. By clicking on this icon, you can initiate the process of creating an [Ignore Rule](https://www.jfrog.com/confluence/display/JFROG/Ignore+Rules) in Xray.
 ![Ignore_Rule](resources/readme/preview/ignoreRule.png)
 
 ## Behind the Scenes

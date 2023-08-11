@@ -3,10 +3,9 @@ import * as vscode from 'vscode';
 import * as os from 'os';
 import * as fs from 'fs';
 import AdmZip, { IZipEntry } from 'adm-zip';
-import { ScanUtils } from './scanUtils';
 
 export class Utils {
-    private static readonly MAX_FILES_EXTRACTED_ZIP: number = 1000;
+    private static readonly MAX_FILES_EXTRACTED_ZIP: number = 2500;
     // 1 GB
     private static readonly MAX_SIZE_EXTRACTED_ZIP_BYTES: number = 1000000000;
     private static readonly COMPRESSION_THRESHOLD_RATIO: number = 100;
@@ -20,6 +19,10 @@ export class Utils {
 
     public static async openSettings(id?: string): Promise<void> {
         await vscode.commands.executeCommand('workbench.action.openSettings', `@ext:${Utils.getExtensionId()}` + (id ? ` ${id}` : ''));
+    }
+
+    public static combineSets(sets: Set<string>[]): Set<string> {
+        return new Set<string>(...sets);
     }
 
     /**
@@ -148,12 +151,6 @@ export class Utils {
     public static createDirIfNotExists(dirPath: string, createRecursive: boolean = true) {
         if (!fs.existsSync(dirPath)) {
             fs.mkdirSync(dirPath, { recursive: createRecursive } as fs.MakeDirectoryOptions);
-        }
-    }
-
-    public static removeDirIfExists(dirPath: string) {
-        if (fs.existsSync(dirPath)) {
-            ScanUtils.removeFolder(dirPath);
         }
     }
 

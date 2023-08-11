@@ -243,8 +243,12 @@ export class ScanUtils {
         if (error instanceof ScanCancellationError) {
             throw error;
         }
-        if (error instanceof NotEntitledError || error instanceof NotSupportedError) {
+        if (error instanceof NotEntitledError) {
             logger.logMessage(error.message, 'INFO');
+            return undefined;
+        }
+        if (error instanceof OsNotSupportedError) {
+            logger.logMessage(error.message, 'WARN');
             return undefined;
         }
         if (error instanceof NotSupportedError) {
@@ -262,10 +266,10 @@ export class ScanUtils {
 export interface FileScanBundle {
     // The results data of all the scans in the workspace
     workspaceResults: ScanResults;
-    // The root view node of the workspace
-    root: IssuesRootTreeNode;
-    // The results if exists if the scan
+    // The issues, if exists, found as a result of specific scan
     data: EntryIssuesData;
+    // The root view node of the workspace
+    rootNode: IssuesRootTreeNode;
     // The view node of the file if exists issues in data
     dataNode?: FileTreeNode;
 }
@@ -277,6 +281,12 @@ export class NotEntitledError extends Error {
 export class NotSupportedError extends Error {
     constructor(typeNotSupported: string) {
         super(typeNotSupported + ' is not supported in the current Analyzer Manager version');
+    }
+}
+
+export class OsNotSupportedError extends Error {
+    constructor(typeNotSupported: string) {
+        super(typeNotSupported + ' is not supported for this operating system');
     }
 }
 

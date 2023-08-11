@@ -2,6 +2,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { assert } from 'chai';
 
+import { IacRunner, IacScanResponse } from '../../../main/scanLogic/scanRunners/iacScan';
 import {
     AnalyzerManagerIntegrationEnv,
     assertFileIssuesExist,
@@ -13,27 +14,27 @@ import {
     assertIssuesSeverityExist
 } from '../utils/testIntegration.test';
 import { NotSupportedError } from '../../../main/utils/scanUtils';
-import { SecretsRunner, SecretsScanResponse } from '../../../main/scanLogic/scanRunners/secretsScan';
 
-describe('Secrets Scan Integration Tests', async () => {
+describe('Iac Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
-    const testDataRoot: string = path.join(__dirname, '..', '..', 'resources', 'secretsScan');
+    const testDataRoot: string = path.join(__dirname, '..', '..', 'resources', 'iacScan');
 
-    let runner: SecretsRunner;
-    let response: SecretsScanResponse;
-    let expectedContent: SecretsScanResponse;
+    let runner: IacRunner;
+    let response: IacScanResponse;
+    let expectedContent: IacScanResponse;
 
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        runner = new SecretsRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
+        runner = new IacRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
+        runner.verbose = true;
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
         // Get expected partial result that the scan should contain
         let dataPath: string = path.join(testDataRoot, 'expectedScanResponse.json');
         expectedContent = JSON.parse(fs.readFileSync(dataPath, 'utf8').toString());
-        assert.isDefined(expectedContent, 'Failed to read expected SecretsScanResponse content from ' + dataPath);
+        assert.isDefined(expectedContent, 'Failed to read expected IacScanResponse content from ' + dataPath);
         // Run scan
-        // Try/Catch (with skip) should be removed after Secrets scan is released
+        // Try/Catch (with skip) should be removed after Iac is released
         try {
             response = await runner.scan(testDataRoot, () => undefined);
         } catch (err) {

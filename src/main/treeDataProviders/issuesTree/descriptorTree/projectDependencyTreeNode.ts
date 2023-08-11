@@ -7,6 +7,7 @@ import { CveTreeNode } from './cveTreeNode';
 import { IComponent } from 'jfrog-client-js';
 import * as path from 'path';
 import { Utils } from '../../../utils/utils';
+import { CveApplicableDetails } from '../../../scanLogic/scanRunners/applicabilityScan';
 
 /**
  * Describes a base class for descriptor/environment dependencies.
@@ -14,8 +15,14 @@ import { Utils } from '../../../utils/utils';
  */
 export class ProjectDependencyTreeNode extends FileTreeNode {
     protected _dependenciesWithIssue: DependencyIssuesTreeNode[] = [];
+
+    // Not applicable if key in here and not in the map below
+    private _scannedCve?: Set<string> | undefined;
+    // Is applicable if key in here
+    private _applicableCve?: Map<string, CveApplicableDetails> | undefined;
     protected _dependencyScanTimeStamp?: number;
     protected _applicableScanTimeStamp?: number;
+
     protected _packageType: PackageType;
     private projectPath: string;
 
@@ -111,6 +118,30 @@ export class ProjectDependencyTreeNode extends FileTreeNode {
 
     public set dependenciesWithIssue(dependencyIssuesTreeNode: DependencyIssuesTreeNode[]) {
         this._dependenciesWithIssue = dependencyIssuesTreeNode;
+    }
+
+    public get scannedCve(): Set<string> | undefined {
+        return this._scannedCve;
+    }
+
+    public set scannedCve(value: Set<string> | undefined) {
+        this._scannedCve = value;
+    }
+
+    public get applicableCve(): Map<string, CveApplicableDetails> | undefined {
+        return this._applicableCve;
+    }
+
+    public set applicableCve(value: Map<string, CveApplicableDetails> | undefined) {
+        this._applicableCve = value;
+    }
+
+    public get applicableScanTimeStamp(): number | undefined {
+        return this._applicableScanTimeStamp;
+    }
+
+    public set applicableScanTimeStamp(value: number | undefined) {
+        this._applicableScanTimeStamp = value;
     }
 
     public get type(): PackageType {

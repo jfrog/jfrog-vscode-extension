@@ -24,14 +24,15 @@ export class SecretsRunner extends BinaryRunner {
     }
 
     /** @override */
-    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string, checkCancel: () => void): Promise<void> {
+    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string | undefined, checkCancel: () => void): Promise<void> {
         await this.executeBinary(checkCancel, ['sec', yamlConfigPath], executionLogDirectory);
     }
 
-    public async scan(directory: string, checkCancel: () => void): Promise<SecretsScanResponse> {
+    public async scan(directory: string, checkCancel: () => void, skipFolders: string[] = []): Promise<SecretsScanResponse> {
         let request: AnalyzeScanRequest = {
             type: ScanType.Secrets,
-            roots: [directory]
+            roots: [directory],
+            skipped_folders: skipFolders
         } as AnalyzeScanRequest;
         return await this.run(checkCancel, request).then(runResult => this.convertResponse(runResult));
     }

@@ -6,8 +6,11 @@ import {
     IGraphResponse,
     IUsageFeature,
     JfrogClient,
-    XrayScanProgress
+    AccessTokenResponse,
+    XrayScanProgress,
+    ClientUtils
 } from 'jfrog-client-js';
+import * as crypto from 'crypto';
 import * as keytar from 'keytar';
 import * as semver from 'semver';
 import * as vscode from 'vscode';
@@ -17,10 +20,13 @@ import { ConnectionUtils } from './connectionUtils';
 import { ScanUtils } from '../utils/scanUtils';
 import { ContextKeys, SessionStatus } from '../constants/contextKeys';
 
-enum ConnectionMethod {
-    CLI = 'Use the JFrog CLI credentials',
-    EnvVar = 'Load credentials from environment variables',
-    Prompt = 'Enter credentials'
+export enum LoginStatus {
+    Success = 'SUCCESS',
+    Failed = 'FAILED',
+    FailedSaveCredentials = 'FAILED_SAVE_CREDENTIALS',
+    FailedServerNotSupported = 'FAILED_SERVER_NOT_SUPPORTED',
+    FailedTimeout = 'FAILED_TIMEOUT',
+    FailedBadCredentials = 'FAILED_BAD_CREDENTIALS'
 }
 
 /**
@@ -35,11 +41,13 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     // Service ID in the OS KeyStore to store and retrieve the password / access token
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
+
     // Key used for uniqueness when storing access token in KeyStore.
     private static readonly ACCESS_TOKEN_FS_KEY: string = 'vscode_jfrog_token';
 
     // Store connection details in file system after reading connection details from env
     public static readonly STORE_CONNECTION_ENV: string = 'JFROG_IDE_STORE_CONNECTION';
+
     // URL and credentials environment variables keys
     public static readonly USERNAME_ENV: string = 'JFROG_IDE_USERNAME';
     public static readonly PASSWORD_ENV: string = 'JFROG_IDE_PASSWORD';
@@ -92,30 +100,22 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
 
     public async isSignedIn(): Promise<boolean> {
-        const status: SessionStatus | undefined = await this.getConnectionStatus();
-        return status === SessionStatus.SignedIn;
+        return (await this.getConnectionStatus()) === SessionStatus.SignedIn;
+    }
+
+    public async isSignedOut(): Promise<boolean> {
+        return (await this.getConnectionStatus()) === SessionStatus.SignedOut;
     }
 
     public async isConnectionLost(): Promise<boolean> {
-        const status: SessionStatus | undefined = await this.getConnectionStatus();
-        return status === SessionStatus.connectionLost;
+        return (await this.getConnectionStatus()) === SessionStatus.connectionLost;
     }
 
     private async handledSignedIn() {
-        if (!(await this.tryToSignedIn())) {
+        if (!(await this.connect())) {
             this.setConnectionView(SessionStatus.connectionLost);
             await this.setConnectionStatus(SessionStatus.connectionLost);
         }
-    }
-
-    private async tryToSignedIn(): Promise<boolean> {
-        if ((await this.populateCredentials(false)) && (await this.verifyCredentials(false))) {
-            this.updateJfrogVersions();
-            this.setConnectionView(SessionStatus.SignedIn);
-            await this.setConnectionStatus(SessionStatus.SignedIn);
-            return true;
-        }
-        return false;
     }
 
     private async handledConnectionLost() {
@@ -123,20 +123,31 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
 
     private async handelUnknownState() {
-        if (!(await this.tryToSignedIn())) {
+        if (!(await this.connect())) {
             this.setConnectionView(SessionStatus.SignedOut);
             await this.setConnectionStatus(SessionStatus.SignedOut);
         }
     }
 
-    public async connect(chooseMethod: boolean = false): Promise<boolean> {
-        if (chooseMethod ? await this.chooseAndPopulateCredentials() : await this.populateCredentials(true)) {
-            await this.setConnectionStatus(SessionStatus.SignedIn);
-            this.setConnectionView(SessionStatus.SignedIn);
-            this.updateJfrogVersions();
-            return true;
+    public async connect(): Promise<boolean> {
+        this._logManager.logMessage('Trying to read credentials from KeyStore...', 'DEBUG');
+        const credentialsSet: boolean =
+            (await this.setUrlsFromFilesystem()) &&
+            (((await this.setUsernameFromFilesystem()) && (await this.setPasswordFromKeyStore())) || (await this.setAccessTokenFromKeyStore()));
+        if (!credentialsSet) {
+            this.deleteCredentialsFromMemory();
+            return false;
         }
-        return false;
+        await this.resolveUrls();
+        await this.onSuccessConnect();
+        return true;
+    }
+
+    public async onSuccessConnect() {
+        await this.setConnectionStatus(SessionStatus.SignedIn);
+        this.setConnectionView(SessionStatus.SignedIn);
+        this.updateJfrogVersions();
+        vscode.commands.executeCommand('jfrog.view.local');
     }
 
     public async disconnect(): Promise<boolean> {
@@ -147,6 +158,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                 this.deleteCredentialsFromMemory();
                 await this.setConnectionStatus(SessionStatus.SignedOut);
                 this.setConnectionView(SessionStatus.SignedOut);
+                vscode.commands.executeCommand('jfrog.view.login');
                 return true;
             }
         );
@@ -158,63 +170,6 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     public areCompleteCredentialsSet(): boolean {
         return !!(this._xrayUrl && this._rtUrl && ((this._username && this._password) || this._accessToken));
-    }
-
-    public async chooseAndPopulateCredentials(): Promise<boolean> {
-        // Try keystore to use old credentials
-        if (await this.tryCredentialsFromKeyStore()) {
-            return true;
-        }
-        let options: string[] = await this.getValidConnectionMethods();
-        let choice: string | undefined =
-            options.length === 1
-                ? options[0]
-                : await vscode.window.showQuickPick(options, <vscode.QuickPickOptions>{
-                      placeHolder: 'Pick connection method',
-                      canPickMany: false
-                  });
-        if (!!choice) {
-            switch (choice) {
-                case ConnectionMethod.EnvVar:
-                    return await this.tryCredentialsFromEnv();
-                case ConnectionMethod.CLI:
-                    return await this.tryCredentialsFromJfrogCli();
-                case ConnectionMethod.Prompt:
-                    return await this.tryCredentialsFromPrompt();
-            }
-        }
-        return false;
-    }
-
-    private async getValidConnectionMethods(): Promise<string[]> {
-        let options: string[] = [ConnectionMethod.Prompt];
-
-        if (await this.verifyJfrogCliInstalledAndVersion()) {
-            options.push(ConnectionMethod.CLI);
-        }
-        if (this.hasRequiredCredentialsInEnv()) {
-            options.push(ConnectionMethod.EnvVar);
-        }
-
-        return options;
-    }
-
-    /**
-     * Credentials priorities:
-     * 1. Credentials from KeyStore and global storage.
-     * 2. Credentials from Environment variable.
-     * 3. Credentials from JFrog CLI.
-     * 4. Credentials from Promp (if interactive).
-     * @param prompt - True if should prompt
-     * @returns true if the credentials populates
-     */
-    public async populateCredentials(prompt: boolean): Promise<boolean> {
-        return (
-            (await this.tryCredentialsFromKeyStore()) ||
-            (await this.tryCredentialsFromEnv()) ||
-            (await this.tryCredentialsFromJfrogCli()) ||
-            (prompt && (await this.tryCredentialsFromPrompt()))
-        );
     }
 
     public async verifyCredentials(prompt: boolean): Promise<boolean> {
@@ -246,21 +201,26 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return true;
     }
 
-    private async promptAll(): Promise<boolean> {
-        if (!(await this.promptUrls())) {
-            return false;
-        }
-        if (await this.promptAccessToken()) {
-            return true;
-        }
-        return (await this.promptUsername()) && (await this.promptPassword());
-    }
-
     public async readCredentialsFromJfrogCli(): Promise<boolean> {
         if (!(await this.verifyJfrogCliInstalledAndVersion())) {
             return false;
         }
         return await this.getJfrogCliDefaultServerConfiguration();
+    }
+
+    public async tryGetUrlFromJFrogCli(): Promise<string> {
+        try {
+            if (await this.verifyJfrogCliInstalledAndVersion()) {
+                return this.getJfrogCliDefaultServerUrl();
+            }
+        } catch (error) {
+            this._logManager.logMessage('Error encountered while reading platform URL from JFrog CLI: ' + error, 'DEBUG');
+        }
+        return '';
+    }
+
+    public tryGetUrlFromEnv(): string {
+        return this.getPlatformUrlFromEnv();
     }
 
     private async verifyJfrogCliInstalledAndVersion(): Promise<boolean> {
@@ -310,7 +270,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             let confStr: string = Buffer.from(output, 'base64').toString('ascii');
             let conf: any = JSON.parse(confStr);
 
-            this._url = conf['url'] || '';
+            this._url = this.getJfrogCliDefaultServerUrl();
             this._xrayUrl = conf['xrayUrl'] || '';
             this._rtUrl = conf['artifactoryUrl'] || '';
 
@@ -333,6 +293,14 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             this._logManager.logMessage('Error encountered while reading credentials from JFrog CLI: ' + error, 'DEBUG');
             return false;
         }
+    }
+
+    private getJfrogCliDefaultServerUrl(): string {
+        let output: string = execSync('jf c export').toString();
+        let confStr: string = Buffer.from(output, 'base64').toString('ascii');
+        let conf: any = JSON.parse(confStr);
+
+        return conf['url'] || '';
     }
 
     public get url() {
@@ -412,79 +380,144 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return this.getServiceUrlFromPlatform(this._url, 'xray');
     }
 
-    private async tryCredentialsFromKeyStore(): Promise<boolean> {
-        this._logManager.logMessage('Trying to read credentials from KeyStore...', 'DEBUG');
-        const credentialsSet: boolean =
-            (await this.setUrlsFromFilesystem()) &&
-            (((await this.setUsernameFromFilesystem()) && (await this.setPasswordFromKeyStore())) || (await this.setAccessTokenFromKeyStore()));
-        if (!credentialsSet) {
-            this.deleteCredentialsFromMemory();
-            return false;
-        }
-        await this.resolveUrls();
-        return true;
-    }
-
-    public async tryCredentialsFromEnv(): Promise<boolean> {
+    public async tryCredentialsFromEnv(): Promise<LoginStatus> {
         if (!(await this.getCredentialsFromEnv())) {
             this.deleteCredentialsFromMemory();
-            return false;
+            return LoginStatus.Failed;
         }
         if (!(await this.verifyCredentials(false))) {
             this.deleteCredentialsFromMemory();
-            return false;
+            return LoginStatus.FailedBadCredentials;
         }
         if (process.env[ConnectionManager.STORE_CONNECTION_ENV]?.toUpperCase() === 'TRUE') {
             // Store credentials in file system if JFROG_IDE_STORE_CONNECTION environment variable is true
-            await this.storeConnection();
+            return (await this.storeConnection()) ? LoginStatus.Success : LoginStatus.FailedSaveCredentials;
         }
-        return true;
+        return LoginStatus.Success;
     }
 
-    public async tryCredentialsFromJfrogCli(): Promise<boolean> {
+    public async tryCredentialsFromJfrogCli(): Promise<LoginStatus> {
         this._logManager.logMessage('Trying to read credentials from JFrog CLI...', 'DEBUG');
         if (!(await this.readCredentialsFromJfrogCli())) {
             this.deleteCredentialsFromMemory();
-            return false;
+            return LoginStatus.Failed;
         }
-        if (!(await this.verifyCredentials(false))) {
+        if (!(await this.verifyCredentials(true))) {
             this.deleteCredentialsFromMemory();
+            return LoginStatus.FailedBadCredentials;
+        }
+        return (await this.storeConnection()) ? LoginStatus.Success : LoginStatus.FailedSaveCredentials;
+    }
+    /**
+     * Initiates a web-based login process and obtains an access token.
+     * @param url - The platform URL.
+     * @param artifactoryUrl - The Artifactory URL.
+     * @param xrayUrl - The Xray URL.
+     * @returns A promise that resolves to the login status.
+     */
+    public async startWebLogin(url: string, artifactoryUrl: string, xrayUrl: string): Promise<LoginStatus> {
+        if (url === '' || artifactoryUrl === '' || xrayUrl === '') {
+            return LoginStatus.Failed;
+        }
+        this._logManager.logMessage('Start Web-Login with "' + url + '"', 'DEBUG');
+        const sessionId: string = crypto.randomUUID();
+        if (!(await this.registerWebLoginId(url, sessionId))) {
+            return LoginStatus.FailedServerNotSupported;
+        }
+        if (!(await this.openBrowser(this.createWebLoginEndpoint(url, sessionId)))) {
+            return LoginStatus.Failed;
+        }
+        const accessToken: string = await this.getWebLoginAccessToken(url, sessionId);
+        if (accessToken === '') {
+            return LoginStatus.FailedTimeout;
+        }
+        return this.tryStoreCredentials(url, artifactoryUrl, xrayUrl, '', '', accessToken);
+    }
+
+    private async registerWebLoginId(url: string, sessionId: string) {
+        try {
+            this._logManager.logMessage('Register session token ' + sessionId, 'DEBUG');
+            await ConnectionUtils.createJfrogClient(url, '', '', '', '', '')
+                .platform()
+                .webLogin()
+                .registerSessionId(sessionId);
+        } catch (error) {
+            this._logManager.logMessage(JSON.stringify(error), 'ERR');
             return false;
         }
-        await this.storeConnection();
         return true;
     }
 
-    private async tryCredentialsFromPrompt(): Promise<boolean> {
-        this._logManager.logMessage('Prompting for credentials...', 'DEBUG');
-        if (!(await this.promptAll())) {
+    /**
+     * Opens the browser window with the login URL for the given session ID and client name.
+     * @param id - The session ID.
+     */
+    private async openBrowser(target: vscode.Uri): Promise<boolean> {
+        try {
+            await vscode.env.openExternal(target);
+        } catch (error) {
+            this._logManager.logMessage('Failed to open the browser to' + target + ' Error:' + error, 'ERR');
             return false;
         }
-        const valid: boolean = await vscode.window.withProgress(
-            <vscode.ProgressOptions>{ location: vscode.ProgressLocation.Window, title: 'Checking connection with JFrog Platform server...' },
-            async (): Promise<boolean> => {
-                return await this.verifyCredentials(true);
-            }
-        );
+        return true;
+    }
+
+    private async getWebLoginAccessToken(url: string, sessionId: string): Promise<string> {
+        try {
+            const accessTokenData: AccessTokenResponse = await ConnectionUtils.createJfrogClient(
+                url,
+                '',
+                '',
+                '',
+                '',
+                '',
+                20,
+                undefined,
+                this._logManager,
+                (statusCode: number) => statusCode >= 500 || statusCode === 400,
+                15000
+            )
+                .platform()
+                .webLogin()
+                .getToken(sessionId);
+            return accessTokenData.access_token;
+        } catch (error) {
+            this._logManager.logMessage('Failed to get access token for SSO login at "' + url + '". Error:' + error, 'ERR');
+            return '';
+        }
+    }
+
+    public createWebLoginEndpoint(platformUrl: string, sessionId: string): vscode.Uri {
+        const endpoint: string = ClientUtils.addTrailingSlashIfMissing(platformUrl) + `ui/login?jfClientSession=${sessionId}&jfClientName=VS-Code`;
+        this._logManager.logMessage('Open browser at ' + endpoint, 'INFO');
+        return vscode.Uri.parse(endpoint);
+    }
+
+    public async tryStoreCredentials(
+        url: string,
+        rtUrl: string,
+        xrayUrl: string,
+        username?: string,
+        password?: string,
+        accessToken?: string
+    ): Promise<LoginStatus> {
+        this._url = url;
+        this._xrayUrl = xrayUrl;
+        this._rtUrl = rtUrl;
+        this._username = username || '';
+        this._password = password || '';
+        this._accessToken = accessToken || '';
+        const valid: boolean = await this.verifyCredentials(false);
         if (!valid) {
             this.deleteCredentialsFromMemory();
-            return false;
+            return LoginStatus.FailedBadCredentials;
         }
-        await this.storeConnection();
-        return true;
-    }
-
-    private hasRequiredCredentialsInEnv(): boolean {
-        return (
-            !!process.env[ConnectionManager.URL_ENV] &&
-            ((!!process.env[ConnectionManager.USERNAME_ENV] && !!process.env[ConnectionManager.PASSWORD_ENV]) ||
-                !!process.env[ConnectionManager.ACCESS_TOKEN_ENV])
-        );
+        return (await this.storeConnection()) ? LoginStatus.Success : LoginStatus.FailedSaveCredentials;
     }
 
     public async getCredentialsFromEnv(): Promise<boolean> {
         this._logManager.logMessage('Trying to read credentials from env...', 'DEBUG');
-        this._url = process.env[ConnectionManager.URL_ENV] || '';
+        this._url = this.getPlatformUrlFromEnv();
         this._username = process.env[ConnectionManager.USERNAME_ENV] || '';
         this._password = process.env[ConnectionManager.PASSWORD_ENV] || '';
         this._accessToken = process.env[ConnectionManager.ACCESS_TOKEN_ENV] || '';
@@ -497,53 +530,15 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return true;
     }
 
+    public getPlatformUrlFromEnv(): string {
+        return process.env[ConnectionManager.URL_ENV] || '';
+    }
+
     private async setUrlsFromFilesystem(): Promise<boolean> {
         this._url = (await this._context.globalState.get(ConnectionManager.PLATFORM_URL_KEY)) || '';
         this._xrayUrl = (await this._context.globalState.get(ConnectionManager.XRAY_URL_KEY)) || '';
         this._rtUrl = (await this._context.globalState.get(ConnectionManager.RT_URL_KEY)) || '';
         return !!this._url || !!this._xrayUrl;
-    }
-
-    private async promptUrls(): Promise<boolean> {
-        await this.promptPlatformUrl();
-        await this.promptArtifactoryUrl();
-        await this.promptXrayUrl();
-        return !!this._xrayUrl;
-    }
-
-    private async promptPlatformUrl(): Promise<boolean> {
-        this._url =
-            (await vscode.window.showInputBox({
-                prompt: 'Enter JFrog Platform URL',
-                value: this._url,
-                ignoreFocusOut: true,
-                placeHolder: 'Example: https://acme.jfrog.io (Leave empty to configure Xray and Artifactory separately)',
-                validateInput: ConnectionUtils.validateUrl
-            })) || '';
-        return !!this._url;
-    }
-
-    private async promptArtifactoryUrl(): Promise<boolean> {
-        this._rtUrl =
-            (await vscode.window.showInputBox({
-                prompt: 'Enter JFrog Artifactory URL',
-                value: this._url ? this.getRtUrlFromPlatform() : '',
-                ignoreFocusOut: true,
-                placeHolder: "Example: https://acme.jfrog.io/artifactory (Leave empty if you'e like to use only local Xray scans)",
-                validateInput: ConnectionUtils.validateUrl
-            })) || '';
-        return !!this._rtUrl;
-    }
-
-    private async promptXrayUrl(): Promise<boolean> {
-        this._xrayUrl =
-            (await vscode.window.showInputBox({
-                prompt: 'Enter JFrog Xray URL',
-                value: this._url ? this.getXrayUrlFromPlatform() : '',
-                ignoreFocusOut: true,
-                validateInput: ConnectionUtils.validateXrayUrl
-            })) || '';
-        return !!this._xrayUrl;
     }
 
     private async storePlatformUrl() {
@@ -560,17 +555,6 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     private async setUsernameFromFilesystem(): Promise<boolean> {
         this._username = (await this._context.globalState.get(ConnectionManager.XRAY_USERNAME_KEY)) || '';
-        return !!this._username;
-    }
-
-    private async promptUsername(): Promise<boolean> {
-        this._username =
-            (await vscode.window.showInputBox({
-                prompt: 'Enter username',
-                value: this._username,
-                ignoreFocusOut: true,
-                validateInput: ConnectionUtils.validateFieldNotEmpty
-            })) || '';
         return !!this._username;
     }
 
@@ -625,32 +609,11 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return true;
     }
 
-    private async promptPassword(): Promise<boolean> {
-        this._password =
-            (await vscode.window.showInputBox({
-                prompt: 'Enter password',
-                password: true,
-                ignoreFocusOut: true,
-                validateInput: ConnectionUtils.validateFieldNotEmpty
-            })) || '';
-        return !!this._password;
-    }
-
     private async storePassword() {
         if (!this._password) {
             return;
         }
         await keytar.setPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, this._username), this._password);
-    }
-
-    private async promptAccessToken(): Promise<boolean> {
-        this._accessToken =
-            (await vscode.window.showInputBox({
-                prompt: 'Enter JFrog access token (Leave blank for username and password)',
-                password: true,
-                ignoreFocusOut: true
-            })) || '';
-        return !!this._accessToken;
     }
 
     private async storeAccessToken() {
@@ -712,16 +675,22 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
      * Store URLs and username in VS-Code global state.
      * Store Xray password and access token in Key chain.
      */
-    private async storeConnection(): Promise<void> {
-        await this.storeXrayUrl();
-        await this.storeRtUrl();
-        await this.storePlatformUrl();
-        await this.storeUsername();
-        await this.storePassword();
-        await this.storeAccessToken();
+    private async storeConnection(): Promise<boolean> {
+        try {
+            await this.storeXrayUrl();
+            await this.storeRtUrl();
+            await this.storePlatformUrl();
+            await this.storeUsername();
+            await this.storePassword();
+            await this.storeAccessToken();
+            return true;
+        } catch (error) {
+            this._logManager.logMessage('Failed to store credentials. ' + JSON.stringify(error), 'ERR');
+        }
+        return false;
     }
 
-    private deleteCredentialsFromMemory() {
+    public deleteCredentialsFromMemory() {
         this._accessToken = '';
         this._password = '';
         this._username = '';
@@ -758,9 +727,6 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         project: string,
         watches: string[]
     ): Promise<IGraphResponse> {
-        if (!this.areXrayCredentialsSet()) {
-            await this.populateCredentials(false);
-        }
         let policyMessage: string = '';
         if (watches.length > 0) {
             policyMessage += ` Using Watches: [${watches.join(', ')}]`;

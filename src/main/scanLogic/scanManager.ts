@@ -237,12 +237,12 @@ export class ScanManager implements ExtensionComponent {
     ): Promise<ApplicabilityScanResponse> {
         let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(this._connectionManager, this._logManager);
         if (!applicableRunner.validateSupported()) {
-            this._logManager.logMessage('Applicability runner could not find binary to run', 'DEBUG');
+            this._logManager.logMessage('Applicability runner could not find binary to run', 'WARN');
             return {} as ApplicabilityScanResponse;
         }
-        let skipFiles: string[] = AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern());
+        let skipFiles: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
         this._logManager.logMessage(
-            'Scanning directory ' + directory + ', for CVE issues: ' + Array.from(cveToRun.values()) + ', skipping files: ' + skipFiles,
+            "Scanning directory '" + directory + "' for CVE issues: " + Array.from(cveToRun.values()) + '. Skipping files: ' + skipFiles,
             'DEBUG'
         );
         return await applicableRunner.scan(directory, checkCancel, cveToRun, skipFiles);
@@ -257,11 +257,12 @@ export class ScanManager implements ExtensionComponent {
     public async scanIac(directory: string, checkCancel: () => void): Promise<IacScanResponse> {
         let iacRunner: IacRunner = new IacRunner(this._connectionManager, this.logManager);
         if (!iacRunner.validateSupported()) {
-            this._logManager.logMessage('Iac runner could not find binary to run', 'DEBUG');
+            this._logManager.logMessage('Iac runner could not find binary to run', 'WARN');
             return {} as IacScanResponse;
         }
-        this._logManager.logMessage('Scanning directory ' + directory + ', for Iac issues', 'DEBUG');
-        return await iacRunner.scan(directory, checkCancel);
+        let skipFiles: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
+        this._logManager.logMessage("Scanning directory '" + directory + "', for Iac issues. Skipping files: " + skipFiles, 'DEBUG');
+        return await iacRunner.scan(directory, checkCancel, skipFiles);
     }
     /**
      * Scan directory for secrets issues.
@@ -272,11 +273,12 @@ export class ScanManager implements ExtensionComponent {
     public async scanSecrets(directory: string, checkCancel: () => void): Promise<SecretsScanResponse> {
         let secretsRunner: SecretsRunner = new SecretsRunner(this._connectionManager, this.logManager);
         if (!secretsRunner.validateSupported()) {
-            this._logManager.logMessage('Secrets runner could not find binary to run', 'DEBUG');
+            this._logManager.logMessage('Secrets runner could not find binary to run', 'WARN');
             return {} as SecretsScanResponse;
         }
-        this._logManager.logMessage('Scanning directory ' + directory + ', for Secrets issues', 'DEBUG');
-        return await secretsRunner.scan(directory, checkCancel);
+        let skipFiles: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
+        this._logManager.logMessage("Scanning directory '" + directory + "', for Secrets issues. Skipping files: " + skipFiles, 'DEBUG');
+        return await secretsRunner.scan(directory, checkCancel, skipFiles);
     }
 
     /**
@@ -288,18 +290,18 @@ export class ScanManager implements ExtensionComponent {
     public async scanEos(checkCancel: () => void, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
         let eosRunner: EosRunner = new EosRunner(this._connectionManager, this._logManager);
         if (!eosRunner.validateSupported()) {
-            this._logManager.logMessage('Eos runner could not find binary to run', 'DEBUG');
+            this._logManager.logMessage('Eos runner could not find binary to run', 'WARN');
             return {} as EosScanResponse;
         }
         if (requests.length === 0) {
             this._logManager.logMessage('Eos runner must receive at least one request to run', 'ERR');
             return {} as EosScanResponse;
         }
-        let skipFiles: string[] = AnalyzerUtils.getApplicableExcludePattern(Configuration.getScanExcludePattern());
+        let skipFiles: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
         this._logManager.logMessage(
             'Scanning for Eos issues in ' +
                 requests.map(request => `(Language '${request.language}', roots: [${request.roots.join()}])`) +
-                ', skipping files: ' +
+                '. Skipping files: ' +
                 skipFiles,
             'DEBUG'
         );

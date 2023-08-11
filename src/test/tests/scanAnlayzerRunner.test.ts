@@ -9,6 +9,7 @@ import { AnalyzerScanResponse, ScanType, AnalyzeScanRequest } from '../../main/s
 import { BinaryRunner } from '../../main/scanLogic/scanRunners/binaryRunner';
 import { NotEntitledError, ScanCancellationError, ScanTimeoutError, ScanUtils } from '../../main/utils/scanUtils';
 import { RunUtils } from '../../main/utils/runUtils';
+import { Translators } from '../../main/utils/translators';
 
 // binary runner
 describe('Analyzer BinaryRunner tests', async () => {
@@ -47,7 +48,7 @@ describe('Analyzer BinaryRunner tests', async () => {
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 _yamlConfigPath: string,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                _executionLogDirectory: string,
+                _executionLogDirectory: string | undefined,
                 checkCancel: () => void
             ): Promise<void> {
                 await RunUtils.runWithTimeout(timeout, checkCancel, dummyAction());
@@ -150,6 +151,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             for (let root of test.roots) {
                 expected += '      - ' + root + '\n';
             }
+            expected += '    skipped-folders: []\n';
             assert.deepEqual(createDummyBinaryRunner().requestsToYaml(request), expected);
         });
     });
@@ -158,7 +160,8 @@ describe('Analyzer BinaryRunner tests', async () => {
         return {
             type: scanType,
             output: '/path/to/output.json',
-            roots: roots
+            roots: roots,
+            skipped_folders: []
         };
     }
 
@@ -196,7 +199,9 @@ describe('Analyzer BinaryRunner tests', async () => {
             timeout: ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
             createDummyResponse: false,
             shouldAbort: false,
-            expectedErr: new Error("Running '" + dummyName + "' binary didn't produce response.\nRequest: request data")
+            expectedErr: new Error(
+                "Running '" + Translators.toAnalyzerTypeString(dummyName) + "' binary didn't produce response.\nRequest: request data"
+            )
         }
     ].forEach(async test => {
         it('Run request - ' + test.name, async () => {

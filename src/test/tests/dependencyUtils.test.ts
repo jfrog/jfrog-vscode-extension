@@ -204,7 +204,7 @@ describe('Dependency Utils Tests', () => {
         it('On file scan error - ' + test.name, () => {
             let bundle: FileScanBundle = {
                 workspaceResults: new ScanResults('workspace'),
-                root: createRootTestNode('nowhere'),
+                rootNode: createRootTestNode('nowhere'),
                 data: root.createEmptyScanResultsObject()
             } as FileScanBundle;
             if (test.expectedThrow || !test.withBundle) {
@@ -215,7 +215,7 @@ describe('Dependency Utils Tests', () => {
                     assert.isDefined(errorNode);
                     assert.include(errorNode?.name, test.expectedNodeName);
                     // make sure information is populated
-                    assert.lengthOf(bundle.root.children, 1);
+                    assert.lengthOf(bundle.rootNode.children, 1);
                     assert.lengthOf(bundle.workspaceResults.failedFiles, 1);
                     assert.include(bundle.workspaceResults.failedFiles[0].name, test.expectedNodeName);
                 } else {
