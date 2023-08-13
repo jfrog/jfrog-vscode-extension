@@ -353,10 +353,11 @@ export class DependencyUtils {
     }
 
     /**
-     * Get the impact path of all the children of a given root, recursively, if exists a component that has issue in the path
+     * Retrieves the impact paths of all child components, recursively from a given root,
+     * The number of impact paths collected may be limited by the '{@link DependencyUtils.IMPACT_PATHS_LIMIT}'.
      * @param root - the root to get it's children impact
      * @param componentWithIssue - the component to generate the impact path for it
-     * @returns array of impact paths one for each child if exists
+     * @param size - the total size of the impacted path
      */
     private static getChildrenGraph(root: DependenciesTreeNode, componentWithIssue: IComponent, size: number): IImpactGraph {
         let impactPaths: IImpactGraphNode[] = [];
