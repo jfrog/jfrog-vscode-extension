@@ -1,7 +1,7 @@
 {
     "name": "jfrog-vscode-extension",
     "displayName": "JFrog",
-    "description": "JFrog Xray scanning of Go, npm, Pypi, Maven and NuGet project dependencies.",
+    "description": "Security scanning for your Go, npm, Pypi, Maven and NuGet projects.",
     "version": "2.5.0",
     "license": "Apache-2.0",
     "icon": "resources/extensionIcon.png",
@@ -28,7 +28,7 @@
         "viewsWelcome": [
             {
                 "view": "jfrog.issues",
-                "contents": "Your project is ready to be scanned for security issues.\nIf your JFrog subscription includes Advanced DevSecOps enabled, we will also run Contextual Analysis scans for CVE applicability, to determine whether your code is actually impacted by the vulnerable dependency, to learn more about this feature, see [Xray Advanced Scans](https://www.jfrog.com/confluence/display/JFROG/Xray+Advanced+Scans).\n[Scan](command:jfrog.scan.refresh)",
+                "contents": "Your project is ready to be scanned for security issues as described below.\nThe basic functionality includes Software Composition Analysis (SCA). We will scan your project dependencies for security issues and also show you enriched CVE data provided by the JFrog Security Research team.\n\nIf your JFrog subscription includes [Advanced DevSecOps](https://jfrog.com/xray/) enabled, we'll also run the following scans:\n\nVulnerability Contextual Analysis - This feature uses the code context to eliminate false positive reports on vulnerable dependencies that are not applicable to the code. Vulnerability Contextual Analysis is currently supported for Python, JavaScript and Java code.\nSecrets Detection - Detect and prevent the inclusion of sensitive information, such as credentials and API keys, in your codebase.\nInfrastructure as Code (IaC) scans - Analyze Infrastructure as Code (IaC) files, such as Terraform, to identify security vulnerabilities and misconfigurations before deploying your cloud infrastructure. Get actionable insights and recommendations for securing your IaC configurations.",
                 "when": "jfrog.connection.status == signedIn && jfrog.firstScanInWorkspace"
             },
             {

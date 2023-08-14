@@ -57,7 +57,7 @@
 The cost of remediating a vulnerability is akin to the cost of fixing a bug.
 The earlier you remediate a vulnerability in the release cycle, the lower the cost.
 The extension allows developers to find and fix security vulnerabilities in their projects and to see valuable information
-about the status of their code by continuously scanning it locally with [JFrog Xray](https://jfrog.com/xray/).
+about the status of their code by continuously scanning it locally with the [JFrog Platform](https://jfrog.com/xray/).
 
 ### What security capabilities do we provide?
 ####  Basic
@@ -71,14 +71,14 @@ Learn more about enriched CVEs in the [JFrog Security CVE Research and Enrichmen
 *Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
 
 ##### 🔍 Vulnerability Contextual Analysis
-This feature uses the code context to eliminate false positive reports on vulnerable dependencies that are not applicable to the code. Vulnerability Contextual Analysis is currently supported for Python and JavaScript code.
+This feature uses the code context to eliminate false positive reports on vulnerable dependencies that are not applicable to the code. Vulnerability Contextual Analysis is currently supported for Python, JavaScript and Java code.
+
+##### 🔐 Secrets Detection
+Detect and prevent the inclusion of sensitive information, such as credentials and API keys, in your codebase.
 
 ##### 🏗️ Infrastructure as Code (IaC) Scan
 - Analyze Infrastructure as Code (IaC) files, such as Terraform, to identify security vulnerabilities and misconfigurations before deploying your cloud infrastructure.
 - Get actionable insights and recommendations for securing your IaC configurations.
-
-##### 🔐 Secrets Detection
-Detect and prevent the inclusion of sensitive information, such as credentials and API keys, in your codebase.
 
 #### 🛡️ Supported Packages
 | Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) | [Terraform](#-infrastructure-as-code-(iac)-Scan) |
