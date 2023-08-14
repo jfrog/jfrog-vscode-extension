@@ -33,10 +33,6 @@ export class CacheRecord {
         return this.isWithinMaxAge() && this.hasCurrentVersion();
     }
 
-    public isEmpty(): boolean {
-        return this._data === undefined;
-    }
-
     private isWithinMaxAge(): boolean {
         return this._timestamp !== undefined && Date.now() - this._timestamp <= CacheRecord.MAX_CACHE_AGE_MILLISECS;
     }

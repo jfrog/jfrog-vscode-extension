@@ -23,6 +23,9 @@ export class ScanResults {
     constructor(private _path: string) {}
 
     public static fromJson(jsonScanResults: any) {
+        if (!jsonScanResults) {
+            return;
+        }
         const workspaceIssuesDetails: ScanResults = new ScanResults(jsonScanResults._path);
         if (jsonScanResults._descriptorsIssues) {
             workspaceIssuesDetails.descriptorsIssues.push(...jsonScanResults._descriptorsIssues);
