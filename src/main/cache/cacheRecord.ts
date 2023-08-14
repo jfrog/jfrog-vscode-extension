@@ -29,15 +29,15 @@ export class CacheRecord {
         return this._data;
     }
 
-    public isValid(): boolean {
-        return this.hasValidData() && this.isNotExpired() && this.hasCurrentVersion();
+    public isNotExpired(): boolean {
+        return this.isWithinMaxAge() && this.hasCurrentVersion();
     }
 
-    private hasValidData(): boolean {
-        return this._data !== undefined;
+    public isEmpty(): boolean {
+        return this._data === undefined;
     }
 
-    private isNotExpired(): boolean {
+    private isWithinMaxAge(): boolean {
         return this._timestamp !== undefined && Date.now() - this._timestamp <= CacheRecord.MAX_CACHE_AGE_MILLISECS;
     }
 
