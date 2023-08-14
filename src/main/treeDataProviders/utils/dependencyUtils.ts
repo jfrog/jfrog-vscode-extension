@@ -106,10 +106,11 @@ export class DependencyUtils {
             descriptorsParsed.add(child.generalInfo.path);
         }
         this.reportNotFoundDescriptors(descriptorsPaths, descriptorsParsed, scanManager.logManager);
-        if (!contextualScan || bundlesWithIssues.length == 0) {
-            return;
-        }
+
         await Promise.all(scansPromises).then(async () => {
+            if (!contextualScan || bundlesWithIssues.length == 0) {
+                return;
+            }
             await AnalyzerUtils.cveApplicableScanning(scanManager, bundlesWithIssues, progressManager, type).catch(err =>
                 ScanUtils.onScanError(err, scanManager.logManager, true)
             );

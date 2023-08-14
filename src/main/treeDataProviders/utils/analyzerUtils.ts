@@ -254,7 +254,7 @@ export class AnalyzerUtils {
                 if (!(issue instanceof CveTreeNode) || !issue.cve?.cve) {
                     return;
                 }
-                // For Python projects, all CVEs should be included.
+                // For Python projects, all CVEs should be included because in some cases it is impossible to determine whether a dependency is direct.
                 // Other project types should include only CVEs on direct dependencies.
                 if (type === PackageType.Python || !issue.parent.indirect) {
                     cvesToScan.add(issue.cve.cve);
