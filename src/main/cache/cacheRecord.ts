@@ -29,15 +29,15 @@ export class CacheRecord {
         return this._data;
     }
 
-    public isNotExpired(): boolean {
-        return this.isWithinMaxAge() && this.hasCurrentVersion();
+    public isExpired(): boolean {
+        return this.passedMaxAge() || this.hasOldCacheVersion();
     }
 
-    private isWithinMaxAge(): boolean {
-        return this._timestamp !== undefined && Date.now() - this._timestamp <= CacheRecord.MAX_CACHE_AGE_MILLISECS;
+    private passedMaxAge(): boolean {
+        return this._timestamp === undefined || Date.now() - this._timestamp > CacheRecord.MAX_CACHE_AGE_MILLISECS;
     }
 
-    private hasCurrentVersion(): boolean {
-        return this._version !== undefined && this._version === CacheRecord.CURRENT_CACHE_VERSION;
+    private hasOldCacheVersion(): boolean {
+        return this._version === undefined || this._version !== CacheRecord.CURRENT_CACHE_VERSION;
     }
 }
