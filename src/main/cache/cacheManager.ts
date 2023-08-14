@@ -47,8 +47,11 @@ export class CacheManager {
     }
 
     private toScanResult(rawJson: string | undefined): ScanResults | undefined {
+        if (!rawJson) {
+            return;
+        }
         const record: CacheRecord = CacheRecord.fromJson(rawJson);
-        if (!record.isValid()) {
+        if (record.isExpired()) {
             vscode.window.showInformationMessage('JFrog: Scan results have expired.', ...['Rescan']).then(answer => {
                 if (answer === 'Rescan') {
                     vscode.commands.executeCommand('jfrog.scan.refresh');

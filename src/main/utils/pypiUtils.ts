@@ -36,7 +36,6 @@ export class PypiUtils {
 
     private static matchPythonDependencies(rawDependencies: string): Map<string, string | undefined> {
         let dependencyMatch: RegExpExecArray | null;
-        // let cleanRawDependencies: RegExpExecArray | null;
         let dependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
         const cleanMatch: RegExpExecArray | null = new RegExp(PypiUtils.removeFlagCommentRegex).exec(rawDependencies);
         if (!cleanMatch) {
@@ -258,7 +257,12 @@ export class PypiUtils {
     }
 
     /**
-     * From pipDepTree, which contains all the environment dependencies, get the dependencies of the dependencies' map
+     * Filters out dependencies that are not part of the descriptor.
+     * @param dependencies The dependencies specified in the descriptor.
+     * @param pipDepTree All dependencies obtained from pipDepTree command.
+     * @param isSetupPy Indicates whether the descriptor is of type setup.py.
+     * @param projectName The name of the project.
+     * @returns Filtered list of PipDepTree representing direct dependencies.
      */
     public static filterDependencies(
         dependencies: Map<string, string | undefined>,
@@ -266,24 +270,26 @@ export class PypiUtils {
         isSetupPy: boolean,
         projectName?: string
     ): PipDepTree[] {
-        let filtered: PipDepTree[] = [];
+        let directDependencies: PipDepTree[] = [];
         if (dependencies.size === 0) {
-            return filtered;
+            return directDependencies;
         }
         for (const dep of pipDepTree) {
             if (dep.key === projectName) {
-                filtered.push(...this.filterDependencies(dependencies, dep.dependencies, isSetupPy));
+                // If a project name is provided, it resides at level 0 of the tree containing all its dependencies.
+                directDependencies.push(...this.filterDependencies(dependencies, dep.dependencies, isSetupPy));
             }
             if (!dependencies.has(dep.key)) {
+                // Dependency is not a direct dependency.
                 continue;
             }
             const version: string | undefined = dependencies.get(dep.key);
             if (version && !this.isVersionsEqual(dep, version, isSetupPy)) {
                 continue;
             }
-            filtered.push(dep);
+            directDependencies.push(dep);
         }
-        return filtered;
+        return directDependencies;
     }
 
     private static isVersionsEqual(dependencyFromPipDepTree: PipDepTree, depFromDescriptor: string, isSetupPy: boolean): boolean {

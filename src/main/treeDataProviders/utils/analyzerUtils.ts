@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as os from 'os';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
-import { ApplicabilityScanResponse, CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
+import { ApplicabilityRunner, ApplicabilityScanResponse, CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { ApplicableTreeNode } from '../issuesTree/codeFileTree/applicableTreeNode';
 import { CodeFileTreeNode } from '../issuesTree/codeFileTree/codeFileTreeNode';
@@ -204,9 +204,13 @@ export class AnalyzerUtils {
     public static async cveApplicableScanning(
         scanManager: ScanManager,
         fileScanBundles: FileScanBundle[],
-        progressManager: StepProgress
+        progressManager: StepProgress,
+        type: PackageType
     ): Promise<void> {
-        let filteredBundles: Map<FileScanBundle, Set<string>> = this.filterBundlesWithoutIssuesToScan(fileScanBundles);
+        if (!ApplicabilityRunner.supportedPackageTypes().includes(type)) {
+            return;
+        }
+        let filteredBundles: Map<FileScanBundle, Set<string>> = this.filterBundlesWithoutIssuesToScan(fileScanBundles, type);
         let spaceToBundles: Map<string, Map<FileScanBundle, Set<string>>> = this.mapBundlesForApplicableScanning(
             scanManager.logManager,
             filteredBundles
@@ -237,7 +241,7 @@ export class AnalyzerUtils {
      * @param fileScanBundles - bundles to process and filter if needed
      * @returns Map of bundles to their set of direct cves issues, with at least one for each bundle
      */
-    private static filterBundlesWithoutIssuesToScan(fileScanBundles: FileScanBundle[]): Map<FileScanBundle, Set<string>> {
+    private static filterBundlesWithoutIssuesToScan(fileScanBundles: FileScanBundle[], type: PackageType): Map<FileScanBundle, Set<string>> {
         let filtered: Map<FileScanBundle, Set<string>> = new Map<FileScanBundle, Set<string>>();
 
         for (let fileScanBundle of fileScanBundles) {
@@ -247,8 +251,12 @@ export class AnalyzerUtils {
             }
             let cvesToScan: Set<string> = new Set<string>();
             fileScanBundle.dataNode.issues.forEach((issue: IssueTreeNode) => {
-                if (issue instanceof CveTreeNode && !issue.parent.indirect && issue.cve?.cve) {
-                    // Only direct cve issues
+                if (!(issue instanceof CveTreeNode) || !issue.cve?.cve) {
+                    return;
+                }
+                // For Python projects, all CVEs should be included because in some cases it is impossible to determine whether a dependency is direct.
+                // Other project types should include only CVEs on direct dependencies.
+                if (type === PackageType.Python || !issue.parent.indirect) {
                     cvesToScan.add(issue.cve.cve);
                 }
             });
