@@ -1,5 +1,4 @@
 import { assert } from 'chai';
-import { IArtifact, IGeneral, ILicense } from 'jfrog-client-js';
 import { before } from 'mocha';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -13,7 +12,6 @@ import { GoUtils } from '../../main/utils/goUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager, getNodeByArtifactId } from './utils/utils.test';
 import { PackageType } from '../../main/types/projectType';
-import { ProjectComponents } from '../../main/types/projectComponents';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { FocusType } from '../../main/constants/contextKeys';
@@ -181,7 +179,6 @@ describe('Go Utils Tests', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let goMods: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Go);
         await GoUtils.createDependenciesTrees(goMods, treesManager.logManager, () => undefined, parent);
-        await dummyScanCacheManager.storeArtifacts(xrayScanResults, { componentIdToCve: new Map() } as ProjectComponents);
         return parent.children.sort((lhs, rhs) => (<string>lhs.label).localeCompare(<string>rhs.label));
     }
 
@@ -222,28 +219,3 @@ describe('Go Utils Tests', async () => {
         ];
     }
 });
-
-const xrayScanResults: IArtifact[] = [
-    {
-        general: { component_id: 'github.com/jfrog/jfrog-cli-core:1.9.0' } as IGeneral,
-        issues: [],
-        licenses: [
-            {
-                name: 'Apache-2.0',
-                full_name: 'The Apache Software License, Version 2.0',
-                more_info_url: [
-                    'http://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt',
-                    'https://raw.githubusercontent.com/aspnet/AspNetCore/2.0.0/LICENSE.txt',
-                    'http://licenses.nuget.org/Apache-2.0',
-                    'https://licenses.nuget.org/Apache-2.0',
-                    'http://www.apache.org/licenses/LICENSE-2.0',
-                    'https://spdx.org/licenses/Apache-2.0.html',
-                    'https://spdx.org/licenses/Apache-2.0',
-                    'http://www.opensource.org/licenses/apache2.0.php',
-                    'http://www.opensource.org/licenses/Apache-2.0'
-                ],
-                components: ['go://github.com/jfrog/jfrog-cli-core:1.9.1']
-            } as ILicense
-        ]
-    }
-];

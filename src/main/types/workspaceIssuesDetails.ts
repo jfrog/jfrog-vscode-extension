@@ -22,23 +22,22 @@ export class ScanResults {
 
     constructor(private _path: string) {}
 
-    public static fromJson(json: string) {
-        const tmp: ScanResults = JSON.parse(json);
-        const workspaceIssuesDetails: ScanResults = new ScanResults(tmp._path);
-        if (tmp._descriptorsIssues) {
-            workspaceIssuesDetails.descriptorsIssues.push(...tmp._descriptorsIssues);
+    public static fromJson(jsonScanResults: any) {
+        const workspaceIssuesDetails: ScanResults = new ScanResults(jsonScanResults._path);
+        if (jsonScanResults._descriptorsIssues) {
+            workspaceIssuesDetails.descriptorsIssues.push(...jsonScanResults._descriptorsIssues);
         }
         // Eos
-        workspaceIssuesDetails.eosScan = tmp._eosScan;
-        workspaceIssuesDetails.eosScanTimestamp = tmp._eosScanTimestamp;
+        workspaceIssuesDetails.eosScan = jsonScanResults._eosScan;
+        workspaceIssuesDetails.eosScanTimestamp = jsonScanResults._eosScanTimestamp;
         // Iac
-        workspaceIssuesDetails.iacScan = tmp._iacScan;
-        workspaceIssuesDetails.iacScanTimestamp = tmp._iacScanTimestamp;
+        workspaceIssuesDetails.iacScan = jsonScanResults._iacScan;
+        workspaceIssuesDetails.iacScanTimestamp = jsonScanResults._iacScanTimestamp;
         // Secrets
-        workspaceIssuesDetails.secretsScan = tmp._secretsScan;
-        workspaceIssuesDetails.secretsScanTimestamp = tmp._secretsScanTimestamp;
-        if (tmp._failedFiles) {
-            workspaceIssuesDetails.failedFiles.push(...tmp._failedFiles);
+        workspaceIssuesDetails.secretsScan = jsonScanResults._secretsScan;
+        workspaceIssuesDetails.secretsScanTimestamp = jsonScanResults._secretsScanTimestamp;
+        if (jsonScanResults._failedFiles) {
+            workspaceIssuesDetails.failedFiles.push(...jsonScanResults._failedFiles);
         }
         return workspaceIssuesDetails;
     }

@@ -20,7 +20,7 @@ import { WebviewManager } from './main/webview/webviewManager';
 export async function activate(context: vscode.ExtensionContext) {
     const workspaceFolders: vscode.WorkspaceFolder[] = vscode.workspace.workspaceFolders?.map(el => el) || [];
     const logManager: LogManager = new LogManager().activate();
-    const cacheManager: CacheManager = new CacheManager(logManager).activate(context);
+    const cacheManager: CacheManager = new CacheManager(context);
     const connectionManager: ConnectionManager = await new ConnectionManager(logManager).activate(context);
     const scanManager: ScanManager = new ScanManager(connectionManager, logManager).activate();
     const scanCacheManager: ScanCacheManager = new ScanCacheManager().activate(context);
@@ -38,7 +38,7 @@ export async function activate(context: vscode.ExtensionContext) {
     const dependencyUpdateManager: DependencyUpdateManager = new DependencyUpdateManager(logManager).activate();
     const diagnosticManager: DiagnosticsManager = new DiagnosticsManager(treesManager, dependencyUpdateManager).activate(context);
 
-    const webviewManager: WebviewManager = await new WebviewManager(logManager, connectionManager, context).activate();
+    const webviewManager: WebviewManager = new WebviewManager(logManager, connectionManager, context).activate();
     new CodeLensManager().activate(context);
     new CommandManager(
         logManager,

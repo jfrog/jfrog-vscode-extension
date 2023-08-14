@@ -1,33 +1,62 @@
 import * as vscode from 'vscode';
 
-import { ExtensionComponent } from '../extensionComponent';
-import { IssuesCache } from './issuesCache';
 import { ScanUtils } from '../utils/scanUtils';
 import { Utils } from '../utils/utils';
-import { LogManager } from '../log/logManager';
+import { ScanResults } from '../types/workspaceIssuesDetails';
+import { CacheRecord } from './cacheRecord';
 
 /**
- * Manage all the caches in the extension
+ * Manages caching of workspace issues data in the extension.
  */
-export class CacheManager implements ExtensionComponent {
-    private _cache: vscode.Memento | undefined;
-    private _issuesCache: IssuesCache | undefined;
+export class CacheManager {
+    public static readonly CACHE_BASE_KEY: string = 'jfrog.cache.issues.';
+    private _cache: vscode.Memento;
 
-    constructor(private _logManager: LogManager) {}
-
-    public activate(context: vscode.ExtensionContext): CacheManager {
+    constructor(context: vscode.ExtensionContext) {
         Utils.createDirIfNotExists(ScanUtils.getHomePath());
-        // Set caches
         this._cache = context.workspaceState;
-        this._issuesCache = new IssuesCache(context.workspaceState, this._logManager);
-        return this;
     }
 
-    public get cache(): vscode.Memento | undefined {
-        return this._cache;
+    /**
+     * Save a workspace issues data in the cache
+     * @param workspace - the workspace to store it's data
+     * @param value - the data we want to store
+     */
+    public save(workspace: vscode.WorkspaceFolder, value: ScanResults) {
+        const record: CacheRecord = new CacheRecord(value, Date.now(), CacheRecord.CURRENT_CACHE_VERSION);
+        return this._cache.update(this.toCacheKey(workspace), JSON.stringify(record));
     }
 
-    public get issuesCache(): IssuesCache | undefined {
-        return this._issuesCache;
+    /**
+     * Get the unique key for this workspace
+     * @param workspace - the workspace we want to get it's id
+     * @returns - the unique key for this workspace
+     */
+    private toCacheKey(workspace: vscode.WorkspaceFolder): string {
+        return CacheManager.CACHE_BASE_KEY + workspace.uri.fsPath;
+    }
+
+    /**
+     * Retrieve stored scan results from the cache for a given workspace, ensuring they not expired.
+     * @param workspace - the workspace for which to retrieve the data.
+     * @returns ScanResults if they are stored, not expired, or have the latest cache version
+     */
+    public async load(workspace: vscode.WorkspaceFolder): Promise<ScanResults | undefined> {
+        let rawJson: string | undefined = this._cache.get(this.toCacheKey(workspace));
+        return this.toScanResult(rawJson);
+    }
+
+    private toScanResult(rawJson: string | undefined): ScanResults | undefined {
+        const record: CacheRecord = CacheRecord.fromJson(rawJson);
+        if (!record.isValid()) {
+            vscode.window.showInformationMessage('JFrog: Scan results have expired.', ...['Rescan']).then(answer => {
+                if (answer === 'Rescan') {
+                    vscode.commands.executeCommand('jfrog.scan.refresh');
+                }
+            });
+            return;
+        }
+
+        return ScanResults.fromJson(record.data);
     }
 }

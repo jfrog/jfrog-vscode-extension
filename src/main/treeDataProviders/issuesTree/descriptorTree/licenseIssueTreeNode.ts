@@ -18,7 +18,7 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
     private _licenseIssue: IGraphLicense;
     private _ignoreUrl: string;
 
-    constructor(issue: IViolation, _severity: Severity, private _parent: DependencyIssuesTreeNode, private _impactedTreeRoot: IImpactGraph) {
+    constructor(issue: IViolation, _severity: Severity, private _parent: DependencyIssuesTreeNode, private _impactGraph: IImpactGraph) {
         super(issue.issue_id, _severity, issue.license_key, vscode.TreeItemCollapsibleState.None);
 
         this._watchNames = [issue.watch_name];
@@ -47,7 +47,7 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
             severity: SeverityUtils.toWebviewSeverity(this._severity),
             license: this.parent.licenses,
             references: this._references,
-            impactGraph: this.impactedTree
+            impactGraph: this._impactGraph
         } as IDependencyPage;
     }
 
@@ -59,8 +59,8 @@ export class LicenseIssueTreeNode extends IssueTreeNode {
         return this._ignoreUrl;
     }
 
-    public get impactedTree(): IImpactGraph {
-        return this._impactedTreeRoot;
+    public get impactGraph(): IImpactGraph {
+        return this._impactGraph;
     }
 
     public get parent(): DependencyIssuesTreeNode {

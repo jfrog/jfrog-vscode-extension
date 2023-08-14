@@ -9,8 +9,6 @@ export class Utils {
     // 1 GB
     private static readonly MAX_SIZE_EXTRACTED_ZIP_BYTES: number = 1000000000;
     private static readonly COMPRESSION_THRESHOLD_RATIO: number = 100;
-    // Week
-    private static readonly MAX_SCAN_CACHE_AGE_MILLISECS: number = 1000 * 60 * 60 * 24 * 7;
 
     public static getExtensionId(): string {
         // publisher.name attributes from package.json
@@ -66,13 +64,6 @@ export class Utils {
             }
         }
         return oldestTimeStamp;
-    }
-
-    public static isIssueCacheIntervalPassed(timeStamp: number | undefined): boolean {
-        if (!timeStamp) {
-            return false;
-        }
-        return Date.now() - timeStamp > Utils.MAX_SCAN_CACHE_AGE_MILLISECS;
     }
 
     public static toDate(timeStamp: number | undefined): string {

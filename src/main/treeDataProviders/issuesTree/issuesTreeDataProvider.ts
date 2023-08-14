@@ -22,7 +22,7 @@ import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
 import { EosTreeNode } from './codeFileTree/eosTreeNode';
 import { EnvironmentTreeNode } from './descriptorTree/environmentTreeNode';
 import { ProjectDependencyTreeNode } from './descriptorTree/projectDependencyTreeNode';
-import { ScanResults, DependencyScanResults } from '../../types/workspaceIssuesDetails';
+import { DependencyScanResults, EntryIssuesData, ScanResults } from '../../types/workspaceIssuesDetails';
 import { AnalyzerUtils } from '../utils/analyzerUtils';
 import { IacTreeNode } from './codeFileTree/iacTreeNode';
 import { SecretTreeNode } from './codeFileTree/secretsTreeNode';
@@ -148,9 +148,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                                 root.apply();
                             }
                             this.onChangeFire();
-                            if (this._cacheManager.issuesCache) {
-                                this._cacheManager.issuesCache.store(workspace, scanResults);
-                            }
+                            this._cacheManager.save(workspace, scanResults);
                         });
                 }, "Refreshing workspace '" + workspace.name + "'")
             );
@@ -260,9 +258,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      */
     public async loadFromCache() {
         await ScanUtils.backgroundTask(async (progress: vscode.Progress<{ message?: string; increment?: number }>) => {
-            if (!this._cacheManager.issuesCache) {
-                return;
-            }
             let progressManager: StepProgress = new StepProgress(progress);
             progressManager.startStep('Loading workspace issues', this._workspaceFolders.length);
             let workspaceLoads: Promise<void>[] = [];
@@ -275,8 +270,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
                 // Create a new async load task for each workspace
                 workspaceLoads.push(
-                    this._cacheManager.issuesCache
-                        .loadIssues(workspace)
+                    this.loadIssueFromCache(workspace)
                         .then(root => {
                             if (root && root.children.length > 0) {
                                 this._workspaceToRoot.set(workspace, root);
@@ -314,6 +308,64 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     }
 
     /**
+     * Async task to load the issues from the last scan of a given workspace
+     * @param workspace - the workspace to load it's issues
+     * @returns - the workspace issues if the exists, undefined otherwise
+     */
+    private async loadIssueFromCache(workspace: vscode.WorkspaceFolder) {
+        // Check if data for the workspace exists in the cache
+        let scanResults: ScanResults | undefined = await this._cacheManager.load(workspace);
+        if (!scanResults) {
+            return undefined;
+        }
+        this._logManager.logMessage("Loading issues from last scan for the workspace '" + workspace.name + "'", 'INFO');
+        let root: IssuesRootTreeNode = new IssuesRootTreeNode(workspace);
+        if (scanResults.failedFiles) {
+            // Load files that had error on the last scan and create tree node in the root
+            scanResults.failedFiles.forEach((file: EntryIssuesData) => {
+                this._logManager.logMessage("Loading file with scan error '" + file.name + "': '" + file.fullPath + "'", 'DEBUG');
+                let failed: FileTreeNode = FileTreeNode.createFailedScanNode(file.fullPath, file.name);
+                root.children.push(failed);
+            });
+        }
+        if (scanResults.descriptorsIssues) {
+            // Load descriptors issues and create tree node in the root
+            scanResults.descriptorsIssues.forEach((graphScanResult: DependencyScanResults) => {
+                let projectNode: ProjectDependencyTreeNode = this.createProjectNode(graphScanResult, root);
+                this._logManager.logMessage("Loading issues for '" + graphScanResult.fullPath + "'", 'DEBUG');
+                DependencyUtils.populateDependencyScanResults(projectNode, graphScanResult);
+                if (projectNode instanceof DescriptorTreeNode && graphScanResult.applicableIssues && graphScanResult.applicableIssues.scannedCve) {
+                    AnalyzerUtils.populateApplicableIssues(root, projectNode, graphScanResult);
+                }
+                root.children.push(projectNode);
+            });
+        }
+        if (scanResults.iacScan) {
+            AnalyzerUtils.populateIacIssues(root, scanResults);
+        }
+        if (scanResults.secretsScan) {
+            AnalyzerUtils.populateSecretsIssues(root, scanResults);
+        }
+        if (scanResults.eosScan) {
+            root.eosScanTimeStamp = scanResults.eosScanTimestamp;
+            AnalyzerUtils.populateEosIssues(root, scanResults);
+        }
+        return root;
+    }
+
+    /**
+     * Creates a project node based on the scan results.
+     * @param graphScanResult - The scan results for a project.
+     * @param parent - The parent node in the issues tree.
+     * @returns A project node.
+     */
+    private createProjectNode(graphScanResult: DependencyScanResults, parent: IssuesRootTreeNode): ProjectDependencyTreeNode {
+        return graphScanResult.isEnvironment
+            ? new EnvironmentTreeNode(graphScanResult.fullPath, graphScanResult.type, parent)
+            : new DescriptorTreeNode(graphScanResult.fullPath, graphScanResult.type, parent);
+    }
+
+    /**
      * Search for file with issues and return the tree node that matches the path.
      * Values return base on the last call to Refresh
      * @param filePath - file path to search if issues exists for it
@@ -340,23 +392,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
 
     private isWorkspaceContainsFile(workspace: string, file: string): boolean {
         return file.startsWith(workspace);
-    }
-
-    /**
-     * Search for descriptor issues data base on a given full path to the descriptor
-     * @param filePath - the full path to the descriptor
-     * @returns - the descriptor issues data if exists issues for the descriptor, undefined otherwise
-     */
-    public getDescriptorIssuesData(filePath: string): DependencyScanResults | undefined {
-        for (const workspace of this._workspaceToRoot.keys()) {
-            if (filePath.includes(workspace.uri.fsPath)) {
-                let scanResults: ScanResults | undefined = this._cacheManager.issuesCache?.get(workspace);
-                if (scanResults) {
-                    return scanResults.descriptorsIssues.find(descriptor => descriptor.fullPath == filePath);
-                }
-            }
-        }
-        return undefined;
     }
 
     public getChildren(element?: IssuesRootTreeNode | FileTreeNode | DependencyIssuesTreeNode): vscode.ProviderResult<any> {

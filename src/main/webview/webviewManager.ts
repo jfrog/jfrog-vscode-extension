@@ -9,7 +9,7 @@ import { ExtensionComponent } from '../extensionComponent';
 /**
  * Manages the webview functionality for the extension.
  */
-export class WebviewManager implements ExtensionComponent  {
+export class WebviewManager implements ExtensionComponent {
     private webviewTab: WebviewTab;
     private webviewSidebar: WebviewSidebar;
     constructor(logManager: LogManager, private connectionManager: ConnectionManager, context: vscode.ExtensionContext) {

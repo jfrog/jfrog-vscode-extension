@@ -29,7 +29,7 @@ export class CveTreeNode extends IssueTreeNode {
         severity: Severity,
         private _parent: DependencyIssuesTreeNode,
         component: IComponent,
-        private _impactedTreeRoot: IImpactGraph,
+        private _impactGraph: IImpactGraph,
         private _cve?: IGraphCve
     ) {
         super(sourceVul.issue_id, severity, _cve && _cve.cve ? _cve.cve : sourceVul.issue_id, vscode.TreeItemCollapsibleState.None);
@@ -92,7 +92,7 @@ export class CveTreeNode extends IssueTreeNode {
             license: this.parent.licenses,
             references: this._references,
             extendedInformation: this._researchInfo,
-            impactGraph: this.impactedTree
+            impactGraph: this._impactGraph
         } as IDependencyPage;
     }
 
@@ -108,8 +108,8 @@ export class CveTreeNode extends IssueTreeNode {
         return this._infectedVersions;
     }
 
-    public get impactedTree(): IImpactGraph {
-        return this._impactedTreeRoot;
+    public get impactGraph(): IImpactGraph {
+        return this._impactGraph;
     }
 
     public get references(): IReference[] {

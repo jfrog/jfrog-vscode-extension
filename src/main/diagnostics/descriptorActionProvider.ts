@@ -204,7 +204,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
             // Calculate the direct dependency information of each issue in the descriptor from the impact tree
             fileIssues.dependenciesWithIssue.forEach(dependencyWithIssue => {
                 dependencyWithIssue.issues.forEach(issue => {
-                    issue.impactedTree.children
+                    issue.impactGraph.root.children
                         ?.map(impact => impact.name)
                         .forEach(directDependencyId =>
                             this.handleIssueInDirectDependency(

@@ -280,25 +280,25 @@ describe('Connection Manager Tests', () => {
         });
     });
 
-        it('Connect successfully', async () => {
-            // Mock dependencies and setup necessary conditions
-            const setConnectionStatusStub: sinon.SinonStub<any[], any> = sinon.stub(mockConnectionManager as any, 'setConnectionStatus').resolves();
-            const setConnectionViewStub: sinon.SinonStub<any[], any> = sinon.stub(mockConnectionManager as any, 'setConnectionView').resolves(true);
-            const updateJfrogVersionsStub: sinon.SinonStub<any[], any> = sinon.stub(mockConnectionManager as any, 'updateJfrogVersions').resolves();
-            const executeCommandStub: any = sinon.stub(vscode.commands, 'executeCommand').resolves();
+    it('Connect successfully', async () => {
+        // Mock dependencies and setup necessary conditions
+        const setConnectionStatusStub: sinon.SinonStub<any[], any> = sinon.stub(mockConnectionManager as any, 'setConnectionStatus').resolves();
+        const setConnectionViewStub: sinon.SinonStub<any[], any> = sinon.stub(mockConnectionManager as any, 'setConnectionView').resolves(true);
+        const updateJfrogVersionsStub: sinon.SinonStub<any[], any> = sinon.stub(mockConnectionManager as any, 'updateJfrogVersions').resolves();
+        const executeCommandStub: any = sinon.stub(vscode.commands, 'executeCommand').resolves();
 
-            // Call the function
-            await mockConnectionManager.onSuccessConnect();
+        // Call the function
+        await mockConnectionManager.onSuccessConnect();
 
-            // Ensure that necessary methods are called
-            sinon.assert.calledOnce(setConnectionStatusStub);
-            sinon.assert.calledWith(setConnectionStatusStub, SessionStatus.SignedIn);
-            sinon.assert.calledOnce(setConnectionViewStub);
-            sinon.assert.calledWith(setConnectionViewStub, SessionStatus.SignedIn);
-            sinon.assert.calledOnce(updateJfrogVersionsStub);
-            sinon.assert.calledOnce(executeCommandStub);
-            sinon.assert.calledWith(executeCommandStub, 'jfrog.view.local');
-        });
+        // Ensure that necessary methods are called
+        sinon.assert.calledOnce(setConnectionStatusStub);
+        sinon.assert.calledWith(setConnectionStatusStub, SessionStatus.SignedIn);
+        sinon.assert.calledOnce(setConnectionViewStub);
+        sinon.assert.calledWith(setConnectionViewStub, SessionStatus.SignedIn);
+        sinon.assert.calledOnce(updateJfrogVersionsStub);
+        sinon.assert.calledOnce(executeCommandStub);
+        sinon.assert.calledWith(executeCommandStub, 'jfrog.view.local');
+    });
 
     describe('JFrog Cli', () => {
         afterEach(() => {
