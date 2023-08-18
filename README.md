@@ -21,19 +21,6 @@
     -   [Using the extension](#using-the-extension)
         -   [Severity Icons](#severity-icons)
 -   [The Local View](#the-local-view)
-    -   [Scanning Workspace](#scanning-workspace)
-    -   [Viewing Vulnerabilities](#viewing-vulnerabilities)
-        -   [Viewing Vulnerability Details](#viewing-vulnerability-details)
-    -   [Updating Dependencies](#updating-dependencies)
-    -   [Creating Ignore Rules](#creating-ignore-rules)
-    -   [Behind the Scenes](#behind-the-scenes)
-        -   [Go Projects](#go-projects)
-        -   [Maven Projects](#maven-projects)
-        -   [Npm Projects](#npm-projects)
-            -   [Exclude Development Dependencies During Scan](#exclude-development-dependencies-during-scan)
-        -   [Yarn v1 Projects](#yarn-v1-projects)
-        -   [Pypi Projects](#pypi-projects)
-        -   [.NET Projects](#net-projects)
 -   [The CI View](#the-ci-view)
     -   [How Does It Work?](#how-does-it-work)
     -   [Setting Up Your CI Pipeline](#setting-up-your-ci-pipeline)
@@ -237,23 +224,18 @@ The icon demonstrates the top severity issue of a selected component and its tra
 | <img src="./resources/Normal.png" width="20">  |  Normal  |   No issues (Used only in CI view)   |
 
 ## The Local View
+### General
+The JFrog VS Code Extension enables continuous scans of your project with the JFrog Platform. The security related information will be displayed under the Local view.
+It allows developers to view vulnerability information about their dependencies and source code in their IDE.
+With this information, you can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
-The local view of the extension adds JFrog Xray scanning of project dependencies and source code to your VS Code IDE.
-It allows developers to view panels displaying vulnerability information about their dependencies and source code in their VS Code IDE.
-With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
-
-### Scanning workspace
 scan your workspace by clicking the Scan/Rescan button, the <img src='resources/dark/refresh.png' height="15" width="15"> icon at the extension tab or click on Start Xray Scan from within the editor. The scan will create a list of files with vulnerabilities in the workspace.
 ![Refresh](resources/readme/preview/refresh.png)
 
-### Viewing Vulnerabilities
-The JFrog extension incorporates a file tree displaying all the vulnerabilities within the project. Each file that is infected with a vulnerability appears as a tree node.
+### Software Composition Analysis (SCA)
+Each descriptor file (like pom.xml in Maven, go.mod in Go, etc.) displayed in the JFrog Panel contains vulnerable dependencies, and each dependency contains the vulnerabilities themselves.
 
-Descriptor file (e.g., pom.xml in Maven, go.mod in Go, etc.) has a special meaning that outlines the available direct dependencies for the project. The tree will show these descriptor files containing vulnerable dependencies.  In cases where a direct dependency contains vulnerable child dependencies, the tree will show the vulnerable child dependencies instead, denoting them with a '(indirect)' postfix.
-
-Furthermore, various types of vulnerability nodes, such as Contextual Analysis Vulnerabilities or hard-coded secrets, may be present in other source code files.
-
-Each file node in the tree is interactive,  click and expand it to view its children node and navigate to the corresponding file in the IDE for better visibility. Upon navigating to a file, the extension will highlight the vulnerable line, making it easier to locate the specific issue
+Each file node in the tree is interactive. Click and expand it to view its children noded and navigate to the corresponding file in the IDE editor for better visibility. Upon navigating to a file, the extension will highlight the vulnerable line, making it easier to locate the specific issue
 
 In addition the locations with vulnerabilities will be marked in the editor. By clicking on the light bulb icon next to a vulnerable location in the editor, we can instantly jump to the corresponding entry in the tree view.
 
@@ -264,8 +246,13 @@ Clicking on a CVE in the list will open the location with the issue in the edito
 ![Impact_Graph](resources/readme/preview/impactGraph.png)
 ![Public_Resources](resources/readme/preview/publicDetails.png)
 
-<details>
-<summary>CVE Research and Enrichment</summary>
+Update a vulnerable direct dependency to a fixed version directly from the vulnerable location at the editor using quick fix
+![Set_Fixed_Version](resources/readme/preview/updateQuickFix.png)
+
+When Xray watches are enabled and a vulnerability is detected, a closed eye icon will appear next to the vulnerability line in the JFrog extension. By clicking on this icon, you can initiate the process of creating an [Ignore Rule](https://www.jfrog.com/confluence/display/JFROG/Ignore+Rules) in Xray.
+![Ignore_Rule](resources/readme/preview/ignoreRule.png)
+
+### CVE Research and Enrichment
 For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team. Prioritize the CVEs based on:
 
 * JFrog Severity: The severity given by the JFrog Security Research team after the manual analysis of the CVE by the team. CVEs with the highest JFrog security severity are the most likely to be used by real-world attackers. This means that you should put effort into fixing them as soon as possible.
@@ -276,10 +263,9 @@ Check out what our research team is up to and stay updated on newly discovered i
 
 ![JFrog_Research](resources/readme/preview/research.png)
 
-</details>
+### Vulnerability Contextual Analysis
+> **_NOTE:_**  Vulnerability Contextual Analysis requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.
 
-<details>
-<summary>Vulnerability Contextual Analysis</summary>
 Xray automatically validates some high and very high impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and provides contextual analysis information for these vulnerabilities, to assist you in figuring out which vulnerabilities need to be fixed. Vulnerability Contextual Analysis data includes:
 
 * Vulnerability Contextual Analysis status: Vulnerability Contextual Analysis results indicating if a CVE was found applicable in your application or not applicable.
@@ -288,36 +274,19 @@ Xray automatically validates some high and very high impact vulnerabilities, suc
 
 ![Contextual_Analysis](resources/readme/preview/contextualDetails.png)
 
-</details>
-
-<details>
-<summary>Secrets Detection</summary>
-* Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
+### Secrets Detection
+> **_NOTE:_**  Secrets Detection requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.
 
 Detect any secrets left exposed inside the code. to prevent any accidental leak of internal tokens or credentials.
 
 ![Secrets_Detection](resources/readme/preview/secrets.png)
 
-</details>
-
-<details>
-
-<summary>Infrastructure as Code (IaC) Scan</summary>
-* Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
+### Infrastructure as Code (IaC) Scan
+> **_NOTE:_**  Infrastructure as Code (IaC) requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.
 
 Scan Infrastructure as Code (Terraform) files for early detection of cloud and infrastructure misconfigurations.
 
 ![iac_scan](resources/readme/preview/iac.png)
-
-</details>
-
-### Updating Dependencies
-Update a vulnerable direct dependency to a fixed version directly from the vulnerable location at the editor using quick fix
-![Set_Fixed_Version](resources/readme/preview/updateQuickFix.png)
-
-### Creating Ignore Rules
-When Xray watches are enabled and a vulnerability is detected, a closed eye icon will appear next to the vulnerability line in the JFrog extension. By clicking on this icon, you can initiate the process of creating an [Ignore Rule](https://www.jfrog.com/confluence/display/JFROG/Ignore+Rules) in Xray.
-![Ignore_Rule](resources/readme/preview/ignoreRule.png)
 
 ## Behind the Scenes
 ### Go Projects
