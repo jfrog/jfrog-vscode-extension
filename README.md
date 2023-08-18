@@ -60,25 +60,54 @@ The extension allows developers to find and fix security vulnerabilities in thei
 about the status of their code by continuously scanning it locally with the [JFrog Platform](https://jfrog.com/xray/).
 
 ### What security capabilities do we provide?
-####  Basic
-##### 📦 Software Composition Analysis (SCA)
-- Scan project dependencies for security issues
-- Access enriched CVE data provided by the JFrog Security Research team.
+#### Basic
+<details>
+  <summary>Software Composition Analysis (SCA)</summary>
+Scans your project dependencies for security issues and shows you which dependencies are vulnerable. If the vulnerabilities have a fix, you can upgrade to the version with the fix in a click of a button.
+</details>
 
-Learn more about enriched CVEs in the [JFrog Security CVE Research and Enrichment](https://www.jfrog.com/confluence/display/JFROG/JFrog+Security+CVE+Research+and+Enrichment) documentation.
+<details>
+  <summary>CVE Research and Enrichment</summary>
+For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team.
+Prioritize the CVEs based on:
 
-####  Advanced
-*Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
+- **JFrog Severity**: The severity given by the JFrog Security Research team after the manual analysis of the CVE by the team.
+CVEs with the highest JFrog security severity are the most likely to be used by real-world attackers.
+This means that you should put effort into fixing them as soon as possible.
+- **Research Summary**: The summary that is based on JFrog's security analysis of the security issue provides detailed technical information on the specific conditions for the CVE to be applicable.
+- **Remediation**: Detailed fix and mitigation options for the CVEs
 
-##### 🔍 Vulnerability Contextual Analysis
-This feature uses the code context to eliminate false positive reports on vulnerable dependencies that are not applicable to the code. Vulnerability Contextual Analysis is currently supported for Python, JavaScript and Java code.
+You can learn more about enriched CVEs [here](https://jfrog.com/help/r/jfrog-security-documentation/jfrog-security-cve-research-and-enrichment).
 
-##### 🔐 Secrets Detection
-Detect and prevent the inclusion of sensitive information, such as credentials and API keys, in your codebase.
+Check out what our research team is up to and stay updated on newly discovered issues by clicking on this link: <https://research.jfrog.com>
+</details>
 
-##### 🏗️ Infrastructure as Code (IaC) Scan
-- Analyze Infrastructure as Code (IaC) files, such as Terraform, to identify security vulnerabilities and misconfigurations before deploying your cloud infrastructure.
-- Get actionable insights and recommendations for securing your IaC configurations.
+#### Advanced
+*Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with [Advanced DevSecOps](https://jfrog.com/xray/#xray-advanced)).*
+
+<details>
+  <summary>Vulnerability Contextual Analysis</summary>
+Uses the code context to eliminate false positive reports on vulnerable dependencies that are not applicable to the code. 
+Vulnerability Contextual Analysis is currently supported for Python, Java and JavaScript code.
+</details>
+
+<details>
+  <summary>Secrets Detection</summary>
+Prevents the exposure of keys or credentials that are stored in your source code.
+</details>
+
+<details>
+  <summary>Infrastructure as Code (IaC) Scan</summary>
+Secures your IaC files. Critical to keeping your cloud deployment safe and secure.
+</details>
+
+#### Additional Perks
+
+- Security issues are easily visible inline.
+- The results show issues with context, impact, and remediation.
+- View all security issues in one place, in the JFrog tab.
+- For Security issues with an available fixed version, you can upgrade to the fixed version within the plugin.
+- Track the status of the code while it is being built, tested, and scanned on the CI server.
 
 #### 🛡️ Supported Packages
 | Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) | [Terraform](#-infrastructure-as-code-(iac)-Scan) |
