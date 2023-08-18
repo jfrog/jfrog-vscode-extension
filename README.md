@@ -22,7 +22,7 @@
         - [Severity Icons](#severity-icons)
 - [The Local View](#the-local-view)
     - [General](#general)
-    - [Software Composition Analysis (SCA)](#software-composition-analysis-)
+    - [Software Composition Analysis (SCA)](#software-composition-analysis)
     - [CVE Research and Enrichment](#cve-research-and-enrichment)
     - [Vulnerability Contextual Analysis](#vulnerability-contextual-analysis)
     - [Secrets Detection](#secrets-detection)
@@ -237,6 +237,7 @@ With this information, you can make an informed decision on whether to use a com
 scan your workspace by clicking the Scan/Rescan button, the <img src='resources/dark/refresh.png' height="15" width="15"> icon at the extension tab or click on Start Xray Scan from within the editor. The scan will create a list of files with vulnerabilities in the workspace.
 ![Refresh](resources/readme/preview/refresh.png)
 
+<div id="software-composition-analysis">
 ### Software Composition Analysis (SCA)
 Each descriptor file (like pom.xml in Maven, go.mod in Go, etc.) displayed in the JFrog Panel contains vulnerable dependencies, and each dependency contains the vulnerabilities themselves.
 
