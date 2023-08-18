@@ -238,6 +238,7 @@ scan your workspace by clicking the Scan/Rescan button, the <img src='resources/
 ![Refresh](resources/readme/preview/refresh.png)
 
 <div id="software-composition-analysis">
+
 ### Software Composition Analysis (SCA)
 Each descriptor file (like pom.xml in Maven, go.mod in Go, etc.) displayed in the JFrog Panel contains vulnerable dependencies, and each dependency contains the vulnerabilities themselves.
 
