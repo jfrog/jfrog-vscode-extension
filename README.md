@@ -21,6 +21,11 @@
     -   [Using the extension](#using-the-extension)
         -   [Severity Icons](#severity-icons)
 -   [The Local View](#the-local-view)
+        -   [General](#general)
+        -   [Software Composition Analysis (SCA)](#software-composition-analysis-)
+        -   [CVE Research and Enrichment](#cve-research-and-enrichment)
+        -   [Vulnerability Contextual Analysis](#vulnerability-contextual-analysis)
+        -   [Secrets Detection](#secrets-detection)
 -   [The CI View](#the-ci-view)
     -   [How Does It Work?](#how-does-it-work)
     -   [Setting Up Your CI Pipeline](#setting-up-your-ci-pipeline)
@@ -237,7 +242,7 @@ Each descriptor file (like pom.xml in Maven, go.mod in Go, etc.) displayed in th
 
 Each file node in the tree is interactive. Click and expand it to view its children noded and navigate to the corresponding file in the IDE editor for better visibility. Upon navigating to a file, the extension will highlight the vulnerable line, making it easier to locate the specific issue
 
-In addition the locations with vulnerabilities will be marked in the editor. By clicking on the light bulb icon next to a vulnerable location in the editor, we can instantly jump to the corresponding entry in the tree view.
+In addition the locations with vulnerabilities will be marked in the editor. By clicking on the light bulb icon next to a vulnerable location in the editor, you can instantly jump to the corresponding entry in the tree view.
 
 ![Tree view](resources/readme/preview/treeView.png)
 
@@ -277,7 +282,7 @@ Xray automatically validates some high and very high impact vulnerabilities, suc
 ### Secrets Detection
 > **_NOTE:_**  Secrets Detection requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.
 
-Detect any secrets left exposed inside the code. to prevent any accidental leak of internal tokens or credentials.
+Detect any secrets left exposed inside the code. to prevent any accidental leak of internal tokens or credentials. To ignore detected secrets, you can add a comment which includes the phrase *jfrog-ignore* above the line with the secret.
 
 ![Secrets_Detection](resources/readme/preview/secrets.png)
 
