@@ -60,7 +60,7 @@ The extension allows developers to find and fix security vulnerabilities in thei
 about the status of their code by continuously scanning it locally with the [JFrog Platform](https://jfrog.com/xray/).
 
 ### What security capabilities do we provide?
-#### Basic
+#### 🌟 Basic
 <details>
   <summary>Software Composition Analysis (SCA)</summary>
 Scans your project dependencies for security issues and shows you which dependencies are vulnerable. If the vulnerabilities have a fix, you can upgrade to the version with the fix in a click of a button.
@@ -82,7 +82,7 @@ You can learn more about enriched CVEs [here](https://jfrog.com/help/r/jfrog-sec
 Check out what our research team is up to and stay updated on newly discovered issues by clicking on this link: <https://research.jfrog.com>
 </details>
 
-#### Advanced
+#### 🌟 Advanced
 *Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with [Advanced DevSecOps](https://jfrog.com/xray/#xray-advanced)).*
 
 <details>
@@ -101,13 +101,15 @@ Prevents the exposure of keys or credentials that are stored in your source code
 Secures your IaC files. Critical to keeping your cloud deployment safe and secure.
 </details>
 
-#### Additional Perks
+#### 🌟 Additional Perks
 
 - Security issues are easily visible inline.
 - The results show issues with context, impact, and remediation.
 - View all security issues in one place, in the JFrog tab.
 - For Security issues with an available fixed version, you can upgrade to the fixed version within the plugin.
 - Track the status of the code while it is being built, tested, and scanned on the CI server.
+
+The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
 #### 🛡️ Supported Packages
 | Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) | [Terraform](#-infrastructure-as-code-(iac)-Scan) |
@@ -118,15 +120,6 @@ Secures your IaC files. Critical to keeping your cloud deployment safe and secur
 | [Secrets Detection](#-secrets-detection)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |✅    |
 | [Exclude dev dependencies](#exclude-development-dependencies-during-scan)                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |   ❌    |
 | [Infrastructure as Code (IaC) Scan](#-infrastructure-as-code-(iac)-Scan)                          |  ❌  |   ❌   |   ❌    |  ❌  |    ❌    |   ❌    |   ✅     |
-
-#### 🌟 Additional Perks
-* Security issues are easily visible inline.
-* The results show issues with context, impact, and remediation.
-* View all security issues in one place, in the JFrog tab.
-* For Security issues with an available fixed version, you can upgrade to the fixed version within the plugin.
-* Track the status of the code while it is being built, tested, and scanned on the CI server.
-
-The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
 ## Getting Started
 
