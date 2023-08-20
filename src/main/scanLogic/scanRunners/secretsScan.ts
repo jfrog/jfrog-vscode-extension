@@ -59,9 +59,13 @@ export class SecretsRunner extends BinaryRunner {
                 }
             }
             // Generate response data
-            run.results?.forEach(analyzeIssue =>
-                AnalyzerUtils.generateIssueData(secretsResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId))
-            );
+            run.results?.forEach(analyzeIssue => {
+                if (analyzeIssue.suppressions && analyzeIssue.suppressions.length > 0) {
+                    // Suppress issue
+                    return;
+                }
+                AnalyzerUtils.generateIssueData(secretsResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId));
+            });
         }
         return secretsResponse;
     }
