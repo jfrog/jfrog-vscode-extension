@@ -14,44 +14,37 @@
 </div>
 
 # Table of Contents
--   [About this Extension](#about-this-extension)
--   [Getting Started](#getting-started)
-    -   [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
-    -   [Connecting VS Code to Your JFrog Platform](#connecting-vs-code-to-your-jfrog-platform)
-    -   [Using the extension](#using-the-extension)
-        -   [Severity Icons](#severity-icons)
--   [The Local View](#the-local-view)
-    -   [Scanning Workspace](#scanning-workspace)
-    -   [Viewing Vulnerabilities](#viewing-vulnerabilities)
-        -   [Viewing Vulnerability Details](#viewing-vulnerability-details)
-    -   [Updating Dependencies](#updating-dependencies)
-    -   [Creating Ignore Rules](#creating-ignore-rules)
-    -   [Behind the Scenes](#behind-the-scenes)
-        -   [Go Projects](#go-projects)
-        -   [Maven Projects](#maven-projects)
-        -   [Npm Projects](#npm-projects)
-            -   [Exclude Development Dependencies During Scan](#exclude-development-dependencies-during-scan)
-        -   [Yarn v1 Projects](#yarn-v1-projects)
-        -   [Pypi Projects](#pypi-projects)
-        -   [.NET Projects](#net-projects)
--   [The CI View](#the-ci-view)
-    -   [How Does It Work?](#how-does-it-work)
-    -   [Setting Up Your CI Pipeline](#setting-up-your-ci-pipeline)
-    -   [Setting Up the CI View](#setting-up-the-ci-view)
--   [Extension Settings](#extension-settings)
-    -   [Apply Xray Policies to your Projects](#apply-xray-policies-to-your-projects)
-    -   [Exclude Paths from Scan](#exclude-paths-from-scan)
-    -   [Proxy Configuration](#proxy-configuration)
-    -   [Proxy Authorization](#proxy-authorization)
-        -   [Basic authorization](#basic-authorization)
-        -   [Access token authorization](#access-token-authorization)
-        -   [Example](#example)
--   [Troubleshooting](#troubleshooting)
--   [License](#license)
--   [Building and Testing the Sources](#building-and-testing-the-sources)
-    -   [Preconditions](#preconditions)
--   [Code Contributions](#code-contributions)
-    -   [Guidelines](#guidelines)
+- [About this Extension](#about-this-extension)
+- [Getting Started](#getting-started)
+    - [Install the **JFrog** extension in VS Code](#install-the-jfrog-extension-in-vs-code)
+    - [Connecting VS Code to Your JFrog Platform](#connecting-vs-code-to-your-jfrog-platform)
+    - [Using the extension](#using-the-extension)
+        - [Severity Icons](#severity-icons)
+- [The Local View](#the-local-view)
+    - [General](#general)
+    - [Software Composition Analysis (SCA)](#software-composition-analysis)
+    - [CVE Research and Enrichment](#cve-research-and-enrichment)
+    - [Vulnerability Contextual Analysis](#vulnerability-contextual-analysis)
+    - [Secrets Detection](#secrets-detection)
+- [The CI View](#the-ci-view)
+    - [How Does It Work?](#how-does-it-work)
+    - [Setting Up Your CI Pipeline](#setting-up-your-ci-pipeline)
+    - [Setting Up the CI View](#setting-up-the-ci-view)
+- [Extension Settings](#extension-settings)
+    - [Apply Xray Policies to your Projects](#apply-xray-policies-to-your-projects)
+    - [Exclude Paths from Scan](#exclude-paths-from-scan)
+    - [Proxy Configuration](#proxy-configuration)
+    - [Proxy Authorization](#proxy-authorization)
+        - [Basic authorization](#basic-authorization)
+        - [Access token authorization](#access-token-authorization)
+        - [Example](#example)
+- [Behind the Scenes - Software Composition Analysis (SCA)](#behind-the-scenes)
+- [Troubleshooting](#troubleshooting)
+- [License](#license)
+- [Building and Testing the Sources](#building-and-testing-the-sources)
+    - [Preconditions](#preconditions)
+- [Code Contributions](#code-contributions)
+    - [Guidelines](#guidelines)
 
 ## About this Extension
 The cost of remediating a vulnerability is akin to the cost of fixing a bug.
@@ -60,25 +53,56 @@ The extension allows developers to find and fix security vulnerabilities in thei
 about the status of their code by continuously scanning it locally with the [JFrog Platform](https://jfrog.com/xray/).
 
 ### What security capabilities do we provide?
-####  Basic
-##### 📦 Software Composition Analysis (SCA)
-- Scan project dependencies for security issues
-- Access enriched CVE data provided by the JFrog Security Research team.
+#### 🌟 Basic
+<details>
+  <summary>Software Composition Analysis (SCA)</summary>
+Scans your project dependencies for security issues and shows you which dependencies are vulnerable. If the vulnerabilities have a fix, you can upgrade to the version with the fix in a click of a button.
+</details>
 
-Learn more about enriched CVEs in the [JFrog Security CVE Research and Enrichment](https://www.jfrog.com/confluence/display/JFROG/JFrog+Security+CVE+Research+and+Enrichment) documentation.
+<details>
+  <summary>CVE Research and Enrichment</summary>
+For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team.
+Prioritize the CVEs based on:
 
-####  Advanced
-*Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
+- **JFrog Severity**: The severity given by the JFrog Security Research team after the manual analysis of the CVE by the team.
+CVEs with the highest JFrog security severity are the most likely to be used by real-world attackers.
+This means that you should put effort into fixing them as soon as possible.
+- **Research Summary**: The summary that is based on JFrog's security analysis of the security issue provides detailed technical information on the specific conditions for the CVE to be applicable.
+- **Remediation**: Detailed fix and mitigation options for the CVEs
 
-##### 🔍 Vulnerability Contextual Analysis
-This feature uses the code context to eliminate false positive reports on vulnerable dependencies that are not applicable to the code. Vulnerability Contextual Analysis is currently supported for Python, JavaScript and Java code.
+You can learn more about enriched CVEs [here](https://jfrog.com/help/r/jfrog-security-documentation/jfrog-security-cve-research-and-enrichment).
 
-##### 🔐 Secrets Detection
-Detect and prevent the inclusion of sensitive information, such as credentials and API keys, in your codebase.
+Check out what our research team is up to and stay updated on newly discovered issues by clicking on this link: <https://research.jfrog.com>
+</details>
 
-##### 🏗️ Infrastructure as Code (IaC) Scan
-- Analyze Infrastructure as Code (IaC) files, such as Terraform, to identify security vulnerabilities and misconfigurations before deploying your cloud infrastructure.
-- Get actionable insights and recommendations for securing your IaC configurations.
+#### 🌟 Advanced
+*Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with [Advanced DevSecOps](https://jfrog.com/xray/#xray-advanced).*
+
+<details>
+  <summary>Vulnerability Contextual Analysis</summary>
+Uses the code context to eliminate false positive reports on vulnerable dependencies that are not applicable to the code. 
+Vulnerability Contextual Analysis is currently supported for Python, Java and JavaScript code.
+</details>
+
+<details>
+  <summary>Secrets Detection</summary>
+Prevents the exposure of keys or credentials that are stored in your source code.
+</details>
+
+<details>
+  <summary>Infrastructure as Code (IaC) Scan</summary>
+Secures your IaC files. Critical to keeping your cloud deployment safe and secure.
+</details>
+
+#### 🌟 Additional Perks
+
+- Security issues are easily visible inline.
+- The results show issues with context, impact, and remediation.
+- View all security issues in one place, in the JFrog tab.
+- For Security issues with an available fixed version, you can upgrade to the fixed version within the plugin.
+- Track the status of the code while it is being built, tested, and scanned on the CI server.
+
+The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
 #### 🛡️ Supported Packages
 | Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) | [Terraform](#-infrastructure-as-code-(iac)-Scan) |
@@ -89,15 +113,6 @@ Detect and prevent the inclusion of sensitive information, such as credentials a
 | [Secrets Detection](#-secrets-detection)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |✅    |
 | [Exclude dev dependencies](#exclude-development-dependencies-during-scan)                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |   ❌    |
 | [Infrastructure as Code (IaC) Scan](#-infrastructure-as-code-(iac)-Scan)                          |  ❌  |   ❌   |   ❌    |  ❌  |    ❌    |   ❌    |   ✅     |
-
-#### 🌟 Additional Perks
-* Security issues are easily visible inline.
-* The results show issues with context, impact, and remediation.
-* View all security issues in one place, in the JFrog tab.
-* For Security issues with an available fixed version, you can upgrade to the fixed version within the plugin.
-* Track the status of the code while it is being built, tested, and scanned on the CI server.
-
-The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
 ## Getting Started
 
@@ -215,25 +230,22 @@ The icon demonstrates the top severity issue of a selected component and its tra
 | <img src="./resources/Normal.png" width="20">  |  Normal  |   No issues (Used only in CI view)   |
 
 ## The Local View
+### General
+The JFrog VS Code Extension enables continuous scans of your project with the JFrog Platform. The security related information will be displayed under the Local view.
+It allows developers to view vulnerability information about their dependencies and source code in their IDE.
+With this information, you can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
 
-The local view of the extension adds JFrog Xray scanning of project dependencies and source code to your VS Code IDE.
-It allows developers to view panels displaying vulnerability information about their dependencies and source code in their VS Code IDE.
-With this information, a developer can make an informed decision on whether to use a component or not before it gets entrenched into the organization’s product.
-
-### Scanning workspace
 scan your workspace by clicking the Scan/Rescan button, the <img src='resources/dark/refresh.png' height="15" width="15"> icon at the extension tab or click on Start Xray Scan from within the editor. The scan will create a list of files with vulnerabilities in the workspace.
 ![Refresh](resources/readme/preview/refresh.png)
 
-### Viewing Vulnerabilities
-The JFrog extension incorporates a file tree displaying all the vulnerabilities within the project. Each file that is infected with a vulnerability appears as a tree node.
+<div id="software-composition-analysis">
 
-Descriptor file (e.g., pom.xml in Maven, go.mod in Go, etc.) has a special meaning that outlines the available direct dependencies for the project. The tree will show these descriptor files containing vulnerable dependencies.  In cases where a direct dependency contains vulnerable child dependencies, the tree will show the vulnerable child dependencies instead, denoting them with a '(indirect)' postfix.
+### Software Composition Analysis (SCA)
+Each descriptor file (like pom.xml in Maven, go.mod in Go, etc.) displayed in the JFrog Panel contains vulnerable dependencies, and each dependency contains the vulnerabilities themselves.
 
-Furthermore, various types of vulnerability nodes, such as Contextual Analysis Vulnerabilities or hard-coded secrets, may be present in other source code files.
+Each file node in the tree is interactive. Click and expand it to view its children noded and navigate to the corresponding file in the IDE editor for better visibility. Upon navigating to a file, the extension will highlight the vulnerable line, making it easier to locate the specific issue
 
-Each file node in the tree is interactive,  click and expand it to view its children node and navigate to the corresponding file in the IDE for better visibility. Upon navigating to a file, the extension will highlight the vulnerable line, making it easier to locate the specific issue
-
-In addition the locations with vulnerabilities will be marked in the editor. By clicking on the light bulb icon next to a vulnerable location in the editor, we can instantly jump to the corresponding entry in the tree view.
+In addition the locations with vulnerabilities will be marked in the editor. By clicking on the light bulb icon next to a vulnerable location in the editor, you can instantly jump to the corresponding entry in the tree view.
 
 ![Tree view](resources/readme/preview/treeView.png)
 
@@ -242,8 +254,13 @@ Clicking on a CVE in the list will open the location with the issue in the edito
 ![Impact_Graph](resources/readme/preview/impactGraph.png)
 ![Public_Resources](resources/readme/preview/publicDetails.png)
 
-<details>
-<summary>CVE Research and Enrichment</summary>
+Update a vulnerable direct dependency to a fixed version directly from the vulnerable location at the editor using quick fix
+![Set_Fixed_Version](resources/readme/preview/updateQuickFix.png)
+
+When Xray watches are enabled and a vulnerability is detected, a closed eye icon will appear next to the vulnerability line in the JFrog extension. By clicking on this icon, you can initiate the process of creating an [Ignore Rule](https://www.jfrog.com/confluence/display/JFROG/Ignore+Rules) in Xray.
+![Ignore_Rule](resources/readme/preview/ignoreRule.png)
+
+### CVE Research and Enrichment
 For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team. Prioritize the CVEs based on:
 
 * JFrog Severity: The severity given by the JFrog Security Research team after the manual analysis of the CVE by the team. CVEs with the highest JFrog security severity are the most likely to be used by real-world attackers. This means that you should put effort into fixing them as soon as possible.
@@ -254,10 +271,9 @@ Check out what our research team is up to and stay updated on newly discovered i
 
 ![JFrog_Research](resources/readme/preview/research.png)
 
-</details>
+### Vulnerability Contextual Analysis
+> **_NOTE:_**  Vulnerability Contextual Analysis requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.
 
-<details>
-<summary>Vulnerability Contextual Analysis</summary>
 Xray automatically validates some high and very high impact vulnerabilities, such as vulnerabilities that have prerequisites for exploitations, and provides contextual analysis information for these vulnerabilities, to assist you in figuring out which vulnerabilities need to be fixed. Vulnerability Contextual Analysis data includes:
 
 * Vulnerability Contextual Analysis status: Vulnerability Contextual Analysis results indicating if a CVE was found applicable in your application or not applicable.
@@ -266,123 +282,21 @@ Xray automatically validates some high and very high impact vulnerabilities, suc
 
 ![Contextual_Analysis](resources/readme/preview/contextualDetails.png)
 
-</details>
+### Secrets Detection
+> **_NOTE:_**  Secrets Detection requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.
 
-<details>
-<summary>Secrets Detection</summary>
-* Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
-
-Detect any secrets left exposed inside the code. to prevent any accidental leak of internal tokens or credentials.
+Detect any secrets left exposed inside the code. to prevent any accidental leak of internal tokens or credentials. To ignore detected secrets, you can add a comment which includes the phrase *jfrog-ignore* above the line with the secret.
 
 ![Secrets_Detection](resources/readme/preview/secrets.png)
 
-</details>
-
-<details>
-
-<summary>Infrastructure as Code (IaC) Scan</summary>
-* Requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.*
+### Infrastructure as Code (IaC) Scan
+> **_NOTE:_**  Infrastructure as Code (IaC) requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.
 
 Scan Infrastructure as Code (Terraform) files for early detection of cloud and infrastructure misconfigurations.
 
 ![iac_scan](resources/readme/preview/iac.png)
 
-</details>
-
-### Updating Dependencies
-Update a vulnerable direct dependency to a fixed version directly from the vulnerable location at the editor using quick fix
-![Set_Fixed_Version](resources/readme/preview/updateQuickFix.png)
-
-### Creating Ignore Rules
-When Xray watches are enabled and a vulnerability is detected, a closed eye icon will appear next to the vulnerability line in the JFrog extension. By clicking on this icon, you can initiate the process of creating an [Ignore Rule](https://www.jfrog.com/confluence/display/JFROG/Ignore+Rules) in Xray.
-![Ignore_Rule](resources/readme/preview/ignoreRule.png)
-
-## Behind the Scenes
-### Go Projects
-Behind the scenes, the JFrog VS Code Extension scans all the project dependencies, both direct and indirect (transitive), even if they are not declared in the project's go.mod. It builds the Go dependencies tree by running `go mod graph` and intersecting the results with `go list -f '{{with .Module}}{{.Path}} {{.Version}}{{end}}' all` command. Therefore, please make sure to have Go CLI in your system PATH.
-
-### Maven Projects
-The JFrog VS Code Extension builds the Maven dependencies tree by running `mvn dependency:tree`. View licenses and top issue severities directly from the pom.xml.
-
-Important notes:
-
-1. To have your project dependencies scanned by JFrog Xray, make sure Maven is installed, and that the mvn command is in your system PATH.
-2. For projects which include the [Maven Dependency Plugin](https://maven.apache.org/plugins/maven-dependency-plugin/examples/resolving-conflicts-using-the-dependency-tree.html) as a build plugin, with include or exclude configurations, the scanning functionality is disabled. For example:
-
-```xml
-      <plugins>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-dependency-plugin</artifactId>
-          <configuration>
-            <includes>org.apache.*</includes>
-          </configuration>
-        </plugin>
-      </plugins>
-```
-
-### Npm Projects
-
-Behind the scenes, the extension builds the npm dependencies tree by running `npm list`. View licenses and top issue severities directly from the package.json.
-
-Important:
-To have your project dependencies scanned by JFrog Xray, make sure the npm CLI is installed on your local machine and that it is in your system PATH.
-In addition, the project dependencies must be installed using `npm install`.
-
-### Exclude Development Dependencies During Scan
-
-Development dependencies are scanned by default. You can exclude them by choosing `Exclude Dev Dependencies` in the [Extension Settings](#extension-settings). Currently, only npm is supported.
-
-### Yarn v1 Projects
-
-Behind the scenes, the extension builds the Yarn dependencies tree by running `yarn list`. View licenses and top issue severities directly from the yarn.lock.
-
-Important:
-
--   To have your project dependencies scanned by JFrog Xray, make sure the Yarn CLI is installed on your local machine and that it is in your system PATH.
--   Yarn v2 is not yet supported.
-
-### Pypi Projects
-
-Behind the scenes, the extension builds the Pypi dependencies tree by running `pipdeptree` on your Python virtual environment. It also uses the Python interpreter path configured by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python). View licenses and top issue severities directly from your requirements.txt files. The scan your Pypi dependencies, make sure the following requirements are met:
-
-1. The [Python extension for VS Code](https://code.visualstudio.com/docs/python/python-tutorial#_install-visual-studio-code-and-the-python-extension) is installed.
-2. Depending on your project, Please make sure Python 2 or 3 are included in your system PATH.
-3. Create and activate a virtual env as instructed in [VS-Code documentation](https://code.visualstudio.com/docs/python/environments#_global-virtual-and-conda-environments). Make sure that Virtualenv Python interpreter is selected as instructed [here](https://code.visualstudio.com/docs/python/environments#_select-and-activate-an-environment).
-4. Open a new terminal and activate your Virtualenv:
-
-    - On macOS and Linux:
-
-        ```sh
-        source <venv-dir>/bin/activate
-
-        # For example:
-        source .env/bin/activate
-        ```
-
-    - On Windows:
-
-        ```powershell
-        .\<venv-dir>\Scripts\activate
-
-        # For example:
-        .\env\Scripts\activate
-        ```
-
-5. In the same terminal, install your python project and dependencies according to your project specifications.
-
-### .NET Projects
-
-For .NET projects which use NuGet packages as dependencies, the extension displays the NuGet dependencies tree, together with the information for each dependency.
-Behind the scenes, the extension builds the NuGet dependencies tree using the [NuGet deps tree](https://github.com/jfrog/nuget-deps-tree) npm package.
-
-Important:
-
--   Does your project define its NuGet dependencies using a _packages.config_ file? If so, then please make sure the `nuget` CLI is installed on your local machine and that it is in your system PATH. The extension uses the `nuget` CLI to find the location of the NuGet packages on the local file-system.
--   The project must be restored using `nuget restore` or `dotnet restore` prior to scanning. After this action, you should click on the Refresh ![Refresh](resources/readme/refresh.png) button, for the tree view to be refreshed and updated.
-
 ## The CI View
-
 The CI view of the extension allows you to view information about your builds directly from your CI system. This allows developers to keep track of the status of their code, while it is being built, tested and scanned as part of the CI pipeline, regardless of the CI provider used.
 
 This information can be viewed inside JFrog VS Code Extension, from the JFrog Panel, after switching to CI mode.
@@ -487,6 +401,92 @@ settings.json:
     "http.proxyAuthorization": "Basic Zm9vOmJhcg=="
 }
 ```
+
+<div id="behind-the-scenes">
+
+## Behind the Scenes - Software Composition Analysis (SCA)
+### Go Projects
+Behind the scenes, the JFrog VS Code Extension scans all the project dependencies, both direct and indirect (transitive), even if they are not declared in the project's go.mod. It builds the Go dependencies tree by running `go mod graph` and intersecting the results with `go list -f '{{with .Module}}{{.Path}} {{.Version}}{{end}}' all` command. Therefore, please make sure to have Go CLI in your system PATH.
+
+### Maven Projects
+The JFrog VS Code Extension builds the Maven dependencies tree by running `mvn dependency:tree`. View licenses and top issue severities directly from the pom.xml.
+
+Important notes:
+
+1. To have your project dependencies scanned by JFrog Xray, make sure Maven is installed, and that the mvn command is in your system PATH.
+2. For projects which include the [Maven Dependency Plugin](https://maven.apache.org/plugins/maven-dependency-plugin/examples/resolving-conflicts-using-the-dependency-tree.html) as a build plugin, with include or exclude configurations, the scanning functionality is disabled. For example:
+
+```xml
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-dependency-plugin</artifactId>
+          <configuration>
+            <includes>org.apache.*</includes>
+          </configuration>
+        </plugin>
+      </plugins>
+```
+
+### Npm Projects
+
+Behind the scenes, the extension builds the npm dependencies tree by running `npm list`. View licenses and top issue severities directly from the package.json.
+
+Important:
+To have your project dependencies scanned by JFrog Xray, make sure the npm CLI is installed on your local machine and that it is in your system PATH.
+In addition, the project dependencies must be installed using `npm install`.
+
+### Exclude Development Dependencies During Scan
+
+Development dependencies are scanned by default. You can exclude them by choosing `Exclude Dev Dependencies` in the [Extension Settings](#extension-settings). Currently, only npm is supported.
+
+### Yarn v1 Projects
+
+Behind the scenes, the extension builds the Yarn dependencies tree by running `yarn list`. View licenses and top issue severities directly from the yarn.lock.
+
+Important:
+
+-   To have your project dependencies scanned by JFrog Xray, make sure the Yarn CLI is installed on your local machine and that it is in your system PATH.
+-   Yarn v2 is not yet supported.
+
+### Pypi Projects
+
+Behind the scenes, the extension builds the Pypi dependencies tree by running `pipdeptree` on your Python virtual environment. It also uses the Python interpreter path configured by the [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python). View licenses and top issue severities directly from your requirements.txt files. The scan your Pypi dependencies, make sure the following requirements are met:
+
+1. The [Python extension for VS Code](https://code.visualstudio.com/docs/python/python-tutorial#_install-visual-studio-code-and-the-python-extension) is installed.
+2. Depending on your project, Please make sure Python 2 or 3 are included in your system PATH.
+3. Create and activate a virtual env as instructed in [VS-Code documentation](https://code.visualstudio.com/docs/python/environments#_global-virtual-and-conda-environments). Make sure that Virtualenv Python interpreter is selected as instructed [here](https://code.visualstudio.com/docs/python/environments#_select-and-activate-an-environment).
+4. Open a new terminal and activate your Virtualenv:
+
+    - On macOS and Linux:
+
+        ```sh
+        source <venv-dir>/bin/activate
+
+        # For example:
+        source .env/bin/activate
+        ```
+
+    - On Windows:
+
+        ```powershell
+        .\<venv-dir>\Scripts\activate
+
+        # For example:
+        .\env\Scripts\activate
+        ```
+
+5. In the same terminal, install your python project and dependencies according to your project specifications.
+
+### .NET Projects
+
+For .NET projects which use NuGet packages as dependencies, the extension displays the NuGet dependencies tree, together with the information for each dependency.
+Behind the scenes, the extension builds the NuGet dependencies tree using the [NuGet deps tree](https://github.com/jfrog/nuget-deps-tree) npm package.
+
+Important:
+
+-   Does your project define its NuGet dependencies using a _packages.config_ file? If so, then please make sure the `nuget` CLI is installed on your local machine and that it is in your system PATH. The extension uses the `nuget` CLI to find the location of the NuGet packages on the local file-system.
+-   The project must be restored using `nuget restore` or `dotnet restore` prior to scanning. After this action, you should click on the Refresh ![Refresh](resources/readme/refresh.png) button, for the tree view to be refreshed and updated.
 
 ## Troubleshooting
 
