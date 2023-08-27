@@ -24,6 +24,7 @@ import { Translators } from '../../utils/translators';
 import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectDependencyTreeNode';
 import { LogManager } from '../../log/logManager';
 import { Utils } from '../../utils/utils';
+import { EnvironmentTreeNode } from '../issuesTree/descriptorTree/environmentTreeNode';
 
 export interface FileWithSecurityIssues {
     full_path: string;
@@ -287,6 +288,9 @@ export class AnalyzerUtils {
             let descriptorIssues: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
             // Map information to similar directory space
             let spacePath: string = path.dirname(descriptorIssues.fullPath);
+            if (fileScanBundle instanceof EnvironmentTreeNode) {
+                spacePath = descriptorIssues.fullPath;
+            }
             if (!workspaceToScanBundles.has(spacePath)) {
                 workspaceToScanBundles.set(spacePath, new Map<FileScanBundle, Set<string>>());
             }
