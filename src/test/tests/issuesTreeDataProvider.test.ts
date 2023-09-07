@@ -8,6 +8,7 @@ import { DependencyScanResults } from '../../main/types/workspaceIssuesDetails';
 import { IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
 import { SecretsScanResponse } from '../../main/scanLogic/scanRunners/secretsScan';
 import { FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
+import { SastFileIssues, SastScanResponse } from '../../main/scanLogic/scanRunners/sastScan';
 
 /**
  * Test functionality of @class IssuesTreeDataProvider.
@@ -68,6 +69,12 @@ describe('Issues Tree Data Provider Tests', () => {
             scanResult: new ScanResults('path'),
             prepareDummy: (scanResult: ScanResults) => addDummySecretsIssue(scanResult),
             expected: true
+        },
+        {
+            test: 'With sast issues',
+            scanResult: new ScanResults('path'),
+            prepareDummy: (scanResult: ScanResults) => addDummySastIssue(scanResult),
+            expected: true
         }
     ].forEach(testCase => {
         it('ScanResult has issues - ' + testCase.test, () => {
@@ -88,5 +95,9 @@ describe('Issues Tree Data Provider Tests', () => {
 
     function addDummySecretsIssue(scanResult: ScanResults) {
         scanResult.secretsScan = { filesWithIssues: [{} as FileWithSecurityIssues] } as SecretsScanResponse;
+    }
+
+    function addDummySastIssue(scanResult: ScanResults) {
+        scanResult.sastScan = { filesWithIssues: [{} as SastFileIssues] } as SastScanResponse;
     }
 });

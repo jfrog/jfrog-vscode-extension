@@ -1,6 +1,8 @@
 import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
 import { AnalyzerUtils, FileWithSecurityIssues } from '../../treeDataProviders/utils/analyzerUtils';
+import { Module } from '../../types/jfrogAppsConfig';
+import { AppsConfigUtils } from '../../utils/appConfigUtils';
 import { Resource } from '../../utils/resource';
 import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeScanRequest, AnalyzerScanResponse, ScanType } from './analyzerModels';
@@ -28,12 +30,16 @@ export class IacRunner extends BinaryRunner {
         await this.executeBinary(checkCancel, ['iac', yamlConfigPath], executionLogDirectory);
     }
 
-    public async scan(directory: string, checkCancel: () => void, skipFolders: string[] = []): Promise<IacScanResponse> {
+    public async scan(module: Module, checkCancel: () => void): Promise<IacScanResponse> {
         let request: AnalyzeScanRequest = {
             type: ScanType.Iac,
-            roots: [directory],
-            skipped_folders: skipFolders
+            roots: AppsConfigUtils.GetSourceRoots(module, module.scanners?.iac),
+            skipped_folders: AppsConfigUtils.GetExcludePatterns(module, module.scanners?.iac)
         } as AnalyzeScanRequest;
+        this._logManager.logMessage(
+            "Scanning directories '" + request.roots + "', for Iac issues. Skipping folders: " + request.skipped_folders,
+            'DEBUG'
+        );
         return await this.run(checkCancel, request).then(runResult => this.convertResponse(runResult));
     }
 

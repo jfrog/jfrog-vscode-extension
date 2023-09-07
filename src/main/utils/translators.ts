@@ -1,27 +1,31 @@
 import {
+    Severity as ClientSeverity,
     ICve,
+    IExtendedInformation,
     IGeneral,
+    IGraphCve,
     IIssue,
     ILicense,
-    IVulnerableComponent,
-    Severity as ClientSeverity,
     IReference,
-    IExtendedInformation,
-    IGraphCve
+    IVulnerableComponent
 } from 'jfrog-client-js';
-import { IExtendedInformation as WebExtendedInformation, ISeverityReasons, ICve as WebICve, IAnalysisStep } from 'jfrog-ide-webview';
+import {
+    IAnalysisStep,
+    IApplicableDetails,
+    ISeverityReasons,
+    IExtendedInformation as WebExtendedInformation,
+    ICve as WebICve
+} from 'jfrog-ide-webview';
 import Set from 'typescript-collections/dist/lib/Set';
-import { IApplicableDetails } from 'jfrog-ide-webview';
+import { LogLevel } from '../log/logManager';
+import { AnalyzerManagerSeverityLevel, FileLocation, ScanType } from '../scanLogic/scanRunners/analyzerModels';
 import { GavGeneralInfo } from '../types/gavGeneralinfo';
 import { GeneralInfo } from '../types/generalInfo';
 import { IIssueCacheObject } from '../types/issueCacheObject';
 import { ILicenseCacheObject } from '../types/licenseCacheObject';
+import { toPackageType } from '../types/projectType';
 import { Severity } from '../types/severity';
-import { FileLocation, AnalyzerManagerSeverityLevel, ScanType } from '../scanLogic/scanRunners/analyzerModels';
-import { PackageType, toPackageType } from '../types/projectType';
 import { Utils } from './utils';
-import { LogLevel } from '../log/logManager';
-import { LanguageType } from '../scanLogic/scanRunners/eosScan';
 
 export class Translators {
     public static toAnalyzerTypeString(type: ScanType): string {
@@ -32,8 +36,8 @@ export class Translators {
                 return 'iac-scan';
             case ScanType.Secrets:
                 return 'secrets-detection';
-            case ScanType.Eos:
-                return 'Eos';
+            case ScanType.Sast:
+                return 'sast';
             default:
                 return type;
         }
@@ -44,20 +48,6 @@ export class Translators {
             return 'ERROR';
         }
         return logLevel.toUpperCase();
-    }
-
-    public static toLanguageType(type: PackageType): LanguageType | undefined {
-        switch (type) {
-            case PackageType.Python:
-                return 'python';
-            case PackageType.Npm:
-            case PackageType.Yarn:
-                return 'javascript';
-            case PackageType.Maven:
-                return 'java';
-            default:
-                return undefined;
-        }
     }
 
     public static levelToSeverity(level?: AnalyzerManagerSeverityLevel): Severity {

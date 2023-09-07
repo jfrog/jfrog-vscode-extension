@@ -2,18 +2,18 @@ import * as fs from 'fs';
 import yaml from 'js-yaml';
 import * as path from 'path';
 
-import { LogManager } from '../../log/logManager';
-import { Utils } from '../../utils/utils';
-import { NotEntitledError, NotSupportedError, OsNotSupportedError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
-import { AnalyzerRequest, AnalyzerScanResponse, ScanType, AnalyzeScanRequest } from './analyzerModels';
+import { IProxyConfig } from 'jfrog-client-js';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { ConnectionUtils } from '../../connect/connectionUtils';
-import { IProxyConfig } from 'jfrog-client-js';
+import { LogManager } from '../../log/logManager';
+import { LogUtils } from '../../log/logUtils';
 import { Configuration } from '../../utils/configuration';
 import { Resource } from '../../utils/resource';
 import { RunUtils } from '../../utils/runUtils';
+import { NotEntitledError, NotSupportedError, OsNotSupportedError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
-import { LogUtils } from '../../log/logUtils';
+import { Utils } from '../../utils/utils';
+import { AnalyzeScanRequest, AnalyzerRequest, AnalyzerScanResponse, ScanType } from './analyzerModels';
 
 /**
  * Arguments for running binary async
@@ -47,7 +47,7 @@ export abstract class BinaryRunner {
     protected _verbose: boolean = false;
 
     private static readonly RUNNER_NAME: string = 'analyzerManager';
-    public static readonly RUNNER_VERSION: string = '1.3.2.2005632';
+    public static readonly RUNNER_VERSION: string = '1.3.2.2019257';
     private static readonly DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/';
 
     public static readonly NOT_ENTITLED: number = 31;
@@ -106,9 +106,15 @@ export abstract class BinaryRunner {
      * Run the executeBinary method with the provided request path
      * @param checkCancel - check if cancel
      * @param yamlConfigPath - the path to the request
-     * @param executionLogDirectory - og file will be written to the dir
+     * @param executionLogDirectory - log file will be written to the dir
+     * @param responsePath - path to the output file
      */
-    protected abstract runBinary(yamlConfigPath: string, executionLogDirectory: string | undefined, checkCancel: () => void): Promise<void>;
+    protected abstract runBinary(
+        yamlConfigPath: string,
+        executionLogDirectory: string | undefined,
+        checkCancel: () => void,
+        responsePath: string | undefined
+    ): Promise<void>;
 
     /**
      * Validates that the binary exists and can run
@@ -137,11 +143,9 @@ export abstract class BinaryRunner {
      * @param executionLogDirectory - the directory to save the execution log in
      */
     private async executeBinaryTask(args: string[], executionLogDirectory?: string): Promise<any> {
-        let std: any = await ScanUtils.executeCmdAsync(
-            '"' + this._binary.fullPath + '" ' + args.join(' '),
-            this._runDirectory,
-            this.createEnvForRun(executionLogDirectory)
-        );
+        let command: string = '"' + this._binary.fullPath + '" ' + args.join(' ');
+        this._logManager.debug('Executing ' + command);
+        let std: any = await ScanUtils.executeCmdAsync(command, this._runDirectory, this.createEnvForRun(executionLogDirectory));
         if (std.stdout && std.stdout.length > 0) {
             this.logTaskResult(std.stdout, false);
         }
@@ -230,11 +234,11 @@ export abstract class BinaryRunner {
         return url;
     }
 
-    public async run(checkCancel: () => void, ...requests: AnalyzeScanRequest[]): Promise<AnalyzerScanResponse | undefined> {
+    public async run(checkCancel: () => void, request: AnalyzeScanRequest): Promise<AnalyzerScanResponse | undefined> {
         if (!this.validateSupported()) {
             return undefined;
         }
-        let args: RunArgs = this.createRunArguments(...requests);
+        let args: RunArgs = this.createRunArguments(request);
         try {
             if (args.requests.length == 0) {
                 return undefined;
@@ -250,27 +254,27 @@ export abstract class BinaryRunner {
      * @param requests - the run requests information
      * @return run arguments for the given requests
      */
-    private createRunArguments(...requests: AnalyzeScanRequest[]): RunArgs {
+    private createRunArguments(request: AnalyzeScanRequest): RunArgs {
         let args: RunArgs = new RunArgs(ScanUtils.createTmpDir());
         let processedRoots: Set<string> = new Set<string>();
 
-        for (const request of requests) {
-            if (request.roots.length > 0 && request.roots.every(root => !processedRoots.has(root))) {
-                // Prepare request information and insert as an actual request
-                const requestPath: string = path.join(args.directory, 'request_' + args.requests.length);
-                const responsePath: string = path.join(args.directory, 'response_' + args.requests.length);
+        if (request.roots.length > 0 && request.roots.every(root => !processedRoots.has(root))) {
+            // Prepare request information and insert as an actual request
+            const requestPath: string = path.join(args.directory, 'request_' + args.requests.length);
+            const responsePath: string = path.join(args.directory, 'response_' + args.requests.length);
+            if (request.type !== ScanType.Sast) {
                 request.output = responsePath;
-                request.type = this._type;
-                request.roots.forEach(root => processedRoots.add(root));
-                // Add request to run
-                args.requests.push({
-                    type: request.type,
-                    request: this.requestsToYaml(request),
-                    requestPath: requestPath,
-                    roots: request.roots,
-                    responsePath: responsePath
-                } as RunRequest);
             }
+            request.type = this._type;
+            request.roots.forEach(root => processedRoots.add(root));
+            // Add request to run
+            args.requests.push({
+                type: request.type,
+                request: this.requestsToYaml(request),
+                requestPath: requestPath,
+                roots: request.roots,
+                responsePath: responsePath
+            } as RunRequest);
         }
 
         return args;
@@ -297,7 +301,7 @@ export abstract class BinaryRunner {
                 this.runRequest(
                     checkCancel,
                     args.requests[i].request,
-                    args.requests[i].type === ScanType.Eos ? args.requests[i].responsePath : args.requests[i].requestPath,
+                    args.requests[i].requestPath,
                     args.requests[i].type,
                     args.requests[i].responsePath
                 )
@@ -390,11 +394,11 @@ export abstract class BinaryRunner {
         responsePath: string
     ): Promise<AnalyzerScanResponse> {
         // 1. Save requests as yaml file in folder
-        if (type !== ScanType.Eos) {
-            fs.writeFileSync(requestPath, request);
-        }
+        fs.writeFileSync(requestPath, request);
+        this._logManager.debug('Input YAML:\n' + request);
+
         // 2. Run the binary
-        await this.runBinary(requestPath, this._verbose ? undefined : path.dirname(requestPath), checkCancel).catch(error => {
+        await this.runBinary(requestPath, this._verbose ? undefined : path.dirname(requestPath), checkCancel, responsePath).catch(error => {
             if (error.code) {
                 // Not entitled to run binary
                 if (error.code === BinaryRunner.NOT_ENTITLED) {

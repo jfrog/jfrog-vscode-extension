@@ -1,19 +1,19 @@
 import { IGraphResponse } from 'jfrog-client-js';
 import { IImpactGraph } from 'jfrog-ide-webview';
 import { ApplicabilityScanResponse } from '../scanLogic/scanRunners/applicabilityScan';
-import { EosScanResponse } from '../scanLogic/scanRunners/eosScan';
+import { IacScanResponse } from '../scanLogic/scanRunners/iacScan';
+import { SastScanResponse } from '../scanLogic/scanRunners/sastScan';
+import { SecretsScanResponse } from '../scanLogic/scanRunners/secretsScan';
 import { Utils } from '../utils/utils';
 import { PackageType } from './projectType';
-import { IacScanResponse } from '../scanLogic/scanRunners/iacScan';
-import { SecretsScanResponse } from '../scanLogic/scanRunners/secretsScan';
 
 /**
  * Describes all the issue data for a specific workspace from Xray scan
  */
 export class ScanResults {
     private _descriptorsIssues: DependencyScanResults[] = [];
-    private _eosScan: EosScanResponse = {} as EosScanResponse;
-    private _eosScanTimestamp?: number;
+    private _sastScan: SastScanResponse = {} as SastScanResponse;
+    private _sastScanTimestamp?: number;
     private _iacScan: IacScanResponse = {} as IacScanResponse;
     private _iacScanTimestamp?: number;
     private _secretsScan: SecretsScanResponse = {} as SecretsScanResponse;
@@ -30,9 +30,9 @@ export class ScanResults {
         if (jsonScanResults._descriptorsIssues) {
             workspaceIssuesDetails.descriptorsIssues.push(...jsonScanResults._descriptorsIssues);
         }
-        // Eos
-        workspaceIssuesDetails.eosScan = jsonScanResults._eosScan;
-        workspaceIssuesDetails.eosScanTimestamp = jsonScanResults._eosScanTimestamp;
+        // SAST
+        workspaceIssuesDetails.sastScan = jsonScanResults._sastScan;
+        workspaceIssuesDetails.sastScanTimestamp = jsonScanResults._sastScanTimestamp;
         // Iac
         workspaceIssuesDetails.iacScan = jsonScanResults._iacScan;
         workspaceIssuesDetails.iacScanTimestamp = jsonScanResults._iacScanTimestamp;
@@ -54,7 +54,7 @@ export class ScanResults {
             ...this._descriptorsIssues.map(descriptorIssues => descriptorIssues.applicableScanTimestamp),
             this.iacScanTimestamp,
             this.secretsScanTimestamp,
-            this.eosScanTimestamp
+            this.sastScanTimestamp
         );
     }
 
@@ -65,7 +65,7 @@ export class ScanResults {
     public hasIssues(): boolean {
         return (
             this.descriptorsIssues.length > 0 ||
-            this.eosScan?.filesWithIssues?.length > 0 ||
+            this.sastScan?.filesWithIssues?.length > 0 ||
             this.iacScan?.filesWithIssues?.length > 0 ||
             this.secretsScan?.filesWithIssues?.length > 0
         );
@@ -83,20 +83,20 @@ export class ScanResults {
         this._descriptorsIssues = value;
     }
 
-    get eosScan(): EosScanResponse {
-        return this._eosScan;
+    get sastScan(): SastScanResponse {
+        return this._sastScan;
     }
 
-    set eosScan(value: EosScanResponse) {
-        this._eosScan = value;
+    set sastScan(value: SastScanResponse) {
+        this._sastScan = value;
     }
 
-    get eosScanTimestamp(): number | undefined {
-        return this._eosScanTimestamp;
+    get sastScanTimestamp(): number | undefined {
+        return this._sastScanTimestamp;
     }
 
-    set eosScanTimestamp(value: number | undefined) {
-        this._eosScanTimestamp = value;
+    set sastScanTimestamp(value: number | undefined) {
+        this._sastScanTimestamp = value;
     }
 
     get iacScan(): IacScanResponse {

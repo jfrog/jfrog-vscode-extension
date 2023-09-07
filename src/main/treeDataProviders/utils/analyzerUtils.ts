@@ -1,30 +1,33 @@
-import * as vscode from 'vscode';
-import * as path from 'path';
-import * as os from 'os';
 import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
-import { ApplicabilityRunner, ApplicabilityScanResponse, CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
-import { Severity, SeverityUtils } from '../../types/severity';
-import { ApplicableTreeNode } from '../issuesTree/codeFileTree/applicableTreeNode';
-import { CodeFileTreeNode } from '../issuesTree/codeFileTree/codeFileTreeNode';
-import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
-import { FileTreeNode } from '../issuesTree/fileTreeNode';
-import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
-import { IssueTreeNode } from '../issuesTree/issueTreeNode';
-import { PackageType, fromPackageType } from '../../types/projectType';
-import { StepProgress } from './stepProgress';
-import { EosIssue, EosIssueLocation, EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
+import * as os from 'os';
+import * as path from 'path';
+import * as vscode from 'vscode';
+import { LogManager } from '../../log/logManager';
 import { ScanManager } from '../../scanLogic/scanManager';
 import { AnalyzeIssue, FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
+import { ApplicabilityRunner, ApplicabilityScanResponse, CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
+import { IacScanResponse } from '../../scanLogic/scanRunners/iacScan';
+import { SastIssue, SastIssueLocation, SastScanResponse } from '../../scanLogic/scanRunners/sastScan';
+import { SecretsScanResponse } from '../../scanLogic/scanRunners/secretsScan';
+import { Module } from '../../types/jfrogAppsConfig';
+import { PackageType } from '../../types/projectType';
+import { Severity, SeverityUtils } from '../../types/severity';
 import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
-import { EosTreeNode } from '../issuesTree/codeFileTree/eosTreeNode';
 import { FileScanBundle } from '../../utils/scanUtils';
-import { IacTreeNode } from '../issuesTree/codeFileTree/iacTreeNode';
-import { SecretTreeNode } from '../issuesTree/codeFileTree/secretsTreeNode';
 import { Translators } from '../../utils/translators';
-import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectDependencyTreeNode';
-import { LogManager } from '../../log/logManager';
 import { Utils } from '../../utils/utils';
+import { ApplicableTreeNode } from '../issuesTree/codeFileTree/applicableTreeNode';
+import { CodeFileTreeNode } from '../issuesTree/codeFileTree/codeFileTreeNode';
+import { IacTreeNode } from '../issuesTree/codeFileTree/iacTreeNode';
+import { SastTreeNode } from '../issuesTree/codeFileTree/sastTreeNode';
+import { SecretTreeNode } from '../issuesTree/codeFileTree/secretsTreeNode';
+import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
 import { EnvironmentTreeNode } from '../issuesTree/descriptorTree/environmentTreeNode';
+import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectDependencyTreeNode';
+import { FileTreeNode } from '../issuesTree/fileTreeNode';
+import { IssueTreeNode } from '../issuesTree/issueTreeNode';
+import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
+import { StepProgress } from './stepProgress';
 
 export interface FileWithSecurityIssues {
     full_path: string;
@@ -475,17 +478,20 @@ export class AnalyzerUtils {
      * @param scanResults - the data object that will be populated with the results
      * @param root - the view object that will be populated with the results
      * @param scanManager - the ScanManager that preforms the actual scans
+     * @param module - the module that will be scanned
      * @param progressManager - the progress for the given scan
      */
     public static async runIac(
         scanResults: ScanResults,
         root: IssuesRootTreeNode,
         scanManager: ScanManager,
+        module: Module,
         progressManager: StepProgress
     ): Promise<void> {
         let startIacTime: number = Date.now();
-        scanResults.iacScan = await scanManager.scanIac(root.workSpace.uri.fsPath, progressManager.checkCancel);
-        if (scanResults.iacScan) {
+        let response: IacScanResponse | undefined = await scanManager.scanIac(module, progressManager.checkCancel);
+        if (response) {
+            scanResults.iacScan = response;
             scanResults.iacScanTimestamp = Date.now();
             let issuesCount: number = AnalyzerUtils.populateIacIssues(root, scanResults);
             scanManager.logManager.logMessage(
@@ -533,17 +539,20 @@ export class AnalyzerUtils {
      * @param scanResults - the data object that will be populated with the results
      * @param root - the view object that will be populated with the results
      * @param scanManager - the ScanManager that preforms the actual scans
+     * @param module - the module that will be scanned
      * @param progressManager - the progress for the given scan
      */
     public static async runSecrets(
         scanResults: ScanResults,
         root: IssuesRootTreeNode,
         scanManager: ScanManager,
+        module: Module,
         progressManager: StepProgress
     ): Promise<void> {
         let startSecretsTime: number = Date.now();
-        scanResults.secretsScan = await scanManager.scanSecrets(root.workSpace.uri.fsPath, progressManager.checkCancel);
-        if (scanResults.secretsScan) {
+        let response: SecretsScanResponse | undefined = await scanManager.scanSecrets(module, progressManager.checkCancel);
+        if (response) {
+            scanResults.secretsScan = response;
             scanResults.secretsScanTimestamp = Date.now();
             let issuesCount: number = AnalyzerUtils.populateSecretsIssues(root, scanResults);
             scanManager.logManager.logMessage(
@@ -587,59 +596,33 @@ export class AnalyzerUtils {
     }
 
     /**
-     * Create Eos scan request for each given package type supported by the scan.
-     * Default will create request for all supported languages.
-     * @param root - the root node of the workspace
-     * @param languages - each supported language will generate a request
-     * @returns list of Eos requests
-     */
-    private static createEosRequests(root: IssuesRootTreeNode, logManager: LogManager, types?: PackageType[]): EosScanRequest[] {
-        let requests: EosScanRequest[] = [{ roots: [root.workSpace.uri.fsPath] } as EosScanRequest];
-
-        if (types && types.length > 0) {
-            // Check if the package type is supported for scan.
-            if (types.find(type => !!Translators.toLanguageType(type))) {
-                return requests;
-            }
-        } else {
-            // In case there are no descriptors to extract language from, add all.
-            return requests;
-        }
-        logManager.logMessage('Skip Eos scan for not supported package type:' + types.map(type => fromPackageType(type)).join(' '), 'INFO');
-        return [];
-    }
-
-    /**
-     *  Run Eos scan async task
+     *  Run SAST scan async task
      * @param workspaceData - the issues data for the workspace
      * @param root - the root node of the workspace
-     * @param types - the packages types that were detected in the workspace
      * @param scanManager - the scan manager to use for scan
+     * @param module - the module that will be scanned
      * @param progressManager - the progress manager of the process for abort control
      */
-    public static async runEos(
+    public static async runSast(
         workspaceData: ScanResults,
         root: IssuesRootTreeNode,
-        types: PackageType[],
         scanManager: ScanManager,
+        module: Module,
         progressManager: StepProgress
     ): Promise<any> {
         let startTime: number = Date.now();
-        workspaceData.eosScan = await scanManager.scanEos(
-            progressManager.checkCancel,
-            root.workSpace.uri.fsPath,
-            ...this.createEosRequests(root, scanManager.logManager, types)
-        );
-        if (workspaceData.eosScan) {
-            workspaceData.eosScanTimestamp = Date.now();
-            let applicableIssuesCount: number = AnalyzerUtils.populateEosIssues(root, workspaceData);
+        let response: SastScanResponse | undefined = await scanManager.scanSast(module, progressManager.checkCancel);
+        if (response) {
+            workspaceData.sastScan = response;
+            workspaceData.sastScanTimestamp = Date.now();
+            let sastIssuesCount: number = AnalyzerUtils.populateSastIssues(root, workspaceData);
             scanManager.logManager.logMessage(
                 'Found ' +
-                    applicableIssuesCount +
-                    " Eos issues in workspace = '" +
+                    sastIssuesCount +
+                    " SAST issues in workspace = '" +
                     workspaceData.path +
                     "' (elapsed " +
-                    (workspaceData.eosScanTimestamp - startTime) / 1000 +
+                    (workspaceData.sastScanTimestamp - startTime) / 1000 +
                     ' seconds)',
                 'INFO'
             );
@@ -650,20 +633,20 @@ export class AnalyzerUtils {
     }
 
     /**
-     * Populate eos information in the view
+     * Populate SAST information in the view
      * @param root - root node to populate data inside
      * @param workspaceData - data to populate on node
-     * @returns number of eos issues populated
+     * @returns number of SAST issues populated
      */
-    public static populateEosIssues(root: IssuesRootTreeNode, workspaceData: ScanResults): number {
-        root.eosScanTimeStamp = workspaceData.eosScanTimestamp;
+    public static populateSastIssues(root: IssuesRootTreeNode, workspaceData: ScanResults): number {
+        root.sastScanTimeStamp = workspaceData.sastScanTimestamp;
         let issuesCount: number = 0;
-        if (workspaceData.eosScan && workspaceData.eosScan.filesWithIssues) {
-            workspaceData.eosScan.filesWithIssues.forEach(fileWithIssues => {
+        if (workspaceData.sastScan && workspaceData.sastScan.filesWithIssues) {
+            workspaceData.sastScan.filesWithIssues.forEach(fileWithIssues => {
                 let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileWithIssues.full_path);
-                fileWithIssues.issues.forEach((issue: EosIssue) => {
-                    issue.locations.forEach((location: EosIssueLocation) => {
-                        fileNode.issues.push(new EosTreeNode(issue, location, fileNode));
+                fileWithIssues.issues.forEach((issue: SastIssue) => {
+                    issue.locations.forEach((location: SastIssueLocation) => {
+                        fileNode.issues.push(new SastTreeNode(issue, location, fileNode));
                         issuesCount++;
                     });
                 });

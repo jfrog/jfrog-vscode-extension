@@ -1,79 +1,104 @@
+import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
-import { BinaryRunner } from './binaryRunner';
+import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
+import { Module, SastScanner } from '../../types/jfrogAppsConfig';
+import { Severity } from '../../types/severity';
+import { AppsConfigUtils } from '../../utils/appConfigUtils';
+import { Resource } from '../../utils/resource';
+import { ScanUtils } from '../../utils/scanUtils';
+import { Translators } from '../../utils/translators';
 import {
     AnalyzeIssue,
-    AnalyzerScanResponse,
-    AnalyzeScanRequest,
     AnalyzeLocation,
-    FileRegion,
-    FileLocation,
+    AnalyzeScanRequest,
+    AnalyzerScanResponse,
     CodeFlow,
+    FileLocation,
+    FileRegion,
     ScanType
 } from './analyzerModels';
-import { ConnectionManager } from '../../connect/connectionManager';
-import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
-import { Resource } from '../../utils/resource';
-import { Severity } from '../../types/severity';
-import { Translators } from '../../utils/translators';
-import { ScanUtils } from '../../utils/scanUtils';
+import { BinaryRunner } from './binaryRunner';
 
-export interface EosScanRequest extends AnalyzeScanRequest {
+/**
+ * The request that is sent to the binary to scan Sast
+ */
+export interface SastScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
     exclude_patterns: string[];
+    excluded_rules: string[];
 }
 
-export type LanguageType = 'python' | 'javascript' | 'java';
+export type LanguageType = 'python' | 'javascript' | 'typescript' | 'java';
 
-export interface EosScanResponse {
-    filesWithIssues: EosFileIssues[];
+export interface SastScanResponse {
+    filesWithIssues: SastFileIssues[];
 }
 
-export interface EosFileIssues {
+export interface SastFileIssues {
     full_path: string;
-    issues: EosIssue[];
+    issues: SastIssue[];
 }
 
-export interface EosIssue {
+export interface SastIssue {
     ruleId: string;
     severity: Severity;
     ruleName: string;
     fullDescription?: string;
-    locations: EosIssueLocation[];
+    locations: SastIssueLocation[];
 }
 
-export interface EosIssueLocation {
+export interface SastIssueLocation {
     region: FileRegion;
     threadFlows: FileLocation[][];
 }
 
-export class EosRunner extends BinaryRunner {
+export class SastRunner extends BinaryRunner {
     constructor(
         connectionManager: ConnectionManager,
         logManager: LogManager,
         binary?: Resource,
-        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
-        runDirectory?: string
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
     ) {
-        super(connectionManager, timeout, ScanType.Eos, logManager, binary, runDirectory);
+        super(connectionManager, timeout, ScanType.Sast, logManager, binary);
     }
 
     /** @override */
-    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string | undefined, checkCancel: () => void): Promise<void> {
-        await this.executeBinary(checkCancel, ['zd', yamlConfigPath], executionLogDirectory);
+    protected async runBinary(
+        yamlConfigPath: string,
+        executionLogDirectory: string | undefined,
+        checkCancel: () => void,
+        responsePath: string
+    ): Promise<void> {
+        await this.executeBinary(checkCancel, ['zd', yamlConfigPath, responsePath], executionLogDirectory);
+    }
+
+    /** @override */
+    public requestsToYaml(...requests: AnalyzeScanRequest[]): string {
+        let str: string = super.requestsToYaml(...requests);
+        return str.replace('excluded_rules', 'excluded-rules');
     }
 
     /**
-     * Scan for EOS issues
+     * Scan for SAST issues
+     * @param module - the module that will be scanned
      * @param checkCancel - check if cancel
-     * @param requests - requests to run
      * @returns the response generated from the scan
      */
-    public async scan(checkCancel: () => void, skipFiles: string[], ...requests: EosScanRequest[]): Promise<EosScanResponse> {
-        requests.forEach(request => {
-            request.type = ScanType.Eos;
-            request.exclude_patterns = skipFiles;
-        });
-        return await this.run(checkCancel, ...requests).then(runResult => this.generateScanResponse(runResult));
+    public async scan(module: Module, checkCancel: () => void): Promise<SastScanResponse> {
+        let sastScanner: SastScanner | undefined = module.scanners?.sast;
+        let request: SastScanRequest = {
+            type: ScanType.Sast,
+            roots: AppsConfigUtils.GetSourceRoots(module, sastScanner),
+            language: sastScanner?.language,
+            excluded_rules: sastScanner?.excluded_rules,
+            exclude_patterns: AppsConfigUtils.GetExcludePatterns(module, sastScanner)
+        } as SastScanRequest;
+        this._logManager.logMessage(
+            "Scanning directories '" + request.roots + "', for SAST issues. Skipping folders: " + request.exclude_patterns,
+            'DEBUG'
+        );
+
+        return await this.run(checkCancel, request).then(runResult => this.generateScanResponse(runResult));
     }
 
     /**
@@ -81,13 +106,13 @@ export class EosRunner extends BinaryRunner {
      * @param run - the run results generated from the binary
      * @returns the response generated from the scan run
      */
-    public generateScanResponse(response?: AnalyzerScanResponse): EosScanResponse {
+    public generateScanResponse(response?: AnalyzerScanResponse): SastScanResponse {
         if (!response) {
-            return {} as EosScanResponse;
+            return {} as SastScanResponse;
         }
-        let eosResponse: EosScanResponse = {
+        let sastResponse: SastScanResponse = {
             filesWithIssues: []
-        } as EosScanResponse;
+        } as SastScanResponse;
 
         for (const run of response.runs) {
             // Prepare
@@ -103,24 +128,24 @@ export class EosRunner extends BinaryRunner {
                     // Suppress issue
                     return;
                 }
-                this.generateIssueData(eosResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId));
+                this.generateIssueData(sastResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId));
             });
         }
-        return eosResponse;
+        return sastResponse;
     }
 
     /**
      * Generate the data for a specific analyze issue (the file object, the issue in the file object and all the location objects of this issue).
      * If the issue also contains codeFlow generate the needed information for it as well
-     * @param eosResponse - the response of the scan that holds all the file objects
+     * @param sastResponse - the response of the scan that holds all the file objects
      * @param analyzeIssue - the issue to handle and generate information base on it
      * @param fullDescription - the description of the analyzeIssue
      */
-    public generateIssueData(eosResponse: EosScanResponse, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
+    public generateIssueData(sastResponse: SastScanResponse, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
         analyzeIssue.locations.forEach(location => {
-            let fileWithIssues: EosFileIssues = this.getOrCreateEosFileIssues(eosResponse, location.physicalLocation.artifactLocation.uri);
-            let fileIssue: EosIssue = this.getOrCreateEosIssue(fileWithIssues, analyzeIssue, fullDescription);
-            let issueLocation: EosIssueLocation = this.getOrCreateIssueLocation(fileIssue, location.physicalLocation);
+            let fileWithIssues: SastFileIssues = this.getOrCreateSastFileIssues(sastResponse, location.physicalLocation.artifactLocation.uri);
+            let fileIssue: SastIssue = this.getOrCreateSastIssue(fileWithIssues, analyzeIssue, fullDescription);
+            let issueLocation: SastIssueLocation = this.getOrCreateIssueLocation(fileIssue, location.physicalLocation);
             if (analyzeIssue.codeFlows) {
                 this.generateCodeFlowData(fileWithIssues.full_path, issueLocation, analyzeIssue.codeFlows);
             }
@@ -134,7 +159,7 @@ export class EosRunner extends BinaryRunner {
      * @param issueLocation - the issue in a location to search code flows that belongs to it
      * @param codeFlows - all the code flows for this issue
      */
-    private generateCodeFlowData(filePath: string, issueLocation: EosIssueLocation, codeFlows: CodeFlow[]) {
+    private generateCodeFlowData(filePath: string, issueLocation: SastIssueLocation, codeFlows: CodeFlow[]) {
         // Check if exists flows for the current location in this issue
         for (const codeFlow of codeFlows) {
             for (const threadFlow of codeFlow.threadFlows) {
@@ -160,16 +185,16 @@ export class EosRunner extends BinaryRunner {
      * @param physicalLocation - the location to search or create
      * @returns issue location
      */
-    private getOrCreateIssueLocation(fileIssue: EosIssue, physicalLocation: FileLocation): EosIssueLocation {
+    private getOrCreateIssueLocation(fileIssue: SastIssue, physicalLocation: FileLocation): SastIssueLocation {
         // TODO: There could be multiple stack trace for each location with issue, uncomment when webview can handle this.
-        // let potential: EosIssueLocation | undefined = fileIssue.locations.find(location => AnalyzerUtils.isSameRegion(location.region,physicalLocation.region));
+        // let potential: SastIssueLocation | undefined = fileIssue.locations.find(location => AnalyzerUtils.isSameRegion(location.region,physicalLocation.region));
         // if(potential) {
         //     return potential;
         // }
-        let location: EosIssueLocation = {
+        let location: SastIssueLocation = {
             region: physicalLocation.region,
             threadFlows: []
-        } as EosIssueLocation;
+        } as SastIssueLocation;
         fileIssue.locations.push(location);
         return location;
     }
@@ -179,20 +204,20 @@ export class EosRunner extends BinaryRunner {
      * @param fileWithIssues - the file with the issues
      * @param analyzeIssue - the issue to search or create
      * @param fullDescription - the description of the issue
-     * @returns - the eos issue
+     * @returns - the sast issue
      */
-    private getOrCreateEosIssue(fileWithIssues: EosFileIssues, analyzeIssue: AnalyzeIssue, fullDescription?: string): EosIssue {
-        let potential: EosIssue | undefined = fileWithIssues.issues.find(issue => issue.ruleId === analyzeIssue.ruleId);
+    private getOrCreateSastIssue(fileWithIssues: SastFileIssues, analyzeIssue: AnalyzeIssue, fullDescription?: string): SastIssue {
+        let potential: SastIssue | undefined = fileWithIssues.issues.find(issue => issue.ruleId === analyzeIssue.ruleId);
         if (potential) {
             return potential;
         }
-        let fileIssue: EosIssue = {
+        let fileIssue: SastIssue = {
             ruleId: analyzeIssue.ruleId,
             severity: Translators.levelToSeverity(analyzeIssue.level),
             ruleName: analyzeIssue.message.text,
             fullDescription: fullDescription,
             locations: []
-        } as EosIssue;
+        } as SastIssue;
         fileWithIssues.issues.push(fileIssue);
         return fileIssue;
     }
@@ -203,15 +228,15 @@ export class EosRunner extends BinaryRunner {
      * @param uri - the files to search or create
      * @returns - file with issues
      */
-    private getOrCreateEosFileIssues(response: EosScanResponse, uri: string): EosFileIssues {
-        let potential: EosFileIssues | undefined = response.filesWithIssues.find(fileWithIssues => fileWithIssues.full_path === uri);
+    private getOrCreateSastFileIssues(response: SastScanResponse, uri: string): SastFileIssues {
+        let potential: SastFileIssues | undefined = response.filesWithIssues.find(fileWithIssues => fileWithIssues.full_path === uri);
         if (potential) {
             return potential;
         }
-        let fileWithIssues: EosFileIssues = {
+        let fileWithIssues: SastFileIssues = {
             full_path: uri,
             issues: []
-        } as EosFileIssues;
+        } as SastFileIssues;
         response.filesWithIssues.push(fileWithIssues);
 
         return fileWithIssues;

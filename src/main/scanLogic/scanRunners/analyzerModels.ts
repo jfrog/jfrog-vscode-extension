@@ -5,7 +5,7 @@ export interface AnalyzerRequest {
 export enum ScanType {
     ContextualAnalysis = 'analyze-applicability',
     Iac = 'iac-scan-modules',
-    Eos = 'analyze-codebase',
+    Sast = 'sast',
     Secrets = 'secrets-scan'
 }
 

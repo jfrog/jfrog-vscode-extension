@@ -14,6 +14,7 @@ import {
 } from '../utils/testIntegration.test';
 import { NotSupportedError } from '../../../main/utils/scanUtils';
 import { SecretsRunner, SecretsScanResponse } from '../../../main/scanLogic/scanRunners/secretsScan';
+import { Module } from '../../../main/types/jfrogAppsConfig';
 
 describe('Secrets Scan Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -36,7 +37,7 @@ describe('Secrets Scan Integration Tests', async () => {
         // Run scan
         // Try/Catch (with skip) should be removed after Secrets scan is released
         try {
-            response = await runner.scan(testDataRoot, () => undefined);
+            response = await runner.scan({ source_root: testDataRoot } as Module, () => undefined);
         } catch (err) {
             if (err instanceof NotSupportedError) {
                 this.skip();

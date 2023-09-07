@@ -1,17 +1,19 @@
 import { assert } from 'chai';
-import { FileWithSecurityIssues, SecurityIssue } from '../../../main/treeDataProviders/utils/analyzerUtils';
+import { FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
+import { SastFileIssues, SastIssue } from '../../../main/scanLogic/scanRunners/sastScan';
 import { CodeFileTreeNode } from '../../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
 import { CodeIssueTreeNode } from '../../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
-import { FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
-import { getTestCodeFileNode } from './treeNodeUtils.test';
-import { IssuesRootTreeNode } from '../../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
-import { SecretTreeNode } from '../../../main/treeDataProviders/issuesTree/codeFileTree/secretsTreeNode';
 import { IacTreeNode } from '../../../main/treeDataProviders/issuesTree/codeFileTree/iacTreeNode';
+import { SecretTreeNode } from '../../../main/treeDataProviders/issuesTree/codeFileTree/secretsTreeNode';
+import { IssuesRootTreeNode } from '../../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
+import { FileWithSecurityIssues, SecurityIssue } from '../../../main/treeDataProviders/utils/analyzerUtils';
+import { getTestCodeFileNode } from './treeNodeUtils.test';
+import { SastTreeNode } from '../../../main/treeDataProviders/issuesTree/codeFileTree/sastTreeNode';
 
-export function groupFiles(response: { filesWithIssues: FileWithSecurityIssues[] }): FileWithSecurityIssues[] {
+export function groupFiles(response: { filesWithIssues: FileWithSecurityIssues[] | SastFileIssues[] }): FileWithSecurityIssues[] {
     let result: FileWithSecurityIssues[] = [];
     // Collect all the locations from the test data with issues under the same file to be together under the same data
-    response.filesWithIssues.forEach((fileWithIssue: FileWithSecurityIssues) => {
+    response.filesWithIssues.forEach((fileWithIssue: FileWithSecurityIssues | SastFileIssues) => {
         let fileIssues: FileWithSecurityIssues | undefined = result.find(
             (fileIssues: FileWithSecurityIssues) => fileIssues.full_path === fileWithIssue.full_path
         );
@@ -22,7 +24,7 @@ export function groupFiles(response: { filesWithIssues: FileWithSecurityIssues[]
             } as FileWithSecurityIssues;
             result.push(fileIssues);
         }
-        fileWithIssue.issues.forEach((issue: SecurityIssue) => {
+        fileWithIssue.issues.forEach((issue: SecurityIssue | SastIssue) => {
             let secretIssue: SecurityIssue | undefined = fileIssues?.issues.find((secretIssue: SecurityIssue) => secretIssue.ruleId === issue.ruleId);
             if (!secretIssue) {
                 secretIssue = {
@@ -34,10 +36,26 @@ export function groupFiles(response: { filesWithIssues: FileWithSecurityIssues[]
                 } as SecurityIssue;
                 fileIssues?.issues.push(secretIssue);
             }
-            secretIssue.locations.push(...issue.locations);
+            secretIssue.locations.push(...toFileRegions(issue.locations));
         });
     });
     return result;
+}
+
+export function toFileRegions(regions: any[]): FileRegion[] {
+    let results: FileRegion[] = [];
+    if (!regions || regions.length === 0) {
+        return results;
+    }
+    if ('region' in regions[0]) {
+        // 'regions' is an array of SastIssue
+        for (let region of regions) {
+            results.push(region.region);
+        }
+        return results;
+    }
+    // 'regions' is already an array of FileRegion
+    return regions;
 }
 
 export function findLocationNode(location: FileRegion, fileNode: CodeFileTreeNode): CodeIssueTreeNode | undefined {
@@ -118,7 +136,7 @@ export function assertNodesSeverity(
 export function assertIssuesFullDescription(
     testRoot: IssuesRootTreeNode,
     expectedFilesWithIssues: FileWithSecurityIssues[],
-    getTestIssueNode: (fileNode: CodeFileTreeNode, location: FileRegion) => SecretTreeNode | IacTreeNode
+    getTestIssueNode: (fileNode: CodeFileTreeNode, location: FileRegion) => SecretTreeNode | IacTreeNode | SastTreeNode
 ) {
     expectedFilesWithIssues.forEach((expectedFileIssues: FileWithSecurityIssues) => {
         let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
@@ -133,7 +151,7 @@ export function assertIssuesFullDescription(
 export function assertIssuesSnippet(
     testRoot: IssuesRootTreeNode,
     expectedFilesWithIssues: FileWithSecurityIssues[],
-    getTestIssueNode: (fileNode: CodeFileTreeNode, location: FileRegion) => SecretTreeNode | IacTreeNode
+    getTestIssueNode: (fileNode: CodeFileTreeNode, location: FileRegion) => SecretTreeNode | IacTreeNode | SastTreeNode
 ) {
     expectedFilesWithIssues.forEach((expectedFileIssues: FileWithSecurityIssues) => {
         let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);

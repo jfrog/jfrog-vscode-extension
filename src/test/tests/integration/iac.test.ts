@@ -1,8 +1,9 @@
-import * as path from 'path';
-import * as fs from 'fs';
 import { assert } from 'chai';
+import * as fs from 'fs';
+import * as path from 'path';
 
 import { IacRunner, IacScanResponse } from '../../../main/scanLogic/scanRunners/iacScan';
+import { Module } from '../../../main/types/jfrogAppsConfig';
 import {
     AnalyzerManagerIntegrationEnv,
     assertFileIssuesExist,
@@ -13,7 +14,6 @@ import {
     assertIssuesRuleNameExist,
     assertIssuesSeverityExist
 } from '../utils/testIntegration.test';
-import { NotSupportedError } from '../../../main/utils/scanUtils';
 
 describe('Iac Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -35,14 +35,7 @@ describe('Iac Integration Tests', async () => {
         assert.isDefined(expectedContent, 'Failed to read expected IacScanResponse content from ' + dataPath);
         // Run scan
         // Try/Catch (with skip) should be removed after Iac is released
-        try {
-            response = await runner.scan(testDataRoot, () => undefined);
-        } catch (err) {
-            if (err instanceof NotSupportedError) {
-                this.skip();
-            }
-            throw err;
-        }
+        response = await runner.scan({ source_root: testDataRoot } as Module, () => undefined);
     });
 
     it('Check response defined', () => {

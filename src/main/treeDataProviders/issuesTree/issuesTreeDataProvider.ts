@@ -1,32 +1,34 @@
 import * as vscode from 'vscode';
-import { ScanManager, SupportedScans } from '../../scanLogic/scanManager';
-import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
-import { IssuesRootTreeNode } from './issuesRootTreeNode';
-import { FileTreeNode } from './fileTreeNode';
-import { DescriptorTreeNode } from './descriptorTree/descriptorTreeNode';
-import { DependencyIssuesTreeNode } from './descriptorTree/dependencyIssuesTreeNode';
-import { CveTreeNode } from './descriptorTree/cveTreeNode';
 import { CacheManager } from '../../cache/cacheManager';
+import { LogManager } from '../../log/logManager';
+import { ScanManager, SupportedScans } from '../../scanLogic/scanManager';
+import { JFrogAppsConfig } from '../../types/jfrogAppsConfig';
 import { PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
-import { StepProgress } from '../utils/stepProgress';
-import { Utils } from '../../utils/utils';
-import { DependencyUtils } from '../utils/dependencyUtils';
-import { TreesManager } from '../treesManager';
-import { IssueTreeNode } from './issueTreeNode';
-import { LogManager } from '../../log/logManager';
-import { LicenseIssueTreeNode } from './descriptorTree/licenseIssueTreeNode';
-import { CodeIssueTreeNode } from './codeFileTree/codeIssueTreeNode';
-import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
-import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
-import { EosTreeNode } from './codeFileTree/eosTreeNode';
-import { EnvironmentTreeNode } from './descriptorTree/environmentTreeNode';
-import { ProjectDependencyTreeNode } from './descriptorTree/projectDependencyTreeNode';
 import { DependencyScanResults, EntryIssuesData, ScanResults } from '../../types/workspaceIssuesDetails';
-import { AnalyzerUtils } from '../utils/analyzerUtils';
-import { IacTreeNode } from './codeFileTree/iacTreeNode';
-import { SecretTreeNode } from './codeFileTree/secretsTreeNode';
+import { AppsConfigUtils } from '../../utils/appConfigUtils';
+import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { UsageUtils } from '../../utils/usageUtils';
+import { Utils } from '../../utils/utils';
+import { TreesManager } from '../treesManager';
+import { AnalyzerUtils } from '../utils/analyzerUtils';
+import { DependencyUtils } from '../utils/dependencyUtils';
+import { StepProgress } from '../utils/stepProgress';
+import { ApplicableTreeNode } from './codeFileTree/applicableTreeNode';
+import { CodeFileTreeNode } from './codeFileTree/codeFileTreeNode';
+import { CodeIssueTreeNode } from './codeFileTree/codeIssueTreeNode';
+import { IacTreeNode } from './codeFileTree/iacTreeNode';
+import { SastTreeNode } from './codeFileTree/sastTreeNode';
+import { SecretTreeNode } from './codeFileTree/secretsTreeNode';
+import { CveTreeNode } from './descriptorTree/cveTreeNode';
+import { DependencyIssuesTreeNode } from './descriptorTree/dependencyIssuesTreeNode';
+import { DescriptorTreeNode } from './descriptorTree/descriptorTreeNode';
+import { EnvironmentTreeNode } from './descriptorTree/environmentTreeNode';
+import { LicenseIssueTreeNode } from './descriptorTree/licenseIssueTreeNode';
+import { ProjectDependencyTreeNode } from './descriptorTree/projectDependencyTreeNode';
+import { FileTreeNode } from './fileTreeNode';
+import { IssueTreeNode } from './issueTreeNode';
+import { IssuesRootTreeNode } from './issuesRootTreeNode';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -167,14 +169,14 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * 2. Dependency scan = task for each descriptor in the workspace (Applicability is optional sub task of dependency)
      * 3. Iac scan = one task for all the workspace
      * 4. Secrets scan = one task for all the workspace
-     * 5. Eos scan = one task for all the workspace
+     * 5. SAST scan = one task for all the workspace
      * @param supportedScans - the details about the entitlements of the user
      * @param descriptors - all the descriptors in the workspace
      * @returns the number of tasks that will be preformed async and report to the progress bar
      */
     public static getNumberOfTasksInRepopulate(supportedScans: SupportedScans, descriptors: Map<PackageType, vscode.Uri[]>): number {
         return (
-            (supportedScans.eos ? 1 : 0) +
+            (supportedScans.sast ? 1 : 0) +
             (supportedScans.iac ? 1 : 0) +
             (supportedScans.secrets ? 1 : 0) +
             (supportedScans.dependencies ? descriptors.size + Array.from(descriptors.values()).reduce((acc, val) => acc + val.length, 0) : 0)
@@ -200,8 +202,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         // Prepare the needed information for the scans
         progress.report({ message: '👷 Preparing workspace' });
         let progressManager: StepProgress = new StepProgress(progress, checkCanceled, () => this.onChangeFire(), this._logManager);
-        let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workSpace], this._logManager);
+        let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workspace], this._logManager);
         let subStepsCount: number = IssuesTreeDataProvider.getNumberOfTasksInRepopulate(this._scanManager.supportedScans, workspaceDescriptors);
+        let jfrogAppConfig: JFrogAppsConfig = AppsConfigUtils.LoadConfig(root.workspace.uri.path);
         checkCanceled();
         UsageUtils.sendUsageReport(this._scanManager.supportedScans, workspaceDescriptors, this._treesManager.connectionManager);
         // Scan workspace
@@ -223,33 +226,32 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 );
             }
         }
-        if (this._scanManager.supportedScans.iac) {
-            // Scan the workspace for Infrastructure As Code (Iac) issues
-            scansPromises.push(
-                AnalyzerUtils.runIac(scanResults, root, this._scanManager, progressManager).catch(err =>
-                    ScanUtils.onScanError(err, this._logManager, true)
-                )
-            );
-        }
-        if (this._scanManager.supportedScans.secrets) {
-            // Scan the workspace for Secrets issues
-            scansPromises.push(
-                AnalyzerUtils.runSecrets(scanResults, root, this._scanManager, progressManager).catch(err =>
-                    ScanUtils.onScanError(err, this._logManager, true)
-                )
-            );
-        }
-        if (this._scanManager.supportedScans.eos) {
-            // Scan the workspace for Eos issues
-            scansPromises.push(
-                AnalyzerUtils.runEos(
-                    scanResults,
-                    root,
-                    Array.from(workspaceDescriptors.keys() ?? []),
-                    this._scanManager,
-                    progressManager
-                ).catch(err => ScanUtils.onScanError(err, this._logManager, true))
-            );
+
+        for (let module of jfrogAppConfig.modules) {
+            if (this._scanManager.supportedScans.iac) {
+                // Scan the workspace for Infrastructure As Code (Iac) issues
+                scansPromises.push(
+                    AnalyzerUtils.runIac(scanResults, root, this._scanManager, module, progressManager).catch(err =>
+                        ScanUtils.onScanError(err, this._logManager, true)
+                    )
+                );
+            }
+            if (this._scanManager.supportedScans.secrets) {
+                // Scan the workspace for Secrets issues
+                scansPromises.push(
+                    AnalyzerUtils.runSecrets(scanResults, root, this._scanManager, module, progressManager).catch(err =>
+                        ScanUtils.onScanError(err, this._logManager, true)
+                    )
+                );
+            }
+            if (this._scanManager.supportedScans.sast) {
+                // Scan the workspace for Sast issues
+                scansPromises.push(
+                    AnalyzerUtils.runSast(scanResults, root, this._scanManager, module, progressManager).catch(err =>
+                        ScanUtils.onScanError(err, this._logManager, true)
+                    )
+                );
+            }
         }
 
         await Promise.all(scansPromises);
@@ -280,7 +282,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                                 root.title = Utils.getLastScanString(root.oldestScanTimestamp);
                                 root.apply();
                             } else {
-                                this._logManager.logMessage("WorkSpace '" + workspace.name + "' has no data in cache", 'DEBUG');
+                                this._logManager.logMessage("Workspace '" + workspace.name + "' has no data in cache", 'DEBUG');
                                 this._workspaceToRoot.set(workspace, undefined);
                             }
                             if (firstTime) {
@@ -349,9 +351,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         if (scanResults.secretsScan) {
             AnalyzerUtils.populateSecretsIssues(root, scanResults);
         }
-        if (scanResults.eosScan) {
-            root.eosScanTimeStamp = scanResults.eosScanTimestamp;
-            AnalyzerUtils.populateEosIssues(root, scanResults);
+        if (scanResults.sastScan) {
+            root.sastScanTimeStamp = scanResults.sastScanTimestamp;
+            AnalyzerUtils.populateSastIssues(root, scanResults);
         }
         return root;
     }
@@ -457,7 +459,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             // Source code issues nodes
             if (
                 element instanceof ApplicableTreeNode ||
-                element instanceof EosTreeNode ||
+                element instanceof SastTreeNode ||
                 element instanceof IacTreeNode ||
                 element instanceof SecretTreeNode
             ) {

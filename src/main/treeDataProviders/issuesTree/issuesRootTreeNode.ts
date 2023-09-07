@@ -9,12 +9,12 @@ import { FileTreeNode } from './fileTreeNode';
 export class IssuesRootTreeNode extends vscode.TreeItem {
     private _children: FileTreeNode[] = [];
     private _title: string = '';
-    private _eosScanTimeStamp?: number | undefined;
+    private _sastScanTimeStamp?: number | undefined;
     private _iacScanTimeStamp?: number | undefined;
     private _secretsScanTimeStamp?: number | undefined;
 
-    constructor(private readonly _workSpace: vscode.WorkspaceFolder, title?: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
-        super(_workSpace.name, collapsibleState ?? vscode.TreeItemCollapsibleState.Expanded);
+    constructor(private readonly _workspace: vscode.WorkspaceFolder, title?: string, collapsibleState?: vscode.TreeItemCollapsibleState) {
+        super(_workspace.name, collapsibleState ?? vscode.TreeItemCollapsibleState.Expanded);
         this.title = title ?? '';
     }
 
@@ -34,7 +34,7 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
         }
 
         this.tooltip = 'Issue count: ' + issueCount + '\n';
-        this.tooltip += 'Full path: ' + this._workSpace.uri.fsPath + '';
+        this.tooltip += 'Full path: ' + this._workspace.uri.fsPath + '';
         if (this._title != '') {
             this.tooltip += '\nStatus: ' + this._title;
         } else if (this.oldestScanTimestamp) {
@@ -77,12 +77,12 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
         return this._children.find(child => child.projectFilePath === file);
     }
 
-    public get eosScanTimeStamp(): number | undefined {
-        return this._eosScanTimeStamp;
+    public get sastScanTimeStamp(): number | undefined {
+        return this._sastScanTimeStamp;
     }
 
-    public set eosScanTimeStamp(value: number | undefined) {
-        this._eosScanTimeStamp = value;
+    public set sastScanTimeStamp(value: number | undefined) {
+        this._sastScanTimeStamp = value;
     }
 
     public get iacScanTimeStamp(): number | undefined {
@@ -109,7 +109,7 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
             ...this.children.map(file => file.timeStamp),
             this._iacScanTimeStamp,
             this._secretsScanTimeStamp,
-            this._eosScanTimeStamp
+            this._sastScanTimeStamp
         );
     }
 
@@ -121,8 +121,8 @@ export class IssuesRootTreeNode extends vscode.TreeItem {
         this.description = val;
     }
 
-    public get workSpace(): vscode.WorkspaceFolder {
-        return this._workSpace;
+    public get workspace(): vscode.WorkspaceFolder {
+        return this._workspace;
     }
 
     public get children(): FileTreeNode[] {

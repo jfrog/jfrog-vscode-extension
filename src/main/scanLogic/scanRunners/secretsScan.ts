@@ -1,6 +1,8 @@
 import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
 import { AnalyzerUtils, FileWithSecurityIssues } from '../../treeDataProviders/utils/analyzerUtils';
+import { Module } from '../../types/jfrogAppsConfig';
+import { AppsConfigUtils } from '../../utils/appConfigUtils';
 import { Resource } from '../../utils/resource';
 import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeScanRequest, AnalyzerScanResponse, ScanType } from './analyzerModels';
@@ -28,12 +30,22 @@ export class SecretsRunner extends BinaryRunner {
         await this.executeBinary(checkCancel, ['sec', yamlConfigPath], executionLogDirectory);
     }
 
-    public async scan(directory: string, checkCancel: () => void, skipFolders: string[] = []): Promise<SecretsScanResponse> {
+    /**
+     * Scan for secrets
+     * @param module - the module that will be scanned
+     * @param checkCancel - check if cancel
+     * @returns the response generated from the scan
+     */
+    public async scan(module: Module, checkCancel: () => void): Promise<SecretsScanResponse> {
         let request: AnalyzeScanRequest = {
             type: ScanType.Secrets,
-            roots: [directory],
-            skipped_folders: skipFolders
+            roots: AppsConfigUtils.GetSourceRoots(module, module.scanners?.secrets),
+            skipped_folders: AppsConfigUtils.GetExcludePatterns(module, module.scanners?.secrets)
         } as AnalyzeScanRequest;
+        this._logManager.logMessage(
+            "Scanning directories '" + request.roots + "', for secrets. Skipping folders: " + request.skipped_folders,
+            'DEBUG'
+        );
         return await this.run(checkCancel, request).then(runResult => this.convertResponse(runResult));
     }
 

@@ -2,29 +2,31 @@ import * as vscode from 'vscode';
 
 import { ExtensionComponent } from '../extensionComponent';
 
-import { LogManager } from '../log/logManager';
 import { ConnectionManager } from '../connect/connectionManager';
 import { ConnectionUtils, EntitlementScanFeature } from '../connect/connectionUtils';
+import { LogManager } from '../log/logManager';
 
-import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { IGraphResponse, XrayScanProgress } from 'jfrog-client-js';
-import { GraphScanLogic } from './scanGraphLogic';
-import { ApplicabilityRunner, ApplicabilityScanResponse } from './scanRunners/applicabilityScan';
-import { EosRunner, EosScanRequest, EosScanResponse } from './scanRunners/eosScan';
+import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { AnalyzerUtils } from '../treeDataProviders/utils/analyzerUtils';
+import { StepProgress } from '../treeDataProviders/utils/stepProgress';
+import { ExcludeScanner, Module } from '../types/jfrogAppsConfig';
+import { AppsConfigUtils } from '../utils/appConfigUtils';
 import { Configuration } from '../utils/configuration';
 import { Resource } from '../utils/resource';
-import { BinaryRunner } from './scanRunners/binaryRunner';
 import { ScanUtils } from '../utils/scanUtils';
-import { StepProgress } from '../treeDataProviders/utils/stepProgress';
 import { Utils } from '../utils/utils';
+import { GraphScanLogic } from './scanGraphLogic';
+import { ApplicabilityRunner, ApplicabilityScanResponse } from './scanRunners/applicabilityScan';
+import { BinaryRunner } from './scanRunners/binaryRunner';
 import { IacRunner, IacScanResponse } from './scanRunners/iacScan';
+import { SastScanResponse, SastRunner } from './scanRunners/sastScan';
 import { SecretsRunner, SecretsScanResponse } from './scanRunners/secretsScan';
 
 export interface SupportedScans {
     dependencies: boolean;
     applicability: boolean;
-    eos: boolean;
+    sast: boolean;
     iac: boolean;
     secrets: boolean;
 }
@@ -167,9 +169,9 @@ export class ScanManager implements ExtensionComponent {
     }
 
     /**
-     * Check if Eos scan is supported for the user
+     * Check if SAST scan is supported for the user
      */
-    public async isEosSupported(): Promise<boolean> {
+    public async isSastSupported(): Promise<boolean> {
         return true;
     }
 
@@ -200,8 +202,8 @@ export class ScanManager implements ExtensionComponent {
                 .catch(err => ScanUtils.onScanError(err, this._logManager, true))
         );
         requests.push(
-            this.isEosSupported()
-                .then(res => (supportedScans.eos = res))
+            this.isSastSupported()
+                .then(res => (supportedScans.sast = res))
                 .catch(err => ScanUtils.onScanError(err, this._logManager, true))
         );
         await Promise.all(requests);
@@ -250,61 +252,57 @@ export class ScanManager implements ExtensionComponent {
 
     /**
      * Scan directory for 'Infrastructure As Code' (Iac) issues.
-     * @param directory - the directory that will be scan
+     * @param module - the module that will be scanned
      * @param checkCancel - check if should cancel
      * @returns the Iac scan response
      */
-    public async scanIac(directory: string, checkCancel: () => void): Promise<IacScanResponse> {
+    public async scanIac(module: Module, checkCancel: () => void): Promise<IacScanResponse | undefined> {
         let iacRunner: IacRunner = new IacRunner(this._connectionManager, this.logManager);
         if (!iacRunner.validateSupported()) {
             this._logManager.logMessage('Iac runner could not find binary to run', 'WARN');
-            return {} as IacScanResponse;
+            return undefined;
         }
-        let skipFiles: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
-        this._logManager.logMessage("Scanning directory '" + directory + "', for Iac issues. Skipping files: " + skipFiles, 'DEBUG');
-        return await iacRunner.scan(directory, checkCancel, skipFiles);
+        if (AppsConfigUtils.ShouldSkipScanner(module, ExcludeScanner.Iac)) {
+            this._logManager.debug('Skipping IaC scanning');
+            return undefined;
+        }
+        return await iacRunner.scan(module, checkCancel);
     }
     /**
      * Scan directory for secrets issues.
-     * @param directory - the directory that will be scan
+     * @param module - the module that will be scanned
      * @param checkCancel - check if should cancel
      * @returns the Secrets scan response
      */
-    public async scanSecrets(directory: string, checkCancel: () => void): Promise<SecretsScanResponse> {
+    public async scanSecrets(module: Module, checkCancel: () => void): Promise<SecretsScanResponse | undefined> {
         let secretsRunner: SecretsRunner = new SecretsRunner(this._connectionManager, this.logManager);
         if (!secretsRunner.validateSupported()) {
             this._logManager.logMessage('Secrets runner could not find binary to run', 'WARN');
-            return {} as SecretsScanResponse;
+            return undefined;
         }
-        let skipFiles: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
-        this._logManager.logMessage("Scanning directory '" + directory + "', for Secrets issues. Skipping files: " + skipFiles, 'DEBUG');
-        return await secretsRunner.scan(directory, checkCancel, skipFiles);
+        if (AppsConfigUtils.ShouldSkipScanner(module, ExcludeScanner.Secrets)) {
+            this._logManager.debug('Skipping secrets scanning');
+            return undefined;
+        }
+        return await secretsRunner.scan(module, checkCancel);
     }
 
     /**
-     * Scan for Eos issues.
-     * @param checkCancel - check if should cancel
-     * @param requests - the Eos requests to run
+     * Scan for SAST issues.
+     * @param module - the module that will be scanned
+     * @param requests - the SAST requests to run
      * @returns the scan response
      */
-    public async scanEos(checkCancel: () => void, runDirectory?: string, ...requests: EosScanRequest[]): Promise<EosScanResponse> {
-        let eosRunner: EosRunner = new EosRunner(this._connectionManager, this._logManager, undefined, undefined, runDirectory);
-        if (!eosRunner.validateSupported()) {
-            this._logManager.logMessage('Eos runner could not find binary to run', 'WARN');
-            return {} as EosScanResponse;
+    public async scanSast(module: Module, checkCancel: () => void): Promise<SastScanResponse | undefined> {
+        let sastRunner: SastRunner = new SastRunner(this._connectionManager, this._logManager);
+        if (!sastRunner.validateSupported()) {
+            this._logManager.logMessage('Sast runner could not find binary to run', 'WARN');
+            return undefined;
         }
-        if (requests.length === 0) {
-            this._logManager.logMessage('Eos runner must receive at least one request to run', 'ERR');
-            return {} as EosScanResponse;
+        if (AppsConfigUtils.ShouldSkipScanner(module, ExcludeScanner.Sast)) {
+            this._logManager.debug('Skipping SAST scanning');
+            return undefined;
         }
-        let skipFiles: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
-        this._logManager.logMessage(
-            'Scanning for Eos issues in ' +
-                requests.map(request => `(Language '${request.language}', roots: [${request.roots.join()}])`) +
-                '. Skipping files: ' +
-                skipFiles,
-            'DEBUG'
-        );
-        return eosRunner.scan(checkCancel, skipFiles, ...requests);
+        return sastRunner.scan(module, checkCancel);
     }
 }

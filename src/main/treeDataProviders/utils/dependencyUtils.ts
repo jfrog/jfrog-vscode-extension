@@ -57,7 +57,7 @@ export class DependencyUtils {
         let descriptorsParsed: Set<string> = new Set<string>();
         // Build dependency tree for all the package descriptors
         let packageDependenciesTree: DependenciesTreeNode = await DependencyUtils.createDependenciesTree(
-            root.workSpace,
+            root.workspace,
             type,
             descriptorsPaths,
             () => progressManager.onProgress,
@@ -295,7 +295,7 @@ export class DependencyUtils {
         if (fileScanBundle) {
             logger.logMessage(
                 "Workspace '" +
-                    fileScanBundle.rootNode.workSpace.name +
+                    fileScanBundle.rootNode.workspace.name +
                     "' scan on file '" +
                     fileScanBundle.data.fullPath +
                     "' ended with error:\n" +
