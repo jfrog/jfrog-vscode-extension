@@ -25,8 +25,8 @@ export class WebviewManager implements ExtensionComponent {
         this.webviewSidebar.loadPage(await this.createLoginPage());
     }
 
-    public loadWebviewTab(page: WebviewPage) {
-        this.webviewTab.resolveWebviewView();
+    public async loadWebviewTab(page: WebviewPage) {
+        await this.webviewTab.resolveWebviewView();
         this.webviewTab.loadPage(page);
     }
 
