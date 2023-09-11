@@ -4,6 +4,7 @@ import fs from 'fs-extra';
 import { WebviewPage } from 'jfrog-ide-webview';
 import { LogManager } from '../log/logManager';
 import { WebviewEventManager } from './eventManager';
+import { RunUtils } from '../utils/runUtils';
 
 /**
  * Show a webview panel with details about objects in the project
@@ -11,6 +12,7 @@ import { WebviewEventManager } from './eventManager';
 export class WebView {
     constructor(private _logManager: LogManager) {}
 
+    private static readonly WEBVIEW_DELAY_MILLISECS: number = 3000;
     private _webview: vscode.WebviewPanel | undefined;
     private _eventManager: WebviewEventManager | undefined;
     private _currentPage: WebviewPage | undefined;
@@ -35,11 +37,15 @@ export class WebView {
      * @param data - the data of the page to be update and show in the webpage
      * @param context - context of the extension
      */
-    public updateWebview(data: WebviewPage, context: vscode.ExtensionContext) {
+    public async updateWebview(data: WebviewPage, context: vscode.ExtensionContext) {
         // Create a custom API object
         if (!this._webview) {
             this._webview = this.createWebview(context);
             this._eventManager = new WebviewEventManager(this._webview.webview, context.subscriptions);
+            // Workaround: Delay the initial page load to ensure proper message delivery in the Webview.
+            // This is necessary because in the Webview, messages are only delivered when the webview is alive.
+            // This workaround applies specifically to VS-Code remote development environments.
+            await RunUtils.delay(WebView.WEBVIEW_DELAY_MILLISECS);
         } else {
             this._webview.reveal();
         }
