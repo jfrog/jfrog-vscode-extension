@@ -28,6 +28,14 @@ export class CacheManager {
     }
 
     /**
+     * Delete a workspace issues data from the cache
+     * @param workspace - the workspace to clear cache
+     */
+    public delete(workspace: vscode.WorkspaceFolder) {
+        return this._cache.update(this.toCacheKey(workspace), undefined);
+    }
+
+    /**
      * Get the unique key for this workspace
      * @param workspace - the workspace we want to get it's id
      * @returns - the unique key for this workspace

@@ -48,6 +48,7 @@ export class CommandManager implements ExtensionComponent {
         // Local state
         this.registerCommand(context, 'jfrog.issues.open.ignore', issue => vscode.env.openExternal(vscode.Uri.parse(issue.ignoreUrl)));
         this.registerCommand(context, 'jfrog.issues.file.open', file => ScanUtils.openFile(file));
+        this.registerCommand(context, 'jfrog.issues.cache.delete', () => this.deleteCache());
         this.registerCommand(context, 'jfrog.issues.file.open.location', (file, fileRegion) => ScanUtils.openFile(file, fileRegion));
         this.registerCommand(context, 'jfrog.issues.select.node', item => this._treesManager.selectItemOnIssuesTree(item));
         this.registerCommand(context, 'jfrog.issues.select.updateDependency', (dependency: DependencyIssuesTreeNode, version: string) =>
@@ -173,9 +174,19 @@ export class CommandManager implements ExtensionComponent {
      * @param scan - True to scan the workspace, false will load from cache
      */
     private async doRefresh(scan: boolean = true) {
+        this.clearView();
+        await this._treesManager.refresh(scan);
+    }
+
+    private async deleteCache() {
+        ScanUtils.setFirstScanForWorkspace(true);
+        this.clearView();
+        this._treesManager.deleteCache();
+    }
+
+    private clearView() {
         this.doCloseDetailsPage();
         this._diagnosticManager.clearDiagnostics();
-        await this._treesManager.refresh(scan);
         this._diagnosticManager.updateDiagnostics();
     }
 
