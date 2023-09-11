@@ -106,6 +106,9 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     public clearTree() {
         this._workspaceToRoot = new Map<vscode.WorkspaceFolder, IssuesRootTreeNode>();
         this.onChangeFire();
+        for (const workspace of this._workspaceFolders) {
+            this._cacheManager.delete(workspace);
+        }
     }
 
     /**

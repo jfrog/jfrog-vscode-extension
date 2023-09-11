@@ -176,6 +176,11 @@
                 "enablement": "viewItem =~ /jfrog.item.copy.to.clipboard/"
             },
             {
+                "command": "jfrog.issues.cache.delete",
+                "title": "Delete cache",
+                "category": "JFrog"
+            },
+            {
                 "command": "jfrog.xray.builds",
                 "title": "Select build to display",
                 "icon": {

@@ -79,6 +79,10 @@ export class TreesManager implements ExtensionComponent {
         }
     }
 
+    public deleteCache() {
+        this.issuesTreeDataProvider.clearTree()
+    }
+
     /**
      * Shows a specific node in the source code tree after clicking on the bulb icon in the source code.
      * @param sourceCodeCveTreeNode
