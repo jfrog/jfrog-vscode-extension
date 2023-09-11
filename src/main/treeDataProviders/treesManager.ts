@@ -80,7 +80,7 @@ export class TreesManager implements ExtensionComponent {
     }
 
     public deleteCache() {
-        this.issuesTreeDataProvider.clearTree()
+        this.issuesTreeDataProvider.clearTree();
     }
 
     /**

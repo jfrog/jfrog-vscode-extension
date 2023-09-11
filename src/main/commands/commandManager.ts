@@ -174,13 +174,13 @@ export class CommandManager implements ExtensionComponent {
      * @param scan - True to scan the workspace, false will load from cache
      */
     private async doRefresh(scan: boolean = true) {
-        this.clearView()
+        this.clearView();
         await this._treesManager.refresh(scan);
     }
 
     private async deleteCache() {
         ScanUtils.setFirstScanForWorkspace(true);
-        this.clearView()
+        this.clearView();
         this._treesManager.deleteCache();
     }
 
