@@ -176,6 +176,7 @@ export class CommandManager implements ExtensionComponent {
     private async doRefresh(scan: boolean = true) {
         this.clearView();
         await this._treesManager.refresh(scan);
+        this.updateView();
     }
 
     private async deleteCache() {
@@ -187,6 +188,9 @@ export class CommandManager implements ExtensionComponent {
     private clearView() {
         this.doCloseDetailsPage();
         this._diagnosticManager.clearDiagnostics();
+    }
+
+    private updateView() {
         this._diagnosticManager.updateDiagnostics();
     }
 
