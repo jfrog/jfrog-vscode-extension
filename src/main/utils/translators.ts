@@ -51,11 +51,10 @@ export class Translators {
             case PackageType.Python:
                 return 'python';
             case PackageType.Npm:
-                return 'npm';
             case PackageType.Yarn:
-                return 'yarn';
+                return 'javascript';
             case PackageType.Maven:
-                return 'maven';
+                return 'java';
             default:
                 return undefined;
         }

@@ -121,8 +121,8 @@ describe('Applicability Integration Tests', async () => {
                         return issue;
                     }
 
-                    it('Check all expected locations exists', async function () {
-                        if(BinaryRunner.RUNNER_VERSION === '1.3.2.2005632'){
+                    it('Check all expected locations exists', async function() {
+                        if (BinaryRunner.RUNNER_VERSION === '1.3.2.2005632') {
                             // Duplicate results are found in this AM version, which may be fixed in the next release.
                             this.skip();
                         }
@@ -135,8 +135,8 @@ describe('Applicability Integration Tests', async () => {
                         });
                     });
 
-                    it('Check snippet data', async function () {
-                        if(BinaryRunner.RUNNER_VERSION === '1.3.2.2005632'){
+                    it('Check snippet data', async function() {
+                        if (BinaryRunner.RUNNER_VERSION === '1.3.2.2005632') {
                             // Duplicate results are found in this AM version, which may be fixed in the next release.
                             this.skip();
                         }

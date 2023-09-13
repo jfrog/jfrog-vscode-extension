@@ -22,7 +22,7 @@ export interface EosScanRequest extends AnalyzeScanRequest {
     exclude_patterns: string[];
 }
 
-export type LanguageType = 'python' | 'npm' | 'yarn' | 'maven';
+export type LanguageType = 'python' | 'javascript' | 'java';
 
 export interface EosScanResponse {
     filesWithIssues: EosFileIssues[];
@@ -55,10 +55,6 @@ export class EosRunner extends BinaryRunner {
         runDirectory?: string
     ) {
         super(connectionManager, timeout, ScanType.Eos, logManager, binary, runDirectory);
-    }
-
-    public static supportedLanguages(): LanguageType[] {
-        return ['python', 'npm', 'yarn', 'maven'];
     }
 
     /** @override */

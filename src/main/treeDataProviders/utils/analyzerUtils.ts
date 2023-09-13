@@ -10,9 +10,9 @@ import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
-import { PackageType } from '../../types/projectType';
+import { PackageType, fromPackageType } from '../../types/projectType';
 import { StepProgress } from './stepProgress';
-import { EosIssue, EosIssueLocation, EosRunner, EosScanRequest, LanguageType } from '../../scanLogic/scanRunners/eosScan';
+import { EosIssue, EosIssueLocation, EosScanRequest } from '../../scanLogic/scanRunners/eosScan';
 import { ScanManager } from '../../scanLogic/scanManager';
 import { AnalyzeIssue, FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
 import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
@@ -583,27 +583,20 @@ export class AnalyzerUtils {
      * @param languages - each supported language will generate a request
      * @returns list of Eos requests
      */
-    private static createEosRequests(root: IssuesRootTreeNode, types?: PackageType[]): EosScanRequest[] {
-        let languages: LanguageType[] = [];
+    private static createEosRequests(root: IssuesRootTreeNode, logManager: LogManager, types?: PackageType[]): EosScanRequest[] {
+        let requests: EosScanRequest[] = [{ roots: [root.workSpace.uri.fsPath] } as EosScanRequest];
+
         if (types && types.length > 0) {
-            types.forEach(type => {
-                let language: LanguageType | undefined = Translators.toLanguageType(type);
-                if (language) {
-                    languages.push(language);
-                }
-            });
+            // Check if the package type is supported for scan.
+            if (types.find(type => !!Translators.toLanguageType(type))) {
+                return requests;
+            }
         } else {
             // In case there are no descriptors to extract language from, add all.
-            languages = EosRunner.supportedLanguages();
+            return requests;
         }
-        let requests: EosScanRequest[] = [];
-        for (let language of languages) {
-            requests.push({
-                language: language,
-                roots: [root.workSpace.uri.fsPath]
-            } as EosScanRequest);
-        }
-        return requests;
+        logManager.logMessage('Skip Eos scan for not supported package type:' + types.map(type => fromPackageType(type)).join(' '), 'INFO');
+        return [];
     }
 
     /**
@@ -625,7 +618,7 @@ export class AnalyzerUtils {
         workspaceData.eosScan = await scanManager.scanEos(
             progressManager.checkCancel,
             root.workSpace.uri.fsPath,
-            ...this.createEosRequests(root, types)
+            ...this.createEosRequests(root, scanManager.logManager, types)
         );
         if (workspaceData.eosScan) {
             workspaceData.eosScanTimestamp = Date.now();
