@@ -224,7 +224,7 @@ describe('Analyzer BinaryRunner tests', async () => {
 
             if (test.expectedErr) {
                 try {
-                    await runner.runRequest(() => undefined, 'request data', requestPath, responsePath);
+                    await runner.runRequest(() => undefined, 'request data', requestPath, ScanType.ContextualAnalysis, responsePath);
                     assert.fail('Expected run to throw error');
                 } catch (err) {
                     if (err instanceof Error) {
@@ -234,7 +234,9 @@ describe('Analyzer BinaryRunner tests', async () => {
                     }
                 }
             } else {
-                assert.doesNotThrow(async () => await runner.runRequest(() => undefined, 'request data', requestPath, responsePath));
+                assert.doesNotThrow(
+                    async () => await runner.runRequest(() => undefined, 'request data', requestPath, ScanType.ContextualAnalysis, responsePath)
+                );
             }
         });
     });

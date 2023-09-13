@@ -22,7 +22,7 @@ export interface EosScanRequest extends AnalyzeScanRequest {
     exclude_patterns: string[];
 }
 
-export type LanguageType = 'python';
+export type LanguageType = 'python' | 'javascript' | 'java';
 
 export interface EosScanResponse {
     filesWithIssues: EosFileIssues[];
@@ -51,13 +51,10 @@ export class EosRunner extends BinaryRunner {
         connectionManager: ConnectionManager,
         logManager: LogManager,
         binary?: Resource,
-        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
+        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
+        runDirectory?: string
     ) {
-        super(connectionManager, timeout, ScanType.Eos, logManager, binary);
-    }
-
-    public static supportedLanguages(): LanguageType[] {
-        return ['python'];
+        super(connectionManager, timeout, ScanType.Eos, logManager, binary, runDirectory);
     }
 
     /** @override */
