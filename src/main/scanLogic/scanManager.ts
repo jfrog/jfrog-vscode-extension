@@ -131,7 +131,7 @@ export class ScanManager implements ExtensionComponent {
     private getResources(supportedScans: SupportedScans): Resource[] {
         let resources: Resource[] = [];
         if (supportedScans.applicability || supportedScans.iac || supportedScans.secrets) {
-            resources.push(BinaryRunner.getAnalyzerManagerResource(this._logManager, undefined));
+            resources.push(BinaryRunner.getAnalyzerManagerResource(this._logManager));
         } else {
             this.logManager.logMessage('You are not entitled to run Advanced Security scans', 'DEBUG');
         }

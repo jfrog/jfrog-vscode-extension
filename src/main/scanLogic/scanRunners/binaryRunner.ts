@@ -67,7 +67,7 @@ export abstract class BinaryRunner {
         protected _abortCheckInterval: number,
         protected _type: ScanType,
         protected _logManager: LogManager,
-        protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager, undefined),
+        protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager),
         protected _runDirectory?: string
     ) {
         this._runDirectory = this._runDirectory ?? path.dirname(this._binary.fullPath);
