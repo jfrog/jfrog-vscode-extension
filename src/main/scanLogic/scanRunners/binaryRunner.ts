@@ -47,7 +47,7 @@ export abstract class BinaryRunner {
     protected _verbose: boolean = false;
 
     private static readonly RUNNER_NAME: string = 'analyzerManager';
-    private static readonly RUNNER_VERSION: string = '1.2.4.1921744';
+    private static readonly RUNNER_VERSION: string = '1.3.2.2005632';
     private static readonly DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/';
 
     public static readonly NOT_ENTITLED: number = 31;
