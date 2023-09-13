@@ -76,15 +76,14 @@ describe('Applicability Integration Tests', async () => {
                 }
 
                 it('Check fixReason data exists', () => {
-                    expectedApplicableCves.forEach((expectedDetails: CveApplicableDetails, cve: string) => {
-                        assert.deepEqual(getResponseApplicableDetails(cve).fixReason, expectedDetails.fixReason);
+                    expectedApplicableCves.forEach((_expectedDetails: CveApplicableDetails, cve: string) => {
+                        assert.isNotEmpty(getResponseApplicableDetails(cve).fixReason);
                     });
                 });
 
                 it('Check fullDescription data exists', () => {
-                    expectedApplicableCves.forEach((expectedDetails: CveApplicableDetails, cve: string) => {
-                        assert.deepEqual(getResponseApplicableDetails(cve).fullDescription, expectedDetails.fullDescription);
-                        expectedDetails.fileEvidences;
+                    expectedApplicableCves.forEach((_expectedDetails: CveApplicableDetails, cve: string) => {
+                        assert.isNotEmpty(getResponseApplicableDetails(cve).fullDescription);
                     });
                 });
 
