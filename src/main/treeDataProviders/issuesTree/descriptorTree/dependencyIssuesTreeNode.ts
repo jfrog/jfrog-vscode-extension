@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ILicense } from 'jfrog-ide-webview';
-import { PackageType, toPackageType } from '../../../types/projectType';
+import { PackageType } from '../../../types/projectType';
 import { Severity, SeverityUtils } from '../../../types/severity';
 import { IComponent } from 'jfrog-client-js';
 import { CveTreeNode } from './cveTreeNode';
@@ -24,7 +24,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
 
         this._name = component.package_name;
         this._version = component.package_version;
-        this._type = toPackageType(component.package_type);
+        this._type = _parent.type
         this.description = this._version + (_indirect ? ' (indirect)' : '');
         this.contextValue += ContextKeys.COPY_TO_CLIPBOARD_ENABLED;
     }
