@@ -27,7 +27,7 @@ jobs:
         run: npm run lint
         
       - name: Update version
-        run: echo ${{ github.event.head_commit.ref }} | cut -c 11- | xargs npm version
+        run: echo ${{ github.event.release.tag_name }} | cut -c 11- | xargs npm version
 
       # Publish to marketplaces
       - name: Publish to VS marketplace
