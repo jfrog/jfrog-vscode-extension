@@ -1,10 +1,7 @@
-import { ComponentDetails } from 'jfrog-client-js';
 import * as path from 'path';
 import { PackageType } from './projectType';
-import Set from 'typescript-collections/dist/lib/Set';
 
 export class ProjectDetails {
-    private _dependencies: Set<ComponentDetails> = new Set<ComponentDetails>();
     private _name: string;
 
     constructor(private _path: string, private _type: PackageType) {
@@ -33,24 +30,5 @@ export class ProjectDetails {
 
     public set path(value: string) {
         this._path = value;
-    }
-
-    public get dependencies(): Set<ComponentDetails> {
-        return this._dependencies;
-    }
-
-    public set dependencies(value: Set<ComponentDetails>) {
-        this._dependencies = value;
-    }
-
-    /**
-     * @param dependencyId - component id of the dependency
-     */
-    public addDependency(dependencyId: string) {
-        this._dependencies.add(new ComponentDetails(dependencyId));
-    }
-
-    public toArray(): ComponentDetails[] {
-        return this._dependencies.toArray();
     }
 }

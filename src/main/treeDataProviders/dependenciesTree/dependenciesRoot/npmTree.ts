@@ -65,8 +65,7 @@ export class NpmTreeNode extends RootNode {
                     : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
                 let componentId: string = key + ':' + version;
-                this.projectDetails.addDependency(NpmTreeNode.COMPONENT_PREFIX + componentId);
-                child.dependencyId = NpmTreeNode.COMPONENT_PREFIX + componentId;
+                child.xrayId = NpmTreeNode.COMPONENT_PREFIX + componentId;
                 this.populateDependenciesTree(child, childDependencies);
             }
         }

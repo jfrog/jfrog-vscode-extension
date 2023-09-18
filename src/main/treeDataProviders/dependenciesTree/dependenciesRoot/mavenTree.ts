@@ -66,9 +66,8 @@ export class MavenTreeNode extends RootNode {
             let child: DependenciesTreeNode = new DependenciesTreeNode(gavGeneralInfo, treeCollapsibleState, parent);
             child.label = group + ':' + name;
             let componentId: string = gavGeneralInfo.getComponentId();
-            this.projectDetails.addDependency(MavenTreeNode.COMPONENT_PREFIX + componentId);
 
-            child.dependencyId = MavenTreeNode.COMPONENT_PREFIX + componentId;
+            child.xrayId = MavenTreeNode.COMPONENT_PREFIX + componentId;
             if (rawDependenciesPtr.index + 1 < rawDependenciesList.length) {
                 while (
                     rawDependenciesPtr.index + 1 < rawDependenciesList.length &&

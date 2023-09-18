@@ -34,11 +34,11 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         }
     }
 
-    public get dependencyId(): string {
+    public get xrayId(): string {
         return this._dependencyId;
     }
 
-    public set dependencyId(value: string) {
+    public set xrayId(value: string) {
         this._dependencyId = value;
     }
 
