@@ -24,7 +24,7 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
 
         this._name = component.package_name;
         this._version = component.package_version;
-        this._type = _parent.type
+        this._type = _parent.type;
         this.description = this._version + (_indirect ? ' (indirect)' : '');
         this.contextValue += ContextKeys.COPY_TO_CLIPBOARD_ENABLED;
     }
