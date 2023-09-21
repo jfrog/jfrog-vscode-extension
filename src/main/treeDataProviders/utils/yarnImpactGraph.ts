@@ -5,7 +5,7 @@ import { ScanUtils } from '../../utils/scanUtils';
 type YarnWhyItem = StepItem | InfoItem;
 
 /**
- * Represents a step item in the Yarn "why" output.
+ * Represents a step item in the "yarn why" output.
  */
 interface StepItem {
     type: 'list';
@@ -13,7 +13,7 @@ interface StepItem {
 }
 
 /**
- * Represents an info item in the Yarn "why" output.
+ * Represents an info item in the "yarn why" output.
  */
 interface InfoItem {
     type: 'info';
@@ -28,7 +28,7 @@ interface ListData {
     items: string[];
 }
 /**
- * Utility class for creating an impact graph based on Yarn package manager's "why" command output.
+ * Utility class for creating an impact graph based on "yarn why" command output.
  */
 export class YarnImpactGraphUtil {
     /**
@@ -41,7 +41,7 @@ export class YarnImpactGraphUtil {
     constructor(private dependencyName: string, private dependencyVersion: string, private projectName: string, private workspaceFolder: string) {}
 
     /**
-     * Creates and returns an impact graph based on Yarn's "why" command output.
+     * Creates and returns an impact graph based on "yarn why" command output.
      * @returns An impact graph.
      */
     public create(): IImpactGraph {
@@ -54,7 +54,7 @@ export class YarnImpactGraphUtil {
     }
 
     /**
-     * Finds the dependency chain, aka, the path from the dependency to the root, based on the supplied Yarn "why" command output.
+     * Finds the dependency chain, aka, the path from the dependency to the root, based on the supplied "yarn why" command output.
      * The dependency chain may appear as a part of a text or in a list of reasons.
      *
      * Example 1 (Text):
@@ -63,7 +63,7 @@ export class YarnImpactGraphUtil {
      * Example 2 (List):
      * {"type":"list","data":{"type":"reasons","items":["Specified in \"dependencies\"","Hoisted from \"jest-cli#node-notifier#minimist\"","Hoisted from \"jest-cli#sane#minimist\""]}}
      *
-     * @param output - The Yarn "why" command output to analyze.
+     * @param output - The "yarn why" command output to analyze.
      * @returns A list of vulnerable dependency chains to the root.
      */
     private findDependencyChain(output: YarnWhyItem[]): string[] {
@@ -87,9 +87,9 @@ export class YarnImpactGraphUtil {
     }
 
     /**
-     * Dependency may present in multiple versions in yarn why output, therefore, finds the position of the specified version in the Yarn "why" command output.
+     * Dependency may present in multiple versions in yarn why output, therefore, finds the position of the specified version in the "yarn why" command output.
      * @param version - The version to search for.
-     * @param output - The Yarn "why" command output to search within.
+     * @param output - The "yarn why" command output to search within.
      * @returns The index of the found version or undefined if not found.
      */
     private findDependencyPosition(version: string, output: YarnWhyItem[]): number | undefined {
@@ -252,7 +252,7 @@ export class YarnImpactGraphUtil {
     }
 
     /**
-     * Executes the Yarn "why" command and parses its JSON output.
+     * Executes the "yarn why" command and parses its JSON output.
      */
     private runYarnWhy(): YarnWhyItem[] {
         const output: string = ScanUtils.executeCmd('yarn why --json --no-progress ' + this.dependencyName, this.workspaceFolder).toString();
