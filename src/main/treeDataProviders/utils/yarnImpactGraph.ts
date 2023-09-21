@@ -2,7 +2,7 @@ import { IImpactGraph, IImpactGraphNode } from 'jfrog-ide-webview';
 import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
 import { ScanUtils } from '../../utils/scanUtils';
 
-type YarnWhyItem = StepItem | InfoItem;
+export type YarnWhyItem = StepItem | InfoItem;
 
 /**
  * Represents a step item in the "yarn why" output.
@@ -68,7 +68,8 @@ export class YarnImpactGraphUtil {
      */
     private findDependencyChain(output: YarnWhyItem[]): string[] {
         const startIndex: number | undefined = this.findDependencyPosition(this.dependencyVersion, output);
-        if (!startIndex) {
+        // Zero could be a valid index
+        if (startIndex === undefined) {
             return [];
         }
         for (let i: number = startIndex + 1; i < output.length; i++) {
@@ -254,7 +255,7 @@ export class YarnImpactGraphUtil {
     /**
      * Executes the "yarn why" command and parses its JSON output.
      */
-    private runYarnWhy(): YarnWhyItem[] {
+    protected runYarnWhy(): YarnWhyItem[] {
         const output: string = ScanUtils.executeCmd('yarn why --json --no-progress ' + this.dependencyName, this.workspaceFolder).toString();
         return output
             .split('\n')
