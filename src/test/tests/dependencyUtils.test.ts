@@ -83,7 +83,7 @@ describe('Dependency Utils Tests', () => {
                 ]
             } as IImpactGraphNode,
             pathsCount: 2,
-            pathsLimit: DependencyUtils.IMPACT_PATHS_LIMIT
+            pathsLimit: RootNode.IMPACT_PATHS_LIMIT
         } as IImpactGraph);
         map.set('XRAY-191882' + 'C:2.0.0', {
             root: {
@@ -91,7 +91,7 @@ describe('Dependency Utils Tests', () => {
                 children: [{ name: 'C:2.0.0' } as IImpactGraphNode]
             },
             pathsCount: 1,
-            pathsLimit: DependencyUtils.IMPACT_PATHS_LIMIT
+            pathsLimit: RootNode.IMPACT_PATHS_LIMIT
         } as IImpactGraph);
         // issue XRAY-94201, for components B:1.0.0
         map.set('XRAY-94201' + 'B:1.0.0', {
@@ -100,7 +100,7 @@ describe('Dependency Utils Tests', () => {
                 children: [{ name: 'B:1.0.0' } as IImpactGraphNode]
             },
             pathsCount: 1,
-            pathsLimit: DependencyUtils.IMPACT_PATHS_LIMIT
+            pathsLimit: RootNode.IMPACT_PATHS_LIMIT
         } as IImpactGraph);
         // issue XRAY-142007, for components [A:1.0.1, C:2.0.0]
         map.set('XRAY-142007' + 'A:1.0.1', {
@@ -109,7 +109,7 @@ describe('Dependency Utils Tests', () => {
                 children: [{ name: 'B:1.0.0', children: [{ name: 'A:1.0.1' } as IImpactGraphNode] } as IImpactGraphNode]
             },
             pathsCount: 1,
-            pathsLimit: DependencyUtils.IMPACT_PATHS_LIMIT
+            pathsLimit: RootNode.IMPACT_PATHS_LIMIT
         } as IImpactGraph);
         map.set('XRAY-142007' + 'C:2.0.0', {
             root: {
@@ -117,7 +117,7 @@ describe('Dependency Utils Tests', () => {
                 children: [{ name: 'C:2.0.0' } as IImpactGraphNode]
             },
             pathsCount: 1,
-            pathsLimit: DependencyUtils.IMPACT_PATHS_LIMIT
+            pathsLimit: RootNode.IMPACT_PATHS_LIMIT
         } as IImpactGraph);
         return map;
     }
@@ -139,15 +139,15 @@ describe('Dependency Utils Tests', () => {
 
     describe('Limit impacted graph', () => {
         it('Set paths limit to 1', () => {
-            const ORIGIN_IMPACT_PATHS_LIMIT: number = DependencyUtils.IMPACT_PATHS_LIMIT;
-            DependencyUtils.IMPACT_PATHS_LIMIT = 1;
+            const ORIGIN_IMPACT_PATHS_LIMIT: number = RootNode.IMPACT_PATHS_LIMIT;
+            RootNode.IMPACT_PATHS_LIMIT = 1;
 
             let impactedTree: Map<string, IImpactGraph> = DependencyUtils.createImpactedGraph(root, getGraphResponse('scanGraphVulnerabilities'));
 
             assert.equal(impactedTree.get('XRAY-191882A:1.0.0')?.pathsCount, 2);
             assert.equal(impactedTree.get('XRAY-191882A:1.0.0')?.root.children?.length, 1);
 
-            DependencyUtils.IMPACT_PATHS_LIMIT = ORIGIN_IMPACT_PATHS_LIMIT;
+            RootNode.IMPACT_PATHS_LIMIT = ORIGIN_IMPACT_PATHS_LIMIT;
         });
     });
 

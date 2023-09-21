@@ -8,6 +8,8 @@ import { DependenciesTreeNode } from '../dependenciesTreeNode';
 import { BuildTreeErrorType, RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
 import { LogManager } from '../../../log/logManager';
+import { IImpactGraph } from 'jfrog-ide-webview';
+import { YarnImpactGraphUtil } from '../../utils/yarnImpactGraph';
 
 export class YarnTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
@@ -16,11 +18,11 @@ export class YarnTreeNode extends RootNode {
         super(workspaceFolder, PackageType.Yarn, parent);
     }
 
-    public refreshDependencies() {
-        let listResults: any;
+    public loadYarnDependencies() {
+        let results: any;
         try {
-            listResults = this.runYarnList();
-            this.populateDependencyTree(this, listResults?.data?.trees);
+            results = this.runYarnList();
+            this.loadYarnList(this, results?.data?.trees);
         } catch (error) {
             this._logManager.logError(<any>error, false);
             this._logManager.logMessageAndToastErr(
@@ -36,34 +38,46 @@ export class YarnTreeNode extends RootNode {
         this.label = this.projectDetails.name;
     }
 
-    private populateDependencyTree(dependencyTreeNode: DependenciesTreeNode, nodes: any[]) {
-        if (!nodes) {
+    /** @override */
+    public createImpactedGraph(name: string, version: string): IImpactGraph {
+        return new YarnImpactGraphUtil(name, version, this.generalInfo.getComponentId(), this.workspaceFolder).create();
+    }
+
+    /**
+     * Parse and load all yarn list's dependencies into concert object.
+     * @param parent - Parent Yarn dependency that is loaded into object from 'yarn list'.
+     * @param children - Child dependency of parent in Yarn list form
+     * @returns
+     */
+    private loadYarnList(parent: DependenciesTreeNode, children: any[]) {
+        if (!children) {
             return;
         }
-        for (let node of nodes) {
+        for (let node of children) {
             // Shadow dependencies does not always contain exact version, and therefore we should skip them.
             if (node.shadow) {
                 continue;
             }
-            const scope: string = NpmUtils.getDependencyScope(node.name);
-            let lastIndexOfAt: number = node.name.lastIndexOf('@');
-            let dependencyName: string = node.name.substring(0, lastIndexOfAt);
-            let dependencyVersion: string = node.name.substring(lastIndexOfAt + 1);
-
-            let generalInfo: GeneralInfo = new GeneralInfo(dependencyName, dependencyVersion, scope !== '' ? [scope] : [], '', PackageType.Yarn);
-            let hasRealChildren: boolean = this.hasRealChildren(node.children);
-            let treeCollapsibleState: vscode.TreeItemCollapsibleState = hasRealChildren
-                ? vscode.TreeItemCollapsibleState.Collapsed
-                : vscode.TreeItemCollapsibleState.None;
-            let componentId: string = dependencyName + ':' + dependencyVersion;
-            this.projectDetails.addDependency(YarnTreeNode.COMPONENT_PREFIX + componentId);
-
-            let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependencyTreeNode);
-            child.dependencyId = YarnTreeNode.COMPONENT_PREFIX + componentId;
-            if (hasRealChildren) {
-                this.populateDependencyTree(child, node.children);
+            this.addDependency(parent, node);
+            if (this.hasRealChildren(node.children)) {
+                this.loadYarnList(parent, node.children);
             }
         }
+    }
+
+    private extractDependencyInfo(node: any): string[] {
+        const scope: string = NpmUtils.getDependencyScope(node.name);
+        let lastIndexOfAt: number = node.name.lastIndexOf('@');
+        let name: string = node.name.substring(0, lastIndexOfAt);
+        let version: string = node.name.substring(lastIndexOfAt + 1);
+        return [name, version, scope];
+    }
+
+    private addDependency(parent: DependenciesTreeNode, node: any): void {
+        const [dependencyName, dependencyVersion, scope] = this.extractDependencyInfo(node);
+        const generalInfo: GeneralInfo = new GeneralInfo(dependencyName, dependencyVersion, scope !== '' ? [scope] : [], '', PackageType.Yarn);
+        new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.None, parent).xrayId =
+            YarnTreeNode.COMPONENT_PREFIX + dependencyName + ':' + dependencyVersion;
     }
 
     /**
