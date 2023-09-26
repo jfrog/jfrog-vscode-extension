@@ -139,7 +139,7 @@
             },
             {
                 "command": "jfrog.open.feedback",
-                "title": "Sends us feedback",
+                "title": "Send us feedback",
                 "icon": "$(feedback)",
                 "category": "JFrog"
             },
