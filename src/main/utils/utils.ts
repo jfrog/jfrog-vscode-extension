@@ -19,6 +19,10 @@ export class Utils {
         await vscode.commands.executeCommand('workbench.action.openSettings', `@ext:${Utils.getExtensionId()}` + (id ? ` ${id}` : ''));
     }
 
+    public static async openFeedback(): Promise<void> {
+        await vscode.env.openExternal(vscode.Uri.parse("https://github.com/jfrog/jfrog-vscode-extension/discussions/new?category=product-feedback"));
+    }
+
     public static combineSets(sets: Set<string>[]): Set<string> {
         return new Set<string>(...sets);
     }

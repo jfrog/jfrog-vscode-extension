@@ -41,6 +41,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.xray.reConnect', () => this.doReconnect());
         // General
         this.registerCommand(context, 'jfrog.open.settings', () => Utils.openSettings());
+        this.registerCommand(context, 'jfrog.open.feedback', () => Utils.openFeedback());
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.scan.refresh', () => this.doRefresh());
