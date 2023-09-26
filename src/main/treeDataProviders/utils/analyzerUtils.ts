@@ -287,18 +287,28 @@ export class AnalyzerUtils {
         for (let [fileScanBundle, cvesToScan] of filteredBundles) {
             let descriptorIssues: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
             // Map information to similar directory space
-            let spacePath: string = path.dirname(descriptorIssues.fullPath);
-            if (fileScanBundle instanceof EnvironmentTreeNode) {
-                spacePath = descriptorIssues.fullPath;
+            let workspacePath: string = AnalyzerUtils.getWorkspacePath(fileScanBundle.dataNode, descriptorIssues.fullPath);
+            if (!workspaceToScanBundles.has(workspacePath)) {
+                workspaceToScanBundles.set(workspacePath, new Map<FileScanBundle, Set<string>>());
             }
-            if (!workspaceToScanBundles.has(spacePath)) {
-                workspaceToScanBundles.set(spacePath, new Map<FileScanBundle, Set<string>>());
-            }
-            workspaceToScanBundles.get(spacePath)?.set(fileScanBundle, cvesToScan);
+            workspaceToScanBundles.get(workspacePath)?.set(fileScanBundle, cvesToScan);
             logManager.logMessage('Adding data from descriptor ' + descriptorIssues.fullPath + ' for cve applicability scan', 'INFO');
         }
 
         return workspaceToScanBundles;
+    }
+
+    /**
+     * Retrieve the workspace path, whether it's a file or an environment.
+     * @param fileScanBundle - The data node for file tree, usually DescriptorTreeNode or EnvironmentTreeNode
+     * @param fullWorkspacePath - Full path to the scanning directory or file
+     * @returns the path to the workspace directory
+     */
+    private static getWorkspacePath(fileScanBundle: FileTreeNode | undefined, fullWorkspacePath: string): string {
+        if (fileScanBundle instanceof EnvironmentTreeNode) {
+            return fullWorkspacePath;
+        }
+        return path.dirname(fullWorkspacePath);
     }
 
     /**
