@@ -118,7 +118,7 @@ The extension also applies [JFrog File Spec JSON schema](https://raw.githubuserc
 | [Static Application Security Testing (SAST)](#static-application-security-testing-sast)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |   ❌    |
 | [Secrets Detection](#secrets-detection)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |✅    |
 | [Exclude dev dependencies](#exclude-development-dependencies-during-scan)                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |   ❌    |
-| [Infrastructure as Code (IaC) Scan](#infrastructure-as-code-(iac)-Scan)                          |  ❌  |   ❌   |   ❌    |  ❌  |    ❌    |   ❌    |   ✅     |
+| [Infrastructure as Code (IaC) Scan](#infrastructure-as-code-iac-scan)                          |  ❌  |   ❌   |   ❌    |  ❌  |    ❌    |   ❌    |   ✅     |
 
 ## Getting Started
 
