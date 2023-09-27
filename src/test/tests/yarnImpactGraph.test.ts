@@ -5,7 +5,7 @@ import { RootNode } from '../../main/treeDataProviders/dependenciesTree/dependen
 import { LogManager } from '../../main/log/logManager';
 
 describe('Yarn impact graph util', async () => {
-    it.only('Build single impact graph', async () => {
+    it('Build single impact graph', async () => {
         const results: IImpactGraph = new YarnImpactGraphUtilMock('minimist', '0.0.8', 'Mock-Project', '', new LogManager().activate()).create();
         assert.deepEqual(results, generateExpectedSingleImpactGraph());
     });
