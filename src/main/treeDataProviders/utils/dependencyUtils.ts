@@ -12,7 +12,7 @@ import { MavenUtils } from '../../utils/mavenUtils';
 import { NpmUtils } from '../../utils/npmUtils';
 import { PypiUtils } from '../../utils/pypiUtils';
 import { YarnUtils } from '../../utils/yarnUtils';
-import { IImpactGraph, IImpactGraphNode, ILicense } from 'jfrog-ide-webview';
+import { IImpactGraph, ILicense } from 'jfrog-ide-webview';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { FocusType } from '../../constants/contextKeys';
 import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
@@ -32,7 +32,6 @@ import { FileTreeNode } from '../issuesTree/fileTreeNode';
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
-    public static IMPACT_PATHS_LIMIT: number = 50;
 
     /**
      * Scan all the dependencies of a given package for security issues and populate the given data and view objects with the information.
@@ -328,18 +327,21 @@ export class DependencyUtils {
         if (!issues) {
             return paths;
         }
+
         for (let i: number = 0; i < issues.length; i++) {
             let issue: IVulnerability = issues[i];
             for (let [componentId, component] of Object.entries(issue.components)) {
-                const childGraph: IImpactGraph = this.getChildrenGraph(descriptorGraph, component, 0);
-                paths.set(issue.issue_id + componentId, {
-                    root: {
-                        name: this.getGraphName(descriptorGraph),
-                        children: childGraph.root.children
-                    },
-                    pathsCount: childGraph.pathsCount,
-                    pathsLimit: DependencyUtils.IMPACT_PATHS_LIMIT
-                } as IImpactGraph);
+                const impactedPaths: IImpactGraph = descriptorGraph.createImpactedGraph(component.package_name, component.package_version);
+                if (impactedPaths.root) {
+                    paths.set(issue.issue_id + componentId, {
+                        root: {
+                            name: this.getGraphName(descriptorGraph),
+                            children: impactedPaths.root?.children
+                        },
+                        pathsCount: impactedPaths.pathsCount,
+                        pathsLimit: RootNode.IMPACT_PATHS_LIMIT
+                    } as IImpactGraph);
+                }
             }
         }
         return paths;
@@ -349,41 +351,6 @@ export class DependencyUtils {
         return descriptorGraph.componentId.endsWith(':')
             ? descriptorGraph.componentId.slice(0, descriptorGraph.componentId.length - 1)
             : descriptorGraph.componentId;
-    }
-
-    /**
-     * Retrieves the impact paths of all child components, recursively from a given root,
-     * The number of impact paths collected may be limited by the '{@link DependencyUtils.IMPACT_PATHS_LIMIT}'.
-     * @param root - the root to get it's children impact
-     * @param componentWithIssue - the component to generate the impact path for it
-     * @param size - the total size of the impacted path
-     */
-    private static getChildrenGraph(root: DependenciesTreeNode, componentWithIssue: IComponent, size: number): IImpactGraph {
-        let impactPaths: IImpactGraphNode[] = [];
-        for (let child of root.children) {
-            let impactChild: IImpactGraphNode | undefined = impactPaths.find(p => p.name === child.componentId);
-            if (!impactChild) {
-                if (child.componentId === componentWithIssue.package_name + ':' + componentWithIssue.package_version) {
-                    // Direct impact
-                    if (size < DependencyUtils.IMPACT_PATHS_LIMIT) {
-                        impactPaths.push({
-                            name: child.componentId
-                        } as IImpactGraphNode);
-                    }
-                    size++;
-                }
-                // indirect impact
-                let indirectImpact: IImpactGraph = this.getChildrenGraph(child, componentWithIssue, size);
-                if (!!indirectImpact.root.children?.length) {
-                    impactPaths.push({
-                        name: child.componentId,
-                        children: indirectImpact.root.children
-                    } as IImpactGraphNode);
-                }
-                size = indirectImpact.pathsCount ?? size;
-            }
-        }
-        return { root: { children: impactPaths }, pathsCount: size } as IImpactGraph;
     }
 
     /**
