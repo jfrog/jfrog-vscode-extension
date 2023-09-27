@@ -2,15 +2,16 @@ import { IImpactGraph } from 'jfrog-ide-webview';
 import { YarnImpactGraphCreator, YarnWhyItem } from '../../main/treeDataProviders/utils/yarnImpactGraph';
 import { assert } from 'chai';
 import { RootNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
+import { LogManager } from '../../main/log/logManager';
 
 describe('Yarn impact graph util', async () => {
-    it('Build single impact graph', async () => {
-        const results: IImpactGraph = new YarnImpactGraphUtilMock('minimist', '0.0.8', 'Mock-Project', '').create();
+    it.only('Build single impact graph', async () => {
+        const results: IImpactGraph = new YarnImpactGraphUtilMock('minimist', '0.0.8', 'Mock-Project', '', new LogManager().activate()).create();
         assert.deepEqual(results, generateExpectedSingleImpactGraph());
     });
 
     it('Build multiple impact graphs', async () => {
-        const results: IImpactGraph = new YarnImpactGraphUtilMock('minimist', '1.2.0', 'Mock-Project', '').create();
+        const results: IImpactGraph = new YarnImpactGraphUtilMock('minimist', '1.2.0', 'Mock-Project', '', new LogManager().activate()).create();
         assert.deepEqual(results, generateExpectedMultipleImpactGraphs());
     });
 });

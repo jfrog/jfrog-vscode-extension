@@ -332,7 +332,7 @@ export class DependencyUtils {
             let issue: IVulnerability = issues[i];
             for (let [componentId, component] of Object.entries(issue.components)) {
                 const impactedPaths: IImpactGraph = descriptorGraph.createImpactedGraph(component.package_name, component.package_version);
-                if(impactedPaths.root){
+                if (impactedPaths.root) {
                     paths.set(issue.issue_id + componentId, {
                         root: {
                             name: this.getGraphName(descriptorGraph),

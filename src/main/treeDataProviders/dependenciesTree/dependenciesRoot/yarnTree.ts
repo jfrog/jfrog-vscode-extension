@@ -40,7 +40,7 @@ export class YarnTreeNode extends RootNode {
 
     /** @override */
     public createImpactedGraph(name: string, version: string): IImpactGraph {
-        return new YarnImpactGraphCreator(name, version, this.generalInfo.getComponentId(), this.workspaceFolder).create();
+        return new YarnImpactGraphCreator(name, version, this.generalInfo.getComponentId(), this.workspaceFolder, this._logManager).create();
     }
 
     /**

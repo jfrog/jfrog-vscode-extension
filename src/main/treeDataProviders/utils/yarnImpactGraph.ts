@@ -1,6 +1,7 @@
 import { IImpactGraph, IImpactGraphNode } from 'jfrog-ide-webview';
 import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
 import { ScanUtils } from '../../utils/scanUtils';
+import { LogManager } from '../../log/logManager';
 
 export type YarnWhyItem = StepItem | InfoItem;
 
@@ -38,7 +39,13 @@ export class YarnImpactGraphCreator {
      * @param _projectName - The name of the project.
      * @param _workspaceFolder - The folder where the project is located.
      */
-    constructor(private _dependencyName: string, private _dependencyVersion: string, private _projectName: string, private _workspaceFolder: string) {}
+    constructor(
+        private _dependencyName: string,
+        private _dependencyVersion: string,
+        private _projectName: string,
+        private _workspaceFolder: string,
+        private _logManager: LogManager
+    ) {}
 
     /**
      * Creates and returns an impact graph based on "yarn why" command output.
@@ -97,6 +104,7 @@ export class YarnImpactGraphCreator {
         for (let i: number = 0; i < output.length; i++) {
             const item: YarnWhyItem = output[i];
             if (item.type === 'info' && item.data.includes(version)) {
+                this._logManager.debug('found dependency version ' + version + " from 'yarn why' at: " + item.data);
                 return i;
             }
         }
@@ -116,6 +124,7 @@ export class YarnImpactGraphCreator {
         list.forEach(item => {
             const chain: string | undefined = this.extractChain(item);
             if (chain) {
+                this._logManager.debug("found dependency chain'" + chain + "' from" + item);
                 results.push(chain);
             }
         });
@@ -133,7 +142,7 @@ export class YarnImpactGraphCreator {
         }
         // Extract the path from the dependency chain using quotes
         const startIndex: number = rawDependencyChain.indexOf('"');
-        const endIndex: number = rawDependencyChain.indexOf('"', startIndex);
+        const endIndex: number = rawDependencyChain.indexOf('"', startIndex + 1);
         if (startIndex !== -1 && endIndex !== -1) {
             return rawDependencyChain.substring(startIndex + 1, endIndex);
         }
@@ -251,7 +260,10 @@ export class YarnImpactGraphCreator {
      * Executes the "yarn why" command and parses its JSON output.
      */
     protected runYarnWhy(): YarnWhyItem[] {
-        const output: string = ScanUtils.executeCmd('yarn why --json --no-progress ' + this._dependencyName, this._workspaceFolder).toString();
+        const cmd: string = 'yarn why --json --no-progress ' + this._dependencyName;
+        this._logManager.debug('Running ' + cmd + ' at ' + this._workspaceFolder);
+        const output: string = ScanUtils.executeCmd(cmd, this._workspaceFolder).toString();
+        this._logManager.debug('yarn why output ' + output);
         return output
             .split('\n')
             .filter(line => line.trim() !== '')
