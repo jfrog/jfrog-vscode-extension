@@ -80,8 +80,13 @@ Check out what our research team is up to and stay updated on newly discovered i
 
 <details>
   <summary>Vulnerability Contextual Analysis</summary>
-Uses the code context to eliminate false positive reports on vulnerable dependencies that are not applicable to the code. 
+Uses the code context to eliminate false positive reports on vulnerable dependencies that are not applicable to the code.
 Vulnerability Contextual Analysis is currently supported for Python, Java and JavaScript code.
+</details>
+
+<details>
+  <summary>Static Application Security Testing (SAST)</summary>
+Provides fast and accurate security-focused engines that detect zero-day security vulnerabilities on your source code sensitive operations, while minimizing false positives.
 </details>
 
 <details>
@@ -110,6 +115,7 @@ The extension also applies [JFrog File Spec JSON schema](https://raw.githubuserc
 | [SCA](#-software-composition-analysis-sca)                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |   ❌    |
 | [Upgrade vulnerable dependencies to fixed versions](#updating-dependencies) |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |   ❌    |
 | [Vulnerability Contextual Analysis](#-vulnerability-contextual-analysis)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |   ❌    |
+| [Static Application Security Testing (SAST)](#-static-application-security-testing-(SAST))                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |   ❌    |
 | [Secrets Detection](#-secrets-detection)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |✅    |
 | [Exclude dev dependencies](#exclude-development-dependencies-during-scan)                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |   ❌    |
 | [Infrastructure as Code (IaC) Scan](#-infrastructure-as-code-(iac)-Scan)                          |  ❌  |   ❌   |   ❌    |  ❌  |    ❌    |   ❌    |   ✅     |
@@ -281,6 +287,20 @@ Xray automatically validates some high and very high impact vulnerabilities, suc
 * Remediation: Contextual mitigation steps and options provided by our research team that assist you with remediating the issues.
 
 ![Contextual_Analysis](resources/readme/preview/contextualDetails.png)
+
+### Static Application Security Testing (SAST)
+> **_NOTE:_**  Static Application Security Testing (SAST) requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.
+
+JFrog SAST scans mainly for specific sensitive operations (DB queries, OS commands, outgoing connection destinations, etc) that can be controlled by an external attacker without proper sanitation injections such as: SQL injections, Command injections, Code injections and SSRF.
+It also detects cases when certain APIs (encryption, cryptographic signing, file operations, etc.) are used with parameters or under circumstances that render the API use unsafe.
+
+SAST findings are presented in a way that will help you easily locate the vulnerable data flow in your code. The data is represented within an easy-to-use interface that enables you to track each vulnerability in the code and provides the following information per vulnerability:
+
+* **Data Flow Analysis**: Provides information on the overall code flow and the different entry points of the vulnerability up to the execution point of the vulnerability. At JFrog we understand the developers need to see the entire picture of their code, rather than just providing the specific vulnerability found in the code. With Data Analysis Flow you will be able to follow the entire lifecycle of the vulnerability.
+* **Fix Steps**: To help you fix the security issues, the JFrog security team provides you with detailed fixes and mitigation options for the vulnerabilities. Xray empowers you to make smart choices when creating the mitigation plan and choosing the paths with the highest return on investment.
+Along with the JFrog severity given, you can make informed decisions on what vulnerabilities are a priority to fix. For example, vulnerabilities with low JFrog security severity are considered less risky, as it would be very unlikely to exploit them in the real world, or the impact of the exploitation is low.
+
+![SAST](resources/readme/preview/sast.png)
 
 ### Secrets Detection
 > **_NOTE:_**  Secrets Detection requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.
