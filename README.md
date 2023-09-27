@@ -112,13 +112,13 @@ The extension also applies [JFrog File Spec JSON schema](https://raw.githubuserc
 #### 🛡️ Supported Packages
 | Features                                             | [Go](#go-projects) | [Maven](#maven-projects) | [npm](#npm-projects) | [Yarn v1](#yarn-v1-projects) | [Pypi](#pypi-projects) | [.NET](#net-projects) | [Terraform](#-infrastructure-as-code-(iac)-Scan) |
 |---------------------------------------------------|:----:|:------:|:-------:|:----:|:--------:|:-------:|:-------:|
-| [SCA](#-software-composition-analysis-sca)                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |   ❌    |
-| [Upgrade vulnerable dependencies to fixed versions](#updating-dependencies) |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |   ❌    |
-| [Vulnerability Contextual Analysis](#-vulnerability-contextual-analysis)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |   ❌    |
-| [Static Application Security Testing (SAST)](#-static-application-security-testing-(SAST))                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |   ❌    |
-| [Secrets Detection](#-secrets-detection)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |✅    |
+| [SCA](#software-composition-analysis-sca)                                               |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |   ❌    |
+| [Upgrade vulnerable dependencies to fixed versions](#upgrade-vulnerable-dependencies-to-fixed-versions) |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |   ❌    |
+| [Vulnerability Contextual Analysis](#vulnerability-contextual-analysis)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |   ❌    |
+| [Static Application Security Testing (SAST)](#static-application-security-testing-sast)                               |  ❌  |    ✅   |   ✅    |  ✅  |    ✅    |   ❌    |   ❌    |
+| [Secrets Detection](#secrets-detection)                          |  ✅  |   ✅   |   ✅    |  ✅  |    ✅    |   ✅    |✅    |
 | [Exclude dev dependencies](#exclude-development-dependencies-during-scan)                          |  ❌  |   ❌   |   ✅    |  ❌  |    ❌    |   ❌    |   ❌    |
-| [Infrastructure as Code (IaC) Scan](#-infrastructure-as-code-(iac)-Scan)                          |  ❌  |   ❌   |   ❌    |  ❌  |    ❌    |   ❌    |   ✅     |
+| [Infrastructure as Code (IaC) Scan](#infrastructure-as-code-(iac)-Scan)                          |  ❌  |   ❌   |   ❌    |  ❌  |    ❌    |   ❌    |   ✅     |
 
 ## Getting Started
 
@@ -260,9 +260,6 @@ Clicking on a CVE in the list will open the location with the issue in the edito
 ![Impact_Graph](resources/readme/preview/impactGraph.png)
 ![Public_Resources](resources/readme/preview/publicDetails.png)
 
-Update a vulnerable direct dependency to a fixed version directly from the vulnerable location at the editor using quick fix
-![Set_Fixed_Version](resources/readme/preview/updateQuickFix.png)
-
 When Xray watches are enabled and a vulnerability is detected, a closed eye icon will appear next to the vulnerability line in the JFrog extension. By clicking on this icon, you can initiate the process of creating an [Ignore Rule](https://www.jfrog.com/confluence/display/JFROG/Ignore+Rules) in Xray.
 ![Ignore_Rule](resources/readme/preview/ignoreRule.png)
 
@@ -287,6 +284,10 @@ Xray automatically validates some high and very high impact vulnerabilities, suc
 * Remediation: Contextual mitigation steps and options provided by our research team that assist you with remediating the issues.
 
 ![Contextual_Analysis](resources/readme/preview/contextualDetails.png)
+
+### Upgrade vulnerable dependencies to fixed versions
+Update a vulnerable direct dependency to a fixed version directly from the vulnerable location at the editor using quick fix
+![Set_Fixed_Version](resources/readme/preview/updateQuickFix.png)
 
 ### Static Application Security Testing (SAST)
 > **_NOTE:_**  Static Application Security Testing (SAST) requires Xray version 3.66.5 or above and Enterprise X / Enterprise+ subscription with Advanced DevSecOps.
