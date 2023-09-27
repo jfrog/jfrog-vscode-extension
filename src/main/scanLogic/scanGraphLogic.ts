@@ -23,7 +23,7 @@ export class GraphScanLogic {
      */
     public async scan(graphRoot: RootNode, progress: XrayScanProgress, checkCanceled: () => void): Promise<IGraphResponse> {
         let graphRequest: IGraphRequestModel = {
-            component_id: graphRoot.generalInfo.artifactId ?? graphRoot.xrayId,
+            component_id: graphRoot.generalInfo.artifactId ?? graphRoot.xrayDependencyId,
             nodes: this.getFlattenRequestModelNodes(graphRoot, new Set<string>())
         } as IGraphRequestModel;
         if (!graphRequest.nodes || graphRequest.nodes.length === 0) {
@@ -48,10 +48,10 @@ export class GraphScanLogic {
     public getFlattenRequestModelNodes(dependency: DependenciesTreeNode, components: Set<string>): IGraphRequestModel[] | undefined {
         let nodes: IGraphRequestModel[] = [];
         for (let child of dependency.children) {
-            if (child.xrayId && !components.has(child.xrayId)) {
-                components.add(child.xrayId);
+            if (child.xrayDependencyId && !components.has(child.xrayDependencyId)) {
+                components.add(child.xrayDependencyId);
                 nodes.push({
-                    component_id: child.xrayId
+                    component_id: child.xrayDependencyId
                 } as IGraphRequestModel);
             }
             let childNodes: IGraphRequestModel[] | undefined = this.getFlattenRequestModelNodes(child, components);

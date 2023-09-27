@@ -9,7 +9,7 @@ import { BuildTreeErrorType, RootNode } from './rootTree';
 import { PackageType } from '../../../types/projectType';
 import { LogManager } from '../../../log/logManager';
 import { IImpactGraph } from 'jfrog-ide-webview';
-import { YarnImpactGraphUtil } from '../../utils/yarnImpactGraph';
+import { YarnImpactGraphCreator } from '../../utils/yarnImpactGraph';
 
 export class YarnTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
@@ -40,7 +40,7 @@ export class YarnTreeNode extends RootNode {
 
     /** @override */
     public createImpactedGraph(name: string, version: string): IImpactGraph {
-        return new YarnImpactGraphUtil(name, version, this.generalInfo.getComponentId(), this.workspaceFolder).create();
+        return new YarnImpactGraphCreator(name, version, this.generalInfo.getComponentId(), this.workspaceFolder).create();
     }
 
     /**
@@ -76,7 +76,7 @@ export class YarnTreeNode extends RootNode {
     private addDependency(parent: DependenciesTreeNode, node: any): void {
         const [dependencyName, dependencyVersion, scope] = this.extractDependencyInfo(node);
         const generalInfo: GeneralInfo = new GeneralInfo(dependencyName, dependencyVersion, scope !== '' ? [scope] : [], '', PackageType.Yarn);
-        new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.None, parent).xrayId =
+        new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.None, parent).xrayDependencyId =
             YarnTreeNode.COMPONENT_PREFIX + dependencyName + ':' + dependencyVersion;
     }
 

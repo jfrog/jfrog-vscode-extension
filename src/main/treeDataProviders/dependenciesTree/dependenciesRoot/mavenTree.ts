@@ -67,7 +67,7 @@ export class MavenTreeNode extends RootNode {
             child.label = group + ':' + name;
             let componentId: string = gavGeneralInfo.getComponentId();
 
-            child.xrayId = MavenTreeNode.COMPONENT_PREFIX + componentId;
+            child.xrayDependencyId = MavenTreeNode.COMPONENT_PREFIX + componentId;
             if (rawDependenciesPtr.index + 1 < rawDependenciesList.length) {
                 while (
                     rawDependenciesPtr.index + 1 < rawDependenciesList.length &&

@@ -12,7 +12,7 @@ export class DependenciesTreeNode extends vscode.TreeItem {
     private _licenses: Set<ILicenseKey> = new Set(license => license.licenseName);
     private _issues: Set<IIssueKey> = new Set(issue => issue.issue_id);
     private _topSeverity: Severity;
-    private _dependencyId: string = this._generalInfo.artifactId;
+    private _xrayDependencyId: string = this._generalInfo.artifactId;
 
     constructor(
         protected _generalInfo: GeneralInfo,
@@ -34,12 +34,12 @@ export class DependenciesTreeNode extends vscode.TreeItem {
         }
     }
 
-    public get xrayId(): string {
-        return this._dependencyId;
+    public get xrayDependencyId(): string {
+        return this._xrayDependencyId;
     }
 
-    public set xrayId(value: string) {
-        this._dependencyId = value;
+    public set xrayDependencyId(value: string) {
+        this._xrayDependencyId = value;
     }
 
     public get componentId(): string {

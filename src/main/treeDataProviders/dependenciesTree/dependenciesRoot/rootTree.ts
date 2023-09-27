@@ -79,15 +79,14 @@ export class RootNode extends DependenciesTreeNode {
     /**
      * Retrieves the impact paths of all child components, recursively from a given root,
      * The number of impact paths collected may be limited by the '{@link RootNode.IMPACT_PATHS_LIMIT}'.
-     * @param root - the root to get it's children impact
-     * @param componentWithIssue - the component to generate the impact path for it
-     * @param size - the total size of the impacted path
+     * @param vulnerableDependencyName - the name of the component used to build a path to the root.
+     * @param componentWithIssue -  the version of the component used to build a path to the root.
      */
-    public createImpactedGraph(vulnerableDependencyname: string, vulnerableDependencyversion: string): IImpactGraph {
-        return RootNode.collectPaths(vulnerableDependencyname + ':' + vulnerableDependencyversion, this.children, 0);
+    public createImpactedGraph(vulnerableDependencyName: string, vulnerableDependencyVersion: string): IImpactGraph {
+        return RootNode.collectPaths(vulnerableDependencyName + ':' + vulnerableDependencyVersion, this.children, 0);
     }
 
-    private static collectPaths(vulnerableDependencyId: string, children: DependenciesTreeNode[], size: number) {
+    private static collectPaths(vulnerableDependencyId: string, children: DependenciesTreeNode[], size: number): IImpactGraph {
         let impactPaths: IImpactGraphNode[] = [];
         for (let child of children) {
             if (impactPaths.find(node => node.name === child.componentId)) {
@@ -102,7 +101,7 @@ export class RootNode extends DependenciesTreeNode {
                 size++;
             }
 
-            let indirectImpact: IImpactGraph = this.collectPaths(vulnerableDependencyId, child.children, size);
+            let indirectImpact: IImpactGraph = RootNode.collectPaths(vulnerableDependencyId, child.children, size);
             RootNode.appendIndirectImpact(impactPaths, child.componentId, indirectImpact);
             size = indirectImpact.pathsCount ?? size;
         }

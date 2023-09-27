@@ -40,7 +40,7 @@ export class PypiTreeNode extends RootNode {
                         : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode);
                 let componentId: string = dependency.key + ':' + version;
-                child.xrayId = PypiTreeNode.COMPONENT_PREFIX + componentId;
+                child.xrayDependencyId = PypiTreeNode.COMPONENT_PREFIX + componentId;
                 this.populateDependenciesTree(child, childDependencies);
             }
         }

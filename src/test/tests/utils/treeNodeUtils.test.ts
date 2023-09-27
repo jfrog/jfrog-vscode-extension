@@ -59,7 +59,7 @@ export function createRootTestNode(pathOfWorkspace: string): IssuesRootTreeNode 
 
 export function createDependency(artifactId: string, version: string, parent?: DependenciesTreeNode): DependenciesTreeNode {
     let dependenciesTreeNode: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo(artifactId, version, [], '', PackageType.Unknown));
-    dependenciesTreeNode.xrayId = artifactId + ':' + version;
+    dependenciesTreeNode.xrayDependencyId = artifactId + ':' + version;
     parent?.addChild(dependenciesTreeNode);
     return dependenciesTreeNode;
 }

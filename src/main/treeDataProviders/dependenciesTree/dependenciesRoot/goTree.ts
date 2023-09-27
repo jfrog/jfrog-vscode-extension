@@ -153,7 +153,7 @@ export class GoTreeNode extends RootNode {
 
     private addComponentToScan(dependenciesTreeNode: DependenciesTreeNode) {
         let componentId: string = dependenciesTreeNode.generalInfo.artifactId + ':' + dependenciesTreeNode.generalInfo.version;
-        dependenciesTreeNode.xrayId = GoTreeNode.COMPONENT_PREFIX + componentId;
+        dependenciesTreeNode.xrayDependencyId = GoTreeNode.COMPONENT_PREFIX + componentId;
     }
 
     private getNameVersionTuple(value: string): string[] {

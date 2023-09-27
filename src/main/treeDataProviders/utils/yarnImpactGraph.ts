@@ -30,23 +30,23 @@ interface ListData {
 /**
  * Utility class for creating an impact graph based on "yarn why" command output.
  */
-export class YarnImpactGraphUtil {
+export class YarnImpactGraphCreator {
     /**
      * Creates an instance of YarnImpactGraphUtil.
-     * @param dependencyName - The name of the impact dependency.
-     * @param dependencyVersion - The version of the impact dependency.
-     * @param projectName - The name of the project.
-     * @param workspaceFolder - The folder where the project is located.
+     * @param _dependencyName - The name of the impact dependency.
+     * @param _dependencyVersion - The version of the impact dependency.
+     * @param _projectName - The name of the project.
+     * @param _workspaceFolder - The folder where the project is located.
      */
-    constructor(private dependencyName: string, private dependencyVersion: string, private projectName: string, private workspaceFolder: string) {}
+    constructor(private _dependencyName: string, private _dependencyVersion: string, private _projectName: string, private _workspaceFolder: string) {}
 
     /**
      * Creates and returns an impact graph based on "yarn why" command output.
      * @returns An impact graph.
      */
     public create(): IImpactGraph {
-        const dependencyChain: string[] | undefined = this.findDependencyChain(this.runYarnWhy());
-        if (dependencyChain) {
+        const dependencyChain: string[] = this.findDependencyChain(this.runYarnWhy());
+        if (dependencyChain.length > 0) {
             return this.createImpactGraphFromChains(dependencyChain);
         }
 
@@ -67,7 +67,7 @@ export class YarnImpactGraphUtil {
      * @returns A list of vulnerable dependency chains to the root.
      */
     private findDependencyChain(output: YarnWhyItem[]): string[] {
-        const startIndex: number | undefined = this.findDependencyPosition(this.dependencyVersion, output);
+        const startIndex: number | undefined = this.findDependencyPosition(this._dependencyVersion, output);
         // Zero could be a valid index
         if (startIndex === undefined) {
             return [];
@@ -108,8 +108,8 @@ export class YarnImpactGraphUtil {
      * @param list - An array of strings representing raw dependency chains.
      * @returns An array of extracted dependency chains.
      *
-     *  input - ["Specified in \"dependencies\"","Hoisted from \"jest-cli#node-notifier#minimist\"","Hoisted from \"jest-cli#sane#minimist\""]
-     *  output - ["minimist","jest-cli#node-notifier#minimist","jest-cli#sane#minimist"]
+     * Example input - ["Specified in \"dependencies\"","Hoisted from \"jest-cli#node-notifier#minimist\"","Hoisted from \"jest-cli#sane#minimist\""]
+     * Example output - ["minimist","jest-cli#node-notifier#minimist","jest-cli#sane#minimist"]
      */
     private extractMultipleChain(list: string[]): string[] {
         const results: string[] = [];
@@ -128,16 +128,16 @@ export class YarnImpactGraphUtil {
      * @returns The extracted dependency chain or undefined if not found.
      */
     private extractChain(rawDependencyChain: string): string | undefined {
-        if (rawDependencyChain.toLocaleLowerCase().includes('specified in')) {
-            return this.dependencyName;
+        if (rawDependencyChain.toLowerCase().includes('specified in')) {
+            return this._dependencyName;
         }
         // Extract the path from the dependency chain using quotes
         const startIndex: number = rawDependencyChain.indexOf('"');
-        const endIndex: number = rawDependencyChain.lastIndexOf('"');
+        const endIndex: number = rawDependencyChain.indexOf('"', startIndex);
         if (startIndex !== -1 && endIndex !== -1) {
             return rawDependencyChain.substring(startIndex + 1, endIndex);
         }
-        return;
+        return undefined;
     }
 
     /**
@@ -164,16 +164,9 @@ export class YarnImpactGraphUtil {
      * @returns The merged impact graph tree.
      */
     public mergeTrees(root1: IImpactGraphNode | null, root2: IImpactGraphNode | null): IImpactGraphNode | null {
-        if (!root1 && !root2) {
-            return null;
+        if (!root1 || !root2) {
+            return root1 || root2;
         }
-        if (!root1) {
-            return root2;
-        }
-        if (!root2) {
-            return root1;
-        }
-
         // Create a merged node with the same name
         const mergedNode: IImpactGraphNode = { name: root1.name };
 
@@ -185,12 +178,13 @@ export class YarnImpactGraphUtil {
                 const matchingChild2: IImpactGraphNode | undefined = root2.children.find(child2 => child2.name === child1.name);
 
                 if (matchingChild2) {
-                    const tmp: IImpactGraphNode | null = this.mergeTrees(child1, matchingChild2);
-                    if (tmp) {
-                        mergedChildren.push(tmp);
+                    const tree: IImpactGraphNode | null = this.mergeTrees(child1, matchingChild2);
+                    if (tree) {
+                        mergedChildren.push(tree);
                     }
                 } else {
-                    mergedChildren.push(child1); // If not found in root2, keep the child from root1
+                    // If not found in root2, keep the child from root1
+                    mergedChildren.push(child1);
                 }
             }
 
@@ -198,7 +192,8 @@ export class YarnImpactGraphUtil {
                 const matchingChild1: IImpactGraphNode | undefined = root1.children.find(child1 => child1.name === child2.name);
 
                 if (!matchingChild1) {
-                    mergedChildren.push(child2); // Add children from root2 that are not present in root1
+                    // Add children from root2 that are not present in root1
+                    mergedChildren.push(child2);
                 }
             }
 
@@ -237,17 +232,17 @@ export class YarnImpactGraphUtil {
      */
     private createImpactGraphNodeFromChain(chain: string): IImpactGraphNode {
         const splitted: string[] = chain.split('#');
-        let currentNode: IImpactGraphNode = { name: this.projectName };
+        let currentNode: IImpactGraphNode = { name: this._projectName };
         const root: IImpactGraphNode = currentNode;
         for (const item of splitted) {
             const child: IImpactGraphNode = { name: item };
             currentNode.children = [child];
             currentNode = child;
         }
-        if (currentNode.name !== this.dependencyName) {
-            currentNode.children = [{ name: this.dependencyName + ':' + this.dependencyVersion }];
+        if (currentNode.name !== this._dependencyName) {
+            currentNode.children = [{ name: this._dependencyName + ':' + this._dependencyVersion }];
         } else {
-            currentNode.name = this.dependencyName + ':' + this.dependencyVersion;
+            currentNode.name = this._dependencyName + ':' + this._dependencyVersion;
         }
         return root;
     }
@@ -256,7 +251,7 @@ export class YarnImpactGraphUtil {
      * Executes the "yarn why" command and parses its JSON output.
      */
     protected runYarnWhy(): YarnWhyItem[] {
-        const output: string = ScanUtils.executeCmd('yarn why --json --no-progress ' + this.dependencyName, this.workspaceFolder).toString();
+        const output: string = ScanUtils.executeCmd('yarn why --json --no-progress ' + this._dependencyName, this._workspaceFolder).toString();
         return output
             .split('\n')
             .filter(line => line.trim() !== '')
