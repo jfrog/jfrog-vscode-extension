@@ -11,7 +11,6 @@ import {
     JfrogClient,
     XrayScanProgress
 } from 'jfrog-client-js';
-import * as keytar from 'keytar';
 import * as semver from 'semver';
 import * as vscode from 'vscode';
 import { ContextKeys, SessionStatus } from '../constants/contextKeys';
@@ -583,10 +582,6 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return (
             (await this._context.secrets.get(this.createSecretStoreId(this._url, keyPair))) ||
             (await this._context.secrets.get(this.createSecretStoreId(this._xrayUrl, keyPair))) ||
-            // Deprecated
-            (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, keyPair))) ||
-            // Deprecated
-            (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, keyPair))) ||
             ''
         );
     }
@@ -607,8 +602,6 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     private async deleteSecretFromSecretStorage(keyPair: string): Promise<void> {
         await this._context.secrets.delete(this.createSecretStoreId(this._xrayUrl, keyPair));
-        // Deprecated
-        await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, keyPair));
     }
 
     private async storePassword(): Promise<void> {
@@ -627,22 +620,22 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     /**
      * Create obscured account id to get extra security.
-     * @param url Xray url
-     * @param username Xray username
+     * @param url     - Xray url
+     * @param keyPair - Unique key
      * @returns hashed account id
      */
-    private createAccountId(url: string, username: string): string {
-        return ScanUtils.Hash('sha256', url + username);
+    private createAccountId(url: string, keyPair: string): string {
+        return ScanUtils.Hash('sha256', url + keyPair);
     }
 
     /**
      * Return unique Secret Store ID to allow retrieving/storing/deleting a value from the Secret Store.
-     * @param url Xray url
-     * @param username Xray username
+     * @param url     - Xray url
+     * @param keyPair - Unique key
      * @returns Secret Store ID
      */
-    private createSecretStoreId(url: string, username: string): string {
-        return ConnectionManager.SERVICE_ID + '.' + this.createAccountId(url, username);
+    private createSecretStoreId(url: string, keyPair: string): string {
+        return ConnectionManager.SERVICE_ID + '.' + this.createAccountId(url, keyPair);
     }
 
     /**
@@ -711,8 +704,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     private async deleteCredentialsFromFileSystem(): Promise<void> {
         // Delete password / access token must be executed first.
-        await this.deletePasswordFromSecretStorage();
-        await this.deleteAccessTokenFromSecretStorage();
+        await Promise.all([await this.deletePasswordFromSecretStorage(), await this.deleteAccessTokenFromSecretStorage()]);
         await Promise.all([
             this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.RT_URL_KEY, undefined),
