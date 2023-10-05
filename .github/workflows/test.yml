@@ -58,9 +58,6 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           check-latest: true
-      
-      - name: Rebuild native modules
-        run: npm rebuild
 
       - name: Tests on macOS, Windows
         env:

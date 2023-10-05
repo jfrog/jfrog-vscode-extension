@@ -1,24 +1,23 @@
 import { execSync } from 'child_process';
+import * as crypto from 'crypto';
 import {
+    AccessTokenResponse,
+    ClientUtils,
     IAqlSearchResult,
     IDetailsResponse,
     IGraphRequestModel,
     IGraphResponse,
     IUsageFeature,
     JfrogClient,
-    AccessTokenResponse,
-    XrayScanProgress,
-    ClientUtils
+    XrayScanProgress
 } from 'jfrog-client-js';
-import * as crypto from 'crypto';
-import * as keytar from 'keytar';
 import * as semver from 'semver';
 import * as vscode from 'vscode';
+import { ContextKeys, SessionStatus } from '../constants/contextKeys';
 import { ExtensionComponent } from '../extensionComponent';
 import { LogManager } from '../log/logManager';
-import { ConnectionUtils } from './connectionUtils';
 import { ScanUtils } from '../utils/scanUtils';
-import { ContextKeys, SessionStatus } from '../constants/contextKeys';
+import { ConnectionUtils } from './connectionUtils';
 
 export enum LoginStatus {
     Success = 'SUCCESS',
@@ -42,7 +41,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     // Service ID in the OS KeyStore to store and retrieve the password / access token
     private static readonly SERVICE_ID: string = 'com.jfrog.xray.vscode';
 
-    // Key used for uniqueness when storing access token in KeyStore.
+    // Key used for uniqueness when storing access token in SecretStorage.
     private static readonly ACCESS_TOKEN_FS_KEY: string = 'vscode_jfrog_token';
 
     // Store connection details in file system after reading connection details from env
@@ -130,10 +129,11 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
 
     public async connect(): Promise<boolean> {
-        this._logManager.logMessage('Trying to read credentials from KeyStore...', 'DEBUG');
+        this._logManager.logMessage('Trying to read credentials from Secret Storage...', 'DEBUG');
         const credentialsSet: boolean =
             (await this.setUrlsFromFilesystem()) &&
-            (((await this.setUsernameFromFilesystem()) && (await this.setPasswordFromKeyStore())) || (await this.setAccessTokenFromKeyStore()));
+            (((await this.setUsernameFromFilesystem()) && (await this.getPasswordFromSecretStorage())) ||
+                (await this.getAccessTokenFromSecretStorage()));
         if (!credentialsSet) {
             this.deleteCredentialsFromMemory();
             return false;
@@ -562,80 +562,82 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         await this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, this._username);
     }
 
-    private async setPasswordFromKeyStore(): Promise<boolean> {
-        this._password = await this.getSecretFromKeyStore(this._username);
+    private async getPasswordFromSecretStorage(): Promise<boolean> {
+        this._password = await this.getSecretFromSecretStorage(this._username);
         return !!this._password;
     }
 
-    private async setAccessTokenFromKeyStore(): Promise<boolean> {
-        this._accessToken = await this.getSecretFromKeyStore(ConnectionManager.ACCESS_TOKEN_FS_KEY);
+    private async getAccessTokenFromSecretStorage(): Promise<boolean> {
+        this._accessToken = await this.getSecretFromSecretStorage(ConnectionManager.ACCESS_TOKEN_FS_KEY);
         return !!this._accessToken;
     }
 
     /**
-     * Password and access token are saved in KeyStore with an account that is a hash of url and another string.
+     * Password and access token are saved in SecretStorage with an account that is a hash of url and another string.
      * For password - username, access token - a constant.
      * @param keyPair - The second string of the account as described above.
      * @returns The secret if found.
      */
-    private async getSecretFromKeyStore(keyPair: string): Promise<string> {
+    private async getSecretFromSecretStorage(keyPair: string): Promise<string> {
         return (
-            (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._url, keyPair))) ||
-            (await keytar.getPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, keyPair))) ||
+            (await this._context.secrets.get(this.createSecretStoreId(this._url, keyPair))) ||
+            (await this._context.secrets.get(this.createSecretStoreId(this._xrayUrl, keyPair))) ||
             ''
         );
     }
 
-    private async deletePasswordFromKeyStore(): Promise<boolean> {
-        if (!this._password) {
-            return true;
-        }
-        return await this.deleteSecretFromKeyStore(this._username, 'password');
-    }
-
-    private async deleteAccessTokenFromKeyStore(): Promise<boolean> {
-        if (!this._accessToken) {
-            return true;
-        }
-        return await this.deleteSecretFromKeyStore(ConnectionManager.ACCESS_TOKEN_FS_KEY, 'access token');
-    }
-
-    private async deleteSecretFromKeyStore(keyPair: string, secretName: string): Promise<boolean> {
-        let ok: boolean = await keytar.deletePassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, keyPair));
-        if (!ok) {
-            this._logManager.logMessage('Failed to delete the ' + secretName + ' from the system secrets manager', 'WARN');
-            return false;
-        }
-        return true;
-    }
-
-    private async storePassword() {
+    private async deletePasswordFromSecretStorage(): Promise<void> {
         if (!this._password) {
             return;
         }
-        await keytar.setPassword(ConnectionManager.SERVICE_ID, this.createAccountId(this._xrayUrl, this._username), this._password);
+        await this.deleteSecretFromSecretStorage(this._username);
     }
 
-    private async storeAccessToken() {
+    private async deleteAccessTokenFromSecretStorage(): Promise<void> {
         if (!this._accessToken) {
             return;
         }
-        await keytar.setPassword(
-            ConnectionManager.SERVICE_ID,
-            this.createAccountId(this._xrayUrl, ConnectionManager.ACCESS_TOKEN_FS_KEY),
-            this._accessToken
-        );
+        await this.deleteSecretFromSecretStorage(ConnectionManager.ACCESS_TOKEN_FS_KEY);
+    }
+
+    private async deleteSecretFromSecretStorage(keyPair: string): Promise<void> {
+        await this._context.secrets.delete(this.createSecretStoreId(this._xrayUrl, keyPair));
+    }
+
+    private async storePassword(): Promise<void> {
+        if (!this._password) {
+            return;
+        }
+        await this._context.secrets.store(this.createSecretStoreId(this._xrayUrl, this._username), this._password);
+    }
+
+    private async storeAccessToken(): Promise<void> {
+        if (!this._accessToken) {
+            return;
+        }
+        await this._context.secrets.store(this.createSecretStoreId(this._xrayUrl, ConnectionManager.ACCESS_TOKEN_FS_KEY), this._accessToken);
     }
 
     /**
      * Create obscured account id to get extra security.
-     * @param url Xray url
-     * @param username Xray username
+     * @param url     - Xray url
+     * @param keyPair - Unique key
      * @returns hashed account id
      */
-    private createAccountId(url: string, username: string): string {
-        return ScanUtils.Hash('sha256', url + username);
+    private createAccountId(url: string, keyPair: string): string {
+        return ScanUtils.Hash('sha256', url + keyPair);
     }
+
+    /**
+     * Return unique Secret Store ID to allow retrieving/storing/deleting a value from the Secret Store.
+     * @param url     - Xray url
+     * @param keyPair - Unique key
+     * @returns Secret Store ID
+     */
+    private createSecretStoreId(url: string, keyPair: string): string {
+        return ConnectionManager.SERVICE_ID + '.' + this.createAccountId(url, keyPair);
+    }
+
     /**
      * By setting the global context, we can save a key/value pair.
      * VS Code manages the storage and will restore it for each extension activation.
@@ -700,17 +702,15 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         this._xrayVersion = '';
     }
 
-    private async deleteCredentialsFromFileSystem(): Promise<boolean> {
+    private async deleteCredentialsFromFileSystem(): Promise<void> {
         // Delete password / access token must be executed first.
-        let passOk: boolean = await this.deletePasswordFromKeyStore();
-        let tokenOk: boolean = await this.deleteAccessTokenFromKeyStore();
+        await Promise.all([await this.deletePasswordFromSecretStorage(), await this.deleteAccessTokenFromSecretStorage()]);
         await Promise.all([
             this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.RT_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.PLATFORM_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined)
         ]);
-        return passOk && tokenOk;
     }
 
     /**

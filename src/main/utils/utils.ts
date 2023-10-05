@@ -20,7 +20,7 @@ export class Utils {
     }
 
     public static async openFeedback(): Promise<void> {
-        await vscode.env.openExternal(vscode.Uri.parse("https://github.com/jfrog/jfrog-vscode-extension/discussions/new/choose"));
+        await vscode.env.openExternal(vscode.Uri.parse('https://github.com/jfrog/jfrog-vscode-extension/discussions/new/choose'));
     }
 
     public static combineSets(sets: Set<string>[]): Set<string> {
