@@ -83,6 +83,21 @@ export class ConnectionUtils {
             .ping();
     }
 
+    /**
+     * Validate Xray Connection.
+     * @param xray - xray URL
+     * @param username - Username
+     * @param password - Password
+     * @param accessToken - Access Token
+     */
+    public static async validateXrayConnection(xray: string, username: string, password: string, accessToken: string): Promise<boolean> {
+        let jfrogClient: JfrogClient = this.createJfrogClient('', '', xray, username, password, accessToken);
+        return await jfrogClient
+            .xray()
+            .system()
+            .ping();
+    }
+
     public static async isPlatformUrl(url: string, username: string, password: string, accessToken: string): Promise<boolean> {
         // If URL ends with '/xray', the URL is an Xray URL
         if (!url || url.endsWith('/xray') || url.endsWith('/xray/')) {

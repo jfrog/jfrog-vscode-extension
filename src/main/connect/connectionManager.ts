@@ -111,6 +111,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
 
     private async handledSignedIn() {
+        if (!(await this.loadCredential())) {
+            await this.disconnect();
+            return;
+        }
         if (!(await this.connect())) {
             this.setConnectionView(SessionStatus.connectionLost);
             await this.setConnectionStatus(SessionStatus.connectionLost);
@@ -130,17 +134,32 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     public async connect(): Promise<boolean> {
         this._logManager.logMessage('Trying to read credentials from Secret Storage...', 'DEBUG');
-        const credentialsSet: boolean =
-            (await this.setUrlsFromFilesystem()) &&
-            (((await this.setUsernameFromFilesystem()) && (await this.getPasswordFromSecretStorage())) ||
-                (await this.getAccessTokenFromSecretStorage()));
-        if (!credentialsSet) {
+        if (!(await this.pingCredential())) {
             this.deleteCredentialsFromMemory();
             return false;
         }
         await this.resolveUrls();
         await this.onSuccessConnect();
         return true;
+    }
+
+    private async pingCredential() {
+        if (await this.loadCredential()) {
+            try {
+                return await ConnectionUtils.validateXrayConnection(this.xrayUrl, this._username, this._password, this._accessToken);
+            } catch (error) {
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private async loadCredential() {
+        return (
+            (await this.setUrlsFromFilesystem()) &&
+            (((await this.setUsernameFromFilesystem()) && (await this.getPasswordFromSecretStorage())) ||
+                (await this.getAccessTokenFromSecretStorage()))
+        );
     }
 
     public async onSuccessConnect() {
