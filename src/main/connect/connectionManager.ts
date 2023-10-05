@@ -579,11 +579,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
      * @returns The secret if found.
      */
     private async getSecretFromSecretStorage(keyPair: string): Promise<string> {
-        return (
-            (await this._context.secrets.get(this.createSecretStoreId(this._url, keyPair))) ||
-            (await this._context.secrets.get(this.createSecretStoreId(this._xrayUrl, keyPair))) ||
-            ''
-        );
+        return (await this._context.secrets.get(this.createSecretStoreId(this._xrayUrl, keyPair))) || '';
     }
 
     private async deletePasswordFromSecretStorage(): Promise<void> {
