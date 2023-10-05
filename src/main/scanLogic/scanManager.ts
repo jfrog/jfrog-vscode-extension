@@ -172,7 +172,8 @@ export class ScanManager implements ExtensionComponent {
      * Check if SAST scan is supported for the user
      */
     public async isSastSupported(): Promise<boolean> {
-        return true;
+        // TODO: change to SAST feature when Xray entitlement service support it.
+        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Applicability);
     }
 
     /**

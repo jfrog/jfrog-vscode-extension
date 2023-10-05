@@ -144,7 +144,7 @@ export abstract class BinaryRunner {
      */
     private async executeBinaryTask(args: string[], executionLogDirectory?: string): Promise<any> {
         let command: string = '"' + this._binary.fullPath + '" ' + args.join(' ');
-        this._logManager.debug('Executing ' + command);
+        this._logManager.debug("Executing '" + command + "' in directory '" + this._runDirectory + "'");
         let std: any = await ScanUtils.executeCmdAsync(command, this._runDirectory, this.createEnvForRun(executionLogDirectory));
         if (std.stdout && std.stdout.length > 0) {
             this.logTaskResult(std.stdout, false);
@@ -256,26 +256,25 @@ export abstract class BinaryRunner {
      */
     private createRunArguments(request: AnalyzeScanRequest): RunArgs {
         let args: RunArgs = new RunArgs(ScanUtils.createTmpDir());
-        let processedRoots: Set<string> = new Set<string>();
-
-        if (request.roots.length > 0 && request.roots.every(root => !processedRoots.has(root))) {
-            // Prepare request information and insert as an actual request
-            const requestPath: string = path.join(args.directory, 'request_' + args.requests.length);
-            const responsePath: string = path.join(args.directory, 'response_' + args.requests.length);
-            if (request.type !== ScanType.Sast) {
-                request.output = responsePath;
-            }
-            request.type = this._type;
-            request.roots.forEach(root => processedRoots.add(root));
-            // Add request to run
-            args.requests.push({
-                type: request.type,
-                request: this.requestsToYaml(request),
-                requestPath: requestPath,
-                roots: request.roots,
-                responsePath: responsePath
-            } as RunRequest);
+        if (request.roots.length === 0) {
+            return args;
         }
+
+        // Prepare request information and insert as an actual request
+        const requestPath: string = path.join(args.directory, 'request_' + args.requests.length);
+        const responsePath: string = path.join(args.directory, 'response_' + args.requests.length);
+        if (request.type !== ScanType.Sast) {
+            request.output = responsePath;
+        }
+        request.type = this._type;
+        // Add request to run
+        args.requests.push({
+            type: request.type,
+            request: this.requestsToYaml(request),
+            requestPath: requestPath,
+            roots: request.roots,
+            responsePath: responsePath
+        } as RunRequest);
 
         return args;
     }
