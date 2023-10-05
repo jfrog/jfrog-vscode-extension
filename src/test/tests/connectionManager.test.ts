@@ -231,7 +231,7 @@ describe('Connection Manager Tests', () => {
 
             // Check the return value and ensure that necessary methods are called
             assert.isTrue(result);
-            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from KeyStore...', 'DEBUG');
+            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from Secret Storage...', 'DEBUG');
             sinon.assert.calledOnce(setUrlsFromFilesystemStub);
             sinon.assert.calledOnce(setUsernameFromFilesystemStub);
             sinon.assert.calledOnce(getPasswordFromSecretStorageStub);
@@ -250,7 +250,7 @@ describe('Connection Manager Tests', () => {
 
             // Check the return value and ensure that necessary methods are called
             assert.isTrue(result);
-            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from KeyStore...', 'DEBUG');
+            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from Secret Storage...', 'DEBUG');
             sinon.assert.calledOnce(setUrlsFromFilesystemStub);
             sinon.assert.calledOnce(setUsernameFromFilesystemStub);
             sinon.assert.notCalled(getPasswordFromSecretStorageStub);
@@ -269,7 +269,7 @@ describe('Connection Manager Tests', () => {
 
             // Check the return value and ensure that necessary methods are called
             assert.isFalse(result);
-            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from KeyStore...', 'DEBUG');
+            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from Secret Storage...', 'DEBUG');
             sinon.assert.calledOnce(setUrlsFromFilesystemStub);
             sinon.assert.notCalled(setUsernameFromFilesystemStub);
             sinon.assert.notCalled(getPasswordFromSecretStorageStub);
