@@ -84,7 +84,7 @@ export class ConnectionUtils {
     }
 
     /**
-     * Validate Xray Connection.
+     * Validate Xray connection.
      * @param xray - xray URL
      * @param username - Username
      * @param password - Password

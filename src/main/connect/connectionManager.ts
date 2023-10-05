@@ -80,11 +80,8 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
         switch (await this.getConnectionStatus()) {
-            case SessionStatus.SignedIn:
+            case (SessionStatus.SignedIn, SessionStatus.connectionLost):
                 await this.handledSignedIn();
-                break;
-            case SessionStatus.connectionLost:
-                await this.handledConnectionLost();
                 break;
             case SessionStatus.SignedOut:
                 this.setConnectionView(SessionStatus.SignedOut);
@@ -121,10 +118,6 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         }
     }
 
-    private async handledConnectionLost() {
-        return this.handledSignedIn();
-    }
-
     private async handelUnknownState() {
         if (!(await this.connect())) {
             this.setConnectionView(SessionStatus.SignedOut);
@@ -143,7 +136,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return true;
     }
 
-    private async pingCredential() {
+    private async pingCredential(): Promise<boolean> {
         if (await this.loadCredential()) {
             try {
                 return await ConnectionUtils.validateXrayConnection(this.xrayUrl, this._username, this._password, this._accessToken);
@@ -154,7 +147,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return false;
     }
 
-    private async loadCredential() {
+    public async loadCredential(): Promise<boolean> {
         return (
             (await this.setUrlsFromFilesystem()) &&
             (((await this.setUsernameFromFilesystem()) && (await this.getPasswordFromSecretStorage())) ||
