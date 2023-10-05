@@ -35,6 +35,11 @@
                 "view": "jfrog.issues",
                 "contents": "Your project was scanned and we didn't find any security issues.\n[Rescan](command:jfrog.scan.refresh)",
                 "when": "jfrog.connection.status == signedIn && !jfrog.firstScanInWorkspace"
+            },
+            {
+                "view": "jfrog.issues",
+                "contents": "Couldn't connect to your JFrog Platform. \n[Reconnect](command:jfrog.xray.reConnect) \n [Reset your connection details](command:jfrog.xray.resetConnection)",
+                "when": "jfrog.connection.status == connectionLost"
             }
         ],
         "viewsContainers": {

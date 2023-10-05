@@ -227,18 +227,15 @@ describe('Connection Manager Tests', () => {
 
         it('Read username and password', async () => {
             // Call the function
-            const result: boolean = await mockConnectionManager.connect();
+            const result: boolean = await mockConnectionManager.loadCredential();
 
             // Check the return value and ensure that necessary methods are called
             assert.isTrue(result);
-            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from Secret Storage...', 'DEBUG');
             sinon.assert.calledOnce(setUrlsFromFilesystemStub);
             sinon.assert.calledOnce(setUsernameFromFilesystemStub);
             sinon.assert.calledOnce(getPasswordFromSecretStorageStub);
             sinon.assert.notCalled(getAccessTokenFromSecretStorageStub);
             sinon.assert.notCalled(deleteCredentialsFromMemoryStub);
-            sinon.assert.calledOnce(resolveUrlsStub);
-            sinon.assert.calledOnce(onSuccessConnectStub);
         });
         it('Read access token', async () => {
             setUsernameFromFilesystemStub.resolves(false);
@@ -246,18 +243,15 @@ describe('Connection Manager Tests', () => {
             getAccessTokenFromSecretStorageStub.resolves(true);
 
             // Call the function
-            const result: boolean = await mockConnectionManager.connect();
+            const result: boolean = await mockConnectionManager.loadCredential();
 
             // Check the return value and ensure that necessary methods are called
             assert.isTrue(result);
-            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from Secret Storage...', 'DEBUG');
             sinon.assert.calledOnce(setUrlsFromFilesystemStub);
             sinon.assert.calledOnce(setUsernameFromFilesystemStub);
             sinon.assert.notCalled(getPasswordFromSecretStorageStub);
             sinon.assert.calledOnce(getAccessTokenFromSecretStorageStub);
             sinon.assert.notCalled(deleteCredentialsFromMemoryStub);
-            sinon.assert.calledOnce(resolveUrlsStub);
-            sinon.assert.calledOnce(onSuccessConnectStub);
         });
 
         it('Empty KeyStore', async () => {
