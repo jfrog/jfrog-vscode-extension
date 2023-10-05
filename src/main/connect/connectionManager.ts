@@ -80,7 +80,8 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     public async activate(context: vscode.ExtensionContext): Promise<ConnectionManager> {
         this._context = context;
         switch (await this.getConnectionStatus()) {
-            case (SessionStatus.SignedIn, SessionStatus.connectionLost):
+            case SessionStatus.SignedIn:
+            case SessionStatus.connectionLost:
                 await this.handledSignedIn();
                 break;
             case SessionStatus.SignedOut:
