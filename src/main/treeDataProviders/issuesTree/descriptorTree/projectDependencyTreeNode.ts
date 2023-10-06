@@ -5,7 +5,6 @@ import { PackageType } from '../../../types/projectType';
 import { IssueTreeNode } from '../issueTreeNode';
 import { CveTreeNode } from './cveTreeNode';
 import { IComponent } from 'jfrog-client-js';
-import * as path from 'path';
 import { Utils } from '../../../utils/utils';
 import { CveApplicableDetails } from '../../../scanLogic/scanRunners/applicabilityScan';
 
@@ -24,12 +23,10 @@ export class ProjectDependencyTreeNode extends FileTreeNode {
     protected _applicableScanTimeStamp?: number;
 
     protected _packageType: PackageType;
-    private projectPath: string;
 
     constructor(filePath: string, packageType?: PackageType, parent?: IssuesRootTreeNode) {
         super(filePath, parent);
         this._packageType = packageType ?? PackageType.Unknown;
-        this.projectPath = path.dirname(filePath);
     }
 
     /** @override */
@@ -146,10 +143,6 @@ export class ProjectDependencyTreeNode extends FileTreeNode {
 
     public get type(): PackageType {
         return this._packageType;
-    }
-
-    public getProjectPath() {
-        return this.projectPath;
     }
 
     public getProjectFilePath() {

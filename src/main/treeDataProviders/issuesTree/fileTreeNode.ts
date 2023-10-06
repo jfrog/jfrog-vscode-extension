@@ -14,12 +14,13 @@ import { IssueTreeNode } from './issueTreeNode';
 export abstract class FileTreeNode extends vscode.TreeItem {
     protected _severity: Severity = Severity.Unknown;
     private _name: string;
+    protected projectPath: string;
 
     constructor(private _fullPath: string, private _parent?: IssuesRootTreeNode, private _timeStamp?: number) {
         super(_fullPath);
         this._name = Utils.getLastSegment(_fullPath);
         this.label = this._name;
-
+        this.projectPath = path.dirname(_fullPath);
         this.contextValue += ContextKeys.COPY_TO_CLIPBOARD_ENABLED;
     }
 
@@ -139,5 +140,9 @@ export abstract class FileTreeNode extends vscode.TreeItem {
 
     public set projectFilePath(value: string) {
         this._fullPath = value;
+    }
+
+    public getProjectPath() {
+        return this.projectPath;
     }
 }
