@@ -24,6 +24,7 @@ import { MavenDependencyUpdate } from '../../main/dependencyUpdate/mavenDependen
 import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
 import { IComponent } from 'jfrog-client-js';
+import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 
 /**
  * Test functionality of Maven.
@@ -382,6 +383,23 @@ describe('Maven Tests', async () => {
                 fs.existsSync(path.join(__dirname, '..', 'resources', 'maven', 'updateToFixVersionWithProperty', 'pom.xml.versionsBackup'))
             );
         });
+
+        it('Multi module with property', async () => {
+            const [mavenDependencyUpdate, issueToUpdate, pomXmlPath] = await setupMultiModuleTestEnvironment(
+                path.join('multiModuleUpdateToFixVersionWithProperty', 'multi1'),
+                'multiModuleUpdateToFixVersionWithProperty'
+            );
+
+            // Operate the test
+            mavenDependencyUpdate.update(issueToUpdate, expectedVersion);
+
+            // Check results
+            const fileContent: string = fs.readFileSync(pomXmlPath, 'utf-8');
+            assert.include(fileContent, `<lets.go.and.fix.this>${expectedVersion}</lets.go.and.fix.this>`);
+            assert.isFalse(
+                fs.existsSync(path.join(__dirname, '..', 'resources', 'maven', 'multiModuleUpdateToFixVersionWithProperty', 'pom.xml.versionsBackup'))
+            );
+        });
     });
 
     async function setupTestEnvironment(projectDir: string): Promise<[MavenDependencyUpdate, DependencyIssuesTreeNode, string]> {
@@ -404,10 +422,49 @@ describe('Maven Tests', async () => {
 
         const issueToUpdate: DependencyIssuesTreeNode = new DependencyIssuesTreeNode(
             'artifactId',
-            { package_type: 'MAVEN', package_name: 'org.codehaus.plexus:plexus-utils' } as IComponent,
+            { package_type: 'MAVEN', package_name: 'org.codehaus.plexus:plexus-utils', package_version: '1.5' } as IComponent,
             false,
             new ProjectDependencyTreeNode(pomXmlPath)
         );
         return [mavenDependencyUpdate, issueToUpdate, pomXmlPath];
+    }
+
+    async function setupMultiModuleTestEnvironment(
+        pomDir: string,
+        parentPomDir: string
+    ): Promise<[MavenDependencyUpdate, DependencyIssuesTreeNode, string]> {
+        const mavenDependencyUpdate: MavenDependencyUpdate = new MavenDependencyUpdate();
+        const pomXmlPath: string = path.join(__dirname, '..', 'resources', 'maven', pomDir, 'pom.xml');
+        const parentPomXmlPath: string = path.join(__dirname, '..', 'resources', 'maven', parentPomDir, 'pom.xml');
+
+        const localWorkspaceFolders: vscode.WorkspaceFolder[] = [
+            {
+                uri: vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven', parentPomDir)),
+                name: '',
+                index: 0
+            } as vscode.WorkspaceFolder
+        ];
+
+        const pomXmlsArray: vscode.Uri[] | undefined = await locatePomXmls(localWorkspaceFolders);
+
+        const parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('parent', '1.0.0', [], '', PackageType.Unknown));
+
+        await MavenUtils.createDependenciesTrees(pomXmlsArray, treesManager.logManager, () => undefined, parent);
+
+        const projectRoot: IssuesRootTreeNode = new IssuesRootTreeNode({
+            uri: localWorkspaceFolders[0].uri
+        } as vscode.WorkspaceFolder);
+
+        const VulnerablePom: ProjectDependencyTreeNode = new ProjectDependencyTreeNode(pomXmlPath, PackageType.Maven);
+        const ParentPomOfVulnerablePom: ProjectDependencyTreeNode = new ProjectDependencyTreeNode(parentPomXmlPath, PackageType.Maven);
+        projectRoot.addChild(VulnerablePom);
+        projectRoot.addChild(ParentPomOfVulnerablePom);
+        const issueToUpdate: DependencyIssuesTreeNode = new DependencyIssuesTreeNode(
+            'artifactId',
+            { package_type: 'MAVEN', package_name: 'org.codehaus.plexus:plexus-utils', package_version: '1.5' } as IComponent,
+            false,
+            VulnerablePom
+        );
+        return [mavenDependencyUpdate, issueToUpdate, parentPomXmlPath];
     }
 });
