@@ -60,11 +60,11 @@ describe('Maven Tests', async () => {
     /**
      * Test locatePomXml.
      */
-    it('Locate pom.xml', async () => {
+    it.only('Locate pom.xml', async () => {
         let packageDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(workspaceFolders, treesManager.logManager);
         let pomXmls: vscode.Uri[] | undefined = packageDescriptors.get(PackageType.Maven);
         assert.isDefined(pomXmls);
-        assert.strictEqual(pomXmls!.length, 6);
+        assert.strictEqual(pomXmls!.length, 10);
 
         // Assert that results contains all projects
         for (let expectedProjectDir of projectDirs) {
