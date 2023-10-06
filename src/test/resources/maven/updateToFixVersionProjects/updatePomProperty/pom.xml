@@ -7,7 +7,7 @@
     <version>3.7-SNAPSHOT</version>
     <name>Need your help here to fix this!</name>
     <properties>
-        <lets.go.and.fix.this>1.5</lets.go.and.fix.this>
+        <lets.go.and.fix.this>3.0.24</lets.go.and.fix.this>
     </properties>
     <dependencies>
         <dependency>
