@@ -6,10 +6,11 @@ import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 
 import { AnalyzerScanResponse, ScanType, AnalyzeScanRequest } from '../../main/scanLogic/scanRunners/analyzerModels';
-import { BinaryRunner } from '../../main/scanLogic/scanRunners/binaryRunner';
+import { JasScanner } from '../../main/scanLogic/scanRunners/binaryRunner';
 import { NotEntitledError, ScanCancellationError, ScanTimeoutError, ScanUtils } from '../../main/utils/scanUtils';
 import { RunUtils } from '../../main/utils/runUtils';
 import { Translators } from '../../main/utils/translators';
+import { Module } from '../../main/types/jfrogAppsConfig';
 
 // binary runner
 describe('Analyzer BinaryRunner tests', async () => {
@@ -41,8 +42,8 @@ describe('Analyzer BinaryRunner tests', async () => {
         connection: ConnectionManager = connectionManager,
         timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
         dummyAction: () => Promise<void> = () => Promise.resolve()
-    ): BinaryRunner {
-        return new (class extends BinaryRunner {
+    ): JasScanner {
+        return new (class extends JasScanner {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             async runBinary(
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -53,7 +54,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             ): Promise<void> {
                 await RunUtils.runWithTimeout(timeout, checkCancel, dummyAction());
             }
-        })(connection, timeout, dummyName, logManager);
+        })(connection, timeout, dummyName, logManager, {} as Module);
     }
 
     [
@@ -110,7 +111,7 @@ describe('Analyzer BinaryRunner tests', async () => {
     ].forEach(test => {
         it('Create environment variables for execution - ' + test.name, () => {
             //
-            let runner: BinaryRunner = createDummyBinaryRunner(createBinaryRunnerConnectionManager(test.url, test.user, test.pass, test.token));
+            let runner: JasScanner = createDummyBinaryRunner(createBinaryRunnerConnectionManager(test.url, test.user, test.pass, test.token));
             process.env['HTTP_PROXY'] = test.proxy;
             process.env['HTTPS_PROXY'] = test.proxy;
 
@@ -120,17 +121,17 @@ describe('Analyzer BinaryRunner tests', async () => {
             } else {
                 assert.isDefined(envVars);
                 // Validate platform vars
-                assert.equal(envVars?.[BinaryRunner.ENV_PLATFORM_URL] ?? '', test.url);
-                assert.equal(envVars?.[BinaryRunner.ENV_USER] ?? '', test.user);
-                assert.equal(envVars?.[BinaryRunner.ENV_PASSWORD] ?? '', test.pass);
-                assert.equal(envVars?.[BinaryRunner.ENV_TOKEN] ?? '', test.token);
+                assert.equal(envVars?.[JasScanner.ENV_PLATFORM_URL] ?? '', test.url);
+                assert.equal(envVars?.[JasScanner.ENV_USER] ?? '', test.user);
+                assert.equal(envVars?.[JasScanner.ENV_PASSWORD] ?? '', test.pass);
+                assert.equal(envVars?.[JasScanner.ENV_TOKEN] ?? '', test.token);
                 // Validate proxy vars
                 if (test.proxy) {
-                    assert.equal(envVars?.[BinaryRunner.ENV_HTTP_PROXY], test.proxy);
-                    assert.equal(envVars?.[BinaryRunner.ENV_HTTPS_PROXY], test.proxy);
+                    assert.equal(envVars?.[JasScanner.ENV_HTTP_PROXY], test.proxy);
+                    assert.equal(envVars?.[JasScanner.ENV_HTTPS_PROXY], test.proxy);
                 }
                 // Validate log vars
-                assert.equal(envVars?.[BinaryRunner.ENV_LOG_DIR], test.logPath);
+                assert.equal(envVars?.[JasScanner.ENV_LOG_DIR], test.logPath);
             }
         });
     });
@@ -209,7 +210,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             let requestPath: string = path.join(tempFolder, 'request');
             let responsePath: string = path.join(tempFolder, 'response');
 
-            let runner: BinaryRunner = createDummyBinaryRunner(connectionManager, test.timeout, async () => {
+            let runner: JasScanner = createDummyBinaryRunner(connectionManager, test.timeout, async () => {
                 if (test.shouldAbort) {
                     throw new ScanCancellationError();
                 } else if (test.name === 'Not entitled') {
@@ -243,5 +244,5 @@ describe('Analyzer BinaryRunner tests', async () => {
 });
 
 class DummyRunnerError extends Error {
-    public code: number = BinaryRunner.NOT_ENTITLED;
+    public code: number = JasScanner.NOT_ENTITLED;
 }

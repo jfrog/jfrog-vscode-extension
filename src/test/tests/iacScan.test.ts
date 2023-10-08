@@ -25,6 +25,7 @@ import {
     findLocationNode,
     groupFiles
 } from './utils/testAnalyzer.test';
+import { Module } from '../../main/types/jfrogAppsConfig';
 
 describe('Iac Scan Tests', () => {
     const scanIac: string = path.join(__dirname, '..', 'resources', 'iacScan');
@@ -120,6 +121,6 @@ describe('Iac Scan Tests', () => {
     });
 
     function getDummyRunner(): IacRunner {
-        return new IacRunner({} as ConnectionManager, logManager);
+        return new IacRunner({} as ConnectionManager, logManager, {} as Module);
     }
 });

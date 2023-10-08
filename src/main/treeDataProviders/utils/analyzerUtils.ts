@@ -6,13 +6,11 @@ import { LogManager } from '../../log/logManager';
 import { ScanManager } from '../../scanLogic/scanManager';
 import { AnalyzeIssue, FileIssues, FileRegion } from '../../scanLogic/scanRunners/analyzerModels';
 import { ApplicabilityRunner, ApplicabilityScanResponse, CveApplicableDetails } from '../../scanLogic/scanRunners/applicabilityScan';
-import { IacScanResponse } from '../../scanLogic/scanRunners/iacScan';
-import { SastIssue, SastIssueLocation, SastScanResponse } from '../../scanLogic/scanRunners/sastScan';
-import { SecretsScanResponse } from '../../scanLogic/scanRunners/secretsScan';
-import { Module } from '../../types/jfrogAppsConfig';
+import { SastIssue, SastIssueLocation } from '../../scanLogic/scanRunners/sastScan';
 import { PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
+import { Configuration } from '../../utils/configuration';
 import { FileScanBundle } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
 import { Utils } from '../../utils/utils';
@@ -209,11 +207,9 @@ export class AnalyzerUtils {
         scanManager: ScanManager,
         fileScanBundles: FileScanBundle[],
         progressManager: StepProgress,
-        type: PackageType
+        type: PackageType,
+        applicableRunner: ApplicabilityRunner
     ): Promise<void> {
-        if (!ApplicabilityRunner.supportedPackageTypes().includes(type)) {
-            return;
-        }
         let filteredBundles: Map<FileScanBundle, Set<string>> = this.filterBundlesWithoutIssuesToScan(fileScanBundles, type);
         let spaceToBundles: Map<string, Map<FileScanBundle, Set<string>>> = this.mapBundlesForApplicableScanning(
             scanManager.logManager,
@@ -226,7 +222,14 @@ export class AnalyzerUtils {
             let cveToScan: Set<string> = Utils.combineSets(Array.from(bundles.values()));
             // Scan workspace for all cve in relevant bundles
             let startApplicableTime: number = Date.now();
-            let applicableIssues: ApplicabilityScanResponse = await scanManager.scanApplicability(spacePath, progressManager.checkCancel, cveToScan);
+            let skipFiles: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
+
+            let applicableIssues: ApplicabilityScanResponse = await applicableRunner.scan(
+                spacePath,
+                progressManager.checkCancel,
+                cveToScan,
+                skipFiles
+            );
             if (applicableIssues && applicableIssues.applicableCve) {
                 let applicableScanTimestamp: number = Date.now();
                 AnalyzerUtils.transferApplicableResponseToBundles(
@@ -474,42 +477,6 @@ export class AnalyzerUtils {
     }
 
     /**
-     * Run Infrastructure As Code (Iac) scan async task and populate the given bundle with the results.
-     * @param scanResults - the data object that will be populated with the results
-     * @param root - the view object that will be populated with the results
-     * @param scanManager - the ScanManager that preforms the actual scans
-     * @param module - the module that will be scanned
-     * @param progressManager - the progress for the given scan
-     */
-    public static async runIac(
-        scanResults: ScanResults,
-        root: IssuesRootTreeNode,
-        scanManager: ScanManager,
-        module: Module,
-        progressManager: StepProgress
-    ): Promise<void> {
-        let startIacTime: number = Date.now();
-        let response: IacScanResponse | undefined = await scanManager.scanIac(module, progressManager.checkCancel);
-        if (response) {
-            scanResults.iacScan = response;
-            scanResults.iacScanTimestamp = Date.now();
-            let issuesCount: number = AnalyzerUtils.populateIacIssues(root, scanResults);
-            scanManager.logManager.logMessage(
-                'Found ' +
-                    issuesCount +
-                    " Iac issues in workspace = '" +
-                    scanResults.path +
-                    "' (elapsed " +
-                    (scanResults.iacScanTimestamp - startIacTime) / 1000 +
-                    ' seconds)',
-                'INFO'
-            );
-            root.apply();
-        }
-        progressManager.reportProgress();
-    }
-
-    /**
      * Populate Iac information in the given node
      * @param root - root node to populate data inside
      * @param workspaceData - data to populate on node
@@ -535,42 +502,6 @@ export class AnalyzerUtils {
     }
 
     /**
-     * Run Secrets scan async task and populate the given bundle with the results.
-     * @param scanResults - the data object that will be populated with the results
-     * @param root - the view object that will be populated with the results
-     * @param scanManager - the ScanManager that preforms the actual scans
-     * @param module - the module that will be scanned
-     * @param progressManager - the progress for the given scan
-     */
-    public static async runSecrets(
-        scanResults: ScanResults,
-        root: IssuesRootTreeNode,
-        scanManager: ScanManager,
-        module: Module,
-        progressManager: StepProgress
-    ): Promise<void> {
-        let startSecretsTime: number = Date.now();
-        let response: SecretsScanResponse | undefined = await scanManager.scanSecrets(module, progressManager.checkCancel);
-        if (response) {
-            scanResults.secretsScan = response;
-            scanResults.secretsScanTimestamp = Date.now();
-            let issuesCount: number = AnalyzerUtils.populateSecretsIssues(root, scanResults);
-            scanManager.logManager.logMessage(
-                'Found ' +
-                    issuesCount +
-                    " Secret issues in workspace = '" +
-                    scanResults.path +
-                    "' (elapsed " +
-                    (scanResults.secretsScanTimestamp - startSecretsTime) / 1000 +
-                    ' seconds)',
-                'INFO'
-            );
-            root.apply();
-        }
-        progressManager.reportProgress();
-    }
-
-    /**
      * Populate Secrets information in the given node
      * @param root - root node to populate data inside
      * @param workspaceData - data to populate on node
@@ -593,43 +524,6 @@ export class AnalyzerUtils {
         }
 
         return issuesCount;
-    }
-
-    /**
-     *  Run SAST scan async task
-     * @param workspaceData - the issues data for the workspace
-     * @param root - the root node of the workspace
-     * @param scanManager - the scan manager to use for scan
-     * @param module - the module that will be scanned
-     * @param progressManager - the progress manager of the process for abort control
-     */
-    public static async runSast(
-        workspaceData: ScanResults,
-        root: IssuesRootTreeNode,
-        scanManager: ScanManager,
-        module: Module,
-        progressManager: StepProgress
-    ): Promise<any> {
-        let startTime: number = Date.now();
-        let response: SastScanResponse | undefined = await scanManager.scanSast(module, progressManager.checkCancel);
-        if (response) {
-            workspaceData.sastScan = response;
-            workspaceData.sastScanTimestamp = Date.now();
-            let sastIssuesCount: number = AnalyzerUtils.populateSastIssues(root, workspaceData);
-            scanManager.logManager.logMessage(
-                'Found ' +
-                    sastIssuesCount +
-                    " SAST issues in workspace = '" +
-                    workspaceData.path +
-                    "' (elapsed " +
-                    (workspaceData.sastScanTimestamp - startTime) / 1000 +
-                    ' seconds)',
-                'INFO'
-            );
-
-            root.apply();
-            progressManager.reportProgress();
-        }
     }
 
     /**

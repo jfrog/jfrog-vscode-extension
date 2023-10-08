@@ -6,7 +6,7 @@ import { LogManager } from '../../../main/log/logManager';
 import { ScanUtils } from '../../../main/utils/scanUtils';
 import { createTestConnectionManager } from './utils.test';
 import { Resource } from '../../../main/utils/resource';
-import { BinaryRunner } from '../../../main/scanLogic/scanRunners/binaryRunner';
+import { JasScanner } from '../../../main/scanLogic/scanRunners/binaryRunner';
 import { AnalyzerUtils, FileWithSecurityIssues, SecurityIssue } from '../../../main/treeDataProviders/utils/analyzerUtils';
 import { FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
 
@@ -81,14 +81,14 @@ export class AnalyzerManagerIntegrationEnv extends BaseIntegrationEnv {
             // Download from a different place in releases
             this._resource = new Resource(
                 <string>process.env[AnalyzerManagerIntegrationEnv.ENV_BINARY_DOWNLOAD_URL],
-                BinaryRunner.getDefaultAnalyzerManagerTargetPath(BaseIntegrationEnv.directory),
+                JasScanner.getDefaultAnalyzerManagerTargetPath(BaseIntegrationEnv.directory),
                 this.logManager
             );
         } else {
             // Run on latest from Releases
-            this._resource = BinaryRunner.getAnalyzerManagerResource(
+            this._resource = JasScanner.getAnalyzerManagerResource(
                 this.logManager,
-                BinaryRunner.getDefaultAnalyzerManagerTargetPath(this._localPath ?? BaseIntegrationEnv.directory)
+                JasScanner.getDefaultAnalyzerManagerTargetPath(this._localPath ?? BaseIntegrationEnv.directory)
             );
         }
     }

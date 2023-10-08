@@ -2,6 +2,7 @@ import { assert } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { AnalyzeScanRequest } from '../../../main/scanLogic/scanRunners/analyzerModels';
 import { IacRunner, IacScanResponse } from '../../../main/scanLogic/scanRunners/iacScan';
 import { Module } from '../../../main/types/jfrogAppsConfig';
 import {
@@ -26,7 +27,7 @@ describe('Iac Integration Tests', async () => {
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        runner = new IacRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
+        runner = new IacRunner(integrationManager.connectionManager, integrationManager.logManager, {} as Module, integrationManager.resource);
         runner.verbose = true;
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
         // Get expected partial result that the scan should contain
@@ -35,7 +36,9 @@ describe('Iac Integration Tests', async () => {
         assert.isDefined(expectedContent, 'Failed to read expected IacScanResponse content from ' + dataPath);
         // Run scan
         // Try/Catch (with skip) should be removed after Iac is released
-        response = await runner.scan({ source_root: testDataRoot } as Module, () => undefined);
+        response = await runner
+            .run(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest)
+            .then(runResult => runner.convertResponse(runResult));
     });
 
     it('Check response defined', () => {

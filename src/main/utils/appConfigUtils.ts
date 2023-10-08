@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import yaml from 'js-yaml';
 import * as path from 'path';
 import { AnalyzerUtils } from '../treeDataProviders/utils/analyzerUtils';
-import { ExcludeScanner, JFrogAppsConfig, Module, Scanner } from '../types/jfrogAppsConfig';
+import { ScanType, JFrogAppsConfig, Module, Scanner } from '../types/jfrogAppsConfig';
 import { Configuration } from './configuration';
 
 export class AppsConfigUtils {
@@ -19,7 +19,7 @@ export class AppsConfigUtils {
         return yaml.load(fs.readFileSync(appConfigPath, 'utf8')) as JFrogAppsConfig;
     }
 
-    public static ShouldSkipScanner(module: Module, scanType: ExcludeScanner): boolean {
+    public static ShouldSkipScanner(module: Module, scanType: ScanType): boolean {
         return !!module.exclude_scanners?.includes(scanType);
     }
 

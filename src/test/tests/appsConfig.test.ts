@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 import * as path from 'path';
-import { ExcludeScanner, JFrogAppsConfig, Module, SastScanner, Scanner } from '../../main/types/jfrogAppsConfig';
+import { ScanType, JFrogAppsConfig, Module, SastScanner, Scanner } from '../../main/types/jfrogAppsConfig';
 import { AppsConfigUtils } from '../../main/utils/appConfigUtils';
 
 describe('JFrog Apps Config Tests', () => {
@@ -41,14 +41,14 @@ describe('JFrog Apps Config Tests', () => {
     it('Should skip scanner', () => {
         [
             { excludeScanners: undefined, shouldSkip: false },
-            { excludeScanners: [] as ExcludeScanner[], shouldSkip: false },
-            { excludeScanners: [ExcludeScanner.Iac] as ExcludeScanner[], shouldSkip: false },
-            { excludeScanners: [ExcludeScanner.Iac, ExcludeScanner.Sast] as ExcludeScanner[], shouldSkip: false },
-            { excludeScanners: [ExcludeScanner.ContextualAnalysis] as ExcludeScanner[], shouldSkip: true },
-            { excludeScanners: [ExcludeScanner.Secrets, ExcludeScanner.ContextualAnalysis] as ExcludeScanner[], shouldSkip: true }
+            { excludeScanners: [] as ScanType[], shouldSkip: false },
+            { excludeScanners: [ScanType.Iac] as ScanType[], shouldSkip: false },
+            { excludeScanners: [ScanType.Iac, ScanType.Sast] as ScanType[], shouldSkip: false },
+            { excludeScanners: [ScanType.ContextualAnalysis] as ScanType[], shouldSkip: true },
+            { excludeScanners: [ScanType.Secrets, ScanType.ContextualAnalysis] as ScanType[], shouldSkip: true }
         ].forEach(testCase => {
             assert.equal(
-                AppsConfigUtils.ShouldSkipScanner({ exclude_scanners: testCase.excludeScanners } as Module, ExcludeScanner.ContextualAnalysis),
+                AppsConfigUtils.ShouldSkipScanner({ exclude_scanners: testCase.excludeScanners } as Module, ScanType.ContextualAnalysis),
                 testCase.shouldSkip
             );
         });

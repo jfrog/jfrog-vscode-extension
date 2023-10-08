@@ -29,6 +29,7 @@ import { FileScanBundle, FileScanError, ScanUtils } from '../../utils/scanUtils'
 import { LogManager } from '../../log/logManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
+import { ApplicabilityRunner } from '../../scanLogic/scanRunners/applicabilityScan';
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
@@ -97,7 +98,6 @@ export class DependencyUtils {
                             })
                             .finally(() => progressManager.reportProgress(progressIncValue / 2))
                     );
-                    continue;
                 }
             }
             // Not root or have no dependencies
@@ -107,14 +107,13 @@ export class DependencyUtils {
         }
         this.reportNotFoundDescriptors(descriptorsPaths, descriptorsParsed, scanManager.logManager);
 
-        await Promise.all(scansPromises).then(async () => {
-            if (!contextualScan || bundlesWithIssues.length == 0) {
-                return;
-            }
-            await AnalyzerUtils.cveApplicableScanning(scanManager, bundlesWithIssues, progressManager, type).catch(err =>
+        await Promise.all(scansPromises);
+        let applicabilityRunner: ApplicabilityRunner = new ApplicabilityRunner(scanManager.connectionManager, scanManager.logManager);
+        if (contextualScan && bundlesWithIssues.length > 0 && applicabilityRunner.shouldRun()) {
+            await AnalyzerUtils.cveApplicableScanning(scanManager, bundlesWithIssues, progressManager, type, applicabilityRunner).catch(err =>
                 ScanUtils.onScanError(err, scanManager.logManager, true)
             );
-        });
+        }
     }
 
     private static isGraphHasBuildError(child: RootNode, scanBundle: FileScanBundle, logManager: LogManager) {

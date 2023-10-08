@@ -25,6 +25,7 @@ import {
     findLocationNode,
     groupFiles
 } from './utils/testAnalyzer.test';
+import { Module } from '../../main/types/jfrogAppsConfig';
 
 describe('Secrets Scan Tests', () => {
     const scanSecrets: string = path.join(__dirname, '..', 'resources', 'secretsScan');
@@ -120,6 +121,6 @@ describe('Secrets Scan Tests', () => {
     });
 
     function getDummyRunner(): SecretsRunner {
-        return new SecretsRunner({} as ConnectionManager, logManager);
+        return new SecretsRunner({} as ConnectionManager, logManager, {} as Module);
     }
 });

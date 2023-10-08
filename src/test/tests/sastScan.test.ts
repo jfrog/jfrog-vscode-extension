@@ -25,6 +25,7 @@ import {
 } from './utils/testAnalyzer.test';
 import { createRootTestNode } from './utils/treeNodeUtils.test';
 import { getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
+import { Module } from '../../main/types/jfrogAppsConfig';
 
 describe('Sast Tests', () => {
     const scanSast: string = path.join(__dirname, '..', 'resources', 'sastScan');
@@ -120,6 +121,6 @@ describe('Sast Tests', () => {
     });
 
     function getDummyRunner(): SastRunner {
-        return new SastRunner({} as ConnectionManager, logManager);
+        return new SastRunner({} as ConnectionManager, logManager, {} as Module);
     }
 });

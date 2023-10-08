@@ -25,7 +25,7 @@ import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFi
 import { IEvidence } from 'jfrog-ide-webview';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { ApplicableTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/applicableTreeNode';
-import { getAnalyzerScanResponse, removeWindowsWhiteSpace } from './utils/utils.test';
+import { createTestConnectionManager, getAnalyzerScanResponse, removeWindowsWhiteSpace } from './utils/utils.test';
 import { ScanManager } from '../../main/scanLogic/scanManager';
 import { StepProgress } from '../../main/treeDataProviders/utils/stepProgress';
 import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
@@ -109,9 +109,12 @@ describe('Applicability Scan Tests', () => {
                 data: { fullPath: 'some-path', applicableScanTimestamp: 1 } as DependencyScanResults,
                 dataNode: testDescriptor
             } as FileScanBundle;
+
             // Run scan
-            await AnalyzerUtils.cveApplicableScanning(npmScanManager, [scanBundle], {} as StepProgress, PackageType.Npm);
-            await AnalyzerUtils.cveApplicableScanning(pythonScanManager, [scanBundle], {} as StepProgress, PackageType.Python);
+            let connectionManager: ConnectionManager = await createTestConnectionManager(logManager);
+            let applicabilityRunner: ApplicabilityRunner = new ApplicabilityRunner(connectionManager, logManager);
+            await AnalyzerUtils.cveApplicableScanning(npmScanManager, [scanBundle], {} as StepProgress, PackageType.Npm, applicabilityRunner);
+            await AnalyzerUtils.cveApplicableScanning(pythonScanManager, [scanBundle], {} as StepProgress, PackageType.Python, applicabilityRunner);
         });
 
         it('Check Virtual Environment is scanned', () => {

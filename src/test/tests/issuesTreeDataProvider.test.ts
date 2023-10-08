@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 import { IssuesTreeDataProvider } from '../../main/treeDataProviders/issuesTree/issuesTreeDataProvider';
-import { SupportedScans } from '../../main/scanLogic/scanManager';
+import { EntitledScans } from '../../main/scanLogic/scanManager';
 import { Uri } from 'vscode';
 import { PackageType } from '../../main/types/projectType';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
@@ -19,17 +19,17 @@ describe('Issues Tree Data Provider Tests', () => {
     [
         {
             test: 'Not supported',
-            supported: {} as SupportedScans,
+            supported: {} as EntitledScans,
             expected: 0
         },
         {
             test: 'With dependencies scan',
-            supported: { dependencies: true } as SupportedScans,
+            supported: { dependencies: true } as EntitledScans,
             expected: 5
         },
         {
             test: 'With advance scan',
-            supported: { dependencies: true, applicability: true, iac: true, secrets: true } as SupportedScans,
+            supported: { dependencies: true, applicability: true, iac: true, secrets: true } as EntitledScans,
             expected: 7
         }
     ].forEach(testCase => {

@@ -7,6 +7,8 @@ import { ConnectionManager } from '../../connect/connectionManager';
 import { ConnectionUtils } from '../../connect/connectionUtils';
 import { LogManager } from '../../log/logManager';
 import { LogUtils } from '../../log/logUtils';
+import { Module } from '../../types/jfrogAppsConfig';
+import { AppsConfigUtils } from '../../utils/appConfigUtils';
 import { Configuration } from '../../utils/configuration';
 import { Resource } from '../../utils/resource';
 import { RunUtils } from '../../utils/runUtils';
@@ -40,11 +42,11 @@ interface RunRequest {
 }
 
 /**
- * Describes a runner for binary executable files.
- * The executable expected to be provided with a path to request file (yaml format) and produce a response file with a result
+ * Base class for a JFrog Advanced Security scanner.
  */
-export abstract class BinaryRunner {
+export abstract class JasScanner {
     protected _verbose: boolean = false;
+    protected _runDirectory: string;
 
     private static readonly RUNNER_NAME: string = 'analyzerManager';
     public static readonly RUNNER_VERSION: string = '1.3.2.2019257';
@@ -64,31 +66,32 @@ export abstract class BinaryRunner {
 
     constructor(
         protected _connectionManager: ConnectionManager,
-        protected _abortCheckInterval: number,
-        protected _type: ScanType,
+        protected _abortCheckIntervalMillisecs: number,
+        protected _scanType: ScanType,
         protected _logManager: LogManager,
-        protected _binary: Resource = BinaryRunner.getAnalyzerManagerResource(_logManager),
-        protected _runDirectory?: string
+        protected _module: Module,
+        protected _binary: Resource = JasScanner.getAnalyzerManagerResource(_logManager)
     ) {
-        this._runDirectory = this._runDirectory ?? path.dirname(this._binary.fullPath);
+        this._binary = JasScanner.getAnalyzerManagerResource(_logManager);
+        this._runDirectory = path.dirname(this._binary.fullPath);
 
-        if (this._abortCheckInterval <= 0) {
+        if (this._abortCheckIntervalMillisecs <= 0) {
             // Default check in 1 sec intervals
-            this._abortCheckInterval = 1 * 1000;
+            this._abortCheckIntervalMillisecs = 1000;
         }
     }
 
     public static getDefaultAnalyzerManagerSourceUrl(version: string = '[RELEASE]'): string {
-        return Utils.addZipSuffix(BinaryRunner.DOWNLOAD_URL + '/' + version + '/' + Utils.getArchitecture() + '/' + BinaryRunner.RUNNER_NAME);
+        return Utils.addZipSuffix(JasScanner.DOWNLOAD_URL + '/' + version + '/' + Utils.getArchitecture() + '/' + JasScanner.RUNNER_NAME);
     }
 
     public static getDefaultAnalyzerManagerTargetPath(baseDirectory?: string): string {
-        return Utils.addWinSuffixIfNeeded(path.join(baseDirectory ?? ScanUtils.getIssuesPath(), BinaryRunner.RUNNER_NAME, BinaryRunner.RUNNER_NAME));
+        return Utils.addWinSuffixIfNeeded(path.join(baseDirectory ?? ScanUtils.getIssuesPath(), JasScanner.RUNNER_NAME, JasScanner.RUNNER_NAME));
     }
 
     public static getAnalyzerManagerResource(logManager: LogManager, targetPath?: string): Resource {
         return new Resource(
-            this.getDefaultAnalyzerManagerSourceUrl(BinaryRunner.RUNNER_VERSION),
+            this.getDefaultAnalyzerManagerSourceUrl(JasScanner.RUNNER_VERSION),
             targetPath ?? this.getDefaultAnalyzerManagerTargetPath(),
             logManager
         );
@@ -116,6 +119,18 @@ export abstract class BinaryRunner {
         responsePath: string | undefined
     ): Promise<void>;
 
+    public shouldRun(): boolean {
+        if (!this.validateSupported()) {
+            this._logManager.logMessage(this._scanType + ' runner could not find binary to run', 'WARN');
+            return false;
+        }
+        if (AppsConfigUtils.ShouldSkipScanner(this._module, this._scanType)) {
+            this._logManager.debug('Skipping ' + this._scanType + ' scanning');
+            return false;
+        }
+        return true;
+    }
+
     /**
      * Validates that the binary exists and can run
      * @returns true if supported false otherwise
@@ -131,7 +146,7 @@ export abstract class BinaryRunner {
      * @param executionLogDirectory - the directory to save the execution log in
      */
     protected async executeBinary(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
-        await RunUtils.runWithTimeout(this._abortCheckInterval, checkCancel, {
+        await RunUtils.runWithTimeout(this._abortCheckIntervalMillisecs, checkCancel, {
             title: this._binary.name,
             task: this.executeBinaryTask(args, executionLogDirectory)
         });
@@ -155,7 +170,7 @@ export abstract class BinaryRunner {
     }
 
     private logTaskResult(stdChannel: string, isErr: boolean) {
-        let text: string = "Done executing '" + Translators.toAnalyzerTypeString(this._type) + "' with log, log:\n" + stdChannel;
+        let text: string = "Done executing '" + Translators.toAnalyzerTypeString(this._scanType) + "' with log, log:\n" + stdChannel;
         if (this._verbose) {
             console.log(text);
         }
@@ -174,13 +189,13 @@ export abstract class BinaryRunner {
 
         let binaryVars: NodeJS.ProcessEnv = { JFROG_CLI_LOG_LEVEL: Translators.toAnalyzerLogLevel(Configuration.getLogLevel()) };
         // Platform information
-        binaryVars[BinaryRunner.ENV_PLATFORM_URL] = this._connectionManager.url;
+        binaryVars[JasScanner.ENV_PLATFORM_URL] = this._connectionManager.url;
         // Credentials information
         if (this._connectionManager.accessToken) {
-            binaryVars[BinaryRunner.ENV_TOKEN] = this._connectionManager.accessToken;
+            binaryVars[JasScanner.ENV_TOKEN] = this._connectionManager.accessToken;
         } else {
-            binaryVars[BinaryRunner.ENV_USER] = this._connectionManager.username;
-            binaryVars[BinaryRunner.ENV_PASSWORD] = this._connectionManager.password;
+            binaryVars[JasScanner.ENV_USER] = this._connectionManager.username;
+            binaryVars[JasScanner.ENV_PASSWORD] = this._connectionManager.password;
         }
 
         this.populateOptionalInformation(binaryVars, executionLogDirectory);
@@ -204,10 +219,10 @@ export abstract class BinaryRunner {
             proxyHttpsUrl = 'https://' + proxyUrl;
         }
         if (proxyHttpUrl) {
-            binaryVars[BinaryRunner.ENV_HTTP_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpUrl);
+            binaryVars[JasScanner.ENV_HTTP_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpUrl);
         }
         if (proxyHttpsUrl) {
-            binaryVars[BinaryRunner.ENV_HTTPS_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
+            binaryVars[JasScanner.ENV_HTTPS_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
         }
         // Optional log destination
         if (executionLogDirectory) {
@@ -235,14 +250,8 @@ export abstract class BinaryRunner {
     }
 
     public async run(checkCancel: () => void, request: AnalyzeScanRequest): Promise<AnalyzerScanResponse | undefined> {
-        if (!this.validateSupported()) {
-            return undefined;
-        }
         let args: RunArgs = this.createRunArguments(request);
         try {
-            if (args.requests.length == 0) {
-                return undefined;
-            }
             return await this.runTasks(args, checkCancel);
         } finally {
             ScanUtils.removeFolder(args.directory);
@@ -256,9 +265,6 @@ export abstract class BinaryRunner {
      */
     private createRunArguments(request: AnalyzeScanRequest): RunArgs {
         let args: RunArgs = new RunArgs(ScanUtils.createTmpDir());
-        if (request.roots.length === 0) {
-            return args;
-        }
 
         // Prepare request information and insert as an actual request
         const requestPath: string = path.join(args.directory, 'request_' + args.requests.length);
@@ -266,7 +272,7 @@ export abstract class BinaryRunner {
         if (request.type !== ScanType.Sast) {
             request.output = responsePath;
         }
-        request.type = this._type;
+        request.type = this._scanType;
         // Add request to run
         args.requests.push({
             type: request.type,
@@ -334,7 +340,7 @@ export abstract class BinaryRunner {
         if (logPath && !(exeErr instanceof NotSupportedError)) {
             this._logManager.logMessage(
                 'AnalyzerManager run ' +
-                    Translators.toAnalyzerTypeString(this._type) +
+                    Translators.toAnalyzerTypeString(this._scanType) +
                     ' on ' +
                     args.getRoots() +
                     ' ended ' +
@@ -363,7 +369,7 @@ export abstract class BinaryRunner {
             copyToDirectory,
             LogUtils.getLogFileName(
                 roots.map(root => Utils.getLastSegment(root)).join('_'),
-                Translators.toAnalyzerTypeString(this._type),
+                Translators.toAnalyzerTypeString(this._scanType),
                 '' + Date.now()
             )
         );
@@ -400,17 +406,17 @@ export abstract class BinaryRunner {
         await this.runBinary(requestPath, this._verbose ? undefined : path.dirname(requestPath), checkCancel, responsePath).catch(error => {
             if (error.code) {
                 // Not entitled to run binary
-                if (error.code === BinaryRunner.NOT_ENTITLED) {
+                if (error.code === JasScanner.NOT_ENTITLED) {
                     throw new NotEntitledError();
                 }
-                if (error.code === BinaryRunner.NOT_SUPPORTED) {
-                    throw new NotSupportedError(Translators.toAnalyzerTypeString(this._type));
+                if (error.code === JasScanner.NOT_SUPPORTED) {
+                    throw new NotSupportedError(Translators.toAnalyzerTypeString(this._scanType));
                 }
-                if (error.code === BinaryRunner.OS_NOT_SUPPORTED) {
-                    throw new OsNotSupportedError(Translators.toAnalyzerTypeString(this._type));
+                if (error.code === JasScanner.OS_NOT_SUPPORTED) {
+                    throw new OsNotSupportedError(Translators.toAnalyzerTypeString(this._scanType));
                 }
                 this._logManager.logMessage(
-                    "Binary '" + Translators.toAnalyzerTypeString(this._type) + "' task ended with status code: " + error.code,
+                    "Binary '" + Translators.toAnalyzerTypeString(this._scanType) + "' task ended with status code: " + error.code,
                     'ERR'
                 );
             }
@@ -419,7 +425,9 @@ export abstract class BinaryRunner {
         // 3. Collect responses
         let analyzerScanResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         if (!fs.existsSync(responsePath)) {
-            throw new Error("Running '" + Translators.toAnalyzerTypeString(this._type) + "' binary didn't produce response.\nRequest: " + request);
+            throw new Error(
+                "Running '" + Translators.toAnalyzerTypeString(this._scanType) + "' binary didn't produce response.\nRequest: " + request
+            );
         }
         // Load result and parse as response
         let result: AnalyzerScanResponse = JSON.parse(fs.readFileSync(responsePath, 'utf8').toString());

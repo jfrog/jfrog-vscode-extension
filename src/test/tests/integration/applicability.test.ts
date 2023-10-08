@@ -1,13 +1,13 @@
-import * as path from 'path';
-import * as fs from 'fs';
 import { assert } from 'chai';
+import * as fs from 'fs';
+import * as path from 'path';
 
 import { ApplicabilityRunner, ApplicabilityScanResponse, CveApplicableDetails } from '../../../main/scanLogic/scanRunners/applicabilityScan';
 
-import { AnalyzerManagerIntegrationEnv } from '../utils/testIntegration.test';
 import { FileIssues, FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
+import { JasScanner } from '../../../main/scanLogic/scanRunners/binaryRunner';
 import { AnalyzerUtils } from '../../../main/treeDataProviders/utils/analyzerUtils';
-import { BinaryRunner } from '../../../main/scanLogic/scanRunners/binaryRunner';
+import { AnalyzerManagerIntegrationEnv } from '../utils/testIntegration.test';
 
 describe('Applicability Integration Tests', async () => {
     let integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -122,7 +122,7 @@ describe('Applicability Integration Tests', async () => {
                     }
 
                     it('Check all expected locations exists', async function() {
-                        if (BinaryRunner.RUNNER_VERSION === '1.3.2.2005632') {
+                        if (JasScanner.RUNNER_VERSION === '1.3.2.2005632') {
                             // Duplicate results are found in this AM version, which may be fixed in the next release.
                             this.skip();
                         }
@@ -136,7 +136,7 @@ describe('Applicability Integration Tests', async () => {
                     });
 
                     it('Check snippet data', async function() {
-                        if (BinaryRunner.RUNNER_VERSION === '1.3.2.2005632') {
+                        if (JasScanner.RUNNER_VERSION === '1.3.2.2005632') {
                             // Duplicate results are found in this AM version, which may be fixed in the next release.
                             this.skip();
                         }

@@ -1,10 +1,10 @@
-import { LogManager } from '../../log/logManager';
-import { BinaryRunner } from './binaryRunner';
-import { AnalyzeIssue, AnalyzeLocation, AnalyzerScanRun, ScanType, AnalyzeScanRequest, FileIssues } from './analyzerModels';
 import { ConnectionManager } from '../../connect/connectionManager';
+import { LogManager } from '../../log/logManager';
+import { Module } from '../../types/jfrogAppsConfig';
 import { Resource } from '../../utils/resource';
 import { ScanUtils } from '../../utils/scanUtils';
-import { PackageType } from '../../types/projectType';
+import { AnalyzeIssue, AnalyzeLocation, AnalyzeScanRequest, AnalyzerScanRun, FileIssues, ScanType } from './analyzerModels';
+import { JasScanner } from './binaryRunner';
 
 /**
  * The request that is sent to the binary to scan applicability
@@ -38,18 +38,14 @@ export interface CveApplicableDetails {
 /**
  * Describes a runner for the Applicability scan executable file.
  */
-export class ApplicabilityRunner extends BinaryRunner {
+export class ApplicabilityRunner extends JasScanner {
     constructor(
         connectionManager: ConnectionManager,
         logManager: LogManager,
         binary?: Resource,
         timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
     ) {
-        super(connectionManager, timeout, ScanType.ContextualAnalysis, logManager, binary);
-    }
-
-    public static supportedPackageTypes(): PackageType[] {
-        return [PackageType.Npm, PackageType.Yarn, PackageType.Python, PackageType.Maven];
+        super(connectionManager, timeout, ScanType.ContextualAnalysis, logManager, {} as Module, binary);
     }
 
     /** @override */

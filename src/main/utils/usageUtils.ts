@@ -1,22 +1,13 @@
-import * as vscode from 'vscode';
 import { IUsageFeature } from 'jfrog-client-js';
-import { PackageType } from '../types/projectType';
-import { SupportedScans } from '../scanLogic/scanManager';
+import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
-import { ApplicabilityRunner } from '../scanLogic/scanRunners/applicabilityScan';
+import { EntitledScans } from '../scanLogic/scanManager';
+import { PackageType } from '../types/projectType';
 
 export class UsageUtils {
-    private static getUsageFeaturesByExistTech(
-        projectDescriptors: Map<PackageType, vscode.Uri[]>,
-        scanSuffix: string,
-        onlyInclude?: PackageType[]
-    ): IUsageFeature[] {
+    private static getUsageFeaturesByExistTech(projectDescriptors: Map<PackageType, vscode.Uri[]>, scanSuffix: string): IUsageFeature[] {
         let features: IUsageFeature[] = [];
         for (const [techEnum, descriptors] of projectDescriptors.entries()) {
-            // If we only support subset of the techs, check if tech is supported.
-            if (onlyInclude && onlyInclude.length > 0 && !onlyInclude.includes(techEnum)) {
-                continue;
-            }
             // Only add to usage if found descriptors for tech.
             if (!!descriptors && descriptors.length > 0) {
                 const featureName: string = PackageType[techEnum].toLowerCase() + '-' + scanSuffix;
@@ -33,7 +24,7 @@ export class UsageUtils {
      * @param connectionManager - manager containing Artifactory details if configured.
      */
     public static async sendUsageReport(
-        supportedScans: SupportedScans,
+        supportedScans: EntitledScans,
         projectDescriptors: Map<PackageType, vscode.Uri[]>,
         connectionManager: ConnectionManager
     ) {
@@ -42,7 +33,7 @@ export class UsageUtils {
             features.push(...this.getUsageFeaturesByExistTech(projectDescriptors, 'deps'));
         }
         if (supportedScans.applicability) {
-            features.push(...this.getUsageFeaturesByExistTech(projectDescriptors, 'contextual', ApplicabilityRunner.supportedPackageTypes()));
+            features.push(...this.getUsageFeaturesByExistTech(projectDescriptors, 'contextual'));
         }
         if (supportedScans.iac) {
             features.push({ featureId: 'iac' });

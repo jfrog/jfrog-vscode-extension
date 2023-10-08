@@ -1,12 +1,16 @@
 import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
+import { IssuesRootTreeNode } from '../../treeDataProviders/issuesTree/issuesRootTreeNode';
 import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
+import { StepProgress } from '../../treeDataProviders/utils/stepProgress';
 import { Module, SastScanner } from '../../types/jfrogAppsConfig';
 import { Severity } from '../../types/severity';
+import { ScanResults } from '../../types/workspaceIssuesDetails';
 import { AppsConfigUtils } from '../../utils/appConfigUtils';
 import { Resource } from '../../utils/resource';
 import { ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
+import { ScanManager } from '../scanManager';
 import {
     AnalyzeIssue,
     AnalyzeLocation,
@@ -17,7 +21,7 @@ import {
     FileRegion,
     ScanType
 } from './analyzerModels';
-import { BinaryRunner } from './binaryRunner';
+import { JasScanner } from './binaryRunner';
 
 /**
  * The request that is sent to the binary to scan Sast
@@ -52,14 +56,15 @@ export interface SastIssueLocation {
     threadFlows: FileLocation[][];
 }
 
-export class SastRunner extends BinaryRunner {
+export class SastRunner extends JasScanner {
     constructor(
         connectionManager: ConnectionManager,
         logManager: LogManager,
+        module: Module,
         binary?: Resource,
         timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
     ) {
-        super(connectionManager, timeout, ScanType.Sast, logManager, binary);
+        super(connectionManager, timeout, ScanType.Sast, logManager, module, binary);
     }
 
     /** @override */
@@ -84,21 +89,40 @@ export class SastRunner extends BinaryRunner {
      * @param checkCancel - check if cancel
      * @returns the response generated from the scan
      */
-    public async scan(module: Module, checkCancel: () => void): Promise<SastScanResponse> {
-        let sastScanner: SastScanner | undefined = module.scanners?.sast;
+    public async scan(scanResults: ScanResults, root: IssuesRootTreeNode, scanManager: ScanManager, progressManager: StepProgress): Promise<void> {
+        let startTime: number = Date.now();
+        let sastScanner: SastScanner | undefined = this._module.scanners?.sast;
         let request: SastScanRequest = {
             type: ScanType.Sast,
-            roots: AppsConfigUtils.GetSourceRoots(module, sastScanner),
+            roots: AppsConfigUtils.GetSourceRoots(this._module, sastScanner),
             language: sastScanner?.language,
             excluded_rules: sastScanner?.excluded_rules,
-            exclude_patterns: AppsConfigUtils.GetExcludePatterns(module, sastScanner)
+            exclude_patterns: AppsConfigUtils.GetExcludePatterns(this._module, sastScanner)
         } as SastScanRequest;
         this._logManager.logMessage(
             "Scanning directories '" + request.roots + "', for SAST issues. Skipping folders: " + request.exclude_patterns,
             'DEBUG'
         );
 
-        return await this.run(checkCancel, request).then(runResult => this.generateScanResponse(runResult));
+        let response: SastScanResponse = await this.run(progressManager.checkCancel, request).then(runResult => this.generateScanResponse(runResult));
+        if (response) {
+            scanResults.sastScan = response;
+            scanResults.sastScanTimestamp = Date.now();
+            let sastIssuesCount: number = AnalyzerUtils.populateSastIssues(root, scanResults);
+            scanManager.logManager.logMessage(
+                'Found ' +
+                    sastIssuesCount +
+                    " SAST issues in workspace = '" +
+                    scanResults.path +
+                    "' (elapsed " +
+                    (scanResults.sastScanTimestamp - startTime) / 1000 +
+                    ' seconds)',
+                'INFO'
+            );
+
+            root.apply();
+            progressManager.reportProgress();
+        }
     }
 
     /**

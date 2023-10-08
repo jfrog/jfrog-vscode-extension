@@ -1,7 +1,10 @@
 import * as vscode from 'vscode';
 import { CacheManager } from '../../cache/cacheManager';
 import { LogManager } from '../../log/logManager';
-import { ScanManager, SupportedScans } from '../../scanLogic/scanManager';
+import { EntitledScans, ScanManager } from '../../scanLogic/scanManager';
+import { IacRunner } from '../../scanLogic/scanRunners/iacScan';
+import { SastRunner } from '../../scanLogic/scanRunners/sastScan';
+import { SecretsRunner } from '../../scanLogic/scanRunners/secretsScan';
 import { JFrogAppsConfig } from '../../types/jfrogAppsConfig';
 import { PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
@@ -174,7 +177,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
      * @param descriptors - all the descriptors in the workspace
      * @returns the number of tasks that will be preformed async and report to the progress bar
      */
-    public static getNumberOfTasksInRepopulate(supportedScans: SupportedScans, descriptors: Map<PackageType, vscode.Uri[]>): number {
+    public static getNumberOfTasksInRepopulate(supportedScans: EntitledScans, descriptors: Map<PackageType, vscode.Uri[]>): number {
         return (
             (supportedScans.sast ? 1 : 0) +
             (supportedScans.iac ? 1 : 0) +
@@ -203,53 +206,55 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         progress.report({ message: '👷 Preparing workspace' });
         let progressManager: StepProgress = new StepProgress(progress, checkCanceled, () => this.onChangeFire(), this._logManager);
         let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workspace], this._logManager);
-        let subStepsCount: number = IssuesTreeDataProvider.getNumberOfTasksInRepopulate(this._scanManager.supportedScans, workspaceDescriptors);
+        let subStepsCount: number = IssuesTreeDataProvider.getNumberOfTasksInRepopulate(this._scanManager.entitledScans, workspaceDescriptors);
         let jfrogAppConfig: JFrogAppsConfig = AppsConfigUtils.LoadConfig(root.workspace.uri.path);
         checkCanceled();
-        UsageUtils.sendUsageReport(this._scanManager.supportedScans, workspaceDescriptors, this._treesManager.connectionManager);
+        UsageUtils.sendUsageReport(this._scanManager.entitledScans, workspaceDescriptors, this._treesManager.connectionManager);
         // Scan workspace
         let scansPromises: Promise<any>[] = [];
         progressManager.startStep('🔎 Scanning for issues', subStepsCount);
-        if (this._scanManager.supportedScans.dependencies) {
-            // Dependency graph and applicability scans for each package
-            for (const [type, descriptorsPaths] of workspaceDescriptors) {
-                scansPromises.push(
-                    DependencyUtils.scanPackageDependencies(
-                        this._scanManager,
-                        scanResults,
-                        root,
-                        type,
-                        descriptorsPaths,
-                        progressManager,
-                        this._scanManager.supportedScans.applicability
-                    ).catch(err => ScanUtils.onScanError(err, this._logManager, true))
-                );
-            }
+
+        // Dependency graph and applicability scans for each package
+        for (const [type, descriptorsPaths] of workspaceDescriptors) {
+            scansPromises.push(
+                DependencyUtils.scanPackageDependencies(
+                    this._scanManager,
+                    scanResults,
+                    root,
+                    type,
+                    descriptorsPaths,
+                    progressManager,
+                    this._scanManager.entitledScans.applicability
+                ).catch(err => ScanUtils.onScanError(err, this._logManager, true))
+            );
         }
 
         for (let module of jfrogAppConfig.modules) {
-            if (this._scanManager.supportedScans.iac) {
+            let iacScanner: IacRunner = new IacRunner(this._treesManager.connectionManager, this._logManager, module);
+            if (this._scanManager.entitledScans.iac && iacScanner.shouldRun()) {
                 // Scan the workspace for Infrastructure As Code (Iac) issues
                 scansPromises.push(
-                    AnalyzerUtils.runIac(scanResults, root, this._scanManager, module, progressManager).catch(err =>
-                        ScanUtils.onScanError(err, this._logManager, true)
-                    )
+                    iacScanner
+                        .scan(scanResults, root, this._scanManager, progressManager)
+                        .catch(err => ScanUtils.onScanError(err, this._logManager, true))
                 );
             }
-            if (this._scanManager.supportedScans.secrets) {
+            let secretsScanner: SecretsRunner = new SecretsRunner(this._treesManager.connectionManager, this._logManager, module);
+            if (this._scanManager.entitledScans.secrets && secretsScanner.shouldRun()) {
                 // Scan the workspace for Secrets issues
                 scansPromises.push(
-                    AnalyzerUtils.runSecrets(scanResults, root, this._scanManager, module, progressManager).catch(err =>
-                        ScanUtils.onScanError(err, this._logManager, true)
-                    )
+                    secretsScanner
+                        .scan(scanResults, root, this._scanManager, progressManager)
+                        .catch(err => ScanUtils.onScanError(err, this._logManager, true))
                 );
             }
-            if (this._scanManager.supportedScans.sast) {
+            let sastScanner: SastRunner = new SastRunner(this._treesManager.connectionManager, this._logManager, module);
+            if (this._scanManager.entitledScans.sast && sastScanner.shouldRun()) {
                 // Scan the workspace for Sast issues
                 scansPromises.push(
-                    AnalyzerUtils.runSast(scanResults, root, this._scanManager, module, progressManager).catch(err =>
-                        ScanUtils.onScanError(err, this._logManager, true)
-                    )
+                    secretsScanner
+                        .scan(scanResults, root, this._scanManager, progressManager)
+                        .catch(err => ScanUtils.onScanError(err, this._logManager, true))
                 );
             }
         }

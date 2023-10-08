@@ -2,7 +2,7 @@ import { IUsageFeature } from 'jfrog-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { assert } from 'chai';
 import { LogManager } from '../../main/log/logManager';
-import { SupportedScans } from '../../main/scanLogic/scanManager';
+import { EntitledScans } from '../../main/scanLogic/scanManager';
 import { PackageType } from '../../main/types/projectType';
 import { UsageUtils } from '../../main/utils/usageUtils';
 import { Uri } from 'vscode';
@@ -13,21 +13,21 @@ describe('Usage Utils Tests', async () => {
     [
         {
             test: 'Not supported',
-            supportedScans: {} as SupportedScans,
+            supportedScans: {} as EntitledScans,
             descriptors: getDummyDescriptors(),
             expectedFeatures: [],
             expectedReportSent: false
         },
         {
             test: 'With dependencies scan',
-            supportedScans: { dependencies: true } as SupportedScans,
+            supportedScans: { dependencies: true } as EntitledScans,
             descriptors: getDummyDescriptors(PackageType.Go, PackageType.Npm),
             expectedFeatures: [{ featureId: 'go-deps' }, { featureId: 'npm-deps' }],
             expectedReportSent: true
         },
         {
             test: 'With advance scan',
-            supportedScans: { dependencies: true, applicability: true, iac: true, secrets: true } as SupportedScans,
+            supportedScans: { dependencies: true, applicability: true, iac: true, secrets: true } as EntitledScans,
             descriptors: getDummyDescriptors(PackageType.Go, PackageType.Npm),
             expectedFeatures: [
                 { featureId: 'go-deps' },
