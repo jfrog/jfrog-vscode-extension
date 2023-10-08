@@ -10,13 +10,16 @@ export class AppsConfigUtils {
 
     public static LoadConfig(workspace: string): JFrogAppsConfig {
         let appConfigPath: string = path.join(workspace, '.jfrog', 'jfrog-apps-config.yml');
-        if (!fs.existsSync(appConfigPath)) {
-            return {
-                version: AppsConfigUtils.JFROG_APP_CONFIG_VERSION,
-                modules: [{ source_root: workspace } as Module]
-            } as JFrogAppsConfig;
+        if (fs.existsSync(appConfigPath)) {
+            let jfrogAppsConfig: JFrogAppsConfig = yaml.load(fs.readFileSync(appConfigPath, 'utf8')) as JFrogAppsConfig;
+            if (jfrogAppsConfig?.modules?.length > 0) {
+                return jfrogAppsConfig;
+            }
         }
-        return yaml.load(fs.readFileSync(appConfigPath, 'utf8')) as JFrogAppsConfig;
+        return {
+            version: AppsConfigUtils.JFROG_APP_CONFIG_VERSION,
+            modules: [{ source_root: workspace } as Module]
+        } as JFrogAppsConfig;
     }
 
     public static ShouldSkipScanner(module: Module, scanType: ScanType): boolean {
@@ -46,7 +49,7 @@ export class AppsConfigUtils {
             excludePatterns = excludePatterns.concat(scanner.exclude_patterns);
         }
         if (excludePatterns.length === 0) {
-            return AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
+            return AnalyzerUtils.getAnalyzerManagerExcludePatterns(Configuration.getScanExcludePattern());
         }
         return excludePatterns;
     }

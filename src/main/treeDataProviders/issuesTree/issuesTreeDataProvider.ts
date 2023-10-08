@@ -1,11 +1,13 @@
 import * as vscode from 'vscode';
 import { CacheManager } from '../../cache/cacheManager';
+import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
 import { EntitledScans, ScanManager } from '../../scanLogic/scanManager';
 import { IacRunner } from '../../scanLogic/scanRunners/iacScan';
+import { JasRunner } from '../../scanLogic/scanRunners/jasRunner';
 import { SastRunner } from '../../scanLogic/scanRunners/sastScan';
 import { SecretsRunner } from '../../scanLogic/scanRunners/secretsScan';
-import { JFrogAppsConfig } from '../../types/jfrogAppsConfig';
+import { JFrogAppsConfig, Module } from '../../types/jfrogAppsConfig';
 import { PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { DependencyScanResults, EntryIssuesData, ScanResults } from '../../types/workspaceIssuesDetails';
@@ -230,37 +232,43 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         }
 
         for (let module of jfrogAppConfig.modules) {
-            let iacScanner: IacRunner = new IacRunner(this._treesManager.connectionManager, this._logManager, module);
-            if (this._scanManager.entitledScans.iac && iacScanner.shouldRun()) {
-                // Scan the workspace for Infrastructure As Code (Iac) issues
-                scansPromises.push(
-                    iacScanner
-                        .scan(scanResults, root, this._scanManager, progressManager)
-                        .catch(err => ScanUtils.onScanError(err, this._logManager, true))
-                );
-            }
-            let secretsScanner: SecretsRunner = new SecretsRunner(this._treesManager.connectionManager, this._logManager, module);
-            if (this._scanManager.entitledScans.secrets && secretsScanner.shouldRun()) {
-                // Scan the workspace for Secrets issues
-                scansPromises.push(
-                    secretsScanner
-                        .scan(scanResults, root, this._scanManager, progressManager)
-                        .catch(err => ScanUtils.onScanError(err, this._logManager, true))
-                );
-            }
-            let sastScanner: SastRunner = new SastRunner(this._treesManager.connectionManager, this._logManager, module);
-            if (this._scanManager.entitledScans.sast && sastScanner.shouldRun()) {
-                // Scan the workspace for Sast issues
-                scansPromises.push(
-                    secretsScanner
-                        .scan(scanResults, root, this._scanManager, progressManager)
-                        .catch(err => ScanUtils.onScanError(err, this._logManager, true))
-                );
+            for (let runner of this.createJasRunners(
+                scanResults,
+                root,
+                progressManager,
+                this._treesManager.connectionManager,
+                this._logManager,
+                module
+            )) {
+                if (runner.shouldRun()) {
+                    scansPromises.push(runner.scan().catch(err => ScanUtils.onScanError(err, this._logManager, true)));
+                }
             }
         }
 
         await Promise.all(scansPromises);
         return root;
+    }
+
+    private createJasRunners(
+        scanResults: ScanResults,
+        root: IssuesRootTreeNode,
+        progressManager: StepProgress,
+        connectionManager: ConnectionManager,
+        logManager: LogManager,
+        module: Module
+    ): JasRunner[] {
+        let results: JasRunner[] = [];
+        if (this._scanManager.entitledScans.iac) {
+            results.push(new IacRunner(scanResults, root, progressManager, connectionManager, logManager, module));
+        }
+        if (this._scanManager.entitledScans.sast) {
+            results.push(new SastRunner(scanResults, root, progressManager, connectionManager, logManager, module));
+        }
+        if (this._scanManager.entitledScans.secrets) {
+            results.push(new SecretsRunner(scanResults, root, progressManager, connectionManager, logManager, module));
+        }
+        return results;
     }
 
     /**

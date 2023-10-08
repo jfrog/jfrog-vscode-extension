@@ -8,15 +8,12 @@ import { LogManager } from '../log/logManager';
 
 import { IGraphResponse, XrayScanProgress } from 'jfrog-client-js';
 import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
-import { AnalyzerUtils } from '../treeDataProviders/utils/analyzerUtils';
 import { StepProgress } from '../treeDataProviders/utils/stepProgress';
-import { Configuration } from '../utils/configuration';
 import { Resource } from '../utils/resource';
 import { ScanUtils } from '../utils/scanUtils';
 import { Utils } from '../utils/utils';
 import { GraphScanLogic } from './scanGraphLogic';
-import { ApplicabilityRunner, ApplicabilityScanResponse } from './scanRunners/applicabilityScan';
-import { JasScanner } from './scanRunners/binaryRunner';
+import { JasRunner } from './scanRunners/jasRunner';
 
 export interface EntitledScans {
     dependencies: boolean;
@@ -128,7 +125,7 @@ export class ScanManager implements ExtensionComponent {
     private getResources(supportedScans: EntitledScans): Resource[] {
         let resources: Resource[] = [];
         if (supportedScans.applicability || supportedScans.iac || supportedScans.secrets) {
-            resources.push(JasScanner.getAnalyzerManagerResource(this._logManager));
+            resources.push(JasRunner.getAnalyzerManagerResource(this._logManager));
         } else {
             this.logManager.logMessage('You are not entitled to run Advanced Security scans', 'DEBUG');
         }
@@ -207,30 +204,5 @@ export class ScanManager implements ExtensionComponent {
     public async scanDependencyGraph(progress: XrayScanProgress, graphRoot: RootNode, checkCanceled: () => void): Promise<IGraphResponse> {
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
         return await scanLogic.scan(graphRoot, progress, checkCanceled);
-    }
-
-    /**
-     * Scan CVE in files for applicability issues.
-     * @param directory - the directory that will be scan
-     * @param checkCancel - check if should cancel
-     * @param cveToRun - the CVE list we want to run applicability scan on
-     * @returns the applicability scan response
-     */
-    public async scanApplicability(
-        directory: string,
-        checkCancel: () => void,
-        cveToRun: Set<string> = new Set<string>()
-    ): Promise<ApplicabilityScanResponse> {
-        let applicableRunner: ApplicabilityRunner = new ApplicabilityRunner(this._connectionManager, this._logManager);
-        if (!applicableRunner.validateSupported()) {
-            this._logManager.logMessage('Applicability runner could not find binary to run', 'WARN');
-            return {} as ApplicabilityScanResponse;
-        }
-        let skipFiles: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(Configuration.getScanExcludePattern());
-        this._logManager.logMessage(
-            "Scanning directory '" + directory + "' for CVE issues: " + Array.from(cveToRun.values()) + '. Skipping files: ' + skipFiles,
-            'DEBUG'
-        );
-        return await applicableRunner.scan(directory, checkCancel, cveToRun, skipFiles);
     }
 }

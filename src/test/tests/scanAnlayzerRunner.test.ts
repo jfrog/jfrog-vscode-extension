@@ -1,16 +1,16 @@
-import * as path from 'path';
-import * as fs from 'fs';
 import { assert } from 'chai';
+import * as fs from 'fs';
 import { describe } from 'mocha';
+import * as path from 'path';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 
-import { AnalyzerScanResponse, ScanType, AnalyzeScanRequest } from '../../main/scanLogic/scanRunners/analyzerModels';
-import { JasScanner } from '../../main/scanLogic/scanRunners/binaryRunner';
-import { NotEntitledError, ScanCancellationError, ScanTimeoutError, ScanUtils } from '../../main/utils/scanUtils';
-import { RunUtils } from '../../main/utils/runUtils';
-import { Translators } from '../../main/utils/translators';
+import { AnalyzeScanRequest, AnalyzerScanRun, ScanType } from '../../main/scanLogic/scanRunners/analyzerModels';
+import { JasRunner } from '../../main/scanLogic/scanRunners/jasRunner';
 import { Module } from '../../main/types/jfrogAppsConfig';
+import { RunUtils } from '../../main/utils/runUtils';
+import { NotEntitledError, ScanCancellationError, ScanTimeoutError, ScanUtils } from '../../main/utils/scanUtils';
+import { Translators } from '../../main/utils/translators';
 
 // binary runner
 describe('Analyzer BinaryRunner tests', async () => {
@@ -42,8 +42,12 @@ describe('Analyzer BinaryRunner tests', async () => {
         connection: ConnectionManager = connectionManager,
         timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS,
         dummyAction: () => Promise<void> = () => Promise.resolve()
-    ): JasScanner {
-        return new (class extends JasScanner {
+    ): JasRunner {
+        return new (class extends JasRunner {
+            public scan(): Promise<void> {
+                throw new Error('Method not implemented.');
+            }
+
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             async runBinary(
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -111,7 +115,7 @@ describe('Analyzer BinaryRunner tests', async () => {
     ].forEach(test => {
         it('Create environment variables for execution - ' + test.name, () => {
             //
-            let runner: JasScanner = createDummyBinaryRunner(createBinaryRunnerConnectionManager(test.url, test.user, test.pass, test.token));
+            let runner: JasRunner = createDummyBinaryRunner(createBinaryRunnerConnectionManager(test.url, test.user, test.pass, test.token));
             process.env['HTTP_PROXY'] = test.proxy;
             process.env['HTTPS_PROXY'] = test.proxy;
 
@@ -121,17 +125,17 @@ describe('Analyzer BinaryRunner tests', async () => {
             } else {
                 assert.isDefined(envVars);
                 // Validate platform vars
-                assert.equal(envVars?.[JasScanner.ENV_PLATFORM_URL] ?? '', test.url);
-                assert.equal(envVars?.[JasScanner.ENV_USER] ?? '', test.user);
-                assert.equal(envVars?.[JasScanner.ENV_PASSWORD] ?? '', test.pass);
-                assert.equal(envVars?.[JasScanner.ENV_TOKEN] ?? '', test.token);
+                assert.equal(envVars?.[JasRunner.ENV_PLATFORM_URL] ?? '', test.url);
+                assert.equal(envVars?.[JasRunner.ENV_USER] ?? '', test.user);
+                assert.equal(envVars?.[JasRunner.ENV_PASSWORD] ?? '', test.pass);
+                assert.equal(envVars?.[JasRunner.ENV_TOKEN] ?? '', test.token);
                 // Validate proxy vars
                 if (test.proxy) {
-                    assert.equal(envVars?.[JasScanner.ENV_HTTP_PROXY], test.proxy);
-                    assert.equal(envVars?.[JasScanner.ENV_HTTPS_PROXY], test.proxy);
+                    assert.equal(envVars?.[JasRunner.ENV_HTTP_PROXY], test.proxy);
+                    assert.equal(envVars?.[JasRunner.ENV_HTTPS_PROXY], test.proxy);
                 }
                 // Validate log vars
-                assert.equal(envVars?.[JasScanner.ENV_LOG_DIR], test.logPath);
+                assert.equal(envVars?.[JasRunner.ENV_LOG_DIR], test.logPath);
             }
         });
     });
@@ -210,7 +214,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             let requestPath: string = path.join(tempFolder, 'request');
             let responsePath: string = path.join(tempFolder, 'response');
 
-            let runner: JasScanner = createDummyBinaryRunner(connectionManager, test.timeout, async () => {
+            let runner: JasRunner = createDummyBinaryRunner(connectionManager, test.timeout, async () => {
                 if (test.shouldAbort) {
                     throw new ScanCancellationError();
                 } else if (test.name === 'Not entitled') {
@@ -219,13 +223,13 @@ describe('Analyzer BinaryRunner tests', async () => {
                     await RunUtils.delay(ScanUtils.ANALYZER_TIMEOUT_MILLISECS);
                 }
                 if (test.createDummyResponse) {
-                    fs.writeFileSync(responsePath, JSON.stringify({ runs: [] } as AnalyzerScanResponse));
+                    fs.writeFileSync(responsePath, JSON.stringify({} as AnalyzerScanRun));
                 }
             });
 
             if (test.expectedErr) {
                 try {
-                    await runner.runRequest(() => undefined, 'request data', requestPath, ScanType.ContextualAnalysis, responsePath);
+                    await runner.runRequest(() => undefined, 'request data', requestPath, responsePath);
                     assert.fail('Expected run to throw error');
                 } catch (err) {
                     if (err instanceof Error) {
@@ -235,14 +239,12 @@ describe('Analyzer BinaryRunner tests', async () => {
                     }
                 }
             } else {
-                assert.doesNotThrow(
-                    async () => await runner.runRequest(() => undefined, 'request data', requestPath, ScanType.ContextualAnalysis, responsePath)
-                );
+                assert.doesNotThrow(async () => await runner.runRequest(() => undefined, 'request data', requestPath, responsePath));
             }
         });
     });
 });
 
 class DummyRunnerError extends Error {
-    public code: number = JasScanner.NOT_ENTITLED;
+    public code: number = JasRunner.NOT_ENTITLED;
 }

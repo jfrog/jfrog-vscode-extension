@@ -3,29 +3,29 @@ import * as path from 'path';
 import { assert } from 'chai';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
-import { IacRunner, IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
-import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
-import { createRootTestNode } from './utils/treeNodeUtils.test';
-import { ScanResults } from '../../main/types/workspaceIssuesDetails';
-import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
-import { getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
 import { FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
-import { IacTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/iacTreeNode';
-import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
+import { IacRunner, IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
+import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
+import { IacTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/iacTreeNode';
+import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
+import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
+import { Module } from '../../main/types/jfrogAppsConfig';
+import { ScanResults } from '../../main/types/workspaceIssuesDetails';
 import {
     assertFileNodesCreated,
     assertIssueNodesCreated,
     assertIssuesFullDescription,
+    assertIssuesSnippet,
     assertNodeLabelRuleName,
     assertNodesSeverity,
-    assertIssuesSnippet,
     assertSameNumberOfFileNodes,
     assertSameNumberOfIssueNodes,
     findLocationNode,
     groupFiles
 } from './utils/testAnalyzer.test';
-import { Module } from '../../main/types/jfrogAppsConfig';
+import { createRootTestNode } from './utils/treeNodeUtils.test';
+import { createTestStepProgress, getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
 
 describe('Iac Scan Tests', () => {
     const scanIac: string = path.join(__dirname, '..', 'resources', 'iacScan');
@@ -121,6 +121,6 @@ describe('Iac Scan Tests', () => {
     });
 
     function getDummyRunner(): IacRunner {
-        return new IacRunner({} as ConnectionManager, logManager, {} as Module);
+        return new IacRunner({} as ScanResults, createRootTestNode(''), createTestStepProgress(), {} as ConnectionManager, logManager, {} as Module);
     }
 });

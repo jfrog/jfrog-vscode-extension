@@ -31,6 +31,7 @@ describe('Usage Utils Tests', async () => {
             descriptors: getDummyDescriptors(PackageType.Go, PackageType.Npm),
             expectedFeatures: [
                 { featureId: 'go-deps' },
+                { featureId: 'go-contextual' },
                 { featureId: 'npm-deps' },
                 { featureId: 'npm-contextual' },
                 { featureId: 'iac' },

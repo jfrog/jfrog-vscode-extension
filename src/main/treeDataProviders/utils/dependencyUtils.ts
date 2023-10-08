@@ -1,35 +1,34 @@
-import * as vscode from 'vscode';
 import { IComponent, IGraphResponse, IViolation, IVulnerability } from 'jfrog-client-js';
-import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
-import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
-import { Severity, SeverityUtils } from '../../types/severity';
-import { DependencyIssuesTreeNode } from '../issuesTree/descriptorTree/dependencyIssuesTreeNode';
-import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
+import { IImpactGraph, ILicense } from 'jfrog-ide-webview';
+import * as vscode from 'vscode';
+import { FocusType } from '../../constants/contextKeys';
+import { LogManager } from '../../log/logManager';
+import { ScanManager } from '../../scanLogic/scanManager';
+import { ApplicabilityRunner } from '../../scanLogic/scanRunners/applicabilityScan';
+import { GeneralInfo } from '../../types/generalInfo';
 import { PackageType } from '../../types/projectType';
-import { LicenseIssueTreeNode } from '../issuesTree/descriptorTree/licenseIssueTreeNode';
+import { Severity, SeverityUtils } from '../../types/severity';
+import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
 import { GoUtils } from '../../utils/goUtils';
 import { MavenUtils } from '../../utils/mavenUtils';
 import { NpmUtils } from '../../utils/npmUtils';
-import { PypiUtils } from '../../utils/pypiUtils';
-import { YarnUtils } from '../../utils/yarnUtils';
-import { IImpactGraph, ILicense } from 'jfrog-ide-webview';
-import { IssueTreeNode } from '../issuesTree/issueTreeNode';
-import { FocusType } from '../../constants/contextKeys';
-import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
-import { EnvironmentTreeNode } from '../issuesTree/descriptorTree/environmentTreeNode';
-import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectDependencyTreeNode';
 import { NugetUtils } from '../../utils/nugetUtils';
+import { PypiUtils } from '../../utils/pypiUtils';
+import { FileScanBundle, FileScanError, ScanUtils } from '../../utils/scanUtils';
+import { YarnUtils } from '../../utils/yarnUtils';
+import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
+import { VirtualEnvPypiTree } from '../dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
+import { DependenciesTreeNode } from '../dependenciesTree/dependenciesTreeNode';
+import { CveTreeNode } from '../issuesTree/descriptorTree/cveTreeNode';
+import { DependencyIssuesTreeNode } from '../issuesTree/descriptorTree/dependencyIssuesTreeNode';
+import { DescriptorTreeNode } from '../issuesTree/descriptorTree/descriptorTreeNode';
+import { EnvironmentTreeNode } from '../issuesTree/descriptorTree/environmentTreeNode';
+import { LicenseIssueTreeNode } from '../issuesTree/descriptorTree/licenseIssueTreeNode';
+import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectDependencyTreeNode';
+import { FileTreeNode } from '../issuesTree/fileTreeNode';
+import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { GraphScanProgress, StepProgress } from './stepProgress';
-import { AnalyzerUtils } from './analyzerUtils';
-import { DescriptorTreeNode } from '../issuesTree/descriptorTree/descriptorTreeNode';
-import { VirtualEnvPypiTree } from '../dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
-import { ScanManager } from '../../scanLogic/scanManager';
-import { FileScanBundle, FileScanError, ScanUtils } from '../../utils/scanUtils';
-import { LogManager } from '../../log/logManager';
-import { GeneralInfo } from '../../types/generalInfo';
-import { FileTreeNode } from '../issuesTree/fileTreeNode';
-import { ApplicabilityRunner } from '../../scanLogic/scanRunners/applicabilityScan';
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
@@ -107,11 +106,15 @@ export class DependencyUtils {
         this.reportNotFoundDescriptors(descriptorsPaths, descriptorsParsed, scanManager.logManager);
 
         await Promise.all(scansPromises);
-        let applicabilityRunner: ApplicabilityRunner = new ApplicabilityRunner(scanManager.connectionManager, scanManager.logManager);
+        let applicabilityRunner: ApplicabilityRunner = new ApplicabilityRunner(
+            bundlesWithIssues,
+            type,
+            progressManager,
+            scanManager.connectionManager,
+            scanManager.logManager
+        );
         if (contextualScan && bundlesWithIssues.length > 0 && applicabilityRunner.shouldRun()) {
-            await AnalyzerUtils.cveApplicableScanning(scanManager, bundlesWithIssues, progressManager, type, applicabilityRunner).catch(err =>
-                ScanUtils.onScanError(err, scanManager.logManager, true)
-            );
+            await applicabilityRunner.scan().catch(err => ScanUtils.onScanError(err, scanManager.logManager, true));
         }
     }
 

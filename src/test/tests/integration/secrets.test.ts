@@ -4,6 +4,8 @@ import * as path from 'path';
 
 import { AnalyzeScanRequest } from '../../../main/scanLogic/scanRunners/analyzerModels';
 import { SecretsRunner, SecretsScanResponse } from '../../../main/scanLogic/scanRunners/secretsScan';
+import { Module } from '../../../main/types/jfrogAppsConfig';
+import { ScanResults } from '../../../main/types/workspaceIssuesDetails';
 import {
     AnalyzerManagerIntegrationEnv,
     assertFileIssuesExist,
@@ -14,7 +16,8 @@ import {
     assertIssuesRuleNameExist,
     assertIssuesSeverityExist
 } from '../utils/testIntegration.test';
-import { Module } from '../../../main/types/jfrogAppsConfig';
+import { createRootTestNode } from '../utils/treeNodeUtils.test';
+import { createTestStepProgress } from '../utils/utils.test';
 
 describe('Secrets Scan Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -27,7 +30,15 @@ describe('Secrets Scan Integration Tests', async () => {
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        runner = new SecretsRunner(integrationManager.connectionManager, integrationManager.logManager, {} as Module, integrationManager.resource);
+        runner = new SecretsRunner(
+            {} as ScanResults,
+            createRootTestNode(''),
+            createTestStepProgress(),
+            integrationManager.connectionManager,
+            integrationManager.logManager,
+            {} as Module,
+            integrationManager.resource
+        );
         runner.verbose = true;
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
         // Get expected partial result that the scan should contain
@@ -37,7 +48,7 @@ describe('Secrets Scan Integration Tests', async () => {
         // Run scan
         // Try/Catch (with skip) should be removed after Secrets scan is released
         response = await runner
-            .run(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest)
+            .executeRequest(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest)
             .then(runResult => runner.convertResponse(runResult));
     });
 

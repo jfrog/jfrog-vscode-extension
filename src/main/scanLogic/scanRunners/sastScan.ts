@@ -10,21 +10,21 @@ import { AppsConfigUtils } from '../../utils/appConfigUtils';
 import { Resource } from '../../utils/resource';
 import { ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
-import { ScanManager } from '../scanManager';
 import {
     AnalyzeIssue,
     AnalyzeLocation,
     AnalyzeScanRequest,
     AnalyzerScanResponse,
+    AnalyzerScanRun,
     CodeFlow,
     FileLocation,
     FileRegion,
     ScanType
 } from './analyzerModels';
-import { JasScanner } from './binaryRunner';
+import { JasRunner } from './jasRunner';
 
 /**
- * The request that is sent to the binary to scan Sast
+ * The request that is sent to the binary to scan SAST
  */
 export interface SastScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
@@ -56,8 +56,11 @@ export interface SastIssueLocation {
     threadFlows: FileLocation[][];
 }
 
-export class SastRunner extends JasScanner {
+export class SastRunner extends JasRunner {
     constructor(
+        private _scanResults: ScanResults,
+        private _root: IssuesRootTreeNode,
+        private _progressManager: StepProgress,
         connectionManager: ConnectionManager,
         logManager: LogManager,
         module: Module,
@@ -84,12 +87,9 @@ export class SastRunner extends JasScanner {
     }
 
     /**
-     * Scan for SAST issues
-     * @param module - the module that will be scanned
-     * @param checkCancel - check if cancel
-     * @returns the response generated from the scan
+     * Run SAST scan async task and populate the given bundle with the results.
      */
-    public async scan(scanResults: ScanResults, root: IssuesRootTreeNode, scanManager: ScanManager, progressManager: StepProgress): Promise<void> {
+    public async scan(): Promise<void> {
         let startTime: number = Date.now();
         let sastScanner: SastScanner | undefined = this._module.scanners?.sast;
         let request: SastScanRequest = {
@@ -99,71 +99,58 @@ export class SastRunner extends JasScanner {
             excluded_rules: sastScanner?.excluded_rules,
             exclude_patterns: AppsConfigUtils.GetExcludePatterns(this._module, sastScanner)
         } as SastScanRequest;
-        this._logManager.logMessage(
-            "Scanning directories '" + request.roots + "', for SAST issues. Skipping folders: " + request.exclude_patterns,
-            'DEBUG'
+        super.logStartScanning(request);
+        let response: SastScanResponse = await this.executeRequest(this._progressManager.checkCancel, request).then(runResult =>
+            this.generateScanResponse(runResult)
         );
-
-        let response: SastScanResponse = await this.run(progressManager.checkCancel, request).then(runResult => this.generateScanResponse(runResult));
         if (response) {
-            scanResults.sastScan = response;
-            scanResults.sastScanTimestamp = Date.now();
-            let sastIssuesCount: number = AnalyzerUtils.populateSastIssues(root, scanResults);
-            scanManager.logManager.logMessage(
-                'Found ' +
-                    sastIssuesCount +
-                    " SAST issues in workspace = '" +
-                    scanResults.path +
-                    "' (elapsed " +
-                    (scanResults.sastScanTimestamp - startTime) / 1000 +
-                    ' seconds)',
-                'INFO'
-            );
-
-            root.apply();
-            progressManager.reportProgress();
+            this._scanResults.sastScan = response;
+            this._scanResults.sastScanTimestamp = Date.now();
+            let issuesCount: number = AnalyzerUtils.populateSastIssues(this._root, this._scanResults);
+            super.logNumberOfIssues(issuesCount, this._scanResults.path, startTime, this._scanResults.sastScanTimestamp);
+            this._root.apply();
         }
+        this._progressManager.reportProgress();
     }
 
     /**
      * Generate response from the run results
-     * @param run - the run results generated from the binary
+     * @param response - Run results generated from the binary
      * @returns the response generated from the scan run
      */
     public generateScanResponse(response?: AnalyzerScanResponse): SastScanResponse {
         if (!response) {
             return {} as SastScanResponse;
         }
+        let analyzerScanRun: AnalyzerScanRun = response.runs[0];
         let sastResponse: SastScanResponse = {
             filesWithIssues: []
         } as SastScanResponse;
 
-        for (const run of response.runs) {
-            // Prepare
-            let rulesFullDescription: Map<string, string> = new Map<string, string>();
-            for (const rule of run.tool.driver.rules) {
-                if (rule.fullDescription) {
-                    rulesFullDescription.set(rule.id, rule.fullDescription.text);
-                }
+        // Prepare
+        let rulesFullDescription: Map<string, string> = new Map<string, string>();
+        for (const rule of analyzerScanRun.tool.driver.rules) {
+            if (rule.fullDescription) {
+                rulesFullDescription.set(rule.id, rule.fullDescription.text);
             }
-            // Generate response data
-            run.results?.forEach((analyzeIssue: AnalyzeIssue) => {
-                if (analyzeIssue.suppressions && analyzeIssue.suppressions.length > 0) {
-                    // Suppress issue
-                    return;
-                }
-                this.generateIssueData(sastResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId));
-            });
         }
+        // Generate response data
+        analyzerScanRun.results?.forEach((analyzeIssue: AnalyzeIssue) => {
+            if (analyzeIssue.suppressions && analyzeIssue.suppressions.length > 0) {
+                // Suppress issue
+                return;
+            }
+            this.generateIssueData(sastResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId));
+        });
         return sastResponse;
     }
 
     /**
      * Generate the data for a specific analyze issue (the file object, the issue in the file object and all the location objects of this issue).
      * If the issue also contains codeFlow generate the needed information for it as well
-     * @param sastResponse - the response of the scan that holds all the file objects
-     * @param analyzeIssue - the issue to handle and generate information base on it
-     * @param fullDescription - the description of the analyzeIssue
+     * @param sastResponse    - Response of the scan that holds all the file objects
+     * @param analyzeIssue    - Issue to handle and generate information base on it
+     * @param fullDescription - The description of the analyzeIssue
      */
     public generateIssueData(sastResponse: SastScanResponse, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
         analyzeIssue.locations.forEach(location => {
@@ -179,9 +166,9 @@ export class SastRunner extends JasScanner {
     /**
      * Generate the code flow data.
      * Search the code flows for the given location (in a given file), the code flow belong to a location if the last location in the flow matches the given location.
-     * @param filePath - the path to the file the issue location belongs to
-     * @param issueLocation - the issue in a location to search code flows that belongs to it
-     * @param codeFlows - all the code flows for this issue
+     * @param filePath      - Path to the file the issue location belongs to
+     * @param issueLocation - Issue in a location to search code flows that belongs to it
+     * @param codeFlows     - All the code flows for this issue
      */
     private generateCodeFlowData(filePath: string, issueLocation: SastIssueLocation, codeFlows: CodeFlow[]) {
         // Check if exists flows for the current location in this issue

@@ -5,6 +5,7 @@ import * as path from 'path';
 import { AnalyzeScanRequest } from '../../../main/scanLogic/scanRunners/analyzerModels';
 import { IacRunner, IacScanResponse } from '../../../main/scanLogic/scanRunners/iacScan';
 import { Module } from '../../../main/types/jfrogAppsConfig';
+import { ScanResults } from '../../../main/types/workspaceIssuesDetails';
 import {
     AnalyzerManagerIntegrationEnv,
     assertFileIssuesExist,
@@ -15,6 +16,8 @@ import {
     assertIssuesRuleNameExist,
     assertIssuesSeverityExist
 } from '../utils/testIntegration.test';
+import { createRootTestNode } from '../utils/treeNodeUtils.test';
+import { createTestStepProgress } from '../utils/utils.test';
 
 describe('Iac Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -27,7 +30,15 @@ describe('Iac Integration Tests', async () => {
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        runner = new IacRunner(integrationManager.connectionManager, integrationManager.logManager, {} as Module, integrationManager.resource);
+        runner = new IacRunner(
+            {} as ScanResults,
+            createRootTestNode(''),
+            createTestStepProgress(),
+            integrationManager.connectionManager,
+            integrationManager.logManager,
+            {} as Module,
+            integrationManager.resource
+        );
         runner.verbose = true;
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
         // Get expected partial result that the scan should contain
@@ -37,7 +48,7 @@ describe('Iac Integration Tests', async () => {
         // Run scan
         // Try/Catch (with skip) should be removed after Iac is released
         response = await runner
-            .run(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest)
+            .executeRequest(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest)
             .then(runResult => runner.convertResponse(runResult));
     });
 

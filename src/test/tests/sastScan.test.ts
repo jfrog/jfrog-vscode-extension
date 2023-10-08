@@ -4,12 +4,13 @@ import { assert } from 'chai';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
-import { SastScanResponse, SastRunner } from '../../main/scanLogic/scanRunners/sastScan';
+import { SastRunner, SastScanResponse } from '../../main/scanLogic/scanRunners/sastScan';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { SastTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/sastTreeNode';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
+import { Module } from '../../main/types/jfrogAppsConfig';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
 import {
     assertFileNodesCreated,
@@ -24,8 +25,7 @@ import {
     groupFiles
 } from './utils/testAnalyzer.test';
 import { createRootTestNode } from './utils/treeNodeUtils.test';
-import { getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
-import { Module } from '../../main/types/jfrogAppsConfig';
+import { createTestStepProgress, getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
 
 describe('Sast Tests', () => {
     const scanSast: string = path.join(__dirname, '..', 'resources', 'sastScan');
@@ -121,6 +121,6 @@ describe('Sast Tests', () => {
     });
 
     function getDummyRunner(): SastRunner {
-        return new SastRunner({} as ConnectionManager, logManager, {} as Module);
+        return new SastRunner({} as ScanResults, createRootTestNode(''), createTestStepProgress(), {} as ConnectionManager, logManager, {} as Module);
     }
 });

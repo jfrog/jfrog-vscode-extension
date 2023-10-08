@@ -29,7 +29,7 @@ describe('Analyzer Utils Tests', async () => {
         }
     ].forEach(testCase => {
         it('Get analyzer manager exclude pattern test - ' + testCase.pattern, () => {
-            let results: string[] = AnalyzerUtils.getAnalyzerManagerExcludePattern(testCase.pattern);
+            let results: string[] = AnalyzerUtils.getAnalyzerManagerExcludePatterns(testCase.pattern);
             assert.sameMembers(testCase.results, results);
         });
     });

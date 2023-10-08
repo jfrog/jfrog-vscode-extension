@@ -8,9 +8,8 @@ import { ScanResults } from '../../types/workspaceIssuesDetails';
 import { AppsConfigUtils } from '../../utils/appConfigUtils';
 import { Resource } from '../../utils/resource';
 import { ScanUtils } from '../../utils/scanUtils';
-import { ScanManager } from '../scanManager';
-import { AnalyzeScanRequest, AnalyzerScanResponse, ScanType } from './analyzerModels';
-import { JasScanner } from './binaryRunner';
+import { AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, ScanType } from './analyzerModels';
+import { JasRunner } from './jasRunner';
 
 export interface IacScanResponse {
     filesWithIssues: FileWithSecurityIssues[];
@@ -19,8 +18,11 @@ export interface IacScanResponse {
 /**
  * Describes a runner for the 'Infrastructure As Code' (Iac) scan executable file.
  */
-export class IacRunner extends JasScanner {
+export class IacRunner extends JasRunner {
     constructor(
+        private _scanResults: ScanResults,
+        private _root: IssuesRootTreeNode,
+        private _progressManager: StepProgress,
         connectionManager: ConnectionManager,
         logManager: LogManager,
         module: Module,
@@ -35,63 +37,56 @@ export class IacRunner extends JasScanner {
         await this.executeBinary(checkCancel, ['iac', yamlConfigPath], executionLogDirectory);
     }
 
-    public async scan(scanResults: ScanResults, root: IssuesRootTreeNode, scanManager: ScanManager, progressManager: StepProgress): Promise<void> {
-        let startIacTime: number = Date.now();
+    /**
+     * Run IaC scan async task and populate the given bundle with the results.
+     */
+    public async scan(): Promise<void> {
+        let startTime: number = Date.now();
         let request: AnalyzeScanRequest = {
             type: ScanType.Iac,
             roots: AppsConfigUtils.GetSourceRoots(this._module, this._module.scanners?.iac),
             skipped_folders: AppsConfigUtils.GetExcludePatterns(this._module, this._module.scanners?.iac)
         } as AnalyzeScanRequest;
-        this._logManager.logMessage(
-            "Scanning directories '" + request.roots + "', for Iac issues. Skipping folders: " + request.skipped_folders,
-            'DEBUG'
+        super.logStartScanning(request);
+        let response: IacScanResponse = await this.executeRequest(this._progressManager.checkCancel, request).then(runResult =>
+            this.convertResponse(runResult)
         );
-        let response: IacScanResponse = await this.run(progressManager.checkCancel, request).then(runResult => this.convertResponse(runResult));
         if (response) {
-            scanResults.iacScan = response;
-            scanResults.iacScanTimestamp = Date.now();
-            let issuesCount: number = AnalyzerUtils.populateIacIssues(root, scanResults);
-            scanManager.logManager.logMessage(
-                'Found ' +
-                    issuesCount +
-                    " Iac issues in workspace = '" +
-                    scanResults.path +
-                    "' (elapsed " +
-                    (scanResults.iacScanTimestamp - startIacTime) / 1000 +
-                    ' seconds)',
-                'INFO'
-            );
-            root.apply();
+            this._scanResults.iacScan = response;
+            this._scanResults.iacScanTimestamp = Date.now();
+            let issuesCount: number = AnalyzerUtils.populateIacIssues(this._root, this._scanResults);
+            super.logNumberOfIssues(issuesCount, this._scanResults.path, startTime, this._scanResults.iacScanTimestamp);
+            this._root.apply();
         }
-        progressManager.reportProgress();
+        this._progressManager.reportProgress();
     }
 
     /**
      * Generate response from the run results
-     * @param analyzerScanResponse - the run results generated from the binary
+     * @param response - Run results generated from the binary
      * @returns the response generated from the scan run
      */
-    public convertResponse(analyzerScanResponse?: AnalyzerScanResponse): IacScanResponse {
-        if (!analyzerScanResponse) {
+    public convertResponse(response?: AnalyzerScanResponse): IacScanResponse {
+        if (!response) {
             return {} as IacScanResponse;
         }
+        let analyzerScanRun: AnalyzerScanRun = response.runs[0];
         let iacResponse: IacScanResponse = {
             filesWithIssues: []
         } as IacScanResponse;
 
-        for (const run of analyzerScanResponse.runs) {
-            // Get the full descriptions of all rules
-            let rulesFullDescription: Map<string, string> = new Map<string, string>();
-            for (const rule of run.tool.driver.rules) {
-                if (rule.fullDescription) {
-                    rulesFullDescription.set(rule.id, rule.fullDescription.text);
-                }
+        // Get the full descriptions of all rules
+        let rulesFullDescription: Map<string, string> = new Map<string, string>();
+        for (const rule of analyzerScanRun.tool.driver.rules) {
+            if (rule.fullDescription) {
+                rulesFullDescription.set(rule.id, rule.fullDescription.text);
             }
-            // Generate response data
-            run.results?.forEach(analyzeIssue =>
-                AnalyzerUtils.generateIssueData(iacResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId))
-            );
         }
+        // Generate response data
+        analyzerScanRun.results?.forEach(analyzeIssue =>
+            AnalyzerUtils.generateIssueData(iacResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId))
+        );
+
         return iacResponse;
     }
 }

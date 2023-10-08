@@ -22,20 +22,20 @@ import { AnalyzeScanRequest, AnalyzerRequest, AnalyzerScanResponse, ScanType } f
  */
 class RunArgs {
     // The requests for the run
-    public requests: RunRequest[] = [];
+    public request: RunRequest = {} as RunRequest;
     // The directory that the requests/responses are expected
     constructor(public readonly directory: string) {}
 
     public getRoots(): string[] {
         let roots: Set<string> = new Set<string>();
-        this.requests.forEach(request => request.roots.forEach(root => roots.add(root)));
+        this.request.roots.forEach(root => roots.add(root));
         return Array.from(roots);
     }
 }
 
 interface RunRequest {
     type: ScanType;
-    request: string;
+    requestContent: string;
     requestPath: string;
     roots: string[];
     responsePath: string;
@@ -44,7 +44,7 @@ interface RunRequest {
 /**
  * Base class for a JFrog Advanced Security scanner.
  */
-export abstract class JasScanner {
+export abstract class JasRunner {
     protected _verbose: boolean = false;
     protected _runDirectory: string;
 
@@ -70,9 +70,8 @@ export abstract class JasScanner {
         protected _scanType: ScanType,
         protected _logManager: LogManager,
         protected _module: Module,
-        protected _binary: Resource = JasScanner.getAnalyzerManagerResource(_logManager)
+        protected _binary: Resource = JasRunner.getAnalyzerManagerResource(_logManager)
     ) {
-        this._binary = JasScanner.getAnalyzerManagerResource(_logManager);
         this._runDirectory = path.dirname(this._binary.fullPath);
 
         if (this._abortCheckIntervalMillisecs <= 0) {
@@ -82,19 +81,23 @@ export abstract class JasScanner {
     }
 
     public static getDefaultAnalyzerManagerSourceUrl(version: string = '[RELEASE]'): string {
-        return Utils.addZipSuffix(JasScanner.DOWNLOAD_URL + '/' + version + '/' + Utils.getArchitecture() + '/' + JasScanner.RUNNER_NAME);
+        return Utils.addZipSuffix(JasRunner.DOWNLOAD_URL + '/' + version + '/' + Utils.getArchitecture() + '/' + JasRunner.RUNNER_NAME);
     }
 
     public static getDefaultAnalyzerManagerTargetPath(baseDirectory?: string): string {
-        return Utils.addWinSuffixIfNeeded(path.join(baseDirectory ?? ScanUtils.getIssuesPath(), JasScanner.RUNNER_NAME, JasScanner.RUNNER_NAME));
+        return Utils.addWinSuffixIfNeeded(path.join(baseDirectory ?? ScanUtils.getIssuesPath(), JasRunner.RUNNER_NAME, JasRunner.RUNNER_NAME));
     }
 
     public static getAnalyzerManagerResource(logManager: LogManager, targetPath?: string): Resource {
         return new Resource(
-            this.getDefaultAnalyzerManagerSourceUrl(JasScanner.RUNNER_VERSION),
+            this.getDefaultAnalyzerManagerSourceUrl(JasRunner.RUNNER_VERSION),
             targetPath ?? this.getDefaultAnalyzerManagerTargetPath(),
             logManager
         );
+    }
+
+    public get binary(): Resource {
+        return this._binary;
     }
 
     public get verbose(): boolean {
@@ -106,11 +109,16 @@ export abstract class JasScanner {
     }
 
     /**
+     * Run full JAS scan for the specific scanner.
+     */
+    public abstract scan(): Promise<void>;
+
+    /**
      * Run the executeBinary method with the provided request path
-     * @param checkCancel - check if cancel
-     * @param yamlConfigPath - the path to the request
-     * @param executionLogDirectory - log file will be written to the dir
-     * @param responsePath - path to the output file
+     * @param yamlConfigPath        - Path to the request
+     * @param executionLogDirectory - Log file will be written to the dir
+     * @param checkCancel           - Check if should cancel
+     * @param responsePath          - Path to the output file
      */
     protected abstract runBinary(
         yamlConfigPath: string,
@@ -119,6 +127,9 @@ export abstract class JasScanner {
         responsePath: string | undefined
     ): Promise<void>;
 
+    /**
+     * @returns true if should run the JAS scanner
+     */
     public shouldRun(): boolean {
         if (!this.validateSupported()) {
             this._logManager.logMessage(this._scanType + ' runner could not find binary to run', 'WARN');
@@ -141,9 +152,9 @@ export abstract class JasScanner {
 
     /**
      * Execute the cmd command to run the binary with given arguments and an option to abort the operation.
-     * @param checkCancel - check if should cancel
-     * @param args  - the arguments for the command
-     * @param executionLogDirectory - the directory to save the execution log in
+     * @param checkCancel           - Check if should cancel
+     * @param args                  - Arguments for the command
+     * @param executionLogDirectory - Directory to save the execution log in
      */
     protected async executeBinary(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
         await RunUtils.runWithTimeout(this._abortCheckIntervalMillisecs, checkCancel, {
@@ -177,6 +188,21 @@ export abstract class JasScanner {
         this._logManager.logMessage(text, isErr ? 'ERR' : 'DEBUG');
     }
 
+    protected logStartScanning(request: AnalyzeScanRequest): void {
+        this._logManager.logMessage(
+            `Scanning directories ' ${request.roots} + ', for ${this._scanType} issues. Skipping folders: ${request.skipped_folders}`,
+            'DEBUG'
+        );
+    }
+
+    protected logNumberOfIssues(issuesCount: number, workspace: string, startTime: number, endTime: number): void {
+        let elapsedTime: number = (endTime - startTime) / 1000;
+        this._logManager.logMessage(
+            `Found ${issuesCount} ${this._scanType} issues in workspace '${workspace}' (elapsed ${elapsedTime} seconds)`,
+            'INFO'
+        );
+    }
+
     /**
      * Create the needed environment variables for the runner to run
      * @param executionLogDirectory - the directory that the log will be written into, if not provided the log will be written in stdout/stderr
@@ -189,13 +215,13 @@ export abstract class JasScanner {
 
         let binaryVars: NodeJS.ProcessEnv = { JFROG_CLI_LOG_LEVEL: Translators.toAnalyzerLogLevel(Configuration.getLogLevel()) };
         // Platform information
-        binaryVars[JasScanner.ENV_PLATFORM_URL] = this._connectionManager.url;
+        binaryVars[JasRunner.ENV_PLATFORM_URL] = this._connectionManager.url;
         // Credentials information
         if (this._connectionManager.accessToken) {
-            binaryVars[JasScanner.ENV_TOKEN] = this._connectionManager.accessToken;
+            binaryVars[JasRunner.ENV_TOKEN] = this._connectionManager.accessToken;
         } else {
-            binaryVars[JasScanner.ENV_USER] = this._connectionManager.username;
-            binaryVars[JasScanner.ENV_PASSWORD] = this._connectionManager.password;
+            binaryVars[JasRunner.ENV_USER] = this._connectionManager.username;
+            binaryVars[JasRunner.ENV_PASSWORD] = this._connectionManager.password;
         }
 
         this.populateOptionalInformation(binaryVars, executionLogDirectory);
@@ -219,10 +245,10 @@ export abstract class JasScanner {
             proxyHttpsUrl = 'https://' + proxyUrl;
         }
         if (proxyHttpUrl) {
-            binaryVars[JasScanner.ENV_HTTP_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpUrl);
+            binaryVars[JasRunner.ENV_HTTP_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpUrl);
         }
         if (proxyHttpsUrl) {
-            binaryVars[JasScanner.ENV_HTTPS_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
+            binaryVars[JasRunner.ENV_HTTPS_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
         }
         // Optional log destination
         if (executionLogDirectory) {
@@ -232,7 +258,7 @@ export abstract class JasScanner {
 
     /**
      * Add optional proxy auth information to the base url if exists
-     * @param url - the base url to add information on
+     * @param url - Base url to add information on
      * @returns the url with the auth information if exists or the given url if not
      */
     private addOptionalProxyAuthInformation(url: string): string {
@@ -249,45 +275,60 @@ export abstract class JasScanner {
         return url;
     }
 
-    public async run(checkCancel: () => void, request: AnalyzeScanRequest): Promise<AnalyzerScanResponse | undefined> {
+    /**
+     * Execute the input scan request.
+     * @param checkCancel - Check if should cancel
+     * @param request     - Request to perform in YAML format
+     * @returns
+     */
+    public async executeRequest(checkCancel: () => void, request: AnalyzeScanRequest): Promise<AnalyzerScanResponse | undefined> {
         let args: RunArgs = this.createRunArguments(request);
+        let execErr: Error | undefined;
         try {
-            return await this.runTasks(args, checkCancel);
+            return await this.runRequest(checkCancel, args.request.requestContent, args.request.requestPath, args.request.responsePath);
+        } catch (err) {
+            execErr = <Error>err;
+            if (err instanceof ScanCancellationError || err instanceof NotEntitledError || err instanceof NotSupportedError) {
+                throw err;
+            }
+            this._logManager.logError(execErr);
         } finally {
+            this.handleExecutionLog(args, execErr);
             ScanUtils.removeFolder(args.directory);
         }
+        return;
     }
 
     /**
      * Populate the run arguments based on the given requests information
-     * @param requests - the run requests information
+     * @param requests - Run requests information
      * @return run arguments for the given requests
      */
     private createRunArguments(request: AnalyzeScanRequest): RunArgs {
         let args: RunArgs = new RunArgs(ScanUtils.createTmpDir());
 
         // Prepare request information and insert as an actual request
-        const requestPath: string = path.join(args.directory, 'request_' + args.requests.length);
-        const responsePath: string = path.join(args.directory, 'response_' + args.requests.length);
+        const requestPath: string = path.join(args.directory, 'request');
+        const responsePath: string = path.join(args.directory, 'response');
         if (request.type !== ScanType.Sast) {
             request.output = responsePath;
         }
         request.type = this._scanType;
         // Add request to run
-        args.requests.push({
+        args.request = {
             type: request.type,
-            request: this.requestsToYaml(request),
+            requestContent: this.requestsToYaml(request),
             requestPath: requestPath,
             roots: request.roots,
             responsePath: responsePath
-        } as RunRequest);
+        } as RunRequest;
 
         return args;
     }
 
     /**
      * Translate the run requests to a single analyze request in yaml format
-     * @param requests - run requests
+     * @param requests - Run requests
      * @returns analyze request in YAML format
      */
     public requestsToYaml(...requests: AnalyzeScanRequest[]): string {
@@ -296,42 +337,6 @@ export abstract class JasScanner {
                 scans: requests
             } as AnalyzerRequest)
             .replace('skipped_folders', 'skipped-folders');
-    }
-
-    private async runTasks(args: RunArgs, checkCancel: () => void): Promise<AnalyzerScanResponse> {
-        let runs: Promise<any>[] = [];
-        let aggResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
-        for (let i: number = 0; i < args.requests.length; i++) {
-            runs.push(
-                this.runRequest(
-                    checkCancel,
-                    args.requests[i].request,
-                    args.requests[i].requestPath,
-                    args.requests[i].type,
-                    args.requests[i].responsePath
-                )
-                    .then(response => {
-                        if (response && response.runs) {
-                            aggResponse.runs.push(...response.runs);
-                        }
-                    })
-                    .catch(err => {
-                        if (err instanceof ScanCancellationError || err instanceof NotEntitledError || err instanceof NotSupportedError) {
-                            throw err;
-                        }
-                        this._logManager.logError(err);
-                    })
-            );
-        }
-        let exeErr: Error | undefined;
-        await Promise.all(runs)
-            .catch(err => {
-                exeErr = err;
-                throw err;
-            })
-            // Collect log if exist
-            .finally(() => this.handleExecutionLog(args, exeErr));
-        return aggResponse;
     }
 
     private handleExecutionLog(args: RunArgs, exeErr: Error | undefined) {
@@ -354,9 +359,9 @@ export abstract class JasScanner {
 
     /**
      * Copy a file that includes 'log' in its name from a given folder to the logs folder
-     * @param arg - the run arguments that related this log
-     * @param hadError - if true, will log result as error, otherwise success.
-     * @param copyToDirectory - optional destination to copy the log
+     * @param arg             - Run arguments that related this log
+     * @param hadError        - If true, will log result as error, otherwise success.
+     * @param copyToDirectory - Optional destination to copy the log
      */
     private copyRunLogToFolder(args: RunArgs, hadError: boolean, copyToDirectory: string = ScanUtils.getLogsPath()): string | undefined {
         let logFile: string | undefined = fs.readdirSync(args.directory).find(fileName => fileName.toLowerCase().includes('log'));
@@ -381,23 +386,17 @@ export abstract class JasScanner {
     }
 
     /**
-     * Perform the binary run, with an option to abort on signal in 3 steps :
+     * Perform the binary run, with an option to abort on signal in 3 steps:
      * 1. Save the request in a given path
      * 2. Run the binary
      * 3. Collect the responses for each run in the request
-     * @param checkCancel - check if cancel
-     * @param request - the request to perform in YAML format
-     * @param requestPath - the path that the request will be
-     * @param responsePath - the path of the response for request in the run
+     * @param checkCancel  - Check if cancel
+     * @param request      - Request to perform in YAML format
+     * @param requestPath  - Path that the request will be
+     * @param responsePath - Path of the response for request in the run
      * @returns the response from all the binary runs
      */
-    public async runRequest(
-        checkCancel: () => void,
-        request: string,
-        requestPath: string,
-        type: ScanType,
-        responsePath: string
-    ): Promise<AnalyzerScanResponse> {
+    public async runRequest(checkCancel: () => void, request: string, requestPath: string, responsePath: string): Promise<AnalyzerScanResponse> {
         // 1. Save requests as yaml file in folder
         fs.writeFileSync(requestPath, request);
         this._logManager.debug('Input YAML:\n' + request);
@@ -406,13 +405,13 @@ export abstract class JasScanner {
         await this.runBinary(requestPath, this._verbose ? undefined : path.dirname(requestPath), checkCancel, responsePath).catch(error => {
             if (error.code) {
                 // Not entitled to run binary
-                if (error.code === JasScanner.NOT_ENTITLED) {
+                if (error.code === JasRunner.NOT_ENTITLED) {
                     throw new NotEntitledError();
                 }
-                if (error.code === JasScanner.NOT_SUPPORTED) {
+                if (error.code === JasRunner.NOT_SUPPORTED) {
                     throw new NotSupportedError(Translators.toAnalyzerTypeString(this._scanType));
                 }
-                if (error.code === JasScanner.OS_NOT_SUPPORTED) {
+                if (error.code === JasRunner.OS_NOT_SUPPORTED) {
                     throw new OsNotSupportedError(Translators.toAnalyzerTypeString(this._scanType));
                 }
                 this._logManager.logMessage(
@@ -423,21 +422,12 @@ export abstract class JasScanner {
             throw error;
         });
         // 3. Collect responses
-        let analyzerScanResponse: AnalyzerScanResponse = { runs: [] } as AnalyzerScanResponse;
         if (!fs.existsSync(responsePath)) {
             throw new Error(
                 "Running '" + Translators.toAnalyzerTypeString(this._scanType) + "' binary didn't produce response.\nRequest: " + request
             );
         }
         // Load result and parse as response
-        let result: AnalyzerScanResponse = JSON.parse(fs.readFileSync(responsePath, 'utf8').toString());
-        if (result && result.runs) {
-            analyzerScanResponse.runs.push(...result.runs);
-        }
-        return analyzerScanResponse;
-    }
-
-    public get binary(): Resource {
-        return this._binary;
+        return JSON.parse(fs.readFileSync(responsePath, 'utf8').toString());
     }
 }
