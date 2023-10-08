@@ -4,7 +4,6 @@ import { CodeIssueTreeNode } from '../treeDataProviders/issuesTree/codeFileTree/
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { IssueTreeNode } from '../treeDataProviders/issuesTree/issueTreeNode';
 import { Severity, SeverityUtils } from '../types/severity';
-
 import { AbstractFileActionProvider } from './abstractFileActionProvider';
 
 export class CodeFileActionProvider extends AbstractFileActionProvider implements vscode.CodeActionProvider {

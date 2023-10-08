@@ -203,8 +203,8 @@ describe('Connection Manager Tests', () => {
         let logMessageStub: sinon.SinonStub<any, void>;
         let setUrlsFromFilesystemStub: sinon.SinonStub<any, Promise<boolean>>;
         let setUsernameFromFilesystemStub: sinon.SinonStub<any, Promise<boolean>>;
-        let setPasswordFromKeyStoreStub: sinon.SinonStub<any, Promise<boolean>>;
-        let setAccessTokenFromKeyStoreStub: sinon.SinonStub<any, Promise<boolean>>;
+        let getPasswordFromSecretStorageStub: sinon.SinonStub<any, Promise<boolean>>;
+        let getAccessTokenFromSecretStorageStub: sinon.SinonStub<any, Promise<boolean>>;
         let deleteCredentialsFromMemoryStub: sinon.SinonStub<any[], any>;
         let resolveUrlsStub: sinon.SinonStub<any, Promise<void>>;
         let onSuccessConnectStub: sinon.SinonStub<any, Promise<void>>;
@@ -214,8 +214,8 @@ describe('Connection Manager Tests', () => {
             //By casting mockConnectionManager to any, we can access and stub the private function.
             setUrlsFromFilesystemStub = sinon.stub(mockConnectionManager as any, 'setUrlsFromFilesystem').resolves(true);
             setUsernameFromFilesystemStub = sinon.stub(mockConnectionManager as any, 'setUsernameFromFilesystem').resolves(true);
-            setPasswordFromKeyStoreStub = sinon.stub(mockConnectionManager as any, 'setPasswordFromKeyStore').resolves(true);
-            setAccessTokenFromKeyStoreStub = sinon.stub(mockConnectionManager as any, 'setAccessTokenFromKeyStore').resolves(false);
+            getPasswordFromSecretStorageStub = sinon.stub(mockConnectionManager as any, 'getPasswordFromSecretStorage').resolves(true);
+            getAccessTokenFromSecretStorageStub = sinon.stub(mockConnectionManager as any, 'getAccessTokenFromSecretStorage').resolves(false);
             deleteCredentialsFromMemoryStub = sinon.stub(mockConnectionManager as any, 'deleteCredentialsFromMemory').resolves(true);
             resolveUrlsStub = sinon.stub(mockConnectionManager as any, 'resolveUrls').resolves();
             onSuccessConnectStub = sinon.stub(mockConnectionManager, 'onSuccessConnect').resolves();
@@ -227,53 +227,47 @@ describe('Connection Manager Tests', () => {
 
         it('Read username and password', async () => {
             // Call the function
-            const result: boolean = await mockConnectionManager.connect();
+            const result: boolean = await mockConnectionManager.loadCredential();
 
             // Check the return value and ensure that necessary methods are called
             assert.isTrue(result);
-            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from KeyStore...', 'DEBUG');
             sinon.assert.calledOnce(setUrlsFromFilesystemStub);
             sinon.assert.calledOnce(setUsernameFromFilesystemStub);
-            sinon.assert.calledOnce(setPasswordFromKeyStoreStub);
-            sinon.assert.notCalled(setAccessTokenFromKeyStoreStub);
+            sinon.assert.calledOnce(getPasswordFromSecretStorageStub);
+            sinon.assert.notCalled(getAccessTokenFromSecretStorageStub);
             sinon.assert.notCalled(deleteCredentialsFromMemoryStub);
-            sinon.assert.calledOnce(resolveUrlsStub);
-            sinon.assert.calledOnce(onSuccessConnectStub);
         });
         it('Read access token', async () => {
             setUsernameFromFilesystemStub.resolves(false);
-            setPasswordFromKeyStoreStub.resolves(false);
-            setAccessTokenFromKeyStoreStub.resolves(true);
+            getPasswordFromSecretStorageStub.resolves(false);
+            getAccessTokenFromSecretStorageStub.resolves(true);
 
             // Call the function
-            const result: boolean = await mockConnectionManager.connect();
+            const result: boolean = await mockConnectionManager.loadCredential();
 
             // Check the return value and ensure that necessary methods are called
             assert.isTrue(result);
-            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from KeyStore...', 'DEBUG');
             sinon.assert.calledOnce(setUrlsFromFilesystemStub);
             sinon.assert.calledOnce(setUsernameFromFilesystemStub);
-            sinon.assert.notCalled(setPasswordFromKeyStoreStub);
-            sinon.assert.calledOnce(setAccessTokenFromKeyStoreStub);
+            sinon.assert.notCalled(getPasswordFromSecretStorageStub);
+            sinon.assert.calledOnce(getAccessTokenFromSecretStorageStub);
             sinon.assert.notCalled(deleteCredentialsFromMemoryStub);
-            sinon.assert.calledOnce(resolveUrlsStub);
-            sinon.assert.calledOnce(onSuccessConnectStub);
         });
 
         it('Empty KeyStore', async () => {
             setUrlsFromFilesystemStub.resolves(false);
             setUsernameFromFilesystemStub.resolves(false);
-            setPasswordFromKeyStoreStub.resolves(false);
+            getPasswordFromSecretStorageStub.resolves(false);
             // Call the function
             const result: boolean = await mockConnectionManager.connect();
 
             // Check the return value and ensure that necessary methods are called
             assert.isFalse(result);
-            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from KeyStore...', 'DEBUG');
+            sinon.assert.calledWith(logMessageStub, 'Trying to read credentials from Secret Storage...', 'DEBUG');
             sinon.assert.calledOnce(setUrlsFromFilesystemStub);
             sinon.assert.notCalled(setUsernameFromFilesystemStub);
-            sinon.assert.notCalled(setPasswordFromKeyStoreStub);
-            sinon.assert.notCalled(setAccessTokenFromKeyStoreStub);
+            sinon.assert.notCalled(getPasswordFromSecretStorageStub);
+            sinon.assert.notCalled(getAccessTokenFromSecretStorageStub);
             sinon.assert.calledOnce(deleteCredentialsFromMemoryStub);
             sinon.assert.notCalled(resolveUrlsStub);
             sinon.assert.notCalled(onSuccessConnectStub);

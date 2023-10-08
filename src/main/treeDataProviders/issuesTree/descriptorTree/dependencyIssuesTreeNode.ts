@@ -7,6 +7,7 @@ import { CveTreeNode } from './cveTreeNode';
 import { LicenseIssueTreeNode } from './licenseIssueTreeNode';
 import { ContextKeys } from '../../../constants/contextKeys';
 import { ProjectDependencyTreeNode } from './projectDependencyTreeNode';
+import { IssuesRootTreeNode } from '../issuesRootTreeNode';
 
 export class DependencyIssuesTreeNode extends vscode.TreeItem {
     // Infer from data
@@ -125,6 +126,10 @@ export class DependencyIssuesTreeNode extends vscode.TreeItem {
 
     public getDependencyProjectPath(): string {
         return this.parent.getProjectPath();
+    }
+
+    public getDependencyRootProject(): IssuesRootTreeNode | undefined {
+        return this.parent.parent;
     }
 
     public getDependencyFilePath(): string {

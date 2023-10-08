@@ -34,11 +34,9 @@ describe('Maven Tests', async () => {
         {} as CacheManager,
         logManager
     );
-    // let mavenExclusion: MavenExclusion = new MavenExclusion(treesManager);
-    // let mavenDependencyUpdate: MavenDependencyUpdate = new MavenDependencyUpdate();
     let projectDirs: string[] = ['dependency', 'empty', 'multiPomDependency'];
     let workspaceFolders: vscode.WorkspaceFolder[];
-    let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven'));
+    let tmpDir: vscode.Uri = vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven', 'treeTestsProjects'));
 
     before(function() {
         workspaceFolders = [
@@ -49,7 +47,7 @@ describe('Maven Tests', async () => {
             } as vscode.WorkspaceFolder
         ];
         // Install maven dependencies
-        exec.execSync('mvn clean install', { cwd: path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency') });
+        exec.execSync('mvn clean install', { cwd: path.join(__dirname, '..', 'resources', 'maven', 'treeTestsProjects', 'multiPomDependency') });
         MavenUtils.installMavenGavReader();
     });
 
@@ -97,7 +95,7 @@ describe('Maven Tests', async () => {
         // Single pom
         let localWorkspaceFolders: vscode.WorkspaceFolder[] = [
             {
-                uri: vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven', 'dependency')),
+                uri: vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven', 'treeTestsProjects', 'dependency')),
                 name: '',
                 index: 0
             } as vscode.WorkspaceFolder
@@ -110,7 +108,7 @@ describe('Maven Tests', async () => {
         //Multi pom
         localWorkspaceFolders = [
             {
-                uri: vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency')),
+                uri: vscode.Uri.file(path.join(__dirname, '..', 'resources', 'maven', 'treeTestsProjects', 'multiPomDependency')),
                 name: '',
                 index: 0
             } as vscode.WorkspaceFolder
@@ -118,16 +116,6 @@ describe('Maven Tests', async () => {
         pomXmlsArray = await locatePomXmls(localWorkspaceFolders);
         got = MavenUtils.buildPrototypePomTree(pomXmlsArray!, treesManager.logManager);
         assert.deepEqual(got, want[1]);
-    });
-
-    /**
-     * Test getProjectInfo.
-     */
-    it('Get Project Info', async () => {
-        const [groupId, ArtifactId, version] = MavenUtils.getProjectInfo(' org.jfrog.test:multi2:jar:3.7-SNAPSHOT');
-        assert.equal(groupId, 'org.jfrog.test');
-        assert.equal(ArtifactId, 'multi2');
-        assert.equal(version, '3.7-SNAPSHOT');
     });
 
     /**
@@ -332,26 +320,26 @@ describe('Maven Tests', async () => {
 
     function expectedBuildPrototypePomTree(): PomTree[][] {
         return [
-            [new PomTree('org.jfrog.test:multi2:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'dependency', 'pom.xml'))],
+            [new PomTree('org.jfrog.test:multi2:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'treeTestsProjects', 'dependency', 'pom.xml'))],
             [
-                new PomTree('org.jfrog.test:multi:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'pom.xml'), [
+                new PomTree('org.jfrog.test:multi:3.7-SNAPSHOT', path.join(__dirname, '..', 'resources', 'maven', 'treeTestsProjects', 'multiPomDependency', 'pom.xml'), [
                     new PomTree(
                         'org.jfrog.test:multi1:3.7-SNAPSHOT',
-                        path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi1', 'pom.xml'),
+                        path.join(__dirname, '..', 'resources', 'maven', 'treeTestsProjects', 'multiPomDependency', 'multi1', 'pom.xml'),
                         [],
                         undefined,
                         'org.jfrog.test:multi:3.7-SNAPSHOT'
                     ),
                     new PomTree(
                         'org.jfrog.test:multi2:3.7-SNAPSHOT',
-                        path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi2', 'pom.xml'),
+                        path.join(__dirname, '..', 'resources', 'maven', 'treeTestsProjects', 'multiPomDependency', 'multi2', 'pom.xml'),
                         [],
                         undefined,
                         'org.jfrog.test:multi:3.7-SNAPSHOT'
                     ),
                     new PomTree(
                         'org.jfrog.test:multi3:3.7-SNAPSHOT',
-                        path.join(__dirname, '..', 'resources', 'maven', 'multiPomDependency', 'multi3', 'pom.xml'),
+                        path.join(__dirname, '..', 'resources', 'maven', 'treeTestsProjects', 'multiPomDependency', 'multi3', 'pom.xml'),
                         [],
                         undefined,
                         'org.jfrog.test:multi:3.7-SNAPSHOT'

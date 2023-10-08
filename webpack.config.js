@@ -15,8 +15,7 @@ const extensionConfig = {
     },
     devtool: 'source-map',
     externals: {
-        vscode: 'commonjs vscode',
-        keytar: 'keytar'
+        vscode: 'commonjs vscode'
     },
     resolve: {
         extensions: ['.ts', '.js']

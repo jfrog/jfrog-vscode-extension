@@ -37,8 +37,7 @@ export class NugetTreeNode extends RootNode {
                     childDependencies.length > 0 ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None;
                 let child: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, treeCollapsibleState, dependenciesTreeNode, '');
                 let combined: string = id + ':' + version;
-                this.projectDetails.addDependency(NugetTreeNode.COMPONENT_PREFIX + combined);
-                child.dependencyId = NugetTreeNode.COMPONENT_PREFIX + combined;
+                child.xrayDependencyId = NugetTreeNode.COMPONENT_PREFIX + combined;
                 this.populateDependenciesTree(child, childDependencies);
             }
         }

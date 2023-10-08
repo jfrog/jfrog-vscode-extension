@@ -74,7 +74,7 @@ export class YarnUtils {
             }
             checkCanceled();
 
-            root.refreshDependencies();
+            root.loadYarnDependencies();
         }
     }
 

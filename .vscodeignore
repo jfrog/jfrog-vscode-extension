@@ -3,7 +3,6 @@
 out/test/**
 src/**
 node_modules/**
-!node_modules/keytar
 .gitignore
 **/tsconfig.json
 **/tslint.json

@@ -43,10 +43,10 @@ export class MavenUtils {
         let res: vscode.Range[] = [];
         let pomXmlContent: string = document.getText();
         let [groupId, artifactId, version] = MavenUtils.getGavArrayFromId(dependencyId);
-        let dependencyTag: string = MavenUtils.getDependencyTag(pomXmlContent, groupId, artifactId);
-        if (dependencyTag) {
-            let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(dependencyTag));
-            let arr: string[] = dependencyTag.split(/\r?\n/).filter(line => line.trim() !== '');
+        let tag: string = MavenUtils.getDependencyXmlTag(pomXmlContent, groupId, artifactId);
+        if (tag) {
+            let startIndex: vscode.Position = document.positionAt(pomXmlContent.indexOf(tag));
+            let arr: string[] = tag.split(/\r?\n/).filter(line => line.trim() !== '');
             for (let i: number = 0; i < arr.length; i++) {
                 let depInfo: string = arr[i].trim().toLowerCase();
                 if (this.isDependencyMatch(groupId, artifactId, version, depInfo, focusType)) {
@@ -82,7 +82,7 @@ export class MavenUtils {
      * @param groupId - The dependency's group ID
      * @param artifactId  - The dependency's artifact ID
      */
-    public static getDependencyTag(pomXmlContent: string, groupId: string, artifactId: string): string {
+    public static getDependencyXmlTag(pomXmlContent: string, groupId: string, artifactId: string): string {
         let groupIdRegex: RegExp = new RegExp(`<groupId>\\s*${groupId}\\s*</groupId>`, 'gi');
         let artifactIdRegex: RegExp = new RegExp(`<artifactId>\\s*${artifactId}\\s*</artifactId>`, 'gi');
         let dependencyMatch: string[] | undefined = pomXmlContent
@@ -366,13 +366,6 @@ export class MavenUtils {
 
     public static searchPomGav(pomTreeArray: PomTree[], pomGav: string): number {
         return pomTreeArray.findIndex(pomTree => pomTree.pomGav === pomGav);
-    }
-
-    /**
-     * @param rawDependency Raw dependency text
-     */
-    public static getProjectInfo(rawDependency: string): [string, string, string, string] {
-        return MavenUtils.getDependencyInfo(rawDependency.replace(/\s/g, '') + ':dummyScope');
     }
 
     /**
