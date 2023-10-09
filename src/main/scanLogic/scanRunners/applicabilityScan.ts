@@ -5,10 +5,10 @@ import { ProjectDependencyTreeNode } from '../../treeDataProviders/issuesTree/de
 import { IssueTreeNode } from '../../treeDataProviders/issuesTree/issueTreeNode';
 import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
 import { StepProgress } from '../../treeDataProviders/utils/stepProgress';
-import { Module } from '../../types/jfrogAppsConfig';
 import { PackageType } from '../../types/projectType';
 import { DependencyScanResults } from '../../types/workspaceIssuesDetails';
 import { Configuration } from '../../utils/configuration';
+import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { Resource } from '../../utils/resource';
 import { FileScanBundle, ScanUtils } from '../../utils/scanUtils';
 import { Utils } from '../../utils/utils';
@@ -57,7 +57,7 @@ export class ApplicabilityRunner extends JasRunner {
         binary?: Resource,
         timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
     ) {
-        super(connectionManager, timeout, ScanType.ContextualAnalysis, logManager, {} as Module, binary);
+        super(connectionManager, timeout, ScanType.ContextualAnalysis, logManager, new AppsConfigModule(), binary);
     }
 
     /** @override */

@@ -7,9 +7,8 @@ import { ConnectionManager } from '../../connect/connectionManager';
 import { ConnectionUtils } from '../../connect/connectionUtils';
 import { LogManager } from '../../log/logManager';
 import { LogUtils } from '../../log/logUtils';
-import { Module } from '../../types/jfrogAppsConfig';
-import { AppsConfigUtils } from '../../utils/appConfigUtils';
 import { Configuration } from '../../utils/configuration';
+import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { Resource } from '../../utils/resource';
 import { RunUtils } from '../../utils/runUtils';
 import { NotEntitledError, NotSupportedError, OsNotSupportedError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
@@ -69,7 +68,7 @@ export abstract class JasRunner {
         protected _abortCheckIntervalMillisecs: number,
         protected _scanType: ScanType,
         protected _logManager: LogManager,
-        protected _module: Module,
+        protected _module: AppsConfigModule,
         protected _binary: Resource = JasRunner.getAnalyzerManagerResource(_logManager)
     ) {
         this._runDirectory = path.dirname(this._binary.fullPath);
@@ -135,7 +134,7 @@ export abstract class JasRunner {
             this._logManager.logMessage(this._scanType + ' runner could not find binary to run', 'WARN');
             return false;
         }
-        if (AppsConfigUtils.ShouldSkipScanner(this._module, this._scanType)) {
+        if (this._module.ShouldSkipScanner(this._scanType)) {
             this._logManager.debug('Skipping ' + this._scanType + ' scanning');
             return false;
         }

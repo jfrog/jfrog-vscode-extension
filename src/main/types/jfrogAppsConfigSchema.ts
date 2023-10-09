@@ -1,9 +1,9 @@
-export interface JFrogAppsConfig {
+export interface JFrogAppsConfigSchema {
     version: string;
     modules: Module[];
 }
 
-export enum ScanType {
+export enum ExcludeScannerName {
     ContextualAnalysis = 'applicability',
     Iac = 'iac',
     Sast = 'sast',
@@ -14,7 +14,7 @@ export interface Module {
     name: string;
     source_root: string;
     exclude_patterns: string[];
-    exclude_scanners: ScanType[];
+    exclude_scanners: ExcludeScannerName[];
     scanners: Scanners;
 }
 

@@ -10,8 +10,8 @@ import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeF
 import { SastTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/sastTreeNode';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
-import { Module } from '../../main/types/jfrogAppsConfig';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
+import { AppsConfigModule } from '../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
 import {
     assertFileNodesCreated,
     assertIssueNodesCreated,
@@ -121,6 +121,13 @@ describe('Sast Tests', () => {
     });
 
     function getDummyRunner(): SastRunner {
-        return new SastRunner({} as ScanResults, createRootTestNode(''), createTestStepProgress(), {} as ConnectionManager, logManager, {} as Module);
+        return new SastRunner(
+            {} as ScanResults,
+            createRootTestNode(''),
+            createTestStepProgress(),
+            {} as ConnectionManager,
+            logManager,
+            new AppsConfigModule()
+        );
     }
 });

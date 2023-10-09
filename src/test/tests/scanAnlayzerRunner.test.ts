@@ -7,7 +7,7 @@ import { LogManager } from '../../main/log/logManager';
 
 import { AnalyzeScanRequest, AnalyzerScanRun, ScanType } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { JasRunner } from '../../main/scanLogic/scanRunners/jasRunner';
-import { Module } from '../../main/types/jfrogAppsConfig';
+import { AppsConfigModule } from '../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
 import { RunUtils } from '../../main/utils/runUtils';
 import { NotEntitledError, ScanCancellationError, ScanTimeoutError, ScanUtils } from '../../main/utils/scanUtils';
 import { Translators } from '../../main/utils/translators';
@@ -58,7 +58,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             ): Promise<void> {
                 await RunUtils.runWithTimeout(timeout, checkCancel, dummyAction());
             }
-        })(connection, timeout, dummyName, logManager, {} as Module);
+        })(connection, timeout, dummyName, logManager, new AppsConfigModule());
     }
 
     [

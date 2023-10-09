@@ -4,8 +4,8 @@ import * as path from 'path';
 
 import { AnalyzeScanRequest } from '../../../main/scanLogic/scanRunners/analyzerModels';
 import { IacRunner, IacScanResponse } from '../../../main/scanLogic/scanRunners/iacScan';
-import { Module } from '../../../main/types/jfrogAppsConfig';
 import { ScanResults } from '../../../main/types/workspaceIssuesDetails';
+import { AppsConfigModule } from '../../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
 import {
     AnalyzerManagerIntegrationEnv,
     assertFileIssuesExist,
@@ -36,7 +36,7 @@ describe('Iac Integration Tests', async () => {
             createTestStepProgress(),
             integrationManager.connectionManager,
             integrationManager.logManager,
-            {} as Module,
+            new AppsConfigModule(),
             integrationManager.resource
         );
         runner.verbose = true;

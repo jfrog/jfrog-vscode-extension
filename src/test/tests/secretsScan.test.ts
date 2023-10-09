@@ -10,8 +10,8 @@ import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeF
 import { SecretTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/secretsTreeNode';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
-import { Module } from '../../main/types/jfrogAppsConfig';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
+import { AppsConfigModule } from '../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
 import {
     assertFileNodesCreated,
     assertIssueNodesCreated,
@@ -127,7 +127,7 @@ describe('Secrets Scan Tests', () => {
             createTestStepProgress(),
             {} as ConnectionManager,
             logManager,
-            {} as Module
+            new AppsConfigModule()
         );
     }
 });

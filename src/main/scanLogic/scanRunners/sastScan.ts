@@ -3,10 +3,9 @@ import { LogManager } from '../../log/logManager';
 import { IssuesRootTreeNode } from '../../treeDataProviders/issuesTree/issuesRootTreeNode';
 import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
 import { StepProgress } from '../../treeDataProviders/utils/stepProgress';
-import { Module, SastScanner } from '../../types/jfrogAppsConfig';
 import { Severity } from '../../types/severity';
 import { ScanResults } from '../../types/workspaceIssuesDetails';
-import { AppsConfigUtils } from '../../utils/appConfigUtils';
+import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { Resource } from '../../utils/resource';
 import { ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
@@ -63,7 +62,7 @@ export class SastRunner extends JasRunner {
         private _progressManager: StepProgress,
         connectionManager: ConnectionManager,
         logManager: LogManager,
-        module: Module,
+        module: AppsConfigModule,
         binary?: Resource,
         timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
     ) {
@@ -91,13 +90,12 @@ export class SastRunner extends JasRunner {
      */
     public async scan(): Promise<void> {
         let startTime: number = Date.now();
-        let sastScanner: SastScanner | undefined = this._module.scanners?.sast;
         let request: SastScanRequest = {
-            type: ScanType.Sast,
-            roots: AppsConfigUtils.GetSourceRoots(this._module, sastScanner),
-            language: sastScanner?.language,
-            excluded_rules: sastScanner?.excluded_rules,
-            exclude_patterns: AppsConfigUtils.GetExcludePatterns(this._module, sastScanner)
+            type: this._scanType,
+            roots: this._module.GetSourceRoots(this._scanType),
+            language: this._module.GetScanLanguage(),
+            excluded_rules: this._module.getExcludeRules(),
+            exclude_patterns: this._module.GetExcludePatterns(this._scanType)
         } as SastScanRequest;
         super.logStartScanning(request);
         let response: SastScanResponse = await this.executeRequest(this._progressManager.checkCancel, request).then(runResult =>

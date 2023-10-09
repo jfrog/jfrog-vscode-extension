@@ -7,11 +7,10 @@ import { IacRunner } from '../../scanLogic/scanRunners/iacScan';
 import { JasRunner } from '../../scanLogic/scanRunners/jasRunner';
 import { SastRunner } from '../../scanLogic/scanRunners/sastScan';
 import { SecretsRunner } from '../../scanLogic/scanRunners/secretsScan';
-import { JFrogAppsConfig, Module } from '../../types/jfrogAppsConfig';
 import { PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { DependencyScanResults, EntryIssuesData, ScanResults } from '../../types/workspaceIssuesDetails';
-import { AppsConfigUtils } from '../../utils/appConfigUtils';
+import { AppsConfigModule, JFrogAppsConfig } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { UsageUtils } from '../../utils/usageUtils';
 import { Utils } from '../../utils/utils';
@@ -209,7 +208,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         let progressManager: StepProgress = new StepProgress(progress, checkCanceled, () => this.onChangeFire(), this._logManager);
         let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workspace], this._logManager);
         let subStepsCount: number = IssuesTreeDataProvider.getNumberOfTasksInRepopulate(this._scanManager.entitledScans, workspaceDescriptors);
-        let jfrogAppConfig: JFrogAppsConfig = AppsConfigUtils.LoadConfig(root.workspace.uri.path);
+        let jfrogAppConfig: JFrogAppsConfig = new JFrogAppsConfig(root.workspace.uri.path);
         checkCanceled();
         UsageUtils.sendUsageReport(this._scanManager.entitledScans, workspaceDescriptors, this._treesManager.connectionManager);
         // Scan workspace
@@ -256,7 +255,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         progressManager: StepProgress,
         connectionManager: ConnectionManager,
         logManager: LogManager,
-        module: Module
+        module: AppsConfigModule
     ): JasRunner[] {
         let results: JasRunner[] = [];
         if (this._scanManager.entitledScans.iac) {

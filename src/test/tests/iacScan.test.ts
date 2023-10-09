@@ -10,8 +10,8 @@ import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeF
 import { IacTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/iacTreeNode';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
-import { Module } from '../../main/types/jfrogAppsConfig';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
+import { AppsConfigModule } from '../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
 import {
     assertFileNodesCreated,
     assertIssueNodesCreated,
@@ -121,6 +121,13 @@ describe('Iac Scan Tests', () => {
     });
 
     function getDummyRunner(): IacRunner {
-        return new IacRunner({} as ScanResults, createRootTestNode(''), createTestStepProgress(), {} as ConnectionManager, logManager, {} as Module);
+        return new IacRunner(
+            {} as ScanResults,
+            createRootTestNode(''),
+            createTestStepProgress(),
+            {} as ConnectionManager,
+            logManager,
+            new AppsConfigModule()
+        );
     }
 });

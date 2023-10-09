@@ -3,9 +3,8 @@ import { LogManager } from '../../log/logManager';
 import { IssuesRootTreeNode } from '../../treeDataProviders/issuesTree/issuesRootTreeNode';
 import { AnalyzerUtils, FileWithSecurityIssues } from '../../treeDataProviders/utils/analyzerUtils';
 import { StepProgress } from '../../treeDataProviders/utils/stepProgress';
-import { Module } from '../../types/jfrogAppsConfig';
 import { ScanResults } from '../../types/workspaceIssuesDetails';
-import { AppsConfigUtils } from '../../utils/appConfigUtils';
+import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { Resource } from '../../utils/resource';
 import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, ScanType } from './analyzerModels';
@@ -25,7 +24,7 @@ export class IacRunner extends JasRunner {
         private _progressManager: StepProgress,
         connectionManager: ConnectionManager,
         logManager: LogManager,
-        module: Module,
+        module: AppsConfigModule,
         binary?: Resource,
         timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
     ) {
@@ -43,9 +42,9 @@ export class IacRunner extends JasRunner {
     public async scan(): Promise<void> {
         let startTime: number = Date.now();
         let request: AnalyzeScanRequest = {
-            type: ScanType.Iac,
-            roots: AppsConfigUtils.GetSourceRoots(this._module, this._module.scanners?.iac),
-            skipped_folders: AppsConfigUtils.GetExcludePatterns(this._module, this._module.scanners?.iac)
+            type: this._scanType,
+            roots: this._module.GetSourceRoots(this._scanType),
+            skipped_folders: this._module.GetExcludePatterns(this._scanType)
         } as AnalyzeScanRequest;
         super.logStartScanning(request);
         let response: IacScanResponse = await this.executeRequest(this._progressManager.checkCancel, request).then(runResult =>
