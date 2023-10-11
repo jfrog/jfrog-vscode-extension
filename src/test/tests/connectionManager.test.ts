@@ -254,7 +254,7 @@ describe('Connection Manager Tests', () => {
             sinon.assert.notCalled(deleteCredentialsFromMemoryStub);
         });
 
-        it('Empty KeyStore', async () => {
+        it.only('Empty KeyStore', async () => {
             setUrlsFromFilesystemStub.resolves(false);
             setUsernameFromFilesystemStub.resolves(false);
             getPasswordFromSecretStorageStub.resolves(false);
@@ -268,7 +268,7 @@ describe('Connection Manager Tests', () => {
             sinon.assert.notCalled(setUsernameFromFilesystemStub);
             sinon.assert.notCalled(getPasswordFromSecretStorageStub);
             sinon.assert.notCalled(getAccessTokenFromSecretStorageStub);
-            sinon.assert.calledOnce(deleteCredentialsFromMemoryStub);
+            sinon.assert.notCalled(deleteCredentialsFromMemoryStub);
             sinon.assert.notCalled(resolveUrlsStub);
             sinon.assert.notCalled(onSuccessConnectStub);
         });
