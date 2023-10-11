@@ -2,7 +2,7 @@ import { ILoginPage, ISendLoginEventData, LoginConnectionType, LoginProgressStat
 import { EventSender } from '../eventSender';
 import * as vscode from 'vscode';
 import { LogManager } from '../../../log/logManager';
-import { ConnectionManager, LoginStatus } from '../../../connect/connectionManager';
+import { ConnectionManager, TestConnectionStatus } from '../../../connect/connectionManager';
 import { ClientUtils } from 'jfrog-client-js';
 
 /**
@@ -66,7 +66,7 @@ export class LoginTask {
      */
     private async doLogin(): Promise<LoginProgressStatus> {
         try {
-            let status: LoginStatus;
+            let status: TestConnectionStatus;
             switch (this.updatedPageStatus.connectionType) {
                 case LoginConnectionType.Sso:
                     status = await this.connectionManager.startWebLogin(this.platformUrl, this.artifactoryUrl, this.xrayUrl);
@@ -94,18 +94,20 @@ export class LoginTask {
         }
     }
 
-    public toWebviewLoginStatus(ideStatus: LoginStatus) {
+    public toWebviewLoginStatus(ideStatus: TestConnectionStatus) {
         switch (ideStatus) {
-            case LoginStatus.Success:
+            case TestConnectionStatus.Success:
                 return LoginProgressStatus.Success;
-            case LoginStatus.FailedBadCredentials:
+            case TestConnectionStatus.FailedBadCredentials:
                 return LoginProgressStatus.FailedBadCredentials;
-            case LoginStatus.FailedTimeout:
+            case TestConnectionStatus.FailedTimeout:
                 return LoginProgressStatus.FailedTimeout;
-            case LoginStatus.FailedServerNotSupported:
-                return LoginProgressStatus.FailedServerNotFound;
-            case LoginStatus.FailedSaveCredentials:
+            case TestConnectionStatus.FailedServerNotSupported:
+                return LoginProgressStatus.FailedServerNotSupported;
+            case TestConnectionStatus.FailedSaveCredentials:
                 return LoginProgressStatus.FailedSaveCredentials;
+            case TestConnectionStatus.FailedServerNotFound:
+                return LoginProgressStatus.FailedServerNotFound;
             default:
                 return LoginProgressStatus.Failed;
         }

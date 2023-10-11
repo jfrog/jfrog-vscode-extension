@@ -75,7 +75,7 @@ export class ConnectionUtils {
      * @param password - Password
      * @param accessToken - Access Token
      */
-    public static async validateArtifactoryConnection(rtUrl: string, username: string, password: string, accessToken: string): Promise<boolean> {
+    public static async pingArtifactory(rtUrl: string, username: string, password: string, accessToken: string): Promise<boolean> {
         let jfrogClient: JfrogClient = this.createJfrogClient('', rtUrl, '', username, password, accessToken);
         return await jfrogClient
             .artifactory()
@@ -90,7 +90,7 @@ export class ConnectionUtils {
      * @param password - Password
      * @param accessToken - Access Token
      */
-    public static async validateXrayConnection(xray: string, username: string, password: string, accessToken: string): Promise<boolean> {
+    public static async pingXray(xray: string, username: string, password: string, accessToken: string): Promise<boolean> {
         let jfrogClient: JfrogClient = this.createJfrogClient('', '', xray, username, password, accessToken);
         return await jfrogClient
             .xray()
@@ -120,7 +120,7 @@ export class ConnectionUtils {
      * @param password
      * @param accessToken - Access Token
      */
-    public static async checkXrayConnectionAndPermissions(
+    public static async checkXrayPermissions(
         xrayUrl: string,
         username: string,
         password: string,
@@ -151,36 +151,6 @@ export class ConnectionUtils {
             return Promise.resolve(false);
         }
         return Promise.resolve(true);
-    }
-
-    /**
-     * Check Artifactory connection.
-     * @returns true iff success.
-     * @param rtUrl
-     * @param username
-     * @param password
-     * @param accessToken - Access Token
-     */
-    public static async checkArtifactoryConnection(
-        rtUrl: string,
-        username: string,
-        password: string,
-        accessToken: string,
-        prompt: boolean,
-        logger: LogManager
-    ): Promise<boolean> {
-        const status: boolean = await ConnectionUtils.validateArtifactoryConnection(rtUrl, username, password, accessToken);
-        let statusStr: string = 'failed.';
-        if (status) {
-            statusStr = 'success.';
-        }
-        const msg: string = 'Artifactory connection ' + statusStr;
-        if (prompt) {
-            vscode.window.showInformationMessage(msg);
-        } else {
-            logger.logMessage(msg, 'DEBUG');
-        }
-        return Promise.resolve(status);
     }
 
     public static async testXrayVersion(jfrogClient: JfrogClient): Promise<string> {

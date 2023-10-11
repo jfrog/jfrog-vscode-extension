@@ -19,13 +19,14 @@ import { LogManager } from '../log/logManager';
 import { ScanUtils } from '../utils/scanUtils';
 import { ConnectionUtils } from './connectionUtils';
 
-export enum LoginStatus {
+export enum TestConnectionStatus {
     Success = 'SUCCESS',
     Failed = 'FAILED',
     FailedSaveCredentials = 'FAILED_SAVE_CREDENTIALS',
     FailedServerNotSupported = 'FAILED_SERVER_NOT_SUPPORTED',
     FailedTimeout = 'FAILED_TIMEOUT',
-    FailedBadCredentials = 'FAILED_BAD_CREDENTIALS'
+    FailedBadCredentials = 'FAILED_BAD_CREDENTIALS',
+    FailedServerNotFound = 'FAILED_SERVER_NOT_FOUND'
 }
 
 /**
@@ -128,24 +129,16 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     public async connect(): Promise<boolean> {
         this._logManager.logMessage('Trying to read credentials from Secret Storage...', 'DEBUG');
-        if (!(await this.pingCredential())) {
+        if (!(await this.loadCredential())) {
+            return false;
+        }
+        if (!(await this.testConnectionHealth())) {
             this.deleteCredentialsFromMemory();
             return false;
         }
         await this.resolveUrls();
         await this.onSuccessConnect();
         return true;
-    }
-
-    private async pingCredential(): Promise<boolean> {
-        if (await this.loadCredential()) {
-            try {
-                return await ConnectionUtils.validateXrayConnection(this.xrayUrl, this._username, this._password, this._accessToken);
-            } catch (error) {
-                return false;
-            }
-        }
-        return false;
     }
 
     public async loadCredential(): Promise<boolean> {
@@ -184,32 +177,34 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     public areCompleteCredentialsSet(): boolean {
         return !!(this._xrayUrl && this._rtUrl && ((this._username && this._password) || this._accessToken));
     }
-
-    public async verifyCredentials(prompt: boolean): Promise<boolean> {
-        if (!this.areXrayCredentialsSet()) {
-            return false;
+    /**
+     * Test whether the connection is valid and the user has permissions to access Xray and Artifactory.
+     */
+    public async testConnection(prompt: boolean): Promise<TestConnectionStatus> {
+        if (!(await this.testConnectionHealth())) {
+            this.deleteCredentialsFromMemory();
+            return TestConnectionStatus.FailedServerNotFound;
         }
         if (
-            !(await ConnectionUtils.checkXrayConnectionAndPermissions(
-                this._xrayUrl,
-                this._username,
-                this._password,
-                this._accessToken,
-                prompt,
-                this._logManager
-            ))
+            !(await ConnectionUtils.checkXrayPermissions(this._xrayUrl, this._username, this._password, this._accessToken, prompt, this._logManager))
         ) {
-            return false;
+            this.deleteCredentialsFromMemory();
+            return TestConnectionStatus.FailedBadCredentials;
         }
-        if (this.areCompleteCredentialsSet()) {
-            return ConnectionUtils.checkArtifactoryConnection(
-                this._rtUrl,
-                this._username,
-                this._password,
-                this._accessToken,
-                prompt,
-                this._logManager
-            );
+        return TestConnectionStatus.Success;
+    }
+
+    public async testConnectionHealth(): Promise<boolean> {
+        try {
+            if (!(await ConnectionUtils.pingXray(this.xrayUrl, this._username, this._password, this._accessToken))) {
+                return false;
+            }
+            if (this.areCompleteCredentialsSet()) {
+                return await ConnectionUtils.pingArtifactory(this.rtUrl, this._username, this._password, this._accessToken);
+            }
+        } catch (error) {
+            this._logManager.logMessage('testConnectionHealth failed. Error:' + error, 'WARN');
+            return false;
         }
         return true;
     }
@@ -366,7 +361,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                 // Assuming platform URL was extracted. Checking against Artifactory.
                 this._url = this._url.substring(0, this._url.lastIndexOf('/xray'));
                 this._rtUrl = this.getRtUrlFromPlatform();
-                if (!(await ConnectionUtils.validateArtifactoryConnection(this._rtUrl, this._username, this._password, this._accessToken))) {
+                if (!(await ConnectionUtils.pingArtifactory(this._rtUrl, this._username, this._password, this._accessToken))) {
                     this._url = '';
                     this._rtUrl = '';
                 }
@@ -393,33 +388,35 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return this.getServiceUrlFromPlatform(this._url, 'xray');
     }
 
-    public async tryCredentialsFromEnv(): Promise<LoginStatus> {
+    public async tryCredentialsFromEnv(): Promise<TestConnectionStatus> {
         if (!(await this.getCredentialsFromEnv())) {
             this.deleteCredentialsFromMemory();
-            return LoginStatus.Failed;
+            return TestConnectionStatus.Failed;
         }
-        if (!(await this.verifyCredentials(false))) {
+        const status: TestConnectionStatus = await this.testConnection(false);
+        if (status !== TestConnectionStatus.Success) {
             this.deleteCredentialsFromMemory();
-            return LoginStatus.FailedBadCredentials;
+            return status;
         }
-        if (process.env[ConnectionManager.STORE_CONNECTION_ENV]?.toUpperCase() === 'TRUE') {
-            // Store credentials in file system if JFROG_IDE_STORE_CONNECTION environment variable is true
-            return (await this.storeConnection()) ? LoginStatus.Success : LoginStatus.FailedSaveCredentials;
+        const shouldStoreConnection: boolean = process.env[ConnectionManager.STORE_CONNECTION_ENV]?.toUpperCase() === 'TRUE';
+        if (shouldStoreConnection) {
+            return (await this.storeConnection()) ? status : TestConnectionStatus.FailedSaveCredentials;
         }
-        return LoginStatus.Success;
+        return status;
     }
 
-    public async tryCredentialsFromJfrogCli(): Promise<LoginStatus> {
+    public async tryCredentialsFromJfrogCli(): Promise<TestConnectionStatus> {
         this._logManager.logMessage('Trying to read credentials from JFrog CLI...', 'DEBUG');
         if (!(await this.readCredentialsFromJfrogCli())) {
             this.deleteCredentialsFromMemory();
-            return LoginStatus.Failed;
+            return TestConnectionStatus.Failed;
         }
-        if (!(await this.verifyCredentials(true))) {
+        const status: TestConnectionStatus = await this.testConnection(false);
+        if (status !== TestConnectionStatus.Success) {
             this.deleteCredentialsFromMemory();
-            return LoginStatus.FailedBadCredentials;
+            return status;
         }
-        return (await this.storeConnection()) ? LoginStatus.Success : LoginStatus.FailedSaveCredentials;
+        return (await this.storeConnection()) ? status : TestConnectionStatus.FailedSaveCredentials;
     }
     /**
      * Initiates a web-based login process and obtains an access token.
@@ -428,21 +425,21 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
      * @param xrayUrl - The Xray URL.
      * @returns A promise that resolves to the login status.
      */
-    public async startWebLogin(url: string, artifactoryUrl: string, xrayUrl: string): Promise<LoginStatus> {
+    public async startWebLogin(url: string, artifactoryUrl: string, xrayUrl: string): Promise<TestConnectionStatus> {
         if (url === '' || artifactoryUrl === '' || xrayUrl === '') {
-            return LoginStatus.Failed;
+            return TestConnectionStatus.Failed;
         }
         this._logManager.logMessage('Start Web-Login with "' + url + '"', 'DEBUG');
         const sessionId: string = crypto.randomUUID();
         if (!(await this.registerWebLoginId(url, sessionId))) {
-            return LoginStatus.FailedServerNotSupported;
+            return TestConnectionStatus.FailedServerNotSupported;
         }
         if (!(await this.openBrowser(this.createWebLoginEndpoint(url, sessionId)))) {
-            return LoginStatus.Failed;
+            return TestConnectionStatus.Failed;
         }
         const accessToken: string = await this.getWebLoginAccessToken(url, sessionId);
         if (accessToken === '') {
-            return LoginStatus.FailedTimeout;
+            return TestConnectionStatus.FailedTimeout;
         }
         return this.tryStoreCredentials(url, artifactoryUrl, xrayUrl, '', '', accessToken);
     }
@@ -513,19 +510,19 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         username?: string,
         password?: string,
         accessToken?: string
-    ): Promise<LoginStatus> {
+    ): Promise<TestConnectionStatus> {
         this._url = url;
         this._xrayUrl = xrayUrl;
         this._rtUrl = rtUrl;
         this._username = username || '';
         this._password = password || '';
         this._accessToken = accessToken || '';
-        const valid: boolean = await this.verifyCredentials(false);
-        if (!valid) {
+        const status: TestConnectionStatus = await this.testConnection(false);
+        if (status !== TestConnectionStatus.Success) {
             this.deleteCredentialsFromMemory();
-            return LoginStatus.FailedBadCredentials;
+            return status;
         }
-        return (await this.storeConnection()) ? LoginStatus.Success : LoginStatus.FailedSaveCredentials;
+        return (await this.storeConnection()) ? status : TestConnectionStatus.FailedSaveCredentials;
     }
 
     public async getCredentialsFromEnv(): Promise<boolean> {

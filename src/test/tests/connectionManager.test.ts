@@ -2,7 +2,7 @@ import { execSync } from 'child_process';
 import { IJfrogClientConfig, IProxyConfig } from 'jfrog-client-js';
 import * as path from 'path';
 import * as vscode from 'vscode';
-import { ConnectionManager, LoginStatus } from '../../main/connect/connectionManager';
+import { ConnectionManager, TestConnectionStatus } from '../../main/connect/connectionManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
 import { LogManager } from '../../main/log/logManager';
 import { createTestConnectionManager, getCliHomeDir, setCliHomeDir } from './utils/utils.test';
@@ -342,13 +342,13 @@ describe('Connection Manager Tests', () => {
             const registerWebLoginIdStub: any = sinon.stub(mockConnectionManager as any, 'registerWebLoginId').resolves(true);
             const openBrowserStub: any = sinon.stub(mockConnectionManager as any, 'openBrowser').resolves(true);
             const getWebLoginAccessTokenStub: any = sinon.stub(mockConnectionManager as any, 'getWebLoginAccessToken').resolves('mock-access-token');
-            const tryStoreCredentialsStub: any = sinon.stub(mockConnectionManager, 'tryStoreCredentials').resolves(LoginStatus.Success);
+            const tryStoreCredentialsStub: any = sinon.stub(mockConnectionManager, 'tryStoreCredentials').resolves(TestConnectionStatus.Success);
 
             // Call the function
-            const result: LoginStatus = await mockConnectionManager.startWebLogin('mock-url', 'mock-artifactoryUrl', 'mock-xrayUrl');
+            const result: TestConnectionStatus = await mockConnectionManager.startWebLogin('mock-url', 'mock-artifactoryUrl', 'mock-xrayUrl');
 
             // Check the return value and ensure that necessary methods are called
-            assert.strictEqual(result, LoginStatus.Success);
+            assert.strictEqual(result, TestConnectionStatus.Success);
             sinon.assert.calledWith(logMessageStub, 'Start Web-Login with "mock-url"', 'DEBUG');
             sinon.assert.calledOnce(registerWebLoginIdStub);
             sinon.assert.calledOnce(openBrowserStub);
