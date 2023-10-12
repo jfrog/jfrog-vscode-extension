@@ -23,10 +23,10 @@ export class IacRunner extends JasRunner {
         private _progressManager: StepProgress,
         connectionManager: ConnectionManager,
         logManager: LogManager,
-        module: AppsConfigModule,
+        config: AppsConfigModule,
         binary?: Resource
     ) {
-        super(connectionManager, ScanType.Iac, logManager, module, binary);
+        super(connectionManager, ScanType.Iac, logManager, config, binary);
     }
 
     /** @override */
@@ -41,8 +41,8 @@ export class IacRunner extends JasRunner {
         let startTime: number = Date.now();
         let request: AnalyzeScanRequest = {
             type: this._scanType,
-            roots: this._module.GetSourceRoots(this._scanType),
-            skipped_folders: this._module.GetExcludePatterns(this._scanType)
+            roots: this._config.GetSourceRoots(this._scanType),
+            skipped_folders: this._config.GetExcludePatterns(this._scanType)
         } as AnalyzeScanRequest;
         super.logStartScanning(request);
         let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request);

@@ -61,10 +61,10 @@ export class SastRunner extends JasRunner {
         private _progressManager: StepProgress,
         connectionManager: ConnectionManager,
         logManager: LogManager,
-        module: AppsConfigModule,
+        config: AppsConfigModule,
         binary?: Resource
     ) {
-        super(connectionManager, ScanType.Sast, logManager, module, binary);
+        super(connectionManager, ScanType.Sast, logManager, config, binary);
     }
 
     /** @override */
@@ -90,10 +90,10 @@ export class SastRunner extends JasRunner {
         let startTime: number = Date.now();
         let request: SastScanRequest = {
             type: this._scanType,
-            roots: this._module.GetSourceRoots(this._scanType),
-            language: this._module.GetScanLanguage(),
-            excluded_rules: this._module.getExcludeRules(),
-            exclude_patterns: this._module.GetExcludePatterns(this._scanType)
+            roots: this._config.GetSourceRoots(this._scanType),
+            language: this._config.GetScanLanguage(),
+            excluded_rules: this._config.getExcludeRules(),
+            exclude_patterns: this._config.GetExcludePatterns(this._scanType)
         } as SastScanRequest;
         super.logStartScanning(request);
         let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request);

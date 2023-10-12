@@ -255,17 +255,17 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         progressManager: StepProgress,
         connectionManager: ConnectionManager,
         logManager: LogManager,
-        module: AppsConfigModule
+        config: AppsConfigModule
     ): JasRunner[] {
         let results: JasRunner[] = [];
         if (this._scanManager.entitledScans.iac) {
-            results.push(new IacRunner(scanResults, root, progressManager, connectionManager, logManager, module));
+            results.push(new IacRunner(scanResults, root, progressManager, connectionManager, logManager, config));
         }
         if (this._scanManager.entitledScans.sast) {
-            results.push(new SastRunner(scanResults, root, progressManager, connectionManager, logManager, module));
+            results.push(new SastRunner(scanResults, root, progressManager, connectionManager, logManager, config));
         }
         if (this._scanManager.entitledScans.secrets) {
-            results.push(new SecretsRunner(scanResults, root, progressManager, connectionManager, logManager, module));
+            results.push(new SecretsRunner(scanResults, root, progressManager, connectionManager, logManager, config));
         }
         return results;
     }

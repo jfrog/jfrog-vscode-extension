@@ -70,7 +70,7 @@ export abstract class JasRunner {
         protected _connectionManager: ConnectionManager,
         protected _scanType: ScanType,
         protected _logManager: LogManager,
-        protected _module: AppsConfigModule,
+        protected _config: AppsConfigModule,
         protected _binary: Resource = JasRunner.getAnalyzerManagerResource(_logManager)
     ) {
         this._runDirectory = path.dirname(this._binary.fullPath);
@@ -131,7 +131,7 @@ export abstract class JasRunner {
             this._logManager.logMessage(this._scanType + ' runner could not find binary to run', 'WARN');
             return false;
         }
-        if (this._module.ShouldSkipScanner(this._scanType)) {
+        if (this._config.ShouldSkipScanner(this._scanType)) {
             this._logManager.debug('Skipping ' + this._scanType + ' scanning');
             return false;
         }
