@@ -1,13 +1,20 @@
-import * as path from 'path';
-import * as fs from 'fs';
 import { assert } from 'chai';
+import * as fs from 'fs';
+import * as path from 'path';
 
-import { ApplicabilityRunner, ApplicabilityScanResponse, CveApplicableDetails } from '../../../main/scanLogic/scanRunners/applicabilityScan';
+import {
+    ApplicabilityRunner,
+    ApplicabilityScanArgs,
+    ApplicabilityScanResponse,
+    CveApplicableDetails
+} from '../../../main/scanLogic/scanRunners/applicabilityScan';
 
-import { AnalyzerManagerIntegrationEnv } from '../utils/testIntegration.test';
 import { FileIssues, FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
+import { JasRunner } from '../../../main/scanLogic/scanRunners/jasRunner';
 import { AnalyzerUtils } from '../../../main/treeDataProviders/utils/analyzerUtils';
-import { BinaryRunner } from '../../../main/scanLogic/scanRunners/binaryRunner';
+import { AnalyzerManagerIntegrationEnv } from '../utils/testIntegration.test';
+import { PackageType } from '../../../main/types/projectType';
+import { createTestStepProgress } from '../utils/utils.test';
 
 describe('Applicability Integration Tests', async () => {
     let integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -18,7 +25,14 @@ describe('Applicability Integration Tests', async () => {
     before(async () => {
         await integrationManager.initialize();
         // Must be created after integration initialization
-        runner = new ApplicabilityRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
+        runner = new ApplicabilityRunner(
+            [],
+            PackageType.Unknown,
+            createTestStepProgress(),
+            integrationManager.connectionManager,
+            integrationManager.logManager,
+            integrationManager.resource
+        );
         runner.verbose = true;
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
     });
@@ -38,7 +52,10 @@ describe('Applicability Integration Tests', async () => {
                 expectedContent = JSON.parse(fs.readFileSync(expectedResponseContentPath, 'utf8').toString());
                 assert.isDefined(expectedContent, 'Failed to read expected ApplicabilityScanResponse content from ' + expectedResponseContentPath);
                 // Run scan
-                response = await runner.scan(directoryToScan, () => undefined, new Set<string>(expectedContent.scannedCve));
+                response = await runner
+                    .executeRequest(() => undefined, { roots: [directoryToScan], cve_whitelist: expectedContent.scannedCve } as ApplicabilityScanArgs)
+                    .then(runResult => runner.convertResponse(runResult))
+                    .catch(err => assert.fail(err));
             });
 
             it('Check response defined', () => {
@@ -122,7 +139,7 @@ describe('Applicability Integration Tests', async () => {
                     }
 
                     it('Check all expected locations exists', async function() {
-                        if (BinaryRunner.RUNNER_VERSION === '1.3.2.2005632') {
+                        if (JasRunner.RUNNER_VERSION === '1.3.2.2005632') {
                             // Duplicate results are found in this AM version, which may be fixed in the next release.
                             this.skip();
                         }
@@ -136,7 +153,7 @@ describe('Applicability Integration Tests', async () => {
                     });
 
                     it('Check snippet data', async function() {
-                        if (BinaryRunner.RUNNER_VERSION === '1.3.2.2005632') {
+                        if (JasRunner.RUNNER_VERSION === '1.3.2.2005632') {
                             // Duplicate results are found in this AM version, which may be fixed in the next release.
                             this.skip();
                         }

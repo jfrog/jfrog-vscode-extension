@@ -1,6 +1,6 @@
 import { assert } from 'chai';
 import { IssuesTreeDataProvider } from '../../main/treeDataProviders/issuesTree/issuesTreeDataProvider';
-import { SupportedScans } from '../../main/scanLogic/scanManager';
+import { EntitledScans } from '../../main/scanLogic/scanManager';
 import { Uri } from 'vscode';
 import { PackageType } from '../../main/types/projectType';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
@@ -8,6 +8,7 @@ import { DependencyScanResults } from '../../main/types/workspaceIssuesDetails';
 import { IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
 import { SecretsScanResponse } from '../../main/scanLogic/scanRunners/secretsScan';
 import { FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
+import { SastFileIssues, SastScanResponse } from '../../main/scanLogic/scanRunners/sastScan';
 
 /**
  * Test functionality of @class IssuesTreeDataProvider.
@@ -18,17 +19,17 @@ describe('Issues Tree Data Provider Tests', () => {
     [
         {
             test: 'Not supported',
-            supported: {} as SupportedScans,
+            supported: {} as EntitledScans,
             expected: 0
         },
         {
             test: 'With dependencies scan',
-            supported: { dependencies: true } as SupportedScans,
+            supported: { dependencies: true } as EntitledScans,
             expected: 5
         },
         {
             test: 'With advance scan',
-            supported: { dependencies: true, applicability: true, iac: true, secrets: true } as SupportedScans,
+            supported: { dependencies: true, applicability: true, iac: true, secrets: true } as EntitledScans,
             expected: 7
         }
     ].forEach(testCase => {
@@ -68,6 +69,12 @@ describe('Issues Tree Data Provider Tests', () => {
             scanResult: new ScanResults('path'),
             prepareDummy: (scanResult: ScanResults) => addDummySecretsIssue(scanResult),
             expected: true
+        },
+        {
+            test: 'With sast issues',
+            scanResult: new ScanResults('path'),
+            prepareDummy: (scanResult: ScanResults) => addDummySastIssue(scanResult),
+            expected: true
         }
     ].forEach(testCase => {
         it('ScanResult has issues - ' + testCase.test, () => {
@@ -88,5 +95,9 @@ describe('Issues Tree Data Provider Tests', () => {
 
     function addDummySecretsIssue(scanResult: ScanResults) {
         scanResult.secretsScan = { filesWithIssues: [{} as FileWithSecurityIssues] } as SecretsScanResponse;
+    }
+
+    function addDummySastIssue(scanResult: ScanResults) {
+        scanResult.sastScan = { filesWithIssues: [{} as SastFileIssues] } as SastScanResponse;
     }
 });

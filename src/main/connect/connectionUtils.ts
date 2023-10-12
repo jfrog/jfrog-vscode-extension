@@ -193,15 +193,6 @@ export class ConnectionUtils {
         return Promise.resolve('Successfully connected to Xray version: ' + xrayVersion);
     }
 
-    public static async testXrayVersionForScanGraph(jfrogClient: JfrogClient, logger: LogManager): Promise<boolean> {
-        let xrayVersion: string = await this.getXrayVersion(jfrogClient);
-        if (!(await this.isXrayVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED))) {
-            logger.logError(new Error('Dependencies scan is supported only on Xray >= 3.29.0'), true);
-            return false;
-        }
-        return true;
-    }
-
     public static async testXrayEntitlementForFeature(jfrogClient: JfrogClient, feature: EntitlementScanFeature): Promise<boolean> {
         return await jfrogClient
             .xray()

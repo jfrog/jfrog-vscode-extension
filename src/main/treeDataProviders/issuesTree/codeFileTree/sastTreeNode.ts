@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { IAnalysisStep, IEosPage, PageType } from 'jfrog-ide-webview';
-import { EosIssue, EosIssueLocation } from '../../../scanLogic/scanRunners/eosScan';
+import { SastIssue, SastIssueLocation } from '../../../scanLogic/scanRunners/sastScan';
 import { SeverityUtils } from '../../../types/severity';
 import { Translators } from '../../../utils/translators';
 import { Utils } from '../../../utils/utils';
@@ -8,15 +8,15 @@ import { CodeFileTreeNode } from './codeFileTreeNode';
 import { CodeIssueTreeNode } from './codeIssueTreeNode';
 
 /**
- * Describe a Eos issue
+ * Describe a SAST issue
  */
-export class EosTreeNode extends CodeIssueTreeNode {
+export class SastTreeNode extends CodeIssueTreeNode {
     private _codeFlows: IAnalysisStep[][];
 
     private _fullDescription?: string;
     private _snippet?: string;
 
-    constructor(issue: EosIssue, location: EosIssueLocation, parent: CodeFileTreeNode) {
+    constructor(issue: SastIssue, location: SastIssueLocation, parent: CodeFileTreeNode) {
         super(
             issue.ruleId,
             parent,

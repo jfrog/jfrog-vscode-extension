@@ -1,38 +1,35 @@
-import * as path from 'path';
-import * as fs from 'fs';
 import { assert } from 'chai';
+import * as fs from 'fs';
+import * as path from 'path';
 
+import { IEvidence } from 'jfrog-ide-webview';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
+import { AnalyzerScanResponse, FileIssues, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
 import {
     ApplicabilityRunner,
-    CveApplicableDetails,
     ApplicabilityScanArgs,
-    ApplicabilityScanResponse
+    ApplicabilityScanResponse,
+    CveApplicableDetails
 } from '../../main/scanLogic/scanRunners/applicabilityScan';
-import { FileScanBundle, ScanUtils } from '../../main/utils/scanUtils';
-import { FileIssues, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
-import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
-import { createDummyCveIssue, createDummyDependencyIssues, createRootTestNode, getTestCodeFileNode } from './utils/treeNodeUtils.test';
-import { DescriptorTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
-import { PackageType } from '../../main/types/projectType';
-import { DependencyScanResults, ScanResults } from '../../main/types/workspaceIssuesDetails';
-import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils';
-import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
-import { Severity } from '../../main/types/severity';
-import { CveTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
-import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
-import { IEvidence } from 'jfrog-ide-webview';
-import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { ApplicableTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/applicableTreeNode';
-import { getAnalyzerScanResponse, removeWindowsWhiteSpace } from './utils/utils.test';
-import { ScanManager } from '../../main/scanLogic/scanManager';
-import { StepProgress } from '../../main/treeDataProviders/utils/stepProgress';
-import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
+import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
+import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
+import { CveTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
+import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
+import { DescriptorTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/descriptorTreeNode';
 import { EnvironmentTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/environmentTreeNode';
+import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
+import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
+import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils';
+import { PackageType } from '../../main/types/projectType';
+import { Severity } from '../../main/types/severity';
+import { DependencyScanResults, ScanResults } from '../../main/types/workspaceIssuesDetails';
+import { FileScanBundle, ScanUtils } from '../../main/utils/scanUtils';
+import { createDummyCveIssue, createDummyDependencyIssues, createRootTestNode, getTestCodeFileNode } from './utils/treeNodeUtils.test';
+import { createTestStepProgress, getAnalyzerScanResponse, removeWindowsWhiteSpace } from './utils/utils.test';
 
 let logManager: LogManager = new LogManager().activate();
-
 describe('Applicability Scan Tests', () => {
     const scanApplicable: string = path.join(__dirname, '..', 'resources', 'applicableScan');
     let tempFolder: string = ScanUtils.createTmpDir();
@@ -56,7 +53,7 @@ describe('Applicability Scan Tests', () => {
         it('Check generated Yaml request for - ' + test.name, () => {
             let request: ApplicabilityScanArgs = getApplicabilityScanRequest(test.roots, test.cves, test.skip);
             let actualYaml: string = path.join(tempFolder, test.name);
-            fs.writeFileSync(actualYaml, getDummyRunner().requestsToYaml(request));
+            fs.writeFileSync(actualYaml, getDummyRunner([], PackageType.Unknown).requestsToYaml(request));
             assert.deepEqual(
                 fs.readFileSync(actualYaml, 'utf-8').toString(),
                 removeWindowsWhiteSpace(fs.readFileSync(test.expectedYaml, 'utf-8').toString())
@@ -68,7 +65,7 @@ describe('Applicability Scan Tests', () => {
         let response: ApplicabilityScanResponse;
 
         before(() => {
-            response = getDummyRunner().convertResponse(undefined);
+            response = getDummyRunner([], PackageType.Unknown).convertResponse(undefined);
         });
 
         it('Check response defined', () => {
@@ -82,8 +79,8 @@ describe('Applicability Scan Tests', () => {
     });
 
     describe('Run applicability scan', () => {
-        let npmScanManager: DummyScanManager;
-        let pythonScanManager: DummyScanManager;
+        let npmApplicabilityRunner: DummyApplicabilityRunner;
+        let pythonApplicabilityRunner: DummyApplicabilityRunner;
         const testRoot: IssuesRootTreeNode = createRootTestNode(path.join('root'));
         const testDescriptor: ProjectDependencyTreeNode = new EnvironmentTreeNode('path', PackageType.Unknown, testRoot);
 
@@ -91,8 +88,6 @@ describe('Applicability Scan Tests', () => {
         let expectedPythonScannedCve: string[] = ['CVE-2021-3807', 'CVE-2021-3918', 'CVE-2022-25878'];
 
         before(async () => {
-            npmScanManager = getDummyScanManager().activate();
-            pythonScanManager = getDummyScanManager().activate();
             // Create dummy cve
             let testDependency: DependencyIssuesTreeNode = createDummyDependencyIssues('dummy', '9.9.9', testDescriptor);
             for (let cve of new Set<string>(expectedNpmScannedCve)) {
@@ -109,23 +104,26 @@ describe('Applicability Scan Tests', () => {
                 data: { fullPath: 'some-path', applicableScanTimestamp: 1 } as DependencyScanResults,
                 dataNode: testDescriptor
             } as FileScanBundle;
+
             // Run scan
-            await AnalyzerUtils.cveApplicableScanning(npmScanManager, [scanBundle], {} as StepProgress, PackageType.Npm);
-            await AnalyzerUtils.cveApplicableScanning(pythonScanManager, [scanBundle], {} as StepProgress, PackageType.Python);
+            npmApplicabilityRunner = getDummyRunner([scanBundle], PackageType.Npm);
+            await npmApplicabilityRunner.scan().catch(err => assert.fail(err));
+            pythonApplicabilityRunner = getDummyRunner([scanBundle], PackageType.Python);
+            await pythonApplicabilityRunner.scan().catch(err => assert.fail(err));
         });
 
         it('Check Virtual Environment is scanned', () => {
-            assert.isTrue(pythonScanManager.scanned);
+            assert.isTrue(pythonApplicabilityRunner.scanned);
         });
 
         it('Only scan direct cve', () => {
-            npmScanManager.cvesScanned.keys();
-            assert.sameMembers(expectedNpmScannedCve, [...npmScanManager.cvesScanned]);
+            npmApplicabilityRunner.cvesScanned.keys();
+            assert.sameMembers(expectedNpmScannedCve, [...npmApplicabilityRunner.cvesScanned]);
         });
         // For Python projects, we scan all CVEs.
         it('All cve with python project', () => {
-            pythonScanManager.cvesScanned.keys();
-            assert.sameMembers(expectedPythonScannedCve, [...pythonScanManager.cvesScanned]);
+            pythonApplicabilityRunner.cvesScanned.keys();
+            assert.sameMembers(expectedPythonScannedCve, [...pythonApplicabilityRunner.cvesScanned]);
         });
     });
 
@@ -139,8 +137,8 @@ describe('Applicability Scan Tests', () => {
 
         before(() => {
             // Read test data and populate scanResult and dummy Cve nodes in test dependency
-            let response: ApplicabilityScanResponse = getDummyRunner().convertResponse(
-                getAnalyzerScanResponse(path.join(scanApplicable, 'analyzerResponse.json'))?.runs[0]
+            let response: ApplicabilityScanResponse = getDummyRunner([], PackageType.Unknown).convertResponse(
+                getAnalyzerScanResponse(path.join(scanApplicable, 'analyzerResponse.json'))
             );
             for (let cve of response.scannedCve) {
                 testCves.push(createDummyCveIssue(Severity.Medium, testDependency, cve, cve));
@@ -356,34 +354,27 @@ describe('Applicability Scan Tests', () => {
         } as ApplicabilityScanArgs;
     }
 
-    function getDummyRunner(): ApplicabilityRunner {
-        return new ApplicabilityRunner({} as ConnectionManager, logManager);
-    }
-
-    function getDummyScanManager(): DummyScanManager {
-        return new DummyScanManager({} as ConnectionManager, logManager);
+    function getDummyRunner(scanBundles: FileScanBundle[], packageType: PackageType): DummyApplicabilityRunner {
+        return new DummyApplicabilityRunner(scanBundles, packageType);
     }
 });
 
-class DummyScanManager extends ScanManager {
-    scanned: boolean = false;
+class DummyApplicabilityRunner extends ApplicabilityRunner {
     cvesScanned: Set<string> = new Set<string>();
+    scanned: boolean = false;
 
-    constructor(connectionManager: ConnectionManager, logManager: LogManager) {
-        super(connectionManager, logManager);
+    constructor(scanBundles: FileScanBundle[], packageType: PackageType) {
+        super(scanBundles, packageType, createTestStepProgress(), {} as ConnectionManager, logManager);
     }
 
     /** @override */
-    public async scanApplicability(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        directory: string,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        checkCancel: () => void,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        cveToRun: Set<string>
-    ): Promise<ApplicabilityScanResponse> {
-        this.cvesScanned = new Set<string>(cveToRun);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    public executeRequest(checkCancel: () => void, request: ApplicabilityScanArgs): Promise<AnalyzerScanResponse | undefined> {
         this.scanned = true;
-        return {} as ApplicabilityScanResponse;
+        this.cvesScanned = new Set<string>(request.cve_whitelist);
+
+        return new Promise<AnalyzerScanResponse | undefined>(resolve => {
+            resolve(undefined);
+        });
     }
 }

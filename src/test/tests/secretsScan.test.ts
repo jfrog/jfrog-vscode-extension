@@ -3,28 +3,29 @@ import * as path from 'path';
 import { assert } from 'chai';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
-import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
-import { createRootTestNode } from './utils/treeNodeUtils.test';
-import { ScanResults } from '../../main/types/workspaceIssuesDetails';
-import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
-import { getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
 import { FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
-import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
-import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
 import { SecretsRunner, SecretsScanResponse } from '../../main/scanLogic/scanRunners/secretsScan';
+import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
+import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 import { SecretTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/secretsTreeNode';
+import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
+import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
+import { ScanResults } from '../../main/types/workspaceIssuesDetails';
+import { AppsConfigModule } from '../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
 import {
     assertFileNodesCreated,
     assertIssueNodesCreated,
     assertIssuesFullDescription,
+    assertIssuesSnippet,
     assertNodeLabelRuleName,
     assertNodesSeverity,
-    assertIssuesSnippet,
     assertSameNumberOfFileNodes,
     assertSameNumberOfIssueNodes,
     findLocationNode,
     groupFiles
 } from './utils/testAnalyzer.test';
+import { createRootTestNode } from './utils/treeNodeUtils.test';
+import { createTestStepProgress, getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
 
 describe('Secrets Scan Tests', () => {
     const scanSecrets: string = path.join(__dirname, '..', 'resources', 'secretsScan');
@@ -120,6 +121,13 @@ describe('Secrets Scan Tests', () => {
     });
 
     function getDummyRunner(): SecretsRunner {
-        return new SecretsRunner({} as ConnectionManager, logManager);
+        return new SecretsRunner(
+            {} as ScanResults,
+            createRootTestNode(''),
+            createTestStepProgress(),
+            {} as ConnectionManager,
+            logManager,
+            new AppsConfigModule()
+        );
     }
 });

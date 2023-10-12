@@ -1,7 +1,11 @@
-import * as path from 'path';
-import * as fs from 'fs';
 import { assert } from 'chai';
+import * as fs from 'fs';
+import * as path from 'path';
 
+import { AnalyzeScanRequest } from '../../../main/scanLogic/scanRunners/analyzerModels';
+import { SecretsRunner, SecretsScanResponse } from '../../../main/scanLogic/scanRunners/secretsScan';
+import { ScanResults } from '../../../main/types/workspaceIssuesDetails';
+import { AppsConfigModule } from '../../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
 import {
     AnalyzerManagerIntegrationEnv,
     assertFileIssuesExist,
@@ -12,8 +16,8 @@ import {
     assertIssuesRuleNameExist,
     assertIssuesSeverityExist
 } from '../utils/testIntegration.test';
-import { NotSupportedError } from '../../../main/utils/scanUtils';
-import { SecretsRunner, SecretsScanResponse } from '../../../main/scanLogic/scanRunners/secretsScan';
+import { createRootTestNode } from '../utils/treeNodeUtils.test';
+import { createTestStepProgress } from '../utils/utils.test';
 
 describe('Secrets Scan Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -26,7 +30,15 @@ describe('Secrets Scan Integration Tests', async () => {
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        runner = new SecretsRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
+        runner = new SecretsRunner(
+            {} as ScanResults,
+            createRootTestNode(''),
+            createTestStepProgress(),
+            integrationManager.connectionManager,
+            integrationManager.logManager,
+            new AppsConfigModule(),
+            integrationManager.resource
+        );
         runner.verbose = true;
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
         // Get expected partial result that the scan should contain
@@ -35,14 +47,9 @@ describe('Secrets Scan Integration Tests', async () => {
         assert.isDefined(expectedContent, 'Failed to read expected SecretsScanResponse content from ' + dataPath);
         // Run scan
         // Try/Catch (with skip) should be removed after Secrets scan is released
-        try {
-            response = await runner.scan(testDataRoot, () => undefined);
-        } catch (err) {
-            if (err instanceof NotSupportedError) {
-                this.skip();
-            }
-            throw err;
-        }
+        response = await runner
+            .executeRequest(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest)
+            .then(runResult => runner.convertResponse(runResult));
     });
 
     it('Check response defined', () => {

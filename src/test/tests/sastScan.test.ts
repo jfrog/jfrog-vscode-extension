@@ -4,10 +4,10 @@ import { assert } from 'chai';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
-import { IacRunner, IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
+import { SastRunner, SastScanResponse } from '../../main/scanLogic/scanRunners/sastScan';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
-import { IacTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/iacTreeNode';
+import { SastTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/sastTreeNode';
 import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProviders/utils/analyzerUtils';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
@@ -27,12 +27,12 @@ import {
 import { createRootTestNode } from './utils/treeNodeUtils.test';
 import { createTestStepProgress, getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
 
-describe('Iac Scan Tests', () => {
-    const scanIac: string = path.join(__dirname, '..', 'resources', 'iacScan');
+describe('Sast Tests', () => {
+    const scanSast: string = path.join(__dirname, '..', 'resources', 'sastScan');
     let logManager: LogManager = new LogManager().activate();
 
-    describe('Iac scan fails', () => {
-        let response: IacScanResponse;
+    describe('Sast scan fails', () => {
+        let response: SastScanResponse;
 
         before(() => {
             response = getDummyRunner().generateScanResponse(undefined);
@@ -47,8 +47,8 @@ describe('Iac Scan Tests', () => {
         });
     });
 
-    describe('Iac scan no issues found', () => {
-        let response: IacScanResponse;
+    describe('Sast scan no issues found', () => {
+        let response: SastScanResponse;
 
         before(() => {
             response = getDummyRunner().generateScanResponse(getEmptyAnalyzerScanResponse());
@@ -63,43 +63,41 @@ describe('Iac Scan Tests', () => {
         });
     });
 
-    describe('Iac scan success', () => {
-        const testRoot: IssuesRootTreeNode = createRootTestNode('root');
+    describe('Sast scan success', () => {
+        const testRoot: IssuesRootTreeNode = createRootTestNode(path.join('root'));
         let expectedScanResult: ScanResults;
         let expectedFilesWithIssues: FileWithSecurityIssues[] = [];
         let populatedIssues: number;
 
         before(() => {
             // Read test data and populate scanResult
-            let response: IacScanResponse = getDummyRunner().generateScanResponse(
-                getAnalyzerScanResponse(path.join(scanIac, 'analyzerResponse.json'))
+            let response: SastScanResponse = getDummyRunner().generateScanResponse(
+                getAnalyzerScanResponse(path.join(scanSast, 'analyzerResponse.json'))
             );
             expectedFilesWithIssues = groupFiles(response);
             expectedScanResult = {
-                iacScanTimestamp: 11,
-                iacScan: response
+                sastScanTimestamp: 22,
+                sastScan: response
             } as ScanResults;
             // Populate scan result information to the test dummy node
-            populatedIssues = AnalyzerUtils.populateIacIssues(testRoot, expectedScanResult);
+            populatedIssues = AnalyzerUtils.populateSastIssues(testRoot, expectedScanResult);
         });
 
         it('Check issue count returned from method', () => {
-            assert.equal(populatedIssues, 3);
+            assert.equal(populatedIssues, 1);
         });
 
         it('Check timestamp transferred from data to node', () => {
-            assert.equal(expectedScanResult.iacScanTimestamp, testRoot.iacScanTimeStamp);
+            assert.equal(expectedScanResult.sastScanTimestamp, testRoot.sastScanTimeStamp);
         });
 
         describe('Data populated as CodeFileTreeNode nodes', () => {
-            function getTestIssueNode(fileNode: CodeFileTreeNode, location: FileRegion): IacTreeNode {
+            function getTestIssueNode(fileNode: CodeFileTreeNode, location: FileRegion): SastTreeNode {
                 let issueLocation: CodeIssueTreeNode | undefined = findLocationNode(location, fileNode);
-                assert.instanceOf(
-                    issueLocation,
-                    IacTreeNode,
-                    'expected node to be IacTreeNode issue for location ' + location + ' in node: ' + issueLocation
-                );
-                return <IacTreeNode>issueLocation;
+                if (!(issueLocation instanceof SastTreeNode)) {
+                    assert.fail('expected node to be SastTreeNode issue for location ' + location + ' in node: ' + issueLocation);
+                }
+                return <SastTreeNode>issueLocation;
             }
 
             it('Check file nodes created for each file with issues', () => assertFileNodesCreated(testRoot, expectedFilesWithIssues));
@@ -122,8 +120,8 @@ describe('Iac Scan Tests', () => {
         });
     });
 
-    function getDummyRunner(): IacRunner {
-        return new IacRunner(
+    function getDummyRunner(): SastRunner {
+        return new SastRunner(
             {} as ScanResults,
             createRootTestNode(''),
             createTestStepProgress(),

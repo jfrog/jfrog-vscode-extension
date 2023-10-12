@@ -1,0 +1,78 @@
+{
+    "runs": [
+        {
+            "tool": {
+                "driver": {
+                    "name": "USAF",
+                    "rules": [
+                        {
+                            "id": "js-insecure-random",
+                            "defaultConfiguration": {
+                                "parameters": {
+                                    "properties": {
+                                        "CWE": "338"
+                                    }
+                                }
+                            },
+                            "fullDescription": {
+                                "text": "\n### Overview\nA use of insecure random vulnerability is a type of security flaw that is\ncaused by the use of inadequate or predictable random numbers in a program\nor system. Random numbers are used in many security-related applications,\nsuch as generating cryptographic keys and if the numbers are not truly\nrandom, an attacker may be able to predict or recreate them, potentially\ncompromising the security of the system.\n\n### Vulnerable example\n```javascript\nvar randomNum = Math.random();\n```\n`Math.random` is not secured, as it creates predictable random numbers.\n\n### Remediation\n```diff\nvar randomNum = crypto.randomInt(0, 100)\n```\n`crypto.randomInt` is secured, and creates much less predictable random\nnumbers.\n",
+                                "markdown": "\n### Overview\nA use of insecure random vulnerability is a type of security flaw that is\ncaused by the use of inadequate or predictable random numbers in a program\nor system. Random numbers are used in many security-related applications,\nsuch as generating cryptographic keys and if the numbers are not truly\nrandom, an attacker may be able to predict or recreate them, potentially\ncompromising the security of the system.\n\n### Vulnerable example\n```javascript\nvar randomNum = Math.random();\n```\n`Math.random` is not secured, as it creates predictable random numbers.\n\n### Remediation\n```diff\nvar randomNum = crypto.randomInt(0, 100)\n```\n`crypto.randomInt` is secured, and creates much less predictable random\nnumbers.\n"
+                            },
+                            "shortDescription": {
+                                "text": "Use of Insecure Random"
+                            }
+                        }
+                    ]
+                }
+            },
+            "invocations": [
+                {
+                    "executionSuccessful": true,
+                    "arguments": [
+                        "/Users/yahavi/.jfrog-vscode-extension/issues/analyzerManager/zd_scanner/scanner",
+                        "scan",
+                        "/var/folders/dn/3smrq2yj2qddjccqlky47mpw0000gq/T/tmp-33126-59BtZ0xxL1U4/response_0",
+                        "/var/folders/dn/3smrq2yj2qddjccqlky47mpw0000gq/T/tmp-33126-59BtZ0xxL1U4/request_0"
+                    ],
+                    "workingDirectory": {
+                        "uri": "file:///Users/yahavi/.jfrog-vscode-extension/issues/analyzerManager"
+                    }
+                }
+            ],
+            "results": [
+                {
+                    "message": {
+                        "text": "Use of Insecure Random"
+                    },
+                    "level": "note",
+                    "locations": [
+                        {
+                            "logicalLocations": [
+                                {
+                                    "fullyQualifiedName": "badguys.static.js.vendor.jquery.^_0.^_213.matcherFromGroupMatchers.^_307"
+                                }
+                            ],
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "file:///Users/yahavi/code/bad-guys/badguys/static/js/vendor/jquery.js"
+                                },
+                                "region": {
+                                    "endColumn": 78,
+                                    "endLine": 5337,
+                                    "snippet": {
+                                        "text": "Math.random()"
+                                    },
+                                    "startColumn": 65,
+                                    "startLine": 5337
+                                }
+                            }
+                        }
+                    ],
+                    "ruleId": "js-insecure-random"
+                }
+            ]
+        }
+    ],
+    "version": "2.1.0",
+    "$schema": "https://docs.oasis-open.org/sarif/sarif/v2.1.0/cos02/schemas/sarif-schema-2.1.0.json"
+}

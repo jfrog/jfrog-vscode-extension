@@ -108,7 +108,7 @@ describe('Issues Root Node Tests', () => {
         it('Tooltip test - ' + testCase.test, () => {
             let testNode: IssuesRootTreeNode = createAndPopulateRootTestNode(testCase.path, testCase.data);
             // Path
-            assert.equal(testNode.workSpace.uri.fsPath, testCase.path);
+            assert.equal(testNode.workspace.uri.fsPath, testCase.path);
             assert.include(testNode.tooltip, 'Full path: ' + testCase.path);
             // Issue count
             assert.include(testNode.tooltip, 'Issue count: ' + testCase.expectedIssueCount);

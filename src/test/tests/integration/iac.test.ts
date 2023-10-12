@@ -1,8 +1,11 @@
-import * as path from 'path';
-import * as fs from 'fs';
 import { assert } from 'chai';
+import * as fs from 'fs';
+import * as path from 'path';
 
+import { AnalyzeScanRequest } from '../../../main/scanLogic/scanRunners/analyzerModels';
 import { IacRunner, IacScanResponse } from '../../../main/scanLogic/scanRunners/iacScan';
+import { ScanResults } from '../../../main/types/workspaceIssuesDetails';
+import { AppsConfigModule } from '../../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
 import {
     AnalyzerManagerIntegrationEnv,
     assertFileIssuesExist,
@@ -13,7 +16,8 @@ import {
     assertIssuesRuleNameExist,
     assertIssuesSeverityExist
 } from '../utils/testIntegration.test';
-import { NotSupportedError } from '../../../main/utils/scanUtils';
+import { createRootTestNode } from '../utils/treeNodeUtils.test';
+import { createTestStepProgress } from '../utils/utils.test';
 
 describe('Iac Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -26,7 +30,15 @@ describe('Iac Integration Tests', async () => {
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        runner = new IacRunner(integrationManager.connectionManager, integrationManager.logManager, integrationManager.resource);
+        runner = new IacRunner(
+            {} as ScanResults,
+            createRootTestNode(''),
+            createTestStepProgress(),
+            integrationManager.connectionManager,
+            integrationManager.logManager,
+            new AppsConfigModule(),
+            integrationManager.resource
+        );
         runner.verbose = true;
         assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
         // Get expected partial result that the scan should contain
@@ -35,14 +47,9 @@ describe('Iac Integration Tests', async () => {
         assert.isDefined(expectedContent, 'Failed to read expected IacScanResponse content from ' + dataPath);
         // Run scan
         // Try/Catch (with skip) should be removed after Iac is released
-        try {
-            response = await runner.scan(testDataRoot, () => undefined);
-        } catch (err) {
-            if (err instanceof NotSupportedError) {
-                this.skip();
-            }
-            throw err;
-        }
+        response = await runner
+            .executeRequest(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest)
+            .then(runResult => runner.generateScanResponse(runResult));
     });
 
     it('Check response defined', () => {

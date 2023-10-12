@@ -1,16 +1,17 @@
+import * as fs from 'fs';
+import { JfrogClient } from 'jfrog-client-js';
 import * as os from 'os';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
-import * as fs from 'fs';
-import { ConnectionManager } from '../../../main/connect/connectionManager';
 import { ScanCacheManager } from '../../../main/cache/scanCacheManager';
-import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { TestMemento } from './testMemento.test';
-import { LogManager } from '../../../main/log/logManager';
-import { ContextKeys, SessionStatus } from '../../../main/constants/contextKeys';
+import { ConnectionManager } from '../../../main/connect/connectionManager';
 import { ConnectionUtils } from '../../../main/connect/connectionUtils';
-import { JfrogClient } from 'jfrog-client-js';
+import { ContextKeys, SessionStatus } from '../../../main/constants/contextKeys';
+import { LogManager } from '../../../main/log/logManager';
 import { AnalyzerDriver, AnalyzerScanResponse, AnalyzerScanRun } from '../../../main/scanLogic/scanRunners/analyzerModels';
+import { DependenciesTreeNode } from '../../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { StepProgress } from '../../../main/treeDataProviders/utils/stepProgress';
+import { TestMemento } from './testMemento.test';
 
 export function isWindows(): boolean {
     return os.platform() === 'win32';
@@ -70,6 +71,11 @@ export async function createTestConnectionManager(logManager: LogManager, timeou
             }
         } as vscode.Memento
     } as vscode.ExtensionContext);
+}
+
+export function createTestStepProgress(): StepProgress {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    return new StepProgress({} as vscode.Progress<{ message?: string; increment?: number }>, () => {});
 }
 
 export class ConnectionManagerWrapper extends ConnectionManager {

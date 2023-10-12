@@ -19,8 +19,8 @@
                         {
                             "id": "applic_CVE-2021-3918",
                             "fullDescription": {
-                                "text": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `json-schema.validate` with external input to its 1st (`instance`) argument.\n* `json-schema.checkPropertyChange` with external input to its 2nd (`schema`) argument.",
-                                "markdown": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `json-schema.validate` with external input to its 1st (`instance`) argument.\n* `json-schema.checkPropertyChange` with external input to its 2nd (`schema`) argument."
+                                "text": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`\n* `loadSync`\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present.",
+                                "markdown": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`\n* `loadSync`\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present."
                             },
                             "name": "CVE-2021-3918",
                             "shortDescription": {
@@ -30,8 +30,8 @@
                         {
                             "id": "applic_CVE-2022-25878",
                             "fullDescription": {
-                                "text": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`",
-                                "markdown": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`"
+                                "text": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`\n* `loadSync`\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present.",
+                                "markdown": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`\n* `loadSync`\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present."
                             },
                             "name": "CVE-2022-25878",
                             "shortDescription": {
@@ -58,7 +58,7 @@
             "results": [
                 {
                     "message": {
-                        "text": "Prototype pollution `Object.freeze` remediation was not detected, The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load is called"
+                        "text": "Prototype pollution `Object.freeze` remediation was not detected, The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load(Sync) is called"
                     },
                     "locations": [
                         {
@@ -82,7 +82,7 @@
                 },
                 {
                     "message": {
-                        "text": "Prototype pollution `Object.freeze` remediation was not detected, The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load is called"
+                        "text": "Prototype pollution `Object.freeze` remediation was not detected, The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load(Sync) is called"
                     },
                     "locations": [
                         {
