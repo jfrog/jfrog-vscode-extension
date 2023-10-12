@@ -398,25 +398,28 @@ export abstract class JasRunner {
         this._logManager.debug('Input YAML:\n' + request);
 
         // 2. Run the binary
-        await this.runBinary(requestPath, this._verbose ? undefined : path.dirname(requestPath), checkCancel, responsePath).catch(error => {
-            if (error.code) {
+        try {
+            await this.runBinary(requestPath, this._verbose ? undefined : path.dirname(requestPath), checkCancel, responsePath);
+        } catch (error) {
+            let code: number | undefined = (<any>error).code;
+            if (code) {
                 // Not entitled to run binary
-                if (error.code === JasRunner.NOT_ENTITLED) {
+                if (code === JasRunner.NOT_ENTITLED) {
                     throw new NotEntitledError();
                 }
-                if (error.code === JasRunner.NOT_SUPPORTED) {
+                if (code === JasRunner.NOT_SUPPORTED) {
                     throw new NotSupportedError(Translators.toAnalyzerTypeString(this._scanType));
                 }
-                if (error.code === JasRunner.OS_NOT_SUPPORTED) {
+                if (code === JasRunner.OS_NOT_SUPPORTED) {
                     throw new OsNotSupportedError(Translators.toAnalyzerTypeString(this._scanType));
                 }
                 this._logManager.logMessage(
-                    "Binary '" + Translators.toAnalyzerTypeString(this._scanType) + "' task ended with status code: " + error.code,
+                    "Binary '" + Translators.toAnalyzerTypeString(this._scanType) + "' task ended with status code: " + code,
                     'ERR'
                 );
             }
             throw error;
-        });
+        }
         // 3. Collect responses
         if (!fs.existsSync(responsePath)) {
             throw new Error(

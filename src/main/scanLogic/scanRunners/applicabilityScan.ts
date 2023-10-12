@@ -56,7 +56,7 @@ export class ApplicabilityRunner extends JasRunner {
         logManager: LogManager,
         binary?: Resource
     ) {
-        super(connectionManager, ScanType.ContextualAnalysis, logManager, new AppsConfigModule(), binary);
+        super(connectionManager, ScanType.AnalyzeApplicability, logManager, new AppsConfigModule(), binary);
     }
 
     /** @override */
@@ -94,7 +94,7 @@ export class ApplicabilityRunner extends JasRunner {
             let startApplicableTime: number = Date.now();
 
             const request: ApplicabilityScanArgs = {
-                type: ScanType.ContextualAnalysis,
+                type: ScanType.AnalyzeApplicability,
                 roots: [workspacePath],
                 cve_whitelist: Array.from(cveToScan),
                 skipped_folders: excludePatterns

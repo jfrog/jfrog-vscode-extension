@@ -43,7 +43,7 @@ describe('JFrog Apps Config Tests', () => {
     ].forEach(testCase => {
         it('Should skip scanner - ' + testCase.excludeScanners, () => {
             let module: AppsConfigModule = new AppsConfigModule({ exclude_scanners: testCase.excludeScanners } as Module);
-            assert.equal(module.ShouldSkipScanner(ScanType.ContextualAnalysis), testCase.shouldSkip);
+            assert.equal(module.ShouldSkipScanner(ScanType.AnalyzeApplicability), testCase.shouldSkip);
         });
     });
 

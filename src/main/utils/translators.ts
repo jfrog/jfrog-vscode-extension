@@ -30,7 +30,7 @@ import { Utils } from './utils';
 export class Translators {
     public static toAnalyzerTypeString(type: ScanType): string {
         switch (type) {
-            case ScanType.ContextualAnalysis:
+            case ScanType.AnalyzeApplicability:
                 return 'contextual-analysis';
             case ScanType.Iac:
                 return 'iac-scan';

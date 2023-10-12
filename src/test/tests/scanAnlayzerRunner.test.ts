@@ -16,7 +16,7 @@ import { Translators } from '../../main/utils/translators';
 describe('Analyzer BinaryRunner tests', async () => {
     let logManager: LogManager = new LogManager().activate();
     let connectionManager: ConnectionManager = createBinaryRunnerConnectionManager('url', 'username', 'pass', 'token');
-    const dummyName: ScanType = ScanType.ContextualAnalysis;
+    const dummyName: ScanType = ScanType.AnalyzeApplicability;
 
     function createBinaryRunnerConnectionManager(inputUrl: string, user: string, pass: string, token: string): ConnectionManager {
         return {
@@ -161,7 +161,7 @@ describe('Analyzer BinaryRunner tests', async () => {
         });
     });
 
-    function getAnalyzeScanRequest(roots: string[], scanType: ScanType = ScanType.ContextualAnalysis): AnalyzeScanRequest {
+    function getAnalyzeScanRequest(roots: string[], scanType: ScanType = ScanType.AnalyzeApplicability): AnalyzeScanRequest {
         return {
             type: scanType,
             output: '/path/to/output.json',

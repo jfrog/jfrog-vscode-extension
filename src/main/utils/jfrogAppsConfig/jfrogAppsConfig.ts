@@ -63,7 +63,7 @@ export class AppsConfigModule {
                         this._excludeScanners.push(ScanType.Secrets);
                         break;
                     case ExcludeScannerName.ContextualAnalysis:
-                        this._excludeScanners.push(ScanType.ContextualAnalysis);
+                        this._excludeScanners.push(ScanType.AnalyzeApplicability);
                 }
             }
         }
@@ -153,7 +153,7 @@ export class AppsConfigModule {
                     excludeScanners.push(ScanType.Secrets);
                     break;
                 case ExcludeScannerName.ContextualAnalysis:
-                    excludeScanners.push(ScanType.ContextualAnalysis);
+                    excludeScanners.push(ScanType.AnalyzeApplicability);
             }
         }
         return excludeScanners;
