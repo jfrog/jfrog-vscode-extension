@@ -51,6 +51,9 @@ export abstract class JasRunner {
     public static readonly RUNNER_VERSION: string = '1.3.2.2019257';
     private static readonly DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/';
 
+    // 5 min
+    public static readonly TIMEOUT_MILLISECS: number = 1000 * 60 * 5;
+
     public static readonly NOT_ENTITLED: number = 31;
     public static readonly NOT_SUPPORTED: number = 13;
     public static readonly OS_NOT_SUPPORTED: number = 55;
@@ -65,18 +68,12 @@ export abstract class JasRunner {
 
     constructor(
         protected _connectionManager: ConnectionManager,
-        protected _abortCheckIntervalMillisecs: number,
         protected _scanType: ScanType,
         protected _logManager: LogManager,
         protected _module: AppsConfigModule,
         protected _binary: Resource = JasRunner.getAnalyzerManagerResource(_logManager)
     ) {
         this._runDirectory = path.dirname(this._binary.fullPath);
-
-        if (this._abortCheckIntervalMillisecs <= 0) {
-            // Default check in 1 sec intervals
-            this._abortCheckIntervalMillisecs = 1000;
-        }
     }
 
     public static getDefaultAnalyzerManagerSourceUrl(version: string = '[RELEASE]'): string {
@@ -156,7 +153,7 @@ export abstract class JasRunner {
      * @param executionLogDirectory - Directory to save the execution log in
      */
     protected async executeBinary(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
-        await RunUtils.runWithTimeout(this._abortCheckIntervalMillisecs, checkCancel, {
+        await RunUtils.runWithTimeout(JasRunner.TIMEOUT_MILLISECS, checkCancel, {
             title: this._binary.name,
             task: this.executeBinaryTask(args, executionLogDirectory)
         });

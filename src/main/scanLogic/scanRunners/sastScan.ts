@@ -7,7 +7,6 @@ import { Severity } from '../../types/severity';
 import { ScanResults } from '../../types/workspaceIssuesDetails';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { Resource } from '../../utils/resource';
-import { ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
 import {
     AnalyzeIssue,
@@ -63,10 +62,9 @@ export class SastRunner extends JasRunner {
         connectionManager: ConnectionManager,
         logManager: LogManager,
         module: AppsConfigModule,
-        binary?: Resource,
-        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
+        binary?: Resource
     ) {
-        super(connectionManager, timeout, ScanType.Sast, logManager, module, binary);
+        super(connectionManager, ScanType.Sast, logManager, module, binary);
     }
 
     /** @override */
@@ -98,11 +96,10 @@ export class SastRunner extends JasRunner {
             exclude_patterns: this._module.GetExcludePatterns(this._scanType)
         } as SastScanRequest;
         super.logStartScanning(request);
-        let response: SastScanResponse = await this.executeRequest(this._progressManager.checkCancel, request).then(runResult =>
-            this.generateScanResponse(runResult)
-        );
+        let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request);
+        let sastScanResponse: SastScanResponse = this.generateScanResponse(response);
         if (response) {
-            this._scanResults.sastScan = response;
+            this._scanResults.sastScan = sastScanResponse;
             this._scanResults.sastScanTimestamp = Date.now();
             let issuesCount: number = AnalyzerUtils.populateSastIssues(this._root, this._scanResults);
             super.logNumberOfIssues(issuesCount, this._scanResults.path, startTime, this._scanResults.sastScanTimestamp);

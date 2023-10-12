@@ -1,25 +1,24 @@
 import { assert } from 'chai';
 import * as path from 'path';
 import * as vscode from 'vscode';
-// import * as exec from 'child_process';
 
 import * as fs from 'fs-extra';
-import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { GeneralInfo } from '../../main/types/generalInfo';
-import { MavenUtils } from '../../main/utils/mavenUtils';
-import { PackageType } from '../../main/types/projectType';
-import { MavenDependencyUpdate } from '../../main/dependencyUpdate/mavenDependencyUpdate';
-import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
-import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
 import { IComponent } from 'jfrog-client-js';
-import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
-import { ScanUtils } from '../../main/utils/scanUtils';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { ScanCacheManager } from '../../main/cache/scanCacheManager';
 import { ConnectionManager } from '../../main/connect/connectionManager';
+import { MavenDependencyUpdate } from '../../main/dependencyUpdate/mavenDependencyUpdate';
 import { LogManager } from '../../main/log/logManager';
 import { ScanManager } from '../../main/scanLogic/scanManager';
+import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
+import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
+import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { TreesManager } from '../../main/treeDataProviders/treesManager';
+import { GeneralInfo } from '../../main/types/generalInfo';
+import { PackageType } from '../../main/types/projectType';
+import { MavenUtils } from '../../main/utils/mavenUtils';
+import { ScanUtils } from '../../main/utils/scanUtils';
 import { createScanCacheManager } from './utils/utils.test';
 
 describe('Maven - Update to fixed version', async () => {
@@ -35,11 +34,6 @@ describe('Maven - Update to fixed version', async () => {
     );
     const expectedVersion: string = '3.0.16';
 
-    before(function() {
-        // Install maven dependencies
-        // exec.execSync('mvn clean install', { cwd: path.join(__dirname, '..', 'resources', 'maven','updateToFixVersionProjects', 'updateParentPomProperty') });
-        // MavenUtils.installMavenGavReader();
-    });
     it('Without version property', async () => {
         const [mavenDependencyUpdate, issueToUpdate, pomXmlPath] = await setupTestEnvironment('updatePom');
 

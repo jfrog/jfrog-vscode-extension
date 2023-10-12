@@ -1,19 +1,19 @@
 import * as exec from 'child_process';
+import crypto from 'crypto'; // Important - Don't import '*'. It'll import deprecated encryption methods
 import * as fs from 'fs';
 import * as fse from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
 import * as tmp from 'tmp';
-import * as vscode from 'vscode';
-import crypto from 'crypto'; // Important - Don't import '*'. It'll import deprecated encryption methods
-import { LogManager } from '../log/logManager';
-import { PackageType } from '../types/projectType';
-import { Configuration } from './configuration';
-import { ContextKeys } from '../constants/contextKeys';
 import * as util from 'util';
-import { EntryIssuesData, ScanResults } from '../types/workspaceIssuesDetails';
-import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
+import * as vscode from 'vscode';
+import { ContextKeys } from '../constants/contextKeys';
+import { LogManager } from '../log/logManager';
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
+import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
+import { PackageType } from '../types/projectType';
+import { EntryIssuesData, ScanResults } from '../types/workspaceIssuesDetails';
+import { Configuration } from './configuration';
 
 export class ScanUtils {
     public static readonly DESCRIPTOR_SELECTOR_PATTERN: string =
@@ -21,8 +21,6 @@ export class ScanUtils {
 
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
-    // 5 min
-    public static readonly ANALYZER_TIMEOUT_MILLISECS: number = 1000 * 60 * 5;
 
     public static async scanWithProgress(
         scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => Promise<void>,

@@ -6,7 +6,6 @@ import { StepProgress } from '../../treeDataProviders/utils/stepProgress';
 import { ScanResults } from '../../types/workspaceIssuesDetails';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { Resource } from '../../utils/resource';
-import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, ScanType } from './analyzerModels';
 import { JasRunner } from './jasRunner';
 
@@ -25,10 +24,9 @@ export class IacRunner extends JasRunner {
         connectionManager: ConnectionManager,
         logManager: LogManager,
         module: AppsConfigModule,
-        binary?: Resource,
-        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
+        binary?: Resource
     ) {
-        super(connectionManager, timeout, ScanType.Iac, logManager, module, binary);
+        super(connectionManager, ScanType.Iac, logManager, module, binary);
     }
 
     /** @override */
@@ -47,11 +45,10 @@ export class IacRunner extends JasRunner {
             skipped_folders: this._module.GetExcludePatterns(this._scanType)
         } as AnalyzeScanRequest;
         super.logStartScanning(request);
-        let response: IacScanResponse = await this.executeRequest(this._progressManager.checkCancel, request).then(runResult =>
-            this.convertResponse(runResult)
-        );
+        let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request);
+        let iacScanResponse: IacScanResponse = this.generateScanResponse(response);
         if (response) {
-            this._scanResults.iacScan = response;
+            this._scanResults.iacScan = iacScanResponse;
             this._scanResults.iacScanTimestamp = Date.now();
             let issuesCount: number = AnalyzerUtils.populateIacIssues(this._root, this._scanResults);
             super.logNumberOfIssues(issuesCount, this._scanResults.path, startTime, this._scanResults.iacScanTimestamp);
@@ -65,7 +62,7 @@ export class IacRunner extends JasRunner {
      * @param response - Run results generated from the binary
      * @returns the response generated from the scan run
      */
-    public convertResponse(response?: AnalyzerScanResponse): IacScanResponse {
+    public generateScanResponse(response?: AnalyzerScanResponse): IacScanResponse {
         if (!response) {
             return {} as IacScanResponse;
         }

@@ -49,7 +49,7 @@ describe('Iac Integration Tests', async () => {
         // Try/Catch (with skip) should be removed after Iac is released
         response = await runner
             .executeRequest(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest)
-            .then(runResult => runner.convertResponse(runResult));
+            .then(runResult => runner.generateScanResponse(runResult));
     });
 
     it('Check response defined', () => {

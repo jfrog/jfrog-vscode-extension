@@ -6,7 +6,6 @@ import { StepProgress } from '../../treeDataProviders/utils/stepProgress';
 import { ScanResults } from '../../types/workspaceIssuesDetails';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { Resource } from '../../utils/resource';
-import { ScanUtils } from '../../utils/scanUtils';
 import { AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, ScanType } from './analyzerModels';
 import { JasRunner } from './jasRunner';
 
@@ -25,10 +24,9 @@ export class SecretsRunner extends JasRunner {
         connectionManager: ConnectionManager,
         logManager: LogManager,
         module: AppsConfigModule,
-        binary?: Resource,
-        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
+        binary?: Resource
     ) {
-        super(connectionManager, timeout, ScanType.Secrets, logManager, module, binary);
+        super(connectionManager, ScanType.Secrets, logManager, module, binary);
     }
 
     /** @override */
@@ -47,11 +45,10 @@ export class SecretsRunner extends JasRunner {
             skipped_folders: this._module.GetExcludePatterns(this._scanType)
         } as AnalyzeScanRequest;
         super.logStartScanning(request);
-        let response: SecretsScanResponse = await this.executeRequest(this._progressManager.checkCancel, request).then(runResult =>
-            this.convertResponse(runResult)
-        );
+        let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request);
+        let secretsScanResponse: SecretsScanResponse = this.convertResponse(response);
         if (response) {
-            this._scanResults.secretsScan = response;
+            this._scanResults.secretsScan = secretsScanResponse;
             this._scanResults.secretsScanTimestamp = Date.now();
             let issuesCount: number = AnalyzerUtils.populateSecretsIssues(this._root, this._scanResults);
             super.logNumberOfIssues(issuesCount, this._scanResults.path, startTime, this._scanResults.secretsScanTimestamp);

@@ -35,7 +35,7 @@ describe('Iac Scan Tests', () => {
         let response: IacScanResponse;
 
         before(() => {
-            response = getDummyRunner().convertResponse(undefined);
+            response = getDummyRunner().generateScanResponse(undefined);
         });
 
         it('Check response defined', () => {
@@ -51,7 +51,7 @@ describe('Iac Scan Tests', () => {
         let response: IacScanResponse;
 
         before(() => {
-            response = getDummyRunner().convertResponse(getEmptyAnalyzerScanResponse());
+            response = getDummyRunner().generateScanResponse(getEmptyAnalyzerScanResponse());
         });
 
         it('Check response defined', () => {
@@ -71,7 +71,9 @@ describe('Iac Scan Tests', () => {
 
         before(() => {
             // Read test data and populate scanResult
-            let response: IacScanResponse = getDummyRunner().convertResponse(getAnalyzerScanResponse(path.join(scanIac, 'analyzerResponse.json')));
+            let response: IacScanResponse = getDummyRunner().generateScanResponse(
+                getAnalyzerScanResponse(path.join(scanIac, 'analyzerResponse.json'))
+            );
             expectedFilesWithIssues = groupFiles(response);
             expectedScanResult = {
                 iacScanTimestamp: 11,

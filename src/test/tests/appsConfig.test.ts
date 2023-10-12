@@ -21,22 +21,16 @@ describe('JFrog Apps Config Tests', () => {
         assert.deepEqual(module.excludePatterns, ['docs/']);
         assert.deepEqual(module.excludeScanners, [ScanType.Secrets]);
 
+        // Check scanners
+        for (let scanType of [ScanType.Sast, ScanType.Iac, ScanType.Secrets]) {
+            assert.include(module.GetSourceRoots(scanType)[0], 'dir1');
+            assert.include(module.GetSourceRoots(scanType)[1], 'dir2');
+            assert.deepEqual(module.GetExcludePatterns(scanType), ['docs/', 'dir1/test/**']);
+        }
+
         // Check SAST scanner
         assert.equal(module.GetScanLanguage(), 'java');
-        assert.include(module.GetSourceRoots(ScanType.Sast)[0], 'dir1');
-        assert.include(module.GetSourceRoots(ScanType.Sast)[1], 'dir2');
-        assert.deepEqual(module.GetExcludePatterns(ScanType.Sast), ['docs/', 'dir1/test/**']);
         assert.deepEqual(module.getExcludeRules(), ['xss-injection']);
-
-        // Check Secrets scanner
-        assert.include(module.GetSourceRoots(ScanType.Secrets)[0], 'dir1');
-        assert.include(module.GetSourceRoots(ScanType.Secrets)[1], 'dir2');
-        assert.deepEqual(module.GetExcludePatterns(ScanType.Secrets), ['docs/', 'dir1/test/**']);
-
-        // Check IaC scanner
-        assert.include(module.GetSourceRoots(ScanType.Iac)[0], 'dir1');
-        assert.include(module.GetSourceRoots(ScanType.Iac)[1], 'dir2');
-        assert.deepEqual(module.GetExcludePatterns(ScanType.Iac), ['docs/', 'dir1/test/**']);
     });
 
     [

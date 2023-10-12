@@ -10,7 +10,7 @@ import { DependencyScanResults } from '../../types/workspaceIssuesDetails';
 import { Configuration } from '../../utils/configuration';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { Resource } from '../../utils/resource';
-import { FileScanBundle, ScanUtils } from '../../utils/scanUtils';
+import { FileScanBundle } from '../../utils/scanUtils';
 import { Utils } from '../../utils/utils';
 import { AnalyzeIssue, AnalyzeLocation, AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, FileIssues, ScanType } from './analyzerModels';
 import { JasRunner } from './jasRunner';
@@ -54,10 +54,9 @@ export class ApplicabilityRunner extends JasRunner {
         private _progressManager: StepProgress,
         connectionManager: ConnectionManager,
         logManager: LogManager,
-        binary?: Resource,
-        timeout: number = ScanUtils.ANALYZER_TIMEOUT_MILLISECS
+        binary?: Resource
     ) {
-        super(connectionManager, timeout, ScanType.ContextualAnalysis, logManager, new AppsConfigModule(), binary);
+        super(connectionManager, ScanType.ContextualAnalysis, logManager, new AppsConfigModule(), binary);
     }
 
     /** @override */
@@ -83,19 +82,16 @@ export class ApplicabilityRunner extends JasRunner {
      * Scan for applicability issues
      */
     public async scan(): Promise<void> {
-        let filteredBundles: Map<FileScanBundle, Set<string>> = this.filterBundlesWithoutIssuesToScan(this._bundlesWithIssues, this._packageType);
-        let workspaceToBundles: Map<string, Map<FileScanBundle, Set<string>>> = this.mapBundlesForApplicableScanning(
-            this._logManager,
-            filteredBundles
-        );
+        let filteredBundles: Map<FileScanBundle, Set<string>> = this.filterBundlesWithoutIssuesToScan();
+        let workspaceToBundles: Map<string, Map<FileScanBundle, Set<string>>> = this.mapBundlesForApplicableScanning(filteredBundles);
         if (workspaceToBundles.size == 0) {
             return;
         }
+        let excludePatterns: string[] = AnalyzerUtils.getAnalyzerManagerExcludePatterns(Configuration.getScanExcludePattern());
         for (let [workspacePath, bundles] of workspaceToBundles) {
             let cveToScan: Set<string> = Utils.combineSets(Array.from(bundles.values()));
             // Scan workspace for all cve in relevant bundles
             let startApplicableTime: number = Date.now();
-            let excludePatterns: string[] = AnalyzerUtils.getAnalyzerManagerExcludePatterns(Configuration.getScanExcludePattern());
 
             const request: ApplicabilityScanArgs = {
                 type: ScanType.ContextualAnalysis,
@@ -115,14 +111,11 @@ export class ApplicabilityRunner extends JasRunner {
 
     /**
      * Filter bundles without direct cve issues, transform the bundle list to have its relevant cve to scan set.
-     * @param fileScanBundles - Bundles to process and filter if needed
-     * @param packageType     - Package type of the project
      * @returns Map of bundles to their set of direct cves issues, with at least one for each bundle
      */
-    private filterBundlesWithoutIssuesToScan(fileScanBundles: FileScanBundle[], packageType: PackageType): Map<FileScanBundle, Set<string>> {
+    private filterBundlesWithoutIssuesToScan(): Map<FileScanBundle, Set<string>> {
         let filtered: Map<FileScanBundle, Set<string>> = new Map<FileScanBundle, Set<string>>();
-
-        for (let fileScanBundle of fileScanBundles) {
+        for (let fileScanBundle of this._bundlesWithIssues) {
             if (!(fileScanBundle.dataNode instanceof ProjectDependencyTreeNode)) {
                 // Filter non dependencies projects
                 continue;
@@ -134,7 +127,7 @@ export class ApplicabilityRunner extends JasRunner {
                 }
                 // For Python projects, all CVEs should be included because in some cases it is impossible to determine whether a dependency is direct.
                 // Other project types should include only CVEs on direct dependencies.
-                if (packageType === PackageType.Python || !issue.parent.indirect) {
+                if (this._packageType === PackageType.Python || !issue.parent.indirect) {
                     cvesToScan.add(issue.cve.cve);
                 }
             });
@@ -151,14 +144,10 @@ export class ApplicabilityRunner extends JasRunner {
 
     /**
      * Create a mapping between a workspace and all the given bundles that relevant to it.
-     * @param logManager      - logger to log added map
      * @param filteredBundles - bundles to map
      * @returns mapped bundles to similar workspace
      */
-    private mapBundlesForApplicableScanning(
-        logManager: LogManager,
-        filteredBundles: Map<FileScanBundle, Set<string>>
-    ): Map<string, Map<FileScanBundle, Set<string>>> {
+    private mapBundlesForApplicableScanning(filteredBundles: Map<FileScanBundle, Set<string>>): Map<string, Map<FileScanBundle, Set<string>>> {
         let workspaceToScanBundles: Map<string, Map<FileScanBundle, Set<string>>> = new Map<string, Map<FileScanBundle, Set<string>>>();
 
         for (let [fileScanBundle, cvesToScan] of filteredBundles) {
@@ -169,7 +158,7 @@ export class ApplicabilityRunner extends JasRunner {
                 workspaceToScanBundles.set(workspacePath, new Map<FileScanBundle, Set<string>>());
             }
             workspaceToScanBundles.get(workspacePath)?.set(fileScanBundle, cvesToScan);
-            logManager.logMessage('Adding data from descriptor ' + descriptorIssues.fullPath + ' for cve applicability scan', 'INFO');
+            this._logManager.logMessage('Adding data from descriptor ' + descriptorIssues.fullPath + ' for cve applicability scan', 'INFO');
         }
 
         return workspaceToScanBundles;
@@ -209,14 +198,17 @@ export class ApplicabilityRunner extends JasRunner {
      * @returns ApplicableScanResponse with information relevant only for the given relevant CVEs
      */
     private filterApplicabilityScanResponse(scanResponse: ApplicabilityScanResponse, relevantCve: Set<string>): ApplicabilityScanResponse {
-        let allApplicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(Object.entries(scanResponse.applicableCve));
+        // Map from Applicable CVE ID to CveApplicableDetails
+        let applicableCvesIdToDetails: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
+            Object.entries(scanResponse.applicableCve)
+        );
         let relevantScannedCve: string[] = [];
         let relevantApplicableCve: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
 
         for (let scannedCve of scanResponse.scannedCve) {
             if (relevantCve.has(scannedCve)) {
                 relevantScannedCve.push(scannedCve);
-                let potential: CveApplicableDetails | undefined = allApplicable.get(scannedCve);
+                let potential: CveApplicableDetails | undefined = applicableCvesIdToDetails.get(scannedCve);
                 if (potential) {
                     relevantApplicableCve.set(scannedCve, potential);
                 }
@@ -238,21 +230,21 @@ export class ApplicabilityRunner extends JasRunner {
             return {} as ApplicabilityScanResponse;
         }
         // Prepare
-        let analyzerScanRun: AnalyzerScanRun = response.runs[0];
-        let applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
-        let scanned: Set<string> = new Set<string>();
-        let rulesFullDescription: Map<string, string> = new Map<string, string>();
+        const analyzerScanRun: AnalyzerScanRun = response.runs[0];
+        const applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
+        const scanned: Set<string> = new Set<string>();
+        const rulesFullDescription: Map<string, string> = new Map<string, string>();
         for (const rule of analyzerScanRun.tool.driver.rules) {
             if (rule.fullDescription) {
                 rulesFullDescription.set(rule.id, rule.fullDescription.text);
             }
         }
-        let issues: AnalyzeIssue[] = analyzerScanRun.results;
+        const issues: AnalyzeIssue[] = analyzerScanRun.results;
         if (issues) {
             // Generate applicable data for all the issues
             issues.forEach((analyzeIssue: AnalyzeIssue) => {
                 if ((!analyzeIssue.kind || analyzeIssue.kind === 'fail') && analyzeIssue.locations) {
-                    let applicableDetails: CveApplicableDetails = this.getOrCreateApplicableDetails(
+                    const applicableDetails: CveApplicableDetails = this.getOrCreateApplicableDetails(
                         analyzeIssue,
                         applicable,
                         rulesFullDescription.get(analyzeIssue.ruleId)
