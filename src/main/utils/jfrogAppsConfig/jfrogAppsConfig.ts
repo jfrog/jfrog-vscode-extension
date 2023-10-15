@@ -19,9 +19,6 @@ export class JFrogAppsConfig {
             this._version = jfrogAppsConfig.version;
             if (jfrogAppsConfig.modules) {
                 for (let module of jfrogAppsConfig.modules) {
-                    if (module.source_root) {
-                        module.source_root = workspace;
-                    }
                     this._modules.push(new AppsConfigModule(workspace, module));
                 }
             }
