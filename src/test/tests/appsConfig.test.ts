@@ -17,7 +17,7 @@ describe('JFrog Apps Config Tests', () => {
         // Check module
         let module: AppsConfigModule = appsConfig!.modules[0];
         assert.equal(module.name, 'FrogLeapApp');
-        assert.include(module.sourceRoot, 'src');
+        assert.include(module.sourceRoot, path.join(jfrogAppsConfigDir, 'src'));
         assert.deepEqual(module.excludePatterns, ['docs/']);
         assert.deepEqual(module.excludeScanners, [ScanType.Secrets]);
 
