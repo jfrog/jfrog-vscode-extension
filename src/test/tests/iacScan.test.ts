@@ -129,7 +129,7 @@ describe('Iac Scan Tests', () => {
             createTestStepProgress(),
             {} as ConnectionManager,
             logManager,
-            new AppsConfigModule(__dirname)
+            new AppsConfigModule('')
         );
     }
 });

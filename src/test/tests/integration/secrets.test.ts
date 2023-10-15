@@ -36,7 +36,7 @@ describe('Secrets Scan Integration Tests', async () => {
             createTestStepProgress(),
             integrationManager.connectionManager,
             integrationManager.logManager,
-            new AppsConfigModule(__dirname),
+            new AppsConfigModule(testDataRoot),
             integrationManager.resource
         );
         runner.verbose = true;

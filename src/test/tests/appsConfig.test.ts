@@ -42,7 +42,7 @@ describe('JFrog Apps Config Tests', () => {
         { excludeScanners: [ExcludeScannerName.Secrets, ExcludeScannerName.ContextualAnalysis] as ExcludeScannerName[], shouldSkip: true }
     ].forEach(testCase => {
         it('Should skip scanner - ' + testCase.excludeScanners, () => {
-            let module: AppsConfigModule = new AppsConfigModule(__dirname, { exclude_scanners: testCase.excludeScanners } as Module);
+            let module: AppsConfigModule = new AppsConfigModule('', { exclude_scanners: testCase.excludeScanners } as Module);
             assert.equal(module.ShouldSkipScanner(ScanType.AnalyzeApplicability), testCase.shouldSkip);
         });
     });
@@ -96,7 +96,7 @@ describe('JFrog Apps Config Tests', () => {
         { scanner: { exclude_patterns: ['exclude-dir-1', 'exclude-dir-2'] } as Scanner }
     ].forEach(testCase => {
         it('Get exclude patterns - ' + testCase.scanner?.exclude_patterns, () => {
-            let module: AppsConfigModule = new AppsConfigModule(__dirname, {
+            let module: AppsConfigModule = new AppsConfigModule('', {
                 exclude_patterns: ['exclude-root'],
                 scanners: { secrets: testCase?.scanner }
             } as Module);

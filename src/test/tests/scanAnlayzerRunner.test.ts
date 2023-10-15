@@ -58,7 +58,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             ): Promise<void> {
                 await RunUtils.runWithTimeout(timeout, checkCancel, dummyAction());
             }
-        })(connection, dummyName, logManager, new AppsConfigModule(__dirname));
+        })(connection, dummyName, logManager, new AppsConfigModule(''));
     }
 
     [
