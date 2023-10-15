@@ -56,7 +56,7 @@ export class ApplicabilityRunner extends JasRunner {
         logManager: LogManager,
         binary?: Resource
     ) {
-        super(connectionManager, ScanType.AnalyzeApplicability, logManager, new AppsConfigModule(), binary);
+        super(connectionManager, ScanType.AnalyzeApplicability, logManager, new AppsConfigModule(__dirname), binary);
     }
 
     /** @override */

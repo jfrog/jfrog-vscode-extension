@@ -42,7 +42,7 @@ describe('JFrog Apps Config Tests', () => {
         { excludeScanners: [ExcludeScannerName.Secrets, ExcludeScannerName.ContextualAnalysis] as ExcludeScannerName[], shouldSkip: true }
     ].forEach(testCase => {
         it('Should skip scanner - ' + testCase.excludeScanners, () => {
-            let module: AppsConfigModule = new AppsConfigModule({ exclude_scanners: testCase.excludeScanners } as Module);
+            let module: AppsConfigModule = new AppsConfigModule(__dirname, { exclude_scanners: testCase.excludeScanners } as Module);
             assert.equal(module.ShouldSkipScanner(ScanType.AnalyzeApplicability), testCase.shouldSkip);
         });
     });
@@ -56,7 +56,10 @@ describe('JFrog Apps Config Tests', () => {
     getSourceRootCases.forEach(testCase => {
         it('Get source roots - With module source - ' + testCase.scanner?.working_dirs, () => {
             let sourceRoot: string = path.join(__dirname, 'source-root');
-            let module: AppsConfigModule = new AppsConfigModule({ source_root: sourceRoot, scanners: { iac: testCase?.scanner } } as Module);
+            let module: AppsConfigModule = new AppsConfigModule(sourceRoot, {
+                source_root: sourceRoot,
+                scanners: { iac: testCase?.scanner }
+            } as Module);
             let actualSourceRoots: string[] = module.GetSourceRoots(ScanType.Iac);
             if (!testCase.scanner) {
                 assert.sameMembers(actualSourceRoots, [module.sourceRoot]);
@@ -73,7 +76,7 @@ describe('JFrog Apps Config Tests', () => {
     getSourceRootCases.forEach(testCase => {
         it('Get source roots - With module source ' + testCase.scanner?.working_dirs, () => {
             let sourceRoot: string = path.join(__dirname, 'source-root');
-            let module: AppsConfigModule = new AppsConfigModule({ source_root: sourceRoot, scanners: { iac: testCase?.scanner } } as Module);
+            let module: AppsConfigModule = new AppsConfigModule(sourceRoot, { scanners: { iac: testCase?.scanner } } as Module);
             let actualSourceRoots: string[] = module.GetSourceRoots(ScanType.Iac);
             if (!testCase.scanner) {
                 assert.sameMembers(actualSourceRoots, [module.sourceRoot]);
@@ -93,7 +96,7 @@ describe('JFrog Apps Config Tests', () => {
         { scanner: { exclude_patterns: ['exclude-dir-1', 'exclude-dir-2'] } as Scanner }
     ].forEach(testCase => {
         it('Get exclude patterns - ' + testCase.scanner?.exclude_patterns, () => {
-            let module: AppsConfigModule = new AppsConfigModule({
+            let module: AppsConfigModule = new AppsConfigModule(__dirname, {
                 exclude_patterns: ['exclude-root'],
                 scanners: { secrets: testCase?.scanner }
             } as Module);

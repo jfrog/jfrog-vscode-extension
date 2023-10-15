@@ -19,13 +19,16 @@ export class JFrogAppsConfig {
             this._version = jfrogAppsConfig.version;
             if (jfrogAppsConfig.modules) {
                 for (let module of jfrogAppsConfig.modules) {
-                    this._modules.push(new AppsConfigModule(module));
+                    if (module.source_root) {
+                        module.source_root = workspace;
+                    }
+                    this._modules.push(new AppsConfigModule(workspace, module));
                 }
             }
         }
         // If no modules provides, push a default module
         if (this._modules.length === 0) {
-            this._modules.push(new AppsConfigModule({ source_root: workspace } as Module));
+            this._modules.push(new AppsConfigModule(workspace));
         }
     }
 
@@ -45,10 +48,10 @@ export class AppsConfigModule {
     private _excludeScanners: ScanType[] = [];
     private _scanners: Map<ScanType, Scanner> = new Map<ScanType, Scanner>();
 
-    constructor(module?: Module) {
+    constructor(defaultWorkspace: string, module?: Module) {
         module = module || ({} as Module);
         this._name = module.name;
-        this._sourceRoot = this.getModuleSourceRoot(module);
+        this._sourceRoot = this.getModuleSourceRoot(module, defaultWorkspace);
         this._excludePatterns = module.exclude_patterns || [];
         if (module.exclude_scanners) {
             for (let excludeScanner of module.exclude_scanners) {
@@ -127,12 +130,12 @@ export class AppsConfigModule {
         return scanner.excluded_rules;
     }
 
-    private getModuleSourceRoot(module: Module) {
+    private getModuleSourceRoot(module: Module, defaultWorkspace: string) {
         let sourceRoot: string = module.source_root || '';
         if (path.isAbsolute(sourceRoot)) {
             return sourceRoot;
         } else {
-            return path.join(__dirname, sourceRoot);
+            return path.join(defaultWorkspace, sourceRoot);
         }
     }
 

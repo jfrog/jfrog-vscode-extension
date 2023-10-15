@@ -127,7 +127,7 @@ describe('Secrets Scan Tests', () => {
             createTestStepProgress(),
             {} as ConnectionManager,
             logManager,
-            new AppsConfigModule()
+            new AppsConfigModule(__dirname)
         );
     }
 });
