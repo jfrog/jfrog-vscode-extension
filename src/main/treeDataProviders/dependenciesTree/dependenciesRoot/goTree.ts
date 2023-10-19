@@ -92,7 +92,7 @@ export class GoTreeNode extends RootNode {
         }
 
         //Filter out go min version that is written in go mod e.g. go@v1.19
-        directDependenciesGeneralInfos = directDependenciesGeneralInfos.filter(generalInfo => !generalInfo.artifactId.startsWith("go@"))
+        directDependenciesGeneralInfos = directDependenciesGeneralInfos.filter(generalInfo => !generalInfo.artifactId.startsWith('go@'));
 
         // Create a set of packages that are actually in use in the project
         let goListPackages: Set<string> = new Set<string>();

@@ -204,15 +204,21 @@ export class GoUtils {
      * @param targetDir - Target directory to copy relevant files to.
      * @param goModAbsDir - Path to the location of the gomod-absolutizer tool.
      */
-    public static prepareProjectWorkspace(sourceDir: string, targetDir: string, goModAbsDir: string, logManager: LogManager, executeCmdFunction: (goModPath: string, sourceDir: string, goModAbsDir: string) => void) {
+    public static prepareProjectWorkspace(
+        sourceDir: string,
+        targetDir: string,
+        goModAbsDir: string,
+        logManager: LogManager,
+        executeCmdFunction: (goModPath: string, sourceDir: string, goModAbsDir: string) => void
+    ) {
         logManager.logMessage('copy go workspace from' + sourceDir + ', to' + targetDir, 'DEBUG');
-        walkdir.find(sourceDir, { follow_symlinks: false, sync: true }, function (curPath: string, stat: fs.Stats) {
+        walkdir.find(sourceDir, { follow_symlinks: false, sync: true }, function(curPath: string, stat: fs.Stats) {
             let destPath: string = path.resolve(targetDir, path.relative(sourceDir, curPath));
 
             if (stat.isDirectory()) {
                 if (GoUtils.shouldSkipDirectory(curPath, '.git', 'testdata', '.idea', '.vscode')) {
                     this.ignore(curPath);
-                    return
+                    return;
                 }
                 if (!(curPath === sourceDir)) {
                     // Skip subdirectories with go.mod files.
@@ -231,10 +237,10 @@ export class GoUtils {
             }
 
             if (curPath.endsWith('_test.go')) {
-                return
+                return;
             }
 
-            logManager.logMessage('copying ' + curPath + ' to ' + destPath, 'DEBUG')
+            logManager.logMessage('copying ' + curPath + ' to ' + destPath, 'DEBUG');
             fs.copySync(curPath, destPath);
 
             // The root go.mod file is copied and relative path in "replace" are resolved to absolute paths.
@@ -251,6 +257,5 @@ export class GoUtils {
             }
         }
         return false;
-    };
-
+    }
 }

@@ -238,10 +238,12 @@ describe('Go Utils Tests', async () => {
             const sourceDir: string = path.join(tmpDir, 'prepareProjectWorkspace');
             const targetDir: string = path.join(tmpDir, 'tmpDir');
 
-            // Call the function with test directories
-            GoUtils.prepareProjectWorkspace(sourceDir, targetDir, '', logManager, () => { return });
+            
+            GoUtils.prepareProjectWorkspace(sourceDir, targetDir, '', logManager, () => {
+                return;
+            });
 
-            // Assert that the .git directory in the source was skipped
+
             assert.isFalse(fs.existsSync(targetDir), 'The target directory should not exist since all files should be excluded');
         });
     });
