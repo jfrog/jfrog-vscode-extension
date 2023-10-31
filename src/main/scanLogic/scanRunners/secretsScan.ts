@@ -5,7 +5,7 @@ import { AnalyzerUtils, FileWithSecurityIssues } from '../../treeDataProviders/u
 import { StepProgress } from '../../treeDataProviders/utils/stepProgress';
 import { ScanResults } from '../../types/workspaceIssuesDetails';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
-import { Resource } from '../../utils/resource';
+import { AnalyzerManager } from './analyzerManager';
 import { AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, ScanType } from './analyzerModels';
 import { JasRunner } from './jasRunner';
 
@@ -24,9 +24,9 @@ export class SecretsRunner extends JasRunner {
         connectionManager: ConnectionManager,
         logManager: LogManager,
         config: AppsConfigModule,
-        binary?: Resource
+        analyzerManager: AnalyzerManager
     ) {
-        super(connectionManager, ScanType.Secrets, logManager, config, binary);
+        super(connectionManager, ScanType.Secrets, logManager, config, analyzerManager);
     }
 
     /** @override */

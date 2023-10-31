@@ -1,12 +1,22 @@
 import { IUsageFeature } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
-import { EntitledScans } from '../scanLogic/scanManager';
 import { PackageType } from '../types/projectType';
 
 export class UsageUtils {
+    private static translateToUsageFeature(usageFeatureDetails: Set<UsageJasScanType>): IUsageFeature[] {
+        let features: IUsageFeature[] = [];
+        for (const feature of usageFeatureDetails) {
+            features.push({ featureId: feature });
+        }
+        return features;
+    }
+
     private static getUsageFeaturesByExistTech(projectDescriptors: Map<PackageType, vscode.Uri[]>, scanSuffix: string): IUsageFeature[] {
         let features: IUsageFeature[] = [];
+        if (!projectDescriptors || projectDescriptors.size === 0) {
+            return features;
+        }
         for (const [techEnum, descriptors] of projectDescriptors.entries()) {
             // Only add to usage if found descriptors for tech.
             if (!!descriptors && descriptors.length > 0) {
@@ -17,33 +27,23 @@ export class UsageUtils {
         return features;
     }
 
-    /**
-     * Sends usage report for all techs we found project descriptors of and for each advance scan that was preformed.
-     * @param supportedScans - the entitlement for each scan
-     * @param projectDescriptors - map of all project descriptors by their tech.
-     * @param connectionManager - manager containing Artifactory details if configured.
-     */
     public static async sendUsageReport(
-        supportedScans: EntitledScans,
+        usageFeatureDetails: Set<UsageJasScanType>,
         projectDescriptors: Map<PackageType, vscode.Uri[]>,
         connectionManager: ConnectionManager
     ) {
-        let features: IUsageFeature[] = [];
-        if (supportedScans.dependencies) {
-            features.push(...this.getUsageFeaturesByExistTech(projectDescriptors, 'deps'));
-        }
-        if (supportedScans.applicability) {
-            features.push(...this.getUsageFeaturesByExistTech(projectDescriptors, 'contextual'));
-        }
-        if (supportedScans.iac) {
-            features.push({ featureId: 'iac' });
-        }
-        if (supportedScans.secrets) {
-            features.push({ featureId: 'secrets' });
-        }
+        const features: IUsageFeature[] = [];
+        features.push(...UsageUtils.translateToUsageFeature(usageFeatureDetails), ...this.getUsageFeaturesByExistTech(projectDescriptors, 'deps'));
         if (features.length === 0) {
             return;
         }
         await connectionManager.sendUsageReport(features);
     }
+}
+
+export enum UsageJasScanType {
+    IAC = 'iac',
+    SAST = 'sast',
+    SERCRETS = 'secrets',
+    APPLICABILITY = 'contextual'
 }

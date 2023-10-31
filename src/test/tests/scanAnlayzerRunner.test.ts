@@ -11,6 +11,7 @@ import { AppsConfigModule } from '../../main/utils/jfrogAppsConfig/jfrogAppsConf
 import { RunUtils } from '../../main/utils/runUtils';
 import { NotEntitledError, ScanCancellationError, ScanTimeoutError, ScanUtils } from '../../main/utils/scanUtils';
 import { Translators } from '../../main/utils/translators';
+import { AnalyzerManager } from '../../main/scanLogic/scanRunners/analyzerManager';
 
 // binary runner
 describe('Analyzer BinaryRunner tests', async () => {
@@ -40,7 +41,7 @@ describe('Analyzer BinaryRunner tests', async () => {
 
     function createDummyBinaryRunner(
         connection: ConnectionManager = connectionManager,
-        timeout: number = JasRunner.TIMEOUT_MILLISECS,
+        timeout: number = AnalyzerManager.TIMEOUT_MILLISECS,
         dummyAction: () => Promise<void> = () => Promise.resolve()
     ): JasRunner {
         return new (class extends JasRunner {
@@ -58,7 +59,30 @@ describe('Analyzer BinaryRunner tests', async () => {
             ): Promise<void> {
                 await RunUtils.runWithTimeout(timeout, checkCancel, dummyAction());
             }
-        })(connection, dummyName, logManager, new AppsConfigModule(''));
+        })(connection, dummyName, logManager, new AppsConfigModule(''), {} as AnalyzerManager);
+    }
+
+    function createDummyAnalyzerManager(
+        connection: ConnectionManager = connectionManager,
+        timeout: number = AnalyzerManager.TIMEOUT_MILLISECS,
+        dummyAction: () => Promise<void> = () => Promise.resolve()
+    ): AnalyzerManager {
+        return new (class extends AnalyzerManager {
+            public scan(): Promise<void> {
+                throw new Error('Method not implemented.');
+            }
+
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            async runBinary(
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                _yamlConfigPath: string,
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                _executionLogDirectory: string | undefined,
+                checkCancel: () => void
+            ): Promise<void> {
+                await RunUtils.runWithTimeout(timeout, checkCancel, dummyAction());
+            }
+        })(connection, logManager);
     }
 
     [
@@ -114,8 +138,7 @@ describe('Analyzer BinaryRunner tests', async () => {
         }
     ].forEach(test => {
         it('Create environment variables for execution - ' + test.name, () => {
-            //
-            let runner: JasRunner = createDummyBinaryRunner(createBinaryRunnerConnectionManager(test.url, test.user, test.pass, test.token));
+            let runner: AnalyzerManager = createDummyAnalyzerManager(createBinaryRunnerConnectionManager(test.url, test.user, test.pass, test.token));
             process.env['HTTP_PROXY'] = test.proxy;
             process.env['HTTPS_PROXY'] = test.proxy;
 
@@ -125,17 +148,17 @@ describe('Analyzer BinaryRunner tests', async () => {
             } else {
                 assert.isDefined(envVars);
                 // Validate platform vars
-                assert.equal(envVars?.[JasRunner.ENV_PLATFORM_URL] ?? '', test.url);
-                assert.equal(envVars?.[JasRunner.ENV_USER] ?? '', test.user);
-                assert.equal(envVars?.[JasRunner.ENV_PASSWORD] ?? '', test.pass);
-                assert.equal(envVars?.[JasRunner.ENV_TOKEN] ?? '', test.token);
+                assert.equal(envVars?.[AnalyzerManager.ENV_PLATFORM_URL] ?? '', test.url);
+                assert.equal(envVars?.[AnalyzerManager.ENV_USER] ?? '', test.user);
+                assert.equal(envVars?.[AnalyzerManager.ENV_PASSWORD] ?? '', test.pass);
+                assert.equal(envVars?.[AnalyzerManager.ENV_TOKEN] ?? '', test.token);
                 // Validate proxy vars
                 if (test.proxy) {
-                    assert.equal(envVars?.[JasRunner.ENV_HTTP_PROXY], test.proxy);
-                    assert.equal(envVars?.[JasRunner.ENV_HTTPS_PROXY], test.proxy);
+                    assert.equal(envVars?.[AnalyzerManager.ENV_HTTP_PROXY], test.proxy);
+                    assert.equal(envVars?.[AnalyzerManager.ENV_HTTPS_PROXY], test.proxy);
                 }
                 // Validate log vars
-                assert.equal(envVars?.[JasRunner.ENV_LOG_DIR], test.logPath);
+                assert.equal(envVars?.[AnalyzerManager.ENV_LOG_DIR], test.logPath);
             }
         });
     });
@@ -173,21 +196,21 @@ describe('Analyzer BinaryRunner tests', async () => {
     [
         {
             name: 'Run valid request',
-            timeout: JasRunner.TIMEOUT_MILLISECS,
+            timeout: AnalyzerManager.TIMEOUT_MILLISECS,
             createDummyResponse: true,
             shouldAbort: false,
             expectedErr: undefined
         },
         {
             name: 'Not entitled',
-            timeout: JasRunner.TIMEOUT_MILLISECS,
+            timeout: AnalyzerManager.TIMEOUT_MILLISECS,
             createDummyResponse: true,
             shouldAbort: false,
             expectedErr: new NotEntitledError()
         },
         {
             name: 'Cancel requested',
-            timeout: JasRunner.TIMEOUT_MILLISECS,
+            timeout: AnalyzerManager.TIMEOUT_MILLISECS,
             createDummyResponse: true,
             shouldAbort: true,
             expectedErr: new ScanCancellationError()
@@ -201,7 +224,7 @@ describe('Analyzer BinaryRunner tests', async () => {
         },
         {
             name: 'Response not created',
-            timeout: JasRunner.TIMEOUT_MILLISECS,
+            timeout: AnalyzerManager.TIMEOUT_MILLISECS,
             createDummyResponse: false,
             shouldAbort: false,
             expectedErr: new Error(
@@ -220,7 +243,7 @@ describe('Analyzer BinaryRunner tests', async () => {
                 } else if (test.name === 'Not entitled') {
                     throw new DummyRunnerError();
                 } else if (test.name === 'Timeout') {
-                    await RunUtils.delay(JasRunner.TIMEOUT_MILLISECS);
+                    await RunUtils.delay(AnalyzerManager.TIMEOUT_MILLISECS);
                 }
                 if (test.createDummyResponse) {
                     fs.writeFileSync(responsePath, JSON.stringify({} as AnalyzerScanRun));

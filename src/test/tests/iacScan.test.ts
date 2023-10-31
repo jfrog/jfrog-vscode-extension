@@ -26,6 +26,7 @@ import {
 } from './utils/testAnalyzer.test';
 import { createRootTestNode } from './utils/treeNodeUtils.test';
 import { createTestStepProgress, getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
+import { AnalyzerManager } from '../../main/scanLogic/scanRunners/analyzerManager';
 
 describe('Iac Scan Tests', () => {
     const scanIac: string = path.join(__dirname, '..', 'resources', 'iacScan');
@@ -129,7 +130,8 @@ describe('Iac Scan Tests', () => {
             createTestStepProgress(),
             {} as ConnectionManager,
             logManager,
-            new AppsConfigModule('')
+            new AppsConfigModule(''),
+            {} as AnalyzerManager
         );
     }
 });

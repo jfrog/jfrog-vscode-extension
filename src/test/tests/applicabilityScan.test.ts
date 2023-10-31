@@ -28,6 +28,7 @@ import { DependencyScanResults, ScanResults } from '../../main/types/workspaceIs
 import { FileScanBundle, ScanUtils } from '../../main/utils/scanUtils';
 import { createDummyCveIssue, createDummyDependencyIssues, createRootTestNode, getTestCodeFileNode } from './utils/treeNodeUtils.test';
 import { createTestStepProgress, getAnalyzerScanResponse, removeWindowsWhiteSpace } from './utils/utils.test';
+import { AnalyzerManager } from '../../main/scanLogic/scanRunners/analyzerManager';
 
 let logManager: LogManager = new LogManager().activate();
 describe('Applicability Scan Tests', () => {
@@ -364,7 +365,7 @@ class DummyApplicabilityRunner extends ApplicabilityRunner {
     scanned: boolean = false;
 
     constructor(scanBundles: FileScanBundle[], packageType: PackageType) {
-        super(scanBundles, packageType, createTestStepProgress(), {} as ConnectionManager, logManager);
+        super(scanBundles, packageType, createTestStepProgress(), {} as ConnectionManager, logManager, {} as AnalyzerManager);
     }
 
     /** @override */

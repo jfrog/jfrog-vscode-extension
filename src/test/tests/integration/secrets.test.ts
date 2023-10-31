@@ -4,8 +4,6 @@ import * as path from 'path';
 
 import { AnalyzeScanRequest } from '../../../main/scanLogic/scanRunners/analyzerModels';
 import { SecretsRunner, SecretsScanResponse } from '../../../main/scanLogic/scanRunners/secretsScan';
-import { ScanResults } from '../../../main/types/workspaceIssuesDetails';
-import { AppsConfigModule } from '../../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
 import {
     AnalyzerManagerIntegrationEnv,
     assertFileIssuesExist,
@@ -16,8 +14,9 @@ import {
     assertIssuesRuleNameExist,
     assertIssuesSeverityExist
 } from '../utils/testIntegration.test';
-import { createRootTestNode } from '../utils/treeNodeUtils.test';
-import { createTestStepProgress } from '../utils/utils.test';
+import { ScanManager } from '../../../main/scanLogic/scanManager';
+import { PackageType } from '../../../main/types/projectType';
+import { Uri } from 'vscode';
 
 describe('Secrets Scan Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -27,20 +26,11 @@ describe('Secrets Scan Integration Tests', async () => {
     let response: SecretsScanResponse;
     let expectedContent: SecretsScanResponse;
 
-    before(async function() {
+    before(async function () {
         // Integration initialization
-        await integrationManager.initialize();
-        runner = new SecretsRunner(
-            {} as ScanResults,
-            createRootTestNode(''),
-            createTestStepProgress(),
-            integrationManager.connectionManager,
-            integrationManager.logManager,
-            new AppsConfigModule(testDataRoot),
-            integrationManager.resource
-        );
-        runner.verbose = true;
-        assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
+        await integrationManager.initialize(testDataRoot);
+        runner = integrationManager.entitledJasRunnerFactory.createSecretsRunners()[0];
+
         // Get expected partial result that the scan should contain
         let dataPath: string = path.join(testDataRoot, 'expectedScanResponse.json');
         expectedContent = JSON.parse(fs.readFileSync(dataPath, 'utf8').toString());
@@ -67,6 +57,9 @@ describe('Secrets Scan Integration Tests', async () => {
 
     it('Check all expected locations detected', () =>
         assertIssuesLocationsExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
+
+    it('Check calculateNumberOfTasks detected', () =>
+        assert.equal(ScanManager.calculateNumberOfTasks(integrationManager.entitledJasRunnerFactory.createSecretsRunners(), new Map<PackageType, Uri[]>()), 1))
 
     describe('Detected issues validations', () => {
         it('Check rule-name', () => assertIssuesRuleNameExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));

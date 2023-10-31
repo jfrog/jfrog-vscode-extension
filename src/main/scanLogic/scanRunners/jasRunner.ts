@@ -2,19 +2,15 @@ import * as fs from 'fs';
 import yaml from 'js-yaml';
 import * as path from 'path';
 
-import { IProxyConfig } from 'jfrog-client-js';
 import { ConnectionManager } from '../../connect/connectionManager';
-import { ConnectionUtils } from '../../connect/connectionUtils';
 import { LogManager } from '../../log/logManager';
 import { LogUtils } from '../../log/logUtils';
-import { Configuration } from '../../utils/configuration';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
-import { Resource } from '../../utils/resource';
-import { RunUtils } from '../../utils/runUtils';
 import { NotEntitledError, NotSupportedError, OsNotSupportedError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
 import { Utils } from '../../utils/utils';
 import { AnalyzeScanRequest, AnalyzerRequest, AnalyzerScanResponse, ScanType } from './analyzerModels';
+import { AnalyzerManager } from './analyzerManager';
 
 /**
  * Arguments for running binary async
@@ -44,65 +40,17 @@ interface RunRequest {
  * Base class for a JFrog Advanced Security scanner.
  */
 export abstract class JasRunner {
-    protected _verbose: boolean = false;
-    protected _runDirectory: string;
-
-    private static readonly RUNNER_NAME: string = 'analyzerManager';
-    public static readonly RUNNER_VERSION: string = '1.3.2.2019257';
-    private static readonly DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/';
-
-    // 8 min
-    public static readonly TIMEOUT_MILLISECS: number = 1000 * 60 * 8;
-
     public static readonly NOT_ENTITLED: number = 31;
     public static readonly NOT_SUPPORTED: number = 13;
     public static readonly OS_NOT_SUPPORTED: number = 55;
-
-    public static readonly ENV_PLATFORM_URL: string = 'JF_PLATFORM_URL';
-    public static readonly ENV_TOKEN: string = 'JF_TOKEN';
-    public static readonly ENV_USER: string = 'JF_USER';
-    public static readonly ENV_PASSWORD: string = 'JF_PASS';
-    public static readonly ENV_LOG_DIR: string = 'AM_LOG_DIRECTORY';
-    public static readonly ENV_HTTP_PROXY: string = 'HTTP_PROXY';
-    public static readonly ENV_HTTPS_PROXY: string = 'HTTPS_PROXY';
 
     constructor(
         protected _connectionManager: ConnectionManager,
         protected _scanType: ScanType,
         protected _logManager: LogManager,
         protected _config: AppsConfigModule,
-        protected _binary: Resource = JasRunner.getAnalyzerManagerResource(_logManager)
-    ) {
-        this._runDirectory = path.dirname(this._binary.fullPath);
-    }
-
-    public static getDefaultAnalyzerManagerSourceUrl(version: string = '[RELEASE]'): string {
-        return Utils.addZipSuffix(JasRunner.DOWNLOAD_URL + '/' + version + '/' + Utils.getArchitecture() + '/' + JasRunner.RUNNER_NAME);
-    }
-
-    public static getDefaultAnalyzerManagerTargetPath(baseDirectory?: string): string {
-        return Utils.addWinSuffixIfNeeded(path.join(baseDirectory ?? ScanUtils.getIssuesPath(), JasRunner.RUNNER_NAME, JasRunner.RUNNER_NAME));
-    }
-
-    public static getAnalyzerManagerResource(logManager: LogManager, targetPath?: string): Resource {
-        return new Resource(
-            this.getDefaultAnalyzerManagerSourceUrl(JasRunner.RUNNER_VERSION),
-            targetPath ?? this.getDefaultAnalyzerManagerTargetPath(),
-            logManager
-        );
-    }
-
-    public get binary(): Resource {
-        return this._binary;
-    }
-
-    public get verbose(): boolean {
-        return this._verbose;
-    }
-
-    public set verbose(value: boolean) {
-        this._verbose = value;
-    }
+        protected _analyzerManager: AnalyzerManager
+    ) {}
 
     /**
      * Run full JAS scan for the specific scanner.
@@ -118,7 +66,7 @@ export abstract class JasRunner {
      */
     protected abstract runBinary(
         yamlConfigPath: string,
-        executionLogDirectory: string | undefined,
+        executionLogDirectory: string,
         checkCancel: () => void,
         responsePath: string | undefined
     ): Promise<void>;
@@ -127,23 +75,11 @@ export abstract class JasRunner {
      * @returns true if should run the JAS scanner
      */
     public shouldRun(): boolean {
-        if (!this.validateSupported()) {
-            this._logManager.logMessage(this._scanType + ' runner could not find binary to run', 'WARN');
-            return false;
-        }
         if (this._config.ShouldSkipScanner(this._scanType)) {
             this._logManager.debug('Skipping ' + this._scanType + ' scanning');
             return false;
         }
         return true;
-    }
-
-    /**
-     * Validates that the binary exists and can run
-     * @returns true if supported false otherwise
-     */
-    public validateSupported(): boolean {
-        return this._binary.isExists();
     }
 
     /**
@@ -153,35 +89,7 @@ export abstract class JasRunner {
      * @param executionLogDirectory - Directory to save the execution log in
      */
     protected async executeBinary(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
-        await RunUtils.runWithTimeout(JasRunner.TIMEOUT_MILLISECS, checkCancel, {
-            title: this._binary.name,
-            task: this.executeBinaryTask(args, executionLogDirectory)
-        });
-    }
-
-    /**
-     * Execute the cmd command to run the binary with given arguments
-     * @param args  - the arguments for the command
-     * @param executionLogDirectory - the directory to save the execution log in
-     */
-    private async executeBinaryTask(args: string[], executionLogDirectory?: string): Promise<any> {
-        let command: string = '"' + this._binary.fullPath + '" ' + args.join(' ');
-        this._logManager.debug("Executing '" + command + "' in directory '" + this._runDirectory + "'");
-        let std: any = await ScanUtils.executeCmdAsync(command, this._runDirectory, this.createEnvForRun(executionLogDirectory));
-        if (std.stdout && std.stdout.length > 0) {
-            this.logTaskResult(std.stdout, false);
-        }
-        if (std.stderr && std.stderr.length > 0) {
-            this.logTaskResult(std.stderr, true);
-        }
-    }
-
-    private logTaskResult(stdChannel: string, isErr: boolean) {
-        let text: string = "Done executing '" + Translators.toAnalyzerTypeString(this._scanType) + "' with log, log:\n" + stdChannel;
-        if (this._verbose) {
-            console.log(text);
-        }
-        this._logManager.logMessage(text, isErr ? 'ERR' : 'DEBUG');
+        await this._analyzerManager.runWithTimeout(checkCancel, args, executionLogDirectory);
     }
 
     protected logStartScanning(request: AnalyzeScanRequest): void {
@@ -197,78 +105,6 @@ export abstract class JasRunner {
             `Found ${issuesCount} ${this._scanType} issues in workspace '${workspace}' (elapsed ${elapsedTime} seconds)`,
             'INFO'
         );
-    }
-
-    /**
-     * Create the needed environment variables for the runner to run
-     * @param executionLogDirectory - the directory that the log will be written into, if not provided the log will be written in stdout/stderr
-     * @returns list of environment variables to use while executing the runner or unidentified if credential not set
-     */
-    public createEnvForRun(executionLogDirectory?: string): NodeJS.ProcessEnv | undefined {
-        if (!this._connectionManager.areXrayCredentialsSet()) {
-            return undefined;
-        }
-
-        let binaryVars: NodeJS.ProcessEnv = { JFROG_CLI_LOG_LEVEL: Translators.toAnalyzerLogLevel(Configuration.getLogLevel()) };
-        // Platform information
-        binaryVars[JasRunner.ENV_PLATFORM_URL] = this._connectionManager.url;
-        // Credentials information
-        if (this._connectionManager.accessToken) {
-            binaryVars[JasRunner.ENV_TOKEN] = this._connectionManager.accessToken;
-        } else {
-            binaryVars[JasRunner.ENV_USER] = this._connectionManager.username;
-            binaryVars[JasRunner.ENV_PASSWORD] = this._connectionManager.password;
-        }
-
-        this.populateOptionalInformation(binaryVars, executionLogDirectory);
-
-        return {
-            ...process.env,
-            ...binaryVars
-        };
-    }
-
-    private populateOptionalInformation(binaryVars: NodeJS.ProcessEnv, executionLogDirectory?: string) {
-        // Optional proxy information - environment variable
-        let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
-        let proxyHttpsUrl: string | undefined = process.env['HTTPS_PROXY'];
-        // Optional proxy information - vscode configuration override
-        let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
-        if (optional) {
-            let proxyConfig: IProxyConfig = <IProxyConfig>optional;
-            let proxyUrl: string = proxyConfig.host + (proxyConfig.port !== 0 ? ':' + proxyConfig.port : '');
-            proxyHttpUrl = 'http://' + proxyUrl;
-            proxyHttpsUrl = 'https://' + proxyUrl;
-        }
-        if (proxyHttpUrl) {
-            binaryVars[JasRunner.ENV_HTTP_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpUrl);
-        }
-        if (proxyHttpsUrl) {
-            binaryVars[JasRunner.ENV_HTTPS_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
-        }
-        // Optional log destination
-        if (executionLogDirectory) {
-            binaryVars.AM_LOG_DIRECTORY = executionLogDirectory;
-        }
-    }
-
-    /**
-     * Add optional proxy auth information to the base url if exists
-     * @param url - Base url to add information on
-     * @returns the url with the auth information if exists or the given url if not
-     */
-    private addOptionalProxyAuthInformation(url: string): string {
-        let authOptional: string | undefined = Configuration.getProxyAuth();
-        if (authOptional) {
-            if (authOptional.startsWith('Basic ')) {
-                // We expect the decoded auth string to be in the format: <proxy-user>:<proxy-password>
-                return Buffer.from(authOptional.substring('Basic '.length), 'base64').toString('binary') + '@' + url;
-            } else if (authOptional.startsWith('Bearer ')) {
-                // Access token
-                return url + '?access_token=' + authOptional.substring('Bearer '.length);
-            }
-        }
-        return url;
     }
 
     /**
@@ -399,7 +235,7 @@ export abstract class JasRunner {
 
         // 2. Run the binary
         try {
-            await this.runBinary(requestPath, this._verbose ? undefined : path.dirname(requestPath), checkCancel, responsePath);
+            await this.runBinary(requestPath, path.dirname(requestPath), checkCancel, responsePath);
         } catch (error) {
             let code: number | undefined = (<any>error).code;
             if (code) {

@@ -1,20 +1,16 @@
 import { assert } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
-
 import {
     ApplicabilityRunner,
     ApplicabilityScanArgs,
     ApplicabilityScanResponse,
     CveApplicableDetails
 } from '../../../main/scanLogic/scanRunners/applicabilityScan';
-
 import { FileIssues, FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
-import { JasRunner } from '../../../main/scanLogic/scanRunners/jasRunner';
 import { AnalyzerUtils } from '../../../main/treeDataProviders/utils/analyzerUtils';
 import { AnalyzerManagerIntegrationEnv } from '../utils/testIntegration.test';
 import { PackageType } from '../../../main/types/projectType';
-import { createTestStepProgress } from '../utils/utils.test';
 
 describe('Applicability Integration Tests', async () => {
     let integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -25,16 +21,15 @@ describe('Applicability Integration Tests', async () => {
     before(async () => {
         await integrationManager.initialize();
         // Must be created after integration initialization
-        runner = new ApplicabilityRunner(
+        const applicableRunner: ApplicabilityRunner | undefined = await integrationManager.entitledJasRunnerFactory.createApplicabilityRunner(
             [],
-            PackageType.Unknown,
-            createTestStepProgress(),
-            integrationManager.connectionManager,
-            integrationManager.logManager,
-            integrationManager.resource
+            PackageType.Unknown
         );
-        runner.verbose = true;
-        assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
+        if (applicableRunner) {
+            runner = applicableRunner;
+        } else {
+            assert.fail('Failed to create ApplicabilityRunner');
+        }
     });
 
     ['npm', 'python'].forEach(async packageType => {
@@ -139,10 +134,6 @@ describe('Applicability Integration Tests', async () => {
                     }
 
                     it('Check all expected locations exists', async function() {
-                        if (JasRunner.RUNNER_VERSION === '1.3.2.2005632') {
-                            // Duplicate results are found in this AM version, which may be fixed in the next release.
-                            this.skip();
-                        }
                         expectedApplicableCves.forEach((expectedDetails: CveApplicableDetails, cve: string) => {
                             expectedDetails.fileEvidences.forEach((expectedFileIssues: FileIssues) => {
                                 expectedFileIssues.locations.forEach((expectedLocation: FileRegion) => {
@@ -153,10 +144,6 @@ describe('Applicability Integration Tests', async () => {
                     });
 
                     it('Check snippet data', async function() {
-                        if (JasRunner.RUNNER_VERSION === '1.3.2.2005632') {
-                            // Duplicate results are found in this AM version, which may be fixed in the next release.
-                            this.skip();
-                        }
                         expectedApplicableCves.forEach((expectedDetails: CveApplicableDetails, cve: string) => {
                             expectedDetails.fileEvidences.forEach((expectedFileIssues: FileIssues) => {
                                 expectedFileIssues.locations.forEach((expectedLocation: FileRegion) => {

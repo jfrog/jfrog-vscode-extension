@@ -1,8 +1,4 @@
 import { assert } from 'chai';
-import { IssuesTreeDataProvider } from '../../main/treeDataProviders/issuesTree/issuesTreeDataProvider';
-import { EntitledScans } from '../../main/scanLogic/scanManager';
-import { Uri } from 'vscode';
-import { PackageType } from '../../main/types/projectType';
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
 import { DependencyScanResults } from '../../main/types/workspaceIssuesDetails';
 import { IacScanResponse } from '../../main/scanLogic/scanRunners/iacScan';
@@ -14,38 +10,6 @@ import { SastFileIssues, SastScanResponse } from '../../main/scanLogic/scanRunne
  * Test functionality of @class IssuesTreeDataProvider.
  */
 describe('Issues Tree Data Provider Tests', () => {
-    const dummyDescriptors: Map<PackageType, Uri[]> = getDummyDescriptors();
-
-    [
-        {
-            test: 'Not supported',
-            supported: {} as EntitledScans,
-            expected: 0
-        },
-        {
-            test: 'With dependencies scan',
-            supported: { dependencies: true } as EntitledScans,
-            expected: 5
-        },
-        {
-            test: 'With advance scan',
-            supported: { dependencies: true, applicability: true, iac: true, secrets: true } as EntitledScans,
-            expected: 7
-        }
-    ].forEach(testCase => {
-        it('Get number of tasks in repopulate - ' + testCase.test, () => {
-            assert.equal(IssuesTreeDataProvider.getNumberOfTasksInRepopulate(testCase.supported, dummyDescriptors), testCase.expected);
-        });
-    });
-
-    function getDummyDescriptors(): Map<PackageType, Uri[]> {
-        let descriptors: Map<PackageType, Uri[]> = new Map<PackageType, Uri[]>();
-        descriptors.set(PackageType.Unknown, [Uri.parse('/somewhere/file'), Uri.parse('/somewhere/other')]);
-        descriptors.set(PackageType.Npm, [Uri.parse('/somewhere/other')]);
-        // 2 package types + 3 files = 5 tasks
-        return descriptors;
-    }
-
     [
         {
             test: 'No issues',

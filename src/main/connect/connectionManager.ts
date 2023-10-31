@@ -247,10 +247,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             if (cliSemver.compare(ConnectionManager.MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT) < 0) {
                 this._logManager.logMessage(
                     'JFrog CLI version is too low to support credentials extraction (needed: ' +
-                        ConnectionManager.MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT +
-                        ', actual: ' +
-                        version +
-                        ')',
+                    ConnectionManager.MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT +
+                    ', actual: ' +
+                    version +
+                    ')',
                     'DEBUG'
                 );
                 return false;
@@ -771,7 +771,21 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
 
     public createJfrogClient(): JfrogClient {
-        return ConnectionUtils.createJfrogClient(this._url, this._rtUrl, this._xrayUrl, this._username, this._password, this._accessToken);
+        return ConnectionUtils.createJfrogClient(this._url, this._rtUrl, this._xrayUrl, this._username, this._password, this._accessToken, undefined, undefined, this._logManager);
+    }
+
+    public createJfrogClientWithRepository(repository: string): JfrogClient {
+        return ConnectionUtils.createJfrogClient(
+            this._url,
+            this._rtUrl + '/' + repository,
+            this._xrayUrl,
+            this._username,
+            this._password,
+            this._accessToken,
+            undefined,
+            undefined,
+            this._logManager
+        );
     }
 
     private async updateJfrogVersions() {
