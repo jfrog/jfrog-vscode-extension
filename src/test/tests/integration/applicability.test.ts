@@ -25,11 +25,8 @@ describe('Applicability Integration Tests', async () => {
             [],
             PackageType.Unknown
         );
-        if (applicableRunner) {
-            runner = applicableRunner;
-        } else {
-            assert.fail('Failed to create ApplicabilityRunner');
-        }
+        assert.isDefined(applicableRunner);
+        runner = applicableRunner!;
     });
 
     ['npm', 'python'].forEach(async packageType => {

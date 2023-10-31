@@ -4,7 +4,7 @@ import { LogManager } from '../../log/logManager';
 import { Resource } from '../../utils/resource';
 import { Utils } from '../../utils/utils';
 import { ScanUtils } from '../../utils/scanUtils';
-import { IProxyConfig } from 'jfrog-client-js';
+import { IProxyConfig, JfrogClient } from 'jfrog-client-js';
 import { ConnectionUtils } from '../../connect/connectionUtils';
 import { Configuration } from '../../utils/configuration';
 import { Translators } from '../../utils/translators';
@@ -14,10 +14,12 @@ import { RunUtils } from '../../utils/runUtils';
  * Analyzer manager is responsible for running the analyzer on the workspace.
  */
 export class AnalyzerManager {
-    public static readonly RUNNER_VERSION: string = '1.3.2.2019257';
+    public static readonly ANALYZER_MANAGER_VERSION: string = '1.3.2.2019257';
     private static readonly RELATIVE_DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1';
     private static readonly BINARY_NAME: string = 'analyzerManager';
-    private static readonly DEFAULT_SERVER: string = 'https://releases.jfrog.io';
+    public static readonly ANALYZER_MANAGER_PATH: string = Utils.addWinSuffixIfNeeded(path.join(ScanUtils.getIssuesPath(), AnalyzerManager.BINARY_NAME, AnalyzerManager.BINARY_NAME));
+    private static readonly DOWNLOAD_URL: string = Utils.addZipSuffix(AnalyzerManager.RELATIVE_DOWNLOAD_URL + '/' + AnalyzerManager.ANALYZER_MANAGER_VERSION + '/' + Utils.getArchitecture() + '/' + AnalyzerManager.BINARY_NAME);
+    private static readonly JFROG_RELEASES_URL: string = 'https://releases.jfrog.io';
     public static readonly TIMEOUT_MILLISECS: number = 1000 * 60 * 5;
     public static readonly ENV_PLATFORM_URL: string = 'JF_PLATFORM_URL';
     public static readonly ENV_TOKEN: string = 'JF_TOKEN';
@@ -29,67 +31,58 @@ export class AnalyzerManager {
     public static readonly JF_RELEASES_REPO: string = 'JF_RELEASES_REPO';
 
     protected _binary: Resource;
-    private static FINISH_UPDATE_PROMISE: Promise<void>;
+    private static FINISH_UPDATE_PROMISE: Promise<boolean>;
 
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {
-        this._binary = new Resource(this.getUrlPath(), this.getDefaultTargetPath(), _logManager, this.createJFrogCLient());
+        this._binary = new Resource(AnalyzerManager.DOWNLOAD_URL, AnalyzerManager.ANALYZER_MANAGER_PATH, _logManager, this.createJFrogCLient());
         AnalyzerManager.FINISH_UPDATE_PROMISE = this.checkForUpdates();
     }
 
-    private createJFrogCLient() {
-        const releasesRepo: string = Configuration.useAirGappedEnvironments() || process.env[AnalyzerManager.JF_RELEASES_REPO] || '';
-        if (releasesRepo !== '') {
-            if (this._connectionManager.areCompleteCredentialsSet()) {
-                throw new Error('Cannot use ' + Configuration.JFROG_IDE_RELEASES_REPO + ' in the settings. No Artifactory URL is configured');
-            }
-            this._logManager.logMessage('Air-Gapped is turned on. Using ' + AnalyzerManager.JF_RELEASES_REPO + ' repository for downloading Advanced Security Features', 'INFO');
-            return this._connectionManager.createJfrogClientWithRepository(releasesRepo + '/artifactory');
+    private createJFrogCLient(): JfrogClient {
+        const releasesRepo: JfrogClient | undefined = this.getExternalResourcesRepository();
+        if (!releasesRepo) {
+            return ConnectionUtils.createJfrogClient(
+                AnalyzerManager.JFROG_RELEASES_URL,
+                AnalyzerManager.JFROG_RELEASES_URL + '/artifactory',
+                '',
+                '',
+                '',
+                '',
+                this._logManager
+            );
         }
-        return ConnectionUtils.createJfrogClient(AnalyzerManager.DEFAULT_SERVER, AnalyzerManager.DEFAULT_SERVER + '/artifactory', '', '', '', '', this._logManager);
+        return releasesRepo;
     }
 
-    /**
-     * Build the path section for the analyzer manager download URL.
-     */
-    public getUrlPath(): string {
-        return Utils.addZipSuffix(
-            AnalyzerManager.RELATIVE_DOWNLOAD_URL +
-            '/' +
-            AnalyzerManager.RUNNER_VERSION +
-            '/' +
-            Utils.getArchitecture() +
-            '/' +
-            AnalyzerManager.BINARY_NAME
-        );
+    private getExternalResourcesRepository(): JfrogClient | undefined {
+        const releasesRepo: string = Configuration.getExternalResourcesRepository();
+        if (releasesRepo === '') {
+            return undefined;
+        }
+        if (!this._connectionManager.areCompleteCredentialsSet()) {
+            this._logManager.logMessage(
+                'Cannot use ' + Configuration.JFROG_IDE_RELEASES_REPO_ENV + ' in the settings. No Artifactory URL is configured',
+                'ERR',
+                true
+            );
+            return undefined;
+        }
+        this._logManager.logMessage('Using external resource from repository' + releasesRepo, 'INFO');
+        return this._connectionManager.createJfrogClientWithRepository(releasesRepo + '/artifactory');
     }
 
-    private checkForUpdates(): Promise<void> {
-        return this._binary
-            .isOutdated()
-            .then((isOutdated: boolean) => {
-                if (isOutdated) {
-                    this._logManager.logMessage('Updating Advanced Security Features', 'INFO');
-                    this._binary
-                        .update()
-                        .then(() => this._logManager.logMessage('Updating Advanced Security Features finished successfully', 'INFO'))
-                        .catch((err: Error) => {
-                            this._logManager.logMessage('Updating Advanced Security Features failed: ' + err.message, 'ERR');
-                        });
-                }
-            })
-            .catch((err: Error) => {
-                this._logManager.logMessage('Failed to check if extension is outdated: ' + err.message, 'ERR');
-            });
+    private async checkForUpdates(): Promise<boolean> {
+        if (await this._binary.isOutdated()) {
+            this._logManager.logMessage('Updating Advanced Security Features', 'INFO');
+            try {
+                return await this._binary.update();
+            } catch (error) {
+                this._logManager.logMessage('Failed to check if extension is outdated: ' + error, 'ERR');
+            }
+        }
+        return false;
     }
 
-    /**
-     * Get the default path to download the analyzer manager to
-     */
-    public getDefaultTargetPath(): string {
-        return Utils.addWinSuffixIfNeeded(
-            path.join(ScanUtils.getIssuesPath(), AnalyzerManager.BINARY_NAME, AnalyzerManager.RUNNER_VERSION, AnalyzerManager.BINARY_NAME)
-        );
-    }
 
     public async runWithTimeout(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
         await AnalyzerManager.FINISH_UPDATE_PROMISE;

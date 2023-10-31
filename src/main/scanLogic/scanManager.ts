@@ -55,7 +55,7 @@ export class ScanManager implements ExtensionComponent {
             await new SupportedScans(this._connectionManager, this._logManager).getSupportedScans()
         );
         const jasRunners: JasRunner[] = await entitledJasRunnerFactory.createConfigurableJasRunner();
-        ScanManager.printStartScanMessage(progressManager, jasRunners, workspaceDescriptors);
+        progressManager.startStep('🔎 Scanning for issues', ScanManager.calculateNumberOfTasks(jasRunners, workspaceDescriptors));
         checkCanceled();
         await Promise.all([
             ...this.runDependenciesScans(workspaceDescriptors, root, checkCanceled, scanResults, progressManager, entitledJasRunnerFactory),
@@ -113,14 +113,6 @@ export class ScanManager implements ExtensionComponent {
     public async scanDependencyGraph(progress: XrayScanProgress, graphRoot: RootNode, checkCanceled: () => void): Promise<IGraphResponse> {
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
         return await scanLogic.scan(graphRoot, progress, checkCanceled);
-    }
-
-    public static printStartScanMessage(
-        progressManager: StepProgress,
-        jasRunners: JasRunner[],
-        workspaceDescriptors: Map<PackageType, vscode.Uri[]>
-    ) {
-        progressManager.startStep('🔎 Scanning for issues', ScanManager.calculateNumberOfTasks(jasRunners, workspaceDescriptors));
     }
 
     public static calculateNumberOfTasks(jasRunners: JasRunner[], workspaceDescriptors: Map<PackageType, vscode.Uri[]>): number {

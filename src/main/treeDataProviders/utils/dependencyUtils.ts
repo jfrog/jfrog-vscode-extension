@@ -108,10 +108,8 @@ export class DependencyUtils {
 
         await Promise.all(scansPromises);
         const applicableRunners: ApplicabilityRunner | undefined = await entitledJasRunnerFactory.createApplicabilityRunner(bundlesWithIssues, type);
-        if (applicableRunners) {
-            if (applicableRunners.shouldRun()) {
-                await applicableRunners.scan().catch(err => ScanUtils.onScanError(err, scanManager.logManager, true));
-            }
+        if (applicableRunners?.shouldRun()) {
+            await applicableRunners.scan().catch(err => ScanUtils.onScanError(err, scanManager.logManager, true));
         }
     }
 

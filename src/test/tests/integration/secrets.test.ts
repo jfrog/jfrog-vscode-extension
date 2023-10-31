@@ -26,7 +26,7 @@ describe('Secrets Scan Integration Tests', async () => {
     let response: SecretsScanResponse;
     let expectedContent: SecretsScanResponse;
 
-    before(async function () {
+    before(async function() {
         // Integration initialization
         await integrationManager.initialize(testDataRoot);
         runner = integrationManager.entitledJasRunnerFactory.createSecretsRunners()[0];
@@ -59,7 +59,10 @@ describe('Secrets Scan Integration Tests', async () => {
         assertIssuesLocationsExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
 
     it('Check calculateNumberOfTasks detected', () =>
-        assert.equal(ScanManager.calculateNumberOfTasks(integrationManager.entitledJasRunnerFactory.createSecretsRunners(), new Map<PackageType, Uri[]>()), 1))
+        assert.equal(
+            ScanManager.calculateNumberOfTasks(integrationManager.entitledJasRunnerFactory.createSecretsRunners(), new Map<PackageType, Uri[]>()),
+            1
+        ));
 
     describe('Detected issues validations', () => {
         it('Check rule-name', () => assertIssuesRuleNameExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));

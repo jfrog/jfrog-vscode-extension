@@ -9,8 +9,8 @@ import { AnalyzerUtils, FileWithSecurityIssues, SecurityIssue } from '../../../m
 import { FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
 import { ScanResults } from '../../../main/types/workspaceIssuesDetails';
 import { createRootTestNode } from './treeNodeUtils.test';
-import { MockEntitledJasRunnerFactory } from './MockEntitledJasRunnerFactory';
 import { SupportedScans } from '../../../main/scanLogic/sourceCodeScan/supportedScans';
+import { MockJasRunnerFactory } from './MockJasRunnerFactory';
 
 export class BaseIntegrationEnv {
     public static readonly ENV_PLATFORM_URL: string = 'JFROG_IDE_PLATFORM_URL';
@@ -64,12 +64,12 @@ export class BaseIntegrationEnv {
 
 export class AnalyzerManagerIntegrationEnv extends BaseIntegrationEnv {
     private _localPath?: string;
-    public entitledJasRunnerFactory!: MockEntitledJasRunnerFactory;
+    public entitledJasRunnerFactory!: MockJasRunnerFactory;
 
     /** @override */
     public async initialize(rootTest?: string) {
         await super.initialize();
-        this.entitledJasRunnerFactory = new MockEntitledJasRunnerFactory(
+        this.entitledJasRunnerFactory = new MockJasRunnerFactory(
             this.connectionManager,
             this.logManager,
             new ScanResults(BaseIntegrationEnv.directory),

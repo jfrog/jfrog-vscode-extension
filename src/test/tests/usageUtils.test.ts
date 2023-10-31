@@ -8,10 +8,10 @@ import { Uri } from 'vscode';
 
 describe('Usage Utils Tests', async () => {
     const logManager: LogManager = new LogManager().activate();
-    const WithAdvanceScan: Set<UsageJasScanType> = new Set<UsageJasScanType>();
-    WithAdvanceScan.add(UsageJasScanType.APPLICABILITY);
-    WithAdvanceScan.add(UsageJasScanType.IAC);
-    WithAdvanceScan.add(UsageJasScanType.SERCRETS);
+    const withAdvancedSecurityScan: Set<UsageJasScanType> = new Set<UsageJasScanType>();
+    withAdvancedSecurityScan.add(UsageJasScanType.APPLICABILITY);
+    withAdvancedSecurityScan.add(UsageJasScanType.IAC);
+    withAdvancedSecurityScan.add(UsageJasScanType.SECRETS);
 
     [
         {
@@ -30,7 +30,7 @@ describe('Usage Utils Tests', async () => {
         },
         {
             test: 'With advance scan',
-            supportedScans: WithAdvanceScan,
+            supportedScans: withAdvancedSecurityScan,
             descriptors: getDummyDescriptors(PackageType.Go, PackageType.Npm),
             expectedFeatures: [
                 { featureId: 'go-deps' },

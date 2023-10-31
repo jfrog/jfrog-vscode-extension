@@ -36,7 +36,7 @@ export class Resource {
      */
     private async download(downloadToFolder: string = this._targetDir): Promise<string> {
         let resourcePath: string = path.join(downloadToFolder, this.sourceUrl.substring(this.sourceUrl.lastIndexOf('/') + 1));
-            this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this.sourceUrl, 'DEBUG');
+        this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this.sourceUrl, 'DEBUG');
         await this._jfrogClient
             .artifactory()
             .download()
@@ -81,7 +81,7 @@ export class Resource {
             this._logManager.logMessage('Resource ' + this._name + ' was update successfully.', 'DEBUG');
             return true;
         } catch (error) {
-            this._logManager.logMessage('Updating resource ' + this._name + ' failed.', 'ERR');
+            this._logManager.logMessage('Updating resource ' + this._name + ' failed. err:' + error, 'ERR');
             throw error;
         } finally {
             ScanUtils.removeFolder(tmpFolder);

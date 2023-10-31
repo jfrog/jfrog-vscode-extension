@@ -103,7 +103,7 @@ describe('Resource Tests', () => {
             'baseURL/' + testCase.target,
             path.join(testDir, testCase.target),
             logManager,
-            ConnectionUtils.createJfrogClient(SERVER_URL, SERVER_URL + '/artifactory', '', '', '', '')
+            ConnectionUtils.createJfrogClient(SERVER_URL, SERVER_URL + '/artifactory', '', '', '', '', logManager)
         );
     }
 

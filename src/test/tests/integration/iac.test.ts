@@ -26,7 +26,7 @@ describe('Iac Integration Tests', async () => {
     let response: IacScanResponse;
     let expectedContent: IacScanResponse;
 
-    before(async function () {
+    before(async function() {
         // Integration initialization
         await integrationManager.initialize();
         runner = integrationManager.entitledJasRunnerFactory.createIacRunners()[0];
@@ -58,8 +58,7 @@ describe('Iac Integration Tests', async () => {
     it('Check all expected locations detected', () =>
         assertIssuesLocationsExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
 
-    it('Check calculateNumberOfTasks detected', () =>
-        assert.equal(ScanManager.calculateNumberOfTasks([runner], getDummyDescriptors()), 4))
+    it('Check calculateNumberOfTasks detected', () => assert.equal(ScanManager.calculateNumberOfTasks([runner], getDummyDescriptors()), 4));
 
     describe('Detected issues validations', () => {
         it('Check rule-name', () => assertIssuesRuleNameExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));

@@ -67,7 +67,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     private _xrayVersion: string = '';
     private _artifactoryVersion: string = '';
 
-    constructor(private _logManager: LogManager) {
+    constructor(protected _logManager: LogManager) {
         this._statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
         this._statusBar.tooltip = 'JFrog connection details';
         this._statusBar.command = 'jfrog.show.connectionStatus';
@@ -140,7 +140,13 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     private async pingCredential(): Promise<boolean> {
         if (await this.loadCredential()) {
             try {
-                return await ConnectionUtils.validateXrayConnection(this.xrayUrl, this._username, this._password, this._accessToken);
+                return await ConnectionUtils.validateXrayConnection(
+                    this.xrayUrl,
+                    this._username,
+                    this._password,
+                    this._accessToken,
+                    this._logManager
+                );
             } catch (error) {
                 return false;
             }
@@ -202,7 +208,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             return false;
         }
         if (this.areCompleteCredentialsSet()) {
-            return ConnectionUtils.checkArtifactoryConnection(
+            return await ConnectionUtils.checkArtifactoryConnection(
                 this._rtUrl,
                 this._username,
                 this._password,
@@ -247,10 +253,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             if (cliSemver.compare(ConnectionManager.MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT) < 0) {
                 this._logManager.logMessage(
                     'JFrog CLI version is too low to support credentials extraction (needed: ' +
-                    ConnectionManager.MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT +
-                    ', actual: ' +
-                    version +
-                    ')',
+                        ConnectionManager.MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT +
+                        ', actual: ' +
+                        version +
+                        ')',
                     'DEBUG'
                 );
                 return false;
@@ -355,7 +361,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
      * If URL leads to an Xray URL not under JFrog platform (like in Artifactory 6), leave the derive platform URL empty.
      */
     private async resolveUrls() {
-        if (await ConnectionUtils.isPlatformUrl(this._url, this._username, this._password, this._accessToken)) {
+        if (await ConnectionUtils.isPlatformUrl(this._url, this._username, this._password, this._accessToken, this._logManager)) {
             // _url is a platform URL
             this._xrayUrl = this.getXrayUrlFromPlatform();
             this._rtUrl = this.getRtUrlFromPlatform();
@@ -366,7 +372,15 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                 // Assuming platform URL was extracted. Checking against Artifactory.
                 this._url = this._url.substring(0, this._url.lastIndexOf('/xray'));
                 this._rtUrl = this.getRtUrlFromPlatform();
-                if (!(await ConnectionUtils.validateArtifactoryConnection(this._rtUrl, this._username, this._password, this._accessToken))) {
+                if (
+                    !(await ConnectionUtils.validateArtifactoryConnection(
+                        this._rtUrl,
+                        this._username,
+                        this._password,
+                        this._accessToken,
+                        this._logManager
+                    ))
+                ) {
                     this._url = '';
                     this._rtUrl = '';
                 }
@@ -450,7 +464,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     private async registerWebLoginId(url: string, sessionId: string) {
         try {
             this._logManager.logMessage('Register session token ' + sessionId, 'DEBUG');
-            await ConnectionUtils.createJfrogClient(url, '', '', '', '', '')
+            await ConnectionUtils.createJfrogClient(url, '', '', '', '', '', this._logManager)
                 .platform()
                 .webLogin()
                 .registerSessionId(sessionId);
@@ -484,9 +498,9 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                 '',
                 '',
                 '',
+                this._logManager,
                 20,
                 undefined,
-                this._logManager,
                 (statusCode: number) => statusCode >= 500 || statusCode === 400,
                 15000
             )
@@ -770,20 +784,35 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             .build(buildName, buildNumber, projectKey);
     }
 
+    /**
+     * Creates an instance of JfrogClient.
+     * @returns The newly created JfrogClient instance.
+     */
     public createJfrogClient(): JfrogClient {
-        return ConnectionUtils.createJfrogClient(this._url, this._rtUrl, this._xrayUrl, this._username, this._password, this._accessToken, undefined, undefined, this._logManager);
-    }
-
-    public createJfrogClientWithRepository(repository: string): JfrogClient {
         return ConnectionUtils.createJfrogClient(
             this._url,
-            this._rtUrl + '/' + repository,
+            this._rtUrl,
             this._xrayUrl,
             this._username,
             this._password,
             this._accessToken,
-            undefined,
-            undefined,
+            this._logManager
+        );
+    }
+
+    /**
+     * Creates an instance of JfrogClient with a suffix in the Artifactory URL.
+     * @param artifactoryUrlSuffix - The suffix to be used in the Artifactory URL.
+     * @returns The newly created JfrogClient instance associated with the provided suffix in the Artifactory URL.
+     */
+    public createJfrogClientWithRepository(artifactoryUrlSuffix: string): JfrogClient {
+        return ConnectionUtils.createJfrogClient(
+            this._url,
+            ClientUtils.addTrailingSlashIfMissing(this._rtUrl) + artifactoryUrlSuffix,
+            this._xrayUrl,
+            this._username,
+            this._password,
+            this._accessToken,
             this._logManager
         );
     }

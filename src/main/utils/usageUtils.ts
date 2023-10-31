@@ -44,6 +44,6 @@ export class UsageUtils {
 export enum UsageJasScanType {
     IAC = 'iac',
     SAST = 'sast',
-    SERCRETS = 'secrets',
+    SECRETS = 'secrets',
     APPLICABILITY = 'contextual'
 }

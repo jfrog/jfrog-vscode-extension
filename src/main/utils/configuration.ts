@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { LogLevel } from '../log/logManager';
 export class Configuration {
     public static jfrogSectionConfigurationKey: string = 'jfrog';
+    public static readonly JFROG_IDE_RELEASES_REPO_ENV: string = 'JFROG_IDE_RELEASES_REPO';
 
     /**
      * Get scan exclude pattern. This pattern is used to exclude specific file descriptors (go.mod, package.json, etc.) from being scanned by Xray.
@@ -29,6 +30,14 @@ export class Configuration {
 
     public static getBuildsPattern(): string {
         return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('xray.ciIntegration.buildNamePattern') || '';
+    }
+
+    public static getExternalResourcesRepository(): string {
+        return (
+            vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('externalResourcesRepository') ||
+            process.env[Configuration.JFROG_IDE_RELEASES_REPO_ENV] ||
+            ''
+        );
     }
 
     /**
