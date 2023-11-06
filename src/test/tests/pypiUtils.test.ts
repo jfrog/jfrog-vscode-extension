@@ -198,7 +198,7 @@ describe('Pypi Utils Tests', async () => {
         );
         node = parent.children[1] as PypiTreeNode;
         assert.deepEqual(node.label, 'setup.py');
-        assert.deepEqual(node.children.length, 2);
+        assert.deepEqual(node.children.length, 3);
         checkFireDependency(node);
 
         // Test 'resources/python/setupAndRequirements'
