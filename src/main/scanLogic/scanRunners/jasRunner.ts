@@ -51,7 +51,7 @@ export abstract class JasRunner {
     public static readonly RUNNER_VERSION: string = '1.3.2.2019257';
     private static readonly DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/';
 
-    // 5 min
+    // 8 min
     public static readonly TIMEOUT_MILLISECS: number = 1000 * 60 * 8;
 
     public static readonly NOT_ENTITLED: number = 31;
