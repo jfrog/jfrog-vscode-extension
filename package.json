@@ -99,7 +99,7 @@
                 "jfrog.externalResourcesRepository": {
                     "type": "string",
                     "scope": "application",
-                    "markdownDescription": "By default, the JFrog extension automatically retrieves the required tools from https://releases.jfrog.io. A remote repository can be configured to act as a proxy for https://releases.jfrog.io if the machine operating the JFrog extension does not have internet access."
+                    "markdownDescription": "By default, the JFrog extension automatically retrieves the required tools from https://releases.jfrog.io. A remote repository can be configured to act as a proxy for https://releases.jfrog.io if the machine operating the JFrog extension does not have access to https://releases.jfrog.io."
                 },
                 "jfrog.projectKey": {
                     "type": "string",
