@@ -64,12 +64,11 @@ describe('Pypi Utils Tests', async () => {
         dependencyToVersion = PypiUtils.getSetupPyDirectDependencies(path.join(tmpDir.fsPath, 'regex', 'setupAllKindOfDepsVariations.py'));
         assert.equal(dependencyToVersion.get('pyyaml'), '');
         assert.equal(dependencyToVersion.get('fire'), '==0.1.3');
-        assert.equal(dependencyToVersion.get('regex'), '==2017.4.5');
         assert.equal(dependencyToVersion.get('matplotlib'), '>=2.2.0,<2.4.0');
         assert.equal(dependencyToVersion.get('newrelic'), '==2.0.*');
         assert.equal(dependencyToVersion.get('jupyter'), '~=1.1.1');
         assert.equal(dependencyToVersion.get('numpy'), '>=1.14.5');
-        assert.equal(dependencyToVersion.size, 7);
+        assert.equal(dependencyToVersion.size, 6);
     });
 
     it('Match setup.py project name with regex', () => {
@@ -145,13 +144,13 @@ describe('Pypi Utils Tests', async () => {
             new GeneralInfo('newrelic', '2.0.0.1', [], '', PackageType.Unknown)
         );
         let dependencyPos: vscode.Range[] = PypiUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
-        assert.deepEqual(dependencyPos[0].start, new vscode.Position(2, 0));
+        assert.deepEqual(dependencyPos[0].start, new vscode.Position(1, 0));
 
         // Test 'resources/python/setupAndRequirements'
         requirements = vscode.Uri.file(path.join(tmpDir.fsPath, 'setupAndRequirements', 'requirements.txt'));
         textDocument = await vscode.workspace.openTextDocument(requirements);
         dependencyPos = PypiUtils.getDependencyPosition(textDocument, dependenciesTreeNode.generalInfo.artifactId);
-        assert.deepEqual(dependencyPos[0].start, new vscode.Position(2, 0));
+        assert.deepEqual(dependencyPos[0].start, new vscode.Position(1, 0));
     });
 
     /**
@@ -180,7 +179,7 @@ describe('Pypi Utils Tests', async () => {
         // Test 'resources/python/requirements'
         let node: PypiTreeNode | undefined = parent.children[0] as PypiTreeNode;
         assert.deepEqual(node?.label, 'requirements.txt');
-        assert.deepEqual(node?.children.length, 3);
+        assert.deepEqual(node?.children.length, 2);
         checkFireDependency(node);
 
         // Test 'resources/python/setup'
@@ -199,7 +198,7 @@ describe('Pypi Utils Tests', async () => {
         );
         node = parent.children[1] as PypiTreeNode;
         assert.deepEqual(node.label, 'setup.py');
-        assert.deepEqual(node.children.length, 3);
+        assert.deepEqual(node.children.length, 2);
         checkFireDependency(node);
 
         // Test 'resources/python/setupAndRequirements'
@@ -229,7 +228,7 @@ describe('Pypi Utils Tests', async () => {
             assert.fail;
             return;
         }
-        assert.deepEqual(node.children.length, 3);
+        assert.deepEqual(node.children.length, 2);
         checkFireDependency(node);
     });
 

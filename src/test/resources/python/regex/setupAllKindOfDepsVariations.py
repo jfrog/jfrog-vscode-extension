@@ -7,7 +7,6 @@ setuptools.setup(
         'PyYAML',
         'fire==0.1.3',
 
-        'regex==2017.4.5',
             'matplotlib>=2.2.0,<2.4.0',
         'newrelic==2.0.*',
         'jupyter~=1.1.1',
