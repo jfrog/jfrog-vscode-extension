@@ -211,7 +211,7 @@ export class GoUtils {
         logManager: LogManager,
         executeCmdFunction: (goModPath: string, sourceDir: string, goModAbsDir: string) => void
     ) {
-        logManager.logMessage('copy go workspace from' + sourceDir + ', to' + targetDir, 'DEBUG');
+        logManager.logMessage('Copy go workspace from' + sourceDir + ', to' + targetDir, 'DEBUG');
         walkdir.find(sourceDir, { follow_symlinks: false, sync: true }, function(curPath: string, stat: fs.Stats) {
             let destPath: string = path.resolve(targetDir, path.relative(sourceDir, curPath));
 
@@ -220,7 +220,7 @@ export class GoUtils {
                     this.ignore(curPath);
                     return;
                 }
-                if (!(curPath === sourceDir)) {
+                if (curPath !== sourceDir) {
                     // Skip subdirectories with go.mod files.
                     // These directories are different Go projects and their go files should not be in the root project.
                     let files: string[] = fs.readdirSync(curPath).filter(fn => fn === 'go.mod');
@@ -236,11 +236,7 @@ export class GoUtils {
                 return;
             }
 
-            if (curPath.endsWith('_test.go')) {
-                return;
-            }
-
-            logManager.logMessage('copying ' + curPath + ' to ' + destPath, 'DEBUG');
+            logManager.logMessage('Copying ' + curPath + ' to ' + destPath, 'DEBUG');
             fs.copySync(curPath, destPath);
 
             // The root go.mod file is copied and relative path in "replace" are resolved to absolute paths.
