@@ -95,7 +95,7 @@ export class SastRunner extends JasRunner {
             excluded_rules: this._config.getExcludeRules(),
             exclude_patterns: this._config.GetExcludePatterns(this._scanType)
         } as SastScanRequest;
-        super.logStartScanning(request);
+        this.logStartScanning(request);
         let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request);
         let sastScanResponse: SastScanResponse = this.generateScanResponse(response);
         if (response) {
@@ -108,6 +108,13 @@ export class SastRunner extends JasRunner {
         this._progressManager.reportProgress();
     }
 
+    /** @override */
+    protected logStartScanning(request: SastScanRequest): void {
+        this._logManager.logMessage(
+            `Scanning directory ' ${request.roots}', for ${this._scanType} Skipping folders: ${request.exclude_patterns}`,
+            'DEBUG'
+        );
+    }
     /**
      * Generate response from the run results
      * @param response - Run results generated from the binary

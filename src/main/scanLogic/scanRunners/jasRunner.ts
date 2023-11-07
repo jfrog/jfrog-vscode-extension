@@ -51,8 +51,8 @@ export abstract class JasRunner {
     public static readonly RUNNER_VERSION: string = '1.3.2.2019257';
     private static readonly DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/';
 
-    // 5 min
-    public static readonly TIMEOUT_MILLISECS: number = 1000 * 60 * 5;
+    // 8 min
+    public static readonly TIMEOUT_MILLISECS: number = 1000 * 60 * 8;
 
     public static readonly NOT_ENTITLED: number = 31;
     public static readonly NOT_SUPPORTED: number = 13;
@@ -186,7 +186,7 @@ export abstract class JasRunner {
 
     protected logStartScanning(request: AnalyzeScanRequest): void {
         this._logManager.logMessage(
-            `Scanning directories ' ${request.roots} + ', for ${this._scanType} issues. Skipping folders: ${request.skipped_folders}`,
+            `Scanning directories '${request.roots}', for ${this._scanType} issues. Skipping folders: ${request.skipped_folders}`,
             'DEBUG'
         );
     }

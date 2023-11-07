@@ -36,7 +36,7 @@ describe('Iac Integration Tests', async () => {
             createTestStepProgress(),
             integrationManager.connectionManager,
             integrationManager.logManager,
-            new AppsConfigModule(),
+            new AppsConfigModule(testDataRoot),
             integrationManager.resource
         );
         runner.verbose = true;
