@@ -1,5 +1,6 @@
 import { assert } from 'chai';
 import { before } from 'mocha';
+import fs from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
@@ -133,6 +134,18 @@ describe('Go Utils Tests', async () => {
     });
 
     /**
+     * The project is with dependencies, and embed file
+     */
+    it('Create go dependencies with embed file', async () => {
+        let projectName: string = 'embedProject';
+        let expectedChildren: Map<string, number> = new Map();
+        expectedChildren.set('github.com/jfrog/jfrog-cli-core:1.9.0', 10);
+        expectedChildren.set('github.com/jfrog/jfrog-client-go:0.26.1', 8);
+        expectedChildren.set('github.com/golang/go:' + GoUtils.getGoVersion().format(), 0);
+        await createGoDependencyTreeAndValidate(projectName, expectedChildren);
+    });
+
+    /**
      * The project is with dependencies, but without go.sum
      */
     it('Project 1 - Create go project with dependencies', async () => {
@@ -140,17 +153,19 @@ describe('Go Utils Tests', async () => {
         let expectedChildren: Map<string, number> = new Map();
         expectedChildren.set('github.com/jfrog/jfrog-cli-core:1.9.0', 11);
         expectedChildren.set('github.com/jfrog/jfrog-client-go:0.26.1', 9);
-        createGoDependencyTreeAndValidate(projectName, expectedChildren);
+        expectedChildren.set('github.com/golang/go:' + GoUtils.getGoVersion().format(), 0);
+        await createGoDependencyTreeAndValidate(projectName, expectedChildren);
     });
 
     /**
-     * The project is with dependencies and go.sum, but with checksum mismatch on github.com/dsnet/compress
+     * The project is with dependencies and go.sum,
      */
     it('Project 2 - Create go project with dependencies', async () => {
         let projectName: string = 'project2';
         let expectedChildren: Map<string, number> = new Map();
         expectedChildren.set('github.com/jfrog/gocmd:0.1.12', 2);
-        createGoDependencyTreeAndValidate(projectName, expectedChildren);
+        expectedChildren.set('github.com/golang/go:' + GoUtils.getGoVersion().format(), 0);
+        await createGoDependencyTreeAndValidate(projectName, expectedChildren);
     });
 
     /**
@@ -161,7 +176,8 @@ describe('Go Utils Tests', async () => {
         let projectName: string = 'project3';
         let expectedChildren: Map<string, number> = new Map();
         expectedChildren.set('github.com/test/subproject:0.0.0-00010101000000-000000000000', 1);
-        createGoDependencyTreeAndValidate(projectName, expectedChildren);
+        expectedChildren.set('github.com/golang/go:' + GoUtils.getGoVersion().format(), 0);
+        await createGoDependencyTreeAndValidate(projectName, expectedChildren);
     });
 
     /**
@@ -172,7 +188,8 @@ describe('Go Utils Tests', async () => {
         let projectName: string = 'project4';
         let expectedChildren: Map<string, number> = new Map();
         expectedChildren.set('github.com/test/subproject:0.0.0-00010101000000-000000000000', 1);
-        createGoDependencyTreeAndValidate(projectName, expectedChildren);
+        expectedChildren.set('github.com/golang/go:' + GoUtils.getGoVersion().format(), 0);
+        await createGoDependencyTreeAndValidate(projectName, expectedChildren);
     });
 
     async function runCreateGoDependenciesTrees(workspaceFolders: vscode.WorkspaceFolder[], parent: DependenciesTreeNode) {
@@ -195,12 +212,8 @@ describe('Go Utils Tests', async () => {
 
     function validateDependencyTreeResults(projectName: string, expectedChildren: Map<string, number>, node: DependenciesTreeNode) {
         let parent: DependenciesTreeNode | null = getNodeByArtifactId(node, projectName);
-        if (!parent) {
-            assert.isNotNull(node);
-            return;
-        }
 
-        let children: DependenciesTreeNode[] = parent.children;
+        let children: DependenciesTreeNode[] = parent?.children || [];
         assert.lengthOf(children, expectedChildren.size);
         children.forEach(child => {
             assert.isTrue(expectedChildren.has(child.componentId));
@@ -218,4 +231,18 @@ describe('Go Utils Tests', async () => {
             } as vscode.WorkspaceFolder
         ];
     }
+
+    describe('prepareProjectWorkspace util', () => {
+        it('Exclude all kind of files', () => {
+            // Define the source and target directories for testing
+            const sourceDir: string = path.join(tmpDir, 'prepareProjectWorkspace');
+            const targetDir: string = path.join(tmpDir, 'tmpDir');
+
+            GoUtils.prepareProjectWorkspace(sourceDir, targetDir, '', logManager, () => {
+                return;
+            });
+
+            assert.isFalse(fs.existsSync(targetDir), 'The target directory should not exist since all files should be excluded');
+        });
+    });
 });

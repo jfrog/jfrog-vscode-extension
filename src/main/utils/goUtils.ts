@@ -150,7 +150,7 @@ export class GoUtils {
 
         try {
             goModAbsDir = this.prepareGoModAbs(logManager);
-            this.prepareProjectWorkspace(workspaceDir, targetDir, goModAbsDir);
+            this.prepareProjectWorkspace(workspaceDir, targetDir, goModAbsDir, logManager, GoUtils.executeGoRun);
         } finally {
             if (goModAbsDir) {
                 try {
@@ -165,6 +165,11 @@ export class GoUtils {
             throw new Error('fail to find temp go.mod while copy go.mod file to a temporary directory at ' + targetDir);
         }
         return tmpGoModPath;
+    }
+
+    private static executeGoRun(destPath: string, sourceDir: string, goModAbsDir: string) {
+        const cmd: string = `go run . -goModPath=${destPath} -wd=${sourceDir}`;
+        ScanUtils.executeCmd(cmd, goModAbsDir);
     }
 
     /**
@@ -199,11 +204,23 @@ export class GoUtils {
      * @param targetDir - Target directory to copy relevant files to.
      * @param goModAbsDir - Path to the location of the gomod-absolutizer tool.
      */
-    private static prepareProjectWorkspace(sourceDir: string, targetDir: string, goModAbsDir: string) {
+    public static prepareProjectWorkspace(
+        sourceDir: string,
+        targetDir: string,
+        goModAbsDir: string,
+        logManager: LogManager,
+        executeCmdFunction: (goModPath: string, sourceDir: string, goModAbsDir: string) => void
+    ) {
+        logManager.logMessage('Copy go workspace from' + sourceDir + ', to' + targetDir, 'DEBUG');
         walkdir.find(sourceDir, { follow_symlinks: false, sync: true }, function(curPath: string, stat: fs.Stats) {
             let destPath: string = path.resolve(targetDir, path.relative(sourceDir, curPath));
+
             if (stat.isDirectory()) {
-                if (!(curPath === sourceDir)) {
+                if (GoUtils.shouldSkipDirectory(curPath, '.git', 'testdata', '.idea', '.vscode')) {
+                    this.ignore(curPath);
+                    return;
+                }
+                if (curPath !== sourceDir) {
                     // Skip subdirectories with go.mod files.
                     // These directories are different Go projects and their go files should not be in the root project.
                     let files: string[] = fs.readdirSync(curPath).filter(fn => fn === 'go.mod');
@@ -219,20 +236,22 @@ export class GoUtils {
                 return;
             }
 
-            // Files other than go.mod and *.go files are not necessary to build the dependency tree of used Go packages.
-            // Go files should be copied to allow running `go list -f "{{with .Module}}{{.Path}} {{.Version}}{{end}}" all`
-            // and to get the list package that are actually in use by the Go project.
-            if (curPath.endsWith('.go')) {
-                fs.copySync(curPath, destPath);
-                return;
-            }
+            logManager.logMessage('Copying ' + curPath + ' to ' + destPath, 'DEBUG');
+            fs.copySync(curPath, destPath);
 
             // The root go.mod file is copied and relative path in "replace" are resolved to absolute paths.
             if (path.basename(curPath) === 'go.mod') {
-                fs.copySync(curPath, destPath);
-                ScanUtils.executeCmd('go run . -goModPath=' + destPath + ' -wd=' + sourceDir, goModAbsDir);
+                executeCmdFunction(destPath, sourceDir, goModAbsDir);
                 return;
             }
         });
+    }
+    private static shouldSkipDirectory(dirPath: string, ...dirToIgnore: string[]) {
+        for (let dir of dirToIgnore) {
+            if (dirPath.includes(path.sep + dir)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
