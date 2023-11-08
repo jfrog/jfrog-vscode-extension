@@ -384,11 +384,11 @@ The exclude pattern can be configured in the [Extension Settings](#extension-set
 
 ### External Resource Repository
 
-By default, the JFrog extension downloads the necessary tools needed from https://releases.jfrog.io. If the machine that runs JFrog extension has no access to the internet, you can create a remote repository in Artifactory which proxy https://releases.jfrog.io and set the JFrog extension setting :
+By default, the JFrog extension downloads the necessary tools needed from https://releases.jfrog.io. If the machine that runs JFrog extension has no access to it, you can create a remote repository in Artifactory which proxy https://releases.jfrog.io and set the JFrog extension setting:
 
 ![externalResourcesRepository](resources/readme/preview/externalResourcesRepository.png)
 
- or set the following envirable variable
+ or set the following enviable variable
 
 ```
 JFROG_IDE_RELEASES_REPO=jfrog-releases-repository
