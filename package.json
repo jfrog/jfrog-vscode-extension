@@ -81,7 +81,7 @@
             "properties": {
                 "jfrog.xray.exclusions": {
                     "type": "string",
-                    "default": "**/*{test,venv,node_modules,target}*",
+                    "default": "**/*{.git,test,venv,node_modules,target}*",
                     "scope": "resource",
                     "pattern": "^\\*\\*/\\*\\{([^{},]+(,[^{},]+)*)\\}\\*$",
                     "markdownDescription": "A [glob pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern) used to exclude specific paths from being scanned by JFrog Xray. For example, go.mod files under directories named testdata will not be scanned."
