@@ -1,0 +1,14 @@
+version: "1.0"
+modules:
+  - exclude_patterns:
+      - "**/.git/**"
+      - "**/node_modules/**"
+      - "**/dist/**"
+      - "**/out/**"
+      - "**/.vscode-test/**"
+    exclude_scanners:
+      - "iac"
+    scanners:
+      sast:
+        exclude_patterns:
+          - "**/src/test/**"
