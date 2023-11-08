@@ -75,7 +75,7 @@ export class ApplicabilityRunner extends JasRunner {
         if (!super.shouldRun()) {
             return false;
         }
-        if (this._bundlesWithIssues.length > 0) {
+        if (this._bundlesWithIssues.length === 0) {
             this._logManager.debug('Skipping applicability scan while there is no CVEs to scan');
             return false;
         }

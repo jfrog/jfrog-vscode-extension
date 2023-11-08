@@ -67,7 +67,7 @@ export class AnalyzerManager {
             );
             return undefined;
         }
-        this._logManager.logMessage('Using external resource from repository' + releasesRepo, 'INFO');
+        this._logManager.logMessage('Using external resource from repository: ' + releasesRepo, 'INFO');
         return this._connectionManager.createJfrogClientWithRepository(releasesRepo + '/artifactory');
     }
 
