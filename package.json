@@ -303,7 +303,7 @@
         "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.2.11.tgz",
         "js-yaml": "^4.1.0",
         "json2csv": "~5.0.7",
-        "nuget-deps-tree": "^0.2.2",
+        "nuget-deps-tree": "^0.3.1",
         "original-fs": "~1.1.0",
         "p-queue": "~6.6.2",
         "retries": "~1.0.0",
