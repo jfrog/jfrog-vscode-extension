@@ -35,7 +35,7 @@
 - [Extension Settings](#extension-settings)
     - [Apply Xray Policies to your Projects](#apply-xray-policies-to-your-projects)
     - [Exclude Paths from Scan](#exclude-paths-from-scan)
-    - [External Resource Repository](#external-resource-repository)
+    - [Downloading External Resources Through Artifactory](#downloading-external-resources-through-artifactory)
     - [Proxy Configuration](#proxy-configuration)
     - [Proxy Authorization](#proxy-authorization)
         - [Basic authorization](#basic-authorization)
@@ -382,37 +382,23 @@ If however your policies are referenced through an Xray Watch or Watches, follow
 By default, paths containing the words `test`, `venv` and `node_modules` are excluded from Xray scan.
 The exclude pattern can be configured in the [Extension Settings](#extension-settings).
 
-### External Resource Repository
+### Downloading External Resources Through Artifactory
 
-By default, the JFrog extension downloads the necessary tools needed from https://releases.jfrog.io. If the machine that runs JFrog extension has no access to it, you can create a remote repository in Artifactory which proxy https://releases.jfrog.io and set the JFrog extension setting:
+JFrog VS Code extension required necessary resources for scanning vulnerabilities in your project.
+By default, the JFrog extension downloads the necessary resources needed from https://releases.jfrog.io.
+If the machine that runs JFrog extension has no access to it, follow these steps to allow the tools to be downloaded from an Artifactory instance, which the machine has access to:
 
+1. Login to the Artifactory UI, with a user who has admin credentials.
+
+2. Create a Remote Repository with the following properties set:
+    - Under the 'Basic' tab:
+        Package Type: Generic
+        URL: https://releases.jfrog.io
+    - Under the 'Advanced' tab:
+        Uncheck the 'Store Artifacts Locally' option
+3. Open JFrog VS Code extension settings and add the Repository Key you created in the External Resources Repository section:
 ![externalResourcesRepository](resources/readme/preview/externalResourcesRepository.png)
-
- or set the following enviable variable
-
-```
-JFROG_IDE_RELEASES_REPO=jfrog-releases-repository
-```
-
-
-To set up a remote repository that acts as a proxy for [https://releases.jfrog.io](https://releases.jfrog.io), follow these steps:
-
-1. Log in using credentials with administrative privileges.
-
-2. Create a Remote Repository:
-   - Navigate to the Remote Repository creation section.
-   - Configure the repository with the following properties:
-
-   Basic Configuration:
-   - Package Type: Generic
-   - Repository Key: jfrog-releases-repository
-   - URL: [https://releases.jfrog.io](https://releases.jfrog.io)
-
-   Advanced Configuration:
-   - Uncheck the 'Store Artifacts Locally' option.
-
-These settings will establish the remote repository as a proxy for the specified URL.
-Remember to set `jfrog-releases-repository` as the releases repository using either an environment variable or in the External Resource Repository within the extension settings.
+Or set the `JFROG_IDE_RELEASES_REPO` environment variable with the Repository Key you created.
 
 ### Proxy Configuration
 

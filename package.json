@@ -99,7 +99,7 @@
                 "jfrog.externalResourcesRepository": {
                     "type": "string",
                     "scope": "application",
-                    "markdownDescription": "By default, the JFrog extension downloads the necessary tools needed from https://releases.jfrog.io. If the machine that runs JFrog extension has no access to it, you can create a remote repository in Artifactory which proxy https://releases.jfrog.io and set it name here. The JFrog extension will download the tools from the remote repository."
+                    "markdownDescription": "Artifactory repository that proxies https://releases.jfrog.io. The JFrog extension will download the necessary resources from this repository. [Read more](https://docs.jfrog-applications.jfrog.io/jfrog-applications/ide/visual-studio-code/extension-settings)."
                 },
                 "jfrog.projectKey": {
                     "type": "string",
