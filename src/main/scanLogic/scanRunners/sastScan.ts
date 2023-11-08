@@ -6,8 +6,8 @@ import { StepProgress } from '../../treeDataProviders/utils/stepProgress';
 import { Severity } from '../../types/severity';
 import { ScanResults } from '../../types/workspaceIssuesDetails';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
-import { Resource } from '../../utils/resource';
 import { Translators } from '../../utils/translators';
+import { AnalyzerManager } from './analyzerManager';
 import {
     AnalyzeIssue,
     AnalyzeLocation,
@@ -62,9 +62,9 @@ export class SastRunner extends JasRunner {
         connectionManager: ConnectionManager,
         logManager: LogManager,
         config: AppsConfigModule,
-        binary?: Resource
+        analyzerManager: AnalyzerManager
     ) {
-        super(connectionManager, ScanType.Sast, logManager, config, binary);
+        super(connectionManager, ScanType.Sast, logManager, config, analyzerManager);
     }
 
     /** @override */

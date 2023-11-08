@@ -1,38 +1,30 @@
 import * as vscode from 'vscode';
-
 import { ExtensionComponent } from '../extensionComponent';
 
 import { ConnectionManager } from '../connect/connectionManager';
-import { ConnectionUtils, EntitlementScanFeature } from '../connect/connectionUtils';
 import { LogManager } from '../log/logManager';
 
 import { IGraphResponse, XrayScanProgress } from 'jfrog-client-js';
 import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { StepProgress } from '../treeDataProviders/utils/stepProgress';
-import { Resource } from '../utils/resource';
 import { ScanUtils } from '../utils/scanUtils';
 import { Utils } from '../utils/utils';
 import { GraphScanLogic } from './scanGraphLogic';
+import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
+import { ScanResults } from '../types/workspaceIssuesDetails';
+import { JasRunnerFactory } from './sourceCodeScan/jasRunnerFactory';
+import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
+import { PackageType } from '../types/projectType';
+import { UsageUtils } from '../utils/usageUtils';
 import { JasRunner } from './scanRunners/jasRunner';
-
-export interface EntitledScans {
-    dependencies: boolean;
-    applicability: boolean;
-    sast: boolean;
-    iac: boolean;
-    secrets: boolean;
-}
+import { SupportedScans } from './sourceCodeScan/supportedScans';
 
 /**
- * Manage all the Xray scans
+ * Scan manager is responsible for running the scan on the workspace.
+ * It scans the workspace for dependencies and source code vulnerabilities.
+ * The scan manager will also send usage report to JFrog.
  */
 export class ScanManager implements ExtensionComponent {
-    // every day
-    private static readonly RESOURCE_CHECK_UPDATE_INTERVAL_MILLISECS: number = 1000 * 60 * 60 * 24;
-
-    private static lastOutdatedCheck: number;
-    private _entitledScans: EntitledScans = {} as EntitledScans;
-
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
     activate() {
@@ -48,148 +40,65 @@ export class ScanManager implements ExtensionComponent {
         return this._connectionManager;
     }
 
-    public get entitledScans(): EntitledScans {
-        return this._entitledScans;
+    /**
+     * Scan the workspace for dependencies and source code vulnerabilities.
+     */
+    public async scanWorkspace(scanResults: ScanResults, root: IssuesRootTreeNode, progressManager: StepProgress, checkCanceled: () => void) {
+        let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workspace], this._logManager);
+
+        const entitledJasRunnerFactory: JasRunnerFactory = new JasRunnerFactory(
+            this._connectionManager,
+            this._logManager,
+            scanResults,
+            root,
+            progressManager,
+            await new SupportedScans(this._connectionManager, this._logManager).getSupportedScans()
+        );
+        const jasRunners: JasRunner[] = await entitledJasRunnerFactory.createConfigurableJasRunner();
+        progressManager.startStep('🔎 Scanning for issues', ScanManager.calculateNumberOfTasks(jasRunners, workspaceDescriptors));
+        checkCanceled();
+        await Promise.all([
+            ...this.runDependenciesScans(workspaceDescriptors, root, checkCanceled, scanResults, progressManager, entitledJasRunnerFactory),
+            ...this.runAMScans(jasRunners)
+        ]);
+        UsageUtils.sendUsageReport(entitledJasRunnerFactory.uniqFeatures, workspaceDescriptors, this.connectionManager);
     }
 
-    /**
-     * Updates all the resources that are outdated.
-     * @param supportedScans - the supported scan to get the needed resources. if default, should call getSupportedScans before calling this method.
-     * @returns true if all the outdated resources updated successfully, false otherwise
-     */
-    public async updateResources(supportedScans: EntitledScans = this._entitledScans): Promise<boolean> {
-        let result: boolean = true;
-        await ScanUtils.backgroundTask(async (progress: vscode.Progress<{ message?: string; increment?: number }>) => {
-            progress.report({ message: 'Checking for updates' });
-            let resources: Resource[] = await this.getOutdatedResources(supportedScans);
-            if (resources.length === 0) {
-                return;
+    private runDependenciesScans(
+        workspaceDescriptors: Map<PackageType, vscode.Uri[]>,
+        root: IssuesRootTreeNode,
+        checkCanceled: () => void,
+        scanResults: ScanResults,
+        progressManager: StepProgress,
+        entitledJasRunnerFactory: JasRunnerFactory
+    ): Promise<void>[] {
+        const scansPromises: Promise<void>[] = [];
+
+        for (const [type, descriptorsPaths] of workspaceDescriptors) {
+            checkCanceled();
+            scansPromises.push(
+                DependencyUtils.scanPackageDependencies(
+                    this,
+                    scanResults,
+                    root,
+                    type,
+                    descriptorsPaths,
+                    progressManager,
+                    entitledJasRunnerFactory
+                ).catch(error => this._logManager.logError(error, true))
+            );
+        }
+        return scansPromises;
+    }
+
+    private runAMScans(jasRunners: JasRunner[]): Promise<void>[] {
+        const scansPromises: Promise<void>[] = [];
+        for (const runner of jasRunners) {
+            if (runner.shouldRun()) {
+                scansPromises.push(runner.scan().catch(error => this._logManager.logError(error, true)));
             }
-            let progressManager: StepProgress = new StepProgress(progress);
-            progressManager.startStep('Updating extension', resources.length);
-            this._logManager.logMessage(
-                'Updating outdated resources (' + resources.length + '): ' + resources.map(resource => resource.name).join(),
-                'DEBUG'
-            );
-            let updatePromises: Promise<any>[] = [];
-            resources.forEach(async (resource: Resource) =>
-                updatePromises.push(
-                    resource
-                        .update()
-                        .catch(err => {
-                            this._logManager.logError(<Error>err);
-                            result = false;
-                        })
-                        .finally(() => progressManager.reportProgress())
-                )
-            );
-            await Promise.all(updatePromises);
-            this._logManager.logMessage('Updating extension finished ' + (result ? 'successfully' : 'with errors'), result ? 'INFO' : 'ERR');
-        });
-
-        return result;
-    }
-
-    private async getOutdatedResources(supportedScans: EntitledScans): Promise<Resource[]> {
-        if (!this.shouldCheckOutdated()) {
-            return [];
         }
-        this._logManager.logMessage('Checking for updates', 'INFO');
-        ScanManager.lastOutdatedCheck = Date.now();
-        let promises: Promise<boolean>[] = [];
-        let outdatedResources: Resource[] = [];
-        for (const resource of this.getResources(supportedScans)) {
-            promises.push(
-                resource
-                    .isOutdated()
-                    .then(outdated => {
-                        if (outdated) {
-                            outdatedResources.push(resource);
-                        }
-                        return outdated;
-                    })
-                    .catch(err => {
-                        this._logManager.logError(<Error>err);
-                        return false;
-                    })
-            );
-        }
-        await Promise.all(promises);
-        return outdatedResources;
-    }
-
-    private shouldCheckOutdated(): boolean {
-        return !ScanManager.lastOutdatedCheck || Date.now() - ScanManager.lastOutdatedCheck > ScanManager.RESOURCE_CHECK_UPDATE_INTERVAL_MILLISECS;
-    }
-
-    private getResources(supportedScans: EntitledScans): Resource[] {
-        let resources: Resource[] = [];
-        if (supportedScans.applicability || supportedScans.iac || supportedScans.secrets) {
-            resources.push(JasRunner.getAnalyzerManagerResource(this._logManager));
-        } else {
-            this.logManager.logMessage('You are not entitled to run Advanced Security scans', 'DEBUG');
-        }
-        return resources;
-    }
-
-    /**
-     * Check if Contextual Analysis (Applicability) is supported for the user
-     */
-    public async isApplicabilitySupported(): Promise<boolean> {
-        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Applicability);
-    }
-
-    /**
-     * Check if Infrastructure As Code (Iac) is supported for the user
-     */
-    public async isIacSupported(): Promise<boolean> {
-        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Iac);
-    }
-
-    /**
-     * Check if Secrets scan is supported for the user
-     */
-    public async isSecretsSupported(): Promise<boolean> {
-        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Secrets);
-    }
-
-    /**
-     * Check if SAST scan is supported for the user
-     */
-    public async isSastSupported(): Promise<boolean> {
-        // TODO: change to SAST feature when Xray entitlement service support it.
-        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Applicability);
-    }
-
-    /**
-     * Get all the entitlement status for each type of scan the manager offers
-     */
-    public async getSupportedScans(): Promise<EntitledScans> {
-        let supportedScans: EntitledScans = {} as EntitledScans;
-        let requests: Promise<any>[] = [];
-        requests.push(
-            this.isApplicabilitySupported()
-                .then(res => (supportedScans.applicability = res))
-                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
-        );
-        requests.push(
-            this.isIacSupported()
-                .then(res => (supportedScans.iac = res))
-                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
-        );
-        requests.push(
-            this.isSecretsSupported()
-                .then(res => (supportedScans.secrets = res))
-                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
-        );
-        requests.push(
-            this.isSastSupported()
-                .then(res => (supportedScans.sast = res))
-                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
-        );
-        await Promise.all(requests);
-        this._entitledScans = supportedScans;
-        return supportedScans;
+        return scansPromises;
     }
 
     /**
@@ -204,5 +113,13 @@ export class ScanManager implements ExtensionComponent {
     public async scanDependencyGraph(progress: XrayScanProgress, graphRoot: RootNode, checkCanceled: () => void): Promise<IGraphResponse> {
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
         return await scanLogic.scan(graphRoot, progress, checkCanceled);
+    }
+
+    public static calculateNumberOfTasks(jasRunners: JasRunner[], workspaceDescriptors: Map<PackageType, vscode.Uri[]>): number {
+        return (
+            [...workspaceDescriptors.values()]
+                .filter(descriptorsPaths => descriptorsPaths && descriptorsPaths.length > 0)
+                .reduce((count, values) => count + values.length, 0) + jasRunners.length
+        );
     }
 }

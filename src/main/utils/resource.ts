@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { IChecksumResult, JfrogClient } from 'jfrog-client-js';
-import { ConnectionUtils } from '../connect/connectionUtils';
 import { LogManager } from '../log/logManager';
 import { Utils } from './utils';
 import { ScanUtils } from './scanUtils';
@@ -11,25 +10,21 @@ import { ScanUtils } from './scanUtils';
  * Represent a resource file that is fetched (download) from a source URL and can be updated from it if outdated.
  */
 export class Resource {
-    private static readonly DEFAULT_SERVER: string = 'https://releases.jfrog.io';
+    private static readonly RESOURCE_CHECK_UPDATE_INTERVAL_MILLISECS: number = 1000 * 60 * 60 * 24;
 
-    private _connectionManager: JfrogClient;
-    private _artifactoryUrl: string;
     private _cacheRemoteSha256: string | undefined;
 
     private _targetDir: string;
     private _name: string;
+    private lastUpdateTimestamp?: number;
 
     constructor(
         public readonly sourceUrl: string,
         private _targetPath: string,
         private _logManager: LogManager,
-        connectionManager?: JfrogClient,
+        private _jfrogClient: JfrogClient,
         private _mode: fs.Mode = '700'
     ) {
-        this._artifactoryUrl = Resource.DEFAULT_SERVER + '/artifactory';
-        this._connectionManager =
-            connectionManager ?? ConnectionUtils.createJfrogClient(Resource.DEFAULT_SERVER, this._artifactoryUrl, '', '', '', '');
         this._name = Utils.getLastSegment(this._targetPath);
         this._targetDir = path.dirname(this._targetPath);
     }
@@ -41,7 +36,8 @@ export class Resource {
      */
     private async download(downloadToFolder: string = this._targetDir): Promise<string> {
         let resourcePath: string = path.join(downloadToFolder, this.sourceUrl.substring(this.sourceUrl.lastIndexOf('/') + 1));
-        await this._connectionManager
+        this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this.sourceUrl, 'DEBUG');
+        await this._jfrogClient
             .artifactory()
             .download()
             .downloadArtifactToFile(this.sourceUrl, resourcePath);
@@ -49,7 +45,7 @@ export class Resource {
             if (this._cacheRemoteSha256) {
                 throw Error('Local checksum is not match to the remote');
             } else {
-                this._logManager.logMessage("Can't get 'x-checksum-sha256' header from " + this._artifactoryUrl + this.sourceUrl, 'WARN');
+                this._logManager.logMessage("Can't get 'x-checksum-sha256' header from " + this.sourceUrl, 'WARN');
             }
         }
         return resourcePath;
@@ -81,12 +77,11 @@ export class Resource {
     public async update(): Promise<boolean> {
         let tmpFolder: string = ScanUtils.createTmpDir();
         try {
-            this._logManager.logMessage('Starting to update resource ' + this._name + ' from ' + this._artifactoryUrl + this.sourceUrl, 'DEBUG');
             await this.copyToTarget(await this.download(tmpFolder));
             this._logManager.logMessage('Resource ' + this._name + ' was update successfully.', 'DEBUG');
             return true;
         } catch (error) {
-            this._logManager.logMessage('Resource ' + this._name + ' update failed.', 'ERR');
+            this._logManager.logMessage('Updating resource ' + this._name + ' failed. err:' + error, 'ERR');
             throw error;
         } finally {
             ScanUtils.removeFolder(tmpFolder);
@@ -120,6 +115,10 @@ export class Resource {
         if (!this.isExists()) {
             return true;
         }
+        if (!this.shouldCheckOutdated()) {
+            return false;
+        }
+        this.lastUpdateTimestamp = Date.now();
         // Check if has update - compare the sha256 of the resource with the latest released resource.
         this._cacheRemoteSha256 = await this.getRemoteChecksum();
         if (!this._cacheRemoteSha256) {
@@ -131,9 +130,13 @@ export class Resource {
         );
     }
 
+    private shouldCheckOutdated(): boolean {
+        return !this.lastUpdateTimestamp || Date.now() - this.lastUpdateTimestamp > Resource.RESOURCE_CHECK_UPDATE_INTERVAL_MILLISECS;
+    }
+
     private async getRemoteChecksum(): Promise<string | undefined> {
         try {
-            let checksumResult: IChecksumResult = await this._connectionManager
+            let checksumResult: IChecksumResult = await this._jfrogClient
                 .artifactory()
                 .download()
                 .getArtifactChecksum(this.sourceUrl);
@@ -150,6 +153,12 @@ export class Resource {
         }
         const fileBuffer: Buffer = fs.readFileSync(filePath);
         return ScanUtils.Hash('SHA256', fileBuffer);
+    }
+
+    public async run(args: string[], env?: NodeJS.ProcessEnv | undefined): Promise<any> {
+        let command: string = '"' + this.fullPath + '" ' + args.join(' ');
+        this._logManager.debug("Executing '" + command + "' in directory '" + this._targetDir + "'");
+        return await ScanUtils.executeCmdAsync(command, this._targetDir, env);
     }
 
     public get fullPath(): string {

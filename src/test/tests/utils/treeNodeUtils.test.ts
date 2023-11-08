@@ -52,7 +52,8 @@ export interface DependencyIssuesNodeTestData {
 export function createRootTestNode(pathOfWorkspace: string): IssuesRootTreeNode {
     return new IssuesRootTreeNode({
         uri: {
-            fsPath: pathOfWorkspace
+            fsPath: pathOfWorkspace,
+            path: pathOfWorkspace
         } as vscode.Uri
     } as vscode.WorkspaceFolder);
 }

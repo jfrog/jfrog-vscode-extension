@@ -9,9 +9,9 @@ import { PackageType } from '../../types/projectType';
 import { DependencyScanResults } from '../../types/workspaceIssuesDetails';
 import { Configuration } from '../../utils/configuration';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
-import { Resource } from '../../utils/resource';
 import { FileScanBundle } from '../../utils/scanUtils';
 import { Utils } from '../../utils/utils';
+import { AnalyzerManager } from './analyzerManager';
 import { AnalyzeIssue, AnalyzeLocation, AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, FileIssues, ScanType } from './analyzerModels';
 import { JasRunner } from './jasRunner';
 
@@ -54,9 +54,9 @@ export class ApplicabilityRunner extends JasRunner {
         private _progressManager: StepProgress,
         connectionManager: ConnectionManager,
         logManager: LogManager,
-        binary?: Resource
+        analyzerManager: AnalyzerManager
     ) {
-        super(connectionManager, ScanType.AnalyzeApplicability, logManager, new AppsConfigModule(__dirname), binary);
+        super(connectionManager, ScanType.AnalyzeApplicability, logManager, new AppsConfigModule(__dirname), analyzerManager);
     }
 
     /** @override */
@@ -68,6 +68,18 @@ export class ApplicabilityRunner extends JasRunner {
     public requestsToYaml(...requests: AnalyzeScanRequest[]): string {
         let str: string = super.requestsToYaml(...requests);
         return str.replace('cve_whitelist', 'cve-whitelist');
+    }
+
+    /** @override */
+    public shouldRun(): boolean {
+        if (!super.shouldRun()) {
+            return false;
+        }
+        if (this._bundlesWithIssues.length === 0) {
+            this._logManager.debug('Skipping applicability scan while there is no CVEs to scan');
+            return false;
+        }
+        return true;
     }
 
     /** @override */

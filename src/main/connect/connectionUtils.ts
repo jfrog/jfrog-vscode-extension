@@ -75,8 +75,14 @@ export class ConnectionUtils {
      * @param password - Password
      * @param accessToken - Access Token
      */
-    public static async validateArtifactoryConnection(rtUrl: string, username: string, password: string, accessToken: string): Promise<boolean> {
-        let jfrogClient: JfrogClient = this.createJfrogClient('', rtUrl, '', username, password, accessToken);
+    public static async validateArtifactoryConnection(
+        rtUrl: string,
+        username: string,
+        password: string,
+        accessToken: string,
+        logManager: LogManager
+    ): Promise<boolean> {
+        let jfrogClient: JfrogClient = this.createJfrogClient('', rtUrl, '', username, password, accessToken, logManager);
         return await jfrogClient
             .artifactory()
             .system()
@@ -90,22 +96,34 @@ export class ConnectionUtils {
      * @param password - Password
      * @param accessToken - Access Token
      */
-    public static async validateXrayConnection(xray: string, username: string, password: string, accessToken: string): Promise<boolean> {
-        let jfrogClient: JfrogClient = this.createJfrogClient('', '', xray, username, password, accessToken);
+    public static async validateXrayConnection(
+        xray: string,
+        username: string,
+        password: string,
+        accessToken: string,
+        logManager: LogManager
+    ): Promise<boolean> {
+        let jfrogClient: JfrogClient = this.createJfrogClient('', '', xray, username, password, accessToken, logManager);
         return await jfrogClient
             .xray()
             .system()
             .ping();
     }
 
-    public static async isPlatformUrl(url: string, username: string, password: string, accessToken: string): Promise<boolean> {
+    public static async isPlatformUrl(
+        url: string,
+        username: string,
+        password: string,
+        accessToken: string,
+        logManager: LogManager
+    ): Promise<boolean> {
         // If URL ends with '/xray', the URL is an Xray URL
         if (!url || url.endsWith('/xray') || url.endsWith('/xray/')) {
             return false;
         }
 
         // Ping to '<url>/xray'
-        let jfrogClient: JfrogClient = this.createJfrogClient(url, '', '', username, password, accessToken);
+        let jfrogClient: JfrogClient = this.createJfrogClient(url, '', '', username, password, accessToken, logManager);
         return await jfrogClient
             .xray()
             .system()
@@ -128,7 +146,7 @@ export class ConnectionUtils {
         prompt: boolean,
         logger: LogManager
     ): Promise<boolean> {
-        let jfrogClient: JfrogClient = this.createJfrogClient('', '', xrayUrl, username, password, accessToken);
+        let jfrogClient: JfrogClient = this.createJfrogClient('', '', xrayUrl, username, password, accessToken, logger);
         try {
             await ConnectionUtils.testComponentPermission(jfrogClient);
             let xrayVersion: string = await ConnectionUtils.testXrayVersion(jfrogClient);
@@ -169,7 +187,7 @@ export class ConnectionUtils {
         prompt: boolean,
         logger: LogManager
     ): Promise<boolean> {
-        const status: boolean = await ConnectionUtils.validateArtifactoryConnection(rtUrl, username, password, accessToken);
+        const status: boolean = await ConnectionUtils.validateArtifactoryConnection(rtUrl, username, password, accessToken, logger);
         let statusStr: string = 'failed.';
         if (status) {
             statusStr = 'success.';
@@ -274,9 +292,9 @@ export class ConnectionUtils {
         username: string,
         password: string,
         accessToken: string,
+        logger: LogManager,
         retries?: number,
         timeout?: number,
-        logger?: LogManager,
         retryOnStatusCode?: RetryOnStatusCode,
         retryDelay?: number
     ): JfrogClient {

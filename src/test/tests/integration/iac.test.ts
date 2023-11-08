@@ -4,8 +4,6 @@ import * as path from 'path';
 
 import { AnalyzeScanRequest } from '../../../main/scanLogic/scanRunners/analyzerModels';
 import { IacRunner, IacScanResponse } from '../../../main/scanLogic/scanRunners/iacScan';
-import { ScanResults } from '../../../main/types/workspaceIssuesDetails';
-import { AppsConfigModule } from '../../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
 import {
     AnalyzerManagerIntegrationEnv,
     assertFileIssuesExist,
@@ -16,8 +14,9 @@ import {
     assertIssuesRuleNameExist,
     assertIssuesSeverityExist
 } from '../utils/testIntegration.test';
-import { createRootTestNode } from '../utils/treeNodeUtils.test';
-import { createTestStepProgress } from '../utils/utils.test';
+import { ScanManager } from '../../../main/scanLogic/scanManager';
+import { Uri } from 'vscode';
+import { PackageType } from '../../../main/types/projectType';
 
 describe('Iac Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -30,17 +29,8 @@ describe('Iac Integration Tests', async () => {
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        runner = new IacRunner(
-            {} as ScanResults,
-            createRootTestNode(''),
-            createTestStepProgress(),
-            integrationManager.connectionManager,
-            integrationManager.logManager,
-            new AppsConfigModule(testDataRoot),
-            integrationManager.resource
-        );
-        runner.verbose = true;
-        assert.isTrue(runner.validateSupported(), "Can't find runner binary file in path: " + runner.binary.fullPath);
+        runner = integrationManager.entitledJasRunnerFactory.createIacRunners()[0];
+
         // Get expected partial result that the scan should contain
         let dataPath: string = path.join(testDataRoot, 'expectedScanResponse.json');
         expectedContent = JSON.parse(fs.readFileSync(dataPath, 'utf8').toString());
@@ -68,6 +58,8 @@ describe('Iac Integration Tests', async () => {
     it('Check all expected locations detected', () =>
         assertIssuesLocationsExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
 
+    it('Check calculateNumberOfTasks detected', () => assert.equal(ScanManager.calculateNumberOfTasks([runner], getDummyDescriptors()), 4));
+
     describe('Detected issues validations', () => {
         it('Check rule-name', () => assertIssuesRuleNameExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
 
@@ -79,3 +71,10 @@ describe('Iac Integration Tests', async () => {
         it('Check snippet', () => assertIssuesLocationSnippetsExist(testDataRoot, response.filesWithIssues, expectedContent.filesWithIssues));
     });
 });
+
+function getDummyDescriptors(): Map<PackageType, Uri[]> {
+    let descriptors: Map<PackageType, Uri[]> = new Map<PackageType, Uri[]>();
+    descriptors.set(PackageType.Go, [Uri.parse('/somewhere/file'), Uri.parse('/somewhere/other')]);
+    descriptors.set(PackageType.Npm, [Uri.parse('/somewhere/other')]);
+    return descriptors;
+}

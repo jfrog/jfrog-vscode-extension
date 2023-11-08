@@ -2,38 +2,40 @@ import { IUsageFeature } from 'jfrog-client-js';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { assert } from 'chai';
 import { LogManager } from '../../main/log/logManager';
-import { EntitledScans } from '../../main/scanLogic/scanManager';
 import { PackageType } from '../../main/types/projectType';
-import { UsageUtils } from '../../main/utils/usageUtils';
+import { UsageJasScanType, UsageUtils } from '../../main/utils/usageUtils';
 import { Uri } from 'vscode';
 
 describe('Usage Utils Tests', async () => {
     const logManager: LogManager = new LogManager().activate();
+    const withAdvancedSecurityScan: Set<UsageJasScanType> = new Set<UsageJasScanType>();
+    withAdvancedSecurityScan.add(UsageJasScanType.APPLICABILITY);
+    withAdvancedSecurityScan.add(UsageJasScanType.IAC);
+    withAdvancedSecurityScan.add(UsageJasScanType.SECRETS);
 
     [
         {
             test: 'Not supported',
-            supportedScans: {} as EntitledScans,
+            supportedScans: new Set<UsageJasScanType>(),
             descriptors: getDummyDescriptors(),
             expectedFeatures: [],
             expectedReportSent: false
         },
         {
             test: 'With dependencies scan',
-            supportedScans: { dependencies: true } as EntitledScans,
+            supportedScans: new Set<UsageJasScanType>(),
             descriptors: getDummyDescriptors(PackageType.Go, PackageType.Npm),
             expectedFeatures: [{ featureId: 'go-deps' }, { featureId: 'npm-deps' }],
             expectedReportSent: true
         },
         {
             test: 'With advance scan',
-            supportedScans: { dependencies: true, applicability: true, iac: true, secrets: true } as EntitledScans,
+            supportedScans: withAdvancedSecurityScan,
             descriptors: getDummyDescriptors(PackageType.Go, PackageType.Npm),
             expectedFeatures: [
                 { featureId: 'go-deps' },
-                { featureId: 'go-contextual' },
                 { featureId: 'npm-deps' },
-                { featureId: 'npm-contextual' },
+                { featureId: 'contextual' },
                 { featureId: 'iac' },
                 { featureId: 'secrets' }
             ],

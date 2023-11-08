@@ -92,6 +92,7 @@ export class ConnectionManagerWrapper extends ConnectionManager {
             this.username,
             this.password,
             this.accessToken,
+            this._logManager,
             this._retry,
             this._timeout
         );

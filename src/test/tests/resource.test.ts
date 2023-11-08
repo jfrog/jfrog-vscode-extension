@@ -4,8 +4,8 @@ import nock from 'nock';
 import { assert } from 'chai';
 import { LogManager } from '../../main/log/logManager';
 import { Resource } from '../../main/utils/resource';
-import { ConnectionUtils } from '../../main/connect/connectionUtils';
 import { ScanUtils } from '../../main/utils/scanUtils';
+import { ConnectionUtils } from '../../main/connect/connectionUtils';
 
 describe('Resource Tests', () => {
     let logManager: LogManager = new LogManager().activate();
@@ -103,7 +103,7 @@ describe('Resource Tests', () => {
             'baseURL/' + testCase.target,
             path.join(testDir, testCase.target),
             logManager,
-            ConnectionUtils.createJfrogClient(SERVER_URL, SERVER_URL + '/artifactory', '', '', '', '')
+            ConnectionUtils.createJfrogClient(SERVER_URL, SERVER_URL + '/artifactory', '', '', '', '', logManager)
         );
     }
 

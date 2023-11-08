@@ -1,18 +1,10 @@
 import * as vscode from 'vscode';
 import { CacheManager } from '../../cache/cacheManager';
-import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
-import { EntitledScans, ScanManager } from '../../scanLogic/scanManager';
-import { IacRunner } from '../../scanLogic/scanRunners/iacScan';
-import { JasRunner } from '../../scanLogic/scanRunners/jasRunner';
-import { SastRunner } from '../../scanLogic/scanRunners/sastScan';
-import { SecretsRunner } from '../../scanLogic/scanRunners/secretsScan';
-import { PackageType } from '../../types/projectType';
+import { ScanManager } from '../../scanLogic/scanManager';
 import { Severity, SeverityUtils } from '../../types/severity';
 import { DependencyScanResults, EntryIssuesData, ScanResults } from '../../types/workspaceIssuesDetails';
-import { AppsConfigModule, JFrogAppsConfig } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
-import { UsageUtils } from '../../utils/usageUtils';
 import { Utils } from '../../utils/utils';
 import { TreesManager } from '../treesManager';
 import { AnalyzerUtils } from '../utils/analyzerUtils';
@@ -91,7 +83,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         // Prepare
         this.scanInProgress = true;
         this._logManager.showOutput();
-        await this._scanManager.updateResources(await this._scanManager.getSupportedScans());
         // Scan
         this._logManager.logMessage('Refresh: starting workspace scans 🐸', 'INFO');
         this.clearTree();
@@ -167,27 +158,6 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
     }
 
     /**
-     * Calculate the number of tasks that will be preformed in the workspace scan.
-     * Components:
-     * 1. Build Dependency Tree = task for each package type that exists in the workspace
-     * 2. Dependency scan = task for each descriptor in the workspace (Applicability is optional sub task of dependency)
-     * 3. Iac scan = one task for all the workspace
-     * 4. Secrets scan = one task for all the workspace
-     * 5. SAST scan = one task for all the workspace
-     * @param supportedScans - the details about the entitlements of the user
-     * @param descriptors - all the descriptors in the workspace
-     * @returns the number of tasks that will be preformed async and report to the progress bar
-     */
-    public static getNumberOfTasksInRepopulate(supportedScans: EntitledScans, descriptors: Map<PackageType, vscode.Uri[]>): number {
-        return (
-            (supportedScans.sast ? 1 : 0) +
-            (supportedScans.iac ? 1 : 0) +
-            (supportedScans.secrets ? 1 : 0) +
-            (supportedScans.dependencies ? descriptors.size + Array.from(descriptors.values()).reduce((acc, val) => acc + val.length, 0) : 0)
-        );
-    }
-
-    /**
      * Execute async scan task for the given workspace and populate the issues from the scan to the data and to the tree
      * Step 1: Build dependency tree step with two substeps (get the workspace descriptors and then build the tree for each of them)
      * Step 2: Run security scans on files in the workspace, async
@@ -206,68 +176,8 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         // Prepare the needed information for the scans
         progress.report({ message: '👷 Preparing workspace' });
         let progressManager: StepProgress = new StepProgress(progress, checkCanceled, () => this.onChangeFire(), this._logManager);
-        let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workspace], this._logManager);
-        let subStepsCount: number = IssuesTreeDataProvider.getNumberOfTasksInRepopulate(this._scanManager.entitledScans, workspaceDescriptors);
-        let jfrogAppConfig: JFrogAppsConfig = new JFrogAppsConfig(root.workspace.uri.path);
-        checkCanceled();
-        UsageUtils.sendUsageReport(this._scanManager.entitledScans, workspaceDescriptors, this._treesManager.connectionManager);
-        // Scan workspace
-        let scansPromises: Promise<any>[] = [];
-        progressManager.startStep('🔎 Scanning for issues', subStepsCount);
-
-        // Dependency graph and applicability scans for each package
-        for (const [type, descriptorsPaths] of workspaceDescriptors) {
-            scansPromises.push(
-                DependencyUtils.scanPackageDependencies(
-                    this._scanManager,
-                    scanResults,
-                    root,
-                    type,
-                    descriptorsPaths,
-                    progressManager,
-                    this._scanManager.entitledScans.applicability
-                ).catch(err => ScanUtils.onScanError(err, this._logManager, true))
-            );
-        }
-
-        for (let module of jfrogAppConfig.modules) {
-            for (let runner of this.createJasRunners(
-                scanResults,
-                root,
-                progressManager,
-                this._treesManager.connectionManager,
-                this._logManager,
-                module
-            )) {
-                if (runner.shouldRun()) {
-                    scansPromises.push(runner.scan().catch(err => ScanUtils.onScanError(err, this._logManager, true)));
-                }
-            }
-        }
-
-        await Promise.all(scansPromises);
+        await this._scanManager.scanWorkspace(scanResults, root, progressManager, checkCanceled);
         return root;
-    }
-
-    private createJasRunners(
-        scanResults: ScanResults,
-        root: IssuesRootTreeNode,
-        progressManager: StepProgress,
-        connectionManager: ConnectionManager,
-        logManager: LogManager,
-        config: AppsConfigModule
-    ): JasRunner[] {
-        let results: JasRunner[] = [];
-        if (this._scanManager.entitledScans.iac) {
-            results.push(new IacRunner(scanResults, root, progressManager, connectionManager, logManager, config));
-        }
-        if (this._scanManager.entitledScans.sast) {
-            results.push(new SastRunner(scanResults, root, progressManager, connectionManager, logManager, config));
-        }
-        if (this._scanManager.entitledScans.secrets) {
-            results.push(new SecretsRunner(scanResults, root, progressManager, connectionManager, logManager, config));
-        }
-        return results;
     }
 
     /**

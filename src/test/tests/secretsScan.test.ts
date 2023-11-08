@@ -26,6 +26,7 @@ import {
 } from './utils/testAnalyzer.test';
 import { createRootTestNode } from './utils/treeNodeUtils.test';
 import { createTestStepProgress, getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
+import { AnalyzerManager } from '../../main/scanLogic/scanRunners/analyzerManager';
 
 describe('Secrets Scan Tests', () => {
     const scanSecrets: string = path.join(__dirname, '..', 'resources', 'secretsScan');
@@ -127,7 +128,8 @@ describe('Secrets Scan Tests', () => {
             createTestStepProgress(),
             {} as ConnectionManager,
             logManager,
-            new AppsConfigModule('')
+            new AppsConfigModule(''),
+            {} as AnalyzerManager
         );
     }
 });

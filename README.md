@@ -27,7 +27,7 @@
     - [Static Application Security Testing (SAST)](#static-application-security-testing-sast)
     - [Vulnerability Contextual Analysis](#vulnerability-contextual-analysis)
     - [Secrets Detection](#secrets-detection)
-    - [Infrastructure as Code (IaC) Scan](#infrastructure-as-code-iac-scan) 
+    - [Infrastructure as Code (IaC) Scan](#infrastructure-as-code-iac-scan)
 - [The CI View](#the-ci-view)
     - [How Does It Work?](#how-does-it-work)
     - [Setting Up Your CI Pipeline](#setting-up-your-ci-pipeline)
@@ -35,6 +35,7 @@
 - [Extension Settings](#extension-settings)
     - [Apply Xray Policies to your Projects](#apply-xray-policies-to-your-projects)
     - [Exclude Paths from Scan](#exclude-paths-from-scan)
+    - [External Resource Repository](#external-resource-repository)
     - [Proxy Configuration](#proxy-configuration)
     - [Proxy Authorization](#proxy-authorization)
         - [Basic authorization](#basic-authorization)
@@ -381,6 +382,38 @@ If however your policies are referenced through an Xray Watch or Watches, follow
 By default, paths containing the words `test`, `venv` and `node_modules` are excluded from Xray scan.
 The exclude pattern can be configured in the [Extension Settings](#extension-settings).
 
+### External Resource Repository
+
+By default, the JFrog extension downloads the necessary tools needed from https://releases.jfrog.io. If the machine that runs JFrog extension has no access to it, you can create a remote repository in Artifactory which proxy https://releases.jfrog.io and set the JFrog extension setting:
+
+![externalResourcesRepository](resources/readme/preview/externalResourcesRepository.png)
+
+ or set the following enviable variable
+
+```
+JFROG_IDE_RELEASES_REPO=jfrog-releases-repository
+```
+
+
+To set up a remote repository that acts as a proxy for [https://releases.jfrog.io](https://releases.jfrog.io), follow these steps:
+
+1. Log in using credentials with administrative privileges.
+
+2. Create a Remote Repository:
+   - Navigate to the Remote Repository creation section.
+   - Configure the repository with the following properties:
+
+   Basic Configuration:
+   - Package Type: Generic
+   - Repository Key: jfrog-releases-repository
+   - URL: [https://releases.jfrog.io](https://releases.jfrog.io)
+
+   Advanced Configuration:
+   - Uncheck the 'Store Artifacts Locally' option.
+
+These settings will establish the remote repository as a proxy for the specified URL.
+Remember to set `jfrog-releases-repository` as the releases repository using either an environment variable or in the External Resource Repository within the extension settings.
+
 ### Proxy Configuration
 
 If your JFrog environment is behind an HTTP/S proxy, follow these steps to configure the proxy server:
@@ -522,9 +555,7 @@ View the extension log:
 
 The extension is licensed under [Apache License 2.0](LICENSE).
 
-## Building and Testing the Sources
-
-### Preconditions
+## Building the Sources
 
 -   npm 7 and above
 -   JFrog CLI's `jf` executable - required for tests
@@ -549,7 +580,11 @@ npm run package
 After the build finishes, you'll find the vsix file in the _jfrog-vscode-extension_ directory.
 The vsix file can be loaded into VS-Code
 
-To run the tests:
+###  Test Instructions:
+* create a remote repository named `releases-proxy` designed to function as a  [proxy jfrog releases](external-resource-repository).
+* Set the environment variables JFROG_IDE_PLATFORM_URL and JFROG_IDE_ACCESS_TOKEN to establish a connection with a valid JFrog instance.
+
+To run the test, execute the following command:
 
 ```bash
 npm t

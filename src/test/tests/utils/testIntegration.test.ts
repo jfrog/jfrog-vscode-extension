@@ -1,14 +1,16 @@
 import { assert } from 'chai';
 import * as path from 'path';
 
-import { ConnectionManager } from '../../../main/connect/connectionManager';
+import { ConnectionManager, LoginStatus } from '../../../main/connect/connectionManager';
 import { LogManager } from '../../../main/log/logManager';
 import { ScanUtils } from '../../../main/utils/scanUtils';
-import { createTestConnectionManager } from './utils.test';
-import { Resource } from '../../../main/utils/resource';
-import { JasRunner } from '../../../main/scanLogic/scanRunners/jasRunner';
+import { createTestConnectionManager, createTestStepProgress } from './utils.test';
 import { AnalyzerUtils, FileWithSecurityIssues, SecurityIssue } from '../../../main/treeDataProviders/utils/analyzerUtils';
 import { FileRegion } from '../../../main/scanLogic/scanRunners/analyzerModels';
+import { ScanResults } from '../../../main/types/workspaceIssuesDetails';
+import { createRootTestNode } from './treeNodeUtils.test';
+import { SupportedScans } from '../../../main/scanLogic/sourceCodeScan/supportedScans';
+import { MockJasRunnerFactory } from './MockJasRunnerFactory';
 
 export class BaseIntegrationEnv {
     public static readonly ENV_PLATFORM_URL: string = 'JFROG_IDE_PLATFORM_URL';
@@ -37,11 +39,11 @@ export class BaseIntegrationEnv {
         // Try to get credentials
         try {
             for (let i: number = 0; i < BaseIntegrationEnv.RETRIES; i++) {
-                if (await connection.tryCredentialsFromEnv()) {
+                if ((await connection.tryCredentialsFromEnv()) === LoginStatus.Success) {
                     BaseIntegrationEnv._connectionManager = connection;
                     return;
                 }
-                if (await connection.tryCredentialsFromJfrogCli()) {
+                if ((await connection.tryCredentialsFromJfrogCli()) === LoginStatus.Success) {
                     BaseIntegrationEnv._connectionManager = connection;
                     return;
                 }
@@ -61,44 +63,24 @@ export class BaseIntegrationEnv {
 }
 
 export class AnalyzerManagerIntegrationEnv extends BaseIntegrationEnv {
-    public static readonly ENV_BINARY_DOWNLOAD_URL: string = 'JFROG_IDE_ANALYZER_MANAGER_DOWNLOAD_URL';
-    public static readonly ENV_DOWNLOAD_FROM_PLATFORM: string = 'JFROG_IDE_DOWNLOAD_FROM_PLATFORM';
-    public static readonly ENV_BINARY_FROM_DIRECTORY: string = 'JFROG_IDE_ANALYZER_MANAGER_DIRECTORY';
-
-    private _resource!: Resource;
     private _localPath?: string;
+    public entitledJasRunnerFactory!: MockJasRunnerFactory;
 
     /** @override */
-    public async initialize() {
+    public async initialize(rootTest?: string) {
         await super.initialize();
-
-        let downloadPlatformUrl: string | undefined = process.env[AnalyzerManagerIntegrationEnv.ENV_DOWNLOAD_FROM_PLATFORM];
-        let baseDownloadUrl: string | undefined = process.env[AnalyzerManagerIntegrationEnv.ENV_BINARY_DOWNLOAD_URL];
-        this._localPath = process.env[AnalyzerManagerIntegrationEnv.ENV_BINARY_FROM_DIRECTORY];
-
-        // Initialize analyzerManager resource for testing
-        if (downloadPlatformUrl || baseDownloadUrl) {
-            // Download from a different place in releases
-            this._resource = new Resource(
-                <string>process.env[AnalyzerManagerIntegrationEnv.ENV_BINARY_DOWNLOAD_URL],
-                JasRunner.getDefaultAnalyzerManagerTargetPath(BaseIntegrationEnv.directory),
-                this.logManager
-            );
-        } else {
-            // Run on latest from Releases
-            this._resource = JasRunner.getAnalyzerManagerResource(
-                this.logManager,
-                JasRunner.getDefaultAnalyzerManagerTargetPath(this._localPath ?? BaseIntegrationEnv.directory)
-            );
-        }
+        this.entitledJasRunnerFactory = new MockJasRunnerFactory(
+            this.connectionManager,
+            this.logManager,
+            new ScanResults(BaseIntegrationEnv.directory),
+            createRootTestNode(rootTest || ''),
+            createTestStepProgress(),
+            await new SupportedScans(this.connectionManager, this.logManager).getSupportedScans()
+        );
     }
 
     public get localPath(): string | undefined {
         return this._localPath;
-    }
-
-    public get resource(): Resource {
-        return this._resource;
     }
 }
 
@@ -107,21 +89,6 @@ export async function initializeIntegrationTests() {
     BaseIntegrationEnv.directory = ScanUtils.createTmpDir();
     let integration: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
     await integration.initialize();
-    if (!integration.localPath) {
-        // Get the analyzerManager (once) to the integration directory for all the scanners to use in the integration tests
-        for (let i: number = 0; i < BaseIntegrationEnv.RETRIES; i++) {
-            if (await integration.resource.update()) {
-                return;
-            }
-        }
-        assert.fail(
-            'Failed to download analyzerManager from ' +
-                (process.env[AnalyzerManagerIntegrationEnv.ENV_BINARY_DOWNLOAD_URL] ?? 'latest version') +
-                ' Url from ' +
-                (process.env[AnalyzerManagerIntegrationEnv.ENV_DOWNLOAD_FROM_PLATFORM] ?? 'releases') +
-                'platform'
-        );
-    }
 }
 
 export async function cleanUpIntegrationTests() {

@@ -4,7 +4,6 @@ import * as vscode from 'vscode';
 import { FocusType } from '../../constants/contextKeys';
 import { LogManager } from '../../log/logManager';
 import { ScanManager } from '../../scanLogic/scanManager';
-import { ApplicabilityRunner } from '../../scanLogic/scanRunners/applicabilityScan';
 import { GeneralInfo } from '../../types/generalInfo';
 import { PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
@@ -29,6 +28,8 @@ import { FileTreeNode } from '../issuesTree/fileTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { GraphScanProgress, StepProgress } from './stepProgress';
+import { ApplicabilityRunner } from '../../scanLogic/scanRunners/applicabilityScan';
+import { JasRunnerFactory } from '../../scanLogic/sourceCodeScan/jasRunnerFactory';
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
@@ -50,7 +51,7 @@ export class DependencyUtils {
         type: PackageType,
         descriptorsPaths: vscode.Uri[],
         progressManager: StepProgress,
-        contextualScan: boolean = true
+        entitledJasRunnerFactory: JasRunnerFactory
     ): Promise<any> {
         let scansPromises: Promise<any>[] = [];
         let descriptorsParsed: Set<string> = new Set<string>();
@@ -106,15 +107,9 @@ export class DependencyUtils {
         this.reportNotFoundDescriptors(descriptorsPaths, descriptorsParsed, scanManager.logManager);
 
         await Promise.all(scansPromises);
-        let applicabilityRunner: ApplicabilityRunner = new ApplicabilityRunner(
-            bundlesWithIssues,
-            type,
-            progressManager,
-            scanManager.connectionManager,
-            scanManager.logManager
-        );
-        if (contextualScan && bundlesWithIssues.length > 0 && applicabilityRunner.shouldRun()) {
-            await applicabilityRunner.scan().catch(err => ScanUtils.onScanError(err, scanManager.logManager, true));
+        const applicableRunners: ApplicabilityRunner | undefined = await entitledJasRunnerFactory.createApplicabilityRunner(bundlesWithIssues, type);
+        if (applicableRunners?.shouldRun()) {
+            await applicableRunners.scan().catch(err => ScanUtils.onScanError(err, scanManager.logManager, true));
         }
     }
 

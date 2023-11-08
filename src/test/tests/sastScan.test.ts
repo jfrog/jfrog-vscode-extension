@@ -26,6 +26,7 @@ import {
 } from './utils/testAnalyzer.test';
 import { createRootTestNode } from './utils/treeNodeUtils.test';
 import { createTestStepProgress, getAnalyzerScanResponse, getEmptyAnalyzerScanResponse } from './utils/utils.test';
+import { AnalyzerManager } from '../../main/scanLogic/scanRunners/analyzerManager';
 
 describe('Sast Tests', () => {
     const scanSast: string = path.join(__dirname, '..', 'resources', 'sastScan');
@@ -127,7 +128,8 @@ describe('Sast Tests', () => {
             createTestStepProgress(),
             {} as ConnectionManager,
             logManager,
-            new AppsConfigModule('')
+            new AppsConfigModule(''),
+            {} as AnalyzerManager
         );
     }
 });
