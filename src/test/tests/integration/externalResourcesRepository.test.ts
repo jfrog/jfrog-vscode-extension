@@ -13,7 +13,7 @@ describe('External Resources Repository Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
     const testDataRoot: string = path.join(__dirname, '..', '..', 'resources', 'secretsScan');
 
-    before(async function () {
+    before(async function() {
         fs.removeSync(path.dirname(AnalyzerManager.ANALYZER_MANAGER_PATH));
     });
 
