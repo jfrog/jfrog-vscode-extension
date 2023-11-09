@@ -216,7 +216,7 @@ export class GoUtils {
             let destPath: string = path.resolve(targetDir, path.relative(sourceDir, curPath));
 
             if (stat.isDirectory()) {
-                if (GoUtils.shouldSkipDirectory(curPath, '.git', 'testdata', '.idea', '.vscode')) {
+                if (GoUtils.shouldSkipDirectory(curPath, '.git', '.idea', '.vscode')) {
                     this.ignore(curPath);
                     return;
                 }
