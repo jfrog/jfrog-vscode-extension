@@ -8,7 +8,6 @@ import { LogManager } from '../../main/log/logManager';
 import { AnalyzeScanRequest, AnalyzerScanRun, ScanType } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { JasRunner } from '../../main/scanLogic/scanRunners/jasRunner';
 import { AppsConfigModule } from '../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
-import { RunUtils } from '../../main/utils/runUtils';
 import { NotEntitledError, ScanCancellationError, ScanUtils } from '../../main/utils/scanUtils';
 import { Translators } from '../../main/utils/translators';
 import { AnalyzerManager } from '../../main/scanLogic/scanRunners/analyzerManager';
@@ -196,21 +195,18 @@ describe('Analyzer BinaryRunner tests', async () => {
     [
         {
             name: 'Run valid request',
-            timeout: AnalyzerManager.TIMEOUT_MILLISECS,
             createDummyResponse: true,
             shouldAbort: false,
             expectedErr: undefined
         },
         {
             name: 'Not entitled',
-            timeout: AnalyzerManager.TIMEOUT_MILLISECS,
             createDummyResponse: true,
             shouldAbort: false,
             expectedErr: new NotEntitledError()
         },
         {
             name: 'Cancel requested',
-            timeout: AnalyzerManager.TIMEOUT_MILLISECS,
             createDummyResponse: true,
             shouldAbort: true,
             expectedErr: new ScanCancellationError()
@@ -218,7 +214,6 @@ describe('Analyzer BinaryRunner tests', async () => {
 
         {
             name: 'Response not created',
-            timeout: AnalyzerManager.TIMEOUT_MILLISECS,
             createDummyResponse: false,
             shouldAbort: false,
             expectedErr: new Error(
@@ -236,8 +231,6 @@ describe('Analyzer BinaryRunner tests', async () => {
                     throw new ScanCancellationError();
                 } else if (test.name === 'Not entitled') {
                     throw new DummyRunnerError();
-                } else if (test.name === 'Timeout') {
-                    await RunUtils.delay(AnalyzerManager.TIMEOUT_MILLISECS);
                 }
                 if (test.createDummyResponse) {
                     fs.writeFileSync(responsePath, JSON.stringify({} as AnalyzerScanRun));

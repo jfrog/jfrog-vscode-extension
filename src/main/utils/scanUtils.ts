@@ -253,7 +253,7 @@ export class ScanUtils {
             logger.logMessage(error.message, 'DEBUG');
             return undefined;
         }
-        if (handle || error instanceof ScanTimeoutError) {
+        if (handle) {
             logger.logError(error, true);
             return undefined;
         }
@@ -300,10 +300,4 @@ export class FileScanError extends Error {
 
 export class ScanCancellationError extends Error {
     message: string = 'Scan was cancelled';
-}
-
-export class ScanTimeoutError extends Error {
-    constructor(scan: string, public time_millisecs: number) {
-        super(`Task ${scan} timed out after ${time_millisecs}ms`);
-    }
 }

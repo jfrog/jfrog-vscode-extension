@@ -29,7 +29,6 @@ export class AnalyzerManager {
             AnalyzerManager.BINARY_NAME
     );
     private static readonly JFROG_RELEASES_URL: string = 'https://releases.jfrog.io';
-    public static readonly TIMEOUT_MILLISECS: number = 1000 * 60 * 5;
     public static readonly ENV_PLATFORM_URL: string = 'JF_PLATFORM_URL';
     public static readonly ENV_TOKEN: string = 'JF_TOKEN';
     public static readonly ENV_USER: string = 'JF_USER';
