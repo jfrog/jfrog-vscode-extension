@@ -74,7 +74,7 @@ export class SastRunner extends JasRunner {
         checkCancel: () => void,
         responsePath: string
     ): Promise<void> {
-        await this.executeBinary(checkCancel, ['zd', yamlConfigPath, responsePath], executionLogDirectory);
+        await this.runAnalyzerManager(checkCancel, ['zd', yamlConfigPath, responsePath], executionLogDirectory);
     }
 
     /** @override */

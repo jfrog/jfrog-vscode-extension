@@ -8,7 +8,6 @@ import { IProxyConfig, JfrogClient } from 'jfrog-client-js';
 import { ConnectionUtils } from '../../connect/connectionUtils';
 import { Configuration } from '../../utils/configuration';
 import { Translators } from '../../utils/translators';
-import { RunUtils } from '../../utils/runUtils';
 
 /**
  * Analyzer manager is responsible for running the analyzer on the workspace.
@@ -93,20 +92,13 @@ export class AnalyzerManager {
         return false;
     }
 
-    public async runWithTimeout(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
-        await AnalyzerManager.FINISH_UPDATE_PROMISE;
-        await RunUtils.runWithTimeout(AnalyzerManager.TIMEOUT_MILLISECS, checkCancel, {
-            title: this._binary.name,
-            task: this.run(args, executionLogDirectory)
-        });
-    }
-
     /**
      * Execute the cmd command to run the binary with given arguments
      * @param args  - the arguments for the command
      * @param executionLogDirectory - the directory to save the execution log in
      */
-    private async run(args: string[], executionLogDirectory?: string): Promise<any> {
+    public async run(args: string[], executionLogDirectory?: string): Promise<any> {
+        await AnalyzerManager.FINISH_UPDATE_PROMISE;
         let std: any = await this._binary.run(args, this.createEnvForRun(executionLogDirectory));
         if (std.stdout && std.stdout.length > 0) {
             this._logManager.logMessage('Done executing with log, log:\n' + std.stdout, 'DEBUG');

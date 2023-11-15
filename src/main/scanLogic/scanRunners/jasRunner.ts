@@ -83,13 +83,13 @@ export abstract class JasRunner {
     }
 
     /**
-     * Execute the cmd command to run the binary with given arguments and an option to abort the operation.
-     * @param checkCancel           - Check if should cancel
+     * Run Analyzer Manager with given arguments and an option to abort the operation.
      * @param args                  - Arguments for the command
      * @param executionLogDirectory - Directory to save the execution log in
      */
-    protected async executeBinary(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
-        await this._analyzerManager.runWithTimeout(checkCancel, args, executionLogDirectory);
+    protected async runAnalyzerManager(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
+        checkCancel();
+        await this._analyzerManager.run(args, executionLogDirectory);
     }
 
     protected logStartScanning(request: AnalyzeScanRequest): void {
