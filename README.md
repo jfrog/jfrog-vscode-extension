@@ -74,9 +74,7 @@ Secures your IaC files. Critical to keeping your cloud deployment safe and secur
 - For Security issues with an available fixed version, you can upgrade to the fixed version within the plugin.
 - Track the status of the code while it is being built, tested, and scanned on the CI server.
 
-The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
-
-## 🏁 Getting Started
+## 🏁 Documentation
 Read the [documentation](https://docs.jfrog-applications.jfrog.io/jfrog-applications/ide/visual-studio-code) to get started.
 
 ## 🔥 Reporting Issues
@@ -86,7 +84,5 @@ Please help us improve by [reporting issues](https://github.com/jfrog/jfrog-vsco
 We welcome community contribution through pull requests.
 
 ### Guidelines
--   Before creating your first pull request, please join our contributors community by signing [JFrog's CLA](https://secure.echosign.com/public/hostedForm?formid=5IYKLZ2RXB543N).
 -   If the existing tests do not already cover your changes, please add tests.
--   Pull requests should be created on the _dev_ branch.
 -   Please run `npm run format` for formatting the code before submitting the pull request.
