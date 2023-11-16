@@ -76,7 +76,7 @@ Secures your IaC files. Critical to keeping your cloud deployment safe and secur
 
 The extension also applies [JFrog File Spec JSON schema](https://raw.githubusercontent.com/jfrog/jfrog-cli/master/schema/filespec-schema.json) on the following file patterns: `**/filespecs/*.json`, `*filespec*.json` and `*.filespec`. Read more about JFrog File specs [here](https://www.jfrog.com/confluence/display/JFROG/FileSpec).
 
-## 🔥 Getting Started
+## 🏁 Getting Started
 Read the [documentation](https://docs.jfrog-applications.jfrog.io/jfrog-applications/ide/visual-studio-code) to get started.
 
 ## 🔥 Reporting Issues
