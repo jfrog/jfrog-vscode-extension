@@ -14,7 +14,7 @@ import { RunUtils } from '../../utils/runUtils';
  * Analyzer manager is responsible for running the analyzer on the workspace.
  */
 export class AnalyzerManager {
-    public static readonly ANALYZER_MANAGER_VERSION: string = '1.3.2.2019257';
+    public static readonly ANALYZER_MANAGER_VERSION: string = '1.4.0.2021123';
     private static readonly RELATIVE_DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1';
     private static readonly BINARY_NAME: string = 'analyzerManager';
     public static readonly ANALYZER_MANAGER_PATH: string = Utils.addWinSuffixIfNeeded(
