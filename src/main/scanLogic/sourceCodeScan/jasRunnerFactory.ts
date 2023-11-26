@@ -141,8 +141,8 @@ export class JasRunnerFactory {
         );
     }
 
-    private getModulesFromConfig(): AppsConfigModule[] {
-        const jfrogAppConfig: JFrogAppsConfig = new JFrogAppsConfig(this.root.workspace.uri.path);
+    private createModulesConfig(): AppsConfigModule[] {
+        const jfrogAppConfig: JFrogAppsConfig = new JFrogAppsConfig(this.root.workspace.uri.fsPath);
         return jfrogAppConfig.modules;
     }
 }
