@@ -39,7 +39,7 @@ export class JasRunnerFactory {
     }
 
     // Jas scanner support JFrog config file. Applicability is not supported by jfrog config so we create a default runner to run on the workspace.
-    public async createConfigurableJasRunner(): Promise<JasRunner[]> {
+    public async createJasRunner(): Promise<JasRunner[]> {
         let jasRunners: JasRunner[] = [];
 
         jasRunners.push(...this.createSastRunners());
@@ -55,7 +55,7 @@ export class JasRunnerFactory {
             this._logManager.logMessage('Static Application Security scanner is not entitled to scan workspace ', 'INFO');
             return sastRunners;
         }
-        for (const configModule of this.getModulesFromConfig()) {
+        for (const configModule of this.createModulesConfig()) {
             sastRunners.push(
                 new SastRunner(
                     this.scanResults,
@@ -80,7 +80,7 @@ export class JasRunnerFactory {
             this._logManager.logMessage('Infrastructure as Code scanner is not entitled to scan workspace', 'INFO');
             return iacRunners;
         }
-        for (const configModule of this.getModulesFromConfig()) {
+        for (const configModule of this.createModulesConfig()) {
             iacRunners.push(
                 new IacRunner(
                     this.scanResults,
@@ -105,7 +105,7 @@ export class JasRunnerFactory {
             this._logManager.logMessage('Secrets scanner is not entitled to scan workspace', 'INFO');
             return secretsRunners;
         }
-        for (const configModule of this.getModulesFromConfig()) {
+        for (const configModule of this.createModulesConfig()) {
             secretsRunners.push(
                 new SecretsRunner(
                     this.scanResults,
