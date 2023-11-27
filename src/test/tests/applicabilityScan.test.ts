@@ -41,6 +41,7 @@ describe('Applicability Scan Tests', () => {
             expectedYaml: path.join(scanApplicable, 'requestOneRoot.yaml'),
             roots: ['/path/to/root'],
             cves: ['CVE-2021-3918'],
+            indirect_cves: ['CVE-2021-44228'],
             skip: []
         },
         {
@@ -48,11 +49,12 @@ describe('Applicability Scan Tests', () => {
             expectedYaml: path.join(scanApplicable, 'requestMultipleRoots.yaml'),
             roots: ['/path/to/root', '/path/to/other'],
             cves: ['CVE-2021-3918', 'CVE-2021-3807', 'CVE-2022-25878'],
+            indirect_cves: ['CVE-2021-44228', 'CVE-2023-1234'],
             skip: ['/path/to/skip']
         }
     ].forEach(test => {
         it('Check generated Yaml request for - ' + test.name, () => {
-            let request: ApplicabilityScanArgs = getApplicabilityScanRequest(test.roots, test.cves, test.skip);
+            let request: ApplicabilityScanArgs = getApplicabilityScanRequest(test.roots, test.cves, test.indirect_cves, test.skip);
             let actualYaml: string = path.join(tempFolder, test.name);
             fs.writeFileSync(actualYaml, getDummyRunner([], PackageType.Unknown).requestsToYaml(request));
             assert.deepEqual(
@@ -345,12 +347,13 @@ describe('Applicability Scan Tests', () => {
         });
     });
 
-    function getApplicabilityScanRequest(roots: string[], cves: string[], skipFolders: string[]): ApplicabilityScanArgs {
+    function getApplicabilityScanRequest(roots: string[], cves: string[], indirect_cves: string[], skipFolders: string[]): ApplicabilityScanArgs {
         return {
             type: 'analyze-applicability',
             output: '/path/to/output.json',
             roots: roots,
             cve_whitelist: cves,
+            indirect_cve_whitelist: indirect_cves,
             skipped_folders: skipFolders
         } as ApplicabilityScanArgs;
     }
