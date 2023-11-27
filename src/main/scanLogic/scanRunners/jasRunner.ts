@@ -89,7 +89,7 @@ export abstract class JasRunner {
      */
     protected async runAnalyzerManager(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
         checkCancel();
-        await this._analyzerManager.run(args, executionLogDirectory);
+        await this._analyzerManager.run(args, checkCancel, executionLogDirectory);
     }
 
     protected logStartScanning(request: AnalyzeScanRequest): void {

@@ -96,15 +96,9 @@ export class AnalyzerManager {
      * @param args  - the arguments for the command
      * @param executionLogDirectory - the directory to save the execution log in
      */
-    public async run(args: string[], executionLogDirectory?: string): Promise<any> {
+    public async run(args: string[], checkCancel: () => void, executionLogDirectory?: string): Promise<void> {
         await AnalyzerManager.FINISH_UPDATE_PROMISE;
-        let std: any = await this._binary.run(args, this.createEnvForRun(executionLogDirectory));
-        if (std.stdout && std.stdout.length > 0) {
-            this._logManager.logMessage('Done executing with log, log:\n' + std.stdout, 'DEBUG');
-        }
-        if (std.stderr && std.stderr.length > 0) {
-            this._logManager.logMessage('Done executing with log, log:\n' + std.stderr, 'ERR');
-        }
+        await this._binary.run(args, checkCancel, this.createEnvForRun(executionLogDirectory));
     }
 
     /**

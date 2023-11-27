@@ -5,7 +5,6 @@ import * as fse from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
 import * as tmp from 'tmp';
-import * as util from 'util';
 import * as vscode from 'vscode';
 import { ContextKeys } from '../constants/contextKeys';
 import { LogManager } from '../log/logManager';
@@ -21,6 +20,8 @@ export class ScanUtils {
 
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
+    // every 0.1 sec
+    private static readonly CANCELLATION_CHECK_INTERVAL_MS: number = 100;
 
     public static async scanWithProgress(
         scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => Promise<void>,
@@ -158,8 +159,43 @@ export class ScanUtils {
         return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
     }
 
-    public static async executeCmdAsync(command: string, cwd?: string, env?: NodeJS.ProcessEnv | undefined): Promise<any> {
-        return await util.promisify(exec.exec)(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
+    public static async executeCmdAsync(
+        command: string,
+        checkCancel: () => void,
+        cwd?: string,
+        env?: NodeJS.ProcessEnv | undefined
+    ): Promise<exec.ChildProcess> {
+        return new Promise<exec.ChildProcess>((resolve, reject) => {
+            const childProcess: exec.ChildProcess = exec.exec(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
+            const checkCancellationInterval: NodeJS.Timer = setInterval(() => {
+                ScanUtils.cancelProcess(childProcess, checkCancellationInterval, checkCancel, reject);
+            }, ScanUtils.CANCELLATION_CHECK_INTERVAL_MS);
+
+            childProcess.on('exit', code => {
+                clearInterval(checkCancellationInterval);
+                code === 0 ? resolve(childProcess) : reject(new Error(`Process exited with code ${code}`));
+            });
+
+            childProcess.on('error', err => {
+                clearInterval(checkCancellationInterval);
+                reject(err);
+            });
+        });
+    }
+
+    public static cancelProcess(
+        childProcess: exec.ChildProcess,
+        checkCancellationInterval: NodeJS.Timer,
+        checkCancel: () => void,
+        reject: (reason?: any) => void
+    ): void {
+        try {
+            checkCancel();
+        } catch (error) {
+            clearInterval(checkCancellationInterval);
+            childProcess.kill('SIGTERM');
+            reject(error);
+        }
     }
 
     public static setScanInProgress(state: boolean) {
