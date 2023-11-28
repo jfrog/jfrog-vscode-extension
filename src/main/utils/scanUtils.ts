@@ -159,6 +159,14 @@ export class ScanUtils {
         return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
     }
 
+    /**
+     * Executes a command asynchronously and returns the output.
+     * @param command - The command to execute.
+     * @param checkCancel - A function to check if cancellation is requested.
+     * @param cwd - The current working directory for the command execution.
+     * @param env - Optional environment variables for the command execution.
+     * @returns Command output or rejects with an error.
+     */
     public static async executeCmdAsync(
         command: string,
         checkCancel: () => void,
@@ -189,7 +197,13 @@ export class ScanUtils {
         });
     }
 
-    public static cancelProcess(childProcess: exec.ChildProcess, checkCancel: () => void, reject: (reason?: any) => void): void {
+    /**
+     * Cancels the child process if cancellation is requested.
+     * @param childProcess - The child process to be cancelled.
+     * @param checkCancel - A function to check if cancellation is requested.
+     * @param reject - A function to reject the promise.
+     */
+    private static cancelProcess(childProcess: exec.ChildProcess, checkCancel: () => void, reject: (reason?: any) => void): void {
         try {
             checkCancel();
         } catch (error) {
