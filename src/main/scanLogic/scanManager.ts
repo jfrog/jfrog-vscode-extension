@@ -54,12 +54,12 @@ export class ScanManager implements ExtensionComponent {
             progressManager,
             await new SupportedScans(this._connectionManager, this._logManager).getSupportedScans()
         );
-        const jasRunners: JasRunner[] = await entitledJasRunnerFactory.createConfigurableJasRunner();
+        const jasRunners: JasRunner[] = await entitledJasRunnerFactory.createJasRunner();
         progressManager.startStep('🔎 Scanning for issues', ScanManager.calculateNumberOfTasks(jasRunners, workspaceDescriptors));
         checkCanceled();
         await Promise.all([
             ...this.runDependenciesScans(workspaceDescriptors, root, checkCanceled, scanResults, progressManager, entitledJasRunnerFactory),
-            ...this.runAMScans(jasRunners)
+            ...this.runSourceCodeScans(jasRunners)
         ]);
         UsageUtils.sendUsageReport(entitledJasRunnerFactory.uniqFeatures, workspaceDescriptors, this.connectionManager);
     }
@@ -91,7 +91,7 @@ export class ScanManager implements ExtensionComponent {
         return scansPromises;
     }
 
-    private runAMScans(jasRunners: JasRunner[]): Promise<void>[] {
+    private runSourceCodeScans(jasRunners: JasRunner[]): Promise<void>[] {
         const scansPromises: Promise<void>[] = [];
         for (const runner of jasRunners) {
             if (runner.shouldRun()) {

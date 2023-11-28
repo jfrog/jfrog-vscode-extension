@@ -57,6 +57,10 @@ export abstract class JasRunner {
      */
     public abstract scan(): Promise<void>;
 
+    public get config() {
+        return this._config;
+    }
+
     /**
      * Run the executeBinary method with the provided request path
      * @param yamlConfigPath        - Path to the request
