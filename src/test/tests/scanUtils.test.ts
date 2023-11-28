@@ -64,7 +64,7 @@ describe('ScanUtils', () => {
             const randomFileName: string = `file_${Date.now()}.txt`;
 
             // Define the command that waits for 2 seconds and writes a file
-            const command: string = isWindows() ? `sleep 2 | echo > ${randomFileName}` : `sleep 2 && touch ${randomFileName}`;
+            const command: string = isWindows() ? `ping 127.0.0.1 -n 2 & echo > ${randomFileName}` : `sleep 2 && touch ${randomFileName}`;
 
             try {
                 await ScanUtils.executeCmdAsync(command, cancelSignal, __dirname, undefined);
