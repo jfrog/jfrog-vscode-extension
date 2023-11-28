@@ -164,36 +164,41 @@ export class ScanUtils {
         checkCancel: () => void,
         cwd?: string,
         env?: NodeJS.ProcessEnv | undefined
-    ): Promise<exec.ChildProcess> {
-        return new Promise<exec.ChildProcess>((resolve, reject) => {
-            const childProcess: exec.ChildProcess = exec.exec(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
-            const checkCancellationInterval: NodeJS.Timer = setInterval(() => {
-                ScanUtils.cancelProcess(childProcess, checkCancellationInterval, checkCancel, reject);
-            }, ScanUtils.CANCELLATION_CHECK_INTERVAL_MS);
+    ): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            try {
+                const childProcess: exec.ChildProcess = exec.exec(
+                    command,
+                    { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env },
+                    (error: exec.ExecException | null, stdout: string, stderr: string) => {
+                        clearInterval(checkCancellationInterval);
+                        if (error) {
+                            reject(error);
+                        } else {
+                            stderr.trim() ? reject(new Error(stderr.trim())) : resolve(stdout.trim());
+                        }
+                    }
+                );
 
-            childProcess.on('exit', code => {
-                clearInterval(checkCancellationInterval);
-                code === 0 ? resolve(childProcess) : reject(new Error(`Process exited with code ${code}`));
-            });
-
-            childProcess.on('error', err => {
-                clearInterval(checkCancellationInterval);
-                reject(err);
-            });
+                const checkCancellationInterval: NodeJS.Timer = setInterval(() => {
+                    ScanUtils.cancelProcess(childProcess, checkCancel, reject);
+                }, ScanUtils.CANCELLATION_CHECK_INTERVAL_MS);
+            } catch (error) {
+                reject(error);
+            }
         });
     }
 
-    public static cancelProcess(
-        childProcess: exec.ChildProcess,
-        checkCancellationInterval: NodeJS.Timer,
-        checkCancel: () => void,
-        reject: (reason?: any) => void
-    ): void {
+    public static cancelProcess(childProcess: exec.ChildProcess, checkCancel: () => void, reject: (reason?: any) => void): void {
         try {
             checkCancel();
         } catch (error) {
-            clearInterval(checkCancellationInterval);
-            childProcess.kill('SIGTERM');
+            const killSuccess: boolean = childProcess.kill('SIGTERM');
+            if (!killSuccess) {
+                const originalError: string = error instanceof Error ? error.message : String(error);
+                reject(`${originalError}\nFailed to kill the process.`);
+                return;
+            }
             reject(error);
         }
     }

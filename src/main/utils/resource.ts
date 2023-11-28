@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as exec from 'child_process';
 import { IChecksumResult, JfrogClient } from 'jfrog-client-js';
 import { LogManager } from '../log/logManager';
 import { Utils } from './utils';
@@ -158,12 +157,13 @@ export class Resource {
     public async run(args: string[], checkCancel: () => void, env?: NodeJS.ProcessEnv | undefined): Promise<void> {
         let command: string = '"' + this.fullPath + '" ' + args.join(' ');
         this._logManager.debug("Executing '" + command + "' in directory '" + this._targetDir + "'");
-        const child: exec.ChildProcess = await ScanUtils.executeCmdAsync(command, checkCancel, this._targetDir, env);
-        if (child.stdout) {
-            this._logManager.logMessage('Done executing with log, log:\n' + child.stdout, 'DEBUG');
-        }
-        if (child.stderr) {
-            this._logManager.logMessage('Done executing with log, log:\n' + child.stderr, 'ERR');
+        try {
+            const output: string = await ScanUtils.executeCmdAsync(command, checkCancel, this._targetDir, env);
+            if (output.length > 0) {
+                this._logManager.logMessage('Done executing with log, log:\n' + output, 'DEBUG');
+            }
+        } catch (error) {
+            throw new Error('Failed to execute ' + command + ' err:' + error);
         }
     }
 

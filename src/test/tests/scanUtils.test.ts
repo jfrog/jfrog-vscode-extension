@@ -1,7 +1,9 @@
 import { assert, expect } from 'chai';
-import * as exec from 'child_process';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import sinon from 'sinon';
+import * as fs from 'fs';
+import * as path from 'path';
+import { isWindows } from './utils/utils.test';
 
 describe('ScanUtils', () => {
     describe('executeCmdAsync', () => {
@@ -17,11 +19,12 @@ describe('ScanUtils', () => {
         const dummyCheckError: () => void = () => {
             return;
         };
+
         it('should execute a command successfully', async () => {
             const command: string = 'echo Hello, World!';
-            const result: exec.ChildProcess | undefined = await ScanUtils.executeCmdAsync(command, () => dummyCheckError, undefined, undefined);
-            assert.instanceOf(result, exec.ChildProcess);
+            const output: string = await ScanUtils.executeCmdAsync(command, () => dummyCheckError, undefined, undefined);
             assert.isTrue(clearIntervalSpy.calledOnce);
+            assert.equal(output, 'Hello, World!');
         });
 
         it('should reject with an error if the command fails', async () => {
@@ -54,30 +57,32 @@ describe('ScanUtils', () => {
             }
         });
 
-        describe('cancelProcess', () => {
-            it('should call childProcess.kill when cancellation is requested', () => {
-                // Arrange
-                const killStub: sinon.SinonStub<any[], any> = sinon.stub();
-                const fakeChildProcess: Partial<exec.ChildProcess> = {
-                    kill: killStub
-                };
+        it('should call childProcess.kill when cancellation is requested', async () => {
+            const cancelSignal: () => void = () => {
+                throw new Error('Cancellation requested.');
+            };
+            const randomFileName: string = `file_${Date.now()}.txt`;
 
-                const checkCancellation: () => never = () => {
-                    throw new Error('Cancellation requested.');
-                };
+            // Define the command that waits for 2 seconds and writes a file
+            const command: string = isWindows() ? `sleep 2 | echo > ${randomFileName}` : `sleep 2 && touch ${randomFileName}`;
 
-                // Act
-                // Simulating an interval, actual logic not included for this test
-                const checkCancellationInterval: NodeJS.Timer = setInterval(() => {
-                    return;
-                }, 100);
-                ScanUtils.cancelProcess(fakeChildProcess as exec.ChildProcess, checkCancellationInterval, checkCancellation, () => {
-                    return;
-                });
+            try {
+                await ScanUtils.executeCmdAsync(command, cancelSignal, __dirname, undefined);
+                expect.fail('The command should have been canceled.');
+            } catch (error) {
+                if (error instanceof Error) {
+                    assert.equal(error.message, 'Cancellation requested.');
 
-                // Assertions
-                assert.isTrue(killStub.calledOnceWithExactly('SIGTERM'));
-            });
+                    // Wait for 3 seconds to ensure the file is not created
+                    await new Promise(resolve => setTimeout(resolve, 3000));
+
+                    // Check if the file 'output.txt' does not exist (indicating it wasn't written due to process kill)
+                    assert.isFalse(fs.existsSync(path.join(__dirname, randomFileName)));
+                } else {
+                    // Fail the test if the error is not an instance of Error
+                    expect.fail('The error should have been an instance of Error.');
+                }
+            }
         });
     });
 });
