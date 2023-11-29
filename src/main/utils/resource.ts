@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-
 import { IChecksumResult, JfrogClient } from 'jfrog-client-js';
 import { LogManager } from '../log/logManager';
 import { Utils } from './utils';
@@ -155,10 +154,17 @@ export class Resource {
         return ScanUtils.Hash('SHA256', fileBuffer);
     }
 
-    public async run(args: string[], env?: NodeJS.ProcessEnv | undefined): Promise<any> {
+    public async run(args: string[], checkCancel: () => void, env?: NodeJS.ProcessEnv | undefined): Promise<void> {
         let command: string = '"' + this.fullPath + '" ' + args.join(' ');
         this._logManager.debug("Executing '" + command + "' in directory '" + this._targetDir + "'");
-        return await ScanUtils.executeCmdAsync(command, this._targetDir, env);
+        try {
+            const output: string = await ScanUtils.executeCmdAsync(command, checkCancel, this._targetDir, env);
+            if (output.length > 0) {
+                this._logManager.logMessage('Done executing "' + command + '" with output:\n' + output, 'DEBUG');
+            }
+        } catch (error) {
+            throw new Error('Failed to execute "' + command + '" err: ' + error);
+        }
     }
 
     public get fullPath(): string {

@@ -31,7 +31,7 @@ export class SecretsRunner extends JasRunner {
 
     /** @override */
     protected async runBinary(yamlConfigPath: string, executionLogDirectory: string | undefined, checkCancel: () => void): Promise<void> {
-        await this.executeBinary(checkCancel, ['sec', yamlConfigPath], executionLogDirectory);
+        await this.runAnalyzerManager(checkCancel, ['sec', yamlConfigPath], executionLogDirectory);
     }
 
     /**

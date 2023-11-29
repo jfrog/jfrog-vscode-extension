@@ -61,7 +61,7 @@ export class ApplicabilityRunner extends JasRunner {
 
     /** @override */
     protected async runBinary(yamlConfigPath: string, executionLogDirectory: string | undefined, checkCancel: () => void): Promise<void> {
-        await this.executeBinary(checkCancel, ['ca', yamlConfigPath], executionLogDirectory);
+        await this.runAnalyzerManager(checkCancel, ['ca', yamlConfigPath], executionLogDirectory);
     }
 
     /** @override */

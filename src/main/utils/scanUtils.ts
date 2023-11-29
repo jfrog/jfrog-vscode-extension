@@ -5,7 +5,6 @@ import * as fse from 'fs-extra';
 import * as os from 'os';
 import * as path from 'path';
 import * as tmp from 'tmp';
-import * as util from 'util';
 import * as vscode from 'vscode';
 import { ContextKeys } from '../constants/contextKeys';
 import { LogManager } from '../log/logManager';
@@ -21,6 +20,8 @@ export class ScanUtils {
 
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
+    // every 0.1 sec
+    private static readonly CANCELLATION_CHECK_INTERVAL_MS: number = 100;
 
     public static async scanWithProgress(
         scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => Promise<void>,
@@ -158,8 +159,62 @@ export class ScanUtils {
         return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
     }
 
-    public static async executeCmdAsync(command: string, cwd?: string, env?: NodeJS.ProcessEnv | undefined): Promise<any> {
-        return await util.promisify(exec.exec)(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
+    /**
+     * Executes a command asynchronously and returns the output.
+     * @param command - The command to execute.
+     * @param checkCancel - A function that throws ScanCancellationError if the user chose to stop the scan
+     * @param cwd - The current working directory for the command execution.
+     * @param env - Optional environment variables for the command execution.
+     * @returns Command output or rejects with an error.
+     */
+    public static async executeCmdAsync(
+        command: string,
+        checkCancel: () => void,
+        cwd?: string,
+        env?: NodeJS.ProcessEnv | undefined
+    ): Promise<string> {
+        return new Promise<string>((resolve, reject) => {
+            try {
+                const childProcess: exec.ChildProcess = exec.exec(
+                    command,
+                    { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env } as exec.ExecOptions,
+                    (error: exec.ExecException | null, stdout: string, stderr: string) => {
+                        clearInterval(checkCancellationInterval);
+                        if (error) {
+                            reject(error);
+                        } else {
+                            stderr.trim() ? reject(new Error(stderr.trim())) : resolve(stdout.trim());
+                        }
+                    }
+                );
+
+                const checkCancellationInterval: NodeJS.Timer = setInterval(() => {
+                    ScanUtils.cancelIfRequested(childProcess, checkCancel, reject);
+                }, ScanUtils.CANCELLATION_CHECK_INTERVAL_MS);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Cancels the child process if cancellation is requested.
+     * @param childProcess - The child process to be cancelled.
+     * @param checkCancel - A function that throws ScanCancellationError if the user chose to stop the scan
+     * @param reject - A function to reject the promise.
+     */
+    private static cancelIfRequested(childProcess: exec.ChildProcess, checkCancel: () => void, reject: (reason?: any) => void): void {
+        try {
+            checkCancel();
+        } catch (error) {
+            const killSuccess: boolean = childProcess.kill('SIGTERM');
+            if (!killSuccess) {
+                const originalError: string = error instanceof Error ? error.message : String(error);
+                reject(`${originalError}\nFailed to kill the process.`);
+                return;
+            }
+            reject(error);
+        }
     }
 
     public static setScanInProgress(state: boolean) {
@@ -253,7 +308,7 @@ export class ScanUtils {
             logger.logMessage(error.message, 'DEBUG');
             return undefined;
         }
-        if (handle || error instanceof ScanTimeoutError) {
+        if (handle) {
             logger.logError(error, true);
             return undefined;
         }
@@ -300,10 +355,4 @@ export class FileScanError extends Error {
 
 export class ScanCancellationError extends Error {
     message: string = 'Scan was cancelled';
-}
-
-export class ScanTimeoutError extends Error {
-    constructor(scan: string, public time_millisecs: number) {
-        super(`Task ${scan} timed out after ${time_millisecs}ms`);
-    }
 }

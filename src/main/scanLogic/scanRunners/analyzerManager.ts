@@ -8,7 +8,6 @@ import { IProxyConfig, JfrogClient } from 'jfrog-client-js';
 import { ConnectionUtils } from '../../connect/connectionUtils';
 import { Configuration } from '../../utils/configuration';
 import { Translators } from '../../utils/translators';
-import { RunUtils } from '../../utils/runUtils';
 
 /**
  * Analyzer manager is responsible for running the analyzer on the workspace.
@@ -30,7 +29,6 @@ export class AnalyzerManager {
             AnalyzerManager.BINARY_NAME
     );
     private static readonly JFROG_RELEASES_URL: string = 'https://releases.jfrog.io';
-    public static readonly TIMEOUT_MILLISECS: number = 1000 * 60 * 5;
     public static readonly ENV_PLATFORM_URL: string = 'JF_PLATFORM_URL';
     public static readonly ENV_TOKEN: string = 'JF_TOKEN';
     public static readonly ENV_USER: string = 'JF_USER';
@@ -93,27 +91,15 @@ export class AnalyzerManager {
         return false;
     }
 
-    public async runWithTimeout(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
-        await AnalyzerManager.FINISH_UPDATE_PROMISE;
-        await RunUtils.runWithTimeout(AnalyzerManager.TIMEOUT_MILLISECS, checkCancel, {
-            title: this._binary.name,
-            task: this.run(args, executionLogDirectory)
-        });
-    }
-
     /**
      * Execute the cmd command to run the binary with given arguments
-     * @param args  - the arguments for the command
+     * @param args - the arguments for the command
+     * @param checkCancel - A function that throws ScanCancellationError if the user chose to stop the scan
      * @param executionLogDirectory - the directory to save the execution log in
      */
-    private async run(args: string[], executionLogDirectory?: string): Promise<any> {
-        let std: any = await this._binary.run(args, this.createEnvForRun(executionLogDirectory));
-        if (std.stdout && std.stdout.length > 0) {
-            this._logManager.logMessage('Done executing with log, log:\n' + std.stdout, 'DEBUG');
-        }
-        if (std.stderr && std.stderr.length > 0) {
-            this._logManager.logMessage('Done executing with log, log:\n' + std.stderr, 'ERR');
-        }
+    public async run(args: string[], checkCancel: () => void, executionLogDirectory?: string): Promise<void> {
+        await AnalyzerManager.FINISH_UPDATE_PROMISE;
+        await this._binary.run(args, checkCancel, this.createEnvForRun(executionLogDirectory));
     }
 
     /**

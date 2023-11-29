@@ -8,8 +8,7 @@ import { LogManager } from '../../main/log/logManager';
 import { AnalyzeScanRequest, AnalyzerScanRun, ScanType } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { JasRunner } from '../../main/scanLogic/scanRunners/jasRunner';
 import { AppsConfigModule } from '../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
-import { RunUtils } from '../../main/utils/runUtils';
-import { NotEntitledError, ScanCancellationError, ScanTimeoutError, ScanUtils } from '../../main/utils/scanUtils';
+import { NotEntitledError, ScanCancellationError, ScanUtils } from '../../main/utils/scanUtils';
 import { Translators } from '../../main/utils/translators';
 import { AnalyzerManager } from '../../main/scanLogic/scanRunners/analyzerManager';
 
@@ -41,7 +40,6 @@ describe('Analyzer BinaryRunner tests', async () => {
 
     function createDummyBinaryRunner(
         connection: ConnectionManager = connectionManager,
-        timeout: number = AnalyzerManager.TIMEOUT_MILLISECS,
         dummyAction: () => Promise<void> = () => Promise.resolve()
     ): JasRunner {
         return new (class extends JasRunner {
@@ -57,14 +55,14 @@ describe('Analyzer BinaryRunner tests', async () => {
                 _executionLogDirectory: string | undefined,
                 checkCancel: () => void
             ): Promise<void> {
-                await RunUtils.runWithTimeout(timeout, checkCancel, dummyAction());
+                checkCancel();
+                await dummyAction();
             }
         })(connection, dummyName, logManager, new AppsConfigModule(''), {} as AnalyzerManager);
     }
 
     function createDummyAnalyzerManager(
         connection: ConnectionManager = connectionManager,
-        timeout: number = AnalyzerManager.TIMEOUT_MILLISECS,
         dummyAction: () => Promise<void> = () => Promise.resolve()
     ): AnalyzerManager {
         return new (class extends AnalyzerManager {
@@ -80,7 +78,8 @@ describe('Analyzer BinaryRunner tests', async () => {
                 _executionLogDirectory: string | undefined,
                 checkCancel: () => void
             ): Promise<void> {
-                await RunUtils.runWithTimeout(timeout, checkCancel, dummyAction());
+                checkCancel();
+                await dummyAction();
             }
         })(connection, logManager);
     }
@@ -196,35 +195,25 @@ describe('Analyzer BinaryRunner tests', async () => {
     [
         {
             name: 'Run valid request',
-            timeout: AnalyzerManager.TIMEOUT_MILLISECS,
             createDummyResponse: true,
             shouldAbort: false,
             expectedErr: undefined
         },
         {
             name: 'Not entitled',
-            timeout: AnalyzerManager.TIMEOUT_MILLISECS,
             createDummyResponse: true,
             shouldAbort: false,
             expectedErr: new NotEntitledError()
         },
         {
             name: 'Cancel requested',
-            timeout: AnalyzerManager.TIMEOUT_MILLISECS,
             createDummyResponse: true,
             shouldAbort: true,
             expectedErr: new ScanCancellationError()
         },
-        {
-            name: 'Timeout',
-            timeout: 1,
-            createDummyResponse: true,
-            shouldAbort: false,
-            expectedErr: new ScanTimeoutError('' + 1, 1)
-        },
+
         {
             name: 'Response not created',
-            timeout: AnalyzerManager.TIMEOUT_MILLISECS,
             createDummyResponse: false,
             shouldAbort: false,
             expectedErr: new Error(
@@ -237,13 +226,11 @@ describe('Analyzer BinaryRunner tests', async () => {
             let requestPath: string = path.join(tempFolder, 'request');
             let responsePath: string = path.join(tempFolder, 'response');
 
-            let runner: JasRunner = createDummyBinaryRunner(connectionManager, test.timeout, async () => {
+            let runner: JasRunner = createDummyBinaryRunner(connectionManager, async () => {
                 if (test.shouldAbort) {
                     throw new ScanCancellationError();
                 } else if (test.name === 'Not entitled') {
                     throw new DummyRunnerError();
-                } else if (test.name === 'Timeout') {
-                    await RunUtils.delay(AnalyzerManager.TIMEOUT_MILLISECS);
                 }
                 if (test.createDummyResponse) {
                     fs.writeFileSync(responsePath, JSON.stringify({} as AnalyzerScanRun));
