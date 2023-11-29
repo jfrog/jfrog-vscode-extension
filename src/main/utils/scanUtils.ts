@@ -162,7 +162,7 @@ export class ScanUtils {
     /**
      * Executes a command asynchronously and returns the output.
      * @param command - The command to execute.
-     * @param checkCancel - A function to check if cancellation is requested.
+     * @param checkCancel - A function that throws ScanCancellationError if the user chose to stop the scan
      * @param cwd - The current working directory for the command execution.
      * @param env - Optional environment variables for the command execution.
      * @returns Command output or rejects with an error.
@@ -177,7 +177,7 @@ export class ScanUtils {
             try {
                 const childProcess: exec.ChildProcess = exec.exec(
                     command,
-                    { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env },
+                    { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env } as exec.ExecOptions,
                     (error: exec.ExecException | null, stdout: string, stderr: string) => {
                         clearInterval(checkCancellationInterval);
                         if (error) {
@@ -189,7 +189,7 @@ export class ScanUtils {
                 );
 
                 const checkCancellationInterval: NodeJS.Timer = setInterval(() => {
-                    ScanUtils.cancelProcess(childProcess, checkCancel, reject);
+                    ScanUtils.cancelIfRequested(childProcess, checkCancel, reject);
                 }, ScanUtils.CANCELLATION_CHECK_INTERVAL_MS);
             } catch (error) {
                 reject(error);
@@ -200,10 +200,10 @@ export class ScanUtils {
     /**
      * Cancels the child process if cancellation is requested.
      * @param childProcess - The child process to be cancelled.
-     * @param checkCancel - A function to check if cancellation is requested.
+     * @param checkCancel - A function that throws ScanCancellationError if the user chose to stop the scan
      * @param reject - A function to reject the promise.
      */
-    private static cancelProcess(childProcess: exec.ChildProcess, checkCancel: () => void, reject: (reason?: any) => void): void {
+    private static cancelIfRequested(childProcess: exec.ChildProcess, checkCancel: () => void, reject: (reason?: any) => void): void {
         try {
             checkCancel();
         } catch (error) {

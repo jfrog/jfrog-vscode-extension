@@ -84,7 +84,8 @@ export abstract class JasRunner {
 
     /**
      * Run Analyzer Manager with given arguments and an option to abort the operation.
-     * @param args                  - Arguments for the command
+     * @param checkCancel - A function that throws ScanCancellationError if the user chose to stop the scan
+     * @param args - Arguments for the command
      * @param executionLogDirectory - Directory to save the execution log in
      */
     protected async runAnalyzerManager(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {

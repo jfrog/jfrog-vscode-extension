@@ -93,7 +93,8 @@ export class AnalyzerManager {
 
     /**
      * Execute the cmd command to run the binary with given arguments
-     * @param args  - the arguments for the command
+     * @param args - the arguments for the command
+     * @param checkCancel - A function that throws ScanCancellationError if the user chose to stop the scan
      * @param executionLogDirectory - the directory to save the execution log in
      */
     public async run(args: string[], checkCancel: () => void, executionLogDirectory?: string): Promise<void> {

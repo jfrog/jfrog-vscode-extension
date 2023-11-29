@@ -20,14 +20,14 @@ describe('ScanUtils', () => {
             return;
         };
 
-        it('should execute a command successfully', async () => {
+        it('execute a command successfully', async () => {
             const command: string = 'echo Hello, World!';
             const output: string = await ScanUtils.executeCmdAsync(command, () => dummyCheckError, undefined, undefined);
             assert.isTrue(clearIntervalSpy.calledOnce);
             assert.equal(output, 'Hello, World!');
         });
 
-        it('should reject with an error if the command fails', async () => {
+        it('reject with an error if the command fails', async () => {
             const command: string = 'invalid_command';
             try {
                 await ScanUtils.executeCmdAsync(command, dummyCheckError, undefined, undefined);
@@ -39,7 +39,7 @@ describe('ScanUtils', () => {
             }
         });
 
-        it('should reject with a cancellation error if canceled', async () => {
+        it('reject with a cancellation error if canceled', async () => {
             const cancelSignal: () => void = () => {
                 throw new Error('Cancellation requested.');
             };
@@ -57,7 +57,7 @@ describe('ScanUtils', () => {
             }
         });
 
-        it('should call childProcess.kill when cancellation is requested', async () => {
+        it('call childProcess.kill when cancellation is requested', async () => {
             const cancelSignal: () => void = () => {
                 throw new Error('Cancellation requested.');
             };

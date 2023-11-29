@@ -160,10 +160,10 @@ export class Resource {
         try {
             const output: string = await ScanUtils.executeCmdAsync(command, checkCancel, this._targetDir, env);
             if (output.length > 0) {
-                this._logManager.logMessage('Done executing with log, log:\n' + output, 'DEBUG');
+                this._logManager.logMessage('Done executing "' + command + '" with output:\n' + output, 'DEBUG');
             }
         } catch (error) {
-            throw new Error('Failed to execute ' + command + ' err:' + error);
+            throw new Error('Failed to execute "' + command + '" err: ' + error);
         }
     }
 
