@@ -109,7 +109,7 @@ export class RootNode extends DependenciesTreeNode {
         return { root: { children: impactPaths }, pathsLimit: size } as IImpactGraph;
     }
 
-    public static createImpactPathLimit(totalPath: number | undefined) {
+    public static createImpactPathLimit(totalPath: number | undefined): number | undefined {
         if (totalPath === RootNode.IMPACT_PATHS_LIMIT) {
             return totalPath;
         }

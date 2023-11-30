@@ -1,7 +1,6 @@
 import { IImpactGraph } from 'jfrog-ide-webview';
 import { YarnImpactGraphCreator, YarnWhyItem } from '../../main/treeDataProviders/utils/yarnImpactGraph';
 import { assert } from 'chai';
-import { RootNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { LogManager } from '../../main/log/logManager';
 
 describe('Yarn impact graph util', async () => {
@@ -85,7 +84,7 @@ function generateExpectedSingleImpactGraph(): IImpactGraph {
                 }
             ]
         },
-        pathsLimit: RootNode.IMPACT_PATHS_LIMIT
+        pathsLimit: undefined
     };
 }
 
@@ -138,6 +137,6 @@ function generateExpectedMultipleImpactGraphs(): IImpactGraph {
                 }
             ]
         },
-        pathsLimit: RootNode.IMPACT_PATHS_LIMIT
+        pathsLimit: undefined
     };
 }

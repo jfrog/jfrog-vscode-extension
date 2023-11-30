@@ -81,33 +81,38 @@ describe('Dependency Utils Tests', () => {
                     { name: 'A:1.0.0' } as IImpactGraphNode,
                     { name: 'C:2.0.0', children: [{ name: 'A:1.0.0' } as IImpactGraphNode] } as IImpactGraphNode
                 ]
-            } as IImpactGraphNode
+            } as IImpactGraphNode,
+            pathsLimit: undefined
         } as IImpactGraph);
         map.set('XRAY-191882' + 'C:2.0.0', {
             root: {
                 name: root.componentId,
                 children: [{ name: 'C:2.0.0' } as IImpactGraphNode]
-            }
+            },
+            pathsLimit: undefined
         } as IImpactGraph);
         // issue XRAY-94201, for components B:1.0.0
         map.set('XRAY-94201' + 'B:1.0.0', {
             root: {
                 name: root.componentId,
                 children: [{ name: 'B:1.0.0' } as IImpactGraphNode]
-            }
+            },
+            pathsLimit: undefined
         } as IImpactGraph);
         // issue XRAY-142007, for components [A:1.0.1, C:2.0.0]
         map.set('XRAY-142007' + 'A:1.0.1', {
             root: {
                 name: root.componentId,
                 children: [{ name: 'B:1.0.0', children: [{ name: 'A:1.0.1' } as IImpactGraphNode] } as IImpactGraphNode]
-            }
+            },
+            pathsLimit: undefined
         } as IImpactGraph);
         map.set('XRAY-142007' + 'C:2.0.0', {
             root: {
                 name: root.componentId,
                 children: [{ name: 'C:2.0.0' } as IImpactGraphNode]
-            }
+            },
+            pathsLimit: undefined
         } as IImpactGraph);
         return map;
     }
@@ -120,7 +125,7 @@ describe('Dependency Utils Tests', () => {
     testCases.forEach(test => {
         it('Create impacted tree - ' + test.name, async () => {
             let impactedTree: Map<string, IImpactGraph> = DependencyUtils.createImpactedGraph(root, test.response);
-            assert.deepEqual(test.expectedTree, Object.fromEntries(impactedTree.entries()));
+            assert.deepEqual(Object.fromEntries(impactedTree.entries()), test.expectedTree);
             // Test get direct components
             let direct: Set<string> = DependencyUtils.getDirectComponents(impactedTree);
             assert.sameMembers(test.expectedDirect, Array.from(direct));
