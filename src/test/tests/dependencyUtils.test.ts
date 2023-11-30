@@ -81,43 +81,33 @@ describe('Dependency Utils Tests', () => {
                     { name: 'A:1.0.0' } as IImpactGraphNode,
                     { name: 'C:2.0.0', children: [{ name: 'A:1.0.0' } as IImpactGraphNode] } as IImpactGraphNode
                 ]
-            } as IImpactGraphNode,
-            pathsCount: 2,
-            pathsLimit: RootNode.IMPACT_PATHS_LIMIT
+            } as IImpactGraphNode
         } as IImpactGraph);
         map.set('XRAY-191882' + 'C:2.0.0', {
             root: {
                 name: root.componentId,
                 children: [{ name: 'C:2.0.0' } as IImpactGraphNode]
-            },
-            pathsCount: 1,
-            pathsLimit: RootNode.IMPACT_PATHS_LIMIT
+            }
         } as IImpactGraph);
         // issue XRAY-94201, for components B:1.0.0
         map.set('XRAY-94201' + 'B:1.0.0', {
             root: {
                 name: root.componentId,
                 children: [{ name: 'B:1.0.0' } as IImpactGraphNode]
-            },
-            pathsCount: 1,
-            pathsLimit: RootNode.IMPACT_PATHS_LIMIT
+            }
         } as IImpactGraph);
         // issue XRAY-142007, for components [A:1.0.1, C:2.0.0]
         map.set('XRAY-142007' + 'A:1.0.1', {
             root: {
                 name: root.componentId,
                 children: [{ name: 'B:1.0.0', children: [{ name: 'A:1.0.1' } as IImpactGraphNode] } as IImpactGraphNode]
-            },
-            pathsCount: 1,
-            pathsLimit: RootNode.IMPACT_PATHS_LIMIT
+            }
         } as IImpactGraph);
         map.set('XRAY-142007' + 'C:2.0.0', {
             root: {
                 name: root.componentId,
                 children: [{ name: 'C:2.0.0' } as IImpactGraphNode]
-            },
-            pathsCount: 1,
-            pathsLimit: RootNode.IMPACT_PATHS_LIMIT
+            }
         } as IImpactGraph);
         return map;
     }
@@ -144,7 +134,7 @@ describe('Dependency Utils Tests', () => {
 
             let impactedTree: Map<string, IImpactGraph> = DependencyUtils.createImpactedGraph(root, getGraphResponse('scanGraphVulnerabilities'));
 
-            assert.equal(impactedTree.get('XRAY-191882A:1.0.0')?.pathsCount, 2);
+            assert.equal(impactedTree.get('XRAY-191882A:1.0.0')?.pathsLimit, 1);
             assert.equal(impactedTree.get('XRAY-191882A:1.0.0')?.root.children?.length, 1);
 
             RootNode.IMPACT_PATHS_LIMIT = ORIGIN_IMPACT_PATHS_LIMIT;

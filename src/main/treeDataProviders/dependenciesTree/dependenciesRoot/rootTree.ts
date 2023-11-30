@@ -14,7 +14,7 @@ export enum BuildTreeErrorType {
 }
 
 export class RootNode extends DependenciesTreeNode {
-    public static IMPACT_PATHS_LIMIT: number = 50;
+    public static IMPACT_PATHS_LIMIT: number = 20;
     private _projectDetails: ProjectDetails;
     private _workspaceFolder: string;
 
@@ -89,23 +89,31 @@ export class RootNode extends DependenciesTreeNode {
     private static collectPaths(vulnerableDependencyId: string, children: DependenciesTreeNode[], size: number): IImpactGraph {
         let impactPaths: IImpactGraphNode[] = [];
         for (let child of children) {
+            if (size === RootNode.IMPACT_PATHS_LIMIT) {
+                break;
+            }
             if (impactPaths.find(node => node.name === child.componentId)) {
                 // Loop encountered
                 continue;
             }
 
             if (child.componentId === vulnerableDependencyId) {
-                if (size < RootNode.IMPACT_PATHS_LIMIT) {
-                    RootNode.appendDirectImpact(impactPaths, child.componentId);
-                }
+                RootNode.appendDirectImpact(impactPaths, child.componentId);
                 size++;
             }
 
             let indirectImpact: IImpactGraph = RootNode.collectPaths(vulnerableDependencyId, child.children, size);
             RootNode.appendIndirectImpact(impactPaths, child.componentId, indirectImpact);
-            size = indirectImpact.pathsCount ?? size;
+            size = indirectImpact.pathsLimit || size;
         }
-        return { root: { children: impactPaths }, pathsCount: size } as IImpactGraph;
+        return { root: { children: impactPaths }, pathsLimit: size } as IImpactGraph;
+    }
+
+    public static createImpactPathLimit(totalPath: number | undefined) {
+        if (totalPath === RootNode.IMPACT_PATHS_LIMIT) {
+            return totalPath;
+        }
+        return undefined;
     }
 
     private static appendDirectImpact(impactPaths: IImpactGraphNode[], componentId: string): void {

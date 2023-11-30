@@ -85,7 +85,6 @@ function generateExpectedSingleImpactGraph(): IImpactGraph {
                 }
             ]
         },
-        pathsCount: 1,
         pathsLimit: RootNode.IMPACT_PATHS_LIMIT
     };
 }
@@ -139,7 +138,6 @@ function generateExpectedMultipleImpactGraphs(): IImpactGraph {
                 }
             ]
         },
-        pathsCount: 4,
         pathsLimit: RootNode.IMPACT_PATHS_LIMIT
     };
 }
