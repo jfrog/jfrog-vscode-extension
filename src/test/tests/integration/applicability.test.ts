@@ -45,7 +45,7 @@ describe('Applicability Integration Tests', async () => {
                 assert.isDefined(expectedContent, 'Failed to read expected ApplicabilityScanResponse content from ' + expectedResponseContentPath);
                 // Run scan
                 response = await runner
-                    .executeRequest(() => undefined, { roots: [directoryToScan], cve_whitelist: expectedContent.scannedCve } as ApplicabilityScanArgs)
+                    .executeRequest(() => undefined, { roots: [directoryToScan], cve_whitelist: expectedContent.scannedCve, indirect_cve_whitelist: expectedContent.indirectCve } as ApplicabilityScanArgs)
                     .then(runResult => runner.convertResponse(runResult))
                     .catch(err => assert.fail(err));
             });
@@ -65,6 +65,10 @@ describe('Applicability Integration Tests', async () => {
 
             it('Check all expected applicable CVE detected', () => {
                 assert.includeDeepMembers(Object.keys(response.applicableCve), Object.keys(expectedContent.applicableCve));
+            });
+
+            it('Check all expected nonapplicable CVE detected', () => {
+                assert.sameDeepMembers(response.nonapplicableCve, expectedContent.nonapplicableCve);
             });
 
             describe('Applicable details data validations', () => {

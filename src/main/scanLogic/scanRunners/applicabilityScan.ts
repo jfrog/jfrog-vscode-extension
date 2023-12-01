@@ -30,10 +30,14 @@ export interface ApplicabilityScanArgs extends AnalyzeScanRequest {
  * The response that is generated from the binary after scanning applicability
  */
 export interface ApplicabilityScanResponse {
-    // All the cve that were scanned (have data about them in analyzer)
+    // All the direct cve that were scanned (have data about them in analyzer)
     scannedCve: string[];
+    // All the indirect cves that should be scanned
+    indirectCve: string[];
     // All the cve that have applicable issues
     applicableCve: { [cve_id: string]: CveApplicableDetails };
+    // All the cve that have non-applicable issues
+    nonapplicableCve: string[];
 }
 
 /**
@@ -44,6 +48,9 @@ export interface CveApplicableDetails {
     fileEvidences: FileIssues[];
     fullDescription?: string;
 }
+
+export class BundleCves extends Map<FileScanBundle, [Set<string>, Set<string>]> {}
+
 
 /**
  * Describes a runner for the Applicability scan.
@@ -95,8 +102,8 @@ export class ApplicabilityRunner extends JasRunner {
      * Scan for applicability issues
      */
     public async scan(): Promise<void> {
-        let filteredBundles: Map<FileScanBundle, [Set<string>, Set<string>]> = this.filterBundlesWithoutIssuesToScan();
-        let workspaceToBundles: Map<string, Map<FileScanBundle, [Set<string>, Set<string>]>> = this.mapBundlesForApplicableScanning(filteredBundles);
+        let filteredBundles: BundleCves = this.filterBundlesWithoutIssuesToScan();
+        let workspaceToBundles: Map<string, BundleCves> = this.mapBundlesForApplicableScanning(filteredBundles);
         if (workspaceToBundles.size == 0) {
             return;
         }
@@ -139,11 +146,11 @@ export class ApplicabilityRunner extends JasRunner {
     }
 
     /**
-     * Filter bundles without direct cve issues, transform the bundle list to have its relevant cve to scan set.
-     * @returns Map of bundles to their set of direct cves issues, with at least one for each bundle
+     * Filter bundles without direct or indirect cves, transform the bundle list to have its relevant cve to scan set.
+     * @returns Map of bundles to their sets of direct and indirect cves, with at least one for each bundle
      */
-    private filterBundlesWithoutIssuesToScan(): Map<FileScanBundle, [Set<string>, Set<string>]> {
-        let filtered: Map<FileScanBundle, [Set<string>, Set<string>]> = new Map<FileScanBundle, [Set<string>, Set<string>]>();
+    private filterBundlesWithoutIssuesToScan(): BundleCves {
+        let filtered: BundleCves = new BundleCves();
         for (let fileScanBundle of this._bundlesWithIssues) {
             if (!(fileScanBundle.dataNode instanceof ProjectDependencyTreeNode)) {
                 // Filter non dependencies projects
@@ -180,19 +187,16 @@ export class ApplicabilityRunner extends JasRunner {
      * @returns mapped bundles to similar workspace
      */
     private mapBundlesForApplicableScanning(
-        filteredBundles: Map<FileScanBundle, [Set<string>, Set<string>]>
-    ): Map<string, Map<FileScanBundle, [Set<string>, Set<string>]>> {
-        let workspaceToScanBundles: Map<string, Map<FileScanBundle, [Set<string>, Set<string>]>> = new Map<
-            string,
-            Map<FileScanBundle, [Set<string>, Set<string>]>
-        >();
+        filteredBundles: BundleCves
+    ): Map<string, BundleCves> {
+        let workspaceToScanBundles: Map<string, BundleCves> = new Map<string, BundleCves>();
 
         for (let [fileScanBundle, cvesTuple] of filteredBundles) {
             let descriptorIssues: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
             // Map information to similar directory space
             let workspacePath: string = AnalyzerUtils.getWorkspacePath(fileScanBundle.dataNode, descriptorIssues.fullPath);
             if (!workspaceToScanBundles.has(workspacePath)) {
-                workspaceToScanBundles.set(workspacePath, new Map<FileScanBundle, [Set<string>, Set<string>]>());
+                workspaceToScanBundles.set(workspacePath, new BundleCves());
             }
             workspaceToScanBundles.get(workspacePath)?.set(fileScanBundle, cvesTuple);
             this._logManager.logMessage('Adding data from descriptor ' + descriptorIssues.fullPath + ' for cve applicability scan', 'INFO');
@@ -269,6 +273,7 @@ export class ApplicabilityRunner extends JasRunner {
         // Prepare
         const analyzerScanRun: AnalyzerScanRun = response.runs[0];
         const applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
+        const nonapplicable: string[] = [];
         const scanned: Set<string> = new Set<string>();
         const rulesFullDescription: Map<string, string> = new Map<string, string>();
         for (const rule of analyzerScanRun.tool.driver.rules) {
@@ -291,13 +296,17 @@ export class ApplicabilityRunner extends JasRunner {
                         fileIssues.locations.push(location.physicalLocation.region);
                     });
                 }
+                else if (analyzeIssue.kind === 'pass') {
+                    nonapplicable.push(this.getCveFromRuleId(analyzeIssue.ruleId));
+                }
                 scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
             });
         }
         // Convert data to a response
         return {
             scannedCve: Array.from(scanned),
-            applicableCve: Object.fromEntries(applicable.entries())
+            applicableCve: Object.fromEntries(applicable.entries()),
+            nonapplicableCve: nonapplicable,
         } as ApplicabilityScanResponse;
     }
 
