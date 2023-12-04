@@ -4,13 +4,11 @@ import { LogManager } from '../log/logManager';
 import { EventManager } from './event/eventManager';
 import { WebView } from './webview';
 import { ConnectionManager } from '../connect/connectionManager';
-import { RunUtils } from '../utils/runUtils';
 
 /**
  * Show a webview panel with details about objects in the project
  */
 export class WebviewTab extends WebView {
-    private static readonly WEBVIEW_DELAY_MILLISECS: number = 2000;
     private panel: vscode.WebviewPanel | undefined;
 
     constructor(logManager: LogManager, private connectionManager: ConnectionManager, private context: vscode.ExtensionContext) {
@@ -25,11 +23,7 @@ export class WebviewTab extends WebView {
     public async resolveWebviewView() {
         if (!this.panel) {
             this.panel = this.createWebview();
-            this.eventManager = this.createEventManager(this.panel);
-            // Workaround: Delay the initial page load to ensure proper message delivery in the Webview.
-            // This is necessary because in the Webview, messages are only delivered when the webview is alive.
-            // This workaround applies specifically to VS-Code remote development environments.
-            await RunUtils.delay(WebviewTab.WEBVIEW_DELAY_MILLISECS);
+            this.eventManager = await this.createEventManager(this.panel);
         } else {
             this.panel.reveal();
         }
@@ -67,8 +61,8 @@ export class WebviewTab extends WebView {
         return panel;
     }
 
-    private createEventManager(panel: vscode.WebviewPanel) {
-        const eventManager: EventManager = new EventManager(panel.webview, this.connectionManager, this._logManager);
+    private async createEventManager(panel: vscode.WebviewPanel) {
+        const eventManager: EventManager = await EventManager.createEventManager(panel.webview, this.connectionManager, this._logManager);
         panel.onDidChangeViewState(() => {
             if (this.currentPage) {
                 eventManager.loadPage(this.currentPage);

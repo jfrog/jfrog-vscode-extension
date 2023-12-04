@@ -15,15 +15,15 @@ export class WebviewSidebar extends WebView implements vscode.WebviewViewProvide
 
     public async resolveWebviewView(webviewView: vscode.WebviewView) {
         if (this.webview === undefined) {
-            this.webview = await this.createWebview(webviewView);
-            this.eventManager = this.createEventManager(this.webview);
+            this.webview = this.createWebview(webviewView);
+            this.eventManager = await this.createEventManager(this.webview);
         }
         if (this.currentPage != undefined) {
             this.eventManager?.loadPage(this.currentPage);
         }
     }
 
-    private async createWebview(currentWebview: vscode.WebviewView) {
+    private createWebview(currentWebview: vscode.WebviewView) {
         currentWebview.webview.html = this.getHtml(this.context, currentWebview.webview);
         currentWebview.onDidDispose(
             () => {
@@ -41,13 +41,13 @@ export class WebviewSidebar extends WebView implements vscode.WebviewViewProvide
         return currentWebview;
     }
 
-    private createEventManager(webview: vscode.WebviewView) {
-        const eventManager: EventManager = new EventManager(webview.webview, this.connectionManager, this._logManager);
-        webview.onDidChangeVisibility(() => {
+    private async createEventManager(webview: vscode.WebviewView) {
+        const eventManager: EventManager = await EventManager.createEventManager(webview.webview, this.connectionManager, this._logManager);
+        webview.onDidChangeVisibility(async () => {
             if (!webview.visible) {
                 return;
             }
-            this.eventManager = new EventManager(webview.webview, this.connectionManager, this._logManager);
+            this.eventManager = await EventManager.createEventManager(webview.webview, this.connectionManager, this._logManager);
             if (this.currentPage) {
                 eventManager.loadPage(this.currentPage);
             }

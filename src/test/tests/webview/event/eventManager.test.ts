@@ -9,9 +9,9 @@ describe('EventManager', () => {
     let webview: MockWebview;
     let eventManager: EventManager;
     let loadPageStub: any;
-    beforeEach(() => {
+    beforeEach(async () => {
         webview = new MockWebview();
-        eventManager = new EventManager(webview, {} as ConnectionManager, {} as LogManager);
+        eventManager = await EventManager.createEventManager(webview, {} as ConnectionManager, {} as LogManager);
         loadPageStub = sinon.stub(eventManager, 'loadPage').resolves();
     });
 

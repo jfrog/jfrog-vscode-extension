@@ -5,16 +5,42 @@ import * as vscode from 'vscode';
 import { LogManager } from '../../log/logManager';
 import { LoginTask } from './tasks/login';
 import { JumpToCodeTask } from './tasks/jumpToCode';
+import { RunUtils } from '../../utils/runUtils';
 
 /**
  * Manages events and communication between the extension and the webview.
  */
 export class EventManager {
     protected send: EventSender;
+    private webviewLoaded: boolean = false;
+    private static TIMEOUT_THREE_MINUTES_IN_MS: number = 3 * 60 * 1000;
+    private static RETRY_DELAY_TEN_MS: number = 3 * 60 * 1000;
 
-    constructor(webview: vscode.Webview, private connectionManager: ConnectionManager, private logManager: LogManager) {
-        this.send = new EventSender(webview, logManager);
+    private constructor(webview: vscode.Webview, private connectionManager: ConnectionManager, private logManager: LogManager) {
         this.setEventReceiver(webview);
+        this.send = new EventSender(webview, logManager);
+    }
+
+    public static async createEventManager(
+        webview: vscode.Webview,
+        connectionManager: ConnectionManager,
+        logManager: LogManager
+    ): Promise<EventManager> {
+        const eventManager: EventManager = new EventManager(webview, connectionManager, logManager);
+        await EventManager.waitUntilWebviewLoaded(eventManager);
+        return eventManager;
+    }
+
+    private static async waitUntilWebviewLoaded(eventManager: EventManager) {
+        const startedTime: number = Date.now();
+        for (let i: number = 1; !EventManager.timedOut(startedTime) && !eventManager.webviewLoaded; i++) {
+            eventManager.send.setEventEmitter();
+            await RunUtils.delay(EventManager.RETRY_DELAY_TEN_MS * i);
+        }
+    }
+
+    private static timedOut(startedTime: number) {
+        return Date.now() - startedTime > EventManager.TIMEOUT_THREE_MINUTES_IN_MS;
     }
 
     /**
@@ -38,6 +64,10 @@ export class EventManager {
                         break;
                     case WebviewEventType.Login:
                         await new LoginTask(this.send, message.data, this.connectionManager, this.logManager).run();
+                        break;
+                    case WebviewEventType.WebviewLoaded:
+                        this.webviewLoaded = true;
+                        break;
                 }
             },
             undefined,
