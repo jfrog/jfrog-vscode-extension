@@ -161,8 +161,7 @@ export class YarnImpactGraphCreator {
         }
         return {
             root: this.mergeAllTrees(trees),
-            pathsCount: Math.min(RootNode.IMPACT_PATHS_LIMIT, chains.length),
-            pathsLimit: RootNode.IMPACT_PATHS_LIMIT
+            pathsLimit: RootNode.createImpactPathLimit(trees.length)
         } as IImpactGraph;
     }
 

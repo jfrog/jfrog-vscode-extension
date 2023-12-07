@@ -335,8 +335,7 @@ export class DependencyUtils {
                             name: this.getGraphName(descriptorGraph),
                             children: impactedPaths.root?.children
                         },
-                        pathsCount: impactedPaths.pathsCount,
-                        pathsLimit: RootNode.IMPACT_PATHS_LIMIT
+                        pathsLimit: RootNode.createImpactPathLimit(impactedPaths.pathsLimit)
                     } as IImpactGraph);
                 }
             }

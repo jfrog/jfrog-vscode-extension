@@ -54,7 +54,7 @@ export function createRootTestNode(pathOfWorkspace: string): IssuesRootTreeNode 
         uri: {
             fsPath: pathOfWorkspace,
             // The usage of 'path' is avoided due to its lack of cross-platform compatibility. This placeholder is used to nullify any tests reliant on 'path'.
-            path: "incorrect path"
+            path: 'incorrect path'
         } as vscode.Uri
     } as vscode.WorkspaceFolder);
 }
