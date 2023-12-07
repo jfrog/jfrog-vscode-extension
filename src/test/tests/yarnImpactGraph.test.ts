@@ -2,6 +2,7 @@ import { IImpactGraph } from 'jfrog-ide-webview';
 import { YarnImpactGraphCreator, YarnWhyItem } from '../../main/treeDataProviders/utils/yarnImpactGraph';
 import { assert } from 'chai';
 import { LogManager } from '../../main/log/logManager';
+import { RootNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 
 describe('Yarn impact graph util', async () => {
     it('Build single impact graph', async () => {
@@ -12,6 +13,24 @@ describe('Yarn impact graph util', async () => {
     it('Build multiple impact graphs', async () => {
         const results: IImpactGraph = new YarnImpactGraphUtilMock('minimist', '1.2.0', 'Mock-Project', '', new LogManager().activate()).create();
         assert.deepEqual(results, generateExpectedMultipleImpactGraphs());
+    });
+
+    it('Limit total impact graphs', async () => {
+        let results: IImpactGraph = new YarnImpactGraphUtilMock('minimist', '1.2.0', 'Mock-Project', '', new LogManager().activate()).create();
+
+        // Assert that pathsLimit is initially undefined (no limit set)
+        assert.isUndefined(results.pathsLimit);
+
+        const ORIGIN_IMPACT_PATHS_LIMIT: number = RootNode.IMPACT_PATHS_LIMIT;
+        RootNode.IMPACT_PATHS_LIMIT = 1;
+
+        results = new YarnImpactGraphUtilMock('minimist', '1.2.0', 'Mock-Project', '', new LogManager().activate()).create();
+
+        // Assert that pathsLimit is correctly set to the limit (1 in this case)
+        assert.deepEqual(results.pathsLimit, 1);
+
+        RootNode.IMPACT_PATHS_LIMIT = ORIGIN_IMPACT_PATHS_LIMIT;
+
     });
 });
 
