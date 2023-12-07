@@ -83,21 +83,26 @@ export class RootNode extends DependenciesTreeNode {
      * @param componentWithIssue -  the version of the component used to build a path to the root.
      */
     public createImpactedGraph(vulnerableDependencyName: string, vulnerableDependencyVersion: string): IImpactGraph {
-        const vulnerableDependencyId: string = vulnerableDependencyName + ':' + vulnerableDependencyVersion;
-        const directImpactPaths: IImpactGraphNode[] = [];
-        const children: DependenciesTreeNode[] = []
-        // Search for the direct vulnerable dependency in the root children
-        for (let child of this.children) {
-            if (child.componentId === vulnerableDependencyId) {
-                RootNode.appendDirectImpact(directImpactPaths, child.componentId);
-            } else{
-                children.push(child);
-            }
+        const vulnerableDependencyId: string = vulnerableDependencyName + ':' + vulnerableDependencyVersion
+        // Ensure we hit the direct impact first
+        RootNode.moveNodeToFirst(this.children, vulnerableDependencyId)
+        return RootNode.collectPaths(vulnerableDependencyId, this.children, 0);
+
+    }
+
+    /**
+     * Moves the node with the specified component ID to the first position in the impactPaths array.
+     * @param impactPaths - The array of DependenciesTreeNode objects.
+     * @param targetComponentId - The component ID of the node to be moved to the first position.
+     */
+    private static moveNodeToFirst(impactPaths: DependenciesTreeNode[], targetComponentId: string): void {
+        let targetNodeIndex: number = impactPaths.findIndex(node => node.componentId === targetComponentId);
+        if (targetNodeIndex === -1) {
+            return;
         }
-        // Search for the indirect vulnerable dependency in the root children
-        const impactGraph:IImpactGraph =  RootNode.collectPaths(vulnerableDependencyId, children, directImpactPaths.length);
-        impactGraph.root.children?.push(...directImpactPaths);
-        return impactGraph;
+        let targetNode: DependenciesTreeNode = impactPaths[targetNodeIndex];
+        impactPaths.splice(targetNodeIndex, 1);
+        impactPaths.unshift(targetNode);
     }
 
     private static collectPaths(vulnerableDependencyId: string, children: DependenciesTreeNode[], totalDependencyAppearances: number): IImpactGraph {
