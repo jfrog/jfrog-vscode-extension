@@ -345,7 +345,7 @@ describe('Connection Manager Tests', () => {
             const tryStoreCredentialsStub: any = sinon.stub(mockConnectionManager, 'tryStoreCredentials').resolves(LoginStatus.Success);
 
             // Call the function
-            const result: LoginStatus = await mockConnectionManager.startWebLogin('mock-url', 'mock-artifactoryUrl', 'mock-xrayUrl');
+            const result: LoginStatus = await mockConnectionManager.startWebLogin('123456', 'mock-url', 'mock-artifactoryUrl', 'mock-xrayUrl');
 
             // Check the return value and ensure that necessary methods are called
             assert.strictEqual(result, LoginStatus.Success);

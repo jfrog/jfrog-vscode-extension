@@ -1,5 +1,4 @@
 import { execSync } from 'child_process';
-import * as crypto from 'crypto';
 import {
     AccessTokenResponse,
     ClientUtils,
@@ -442,12 +441,11 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
      * @param xrayUrl - The Xray URL.
      * @returns A promise that resolves to the login status.
      */
-    public async startWebLogin(url: string, artifactoryUrl: string, xrayUrl: string): Promise<LoginStatus> {
+    public async startWebLogin(sessionId: string, url: string, artifactoryUrl: string, xrayUrl: string): Promise<LoginStatus> {
         if (url === '' || artifactoryUrl === '' || xrayUrl === '') {
             return LoginStatus.Failed;
         }
         this._logManager.logMessage('Start Web-Login with "' + url + '"', 'DEBUG');
-        const sessionId: string = crypto.randomUUID();
         if (!(await this.registerWebLoginId(url, sessionId))) {
             return LoginStatus.FailedServerNotSupported;
         }
@@ -515,7 +513,8 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
 
     public createWebLoginEndpoint(platformUrl: string, sessionId: string): vscode.Uri {
-        const endpoint: string = ClientUtils.addTrailingSlashIfMissing(platformUrl) + `ui/login?jfClientSession=${sessionId}&jfClientName=VS-Code`;
+        const endpoint: string =
+            ClientUtils.addTrailingSlashIfMissing(platformUrl) + `ui/login?jfClientSession=${sessionId}&jfClientName=VS-Code&jfClientCode=1`;
         this._logManager.logMessage('Open browser at ' + endpoint, 'INFO');
         return vscode.Uri.parse(endpoint);
     }
