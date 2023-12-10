@@ -436,6 +436,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
     /**
      * Initiates a web-based login process and obtains an access token.
+     * @param sessionId - The web login session ID.
      * @param url - The platform URL.
      * @param artifactoryUrl - The Artifactory URL.
      * @param xrayUrl - The Xray URL.
