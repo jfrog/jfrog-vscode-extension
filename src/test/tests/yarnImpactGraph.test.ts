@@ -30,7 +30,6 @@ describe('Yarn impact graph util', async () => {
         assert.deepEqual(results.pathsLimit, 1);
 
         RootNode.IMPACT_PATHS_LIMIT = ORIGIN_IMPACT_PATHS_LIMIT;
-
     });
 });
 

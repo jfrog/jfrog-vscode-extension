@@ -83,11 +83,10 @@ export class RootNode extends DependenciesTreeNode {
      * @param componentWithIssue -  the version of the component used to build a path to the root.
      */
     public createImpactedGraph(vulnerableDependencyName: string, vulnerableDependencyVersion: string): IImpactGraph {
-        const vulnerableDependencyId: string = vulnerableDependencyName + ':' + vulnerableDependencyVersion
+        const vulnerableDependencyId: string = vulnerableDependencyName + ':' + vulnerableDependencyVersion;
         // Ensure we hit the direct impact first
-        RootNode.moveNodeToFirst(this.children, vulnerableDependencyId)
+        RootNode.moveNodeToFirst(this.children, vulnerableDependencyId);
         return RootNode.collectPaths(vulnerableDependencyId, this.children, 0);
-
     }
 
     /**

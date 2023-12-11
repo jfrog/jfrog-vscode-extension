@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { LogManager } from '../../../log/logManager';
 import { ConnectionManager, LoginStatus } from '../../../connect/connectionManager';
 import { ClientUtils } from 'jfrog-client-js';
+import crypto from 'crypto'; // Important - Don't import '*'. It'll import deprecated encryption methods
 
 /**
  * Represents a login task that handles the authentication process and communicates with the webview.
@@ -36,9 +37,6 @@ export class LoginTask {
      * Executes the login task.
      */
     public async run() {
-        // Send initial page status to the webview
-        await this.send.loadPage(this.updatedPageStatus);
-
         // Perform login and update page status
         const requestStatus: LoginProgressStatus = await this.doLogin();
         await this.send.loadPage({ ...this.updatedPageStatus, status: requestStatus });
@@ -69,9 +67,10 @@ export class LoginTask {
             let status: LoginStatus;
             switch (this.updatedPageStatus.connectionType) {
                 case LoginConnectionType.Sso:
-                    status = await this.connectionManager.startWebLogin(this.platformUrl, this.artifactoryUrl, this.xrayUrl);
+                    status = await this.startWebLogin();
                     break;
                 case LoginConnectionType.BasicAuthOrToken:
+                    await this.send.loadPage(this.updatedPageStatus);
                     status = await this.connectionManager.tryStoreCredentials(
                         this.platformUrl,
                         this.artifactoryUrl,
@@ -82,9 +81,11 @@ export class LoginTask {
                     );
                     break;
                 case LoginConnectionType.Cli:
+                    await this.send.loadPage(this.updatedPageStatus);
                     status = await this.connectionManager.tryCredentialsFromJfrogCli();
                     break;
                 case LoginConnectionType.EnvVars:
+                    await this.send.loadPage(this.updatedPageStatus);
                     status = await this.connectionManager.tryCredentialsFromEnv();
             }
             return this.toWebviewLoginStatus(status);
@@ -92,6 +93,19 @@ export class LoginTask {
             this.logManager.logMessage(`Failed to sign in. Error: ${JSON.stringify(error)}`, 'ERR');
             return LoginProgressStatus.Failed;
         }
+    }
+
+    private async startWebLogin(): Promise<LoginStatus> {
+        const sessionId: string = crypto.randomUUID();
+
+        this.updatedPageStatus.ssoVerification = {
+            code: sessionId.substring(sessionId.length - 4),
+            codeTimeoutMs: 300000
+        };
+        // Update webview page
+        await this.send.loadPage(this.updatedPageStatus);
+
+        return await this.connectionManager.startWebLogin(sessionId, this.platformUrl, this.artifactoryUrl, this.xrayUrl);
     }
 
     public toWebviewLoginStatus(ideStatus: LoginStatus) {

@@ -345,7 +345,7 @@ describe('Connection Manager Tests', () => {
             const tryStoreCredentialsStub: any = sinon.stub(mockConnectionManager, 'tryStoreCredentials').resolves(LoginStatus.Success);
 
             // Call the function
-            const result: LoginStatus = await mockConnectionManager.startWebLogin('mock-url', 'mock-artifactoryUrl', 'mock-xrayUrl');
+            const result: LoginStatus = await mockConnectionManager.startWebLogin('123456', 'mock-url', 'mock-artifactoryUrl', 'mock-xrayUrl');
 
             // Check the return value and ensure that necessary methods are called
             assert.strictEqual(result, LoginStatus.Success);
@@ -361,7 +361,7 @@ describe('Connection Manager Tests', () => {
         // Mock dependencies and setup necessary conditions
         const platformUrl: string = 'mock-platform-url';
         const sessionId: string = 'mock-session-id';
-        const expectedEndpoint: string = 'mock-platform-url/ui/login?jfClientSession=mock-session-id&jfClientName=VS-Code';
+        const expectedEndpoint: string = 'mock-platform-url/ui/login?jfClientSession=mock-session-id&jfClientName=VS-Code&jfClientCode=1';
         const logMessageStub: any = sinon.stub(mockLogger, 'logMessage');
 
         // Call the method
