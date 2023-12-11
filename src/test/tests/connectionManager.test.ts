@@ -361,7 +361,7 @@ describe('Connection Manager Tests', () => {
         // Mock dependencies and setup necessary conditions
         const platformUrl: string = 'mock-platform-url';
         const sessionId: string = 'mock-session-id';
-        const expectedEndpoint: string = 'mock-platform-url/ui/login?jfClientSession=mock-session-id&jfClientName=VS-Code';
+        const expectedEndpoint: string = 'mock-platform-url/ui/login?jfClientSession=mock-session-id&jfClientName=VS-Code&jfClientCode=1';
         const logMessageStub: any = sinon.stub(mockLogger, 'logMessage');
 
         // Call the method
