@@ -23,16 +23,21 @@ export interface ApplicabilityScanArgs extends AnalyzeScanRequest {
     grep_disable: boolean;
     // Must have at least one item, the CVE to search for in scan
     cve_whitelist: string[];
+    indirect_cve_whitelist: string[];
 }
 
 /**
  * The response that is generated from the binary after scanning applicability
  */
 export interface ApplicabilityScanResponse {
-    // All the cve that were scanned (have data about them in analyzer)
+    // All the direct cve that were scanned (have data about them in analyzer)
     scannedCve: string[];
+    // All the indirect cves that should be scanned
+    indirectCve: string[];
     // All the cve that have applicable issues
     applicableCve: { [cve_id: string]: CveApplicableDetails };
+    // All the cve that have non-applicable issues
+    nonapplicableCve: string[];
 }
 
 /**
@@ -43,6 +48,9 @@ export interface CveApplicableDetails {
     fileEvidences: FileIssues[];
     fullDescription?: string;
 }
+
+export class BundleCves extends Map<FileScanBundle, [Set<string>, Set<string>]> {}
+
 
 /**
  * Describes a runner for the Applicability scan.
@@ -67,7 +75,7 @@ export class ApplicabilityRunner extends JasRunner {
     /** @override */
     public requestsToYaml(...requests: AnalyzeScanRequest[]): string {
         let str: string = super.requestsToYaml(...requests);
-        return str.replace('cve_whitelist', 'cve-whitelist');
+        return str.replace('cve_whitelist', 'cve-whitelist').replace('indirect_cve_whitelist', 'indirect-cve-whitelist');
     }
 
     /** @override */
@@ -85,7 +93,7 @@ export class ApplicabilityRunner extends JasRunner {
     /** @override */
     protected logStartScanning(request: ApplicabilityScanArgs): void {
         this._logManager.logMessage(
-            `Scanning directory ' ${request.roots[0]} + ', for ${this._scanType} issues: ${request.cve_whitelist} Skipping folders: ${request.skipped_folders}`,
+            `Scanning directory ' ${request.roots[0]} + ', for ${this._scanType} issues: ${request.cve_whitelist} indirect issues: ${request.indirect_cve_whitelist} Skipping folders: ${request.skipped_folders}`,
             'DEBUG'
         );
     }
@@ -94,14 +102,23 @@ export class ApplicabilityRunner extends JasRunner {
      * Scan for applicability issues
      */
     public async scan(): Promise<void> {
-        let filteredBundles: Map<FileScanBundle, Set<string>> = this.filterBundlesWithoutIssuesToScan();
-        let workspaceToBundles: Map<string, Map<FileScanBundle, Set<string>>> = this.mapBundlesForApplicableScanning(filteredBundles);
+        let filteredBundles: BundleCves = this.filterBundlesWithoutIssuesToScan();
+        let workspaceToBundles: Map<string, BundleCves> = this.mapBundlesForApplicableScanning(filteredBundles);
         if (workspaceToBundles.size == 0) {
             return;
         }
         let excludePatterns: string[] = AnalyzerUtils.getAnalyzerManagerExcludePatterns(Configuration.getScanExcludePattern());
         for (let [workspacePath, bundles] of workspaceToBundles) {
-            let cveToScan: Set<string> = Utils.combineSets(Array.from(bundles.values()));
+            // Unpack the direct & indirect CVEs
+            const directCveSets: Set<string>[] = [];
+            const indirectCveSets: Set<string>[] = [];
+            for (const cvesTuple of bundles.values()) {
+                directCveSets.push(cvesTuple[0]);
+                indirectCveSets.push(cvesTuple[1]);
+            }
+
+            const cveToScan: Set<string> = Utils.combineSets(directCveSets);
+            const indirectCveToScan: Set<string> = Utils.combineSets(indirectCveSets);
             // Scan workspace for all cve in relevant bundles
             let startApplicableTime: number = Date.now();
 
@@ -109,30 +126,38 @@ export class ApplicabilityRunner extends JasRunner {
                 type: ScanType.AnalyzeApplicability,
                 roots: [workspacePath],
                 cve_whitelist: Array.from(cveToScan),
+                indirect_cve_whitelist: Array.from(indirectCveToScan),
                 skipped_folders: excludePatterns
             } as ApplicabilityScanArgs;
+
+            // Merge the direct and indirect CVEs
+            const mergedBundles: Map<FileScanBundle, Set<string>> = new Map<FileScanBundle, Set<string>>();
+            for (const [fileScanBundle, cvesTuple] of bundles) {
+                mergedBundles.set(fileScanBundle, Utils.combineSets(cvesTuple));
+            }
 
             this.logStartScanning(request);
             let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request);
             let applicableIssues: ApplicabilityScanResponse = this.convertResponse(response);
             if (applicableIssues?.applicableCve) {
-                this.transferApplicableResponseToBundles(applicableIssues, bundles, startApplicableTime);
+                this.transferApplicableResponseToBundles(applicableIssues, mergedBundles, startApplicableTime);
             }
         }
     }
 
     /**
-     * Filter bundles without direct cve issues, transform the bundle list to have its relevant cve to scan set.
-     * @returns Map of bundles to their set of direct cves issues, with at least one for each bundle
+     * Filter bundles without direct or indirect cves, transform the bundle list to have its relevant cve to scan set.
+     * @returns Map of bundles to their sets of direct and indirect cves, with at least one for each bundle
      */
-    private filterBundlesWithoutIssuesToScan(): Map<FileScanBundle, Set<string>> {
-        let filtered: Map<FileScanBundle, Set<string>> = new Map<FileScanBundle, Set<string>>();
+    private filterBundlesWithoutIssuesToScan(): BundleCves {
+        let filtered: BundleCves = new BundleCves();
         for (let fileScanBundle of this._bundlesWithIssues) {
             if (!(fileScanBundle.dataNode instanceof ProjectDependencyTreeNode)) {
                 // Filter non dependencies projects
                 continue;
             }
-            let cvesToScan: Set<string> = new Set<string>();
+            const cvesToScan: Set<string> = new Set<string>();
+            const indirectCvesToScan: Set<string> = new Set<string>();
             fileScanBundle.dataNode.issues.forEach((issue: IssueTreeNode) => {
                 if (!(issue instanceof CveTreeNode) || !issue.cve?.cve) {
                     return;
@@ -141,14 +166,16 @@ export class ApplicabilityRunner extends JasRunner {
                 // Other project types should include only CVEs on direct dependencies.
                 if (this._packageType === PackageType.Python || !issue.parent.indirect) {
                     cvesToScan.add(issue.cve.cve);
+                } else {
+                    indirectCvesToScan.add(issue.cve.cve);
                 }
             });
-            if (cvesToScan.size == 0) {
+            if (cvesToScan.size == 0 && indirectCvesToScan.size == 0) {
                 // Nothing to do in bundle
                 continue;
             }
 
-            filtered.set(fileScanBundle, cvesToScan);
+            filtered.set(fileScanBundle, [cvesToScan, indirectCvesToScan]);
         }
 
         return filtered;
@@ -159,17 +186,19 @@ export class ApplicabilityRunner extends JasRunner {
      * @param filteredBundles - bundles to map
      * @returns mapped bundles to similar workspace
      */
-    private mapBundlesForApplicableScanning(filteredBundles: Map<FileScanBundle, Set<string>>): Map<string, Map<FileScanBundle, Set<string>>> {
-        let workspaceToScanBundles: Map<string, Map<FileScanBundle, Set<string>>> = new Map<string, Map<FileScanBundle, Set<string>>>();
+    private mapBundlesForApplicableScanning(
+        filteredBundles: BundleCves
+    ): Map<string, BundleCves> {
+        let workspaceToScanBundles: Map<string, BundleCves> = new Map<string, BundleCves>();
 
-        for (let [fileScanBundle, cvesToScan] of filteredBundles) {
+        for (let [fileScanBundle, cvesTuple] of filteredBundles) {
             let descriptorIssues: DependencyScanResults = <DependencyScanResults>fileScanBundle.data;
             // Map information to similar directory space
             let workspacePath: string = AnalyzerUtils.getWorkspacePath(fileScanBundle.dataNode, descriptorIssues.fullPath);
             if (!workspaceToScanBundles.has(workspacePath)) {
-                workspaceToScanBundles.set(workspacePath, new Map<FileScanBundle, Set<string>>());
+                workspaceToScanBundles.set(workspacePath, new BundleCves());
             }
-            workspaceToScanBundles.get(workspacePath)?.set(fileScanBundle, cvesToScan);
+            workspaceToScanBundles.get(workspacePath)?.set(fileScanBundle, cvesTuple);
             this._logManager.logMessage('Adding data from descriptor ' + descriptorIssues.fullPath + ' for cve applicability scan', 'INFO');
         }
 
@@ -244,6 +273,7 @@ export class ApplicabilityRunner extends JasRunner {
         // Prepare
         const analyzerScanRun: AnalyzerScanRun = response.runs[0];
         const applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
+        const nonapplicable: string[] = [];
         const scanned: Set<string> = new Set<string>();
         const rulesFullDescription: Map<string, string> = new Map<string, string>();
         for (const rule of analyzerScanRun.tool.driver.rules) {
@@ -266,13 +296,17 @@ export class ApplicabilityRunner extends JasRunner {
                         fileIssues.locations.push(location.physicalLocation.region);
                     });
                 }
+                else if (analyzeIssue.kind === 'pass') {
+                    nonapplicable.push(this.getCveFromRuleId(analyzeIssue.ruleId));
+                }
                 scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
             });
         }
         // Convert data to a response
         return {
             scannedCve: Array.from(scanned),
-            applicableCve: Object.fromEntries(applicable.entries())
+            applicableCve: Object.fromEntries(applicable.entries()),
+            nonapplicableCve: nonapplicable,
         } as ApplicabilityScanResponse;
     }
 

@@ -4,6 +4,9 @@
         "CVE-2021-3807",
         "CVE-2021-3918"
     ],
+    "indirectCve": [
+        "CVE-2021-44228"
+    ],
     "applicableCve": {
         "CVE-2022-25878": {
             "fixReason": "Prototype pollution `Object.freeze` remediation was not detected, The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load(Sync) is called",
@@ -34,5 +37,10 @@
             ],
             "fullDescription": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`\n* `loadSync`\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present."
         }
-    }
+    },
+    "nonapplicableCve": [
+        "CVE-2021-3807",
+        "CVE-2021-3918",
+        "CVE-2021-44228"
+    ]
 }

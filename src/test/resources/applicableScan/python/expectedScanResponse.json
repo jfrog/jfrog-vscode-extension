@@ -4,6 +4,7 @@
         "CVE-2019-15605",
         "CVE-2019-20907"
     ],
+    "indirectCve": [],
     "applicableCve": {
         "CVE-2019-20907": {
             "fixReason": "The vulnerable function tarfile.open is called with external input",
@@ -25,5 +26,9 @@
             ],
             "fullDescription": "The scanner checks whether the vulnerable function `open` is called with external input to its 1st (`name`) argument."
         }
-    }
+    },
+    "nonapplicableCve": [
+        "CVE-2021-3918",
+        "CVE-2019-15605"
+    ]
 }

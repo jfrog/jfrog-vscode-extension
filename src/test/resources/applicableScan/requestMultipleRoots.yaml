@@ -8,5 +8,8 @@ scans:
       - CVE-2021-3918
       - CVE-2021-3807
       - CVE-2022-25878
+    indirect-cve-whitelist:
+      - CVE-2021-44228
+      - CVE-2023-1234
     skipped-folders:
       - /path/to/skip
