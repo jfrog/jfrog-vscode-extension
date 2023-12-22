@@ -7,13 +7,13 @@ import { LogManager } from '../../log/logManager';
  */
 export class EventSender {
     constructor(private webview: vscode.Webview, private logManager: LogManager) {
-        this.setEventEmitter();
+        this.loadWebviewAPI();
     }
 
     /**
      * Establishes the event emitter within the webview to enable sending messages from the webview back to the IDE.
      */
-    public async setEventEmitter(): Promise<void> {
+    public async loadWebviewAPI(): Promise<void> {
         await this.sendEvent(this.webview, {
             type: IdeEventType.SetEmitter,
             data: 'return acquireVsCodeApi().postMessage'

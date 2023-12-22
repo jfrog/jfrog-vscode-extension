@@ -12,9 +12,10 @@ import { RunUtils } from '../../utils/runUtils';
  */
 export class EventManager {
     protected send: EventSender;
-    private webviewLoaded: boolean = false;
-    private static TIMEOUT_THREE_MINUTES_IN_MS: number = 3 * 60 * 1000;
-    private static RETRY_DELAY_TEN_MS: number = 3 * 60 * 1000;
+    private webviewAPILoaded: boolean = false;
+    // 3 minutes
+    private static TIMEOUT_MILLISECOND: number = 3 * 60 * 1000;
+    private static RETRY_DELAY_MILLISECOND: number = 10;
 
     private constructor(webview: vscode.Webview, private connectionManager: ConnectionManager, private logManager: LogManager) {
         this.setEventReceiver(webview);
@@ -31,16 +32,23 @@ export class EventManager {
         return eventManager;
     }
 
+    /**
+     * Waits until the webview is loaded by sending requests at intervals until loaded or until timed out.
+     * @param eventManager The EventManager instance responsible for handling events.
+     */
     private static async waitUntilWebviewLoaded(eventManager: EventManager) {
         const startedTime: number = Date.now();
-        for (let i: number = 1; !EventManager.timedOut(startedTime) && !eventManager.webviewLoaded; i++) {
-            eventManager.send.setEventEmitter();
-            await RunUtils.delay(EventManager.RETRY_DELAY_TEN_MS * i);
+        for (let i: number = 1; !EventManager.timedOut(startedTime); i++) {
+            eventManager.send.loadWebviewAPI();
+            if (eventManager.webviewAPILoaded) {
+                return;
+            }
+            await RunUtils.delay(EventManager.RETRY_DELAY_MILLISECOND * i);
         }
     }
 
     private static timedOut(startedTime: number) {
-        return Date.now() - startedTime > EventManager.TIMEOUT_THREE_MINUTES_IN_MS;
+        return Date.now() - startedTime > EventManager.TIMEOUT_MILLISECOND;
     }
 
     /**
@@ -66,7 +74,7 @@ export class EventManager {
                         await new LoginTask(this.send, message.data, this.connectionManager, this.logManager).run();
                         break;
                     case WebviewEventType.WebviewLoaded:
-                        this.webviewLoaded = true;
+                        this.webviewAPILoaded = true;
                         break;
                 }
             },
