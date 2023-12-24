@@ -5,16 +5,47 @@ import * as vscode from 'vscode';
 import { LogManager } from '../../log/logManager';
 import { LoginTask } from './tasks/login';
 import { JumpToCodeTask } from './tasks/jumpToCode';
+import { RunUtils } from '../../utils/runUtils';
 
 /**
  * Manages events and communication between the extension and the webview.
  */
 export class EventManager {
     protected send: EventSender;
+    private webviewAPILoaded: boolean = false;
+    // 3 minutes
+    private static TIMEOUT_MILLISECOND: number = 3 * 60 * 1000;
+    private static RETRY_DELAY_MILLISECOND: number = 100;
 
-    constructor(webview: vscode.Webview, private connectionManager: ConnectionManager, private logManager: LogManager) {
-        this.send = new EventSender(webview, logManager);
+    private constructor(webview: vscode.Webview, private connectionManager: ConnectionManager, private logManager: LogManager) {
         this.setEventReceiver(webview);
+        this.send = new EventSender(webview, logManager);
+    }
+
+    public static async createEventManager(
+        webview: vscode.Webview,
+        connectionManager: ConnectionManager,
+        logManager: LogManager
+    ): Promise<EventManager> {
+        const eventManager: EventManager = new EventManager(webview, connectionManager, logManager);
+        await EventManager.waitUntilWebviewLoaded(eventManager);
+        return eventManager;
+    }
+
+    /**
+     * Waits until the webview is loaded by sending requests at intervals until loaded or until timed out.
+     * @param eventManager The EventManager instance responsible for handling events.
+     */
+    private static async waitUntilWebviewLoaded(eventManager: EventManager) {
+        const startedTime: number = Date.now();
+        for (let i: number = 1; !EventManager.timedOut(startedTime) && !eventManager.webviewAPILoaded; i++) {
+            eventManager.send.loadWebviewAPI();
+            await RunUtils.delay(EventManager.RETRY_DELAY_MILLISECOND * i);
+        }
+    }
+
+    private static timedOut(startedTime: number) {
+        return Date.now() - startedTime > EventManager.TIMEOUT_MILLISECOND;
     }
 
     /**
@@ -38,6 +69,10 @@ export class EventManager {
                         break;
                     case WebviewEventType.Login:
                         await new LoginTask(this.send, message.data, this.connectionManager, this.logManager).run();
+                        break;
+                    case WebviewEventType.WebviewLoaded:
+                        this.webviewAPILoaded = true;
+                        break;
                 }
             },
             undefined,

@@ -51,7 +51,6 @@ export interface CveApplicableDetails {
 
 export class BundleCves extends Map<FileScanBundle, [Set<string>, Set<string>]> {}
 
-
 /**
  * Describes a runner for the Applicability scan.
  */
@@ -186,9 +185,7 @@ export class ApplicabilityRunner extends JasRunner {
      * @param filteredBundles - bundles to map
      * @returns mapped bundles to similar workspace
      */
-    private mapBundlesForApplicableScanning(
-        filteredBundles: BundleCves
-    ): Map<string, BundleCves> {
+    private mapBundlesForApplicableScanning(filteredBundles: BundleCves): Map<string, BundleCves> {
         let workspaceToScanBundles: Map<string, BundleCves> = new Map<string, BundleCves>();
 
         for (let [fileScanBundle, cvesTuple] of filteredBundles) {
@@ -295,8 +292,7 @@ export class ApplicabilityRunner extends JasRunner {
                         let fileIssues: FileIssues = this.getOrCreateFileIssues(applicableDetails, location.physicalLocation.artifactLocation.uri);
                         fileIssues.locations.push(location.physicalLocation.region);
                     });
-                }
-                else if (analyzeIssue.kind === 'pass') {
+                } else if (analyzeIssue.kind === 'pass') {
                     nonapplicable.push(this.getCveFromRuleId(analyzeIssue.ruleId));
                 }
                 scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
@@ -306,7 +302,7 @@ export class ApplicabilityRunner extends JasRunner {
         return {
             scannedCve: Array.from(scanned),
             applicableCve: Object.fromEntries(applicable.entries()),
-            nonapplicableCve: nonapplicable,
+            nonapplicableCve: nonapplicable
         } as ApplicabilityScanResponse;
     }
 
