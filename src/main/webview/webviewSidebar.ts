@@ -43,15 +43,17 @@ export class WebviewSidebar extends WebView implements vscode.WebviewViewProvide
 
     private async createEventManager(webview: vscode.WebviewView) {
         const eventManager: EventManager = await EventManager.createEventManager(webview.webview, this.connectionManager, this._logManager);
-        webview.onDidChangeVisibility(async () => {
-            if (!webview.visible) {
-                return;
-            }
-            this.eventManager = await EventManager.createEventManager(webview.webview, this.connectionManager, this._logManager);
-            if (this.currentPage) {
-                eventManager.loadPage(this.currentPage);
-            }
-        });
+        this.context.subscriptions.push(
+            webview.onDidChangeVisibility(async () => {
+                if (!webview.visible) {
+                    return;
+                }
+                this.eventManager = await EventManager.createEventManager(webview.webview, this.connectionManager, this._logManager);
+                if (this.currentPage) {
+                    eventManager.loadPage(this.currentPage);
+                }
+            })
+        );
         return eventManager;
     }
 }

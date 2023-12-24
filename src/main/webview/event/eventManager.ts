@@ -15,7 +15,7 @@ export class EventManager {
     private webviewAPILoaded: boolean = false;
     // 3 minutes
     private static TIMEOUT_MILLISECOND: number = 3 * 60 * 1000;
-    private static RETRY_DELAY_MILLISECOND: number = 10;
+    private static RETRY_DELAY_MILLISECOND: number = 100;
 
     private constructor(webview: vscode.Webview, private connectionManager: ConnectionManager, private logManager: LogManager) {
         this.setEventReceiver(webview);
@@ -38,11 +38,8 @@ export class EventManager {
      */
     private static async waitUntilWebviewLoaded(eventManager: EventManager) {
         const startedTime: number = Date.now();
-        for (let i: number = 1; !EventManager.timedOut(startedTime); i++) {
+        for (let i: number = 1; !EventManager.timedOut(startedTime) && !eventManager.webviewAPILoaded; i++) {
             eventManager.send.loadWebviewAPI();
-            if (eventManager.webviewAPILoaded) {
-                return;
-            }
             await RunUtils.delay(EventManager.RETRY_DELAY_MILLISECOND * i);
         }
     }
