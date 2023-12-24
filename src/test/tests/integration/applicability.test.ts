@@ -45,7 +45,11 @@ describe('Applicability Integration Tests', async () => {
                 assert.isDefined(expectedContent, 'Failed to read expected ApplicabilityScanResponse content from ' + expectedResponseContentPath);
                 // Run scan
                 response = await runner
-                    .executeRequest(() => undefined, { roots: [directoryToScan], cve_whitelist: expectedContent.scannedCve, indirect_cve_whitelist: expectedContent.indirectCve } as ApplicabilityScanArgs)
+                    .executeRequest(() => undefined, {
+                        roots: [directoryToScan],
+                        cve_whitelist: expectedContent.scannedCve,
+                        indirect_cve_whitelist: expectedContent.indirectCve
+                    } as ApplicabilityScanArgs)
                     .then(runResult => runner.convertResponse(runResult))
                     .catch(err => assert.fail(err));
             });
