@@ -24,7 +24,7 @@ export class Utils {
     }
 
     public static combineSets(sets: Set<string>[]): Set<string> {
-        const result: Set<string> = new Set<string>;
+        const result: Set<string> = new Set<string>();
         for (const set of sets) {
             for (const elem of set) {
                 result.add(elem);
