@@ -13,20 +13,13 @@ import { Translators } from '../../utils/translators';
  * Analyzer manager is responsible for running the analyzer on the workspace.
  */
 export class AnalyzerManager {
-    public static readonly ANALYZER_MANAGER_VERSION: string = '[RELEASE]';
-    private static readonly RELATIVE_DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1';
+    private static readonly RELATIVE_DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/[RELEASE]';
     private static readonly BINARY_NAME: string = 'analyzerManager';
     public static readonly ANALYZER_MANAGER_PATH: string = Utils.addWinSuffixIfNeeded(
         path.join(ScanUtils.getIssuesPath(), AnalyzerManager.BINARY_NAME, AnalyzerManager.BINARY_NAME)
     );
     private static readonly DOWNLOAD_URL: string = Utils.addZipSuffix(
-        AnalyzerManager.RELATIVE_DOWNLOAD_URL +
-            '/' +
-            AnalyzerManager.ANALYZER_MANAGER_VERSION +
-            '/' +
-            Utils.getArchitecture() +
-            '/' +
-            AnalyzerManager.BINARY_NAME
+        AnalyzerManager.RELATIVE_DOWNLOAD_URL + '/' + Utils.getArchitecture() + '/' + AnalyzerManager.BINARY_NAME
     );
     private static readonly JFROG_RELEASES_URL: string = 'https://releases.jfrog.io';
     public static readonly ENV_PLATFORM_URL: string = 'JF_PLATFORM_URL';
