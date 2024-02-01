@@ -13,7 +13,7 @@ import { Translators } from '../../utils/translators';
  * Analyzer manager is responsible for running the analyzer on the workspace.
  */
 export class AnalyzerManager {
-    public static readonly ANALYZER_MANAGER_VERSION: string = '1.6.3';
+    public static readonly ANALYZER_MANAGER_VERSION: string = '[RELEASE]';
     private static readonly RELATIVE_DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1';
     private static readonly BINARY_NAME: string = 'analyzerManager';
     public static readonly ANALYZER_MANAGER_PATH: string = Utils.addWinSuffixIfNeeded(
