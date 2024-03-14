@@ -30,6 +30,7 @@ import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
 import { GraphScanProgress, StepProgress } from './stepProgress';
 import { ApplicabilityRunner } from '../../scanLogic/scanRunners/applicabilityScan';
 import { JasRunnerFactory } from '../../scanLogic/sourceCodeScan/jasRunnerFactory';
+import { PnpmUtils } from '../../utils/pnpmUtils';
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
@@ -151,6 +152,9 @@ export class DependencyUtils {
                 break;
             case PackageType.Npm:
                 await NpmUtils.createDependenciesTrees(descriptors, log, onProgress, parent);
+                break;
+            case PackageType.Pnpm:
+                await PnpmUtils.createDependenciesTrees(descriptors, log, onProgress, parent);
                 break;
             case PackageType.Python:
                 await PypiUtils.createDependenciesTrees(descriptors, workspace, log, onProgress, parent);
@@ -509,6 +513,8 @@ export class DependencyUtils {
             case PackageType.Maven:
                 return MavenUtils.getDependencyPosition(document, dependencyName, FocusType.Dependency);
             case PackageType.Npm:
+                return NpmUtils.getDependencyPosition(document, dependencyName, FocusType.Dependency);
+            case PackageType.Pnpm:
                 return NpmUtils.getDependencyPosition(document, dependencyName, FocusType.Dependency);
             case PackageType.Python:
                 return PypiUtils.getDependencyPosition(document, dependencyName);

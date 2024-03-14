@@ -16,7 +16,7 @@ import { Configuration } from './configuration';
 
 export class ScanUtils {
     public static readonly DESCRIPTOR_SELECTOR_PATTERN: string =
-        '**/{go.mod,package.json,pom.xml,setup.py,*requirements*.txt,yarn.lock,*.csproj,*.sln,packages.config}';
+        '**/{go.mod,package.json,pom.xml,setup.py,*requirements*.txt,pnpm-lock.yaml,yarn.lock,*.csproj,*.sln,packages.config}';
 
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
@@ -250,9 +250,12 @@ export class ScanUtils {
         if (fsPath.endsWith('yarn.lock')) {
             return PackageType.Yarn;
         }
+        if (fsPath.endsWith('pnpm-lock.yaml')) {
+            return PackageType.Pnpm;
+        }
         if (fsPath.endsWith('package.json')) {
-            if (fs.existsSync(path.join(path.dirname(fsPath), 'yarn.lock'))) {
-                // The package type is yarn, but we already saved the fsPath of yarn.lock as the project descriptor
+            if (fs.existsSync(path.join(path.dirname(fsPath), 'yarn.lock')) || fs.existsSync(path.join(path.dirname(fsPath), 'pnpm-lock.yaml'))) {
+                // The package type is yarn/pnpm, but we already saved the fsPath of yarn.lock/pnpm-lock.yaml as the project descriptor
                 return undefined;
             }
             return PackageType.Npm;

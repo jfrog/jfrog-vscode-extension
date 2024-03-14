@@ -8,6 +8,7 @@ import { LogManager } from '../log/logManager';
 import { YarnDependencyUpdate } from './yarnDependencyUpdate';
 import { NugetDependencyUpdate } from './nugetDependencyUpdate';
 import { PythonDependencyUpdate } from './pythonDependencyUpdate';
+import { PnpmDependencyUpdate } from './pnpmDependencyUpdate';
 
 /**
  * Update the dependency version in the project descriptor (e.g. pom.xml) file after right click on the components tree and a left click on "Update dependency to fixed version".
@@ -19,6 +20,7 @@ export class DependencyUpdateManager implements ExtensionComponent {
         this._dependencyUpdaters.push(
             new MavenDependencyUpdate(),
             new NpmDependencyUpdate(),
+            new PnpmDependencyUpdate(),
             new YarnDependencyUpdate(),
             new GoDependencyUpdate(),
             new NugetDependencyUpdate(),

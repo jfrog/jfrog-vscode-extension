@@ -5,7 +5,7 @@ import { LogManager } from '../log/logManager';
 import { YarnTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/yarnTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { GeneralInfo } from '../types/generalInfo';
-import { ProjectDetails } from './npmUtils';
+import { NpmUtils, ProjectDetails } from './npmUtils';
 import { ScanUtils } from './scanUtils';
 import { PackageType } from '../types/projectType';
 import { BuildTreeErrorType } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
@@ -84,7 +84,7 @@ export class YarnUtils {
             let yarnSemver: semver.SemVer = new semver.SemVer(version);
             if (yarnSemver.compare('2.0.0') >= 0) {
                 logManager.logError(new Error('Could not scan Yarn project dependencies, because currently only Yarn 1 is supported.'), true);
-                let yarnProject: ProjectDetails = this.getYarnProjectDetails(workspaceFolder);
+                let yarnProject: ProjectDetails = NpmUtils.getProjectDetailsFromPackageJson(workspaceFolder);
                 let generalInfo: GeneralInfo = new GeneralInfo(
                     yarnProject.projectName || workspaceFolder,
                     yarnProject.projectVersion,
@@ -100,17 +100,5 @@ export class YarnUtils {
             return BuildTreeErrorType.NotInstalled;
         }
         return undefined;
-    }
-
-    /**
-     * Return ScopedNpmProject which contain the name and version of Yarn project.
-     * The name and version are extracted from the package.json.
-     * @param workspaceFolder - The workspace folder
-     * @returns ScopedNpmProject
-     */
-    public static getYarnProjectDetails(workspaceFolder: string): ProjectDetails {
-        const yarnProject: ProjectDetails = new ProjectDetails();
-        yarnProject.loadProjectDetailsFromFile(path.join(workspaceFolder, 'package.json'));
-        return yarnProject;
     }
 }

@@ -3,6 +3,7 @@ export enum PackageType {
     Go,
     Maven,
     Npm,
+    Pnpm,
     Yarn,
     Nuget,
     Python
@@ -20,6 +21,8 @@ export function toPackageType(str: string): PackageType {
             return PackageType.Maven;
         case 'NPM':
             return PackageType.Npm;
+        case 'PNPM':
+            return PackageType.Pnpm;
         case 'YARN':
             return PackageType.Yarn;
         case 'NUGET':
@@ -38,6 +41,8 @@ export function fromPackageType(packageType: PackageType): string {
             return 'Maven';
         case PackageType.Npm:
             return 'npm';
+        case PackageType.Pnpm:
+            return 'pnpm';
         case PackageType.Yarn:
             return 'Yarn';
         case PackageType.Nuget:
