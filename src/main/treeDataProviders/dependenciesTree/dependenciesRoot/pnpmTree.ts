@@ -35,7 +35,7 @@ export class PnpmTreeNode extends RootNode {
             details.projectVersion,
             [],
             path.join(this.workspaceFolder, 'pnpm-lock.yaml'),
-            PackageType.Npm
+            PackageType.Pnpm
         );
         this.projectDetails.name = details.projectName ?? this.fullPath;
         this.label = this.projectDetails.name;
