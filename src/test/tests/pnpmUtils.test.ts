@@ -98,13 +98,13 @@ describe('Pnpm Utils Tests', async () => {
             // Check labels
             assert.deepEqual(tree.label, 'jfrog-vscode-tests2');
             // Check direct children
-            assert.lengthOf(tree.children, 4);
+            assert.lengthOf(tree.children, 3);
             assertChild(
                 tree.children.find(component => component.label === 'xml'),
                 'xml',
                 'xml:1.0.1',
                 '1.0.1',
-                [],
+                ['prod'],
                 tree
             );
             assertChild(
@@ -112,7 +112,7 @@ describe('Pnpm Utils Tests', async () => {
                 'pug',
                 'pug:2.0.4',
                 '2.0.4',
-                [],
+                ['prod'],
                 tree
             );
             assertChild(
@@ -120,15 +120,7 @@ describe('Pnpm Utils Tests', async () => {
                 'json',
                 'json:9.0.6',
                 '9.0.6',
-                [],
-                tree
-            );
-            assertChild(
-                tree.children.find(component => component.label === 'cookie-parser'),
-                'cookie-parser',
-                'cookie-parser:1.4.4',
-                '1.4.4',
-                [],
+                ['dev'],
                 tree
             );
         });

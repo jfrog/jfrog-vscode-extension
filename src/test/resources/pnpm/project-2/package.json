@@ -12,7 +12,6 @@
     "pug": "^2.0.4"
   },
   "devDependencies": {
-    "json": "9.0.6",
-    "cookie-parser": "~1.4.4"
+    "json": "9.0.6"
   }
 }
