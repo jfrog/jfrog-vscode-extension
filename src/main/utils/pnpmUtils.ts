@@ -4,10 +4,12 @@ import { LogManager } from '../log/logManager';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { ScanUtils } from './scanUtils';
 import { PnpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/pnpmTree';
+import { Configuration } from './configuration';
 
 export class PnpmUtils {
     public static readonly DESCRIPTOR: string = 'package.json';
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/' + PnpmUtils.DESCRIPTOR };
+    public static readonly SKIP_DEV_DEPENDENCIES_FLAG: string = '--prod';
 
     public static async createDependenciesTrees(
         pnpmLocks: vscode.Uri[] | undefined,
@@ -42,7 +44,19 @@ export class PnpmUtils {
     }
 
     public static runPnpmLs(workspace: string): any {
-        return JSON.parse(ScanUtils.executeCmd(['pnpm', 'ls', '--depth', 'Infinity', '--json', '--long'].join(' '), workspace).toString());
+        let args: string[] = ['pnpm', 'ls', '--depth', 'Infinity', '--json', '--long'];
+        let skipFlag: string = PnpmUtils.getSkipDevDependenciesFlag();
+        if (skipFlag !== '') {
+            args.push(skipFlag);
+        }
+        return JSON.parse(ScanUtils.executeCmd(args.join(' '), workspace).toString());
+    }
+
+    protected static getSkipDevDependenciesFlag(): string {
+        if (!Configuration.excludeDevDependencies()) {
+            return '';
+        }
+        return PnpmUtils.SKIP_DEV_DEPENDENCIES_FLAG;
     }
 
     public static runPnpmInstall(workspace: string): void {
