@@ -28,6 +28,8 @@ export class GoUtils {
             .toString()
             .substring('go version go'.length);
         let versionNumber: string = versionStr.substring(0, versionStr.indexOf(' '));
+        // Add patch version if not exists
+        versionNumber += versionNumber.split('.').length < 3 ? '.0' : '';
         return new SemVer(versionNumber);
     }
 
