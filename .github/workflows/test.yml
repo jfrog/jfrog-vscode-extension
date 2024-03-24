@@ -36,6 +36,10 @@ jobs:
         with:
           node-version: "16"
           check-latest: true
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 8
 
       - name: Install
         run: npm i --ignore-scripts

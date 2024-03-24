@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { NpmTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/npmTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import * as fs from 'fs';
+import * as path from 'path';
 import { FocusType } from '../constants/contextKeys';
 import { LogManager } from '../log/logManager';
 import { NpmCmd } from './cmds/npm';
@@ -75,7 +76,7 @@ export class NpmUtils {
         for (let packageJson of packageJsons) {
             checkCanceled();
             let root: NpmTreeNode = new NpmTreeNode(packageJson.fsPath, logManager, parent);
-            root.refreshDependencies();
+            await root.refreshDependencies();
         }
     }
 
@@ -93,6 +94,18 @@ export class NpmUtils {
             return dep.substring(1, dep.indexOf('/'));
         }
         return '';
+    }
+
+    /**
+     * Return ScopedNpmProject which contain the name and version of the project.
+     * The name and version are extracted from the package.json.
+     * @param workspaceFolder - The workspace folder
+     * @returns ScopedNpmProject
+     */
+    public static getProjectDetailsFromPackageJson(workspaceFolder: string): ProjectDetails {
+        const project: ProjectDetails = new ProjectDetails();
+        project.loadProjectDetailsFromFile(path.join(workspaceFolder, 'package.json'));
+        return project;
     }
 }
 
