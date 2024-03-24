@@ -245,4 +245,9 @@ describe('Go Utils Tests', async () => {
             assert.isFalse(fs.existsSync(targetDir), 'The target directory should not exist since all files should be excluded');
         });
     });
+
+    it('Get go version', () => {
+        let goVersion: string = GoUtils.getGoVersion().format();
+        assert.isNotEmpty(goVersion);
+    });
 });
