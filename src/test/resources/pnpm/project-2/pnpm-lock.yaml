@@ -14,8 +14,8 @@ dependencies:
 
 devDependencies:
   json:
-    specifier: 9.0.6
-    version: 9.0.6
+    specifier: 10.0.0
+    version: 10.0.0
 
 packages:
 
@@ -260,8 +260,8 @@ packages:
     resolution: {integrity: sha512-rtS5ATOo2Q5k1G+DADISilDA6lv79zIiwFd6CcjuIxGKLFm5C+RLImRscVap9k55i+MOZwgliw+NejvkLuGD5g==}
     dev: false
 
-  /json@9.0.6:
-    resolution: {integrity: sha512-Nx+4WwMM1xadgqjjteOVEyjoIVq7fGH1hAlRDoxoq2tFzYsBYZDIKwYbyxolkTYwxsSOgAZD2ACLkeGjhFW2Jw==}
+  /json@10.0.0:
+    resolution: {integrity: sha512-iK7tAZtpoghibjdB1ncCWykeBMmke3JThUe+rnkD4qkZaglOIQ70Pw7r5UJ4lyUT+7gnw7ehmmLUHDuhqzQD+g==}
     engines: {node: '>=0.10.0'}
     hasBin: true
     dev: true
