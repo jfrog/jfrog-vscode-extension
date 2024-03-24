@@ -14,7 +14,7 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 /**
  * Test functionality of @class PnpmUtils.
  */
-describe.only('Pnpm Utils Tests', async () => {
+describe('Pnpm Utils Tests', async () => {
     checkNodeVersionSupported();
     let logManager: LogManager = new LogManager().activate();
     let workspaceFolders: vscode.WorkspaceFolder[];
@@ -144,9 +144,7 @@ describe.only('Pnpm Utils Tests', async () => {
 
     function checkNodeVersionSupported(): void {
         // pnpm v8 has dropped Node.js 14 support. Skip test if Node.js version is 14 or less.
-        let nodeVersion: string = process.versions.node;
-        logManager.logMessage('Node.js version: ' + nodeVersion, 'INFO');
-        if (parseInt(nodeVersion.slice(1).split('.')[0]) <= 14) {
+        if (parseInt(process.versions.node.slice(1).split('.')[0]) <= 14) {
             test.skip('Skip pnpm tests for Node.js v14 or less');
         }
     }
