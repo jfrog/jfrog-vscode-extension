@@ -36,9 +36,11 @@ describe('Pnpm Utils Tests', async () => {
         fs.rmdirSync(testFolder.fsPath, { recursive: true });
     });
 
-    describe('Pnpm commands', async () => {        
+    describe('Pnpm commands', async () => {
         it('Verify pnpm installed', async () => {
-            initPnpmTests();
+            if (checkNodeVersionSupported()) {
+                test.skip('Skip pnpm tests for Node.js v14 or less');
+            }
             assert.isTrue(PnpmUtils.verifyPnpmInstalled());
         });
     });
@@ -69,7 +71,9 @@ describe('Pnpm Utils Tests', async () => {
         let sortedDescriptorTrees: DependenciesTreeNode[] = [];
 
         before(async () => {
-            initPnpmTests();
+            if (checkNodeVersionSupported()) {
+                test.skip('Skip pnpm tests for Node.js v14 or less');
+            }
             // Install projects
             projectDirs.forEach(projectDir => {
                 PnpmUtils.runPnpmInstall(path.join(testFolder.fsPath, projectDir));
@@ -80,7 +84,9 @@ describe('Pnpm Utils Tests', async () => {
         });
 
         it('Check descriptors node general information', async () => {
-            initPnpmTests();
+            if (checkNodeVersionSupported()) {
+                test.skip('Skip pnpm tests for Node.js v14 or less');
+            }
             // Check number of descriptor trees
             assert.lengthOf(sortedDescriptorTrees, 2);
             // Check parents
@@ -89,7 +95,9 @@ describe('Pnpm Utils Tests', async () => {
         });
 
         it('Check descriptor node with empty dependency tree', async () => {
-            initPnpmTests();
+            if (checkNodeVersionSupported()) {
+                test.skip('Skip pnpm tests for Node.js v14 or less');
+            }
             let tree: DependenciesTreeNode = sortedDescriptorTrees[0];
             // Check labels
             assert.deepEqual(tree.label, 'jfrog-vscode-tests1');
@@ -98,7 +106,9 @@ describe('Pnpm Utils Tests', async () => {
         });
 
         it('Check descriptor node with dependency tree', async () => {
-            initPnpmTests();
+            if (checkNodeVersionSupported()) {
+                test.skip('Skip pnpm tests for Node.js v14 or less');
+            }
             let tree: DependenciesTreeNode = sortedDescriptorTrees[1];
             // Check labels
             assert.deepEqual(tree.label, 'jfrog-vscode-tests2');
@@ -146,10 +156,8 @@ describe('Pnpm Utils Tests', async () => {
         }
     });
 
-    function initPnpmTests(): void {
+    function checkNodeVersionSupported(): boolean {
         // pnpm v8 has dropped Node.js 14 support. Skip test if Node.js version is 14 or less.
-        if (parseInt(process.version.slice(1).split('.')[0]) <= 14) {
-            test.skip('Skip pnpm tests for Node.js v14 or less');
-        }
+        return parseInt(process.version.slice(1).split('.')[0]) > 14;
     }
 });
