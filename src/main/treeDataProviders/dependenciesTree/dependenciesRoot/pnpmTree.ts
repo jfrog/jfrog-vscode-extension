@@ -34,6 +34,8 @@ export class PnpmTreeNode extends RootNode {
             details.projectName,
             details.projectVersion,
             [],
+            // fullPath points to the package.json file. but the discovered file that indicates the project type is pnpm-lock.yaml
+            // descriptorsParsed.add(child.generalInfo.path); is called to mark the file as parsed
             path.join(this.workspaceFolder, 'pnpm-lock.yaml'),
             PackageType.Pnpm
         );
@@ -68,7 +70,7 @@ export class PnpmTreeNode extends RootNode {
     }
 
     private addDependency(parent: DependenciesTreeNode, dependencyName: string, dependencyVersion: string, scope: string): DependenciesTreeNode {
-        const generalInfo: GeneralInfo = new GeneralInfo(dependencyName, dependencyVersion, scope !== '' ? [scope] : [], '', PackageType.Pnpm);
+        const generalInfo: GeneralInfo = new GeneralInfo(dependencyName, dependencyVersion, scope ? [scope] : [], '', PackageType.Pnpm);
         let node: DependenciesTreeNode = new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.None, parent);
         node.xrayDependencyId = PnpmTreeNode.COMPONENT_PREFIX + dependencyName + ':' + dependencyVersion;
         return node;
