@@ -15,7 +15,6 @@ import { GeneralInfo } from '../../main/types/generalInfo';
  * Test functionality of @class PnpmUtils.
  */
 describe('Pnpm Utils Tests', async () => {
-    initPnpmTests()
     let logManager: LogManager = new LogManager().activate();
     let workspaceFolders: vscode.WorkspaceFolder[];
 
@@ -37,8 +36,9 @@ describe('Pnpm Utils Tests', async () => {
         fs.rmdirSync(testFolder.fsPath, { recursive: true });
     });
 
-    describe('Pnpm commands', async () => {
+    describe('Pnpm commands', async () => {        
         it('Verify pnpm installed', async () => {
+            initPnpmTests();
             assert.isTrue(PnpmUtils.verifyPnpmInstalled());
         });
     });
@@ -69,6 +69,7 @@ describe('Pnpm Utils Tests', async () => {
         let sortedDescriptorTrees: DependenciesTreeNode[] = [];
 
         before(async () => {
+            initPnpmTests();
             // Install projects
             projectDirs.forEach(projectDir => {
                 PnpmUtils.runPnpmInstall(path.join(testFolder.fsPath, projectDir));
@@ -79,6 +80,7 @@ describe('Pnpm Utils Tests', async () => {
         });
 
         it('Check descriptors node general information', async () => {
+            initPnpmTests();
             // Check number of descriptor trees
             assert.lengthOf(sortedDescriptorTrees, 2);
             // Check parents
@@ -87,6 +89,7 @@ describe('Pnpm Utils Tests', async () => {
         });
 
         it('Check descriptor node with empty dependency tree', async () => {
+            initPnpmTests();
             let tree: DependenciesTreeNode = sortedDescriptorTrees[0];
             // Check labels
             assert.deepEqual(tree.label, 'jfrog-vscode-tests1');
@@ -95,6 +98,7 @@ describe('Pnpm Utils Tests', async () => {
         });
 
         it('Check descriptor node with dependency tree', async () => {
+            initPnpmTests();
             let tree: DependenciesTreeNode = sortedDescriptorTrees[1];
             // Check labels
             assert.deepEqual(tree.label, 'jfrog-vscode-tests2');
