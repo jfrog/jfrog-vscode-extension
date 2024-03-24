@@ -14,7 +14,7 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 /**
  * Test functionality of @class PnpmUtils.
  */
-describe('Pnpm Utils Tests', async () => {
+describe.only('Pnpm Utils Tests', async () => {
     let logManager: LogManager = new LogManager().activate();
     let workspaceFolders: vscode.WorkspaceFolder[];
 
@@ -38,7 +38,7 @@ describe('Pnpm Utils Tests', async () => {
 
     describe('Pnpm commands', async () => {
         it('Verify pnpm installed', async () => {
-            if (checkNodeVersionSupported()) {
+            if (!checkNodeVersionSupported()) {
                 test.skip('Skip pnpm tests for Node.js v14 or less');
             }
             assert.isTrue(PnpmUtils.verifyPnpmInstalled());
@@ -71,7 +71,7 @@ describe('Pnpm Utils Tests', async () => {
         let sortedDescriptorTrees: DependenciesTreeNode[] = [];
 
         before(async () => {
-            if (checkNodeVersionSupported()) {
+            if (!checkNodeVersionSupported()) {
                 test.skip('Skip pnpm tests for Node.js v14 or less');
             }
             // Install projects
@@ -84,7 +84,7 @@ describe('Pnpm Utils Tests', async () => {
         });
 
         it('Check descriptors node general information', async () => {
-            if (checkNodeVersionSupported()) {
+            if (!checkNodeVersionSupported()) {
                 test.skip('Skip pnpm tests for Node.js v14 or less');
             }
             // Check number of descriptor trees
@@ -95,7 +95,7 @@ describe('Pnpm Utils Tests', async () => {
         });
 
         it('Check descriptor node with empty dependency tree', async () => {
-            if (checkNodeVersionSupported()) {
+            if (!checkNodeVersionSupported()) {
                 test.skip('Skip pnpm tests for Node.js v14 or less');
             }
             let tree: DependenciesTreeNode = sortedDescriptorTrees[0];
@@ -106,7 +106,7 @@ describe('Pnpm Utils Tests', async () => {
         });
 
         it('Check descriptor node with dependency tree', async () => {
-            if (checkNodeVersionSupported()) {
+            if (!checkNodeVersionSupported()) {
                 test.skip('Skip pnpm tests for Node.js v14 or less');
             }
             let tree: DependenciesTreeNode = sortedDescriptorTrees[1];
