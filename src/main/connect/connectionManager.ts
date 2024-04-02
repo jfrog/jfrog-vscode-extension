@@ -8,15 +8,19 @@ import {
     IGraphResponse,
     IUsageFeature,
     JfrogClient,
-    XrayScanProgress
+    ScanEvent,
+    StartScanRequest,
+    XrayScanProgress,
+    XscLogLevel
 } from 'jfrog-client-js';
 import * as semver from 'semver';
 import * as vscode from 'vscode';
 import { ContextKeys, SessionStatus } from '../constants/contextKeys';
 import { ExtensionComponent } from '../extensionComponent';
-import { LogManager } from '../log/logManager';
+import { LogLevel, LogManager } from '../log/logManager';
 import { ScanUtils } from '../utils/scanUtils';
 import { ConnectionUtils } from './connectionUtils';
+import { Configuration } from '../utils/configuration';
 
 export enum LoginStatus {
     Success = 'SUCCESS',
@@ -35,6 +39,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     private static readonly XRAY_USERNAME_KEY: string = 'jfrog.xray.username';
     private static readonly PLATFORM_URL_KEY: string = 'jfrog.xray.platformUrl';
     private static readonly XRAY_URL_KEY: string = 'jfrog.xray.url';
+    private static readonly XSC_URL_KEY: string = 'jfrog.xsc.url';
     private static readonly RT_URL_KEY: string = 'jfrog.rt.url';
 
     // Service ID in the OS KeyStore to store and retrieve the password / access token
@@ -54,6 +59,8 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     // Minimal version supporting exporting default server configuration.
     private static readonly MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT: any = semver.coerce('2.6.1');
+    // Minimal version supporting Xsc operations.
+    private static readonly MINIMAL_XSC_VERSION_SUPPORTED: any = semver.coerce('1.7.1');
 
     private _statusBar!: vscode.StatusBarItem;
     private _context!: vscode.ExtensionContext;
@@ -61,9 +68,11 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     private _username: string = '';
     private _password: string = '';
     private _xrayUrl: string = '';
+    private _xscUrl: string = '';
     private _rtUrl: string = '';
     private _url: string = '';
     private _xrayVersion: string = '';
+    private _xscVersion: string = '';
     private _artifactoryVersion: string = '';
 
     constructor(protected _logManager: LogManager) {
@@ -329,6 +338,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return this._xrayUrl;
     }
 
+    public get xscUrl() {
+        return this._xscUrl;
+    }
+
     public get rtUrl() {
         return this._rtUrl;
     }
@@ -349,6 +362,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return this._xrayVersion;
     }
 
+    public get xscVersion() {
+        return this._xscVersion;
+    }
+
     public get artifactoryVersion() {
         return this._artifactoryVersion;
     }
@@ -363,6 +380,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         if (await ConnectionUtils.isPlatformUrl(this._url, this._username, this._password, this._accessToken, this._logManager)) {
             // _url is a platform URL
             this._xrayUrl = this.getXrayUrlFromPlatform();
+            this._xscUrl = this.getXscUrlFromPlatform();
             this._rtUrl = this.getRtUrlFromPlatform();
         } else if (this._url) {
             // _url is an Xray URL
@@ -370,6 +388,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             if (this._url.endsWith('/xray') || this._url.endsWith('/xray/')) {
                 // Assuming platform URL was extracted. Checking against Artifactory.
                 this._url = this._url.substring(0, this._url.lastIndexOf('/xray'));
+                this._xscUrl = this.getXscUrlFromPlatform();
                 this._rtUrl = this.getRtUrlFromPlatform();
                 if (
                     !(await ConnectionUtils.validateArtifactoryConnection(
@@ -390,6 +409,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         }
         this._logManager.logMessage('Resolved JFrog platform URL: ' + this._url, 'DEBUG');
         this._logManager.logMessage('Resolved Xray URL: ' + this._xrayUrl, 'DEBUG');
+        this._logManager.logMessage('Resolved Xsc URL: ' + this._xscUrl, 'DEBUG');
         this._logManager.logMessage('Resolved Artifactory URL: ' + this._rtUrl, 'DEBUG');
     }
 
@@ -404,6 +424,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     private getXrayUrlFromPlatform(): string {
         return this.getServiceUrlFromPlatform(this._url, 'xray');
+    }
+
+    private getXscUrlFromPlatform(): string {
+        return this.getServiceUrlFromPlatform(this._url, 'xsc');
     }
 
     public async tryCredentialsFromEnv(): Promise<LoginStatus> {
@@ -564,6 +588,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     private async setUrlsFromFilesystem(): Promise<boolean> {
         this._url = (await this._context.globalState.get(ConnectionManager.PLATFORM_URL_KEY)) || '';
         this._xrayUrl = (await this._context.globalState.get(ConnectionManager.XRAY_URL_KEY)) || '';
+        this._xscUrl = (await this._context.globalState.get(ConnectionManager.XSC_URL_KEY)) || '';
         this._rtUrl = (await this._context.globalState.get(ConnectionManager.RT_URL_KEY)) || '';
         return !!this._url || !!this._xrayUrl;
     }
@@ -574,6 +599,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     private async storeXrayUrl() {
         await this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, this._xrayUrl);
+    }
+
+    private async storeXscUrl() {
+        await this._context.globalState.update(ConnectionManager.XSC_URL_KEY, this._xscUrl);
     }
 
     private async storeRtUrl() {
@@ -703,6 +732,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     private async storeConnection(): Promise<boolean> {
         try {
             await this.storeXrayUrl();
+            await this.storeXscUrl();
             await this.storeRtUrl();
             await this.storePlatformUrl();
             await this.storeUsername();
@@ -763,6 +793,82 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             .graph(graphRequest, progress, checkCanceled, project, watches);
     }
 
+    public async startScan(request: StartScanRequest): Promise<ScanEvent> {
+        if (this._xscUrl === '') {
+            this._logManager.logMessage('Xsc is not configured. Skipping analytics...', 'DEBUG');
+            return {} as ScanEvent;
+        }
+        return this.createJfrogClient()
+            .xsc()
+            .event()
+            .startScan(request);
+    }
+
+    public async endScan(event: ScanEvent): Promise<void> {
+        if (this._xscUrl === '') {
+            return;
+        }
+        this.createJfrogClient()
+            .xsc()
+            .event()
+            .endScan(event);
+    }
+
+    public async logWithAnalytics(message: string, level: LogLevel): Promise<void> {
+        if (this._xscUrl === '') {
+            return;
+        }
+        this.createJfrogClient()
+            .xsc()
+            .event()
+            .log({
+                message: message,
+                source: 'jfrog-vscode-extension',
+                log_level: this.toXscLogLevel(level)
+            });
+    }
+
+    public async logErrorWithAnalytics(err: Error, shouldToast: boolean = false): Promise<void> {
+        this._logManager.logError(err, shouldToast);
+        if (!this.shouldReportAnalytics()) {
+            return;
+        }
+        await this.logWithAnalytics(`${err.name}: ${err.message}\n${err.stack}`, 'ERR');
+    }
+
+    public async shouldReportAnalytics(): Promise<boolean> {
+        if (!Configuration.getReportAnalytics()) {
+            this._logManager.logMessage('Analytics are disabled', 'DEBUG');
+            return false;
+        }
+        if (this._xscUrl === '' || this._xscVersion === '') {
+            this._logManager.logMessage('Xsc is not configured. Skipping analytics...', 'DEBUG');
+            return false;
+        }
+        let xscSemver: semver.SemVer = new semver.SemVer(this.xscVersion);
+        if (xscSemver.compare(ConnectionManager.MINIMAL_XSC_VERSION_SUPPORTED) < 0) {
+            this._logManager.logMessage(
+                'Xsc version is too low to support analytics (needed: ' +
+                    ConnectionManager.MINIMAL_XSC_VERSION_SUPPORTED +
+                    ', actual: ' +
+                    this.xscVersion +
+                    ')',
+                'DEBUG'
+            );
+            return false;
+        }
+        return true;
+    }
+
+    private toXscLogLevel(level: LogLevel): XscLogLevel {
+        if (level === 'WARN') {
+            return 'warning';
+        } else if (level === 'ERR') {
+            return 'error';
+        }
+        return level.toLowerCase() as XscLogLevel;
+    }
+
     public async searchArtifactsByAql(aql: string): Promise<IAqlSearchResult> {
         return this.createJfrogClient()
             .artifactory()
@@ -818,11 +924,15 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
 
     private async updateJfrogVersions() {
-        await Promise.all([this.updateArtifactoryVersion(), this.updateXrayVersion()]);
+        await Promise.all([this.updateArtifactoryVersion(), this.updateXrayVersion(), this.updateXscVersion()]);
     }
 
     private async updateXrayVersion() {
         this._xrayVersion = await ConnectionUtils.getXrayVersion(this.createJfrogClient());
+    }
+
+    private async updateXscVersion() {
+        this._xscVersion = await ConnectionUtils.getXscVersion(this._logManager, this.createJfrogClient());
     }
 
     private async updateArtifactoryVersion() {

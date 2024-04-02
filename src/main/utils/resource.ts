@@ -154,7 +154,7 @@ export class Resource {
         return ScanUtils.Hash('SHA256', fileBuffer);
     }
 
-    public async run(args: string[], checkCancel: () => void, env?: NodeJS.ProcessEnv | undefined): Promise<void> {
+    public async run(args: string[], checkCancel: () => void, env?: NodeJS.ProcessEnv | undefined): Promise<string> {
         let command: string = '"' + this.fullPath + '" ' + args.join(' ');
         this._logManager.debug("Executing '" + command + "' in directory '" + this._targetDir + "'");
         try {
@@ -162,6 +162,7 @@ export class Resource {
             if (output.length > 0) {
                 this._logManager.logMessage('Done executing "' + command + '" with output:\n' + output, 'DEBUG');
             }
+            return output;
         } catch (error) {
             throw new Error('Failed to execute "' + command + '" err: ' + error);
         }

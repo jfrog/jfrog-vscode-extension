@@ -38,8 +38,12 @@ export class JasRunnerFactory {
         return this._uniqueFeatures;
     }
 
+    public get analyzerManager(): AnalyzerManager | undefined {
+        return this._analyzerManager;
+    }
+
     // Jas scanner support JFrog config file. Applicability is not supported by jfrog config so we create a default runner to run on the workspace.
-    public async createJasRunner(): Promise<JasRunner[]> {
+    public createJasRunner(): JasRunner[] {
         let jasRunners: JasRunner[] = [];
 
         jasRunners.push(...this.createSastRunners());

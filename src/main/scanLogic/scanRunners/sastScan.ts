@@ -19,7 +19,7 @@ import {
     FileRegion,
     ScanType
 } from './analyzerModels';
-import { JasRunner } from './jasRunner';
+import { BinaryEnvParams, JasRunner, RunArgs } from './jasRunner';
 
 /**
  * The request that is sent to the binary to scan SAST
@@ -34,6 +34,7 @@ export type LanguageType = 'python' | 'javascript' | 'typescript' | 'java';
 
 export interface SastScanResponse {
     filesWithIssues: SastFileIssues[];
+    ignoreCount?: number;
 }
 
 export interface SastFileIssues {
@@ -68,13 +69,12 @@ export class SastRunner extends JasRunner {
     }
 
     /** @override */
-    protected async runBinary(
-        yamlConfigPath: string,
-        executionLogDirectory: string | undefined,
-        checkCancel: () => void,
-        responsePath: string
-    ): Promise<void> {
-        await this.runAnalyzerManager(checkCancel, ['zd', yamlConfigPath, responsePath], executionLogDirectory);
+    protected async runBinary(checkCancel: () => void, args: RunArgs, params?: BinaryEnvParams): Promise<void> {
+        await this.runAnalyzerManager(
+            checkCancel,
+            ['zd', args.request.requestPath, args.request.responsePath],
+            this._analyzerManager.createEnvForRun(params)
+        );
     }
 
     /** @override */
@@ -86,7 +86,7 @@ export class SastRunner extends JasRunner {
     /**
      * Run SAST scan async task and populate the given bundle with the results.
      */
-    public async scan(): Promise<void> {
+    public async scan(params?: BinaryEnvParams): Promise<void> {
         let startTime: number = Date.now();
         let request: SastScanRequest = {
             type: this._scanType,
@@ -95,8 +95,8 @@ export class SastRunner extends JasRunner {
             excluded_rules: this._config.getExcludeRules(),
             exclude_patterns: this._config.GetExcludePatterns(this._scanType)
         } as SastScanRequest;
-        this.logStartScanning(request);
-        let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request);
+        this.logStartScanning(request, params?.msi);
+        let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request, params);
         let sastScanResponse: SastScanResponse = this.generateScanResponse(response);
         if (response) {
             this._scanResults.sastScan = sastScanResponse;
@@ -109,11 +109,13 @@ export class SastRunner extends JasRunner {
     }
 
     /** @override */
-    protected logStartScanning(request: SastScanRequest): void {
-        this._logManager.logMessage(
-            `Scanning directory ' ${request.roots}', for ${this._scanType} Skipping folders: ${request.exclude_patterns}`,
-            'DEBUG'
-        );
+    protected logStartScanning(request: SastScanRequest, msi?: string): void {
+        let msg: string = `Scanning directories '${request.roots}', for ${this._scanType} issues.`;
+        if (msi) {
+            msg += `\nMultiScanId: ${msi}`;
+        }
+        msg += ` Skipping folders: ${request.exclude_patterns}`;
+        this._logManager.logMessage(msg, 'DEBUG');
     }
     /**
      * Generate response from the run results
@@ -137,13 +139,16 @@ export class SastRunner extends JasRunner {
             }
         }
         // Generate response data
+        let ignoreCount: number = 0;
         analyzerScanRun.results?.forEach((analyzeIssue: AnalyzeIssue) => {
             if (analyzeIssue.suppressions && analyzeIssue.suppressions.length > 0) {
                 // Suppress issue
+                ignoreCount++;
                 return;
             }
             this.generateIssueData(sastResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId));
         });
+        sastResponse.ignoreCount = ignoreCount;
         return sastResponse;
     }
 

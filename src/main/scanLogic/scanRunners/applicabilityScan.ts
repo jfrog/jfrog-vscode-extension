@@ -5,7 +5,7 @@ import { ProjectDependencyTreeNode } from '../../treeDataProviders/issuesTree/de
 import { IssueTreeNode } from '../../treeDataProviders/issuesTree/issueTreeNode';
 import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
 import { StepProgress } from '../../treeDataProviders/utils/stepProgress';
-import { PackageType } from '../../types/projectType';
+import { PackageType, fromPackageType } from '../../types/projectType';
 import { DependencyScanResults } from '../../types/workspaceIssuesDetails';
 import { Configuration } from '../../utils/configuration';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
@@ -13,7 +13,7 @@ import { FileScanBundle } from '../../utils/scanUtils';
 import { Utils } from '../../utils/utils';
 import { AnalyzerManager } from './analyzerManager';
 import { AnalyzeIssue, AnalyzeLocation, AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, FileIssues, ScanType } from './analyzerModels';
-import { JasRunner } from './jasRunner';
+import { BinaryEnvParams, JasRunner, RunArgs } from './jasRunner';
 
 /**
  * The request that is sent to the binary to scan applicability
@@ -55,6 +55,8 @@ export class BundleCves extends Map<FileScanBundle, [Set<string>, Set<string>]> 
  * Describes a runner for the Applicability scan.
  */
 export class ApplicabilityRunner extends JasRunner {
+    public static readonly ENV_PACKAGE_MANAGER: string = 'AM_PACKAGE_MANAGER';
+
     constructor(
         private _bundlesWithIssues: FileScanBundle[],
         private _packageType: PackageType,
@@ -67,8 +69,17 @@ export class ApplicabilityRunner extends JasRunner {
     }
 
     /** @override */
-    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string | undefined, checkCancel: () => void): Promise<void> {
-        await this.runAnalyzerManager(checkCancel, ['ca', yamlConfigPath], executionLogDirectory);
+    protected async runBinary(checkCancel: () => void, args: RunArgs, params?: BinaryEnvParams): Promise<void> {
+        await this.runAnalyzerManager(checkCancel, ['ca', args.request.requestPath], this.createApplicabilityEnv(params));
+    }
+
+    private createApplicabilityEnv(params?: BinaryEnvParams): NodeJS.ProcessEnv | undefined {
+        let env: NodeJS.ProcessEnv | undefined = this._analyzerManager.createEnvForRun(params);
+        if (!env) {
+            return;
+        }
+        env[ApplicabilityRunner.ENV_PACKAGE_MANAGER] = fromPackageType(this._packageType);
+        return env;
     }
 
     /** @override */
@@ -90,17 +101,19 @@ export class ApplicabilityRunner extends JasRunner {
     }
 
     /** @override */
-    protected logStartScanning(request: ApplicabilityScanArgs): void {
-        this._logManager.logMessage(
-            `Scanning directory ' ${request.roots[0]} + ', for ${this._scanType} issues: ${request.cve_whitelist} indirect issues: ${request.indirect_cve_whitelist} Skipping folders: ${request.skipped_folders}`,
-            'DEBUG'
-        );
+    protected logStartScanning(request: ApplicabilityScanArgs, msi?: string): void {
+        let msg: string = `Scanning directories '${request.roots}', for ${this._scanType} issues: ${request.cve_whitelist} indirect issues: ${request.indirect_cve_whitelist}`;
+        if (msi) {
+            msg += `\nMultiScanId: ${msi}`;
+        }
+        msg += ` Skipping folders: ${request.skipped_folders}`;
+        this._logManager.logMessage(msg, 'DEBUG');
     }
 
     /**
      * Scan for applicability issues
      */
-    public async scan(): Promise<void> {
+    public async scan(params?: BinaryEnvParams): Promise<void> {
         let filteredBundles: BundleCves = this.filterBundlesWithoutIssuesToScan();
         let workspaceToBundles: Map<string, BundleCves> = this.mapBundlesForApplicableScanning(filteredBundles);
         if (workspaceToBundles.size == 0) {
@@ -135,8 +148,8 @@ export class ApplicabilityRunner extends JasRunner {
                 mergedBundles.set(fileScanBundle, Utils.combineSets(cvesTuple));
             }
 
-            this.logStartScanning(request);
-            let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request);
+            this.logStartScanning(request, params?.msi);
+            let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request, params);
             let applicableIssues: ApplicabilityScanResponse = this.convertResponse(response);
             if (applicableIssues?.applicableCve) {
                 this.transferApplicableResponseToBundles(applicableIssues, mergedBundles, startApplicableTime);

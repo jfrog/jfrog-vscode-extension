@@ -7,10 +7,11 @@ import { ScanResults } from '../../types/workspaceIssuesDetails';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { AnalyzerManager } from './analyzerManager';
 import { AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, ScanType } from './analyzerModels';
-import { JasRunner } from './jasRunner';
+import { BinaryEnvParams, JasRunner, RunArgs } from './jasRunner';
 
 export interface SecretsScanResponse {
     filesWithIssues: FileWithSecurityIssues[];
+    ignoreCount?: number;
 }
 
 /**
@@ -30,22 +31,22 @@ export class SecretsRunner extends JasRunner {
     }
 
     /** @override */
-    protected async runBinary(yamlConfigPath: string, executionLogDirectory: string | undefined, checkCancel: () => void): Promise<void> {
-        await this.runAnalyzerManager(checkCancel, ['sec', yamlConfigPath], executionLogDirectory);
+    protected async runBinary(checkCancel: () => void, args: RunArgs, params?: BinaryEnvParams): Promise<void> {
+        await this.runAnalyzerManager(checkCancel, ['sec', args.request.requestPath], this._analyzerManager.createEnvForRun(params));
     }
 
     /**
      * Run Secrets scan async task and populate the given bundle with the results.
      */
-    public async scan(): Promise<void> {
+    public async scan(params?: BinaryEnvParams): Promise<void> {
         let startTime: number = Date.now();
         let request: AnalyzeScanRequest = {
             type: ScanType.Secrets,
             roots: this._config.GetSourceRoots(this._scanType),
             skipped_folders: this._config.GetExcludePatterns(this._scanType)
         } as AnalyzeScanRequest;
-        super.logStartScanning(request);
-        let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request);
+        super.logStartScanning(request, params?.msi);
+        let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request, params);
         let secretsScanResponse: SecretsScanResponse = this.convertResponse(response);
         if (response) {
             this._scanResults.secretsScan = secretsScanResponse;
@@ -79,13 +80,16 @@ export class SecretsRunner extends JasRunner {
             }
         }
         // Generate response data
+        let ignoreCount: number = 0;
         analyzerScanRun.results?.forEach(analyzeIssue => {
             if (analyzeIssue.suppressions && analyzeIssue.suppressions.length > 0) {
                 // Suppress issue
+                ignoreCount++;
                 return;
             }
             AnalyzerUtils.generateIssueData(secretsResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId));
         });
+        secretsResponse.ignoreCount = ignoreCount;
         return secretsResponse;
     }
 }

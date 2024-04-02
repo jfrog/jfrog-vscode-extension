@@ -275,6 +275,9 @@ export class CommandManager implements ExtensionComponent {
             if (this._connectionManager.rtUrl) {
                 return vscode.window.showInformationMessage(this.artifactoryConnectionDetails());
             }
+            if (this._connectionManager.xscUrl) {
+                return vscode.window.showInformationMessage(this.xscConnectionDetails());
+            }
             return;
         }
         if (await this._connectionManager.isConnectionLost()) {
@@ -286,6 +289,10 @@ export class CommandManager implements ExtensionComponent {
 
     private xrayConnectionDetails(): string {
         return this.createServerDetailsMessage('Xray', this._connectionManager.xrayUrl, this._connectionManager.xrayVersion);
+    }
+
+    private xscConnectionDetails(): string {
+        return this.createServerDetailsMessage('Xsc', this._connectionManager.xscUrl, this._connectionManager.xscVersion);
     }
 
     private artifactoryConnectionDetails(): string {

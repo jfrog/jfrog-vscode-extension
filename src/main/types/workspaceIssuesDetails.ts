@@ -1,4 +1,4 @@
-import { IGraphResponse } from 'jfrog-client-js';
+import { IGraphResponse, IVulnerability } from 'jfrog-client-js';
 import { IImpactGraph } from 'jfrog-ide-webview';
 import { ApplicabilityScanResponse } from '../scanLogic/scanRunners/applicabilityScan';
 import { IacScanResponse } from '../scanLogic/scanRunners/iacScan';
@@ -69,6 +69,22 @@ export class ScanResults {
             this.iacScan?.filesWithIssues?.length > 0 ||
             this.secretsScan?.filesWithIssues?.length > 0
         );
+    }
+
+    public get cveDiscovered(): number {
+        let uniqueCVEs: Set<string> = new Set();
+        this.descriptorsIssues.forEach(descriptor => {
+            let issues: IVulnerability[] = descriptor.dependenciesGraphScan.violations || descriptor.dependenciesGraphScan.vulnerabilities;
+            issues.forEach(issue => {
+                let cveIds: string[] = issue.cves.length > 0 ? issue.cves.map(cve => cve.cve) : [issue.issue_id];
+                cveIds.forEach(cveId => uniqueCVEs.add(cveId));
+            });
+        });
+        return uniqueCVEs.size;
+    }
+
+    public get ignoreIssueCount(): number {
+        return (this.secretsScan?.ignoreCount ?? 0) + (this.sastScan?.ignoreCount ?? 0);
     }
 
     get path(): string {

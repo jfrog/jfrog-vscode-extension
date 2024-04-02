@@ -89,7 +89,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         ScanUtils.setFirstScanForWorkspace(false);
         const startRefreshTimestamp: number = Date.now();
         await this.scanWorkspaces()
-            .catch(error => this._logManager.logError(error, true))
+            .catch(error => this._scanManager.connectionManager.logErrorWithAnalytics(error, true))
             .finally(() => {
                 this.scanInProgress = false;
                 this.onChangeFire();
@@ -137,7 +137,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                                 root.title = 'Scan canceled';
                             } else {
                                 this._logManager.logMessage("Workspace '" + workspace.name + "' scan task ended with error:", 'ERR');
-                                this._logManager.logError(error, true);
+                                this._scanManager.connectionManager.logErrorWithAnalytics(error, true);
                                 root.title = 'Scan failed';
                             }
                         })
@@ -176,7 +176,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         // Prepare the needed information for the scans
         progress.report({ message: '👷 Preparing workspace' });
         let progressManager: StepProgress = new StepProgress(progress, checkCanceled, () => this.onChangeFire(), this._logManager);
-        await this._scanManager.scanWorkspace(scanResults, root, progressManager, checkCanceled);
+        await this._scanManager.scanWorkspace(
+            scanResults,
+            root,
+            progressManager,
+            await ScanUtils.locatePackageDescriptors([root.workspace], this._logManager),
+            checkCanceled
+        );
         return root;
     }
 

@@ -6,6 +6,7 @@ import {
     IProxyConfig,
     ISummaryRequestModel,
     IXrayVersion,
+    IXscVersion,
     JfrogClient
 } from 'jfrog-client-js';
 import { ServerNotActiveError } from 'jfrog-client-js/dist/src/HttpClient';
@@ -19,6 +20,7 @@ import { RetryOnStatusCode } from 'jfrog-client-js/dist/model/ClientConfig';
 
 export enum EntitlementScanFeature {
     Applicability = 'contextual_analysis',
+    Sast = 'sast',
     Iac = 'iac_scanners',
     Secrets = 'secrets_detection'
 }
@@ -26,6 +28,7 @@ export enum EntitlementScanFeature {
 export class ConnectionUtils {
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI: any = semver.coerce('3.21.2');
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED: any = semver.coerce('3.29.0');
+
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
 
@@ -203,7 +206,7 @@ export class ConnectionUtils {
 
     public static async testXrayVersion(jfrogClient: JfrogClient): Promise<string> {
         let xrayVersion: string = await this.getXrayVersion(jfrogClient);
-        if (!(await this.isXrayVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED))) {
+        if (!this.isVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED)) {
             return Promise.reject(
                 'Unsupported Xray version: ' + xrayVersion + ', version ' + ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED + ' or above is required.'
             );
@@ -220,7 +223,7 @@ export class ConnectionUtils {
 
     public static async testXrayVersionForCi(jfrogClient: JfrogClient, logger: LogManager): Promise<boolean> {
         let xrayVersion: string = await this.getXrayVersion(jfrogClient);
-        if (!(await this.isXrayVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI))) {
+        if (!this.isVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI)) {
             logger.logMessage(
                 'Unsupported Xray version for builds scan: ' +
                     xrayVersion +
@@ -234,10 +237,10 @@ export class ConnectionUtils {
         return true;
     }
 
-    public static async isXrayVersionCompatible(curXrayVersion: string, minXrayVersion: SemVer): Promise<boolean> {
-        if (curXrayVersion !== 'Unknown') {
-            let xraySemver: semver.SemVer = new semver.SemVer(curXrayVersion);
-            return xraySemver.compare(minXrayVersion) >= 0;
+    public static isVersionCompatible(curVersion: string, minVersion: SemVer): boolean {
+        if (curVersion !== 'Unknown') {
+            let xraySemver: semver.SemVer = new semver.SemVer(curVersion);
+            return xraySemver.compare(minVersion) >= 0;
         }
         return true;
     }
@@ -248,6 +251,18 @@ export class ConnectionUtils {
             .system()
             .version();
         return xrayVersion.xray_version;
+    }
+
+    public static async getXscVersion(logger: LogManager, jfrogClient: JfrogClient): Promise<string> {
+        try {
+            let xscVersion: IXscVersion = await jfrogClient
+                .xsc()
+                .system()
+                .version();
+            return xscVersion.xsc_version;
+        } catch (error) {
+            return '';
+        }
     }
 
     public static async getArtifactoryVersion(jfrogClient: JfrogClient): Promise<string> {
