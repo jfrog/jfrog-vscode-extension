@@ -70,11 +70,12 @@ export class ScanResults {
             this.secretsScan?.filesWithIssues?.length > 0
         );
     }
-    
+
     public get scaIssueCount(): number {
         let acc: number = 0;
         for (const descriptorIssues of this.descriptorsIssues) {
-            let issues: IVulnerability[] = (descriptorIssues.dependenciesGraphScan.violations || descriptorIssues.dependenciesGraphScan.vulnerabilities)
+            let issues: IVulnerability[] =
+                descriptorIssues.dependenciesGraphScan.violations || descriptorIssues.dependenciesGraphScan.vulnerabilities;
             for (const issue of issues) {
                 acc += issue.components.size;
             }

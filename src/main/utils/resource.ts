@@ -154,7 +154,12 @@ export class Resource {
         return ScanUtils.Hash('SHA256', fileBuffer);
     }
 
-    public async run(args: string[], checkCancel: () => void, env?: NodeJS.ProcessEnv | undefined, errIfStderrNotEmpty: boolean = true): Promise<string> {
+    public async run(
+        args: string[],
+        checkCancel: () => void,
+        env?: NodeJS.ProcessEnv | undefined,
+        errIfStderrNotEmpty: boolean = true
+    ): Promise<string> {
         let command: string = '"' + this.fullPath + '" ' + args.join(' ');
         this._logManager.debug("Executing '" + command + "' in directory '" + this._targetDir + "'");
         try {

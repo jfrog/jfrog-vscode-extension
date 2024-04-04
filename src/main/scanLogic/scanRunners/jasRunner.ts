@@ -130,9 +130,9 @@ export abstract class JasRunner {
         let execErr: Error | undefined;
         try {
             return await this.runRequest(checkCancel, args, params);
-        } catch (err: any) {
-            execErr = <Error>err;throw err;
-
+        } catch (err) {
+            execErr = <Error>err;
+            throw err;
         } finally {
             this.handleExecutionLog(args, execErr);
             ScanUtils.removeFolder(args.directory);

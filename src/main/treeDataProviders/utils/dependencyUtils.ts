@@ -111,9 +111,7 @@ export class DependencyUtils {
             type
         );
         if (applicableRunners?.shouldRun()) {
-            await applicableRunners
-                .scan({ msi: scanDetails.multiScanId })
-                .catch(err => ScanUtils.onScanError(err, scanManager.logManager, true));
+            await applicableRunners.scan({ msi: scanDetails.multiScanId }).catch(err => ScanUtils.onScanError(err, scanManager.logManager, true));
         }
     }
 
@@ -257,10 +255,12 @@ export class DependencyUtils {
         scanManager.logManager.logMessage('Scanning descriptor ' + dependencyIssues.fullPath + ' for dependencies issues', 'INFO');
         // Scan
         let startGraphScan: number = Date.now();
-        dependencyIssues.dependenciesGraphScan = await scanManager.scanDependencyGraph(scanProgress, descriptorGraph, checkCanceled, msi).finally(() => {
-            scanProgress.setPercentage(100);
-            dependencyIssues.graphScanTimestamp = Date.now();
-        });
+        dependencyIssues.dependenciesGraphScan = await scanManager
+            .scanDependencyGraph(scanProgress, descriptorGraph, checkCanceled, msi)
+            .finally(() => {
+                scanProgress.setPercentage(100);
+                dependencyIssues.graphScanTimestamp = Date.now();
+            });
         if (!dependencyIssues.dependenciesGraphScan.vulnerabilities && !dependencyIssues.dependenciesGraphScan.violations) {
             return 0;
         }

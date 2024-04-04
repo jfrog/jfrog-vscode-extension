@@ -782,9 +782,9 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         progress: XrayScanProgress,
         checkCanceled: () => void,
         project: string,
-        watches: string[], 
+        watches: string[],
         msi?: string,
-        packageType?: string,
+        packageType?: string
     ): Promise<IGraphResponse> {
         let client: JfrogClient = this.createJfrogClient();
         let scanService: XrayScanClient = client.xray().scan();
@@ -797,27 +797,22 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return await scanService.graph(graphRequest, progress, checkCanceled, project, watches, msi, technology);
     }
 
-    private getScanLog(
-        componentId: string,
-        project: string,
-        watches: string[], 
-        msi?: string,
-        packageType?: string): string {
-            let service: string = 'Xray';
-            let message: string = '';
-            if (msi && msi !== '') {
-                service = 'XSC';
-                message += ` Scan MSI: ${msi}`;
-                if (packageType) {
-                    message += ` Scan Technology: ${packageType}`;
-                }
+    private getScanLog(componentId: string, project: string, watches: string[], msi?: string, packageType?: string): string {
+        let service: string = 'Xray';
+        let message: string = '';
+        if (msi && msi !== '') {
+            service = 'XSC';
+            message += ` Scan MSI: ${msi}`;
+            if (packageType) {
+                message += ` Scan Technology: ${packageType}`;
             }
-            if (watches.length > 0) {
-                message += ` Using Watches: [${watches.join(', ')}]`;
-            } else if (project && project !== '') {
-                message += ` Using Project key: ${project}`;
-            }
-            return `Sending dependency graph "` + componentId + `" to ` + service + ` for analyzing.` + message;
+        }
+        if (watches.length > 0) {
+            message += ` Using Watches: [${watches.join(', ')}]`;
+        } else if (project && project !== '') {
+            message += ` Using Project key: ${project}`;
+        }
+        return `Sending dependency graph "` + componentId + `" to ` + service + ` for analyzing.` + message;
     }
 
     public async startScan(request: StartScanRequest): Promise<ScanEvent> {
@@ -871,6 +866,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             this._logManager.logMessage('Xsc is not configured. Skipping analytics...', 'DEBUG');
             return false;
         }
+        return true;
         let xscSemver: semver.SemVer = new semver.SemVer(this.xscVersion);
         if (xscSemver.compare(ConnectionManager.MINIMAL_XSC_VERSION_SUPPORTED) < 0) {
             this._logManager.logMessage(

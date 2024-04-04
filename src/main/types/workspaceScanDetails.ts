@@ -70,8 +70,8 @@ export class WorkspaceScanDetails {
 
         this._scanEvent.total_scan_duration = `${Date.now() - this._startTime}`;
         this._scanEvent.event_status = this.status;
-        this._scanEvent.total_findings = this._resultsData.issueCount
-        this._scanEvent.total_ignored_findings = this._resultsData.ignoreIssueCount
+        this._scanEvent.total_findings = this._resultsData.issueCount;
+        this._scanEvent.total_ignored_findings = this._resultsData.ignoreIssueCount;
 
         this._logManager.logMessage(
             `'${this.viewRoot.workspace.uri}' Scan event result:\n` + JSON.stringify(this._scanEvent),

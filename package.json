@@ -120,11 +120,11 @@
                     "scope": "application",
                     "markdownDescription": "Help us improve the JFrog extension by sending anonymous usage data to JFrog."
                 },
-                "jfrog.saveAdvanceLog": {
+                "jfrog.showAdvanceScanLog": {
                     "type": "boolean",
-                    "default": true,
+                    "default": false,
                     "scope": "application",
-                    "markdownDescription": "Save Jfrog Advance Security logs when running the scan."
+                    "markdownDescription": "Show the detailed advance scan logs at debug level."
                 },
                 "jfrog.logLevel": {
                     "type": "string",

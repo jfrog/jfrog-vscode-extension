@@ -103,10 +103,12 @@ export class ScanManager implements ExtensionComponent {
         const scansPromises: Promise<void>[] = [];
         for (const runner of jasRunners) {
             if (runner.shouldRun()) {
-                scansPromises.push(runner.scan({ msi: scanDetails.multiScanId }).catch(error => {
-                    this._connectionManager.logErrorWithAnalytics(error, false);
-                    scanDetails.status = ScanEventStatus.Failed;
-                }));
+                scansPromises.push(
+                    runner.scan({ msi: scanDetails.multiScanId }).catch(error => {
+                        this._connectionManager.logErrorWithAnalytics(error, false);
+                        scanDetails.status = ScanEventStatus.Failed;
+                    })
+                );
             }
         }
         return scansPromises;
@@ -121,7 +123,12 @@ export class ScanManager implements ExtensionComponent {
      * @param flatten - if true will flatten the graph and send only distinct dependencies, other wise will keep the graph as is
      * @returns the result of the scan
      */
-    public async scanDependencyGraph(progress: XrayScanProgress, graphRoot: RootNode, checkCanceled: () => void, msi?: string): Promise<IGraphResponse> {
+    public async scanDependencyGraph(
+        progress: XrayScanProgress,
+        graphRoot: RootNode,
+        checkCanceled: () => void,
+        msi?: string
+    ): Promise<IGraphResponse> {
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
         return await scanLogic.scan(graphRoot, progress, checkCanceled, msi);
     }

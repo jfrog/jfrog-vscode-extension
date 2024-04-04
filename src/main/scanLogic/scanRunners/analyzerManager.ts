@@ -148,7 +148,7 @@ export class AnalyzerManager {
             binaryVars[AnalyzerManager.ENV_HTTPS_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
         }
         // Optional log destination
-        if (Configuration.getShouldSaveJasLogs() && params?.executionLogDirectory) {
+        if (!Configuration.getShouldShowJasLogs() && params?.executionLogDirectory) {
             binaryVars.AM_LOG_DIRECTORY = params.executionLogDirectory;
         }
         // Optional Multi scan id
@@ -185,7 +185,7 @@ export class AnalyzerManager {
             // eslint-disable-next-line @typescript-eslint/no-empty-function
             let versionString: string = await this._binary.run(['version'], () => {});
             // Extract the version from the output
-            const match: RegExpMatchArray | null = versionString.match('/analyzer manager version:\\s*(\\S+)/');
+            const match: RegExpMatchArray | null = versionString.match('analyzer manager version:\\s*(\\S+)');
             if (match && match.length > 1) {
                 this._version = match[1];
             }

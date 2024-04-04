@@ -51,7 +51,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             async runBinary(
                 checkCancel: () => void,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                args: RunArgs, 
+                args: RunArgs,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 params?: BinaryEnvParams
             ): Promise<void> {
@@ -74,7 +74,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             async runBinary(
                 checkCancel: () => void,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                args: RunArgs, 
+                args: RunArgs,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 params?: BinaryEnvParams
             ): Promise<void> {
@@ -141,7 +141,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             process.env['HTTP_PROXY'] = test.proxy;
             process.env['HTTPS_PROXY'] = test.proxy;
 
-            let envVars: NodeJS.ProcessEnv | undefined = runner.createEnvForRun({executionLogDirectory: test.logPath});
+            let envVars: NodeJS.ProcessEnv | undefined = runner.createEnvForRun({ executionLogDirectory: test.logPath });
             if (test.shouldFail) {
                 assert.isUndefined(envVars);
             } else {
@@ -223,9 +223,9 @@ describe('Analyzer BinaryRunner tests', async () => {
     ].forEach(async test => {
         it('Run request - ' + test.name, async () => {
             let tempFolder: string = ScanUtils.createTmpDir();
-            let args: RunArgs = new RunArgs(tempFolder)
+            let args: RunArgs = new RunArgs(tempFolder);
             args.request.requestPath = path.join(tempFolder, 'request');
-            args.request.requestContent = 'request data'
+            args.request.requestContent = 'request data';
             args.request.responsePath = path.join(tempFolder, 'response');
 
             let runner: JasRunner = createDummyBinaryRunner(connectionManager, async () => {
