@@ -6,7 +6,7 @@ import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
 import { LogUtils } from '../../log/logUtils';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
-import { NotEntitledError, NotSupportedError, OsNotSupportedError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
+import { NotEntitledError, NotSupportedError, OsNotSupportedError, ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
 import { Utils } from '../../utils/utils';
 import { AnalyzeScanRequest, AnalyzerRequest, AnalyzerScanResponse, ScanType } from './analyzerModels';
@@ -130,17 +130,13 @@ export abstract class JasRunner {
         let execErr: Error | undefined;
         try {
             return await this.runRequest(checkCancel, args, params);
-        } catch (err) {
-            execErr = <Error>err;
-            if (err instanceof ScanCancellationError || err instanceof NotEntitledError || err instanceof NotSupportedError) {
-                throw err;
-            }
-            this._connectionManager.logErrorWithAnalytics(execErr);
+        } catch (err: any) {
+            execErr = <Error>err;throw err;
+
         } finally {
             this.handleExecutionLog(args, execErr);
             ScanUtils.removeFolder(args.directory);
         }
-        return;
     }
 
     /**

@@ -253,7 +253,7 @@ export class ConnectionUtils {
         return xrayVersion.xray_version;
     }
 
-    public static async getXscVersion(logger: LogManager, jfrogClient: JfrogClient): Promise<string> {
+    public static async getXscVersion(jfrogClient: JfrogClient): Promise<string> {
         try {
             let xscVersion: IXscVersion = await jfrogClient
                 .xsc()

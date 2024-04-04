@@ -272,11 +272,12 @@ export class CommandManager implements ExtensionComponent {
     private async showConnectionStatus() {
         if (await this._connectionManager.isSignedIn()) {
             vscode.window.showInformationMessage(this.xrayConnectionDetails());
-            if (this._connectionManager.rtUrl) {
-                return vscode.window.showInformationMessage(this.artifactoryConnectionDetails());
+            if (this._connectionManager.xscUrl && this._connectionManager.xscVersion !== '') {
+                // Optional for compatible platforms
+                vscode.window.showInformationMessage(this.xscConnectionDetails());
             }
-            if (this._connectionManager.xscUrl) {
-                return vscode.window.showInformationMessage(this.xscConnectionDetails());
+            if (this._connectionManager.rtUrl) {
+                vscode.window.showInformationMessage(this.artifactoryConnectionDetails());
             }
             return;
         }
@@ -292,7 +293,7 @@ export class CommandManager implements ExtensionComponent {
     }
 
     private xscConnectionDetails(): string {
-        return this.createServerDetailsMessage('Xsc', this._connectionManager.xscUrl, this._connectionManager.xscVersion);
+        return this.createServerDetailsMessage('Xray Source Control', this._connectionManager.xscUrl, this._connectionManager.xscVersion);
     }
 
     private artifactoryConnectionDetails(): string {

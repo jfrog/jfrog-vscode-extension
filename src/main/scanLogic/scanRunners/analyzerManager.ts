@@ -97,7 +97,7 @@ export class AnalyzerManager {
      */
     public async run(args: string[], checkCancel: () => void, env?: NodeJS.ProcessEnv | undefined): Promise<string> {
         await AnalyzerManager.FINISH_UPDATE_PROMISE;
-        return await this._binary.run(args, checkCancel, env);
+        return await this._binary.run(args, checkCancel, env, false);
     }
 
     /**
@@ -148,12 +148,12 @@ export class AnalyzerManager {
             binaryVars[AnalyzerManager.ENV_HTTPS_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
         }
         // Optional log destination
-        if (params?.executionLogDirectory) {
+        if (Configuration.getShouldSaveJasLogs() && params?.executionLogDirectory) {
             binaryVars.AM_LOG_DIRECTORY = params.executionLogDirectory;
         }
         // Optional Multi scan id
         if (params?.msi) {
-            binaryVars.ENV_MSI = params.msi;
+            binaryVars[AnalyzerManager.ENV_MSI] = params.msi;
         }
     }
 

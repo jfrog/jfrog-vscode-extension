@@ -60,28 +60,27 @@ export class ScanManager implements ExtensionComponent {
         const jasRunners: JasRunner[] = scanDetails.jasRunnerFactory.createJasRunner();
 
         progressManager.startStep('🔎 Scanning for issues', ScanManager.calculateNumberOfTasks(jasRunners, workspaceDescriptors));
-        let scanStatus: ScanEventStatus = ScanEventStatus.Completed;
         try {
-            scanDetails.startScan();
+            await scanDetails.startScan();
             checkCanceled();
             await Promise.all([
                 ...this.runDependenciesScans(workspaceDescriptors, scanDetails, checkCanceled),
-                ...this.runSourceCodeScans(await scanDetails.getMultiScanId(), jasRunners)
+                ...this.runSourceCodeScans(scanDetails, jasRunners)
             ]);
         } catch (error) {
             if (error instanceof ScanCancellationError) {
-                scanStatus = ScanEventStatus.Cancelled;
+                scanDetails.status = ScanEventStatus.Cancelled;
             } else {
-                scanStatus = ScanEventStatus.Failed;
+                scanDetails.status = ScanEventStatus.Failed;
             }
             throw error;
         } finally {
-            scanDetails.endScan(scanStatus);
+            scanDetails.endScan();
             UsageUtils.sendUsageReport(scanDetails.jasRunnerFactory.uniqFeatures, workspaceDescriptors, this.connectionManager);
         }
     }
 
-    private runDependenciesScans(
+    public runDependenciesScans(
         workspaceDescriptors: Map<PackageType, vscode.Uri[]>,
         scanDetails: WorkspaceScanDetails,
         checkCanceled: () => void
@@ -91,19 +90,23 @@ export class ScanManager implements ExtensionComponent {
         for (const [type, descriptorsPaths] of workspaceDescriptors) {
             checkCanceled();
             scansPromises.push(
-                DependencyUtils.scanPackageDependencies(this, scanDetails, type, descriptorsPaths).catch(error =>
-                    this._connectionManager.logErrorWithAnalytics(error, true)
-                )
+                DependencyUtils.scanPackageDependencies(this, scanDetails, type, descriptorsPaths).catch(error => {
+                    this._connectionManager.logErrorWithAnalytics(error, true);
+                    scanDetails.status = ScanEventStatus.Failed;
+                })
             );
         }
         return scansPromises;
     }
 
-    private runSourceCodeScans(multiScanId: string | undefined, jasRunners: JasRunner[]): Promise<void>[] {
+    private runSourceCodeScans(scanDetails: WorkspaceScanDetails, jasRunners: JasRunner[]): Promise<void>[] {
         const scansPromises: Promise<void>[] = [];
         for (const runner of jasRunners) {
             if (runner.shouldRun()) {
-                scansPromises.push(runner.scan({ msi: multiScanId }).catch(error => this._connectionManager.logErrorWithAnalytics(error, true)));
+                scansPromises.push(runner.scan({ msi: scanDetails.multiScanId }).catch(error => {
+                    this._connectionManager.logErrorWithAnalytics(error, false);
+                    scanDetails.status = ScanEventStatus.Failed;
+                }));
             }
         }
         return scansPromises;
@@ -118,9 +121,9 @@ export class ScanManager implements ExtensionComponent {
      * @param flatten - if true will flatten the graph and send only distinct dependencies, other wise will keep the graph as is
      * @returns the result of the scan
      */
-    public async scanDependencyGraph(progress: XrayScanProgress, graphRoot: RootNode, checkCanceled: () => void): Promise<IGraphResponse> {
+    public async scanDependencyGraph(progress: XrayScanProgress, graphRoot: RootNode, checkCanceled: () => void, msi?: string): Promise<IGraphResponse> {
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
-        return await scanLogic.scan(graphRoot, progress, checkCanceled);
+        return await scanLogic.scan(graphRoot, progress, checkCanceled, msi);
     }
 
     public static calculateNumberOfTasks(jasRunners: JasRunner[], workspaceDescriptors: Map<PackageType, vscode.Uri[]>): number {

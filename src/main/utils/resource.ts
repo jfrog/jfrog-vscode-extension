@@ -154,11 +154,11 @@ export class Resource {
         return ScanUtils.Hash('SHA256', fileBuffer);
     }
 
-    public async run(args: string[], checkCancel: () => void, env?: NodeJS.ProcessEnv | undefined): Promise<string> {
+    public async run(args: string[], checkCancel: () => void, env?: NodeJS.ProcessEnv | undefined, errIfStderrNotEmpty: boolean = true): Promise<string> {
         let command: string = '"' + this.fullPath + '" ' + args.join(' ');
         this._logManager.debug("Executing '" + command + "' in directory '" + this._targetDir + "'");
         try {
-            const output: string = await ScanUtils.executeCmdAsync(command, checkCancel, this._targetDir, env);
+            const output: string = await ScanUtils.executeCmdAsync(command, checkCancel, this._targetDir, env, errIfStderrNotEmpty);
             if (output.length > 0) {
                 this._logManager.logMessage('Done executing "' + command + '" with output:\n' + output, 'DEBUG');
             }

@@ -70,6 +70,7 @@ export class DependencyUtils {
                 // Create bundle for the scan
                 descriptorsParsed.add(child.fullPath);
                 let scanBundle: FileScanBundle = {
+                    multiScanId: scanDetails.multiScanId,
                     workspaceResults: scanDetails.results,
                     rootNode: scanDetails.viewRoot,
                     data: child.createEmptyScanResultsObject()
@@ -111,7 +112,7 @@ export class DependencyUtils {
         );
         if (applicableRunners?.shouldRun()) {
             await applicableRunners
-                .scan({ msi: await scanDetails.getMultiScanId() })
+                .scan({ msi: scanDetails.multiScanId })
                 .catch(err => ScanUtils.onScanError(err, scanManager.logManager, true));
         }
     }
@@ -214,7 +215,8 @@ export class DependencyUtils {
                 fileScanBundle.dataNode,
                 rootGraph,
                 scanProgress,
-                scanProgress.onProgress
+                scanProgress.onProgress,
+                fileScanBundle.multiScanId
             );
             if (issuesCount > 0) {
                 // populate data and view
@@ -249,12 +251,13 @@ export class DependencyUtils {
         projectNode: ProjectDependencyTreeNode,
         descriptorGraph: RootNode,
         scanProgress: GraphScanProgress,
-        checkCanceled: () => void
+        checkCanceled: () => void,
+        msi?: string
     ): Promise<number> {
         scanManager.logManager.logMessage('Scanning descriptor ' + dependencyIssues.fullPath + ' for dependencies issues', 'INFO');
         // Scan
         let startGraphScan: number = Date.now();
-        dependencyIssues.dependenciesGraphScan = await scanManager.scanDependencyGraph(scanProgress, descriptorGraph, checkCanceled).finally(() => {
+        dependencyIssues.dependenciesGraphScan = await scanManager.scanDependencyGraph(scanProgress, descriptorGraph, checkCanceled, msi).finally(() => {
             scanProgress.setPercentage(100);
             dependencyIssues.graphScanTimestamp = Date.now();
         });

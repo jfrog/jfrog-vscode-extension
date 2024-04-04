@@ -61,6 +61,10 @@ export class Configuration {
         return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('reportAnalytics', true);
     }
 
+    public static getShouldSaveJasLogs(): boolean {
+        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('saveAdvanceLog', true);
+    }
+
     /**
      * @returns the log level
      */

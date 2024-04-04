@@ -70,21 +70,36 @@ export class ScanResults {
             this.secretsScan?.filesWithIssues?.length > 0
         );
     }
-
-    public get cveDiscovered(): number {
-        let uniqueCVEs: Set<string> = new Set();
-        this.descriptorsIssues.forEach(descriptor => {
-            let issues: IVulnerability[] = descriptor.dependenciesGraphScan.violations || descriptor.dependenciesGraphScan.vulnerabilities;
-            issues.forEach(issue => {
-                let cveIds: string[] = issue.cves.length > 0 ? issue.cves.map(cve => cve.cve) : [issue.issue_id];
-                cveIds.forEach(cveId => uniqueCVEs.add(cveId));
-            });
-        });
-        return uniqueCVEs.size;
+    
+    public get scaIssueCount(): number {
+        let acc: number = 0;
+        for (const descriptorIssues of this.descriptorsIssues) {
+            let issues: IVulnerability[] = (descriptorIssues.dependenciesGraphScan.violations || descriptorIssues.dependenciesGraphScan.vulnerabilities)
+            for (const issue of issues) {
+                acc += issue.components.size;
+            }
+        }
+        return acc;
     }
 
     public get ignoreIssueCount(): number {
         return (this.secretsScan?.ignoreCount ?? 0) + (this.sastScan?.ignoreCount ?? 0);
+    }
+
+    public get iacIssueCount(): number {
+        return this.iacScan?.filesWithIssues?.reduce((acc, file) => acc + file.issues.length, 0) ?? 0;
+    }
+
+    public get sastIssueCount(): number {
+        return this.sastScan?.filesWithIssues?.reduce((acc, file) => acc + file.issues.length, 0) ?? 0;
+    }
+
+    public get secretsIssueCount(): number {
+        return this.secretsScan?.filesWithIssues?.reduce((acc, file) => acc + file.issues.length, 0) ?? 0;
+    }
+
+    public get issueCount(): number {
+        return this.scaIssueCount + this.iacIssueCount + this.sastIssueCount + this.secretsIssueCount;
     }
 
     get path(): string {

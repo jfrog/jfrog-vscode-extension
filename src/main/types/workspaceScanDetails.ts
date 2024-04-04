@@ -18,9 +18,9 @@ export class WorkspaceScanDetails {
     private _jasRunnerFactory: JasRunnerFactory;
 
     private _startTime: number = Date.now();
-    private _scanEventPromise?: Promise<ScanEvent>;
 
-    private _multiScanId?: string;
+    private _scanEvent?: ScanEvent;
+    private _status?: ScanEventStatus;
 
     constructor(
         manager: ScanManager,
@@ -57,38 +57,31 @@ export class WorkspaceScanDetails {
             machine_id: JfrogClient.getClientId(Object.values(os.networkInterfaces())),
             analyzer_manager_version: await this._jasRunnerFactory.analyzerManager?.version(),
             jpd_version: this._connectionManager.artifactoryVersion,
-            is_default_config: !JFrogAppsConfig.isConfigFileExist(this.results.path)
+            is_default_config: !JFrogAppsConfig.isConfigFileExist(this._resultsData.path)
         };
-        this._scanEventPromise = this._connectionManager.startScan(request);
+        this._scanEvent = await this._connectionManager.startScan(request);
     }
 
-    public async endScan(endStatus: ScanEventStatus): Promise<void> {
-        let msi: string | undefined = await this.getMultiScanId();
-        if (!msi) {
+    public async endScan(): Promise<void> {
+        if (!this._scanEvent) {
             // Analytics are disabled
             return;
         }
-        let scanEvent: ScanEvent = {
-            multi_scan_id: msi,
-            total_scan_duration: `${Date.now() - this._startTime}`,
-            event_status: endStatus,
-            total_findings: this.results.cveDiscovered,
-            total_ignored_findings: this.results.ignoreIssueCount
-        };
+
+        this._scanEvent.total_scan_duration = `${Date.now() - this._startTime}`;
+        this._scanEvent.event_status = this.status;
+        this._scanEvent.total_findings = this._resultsData.issueCount
+        this._scanEvent.total_ignored_findings = this._resultsData.ignoreIssueCount
+
         this._logManager.logMessage(
-            `'${this.viewRoot.workspace.uri}' Scan event result:\n` + JSON.stringify(scanEvent),
-            endStatus !== ScanEventStatus.Failed ? 'DEBUG' : 'ERR'
+            `'${this.viewRoot.workspace.uri}' Scan event result:\n` + JSON.stringify(this._scanEvent),
+            this.status !== ScanEventStatus.Failed ? 'DEBUG' : 'ERR'
         );
-        this._connectionManager.endScan(scanEvent);
+        this._connectionManager.endScan(this._scanEvent);
     }
 
-    public async getMultiScanId(): Promise<string | undefined> {
-        if (!this._scanEventPromise || this._multiScanId !== '') {
-            // Disabled / already finished waiting and result is stored
-            return this._multiScanId;
-        }
-        this._multiScanId = (await this._scanEventPromise).multi_scan_id;
-        return this._multiScanId;
+    public get multiScanId(): string | undefined {
+        return this._scanEvent?.multi_scan_id;
     }
 
     public get results(): ScanResults {
@@ -105,5 +98,13 @@ export class WorkspaceScanDetails {
 
     public get progressManager(): StepProgress {
         return this._scanProgressManager;
+    }
+
+    get status(): ScanEventStatus {
+        return this._status ?? (this._resultsData.failedFiles.length > 0 ? ScanEventStatus.Failed : ScanEventStatus.Completed);
+    }
+
+    set status(value: ScanEventStatus | undefined) {
+        this._status = value;
     }
 }

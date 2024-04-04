@@ -21,6 +21,7 @@ import { LogLevel, LogManager } from '../log/logManager';
 import { ScanUtils } from '../utils/scanUtils';
 import { ConnectionUtils } from './connectionUtils';
 import { Configuration } from '../utils/configuration';
+import { XrayScanClient } from 'jfrog-client-js/dist/src/Xray/XrayScanClient';
 
 export enum LoginStatus {
     Success = 'SUCCESS',
@@ -400,10 +401,12 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                     ))
                 ) {
                     this._url = '';
+                    this._xscUrl = '';
                     this._rtUrl = '';
                 }
             } else {
                 this._url = '';
+                this._xscUrl = '';
                 this._rtUrl = '';
             }
         }
@@ -760,6 +763,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         await Promise.all([await this.deletePasswordFromSecretStorage(), await this.deleteAccessTokenFromSecretStorage()]);
         await Promise.all([
             this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined),
+            this._context.globalState.update(ConnectionManager.XSC_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.RT_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.PLATFORM_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined)
@@ -778,19 +782,42 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         progress: XrayScanProgress,
         checkCanceled: () => void,
         project: string,
-        watches: string[]
+        watches: string[], 
+        msi?: string,
+        packageType?: string,
     ): Promise<IGraphResponse> {
-        let policyMessage: string = '';
-        if (watches.length > 0) {
-            policyMessage += ` Using Watches: [${watches.join(', ')}]`;
-        } else if (project && project !== '') {
-            policyMessage += ` Using Project key: ${project}`;
+        let client: JfrogClient = this.createJfrogClient();
+        let scanService: XrayScanClient = client.xray().scan();
+        let technology: string[] | undefined;
+        if (msi && msi !== '' && packageType) {
+            scanService = client.xsc().scan();
+            technology = [packageType];
         }
-        this._logManager.logMessage('Sending dependency graph "' + graphRequest.component_id + '" to Xray for analyzing.' + policyMessage, 'DEBUG');
-        return await this.createJfrogClient()
-            .xray()
-            .scan()
-            .graph(graphRequest, progress, checkCanceled, project, watches);
+        this._logManager.logMessage(this.getScanLog(graphRequest.component_id, project, watches, msi, packageType), 'DEBUG');
+        return await scanService.graph(graphRequest, progress, checkCanceled, project, watches, msi, technology);
+    }
+
+    private getScanLog(
+        componentId: string,
+        project: string,
+        watches: string[], 
+        msi?: string,
+        packageType?: string): string {
+            let service: string = 'Xray';
+            let message: string = '';
+            if (msi && msi !== '') {
+                service = 'XSC';
+                message += ` Scan MSI: ${msi}`;
+                if (packageType) {
+                    message += ` Scan Technology: ${packageType}`;
+                }
+            }
+            if (watches.length > 0) {
+                message += ` Using Watches: [${watches.join(', ')}]`;
+            } else if (project && project !== '') {
+                message += ` Using Project key: ${project}`;
+            }
+            return `Sending dependency graph "` + componentId + `" to ` + service + ` for analyzing.` + message;
     }
 
     public async startScan(request: StartScanRequest): Promise<ScanEvent> {
@@ -836,9 +863,8 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         await this.logWithAnalytics(`${err.name}: ${err.message}\n${err.stack}`, 'ERR');
     }
 
-    public async shouldReportAnalytics(): Promise<boolean> {
+    public shouldReportAnalytics(): boolean {
         if (!Configuration.getReportAnalytics()) {
-            this._logManager.logMessage('Analytics are disabled', 'DEBUG');
             return false;
         }
         if (this._xscUrl === '' || this._xscVersion === '') {
@@ -932,7 +958,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
 
     private async updateXscVersion() {
-        this._xscVersion = await ConnectionUtils.getXscVersion(this._logManager, this.createJfrogClient());
+        this._xscVersion = await ConnectionUtils.getXscVersion(this.createJfrogClient());
+        if (this._xscVersion === '') {
+            this._logManager.logMessage('Xray source control is not enabled or not supported by the connected server.', 'DEBUG');
+        }
     }
 
     private async updateArtifactoryVersion() {

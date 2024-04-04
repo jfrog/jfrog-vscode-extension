@@ -25,9 +25,9 @@ export class JasRunnerFactory {
         private scanResults: ScanResults,
         private root: IssuesRootTreeNode,
         private progressManager: StepProgress,
-        private supportedScans: SupportedScans
+        private _supportedScans: SupportedScans
     ) {
-        if (this.supportedScans.hasSupportedScan()) {
+        if (this._supportedScans.hasSupportedScan()) {
             this._analyzerManager = new AnalyzerManager(this._connectionManager, this._logManager);
         } else {
             this._logManager.logMessage('JFrog Advanced Security features are not entitled.', 'INFO');
@@ -40,6 +40,10 @@ export class JasRunnerFactory {
 
     public get analyzerManager(): AnalyzerManager | undefined {
         return this._analyzerManager;
+    }
+
+    public get supportedScans(): SupportedScans {
+        return this._supportedScans;
     }
 
     // Jas scanner support JFrog config file. Applicability is not supported by jfrog config so we create a default runner to run on the workspace.
@@ -55,7 +59,7 @@ export class JasRunnerFactory {
 
     private createSastRunners(): SastRunner[] {
         const sastRunners: SastRunner[] = [];
-        if (!this.supportedScans?.sast || !this._analyzerManager) {
+        if (!this._supportedScans?.sast || !this._analyzerManager) {
             this._logManager.logMessage('Static Application Security scanner is not entitled to scan workspace ', 'INFO');
             return sastRunners;
         }
@@ -80,7 +84,7 @@ export class JasRunnerFactory {
 
     protected createIacRunners(): IacRunner[] {
         const iacRunners: IacRunner[] = [];
-        if (!this.supportedScans?.iac || !this._analyzerManager) {
+        if (!this._supportedScans?.iac || !this._analyzerManager) {
             this._logManager.logMessage('Infrastructure as Code scanner is not entitled to scan workspace', 'INFO');
             return iacRunners;
         }
@@ -105,7 +109,7 @@ export class JasRunnerFactory {
 
     protected createSecretsRunners(): SecretsRunner[] {
         const secretsRunners: SecretsRunner[] = [];
-        if (!this.supportedScans?.secrets || !this._analyzerManager) {
+        if (!this._supportedScans?.secrets || !this._analyzerManager) {
             this._logManager.logMessage('Secrets scanner is not entitled to scan workspace', 'INFO');
             return secretsRunners;
         }
@@ -130,7 +134,7 @@ export class JasRunnerFactory {
 
     // Applicability is not supported by jfrog config so we create a default runner to run on the workspace.
     public async createApplicabilityRunner(bundlesWithIssues: FileScanBundle[], packageType: PackageType): Promise<ApplicabilityRunner | undefined> {
-        if (!this.supportedScans?.applicability || !this._analyzerManager) {
+        if (!this._supportedScans?.applicability || !this._analyzerManager) {
             this._logManager.logMessage('CVE Applicability scanner is not entitled to scan workspace', 'INFO');
             return undefined;
         }
