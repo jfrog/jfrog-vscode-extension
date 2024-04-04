@@ -30,13 +30,13 @@ describe('External Resources Repository Integration Tests', async () => {
         const expectedContent: any = JSON.parse(fs.readFileSync(dataPath, 'utf8').toString());
         assert.isDefined(expectedContent, 'Failed to read expected SecretsScanResponse content from ' + dataPath);
 
-        // Run
-        const response: SecretsScanResponse = await runner
-            .executeRequest(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest)
-            .then(runResult => runner.convertResponse(runResult));
-
-        // Assert
-        assert.isUndefined(response.filesWithIssues);
+        // Run and Assert
+        try {
+            await runner.executeRequest(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest)
+            assert.fail('Should throw error when executing runner and analyzer manager not downloaded');
+        } catch (error) {
+            assert.isDefined(error);
+        }
     });
 
     it('Should download the analyzer  manager from releases-proxy instead of direct releases.jfrog.io', async () => {
