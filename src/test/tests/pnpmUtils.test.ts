@@ -23,10 +23,10 @@ describe('Pnpm Utils Tests', async () => {
     let projectDirs: string[] = ['project-1', 'project-2'];
     let packageDescriptors: Map<PackageType, vscode.Uri[]> = new Map<PackageType, vscode.Uri[]>();
 
-    before(async () => {
+    before(async function() {
         // pnpm v8 has dropped Node.js 14 support. Skip test if Node.js version is 14 or less.
         if (parseInt(process.versions.node.slice(1).split('.')[0]) <= 14) {
-            test.skip('Skip pnpm tests for Node.js v14 or less');
+            this.skip();
         }
         // Copy test projects to temp folder
         fs.copySync(testProjectsDir, testFolder.fsPath);

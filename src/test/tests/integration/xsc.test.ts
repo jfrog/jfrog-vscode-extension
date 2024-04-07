@@ -18,7 +18,10 @@ describe('XSC Integration Tests', async () => {
     before(async function() {
         // Integration initialization
         await integrationManager.initialize();
-        if ((await ConnectionUtils.testXscVersion(integrationManager.connectionManager.createJfrogClient())) === '') {
+        try {
+            (await ConnectionUtils.testXscVersion(integrationManager.connectionManager.createJfrogClient())) !== '';
+        } catch (error) {
+            // Skip test if XSC is not supported
             this.skip();
         }
         scanManager = new ScanManager(integrationManager.connectionManager, logManager);
