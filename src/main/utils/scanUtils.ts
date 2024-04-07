@@ -171,7 +171,8 @@ export class ScanUtils {
         command: string,
         checkCancel: () => void,
         cwd?: string,
-        env?: NodeJS.ProcessEnv | undefined
+        env?: NodeJS.ProcessEnv | undefined,
+        errIfStderrNotEmpty: boolean = true
     ): Promise<string> {
         return new Promise<string>((resolve, reject) => {
             try {
@@ -183,12 +184,15 @@ export class ScanUtils {
                         if (error) {
                             reject(error);
                         } else {
-                            stderr.trim() ? reject(new Error(stderr.trim())) : resolve(stdout.trim());
+                            stderr.trim()
+                                ? errIfStderrNotEmpty
+                                    ? reject(new Error(stderr.trim()))
+                                    : resolve(stderr.trim())
+                                : resolve(stdout.trim());
                         }
                     }
                 );
-
-                const checkCancellationInterval: NodeJS.Timer = setInterval(() => {
+                const checkCancellationInterval: string | number | NodeJS.Timeout | undefined = setInterval(() => {
                     ScanUtils.cancelIfRequested(childProcess, checkCancel, reject);
                 }, ScanUtils.CANCELLATION_CHECK_INTERVAL_MS);
             } catch (error) {
@@ -320,6 +324,8 @@ export class ScanUtils {
 }
 
 export interface FileScanBundle {
+    // The ID that binds all the scans in the workspace
+    multiScanId?: string;
     // The results data of all the scans in the workspace
     workspaceResults: ScanResults;
     // The issues, if exists, found as a result of specific scan

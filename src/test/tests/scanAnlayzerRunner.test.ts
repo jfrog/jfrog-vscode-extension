@@ -6,7 +6,7 @@ import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 
 import { AnalyzeScanRequest, AnalyzerScanRun, ScanType } from '../../main/scanLogic/scanRunners/analyzerModels';
-import { JasRunner } from '../../main/scanLogic/scanRunners/jasRunner';
+import { BinaryEnvParams, JasRunner, RunArgs } from '../../main/scanLogic/scanRunners/jasRunner';
 import { AppsConfigModule } from '../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
 import { NotEntitledError, ScanCancellationError, ScanUtils } from '../../main/utils/scanUtils';
 import { Translators } from '../../main/utils/translators';
@@ -49,11 +49,11 @@ describe('Analyzer BinaryRunner tests', async () => {
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             async runBinary(
+                checkCancel: () => void,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                _yamlConfigPath: string,
+                args: RunArgs,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                _executionLogDirectory: string | undefined,
-                checkCancel: () => void
+                params?: BinaryEnvParams
             ): Promise<void> {
                 checkCancel();
                 await dummyAction();
@@ -72,11 +72,11 @@ describe('Analyzer BinaryRunner tests', async () => {
 
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             async runBinary(
+                checkCancel: () => void,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                _yamlConfigPath: string,
+                args: RunArgs,
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                _executionLogDirectory: string | undefined,
-                checkCancel: () => void
+                params?: BinaryEnvParams
             ): Promise<void> {
                 checkCancel();
                 await dummyAction();
@@ -141,7 +141,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             process.env['HTTP_PROXY'] = test.proxy;
             process.env['HTTPS_PROXY'] = test.proxy;
 
-            let envVars: NodeJS.ProcessEnv | undefined = runner.createEnvForRun(test.logPath);
+            let envVars: NodeJS.ProcessEnv | undefined = runner.createEnvForRun({ executionLogDirectory: test.logPath });
             if (test.shouldFail) {
                 assert.isUndefined(envVars);
             } else {
@@ -223,8 +223,10 @@ describe('Analyzer BinaryRunner tests', async () => {
     ].forEach(async test => {
         it('Run request - ' + test.name, async () => {
             let tempFolder: string = ScanUtils.createTmpDir();
-            let requestPath: string = path.join(tempFolder, 'request');
-            let responsePath: string = path.join(tempFolder, 'response');
+            let args: RunArgs = new RunArgs(tempFolder);
+            args.request.requestPath = path.join(tempFolder, 'request');
+            args.request.requestContent = 'request data';
+            args.request.responsePath = path.join(tempFolder, 'response');
 
             let runner: JasRunner = createDummyBinaryRunner(connectionManager, async () => {
                 if (test.shouldAbort) {
@@ -233,13 +235,13 @@ describe('Analyzer BinaryRunner tests', async () => {
                     throw new DummyRunnerError();
                 }
                 if (test.createDummyResponse) {
-                    fs.writeFileSync(responsePath, JSON.stringify({} as AnalyzerScanRun));
+                    fs.writeFileSync(args.request.responsePath, JSON.stringify({} as AnalyzerScanRun));
                 }
             });
 
             if (test.expectedErr) {
                 try {
-                    await runner.runRequest(() => undefined, 'request data', requestPath, responsePath);
+                    await runner.runRequest(() => undefined, args);
                     assert.fail('Expected run to throw error');
                 } catch (err) {
                     if (err instanceof Error) {
@@ -249,7 +251,7 @@ describe('Analyzer BinaryRunner tests', async () => {
                     }
                 }
             } else {
-                assert.doesNotThrow(async () => await runner.runRequest(() => undefined, 'request data', requestPath, responsePath));
+                assert.doesNotThrow(async () => await runner.runRequest(() => undefined, args));
             }
         });
     });

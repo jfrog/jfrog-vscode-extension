@@ -2,6 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 import { ScanUtils } from '../utils/scanUtils';
+import { ConnectionManager } from '../connect/connectionManager';
+import { Configuration } from '../utils/configuration';
 
 export class LogUtils {
     // keep up to 100 logs
@@ -24,5 +26,13 @@ export class LogUtils {
 
     public static getLogFileName(...args: string[]): string {
         return args.join('-') + '.log';
+    }
+
+    public static logErrorWithAnalytics(error: Error, connectionManager: ConnectionManager, shouldToast: boolean = false) {
+        connectionManager.logManager.logError(error, shouldToast);
+        if (!Configuration.getReportAnalytics()) {
+            return;
+        }
+        connectionManager.logWithAnalytics(`${error.name}: ${error.message}\n${error.stack}`, 'ERR');
     }
 }

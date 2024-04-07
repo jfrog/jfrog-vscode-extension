@@ -13,9 +13,10 @@ export class JFrogAppsConfig {
     private _modules: AppsConfigModule[] = [];
 
     constructor(workspace: string) {
-        let appConfigPath: string = path.join(workspace, '.jfrog', 'jfrog-apps-config.yml');
-        if (fs.existsSync(appConfigPath)) {
-            let jfrogAppsConfig: JFrogAppsConfigSchema = yaml.load(fs.readFileSync(appConfigPath, 'utf8')) as JFrogAppsConfigSchema;
+        if (JFrogAppsConfig.isConfigFileExist(workspace)) {
+            let jfrogAppsConfig: JFrogAppsConfigSchema = yaml.load(
+                fs.readFileSync(JFrogAppsConfig.getConfigFilePath(workspace), 'utf8')
+            ) as JFrogAppsConfigSchema;
             this._version = jfrogAppsConfig.version;
             if (jfrogAppsConfig.modules) {
                 for (let module of jfrogAppsConfig.modules) {
@@ -27,6 +28,14 @@ export class JFrogAppsConfig {
         if (this._modules.length === 0) {
             this._modules.push(new AppsConfigModule(workspace));
         }
+    }
+
+    private static getConfigFilePath(workspace: string): string {
+        return path.join(workspace, '.jfrog', 'jfrog-apps-config.yml');
+    }
+
+    public static isConfigFileExist(workspace: string): boolean {
+        return fs.existsSync(JFrogAppsConfig.getConfigFilePath(workspace));
     }
 
     public get version(): string {

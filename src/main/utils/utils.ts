@@ -161,17 +161,31 @@ export class Utils {
         }
     }
 
-    public static getArchitecture(): string {
+    public static getPlatform(): string {
         if (Utils.isWindows()) {
-            return 'windows-amd64';
+            return 'windows';
         }
         if (os.platform().includes('darwin')) {
-            return os.arch() === 'arm64' ? 'mac-arm64' : 'mac-amd64';
+            return 'mac';
+        }
+        return 'linux';
+    }
+
+    public static getPlatformAndArch(): string {
+        return Utils.getPlatform() + '-' + Utils.getArchitecture();
+    }
+
+    public static getArchitecture(): string {
+        if (Utils.isWindows()) {
+            return 'amd64';
+        }
+        if (os.platform().includes('darwin')) {
+            return os.arch() === 'arm64' ? 'arm64' : 'amd64';
         }
         if (os.arch().includes('arm')) {
-            return os.arch().includes('64') ? 'linux-arm64' : 'linux-arm';
+            return os.arch().includes('64') ? 'arm64' : 'arm';
         }
-        return os.arch().includes('64') ? 'linux-amd64' : 'linux-386';
+        return os.arch().includes('64') ? 'amd64' : '386';
     }
 
     public static isWindows(): boolean {

@@ -8,6 +8,8 @@ import { IProxyConfig, JfrogClient } from 'jfrog-client-js';
 import { ConnectionUtils } from '../../connect/connectionUtils';
 import { Configuration } from '../../utils/configuration';
 import { Translators } from '../../utils/translators';
+import { BinaryEnvParams } from './jasRunner';
+import { LogUtils } from '../../log/logUtils';
 
 /**
  * Analyzer manager is responsible for running the analyzer on the workspace.
@@ -19,19 +21,23 @@ export class AnalyzerManager {
         path.join(ScanUtils.getIssuesPath(), AnalyzerManager.BINARY_NAME, AnalyzerManager.BINARY_NAME)
     );
     private static readonly DOWNLOAD_URL: string = Utils.addZipSuffix(
-        AnalyzerManager.RELATIVE_DOWNLOAD_URL + '/' + Utils.getArchitecture() + '/' + AnalyzerManager.BINARY_NAME
+        AnalyzerManager.RELATIVE_DOWNLOAD_URL + '/' + Utils.getPlatformAndArch() + '/' + AnalyzerManager.BINARY_NAME
     );
+
     private static readonly JFROG_RELEASES_URL: string = 'https://releases.jfrog.io';
+    public static readonly JF_RELEASES_REPO: string = 'JF_RELEASES_REPO';
+
     public static readonly ENV_PLATFORM_URL: string = 'JF_PLATFORM_URL';
     public static readonly ENV_TOKEN: string = 'JF_TOKEN';
     public static readonly ENV_USER: string = 'JF_USER';
     public static readonly ENV_PASSWORD: string = 'JF_PASS';
+    public static readonly ENV_MSI: string = 'JF_MSI';
     public static readonly ENV_LOG_DIR: string = 'AM_LOG_DIRECTORY';
     public static readonly ENV_HTTP_PROXY: string = 'HTTP_PROXY';
     public static readonly ENV_HTTPS_PROXY: string = 'HTTPS_PROXY';
-    public static readonly JF_RELEASES_REPO: string = 'JF_RELEASES_REPO';
 
     protected _binary: Resource;
+    private _version: string = '';
     private static FINISH_UPDATE_PROMISE: Promise<boolean>;
 
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {
@@ -78,7 +84,7 @@ export class AnalyzerManager {
             try {
                 return await this._binary.update();
             } catch (error) {
-                this._logManager.logMessage('Failed to check if extension is outdated: ' + error, 'ERR');
+                LogUtils.logErrorWithAnalytics(new Error('Failed to check if extension is outdated: ' + error), this._connectionManager);
             }
         }
         return false;
@@ -90,9 +96,9 @@ export class AnalyzerManager {
      * @param checkCancel - A function that throws ScanCancellationError if the user chose to stop the scan
      * @param executionLogDirectory - the directory to save the execution log in
      */
-    public async run(args: string[], checkCancel: () => void, executionLogDirectory?: string): Promise<void> {
+    public async run(args: string[], checkCancel: () => void, env?: NodeJS.ProcessEnv | undefined): Promise<string> {
         await AnalyzerManager.FINISH_UPDATE_PROMISE;
-        await this._binary.run(args, checkCancel, this.createEnvForRun(executionLogDirectory));
+        return await this._binary.run(args, checkCancel, env, false);
     }
 
     /**
@@ -100,7 +106,7 @@ export class AnalyzerManager {
      * @param executionLogDirectory - the directory that the log will be written into, if not provided the log will be written in stdout/stderr
      * @returns list of environment variables to use while executing the runner or unidentified if credential not set
      */
-    public createEnvForRun(executionLogDirectory?: string): NodeJS.ProcessEnv | undefined {
+    public createEnvForRun(params?: BinaryEnvParams): NodeJS.ProcessEnv | undefined {
         if (!this._connectionManager.areXrayCredentialsSet()) {
             return undefined;
         }
@@ -116,7 +122,7 @@ export class AnalyzerManager {
             binaryVars[AnalyzerManager.ENV_PASSWORD] = this._connectionManager.password;
         }
 
-        this.populateOptionalInformation(binaryVars, executionLogDirectory);
+        this.populateOptionalInformation(binaryVars, params);
 
         return {
             ...process.env,
@@ -124,7 +130,7 @@ export class AnalyzerManager {
         };
     }
 
-    private populateOptionalInformation(binaryVars: NodeJS.ProcessEnv, executionLogDirectory?: string) {
+    private populateOptionalInformation(binaryVars: NodeJS.ProcessEnv, params?: BinaryEnvParams) {
         // Optional proxy information - environment variable
         let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
         let proxyHttpsUrl: string | undefined = process.env['HTTPS_PROXY'];
@@ -143,8 +149,12 @@ export class AnalyzerManager {
             binaryVars[AnalyzerManager.ENV_HTTPS_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpsUrl);
         }
         // Optional log destination
-        if (executionLogDirectory) {
-            binaryVars.AM_LOG_DIRECTORY = executionLogDirectory;
+        if (!Configuration.getShouldShowJasLogs() && params?.executionLogDirectory) {
+            binaryVars.AM_LOG_DIRECTORY = params.executionLogDirectory;
+        }
+        // Optional Multi scan id
+        if (params?.msi) {
+            binaryVars[AnalyzerManager.ENV_MSI] = params.msi;
         }
     }
 
@@ -165,5 +175,25 @@ export class AnalyzerManager {
             }
         }
         return url;
+    }
+
+    public async version(): Promise<string | undefined> {
+        if (this._version !== '') {
+            return this._version;
+        }
+        await AnalyzerManager.FINISH_UPDATE_PROMISE;
+        try {
+            // eslint-disable-next-line @typescript-eslint/no-empty-function
+            let versionString: string = await this._binary.run(['version'], () => {});
+            // Extract the version from the output
+            const match: RegExpMatchArray | null = versionString.match('analyzer manager version:\\s*(\\S+)');
+            if (match && match.length > 1) {
+                this._version = match[1];
+            }
+        } catch (error) {
+            LogUtils.logErrorWithAnalytics(<Error>error, this._connectionManager);
+            return undefined;
+        }
+        return this._version;
     }
 }

@@ -15,7 +15,6 @@ import { GeneralInfo } from '../../main/types/generalInfo';
  * Test functionality of @class PnpmUtils.
  */
 describe('Pnpm Utils Tests', async () => {
-    checkNodeVersionSupported();
     let logManager: LogManager = new LogManager().activate();
     let workspaceFolders: vscode.WorkspaceFolder[];
 
@@ -24,7 +23,11 @@ describe('Pnpm Utils Tests', async () => {
     let projectDirs: string[] = ['project-1', 'project-2'];
     let packageDescriptors: Map<PackageType, vscode.Uri[]> = new Map<PackageType, vscode.Uri[]>();
 
-    before(async () => {
+    before(async function() {
+        // pnpm v8 has dropped Node.js 14 support. Skip test if Node.js version is 14 or less.
+        if (parseInt(process.versions.node.slice(1).split('.')[0]) <= 14) {
+            this.skip();
+        }
         // Copy test projects to temp folder
         fs.copySync(testProjectsDir, testFolder.fsPath);
         workspaceFolders = [{ uri: testFolder, name: '', index: 0 } as vscode.WorkspaceFolder];
@@ -141,11 +144,4 @@ describe('Pnpm Utils Tests', async () => {
             assert.deepEqual(child?.parent, parent);
         }
     });
-
-    function checkNodeVersionSupported(): void {
-        // pnpm v8 has dropped Node.js 14 support. Skip test if Node.js version is 14 or less.
-        if (parseInt(process.versions.node.slice(1).split('.')[0]) <= 14) {
-            test.skip('Skip pnpm tests for Node.js v14 or less');
-        }
-    }
 });

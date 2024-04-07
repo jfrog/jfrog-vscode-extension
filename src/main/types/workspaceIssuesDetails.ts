@@ -71,6 +71,38 @@ export class ScanResults {
         );
     }
 
+    public get scaIssueCount(): number {
+        let uniqueIssues: Set<string> = new Set();
+        this.descriptorsIssues.forEach(descriptorIssues => {
+            (descriptorIssues.dependenciesGraphScan.violations || descriptorIssues.dependenciesGraphScan.vulnerabilities).forEach(issue => {
+                Object.entries(issue.components).forEach((_, cName) => {
+                    uniqueIssues.add(`${issue.issue_id}${cName}`);
+                });
+            });
+        });
+        return uniqueIssues.size;
+    }
+
+    public get ignoreIssueCount(): number {
+        return (this.secretsScan?.ignoreCount ?? 0) + (this.sastScan?.ignoreCount ?? 0);
+    }
+
+    public get iacIssueCount(): number {
+        return this.iacScan?.filesWithIssues?.reduce((acc, file) => acc + file.issues.length, 0) ?? 0;
+    }
+
+    public get sastIssueCount(): number {
+        return this.sastScan?.filesWithIssues?.reduce((acc, file) => acc + file.issues.length, 0) ?? 0;
+    }
+
+    public get secretsIssueCount(): number {
+        return this.secretsScan?.filesWithIssues?.reduce((acc, file) => acc + file.issues.length, 0) ?? 0;
+    }
+
+    public get issueCount(): number {
+        return this.scaIssueCount + this.iacIssueCount + this.sastIssueCount + this.secretsIssueCount;
+    }
+
     get path(): string {
         return this._path;
     }

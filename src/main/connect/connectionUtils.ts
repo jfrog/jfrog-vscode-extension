@@ -6,6 +6,7 @@ import {
     IProxyConfig,
     ISummaryRequestModel,
     IXrayVersion,
+    IXscVersion,
     JfrogClient
 } from 'jfrog-client-js';
 import { ServerNotActiveError } from 'jfrog-client-js/dist/src/HttpClient';
@@ -19,6 +20,7 @@ import { RetryOnStatusCode } from 'jfrog-client-js/dist/model/ClientConfig';
 
 export enum EntitlementScanFeature {
     Applicability = 'contextual_analysis',
+    Sast = 'sast',
     Iac = 'iac_scanners',
     Secrets = 'secrets_detection'
 }
@@ -26,6 +28,8 @@ export enum EntitlementScanFeature {
 export class ConnectionUtils {
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI: any = semver.coerce('3.21.2');
     private static readonly MINIMAL_XRAY_VERSION_SUPPORTED: any = semver.coerce('3.29.0');
+    private static readonly MINIMAL_XSC_VERSION_SUPPORTED: any = semver.coerce('1.7.7');
+
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     static readonly USER_AGENT: string = 'jfrog-vscode-extension/' + require('../../../package.json').version;
 
@@ -87,6 +91,22 @@ export class ConnectionUtils {
             .artifactory()
             .system()
             .ping();
+    }
+
+    public static async validateXscConnection(
+        url: string,
+        username: string,
+        password: string,
+        accessToken: string,
+        logManager: LogManager
+    ): Promise<boolean> {
+        let jfrogClient: JfrogClient = this.createJfrogClient(url, '', '', username, password, accessToken, logManager);
+        try {
+            return (await this.testXscVersion(jfrogClient)) !== '';
+        } catch (error) {
+            logManager.logMessage(<string>error, 'DEBUG');
+            return false;
+        }
     }
 
     /**
@@ -201,14 +221,61 @@ export class ConnectionUtils {
         return Promise.resolve(status);
     }
 
+    /**
+     * Check Xsc connection.
+     * @returns true iff success.
+     * @param xscUrl
+     * @param username
+     * @param password
+     * @param accessToken - Access Token
+     */
+    public static async checkXscConnection(
+        url: string,
+        username: string,
+        password: string,
+        accessToken: string,
+        prompt: boolean,
+        logger: LogManager
+    ): Promise<boolean> {
+        const status: boolean = await ConnectionUtils.validateXscConnection(url, username, password, accessToken, logger);
+        let statusStr: string = 'failed.';
+        if (status) {
+            statusStr = 'success.';
+        }
+        const msg: string = 'Xray-Source-Control connection ' + statusStr;
+        if (prompt) {
+            vscode.window.showInformationMessage(msg);
+        } else {
+            logger.logMessage(msg, 'DEBUG');
+        }
+        return Promise.resolve(status);
+    }
+
     public static async testXrayVersion(jfrogClient: JfrogClient): Promise<string> {
         let xrayVersion: string = await this.getXrayVersion(jfrogClient);
-        if (!(await this.isXrayVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED))) {
+        if (!this.isVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED)) {
             return Promise.reject(
                 'Unsupported Xray version: ' + xrayVersion + ', version ' + ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED + ' or above is required.'
             );
         }
         return Promise.resolve('Successfully connected to Xray version: ' + xrayVersion);
+    }
+
+    public static async testXscVersion(jfrogClient: JfrogClient): Promise<string> {
+        let xscVersion: string = await this.getXscVersion(jfrogClient);
+        if (xscVersion === '') {
+            return Promise.reject('Xray-Source-Control is not supported.');
+        }
+        if (!this.isVersionCompatible(xscVersion, ConnectionUtils.MINIMAL_XSC_VERSION_SUPPORTED)) {
+            return Promise.reject(
+                'Unsupported Xray-Source-Control version: ' +
+                    xscVersion +
+                    ', version ' +
+                    ConnectionUtils.MINIMAL_XSC_VERSION_SUPPORTED +
+                    ' or above is required.'
+            );
+        }
+        return Promise.resolve('Successfully connected to Xsc version: ' + xscVersion);
     }
 
     public static async testXrayEntitlementForFeature(jfrogClient: JfrogClient, feature: EntitlementScanFeature): Promise<boolean> {
@@ -220,7 +287,7 @@ export class ConnectionUtils {
 
     public static async testXrayVersionForCi(jfrogClient: JfrogClient, logger: LogManager): Promise<boolean> {
         let xrayVersion: string = await this.getXrayVersion(jfrogClient);
-        if (!(await this.isXrayVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI))) {
+        if (!this.isVersionCompatible(xrayVersion, ConnectionUtils.MINIMAL_XRAY_VERSION_SUPPORTED_FOR_CI)) {
             logger.logMessage(
                 'Unsupported Xray version for builds scan: ' +
                     xrayVersion +
@@ -234,10 +301,10 @@ export class ConnectionUtils {
         return true;
     }
 
-    public static async isXrayVersionCompatible(curXrayVersion: string, minXrayVersion: SemVer): Promise<boolean> {
-        if (curXrayVersion !== 'Unknown') {
-            let xraySemver: semver.SemVer = new semver.SemVer(curXrayVersion);
-            return xraySemver.compare(minXrayVersion) >= 0;
+    public static isVersionCompatible(curVersion: string, minVersion: SemVer): boolean {
+        if (curVersion !== 'Unknown') {
+            let xraySemver: semver.SemVer = new semver.SemVer(curVersion);
+            return xraySemver.compare(minVersion) >= 0;
         }
         return true;
     }
@@ -248,6 +315,18 @@ export class ConnectionUtils {
             .system()
             .version();
         return xrayVersion.xray_version;
+    }
+
+    public static async getXscVersion(jfrogClient: JfrogClient): Promise<string> {
+        try {
+            let xscVersion: IXscVersion = await jfrogClient
+                .xsc()
+                .system()
+                .version();
+            return xscVersion.xsc_version;
+        } catch (error) {
+            return '';
+        }
     }
 
     public static async getArtifactoryVersion(jfrogClient: JfrogClient): Promise<string> {

@@ -6,7 +6,7 @@ import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
 import { LogUtils } from '../../log/logUtils';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
-import { NotEntitledError, NotSupportedError, OsNotSupportedError, ScanCancellationError, ScanUtils } from '../../utils/scanUtils';
+import { NotEntitledError, NotSupportedError, OsNotSupportedError, ScanUtils } from '../../utils/scanUtils';
 import { Translators } from '../../utils/translators';
 import { Utils } from '../../utils/utils';
 import { AnalyzeScanRequest, AnalyzerRequest, AnalyzerScanResponse, ScanType } from './analyzerModels';
@@ -15,7 +15,7 @@ import { AnalyzerManager } from './analyzerManager';
 /**
  * Arguments for running binary async
  */
-class RunArgs {
+export class RunArgs {
     // The requests for the run
     public request: RunRequest = {} as RunRequest;
     // The directory that the requests/responses are expected
@@ -34,6 +34,12 @@ interface RunRequest {
     requestPath: string;
     roots: string[];
     responsePath: string;
+}
+
+// Parameters that are passed to the analyzer manager when running a scan
+export interface BinaryEnvParams {
+    executionLogDirectory?: string;
+    msi?: string;
 }
 
 /**
@@ -55,7 +61,7 @@ export abstract class JasRunner {
     /**
      * Run full JAS scan for the specific scanner.
      */
-    public abstract scan(): Promise<void>;
+    public abstract scan(params?: BinaryEnvParams): Promise<void>;
 
     public get config() {
         return this._config;
@@ -68,12 +74,7 @@ export abstract class JasRunner {
      * @param checkCancel           - Check if should cancel
      * @param responsePath          - Path to the output file
      */
-    protected abstract runBinary(
-        yamlConfigPath: string,
-        executionLogDirectory: string,
-        checkCancel: () => void,
-        responsePath: string | undefined
-    ): Promise<void>;
+    protected abstract runBinary(checkCancel: () => void, args: RunArgs, params?: BinaryEnvParams): Promise<void>;
 
     /**
      * @returns true if should run the JAS scanner
@@ -92,16 +93,18 @@ export abstract class JasRunner {
      * @param args - Arguments for the command
      * @param executionLogDirectory - Directory to save the execution log in
      */
-    protected async runAnalyzerManager(checkCancel: () => void, args: string[], executionLogDirectory?: string): Promise<void> {
+    protected async runAnalyzerManager(checkCancel: () => void, args: string[], env?: NodeJS.ProcessEnv | undefined): Promise<void> {
         checkCancel();
-        await this._analyzerManager.run(args, checkCancel, executionLogDirectory);
+        await this._analyzerManager.run(args, checkCancel, env);
     }
 
-    protected logStartScanning(request: AnalyzeScanRequest): void {
-        this._logManager.logMessage(
-            `Scanning directories '${request.roots}', for ${this._scanType} issues. Skipping folders: ${request.skipped_folders}`,
-            'DEBUG'
-        );
+    protected logStartScanning(request: AnalyzeScanRequest, msi?: string): void {
+        let msg: string = `Scanning directories '${request.roots}', for ${this._scanType} issues.`;
+        if (msi) {
+            msg += `\nMultiScanId: ${msi}`;
+        }
+        msg += ` Skipping folders: ${request.skipped_folders}`;
+        this._logManager.logMessage(msg, 'DEBUG');
     }
 
     protected logNumberOfIssues(issuesCount: number, workspace: string, startTime: number, endTime: number): void {
@@ -118,22 +121,22 @@ export abstract class JasRunner {
      * @param request     - Request to perform in YAML format
      * @returns
      */
-    public async executeRequest(checkCancel: () => void, request: AnalyzeScanRequest): Promise<AnalyzerScanResponse | undefined> {
+    public async executeRequest(
+        checkCancel: () => void,
+        request: AnalyzeScanRequest,
+        params?: BinaryEnvParams
+    ): Promise<AnalyzerScanResponse | undefined> {
         let args: RunArgs = this.createRunArguments(request);
         let execErr: Error | undefined;
         try {
-            return await this.runRequest(checkCancel, args.request.requestContent, args.request.requestPath, args.request.responsePath);
+            return await this.runRequest(checkCancel, args, params);
         } catch (err) {
             execErr = <Error>err;
-            if (err instanceof ScanCancellationError || err instanceof NotEntitledError || err instanceof NotSupportedError) {
-                throw err;
-            }
-            this._logManager.logError(execErr);
+            throw err;
         } finally {
             this.handleExecutionLog(args, execErr);
             ScanUtils.removeFolder(args.directory);
         }
-        return;
     }
 
     /**
@@ -233,14 +236,19 @@ export abstract class JasRunner {
      * @param responsePath - Path of the response for request in the run
      * @returns the response from all the binary runs
      */
-    public async runRequest(checkCancel: () => void, request: string, requestPath: string, responsePath: string): Promise<AnalyzerScanResponse> {
+    public async runRequest(checkCancel: () => void, args: RunArgs, params?: BinaryEnvParams): Promise<AnalyzerScanResponse> {
+        // 0. Prepare args.request.requestContent, args.request.requestPath, args.request.responsePath
+        if (params && !params.executionLogDirectory) {
+            params.executionLogDirectory = path.dirname(args.request.requestPath);
+        }
+
         // 1. Save requests as yaml file in folder
-        fs.writeFileSync(requestPath, request);
-        this._logManager.debug('Input YAML:\n' + request);
+        fs.writeFileSync(args.request.requestPath, args.request.requestContent);
+        this._logManager.debug('Input YAML:\n' + args.request.requestContent);
 
         // 2. Run the binary
         try {
-            await this.runBinary(requestPath, path.dirname(requestPath), checkCancel, responsePath);
+            await this.runBinary(checkCancel, args, params);
         } catch (error) {
             let code: number | undefined = (<any>error).code;
             if (code) {
@@ -262,12 +270,15 @@ export abstract class JasRunner {
             throw error;
         }
         // 3. Collect responses
-        if (!fs.existsSync(responsePath)) {
+        if (!fs.existsSync(args.request.responsePath)) {
             throw new Error(
-                "Running '" + Translators.toAnalyzerTypeString(this._scanType) + "' binary didn't produce response.\nRequest: " + request
+                "Running '" +
+                    Translators.toAnalyzerTypeString(this._scanType) +
+                    "' binary didn't produce response.\nRequest: " +
+                    args.request.requestContent
             );
         }
         // Load result and parse as response
-        return JSON.parse(fs.readFileSync(responsePath, 'utf8').toString());
+        return JSON.parse(fs.readFileSync(args.request.responsePath, 'utf8').toString());
     }
 }

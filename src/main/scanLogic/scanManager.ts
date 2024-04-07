@@ -4,20 +4,22 @@ import { ExtensionComponent } from '../extensionComponent';
 import { ConnectionManager } from '../connect/connectionManager';
 import { LogManager } from '../log/logManager';
 
-import { IGraphResponse, XrayScanProgress } from 'jfrog-client-js';
+import { IGraphResponse, ScanEventStatus, XrayScanProgress } from 'jfrog-client-js';
 import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { StepProgress } from '../treeDataProviders/utils/stepProgress';
-import { ScanUtils } from '../utils/scanUtils';
+import { ScanCancellationError, ScanUtils } from '../utils/scanUtils';
 import { Utils } from '../utils/utils';
 import { GraphScanLogic } from './scanGraphLogic';
 import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
 import { ScanResults } from '../types/workspaceIssuesDetails';
-import { JasRunnerFactory } from './sourceCodeScan/jasRunnerFactory';
 import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
 import { PackageType } from '../types/projectType';
 import { UsageUtils } from '../utils/usageUtils';
 import { JasRunner } from './scanRunners/jasRunner';
 import { SupportedScans } from './sourceCodeScan/supportedScans';
+import { WorkspaceScanDetails } from '../types/workspaceScanDetails';
+import { Configuration } from '../utils/configuration';
+import { LogUtils } from '../log/logUtils';
 
 /**
  * Scan manager is responsible for running the scan on the workspace.
@@ -43,59 +45,74 @@ export class ScanManager implements ExtensionComponent {
     /**
      * Scan the workspace for dependencies and source code vulnerabilities.
      */
-    public async scanWorkspace(scanResults: ScanResults, root: IssuesRootTreeNode, progressManager: StepProgress, checkCanceled: () => void) {
-        let workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors([root.workspace], this._logManager);
-
-        const entitledJasRunnerFactory: JasRunnerFactory = new JasRunnerFactory(
-            this._connectionManager,
-            this._logManager,
+    public async scanWorkspace(
+        scanResults: ScanResults,
+        root: IssuesRootTreeNode,
+        progressManager: StepProgress,
+        workspaceDescriptors: Map<PackageType, vscode.Uri[]>,
+        checkCanceled: () => void
+    ) {
+        const scanDetails: WorkspaceScanDetails = new WorkspaceScanDetails(
+            this,
+            await new SupportedScans(this._connectionManager, this._logManager).getSupportedScans(),
             scanResults,
             root,
-            progressManager,
-            await new SupportedScans(this._connectionManager, this._logManager).getSupportedScans()
+            progressManager
         );
-        const jasRunners: JasRunner[] = await entitledJasRunnerFactory.createJasRunner();
+        const jasRunners: JasRunner[] = scanDetails.jasRunnerFactory.createJasRunner();
+
         progressManager.startStep('🔎 Scanning for issues', ScanManager.calculateNumberOfTasks(jasRunners, workspaceDescriptors));
-        checkCanceled();
-        await Promise.all([
-            ...this.runDependenciesScans(workspaceDescriptors, root, checkCanceled, scanResults, progressManager, entitledJasRunnerFactory),
-            ...this.runSourceCodeScans(jasRunners)
-        ]);
-        UsageUtils.sendUsageReport(entitledJasRunnerFactory.uniqFeatures, workspaceDescriptors, this.connectionManager);
+        try {
+            if (Configuration.getReportAnalytics()) {
+                await scanDetails.startScan();
+            }
+            checkCanceled();
+            await Promise.all([
+                ...this.runDependenciesScans(workspaceDescriptors, scanDetails, checkCanceled),
+                ...this.runSourceCodeScans(scanDetails, jasRunners)
+            ]);
+        } catch (error) {
+            if (error instanceof ScanCancellationError) {
+                scanDetails.status = ScanEventStatus.Cancelled;
+            } else {
+                scanDetails.status = ScanEventStatus.Failed;
+            }
+            throw error;
+        } finally {
+            scanDetails.endScan();
+            UsageUtils.sendUsageReport(scanDetails.jasRunnerFactory.uniqFeatures, workspaceDescriptors, this.connectionManager);
+        }
     }
 
-    private runDependenciesScans(
+    public runDependenciesScans(
         workspaceDescriptors: Map<PackageType, vscode.Uri[]>,
-        root: IssuesRootTreeNode,
-        checkCanceled: () => void,
-        scanResults: ScanResults,
-        progressManager: StepProgress,
-        entitledJasRunnerFactory: JasRunnerFactory
+        scanDetails: WorkspaceScanDetails,
+        checkCanceled: () => void
     ): Promise<void>[] {
         const scansPromises: Promise<void>[] = [];
 
         for (const [type, descriptorsPaths] of workspaceDescriptors) {
             checkCanceled();
             scansPromises.push(
-                DependencyUtils.scanPackageDependencies(
-                    this,
-                    scanResults,
-                    root,
-                    type,
-                    descriptorsPaths,
-                    progressManager,
-                    entitledJasRunnerFactory
-                ).catch(error => this._logManager.logError(error, true))
+                DependencyUtils.scanPackageDependencies(this, scanDetails, type, descriptorsPaths).catch(error => {
+                    LogUtils.logErrorWithAnalytics(error, this._connectionManager, true);
+                    scanDetails.status = ScanEventStatus.Failed;
+                })
             );
         }
         return scansPromises;
     }
 
-    private runSourceCodeScans(jasRunners: JasRunner[]): Promise<void>[] {
+    private runSourceCodeScans(scanDetails: WorkspaceScanDetails, jasRunners: JasRunner[]): Promise<void>[] {
         const scansPromises: Promise<void>[] = [];
         for (const runner of jasRunners) {
             if (runner.shouldRun()) {
-                scansPromises.push(runner.scan().catch(error => this._logManager.logError(error, true)));
+                scansPromises.push(
+                    runner.scan({ msi: scanDetails.multiScanId }).catch(error => {
+                        LogUtils.logErrorWithAnalytics(error, this._connectionManager);
+                        scanDetails.status = ScanEventStatus.Failed;
+                    })
+                );
             }
         }
         return scansPromises;
@@ -110,9 +127,14 @@ export class ScanManager implements ExtensionComponent {
      * @param flatten - if true will flatten the graph and send only distinct dependencies, other wise will keep the graph as is
      * @returns the result of the scan
      */
-    public async scanDependencyGraph(progress: XrayScanProgress, graphRoot: RootNode, checkCanceled: () => void): Promise<IGraphResponse> {
+    public async scanDependencyGraph(
+        progress: XrayScanProgress,
+        graphRoot: RootNode,
+        checkCanceled: () => void,
+        msi?: string
+    ): Promise<IGraphResponse> {
         let scanLogic: GraphScanLogic = new GraphScanLogic(this._connectionManager);
-        return await scanLogic.scan(graphRoot, progress, checkCanceled);
+        return await scanLogic.scan(graphRoot, progress, checkCanceled, msi);
     }
 
     public static calculateNumberOfTasks(jasRunners: JasRunner[], workspaceDescriptors: Map<PackageType, vscode.Uri[]>): number {

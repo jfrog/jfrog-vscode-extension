@@ -3,6 +3,7 @@ import { ConnectionManager } from '../connect/connectionManager';
 import { RootNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { Configuration } from '../utils/configuration';
+import { fromPackageType } from '../types/projectType';
 
 /**
  * Supported in Xray >= 3.29.0.
@@ -21,7 +22,7 @@ export class GraphScanLogic {
      * @param checkCanceled - method to check if the action was canceled
      * @returns the result of the scan
      */
-    public async scan(graphRoot: RootNode, progress: XrayScanProgress, checkCanceled: () => void): Promise<IGraphResponse> {
+    public async scan(graphRoot: RootNode, progress: XrayScanProgress, checkCanceled: () => void, msi?: string): Promise<IGraphResponse> {
         let graphRequest: IGraphRequestModel = {
             component_id: graphRoot.generalInfo.artifactId ?? graphRoot.xrayDependencyId,
             nodes: this.getFlattenRequestModelNodes(graphRoot, new Set<string>())
@@ -35,7 +36,9 @@ export class GraphScanLogic {
             progress,
             checkCanceled,
             Configuration.getProjectKey(),
-            Configuration.getWatches()
+            Configuration.getWatches(),
+            msi,
+            fromPackageType(graphRoot.generalInfo.pkgType)
         );
     }
 

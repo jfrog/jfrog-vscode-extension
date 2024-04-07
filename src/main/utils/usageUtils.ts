@@ -2,6 +2,7 @@ import { IUsageFeature } from 'jfrog-client-js';
 import * as vscode from 'vscode';
 import { ConnectionManager } from '../connect/connectionManager';
 import { PackageType } from '../types/projectType';
+import { Configuration } from './configuration';
 
 export class UsageUtils {
     private static translateToUsageFeature(usageFeatureDetails: Set<UsageJasScanType>): IUsageFeature[] {
@@ -32,6 +33,9 @@ export class UsageUtils {
         projectDescriptors: Map<PackageType, vscode.Uri[]>,
         connectionManager: ConnectionManager
     ) {
+        if (!Configuration.getReportAnalytics()) {
+            return;
+        }
         const features: IUsageFeature[] = [];
         features.push(...UsageUtils.translateToUsageFeature(usageFeatureDetails), ...this.getUsageFeaturesByExistTech(projectDescriptors, 'deps'));
         if (features.length === 0) {

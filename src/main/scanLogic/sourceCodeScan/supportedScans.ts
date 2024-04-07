@@ -100,7 +100,6 @@ export class SupportedScans {
      * Check if SAST scan is supported for the user
      */
     public async isSastSupported(): Promise<boolean> {
-        // TODO: change to SAST feature when Xray entitlement service support it.
-        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Applicability);
+        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Sast);
     }
 }

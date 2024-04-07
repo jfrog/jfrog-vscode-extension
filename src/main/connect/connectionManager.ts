@@ -8,15 +8,19 @@ import {
     IGraphResponse,
     IUsageFeature,
     JfrogClient,
-    XrayScanProgress
+    ScanEvent,
+    StartScanRequest,
+    XrayScanProgress,
+    XscLogLevel
 } from 'jfrog-client-js';
 import * as semver from 'semver';
 import * as vscode from 'vscode';
 import { ContextKeys, SessionStatus } from '../constants/contextKeys';
 import { ExtensionComponent } from '../extensionComponent';
-import { LogManager } from '../log/logManager';
+import { LogLevel, LogManager } from '../log/logManager';
 import { ScanUtils } from '../utils/scanUtils';
 import { ConnectionUtils } from './connectionUtils';
+import { XrayScanClient } from 'jfrog-client-js/dist/src/Xray/XrayScanClient';
 
 export enum LoginStatus {
     Success = 'SUCCESS',
@@ -35,6 +39,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     private static readonly XRAY_USERNAME_KEY: string = 'jfrog.xray.username';
     private static readonly PLATFORM_URL_KEY: string = 'jfrog.xray.platformUrl';
     private static readonly XRAY_URL_KEY: string = 'jfrog.xray.url';
+    private static readonly XSC_URL_KEY: string = 'jfrog.xsc.url';
     private static readonly RT_URL_KEY: string = 'jfrog.rt.url';
 
     // Service ID in the OS KeyStore to store and retrieve the password / access token
@@ -61,9 +66,11 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     private _username: string = '';
     private _password: string = '';
     private _xrayUrl: string = '';
+    private _xscUrl: string = '';
     private _rtUrl: string = '';
     private _url: string = '';
     private _xrayVersion: string = '';
+    private _xscVersion: string = '';
     private _artifactoryVersion: string = '';
 
     constructor(protected _logManager: LogManager) {
@@ -206,6 +213,9 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         ) {
             return false;
         }
+        if (this._url !== '') {
+            await ConnectionUtils.checkXscConnection(this._url, this._username, this._password, this._accessToken, prompt, this._logManager);
+        }
         if (this.areCompleteCredentialsSet()) {
             return await ConnectionUtils.checkArtifactoryConnection(
                 this._rtUrl,
@@ -329,6 +339,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return this._xrayUrl;
     }
 
+    public get xscUrl() {
+        return this._xscUrl;
+    }
+
     public get rtUrl() {
         return this._rtUrl;
     }
@@ -349,8 +363,16 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return this._xrayVersion;
     }
 
+    public get xscVersion() {
+        return this._xscVersion;
+    }
+
     public get artifactoryVersion() {
         return this._artifactoryVersion;
+    }
+
+    public get logManager() {
+        return this._logManager;
     }
 
     /**
@@ -363,6 +385,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         if (await ConnectionUtils.isPlatformUrl(this._url, this._username, this._password, this._accessToken, this._logManager)) {
             // _url is a platform URL
             this._xrayUrl = this.getXrayUrlFromPlatform();
+            this._xscUrl = this.getXscUrlFromPlatform();
             this._rtUrl = this.getRtUrlFromPlatform();
         } else if (this._url) {
             // _url is an Xray URL
@@ -370,6 +393,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             if (this._url.endsWith('/xray') || this._url.endsWith('/xray/')) {
                 // Assuming platform URL was extracted. Checking against Artifactory.
                 this._url = this._url.substring(0, this._url.lastIndexOf('/xray'));
+                this._xscUrl = this.getXscUrlFromPlatform();
                 this._rtUrl = this.getRtUrlFromPlatform();
                 if (
                     !(await ConnectionUtils.validateArtifactoryConnection(
@@ -385,11 +409,21 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                 }
             } else {
                 this._url = '';
+                this._xscUrl = '';
                 this._rtUrl = '';
             }
         }
+        if (
+            this._url &&
+            !(await ConnectionUtils.validateXscConnection(this._url, this._username, this._password, this._accessToken, this._logManager))
+        ) {
+            this._xscUrl = '';
+        }
         this._logManager.logMessage('Resolved JFrog platform URL: ' + this._url, 'DEBUG');
         this._logManager.logMessage('Resolved Xray URL: ' + this._xrayUrl, 'DEBUG');
+        if (this._xscUrl) {
+            this._logManager.logMessage('Resolved Xray Source Control URL: ' + this._xscUrl, 'DEBUG');
+        }
         this._logManager.logMessage('Resolved Artifactory URL: ' + this._rtUrl, 'DEBUG');
     }
 
@@ -404,6 +438,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     private getXrayUrlFromPlatform(): string {
         return this.getServiceUrlFromPlatform(this._url, 'xray');
+    }
+
+    private getXscUrlFromPlatform(): string {
+        return this.getServiceUrlFromPlatform(this._url, 'xsc');
     }
 
     public async tryCredentialsFromEnv(): Promise<LoginStatus> {
@@ -564,6 +602,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     private async setUrlsFromFilesystem(): Promise<boolean> {
         this._url = (await this._context.globalState.get(ConnectionManager.PLATFORM_URL_KEY)) || '';
         this._xrayUrl = (await this._context.globalState.get(ConnectionManager.XRAY_URL_KEY)) || '';
+        this._xscUrl = (await this._context.globalState.get(ConnectionManager.XSC_URL_KEY)) || '';
         this._rtUrl = (await this._context.globalState.get(ConnectionManager.RT_URL_KEY)) || '';
         return !!this._url || !!this._xrayUrl;
     }
@@ -574,6 +613,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     private async storeXrayUrl() {
         await this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, this._xrayUrl);
+    }
+
+    private async storeXscUrl() {
+        await this._context.globalState.update(ConnectionManager.XSC_URL_KEY, this._xscUrl);
     }
 
     private async storeRtUrl() {
@@ -703,6 +746,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     private async storeConnection(): Promise<boolean> {
         try {
             await this.storeXrayUrl();
+            await this.storeXscUrl();
             await this.storeRtUrl();
             await this.storePlatformUrl();
             await this.storeUsername();
@@ -730,6 +774,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         await Promise.all([await this.deletePasswordFromSecretStorage(), await this.deleteAccessTokenFromSecretStorage()]);
         await Promise.all([
             this._context.globalState.update(ConnectionManager.XRAY_URL_KEY, undefined),
+            this._context.globalState.update(ConnectionManager.XSC_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.RT_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.PLATFORM_URL_KEY, undefined),
             this._context.globalState.update(ConnectionManager.XRAY_USERNAME_KEY, undefined)
@@ -748,19 +793,81 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         progress: XrayScanProgress,
         checkCanceled: () => void,
         project: string,
-        watches: string[]
+        watches: string[],
+        msi?: string,
+        packageType?: string
     ): Promise<IGraphResponse> {
-        let policyMessage: string = '';
-        if (watches.length > 0) {
-            policyMessage += ` Using Watches: [${watches.join(', ')}]`;
-        } else if (project && project !== '') {
-            policyMessage += ` Using Project key: ${project}`;
+        let client: JfrogClient = this.createJfrogClient();
+        let scanService: XrayScanClient = client.xray().scan();
+        let technology: string[] | undefined;
+        if (msi && msi !== '' && packageType) {
+            scanService = client.xsc().scan();
+            technology = [packageType];
         }
-        this._logManager.logMessage('Sending dependency graph "' + graphRequest.component_id + '" to Xray for analyzing.' + policyMessage, 'DEBUG');
-        return await this.createJfrogClient()
-            .xray()
-            .scan()
-            .graph(graphRequest, progress, checkCanceled, project, watches);
+        this._logManager.logMessage(this.getScanLog(graphRequest.component_id, project, watches, msi, packageType), 'DEBUG');
+        return await scanService.graph(graphRequest, progress, checkCanceled, project, watches, msi, technology);
+    }
+
+    private getScanLog(componentId: string, project: string, watches: string[], msi?: string, packageType?: string): string {
+        let service: string = 'Xray';
+        let message: string = '';
+        if (msi && msi !== '') {
+            service += ' Source Control (XSC)';
+            message += ` Scan MSI: ${msi}`;
+            if (packageType) {
+                message += ` Scan Technology: ${packageType}`;
+            }
+        }
+        if (watches.length > 0) {
+            message += ` Using Watches: [${watches.join(', ')}]`;
+        } else if (project && project !== '') {
+            message += ` Using Project key: ${project}`;
+        }
+        return `Sending dependency graph "` + componentId + `" to ` + service + ` for analyzing.` + message;
+    }
+
+    public async startScan(request: StartScanRequest): Promise<ScanEvent> {
+        if (this._xscUrl === '') {
+            this._logManager.logMessage('Xsc is not configured. Skipping analytics...', 'DEBUG');
+            return {} as ScanEvent;
+        }
+        return this.createJfrogClient()
+            .xsc()
+            .event()
+            .startScan(request);
+    }
+
+    public async endScan(event: ScanEvent): Promise<void> {
+        if (this._xscUrl === '') {
+            return;
+        }
+        this.createJfrogClient()
+            .xsc()
+            .event()
+            .endScan(event);
+    }
+
+    public async logWithAnalytics(message: string, level: LogLevel): Promise<void> {
+        if (this._xscUrl === '') {
+            return;
+        }
+        this.createJfrogClient()
+            .xsc()
+            .event()
+            .log({
+                message: message,
+                source: 'jfrog-vscode-extension',
+                log_level: this.toXscLogLevel(level)
+            });
+    }
+
+    private toXscLogLevel(level: LogLevel): XscLogLevel {
+        if (level === 'WARN') {
+            return 'warning';
+        } else if (level === 'ERR') {
+            return 'error';
+        }
+        return level.toLowerCase() as XscLogLevel;
     }
 
     public async searchArtifactsByAql(aql: string): Promise<IAqlSearchResult> {
@@ -818,11 +925,18 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
     }
 
     private async updateJfrogVersions() {
-        await Promise.all([this.updateArtifactoryVersion(), this.updateXrayVersion()]);
+        await Promise.all([this.updateArtifactoryVersion(), this.updateXrayVersion(), this.updateXscVersion()]);
     }
 
     private async updateXrayVersion() {
         this._xrayVersion = await ConnectionUtils.getXrayVersion(this.createJfrogClient());
+    }
+
+    public async updateXscVersion() {
+        this._xscVersion = await ConnectionUtils.getXscVersion(this.createJfrogClient());
+        if (this._xscVersion === '') {
+            this._logManager.logMessage('Xray source control is not enabled or not supported by the connected server.', 'DEBUG');
+        }
     }
 
     private async updateArtifactoryVersion() {

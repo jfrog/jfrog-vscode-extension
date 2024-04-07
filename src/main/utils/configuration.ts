@@ -57,6 +57,14 @@ export class Configuration {
         return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('watches', []);
     }
 
+    public static getReportAnalytics(): boolean {
+        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('reportAnalytics', true);
+    }
+
+    public static getShouldShowJasLogs(): boolean {
+        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('showAdvanceScanLog', false);
+    }
+
     /**
      * @returns the log level
      */

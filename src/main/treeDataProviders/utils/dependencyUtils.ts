@@ -7,7 +7,7 @@ import { ScanManager } from '../../scanLogic/scanManager';
 import { GeneralInfo } from '../../types/generalInfo';
 import { PackageType } from '../../types/projectType';
 import { Severity, SeverityUtils } from '../../types/severity';
-import { DependencyScanResults, ScanResults } from '../../types/workspaceIssuesDetails';
+import { DependencyScanResults } from '../../types/workspaceIssuesDetails';
 import { GoUtils } from '../../utils/goUtils';
 import { MavenUtils } from '../../utils/mavenUtils';
 import { NpmUtils } from '../../utils/npmUtils';
@@ -26,11 +26,10 @@ import { LicenseIssueTreeNode } from '../issuesTree/descriptorTree/licenseIssueT
 import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectDependencyTreeNode';
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
-import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
-import { GraphScanProgress, StepProgress } from './stepProgress';
+import { GraphScanProgress } from './stepProgress';
 import { ApplicabilityRunner } from '../../scanLogic/scanRunners/applicabilityScan';
-import { JasRunnerFactory } from '../../scanLogic/sourceCodeScan/jasRunnerFactory';
 import { PnpmUtils } from '../../utils/pnpmUtils';
+import { WorkspaceScanDetails } from '../../types/workspaceScanDetails';
 
 export class DependencyUtils {
     public static readonly FAIL_TO_SCAN: string = '[Fail to scan]';
@@ -38,7 +37,7 @@ export class DependencyUtils {
     /**
      * Scan all the dependencies of a given package for security issues and populate the given data and view objects with the information.
      * @param scanManager - the scanManager that preforms the actual scans
-     * @param scanResults - the data object that hold the workspace issues and will be populated with data
+     * @param scanDetails - all the scan information needed for the scan (data, view, progressManager) the data object that hold the workspace issues and will be populated with data
      * @param root - the root view object of the workspace issues and will be populated with nodes
      * @param type - Package type to scan it's dependencies
      * @param descriptorsPaths - the paths for all the descriptors of the package type
@@ -47,38 +46,37 @@ export class DependencyUtils {
      */
     public static async scanPackageDependencies(
         scanManager: ScanManager,
-        scanResults: ScanResults,
-        root: IssuesRootTreeNode,
+        scanDetails: WorkspaceScanDetails,
         type: PackageType,
-        descriptorsPaths: vscode.Uri[],
-        progressManager: StepProgress,
-        entitledJasRunnerFactory: JasRunnerFactory
+        descriptorsPaths: vscode.Uri[]
     ): Promise<any> {
         let scansPromises: Promise<any>[] = [];
         let descriptorsParsed: Set<string> = new Set<string>();
         // Build dependency tree for all the package descriptors
         let packageDependenciesTree: DependenciesTreeNode = await DependencyUtils.createDependenciesTree(
-            root.workspace,
+            scanDetails.viewRoot.workspace,
             type,
             descriptorsPaths,
-            () => progressManager.onProgress,
+            () => scanDetails.progressManager.onProgress,
             scanManager.logManager
         );
-        progressManager.reportProgress();
+        scanDetails.progressManager.reportProgress();
         // Adjust progress value with 2 substeps and the new number of discovered project dependency tree items.
-        let progressIncValue: number = (descriptorsPaths.length / packageDependenciesTree.children.length) * progressManager.getStepIncValue;
+        let progressIncValue: number =
+            (descriptorsPaths.length / packageDependenciesTree.children.length) * scanDetails.progressManager.getStepIncValue;
         let bundlesWithIssues: FileScanBundle[] = [];
         for (let child of packageDependenciesTree.children) {
             if (child instanceof RootNode) {
                 // Create bundle for the scan
                 descriptorsParsed.add(child.fullPath);
                 let scanBundle: FileScanBundle = {
-                    workspaceResults: scanResults,
-                    rootNode: root,
+                    multiScanId: scanDetails.multiScanId,
+                    workspaceResults: scanDetails.results,
+                    rootNode: scanDetails.viewRoot,
                     data: child.createEmptyScanResultsObject()
                 };
                 if (this.isGraphHasBuildError(child, scanBundle, scanManager.logManager)) {
-                    progressManager.reportProgress(progressIncValue);
+                    scanDetails.progressManager.reportProgress(progressIncValue);
                     continue;
                 }
                 if (child.children.length > 0) {
@@ -89,28 +87,31 @@ export class DependencyUtils {
                             scanManager,
                             scanBundle,
                             child,
-                            progressManager.createScanProgress(child.fullPath, progressIncValue / 2)
+                            scanDetails.progressManager.createScanProgress(child.fullPath, progressIncValue / 2)
                         )
                             .then(issueCount => {
                                 if (issueCount > 0) {
                                     bundlesWithIssues.push(scanBundle);
                                 }
                             })
-                            .finally(() => progressManager.reportProgress(progressIncValue / 2))
+                            .finally(() => scanDetails.progressManager.reportProgress(progressIncValue / 2))
                     );
                 }
             }
             // Not root or have no dependencies
             // Has to be at least after error checks because files with errors has no dependencies
-            progressManager.reportProgress(progressIncValue);
+            scanDetails.progressManager.reportProgress(progressIncValue);
             descriptorsParsed.add(child.generalInfo.path);
         }
         this.reportNotFoundDescriptors(descriptorsPaths, descriptorsParsed, scanManager.logManager);
 
         await Promise.all(scansPromises);
-        const applicableRunners: ApplicabilityRunner | undefined = await entitledJasRunnerFactory.createApplicabilityRunner(bundlesWithIssues, type);
+        const applicableRunners: ApplicabilityRunner | undefined = await scanDetails.jasRunnerFactory.createApplicabilityRunner(
+            bundlesWithIssues,
+            type
+        );
         if (applicableRunners?.shouldRun()) {
-            await applicableRunners.scan().catch(err => ScanUtils.onScanError(err, scanManager.logManager, true));
+            await applicableRunners.scan({ msi: scanDetails.multiScanId }).catch(err => ScanUtils.onScanError(err, scanManager.logManager, true));
         }
     }
 
@@ -212,7 +213,8 @@ export class DependencyUtils {
                 fileScanBundle.dataNode,
                 rootGraph,
                 scanProgress,
-                scanProgress.onProgress
+                scanProgress.onProgress,
+                fileScanBundle.multiScanId
             );
             if (issuesCount > 0) {
                 // populate data and view
@@ -247,15 +249,18 @@ export class DependencyUtils {
         projectNode: ProjectDependencyTreeNode,
         descriptorGraph: RootNode,
         scanProgress: GraphScanProgress,
-        checkCanceled: () => void
+        checkCanceled: () => void,
+        msi?: string
     ): Promise<number> {
         scanManager.logManager.logMessage('Scanning descriptor ' + dependencyIssues.fullPath + ' for dependencies issues', 'INFO');
         // Scan
         let startGraphScan: number = Date.now();
-        dependencyIssues.dependenciesGraphScan = await scanManager.scanDependencyGraph(scanProgress, descriptorGraph, checkCanceled).finally(() => {
-            scanProgress.setPercentage(100);
-            dependencyIssues.graphScanTimestamp = Date.now();
-        });
+        dependencyIssues.dependenciesGraphScan = await scanManager
+            .scanDependencyGraph(scanProgress, descriptorGraph, checkCanceled, msi)
+            .finally(() => {
+                scanProgress.setPercentage(100);
+                dependencyIssues.graphScanTimestamp = Date.now();
+            });
         if (!dependencyIssues.dependenciesGraphScan.vulnerabilities && !dependencyIssues.dependenciesGraphScan.violations) {
             return 0;
         }

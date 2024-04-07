@@ -36,7 +36,6 @@ describe('Iac Integration Tests', async () => {
         expectedContent = JSON.parse(fs.readFileSync(dataPath, 'utf8').toString());
         assert.isDefined(expectedContent, 'Failed to read expected IacScanResponse content from ' + dataPath);
         // Run scan
-        // Try/Catch (with skip) should be removed after Iac is released
         response = await runner
             .executeRequest(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest)
             .then(runResult => runner.generateScanResponse(runResult));
