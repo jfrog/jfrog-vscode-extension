@@ -118,7 +118,7 @@
                     "type": "boolean",
                     "default": true,
                     "scope": "application",
-                    "markdownDescription": "Help us improve the JFrog extension by sending anonymous usage data to JFrog."
+                    "markdownDescription": "Help us improve the JFrog extension by sending analytic data and errors to JFrog."
                 },
                 "jfrog.showAdvanceScanLog": {
                     "type": "boolean",

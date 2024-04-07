@@ -32,9 +32,10 @@ describe('External Resources Repository Integration Tests', async () => {
 
         // Run and Assert
         try {
-            await runner.executeRequest(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest)
+            await runner.executeRequest(() => undefined, { roots: [testDataRoot] } as AnalyzeScanRequest);
             assert.fail('Should throw error when executing runner and analyzer manager not downloaded');
         } catch (error) {
+            assert.instanceOf(error, Error);
             assert.isDefined(error);
         }
     });

@@ -18,6 +18,8 @@ import { UsageUtils } from '../utils/usageUtils';
 import { JasRunner } from './scanRunners/jasRunner';
 import { SupportedScans } from './sourceCodeScan/supportedScans';
 import { WorkspaceScanDetails } from '../types/workspaceScanDetails';
+import { Configuration } from '../utils/configuration';
+import { LogUtils } from '../log/logUtils';
 
 /**
  * Scan manager is responsible for running the scan on the workspace.
@@ -61,7 +63,9 @@ export class ScanManager implements ExtensionComponent {
 
         progressManager.startStep('🔎 Scanning for issues', ScanManager.calculateNumberOfTasks(jasRunners, workspaceDescriptors));
         try {
-            await scanDetails.startScan();
+            if (Configuration.getReportAnalytics()) {
+                await scanDetails.startScan();
+            }
             checkCanceled();
             await Promise.all([
                 ...this.runDependenciesScans(workspaceDescriptors, scanDetails, checkCanceled),
@@ -91,7 +95,7 @@ export class ScanManager implements ExtensionComponent {
             checkCanceled();
             scansPromises.push(
                 DependencyUtils.scanPackageDependencies(this, scanDetails, type, descriptorsPaths).catch(error => {
-                    this._connectionManager.logErrorWithAnalytics(error, true);
+                    LogUtils.logErrorWithAnalytics(error, this._connectionManager, true);
                     scanDetails.status = ScanEventStatus.Failed;
                 })
             );
@@ -105,7 +109,7 @@ export class ScanManager implements ExtensionComponent {
             if (runner.shouldRun()) {
                 scansPromises.push(
                     runner.scan({ msi: scanDetails.multiScanId }).catch(error => {
-                        this._connectionManager.logErrorWithAnalytics(error, false);
+                        LogUtils.logErrorWithAnalytics(error, this._connectionManager);
                         scanDetails.status = ScanEventStatus.Failed;
                     })
                 );

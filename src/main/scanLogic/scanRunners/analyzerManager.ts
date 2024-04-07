@@ -9,6 +9,7 @@ import { ConnectionUtils } from '../../connect/connectionUtils';
 import { Configuration } from '../../utils/configuration';
 import { Translators } from '../../utils/translators';
 import { BinaryEnvParams } from './jasRunner';
+import { LogUtils } from '../../log/logUtils';
 
 /**
  * Analyzer manager is responsible for running the analyzer on the workspace.
@@ -83,7 +84,7 @@ export class AnalyzerManager {
             try {
                 return await this._binary.update();
             } catch (error) {
-                this._connectionManager.logErrorWithAnalytics(new Error('Failed to check if extension is outdated: ' + error));
+                LogUtils.logErrorWithAnalytics(new Error('Failed to check if extension is outdated: ' + error), this._connectionManager);
             }
         }
         return false;
@@ -190,7 +191,7 @@ export class AnalyzerManager {
                 this._version = match[1];
             }
         } catch (error) {
-            this._connectionManager.logErrorWithAnalytics(<Error>error);
+            LogUtils.logErrorWithAnalytics(<Error>error, this._connectionManager);
             return undefined;
         }
         return this._version;

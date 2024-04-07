@@ -1,4 +1,4 @@
-import { IGraphResponse, IVulnerability } from 'jfrog-client-js';
+import { IGraphResponse } from 'jfrog-client-js';
 import { IImpactGraph } from 'jfrog-ide-webview';
 import { ApplicabilityScanResponse } from '../scanLogic/scanRunners/applicabilityScan';
 import { IacScanResponse } from '../scanLogic/scanRunners/iacScan';
@@ -72,15 +72,15 @@ export class ScanResults {
     }
 
     public get scaIssueCount(): number {
-        let acc: number = 0;
-        for (const descriptorIssues of this.descriptorsIssues) {
-            let issues: IVulnerability[] =
-                descriptorIssues.dependenciesGraphScan.violations || descriptorIssues.dependenciesGraphScan.vulnerabilities;
-            for (const issue of issues) {
-                acc += issue.components.size;
-            }
-        }
-        return acc;
+        let uniqueIssues: Set<string> = new Set();
+        this.descriptorsIssues.forEach(descriptorIssues => {
+            (descriptorIssues.dependenciesGraphScan.violations || descriptorIssues.dependenciesGraphScan.vulnerabilities).forEach(issue => {
+                Object.entries(issue.components).forEach((_, cName) => {
+                    uniqueIssues.add(`${issue.issue_id}${cName}`);
+                });
+            });
+        });
+        return uniqueIssues.size;
     }
 
     public get ignoreIssueCount(): number {

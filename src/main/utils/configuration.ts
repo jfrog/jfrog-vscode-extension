@@ -62,7 +62,7 @@ export class Configuration {
     }
 
     public static getShouldShowJasLogs(): boolean {
-        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('showAdvanceScanLog', true);
+        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('showAdvanceScanLog', false);
     }
 
     /**

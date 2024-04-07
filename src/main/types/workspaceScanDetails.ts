@@ -43,9 +43,6 @@ export class WorkspaceScanDetails {
     }
 
     public async startScan(): Promise<void> {
-        if (!this._connectionManager.shouldReportAnalytics()) {
-            return;
-        }
         // eslint-disable-next-line @typescript-eslint/no-var-requires
         let packageJson: any = require('../../../package.json');
         let request: StartScanRequest = {
@@ -63,8 +60,8 @@ export class WorkspaceScanDetails {
     }
 
     public async endScan(): Promise<void> {
-        if (!this._scanEvent) {
-            // Analytics are disabled
+        if (!this._scanEvent || !this._scanEvent.multi_scan_id) {
+            // Analytics are disabled / failed to start scan
             return;
         }
 
@@ -74,7 +71,7 @@ export class WorkspaceScanDetails {
         this._scanEvent.total_ignored_findings = this._resultsData.ignoreIssueCount;
 
         this._logManager.logMessage(
-            `'${this.viewRoot.workspace.uri}' Scan event result:\n` + JSON.stringify(this._scanEvent),
+            `'${this.viewRoot.workspace.uri.fsPath}' Scan event result:\n` + JSON.stringify(this._scanEvent),
             this.status !== ScanEventStatus.Failed ? 'DEBUG' : 'ERR'
         );
         this._connectionManager.endScan(this._scanEvent);

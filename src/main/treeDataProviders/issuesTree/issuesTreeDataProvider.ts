@@ -25,6 +25,7 @@ import { ProjectDependencyTreeNode } from './descriptorTree/projectDependencyTre
 import { FileTreeNode } from './fileTreeNode';
 import { IssueTreeNode } from './issueTreeNode';
 import { IssuesRootTreeNode } from './issuesRootTreeNode';
+import { LogUtils } from '../../log/logUtils';
 
 /**
  * Describes Xray issues data provider for the 'Issues' tree view and provides API to get issues data for files.
@@ -89,7 +90,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
         ScanUtils.setFirstScanForWorkspace(false);
         const startRefreshTimestamp: number = Date.now();
         await this.scanWorkspaces()
-            .catch(error => this._scanManager.connectionManager.logErrorWithAnalytics(error, true))
+            .catch(error => LogUtils.logErrorWithAnalytics(error, this._scanManager.connectionManager, true))
             .finally(() => {
                 this.scanInProgress = false;
                 this.onChangeFire();
@@ -137,7 +138,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                                 root.title = 'Scan canceled';
                             } else {
                                 this._logManager.logMessage("Workspace '" + workspace.name + "' scan task ended with error:", 'ERR');
-                                this._scanManager.connectionManager.logErrorWithAnalytics(error, true);
+                                LogUtils.logErrorWithAnalytics(error, this._scanManager.connectionManager, true);
                                 root.title = 'Scan failed';
                             }
                         })

@@ -20,7 +20,6 @@ import { ExtensionComponent } from '../extensionComponent';
 import { LogLevel, LogManager } from '../log/logManager';
 import { ScanUtils } from '../utils/scanUtils';
 import { ConnectionUtils } from './connectionUtils';
-import { Configuration } from '../utils/configuration';
 import { XrayScanClient } from 'jfrog-client-js/dist/src/Xray/XrayScanClient';
 
 export enum LoginStatus {
@@ -60,8 +59,6 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
 
     // Minimal version supporting exporting default server configuration.
     private static readonly MINIMAL_JFROG_CLI_VERSION_FOR_DEFAULT_EXPORT: any = semver.coerce('2.6.1');
-    // Minimal version supporting Xsc operations.
-    private static readonly MINIMAL_XSC_VERSION_SUPPORTED: any = semver.coerce('1.7.1');
 
     private _statusBar!: vscode.StatusBarItem;
     private _context!: vscode.ExtensionContext;
@@ -215,6 +212,9 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             ))
         ) {
             return false;
+        }
+        if (this._url !== '') {
+            await ConnectionUtils.checkXscConnection(this._url, this._username, this._password, this._accessToken, prompt, this._logManager);
         }
         if (this.areCompleteCredentialsSet()) {
             return await ConnectionUtils.checkArtifactoryConnection(
@@ -371,6 +371,10 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         return this._artifactoryVersion;
     }
 
+    public get logManager() {
+        return this._logManager;
+    }
+
     /**
      * Resolve Xray and JFrog platform URLs from the input url.
      * If URL is <platform-url>, the derived Xray URL is <platform-url/xray>, and the Artifactory URL is <platform-url/artifactory>.
@@ -401,7 +405,6 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                     ))
                 ) {
                     this._url = '';
-                    this._xscUrl = '';
                     this._rtUrl = '';
                 }
             } else {
@@ -410,9 +413,17 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                 this._rtUrl = '';
             }
         }
+        if (
+            this._url &&
+            !(await ConnectionUtils.validateXscConnection(this._url, this._username, this._password, this._accessToken, this._logManager))
+        ) {
+            this._xscUrl = '';
+        }
         this._logManager.logMessage('Resolved JFrog platform URL: ' + this._url, 'DEBUG');
         this._logManager.logMessage('Resolved Xray URL: ' + this._xrayUrl, 'DEBUG');
-        this._logManager.logMessage('Resolved Xsc URL: ' + this._xscUrl, 'DEBUG');
+        if (this._xscUrl) {
+            this._logManager.logMessage('Resolved Xray Source Control URL: ' + this._xscUrl, 'DEBUG');
+        }
         this._logManager.logMessage('Resolved Artifactory URL: ' + this._rtUrl, 'DEBUG');
     }
 
@@ -801,7 +812,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         let service: string = 'Xray';
         let message: string = '';
         if (msi && msi !== '') {
-            service = 'XSC';
+            service += ' Source Control (XSC)';
             message += ` Scan MSI: ${msi}`;
             if (packageType) {
                 message += ` Scan Technology: ${packageType}`;
@@ -848,38 +859,6 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                 source: 'jfrog-vscode-extension',
                 log_level: this.toXscLogLevel(level)
             });
-    }
-
-    public async logErrorWithAnalytics(err: Error, shouldToast: boolean = false): Promise<void> {
-        this._logManager.logError(err, shouldToast);
-        if (!this.shouldReportAnalytics()) {
-            return;
-        }
-        await this.logWithAnalytics(`${err.name}: ${err.message}\n${err.stack}`, 'ERR');
-    }
-
-    public shouldReportAnalytics(): boolean {
-        if (!Configuration.getReportAnalytics()) {
-            return false;
-        }
-        if (this._xscUrl === '' || this._xscVersion === '') {
-            this._logManager.logMessage('Xsc is not configured. Skipping analytics...', 'DEBUG');
-            return false;
-        }
-        return true;
-        let xscSemver: semver.SemVer = new semver.SemVer(this.xscVersion);
-        if (xscSemver.compare(ConnectionManager.MINIMAL_XSC_VERSION_SUPPORTED) < 0) {
-            this._logManager.logMessage(
-                'Xsc version is too low to support analytics (needed: ' +
-                    ConnectionManager.MINIMAL_XSC_VERSION_SUPPORTED +
-                    ', actual: ' +
-                    this.xscVersion +
-                    ')',
-                'DEBUG'
-            );
-            return false;
-        }
-        return true;
     }
 
     private toXscLogLevel(level: LogLevel): XscLogLevel {
@@ -953,7 +932,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
         this._xrayVersion = await ConnectionUtils.getXrayVersion(this.createJfrogClient());
     }
 
-    private async updateXscVersion() {
+    public async updateXscVersion() {
         this._xscVersion = await ConnectionUtils.getXscVersion(this.createJfrogClient());
         if (this._xscVersion === '') {
             this._logManager.logMessage('Xray source control is not enabled or not supported by the connected server.', 'DEBUG');
