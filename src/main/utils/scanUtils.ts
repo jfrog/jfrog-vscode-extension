@@ -179,7 +179,6 @@ export class ScanUtils {
                 const childProcess: exec.ChildProcess = exec.exec(
                     command,
                     { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env } as exec.ExecOptions,
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     (error: exec.ExecException | null, stdout: string, stderr: string) => {
                         clearInterval(checkCancellationInterval);
                         if (error) {
@@ -193,7 +192,7 @@ export class ScanUtils {
                         }
                     }
                 );
-                const checkCancellationInterval: NodeJS.Timer = setInterval(() => {
+                const checkCancellationInterval: string | number | NodeJS.Timeout | undefined = setInterval(() => {
                     ScanUtils.cancelIfRequested(childProcess, checkCancel, reject);
                 }, ScanUtils.CANCELLATION_CHECK_INTERVAL_MS);
             } catch (error) {
