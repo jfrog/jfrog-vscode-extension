@@ -104,7 +104,7 @@ export class ConnectionUtils {
         try {
             return (await this.testXscVersion(jfrogClient)) !== '';
         } catch (error) {
-            logManager.logMessage(error, 'DEBUG');
+            logManager.logMessage(<string>error, 'DEBUG');
             return false;
         }
     }

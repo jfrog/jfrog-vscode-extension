@@ -9,7 +9,7 @@ import { BaseIntegrationEnv } from '../utils/testIntegration.test';
 import { createTestStepProgress } from '../utils/utils.test';
 import { ConnectionUtils } from '../../../main/connect/connectionUtils';
 
-describe.only('XSC Integration Tests', async () => {
+describe('XSC Integration Tests', async () => {
     const integrationManager: BaseIntegrationEnv = new BaseIntegrationEnv();
     let logManager: LogManager = new LogManager().activate();
     let scanManager: ScanManager;
