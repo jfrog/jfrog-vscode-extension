@@ -184,10 +184,12 @@ export class ScanUtils {
                         clearInterval(checkCancellationInterval);
                         if (error) {
                             reject(error);
-                        } else if (errIfStderrNotEmpty) {
-                            stderr.trim() ? reject(new Error(stderr.trim())) : resolve(stdout.trim());
                         } else {
-                            stderr.trim() ? resolve(stderr.trim()) : resolve(stdout.trim());
+                            stderr.trim()
+                                ? errIfStderrNotEmpty
+                                    ? reject(new Error(stderr.trim()))
+                                    : resolve(stderr.trim())
+                                : resolve(stdout.trim());
                         }
                     }
                 );
