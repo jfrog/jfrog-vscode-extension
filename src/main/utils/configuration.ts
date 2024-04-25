@@ -65,6 +65,10 @@ export class Configuration {
         return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('showAdvanceScanLog', false);
     }
 
+    public static getAnalyzerManagerVersion(): string {
+        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('analyzerManagerVersion', '[RELEASE]');
+    }
+
     /**
      * @returns the log level
      */
