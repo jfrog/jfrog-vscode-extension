@@ -15,7 +15,7 @@ import { ScanResults } from '../types/workspaceIssuesDetails';
 import { DependencyUtils } from '../treeDataProviders/utils/dependencyUtils';
 import { PackageType } from '../types/projectType';
 import { UsageUtils } from '../utils/usageUtils';
-import { JasRunner } from './scanRunners/jasRunner';
+import { BinaryEnvParams, JasRunner } from './scanRunners/jasRunner';
 import { SupportedScans } from './sourceCodeScan/supportedScans';
 import { WorkspaceScanDetails } from '../types/workspaceScanDetails';
 import { Configuration } from '../utils/configuration';
@@ -105,10 +105,14 @@ export class ScanManager implements ExtensionComponent {
 
     private runSourceCodeScans(scanDetails: WorkspaceScanDetails, jasRunners: JasRunner[]): Promise<void>[] {
         const scansPromises: Promise<void>[] = [];
+        let params: BinaryEnvParams | undefined;
+        if (scanDetails.multiScanId) {
+            params = { msi: scanDetails.multiScanId };
+        }
         for (const runner of jasRunners) {
             if (runner.shouldRun()) {
                 scansPromises.push(
-                    runner.scan({ msi: scanDetails.multiScanId }).catch(error => {
+                    runner.scan(params).catch(error => {
                         LogUtils.logErrorWithAnalytics(error, this._connectionManager);
                         scanDetails.status = ScanEventStatus.Failed;
                     })
