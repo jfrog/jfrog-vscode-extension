@@ -15,13 +15,10 @@ import { LogUtils } from '../../log/logUtils';
  * Analyzer manager is responsible for running the analyzer on the workspace.
  */
 export class AnalyzerManager {
-    private static readonly RELATIVE_DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1/[RELEASE]';
+    private static readonly RELATIVE_DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1';
     private static readonly BINARY_NAME: string = 'analyzerManager';
     public static readonly ANALYZER_MANAGER_PATH: string = Utils.addWinSuffixIfNeeded(
         path.join(ScanUtils.getIssuesPath(), AnalyzerManager.BINARY_NAME, AnalyzerManager.BINARY_NAME)
-    );
-    private static readonly DOWNLOAD_URL: string = Utils.addZipSuffix(
-        AnalyzerManager.RELATIVE_DOWNLOAD_URL + '/' + Utils.getPlatformAndArch() + '/' + AnalyzerManager.BINARY_NAME
     );
 
     private static readonly JFROG_RELEASES_URL: string = 'https://releases.jfrog.io';
@@ -41,8 +38,20 @@ export class AnalyzerManager {
     private static FINISH_UPDATE_PROMISE: Promise<boolean>;
 
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {
-        this._binary = new Resource(AnalyzerManager.DOWNLOAD_URL, AnalyzerManager.ANALYZER_MANAGER_PATH, _logManager, this.createJFrogCLient());
+        this._binary = new Resource(AnalyzerManager.getDownloadUrl(), AnalyzerManager.ANALYZER_MANAGER_PATH, _logManager, this.createJFrogCLient());
         AnalyzerManager.FINISH_UPDATE_PROMISE = this.checkForUpdates();
+    }
+
+    private static getDownloadUrl(): string {
+        return Utils.addZipSuffix(
+            AnalyzerManager.RELATIVE_DOWNLOAD_URL +
+                '/' +
+                Configuration.getAnalyzerManagerVersion() +
+                '/' +
+                Utils.getPlatformAndArch() +
+                '/' +
+                AnalyzerManager.BINARY_NAME
+        );
     }
 
     private createJFrogCLient(): JfrogClient {

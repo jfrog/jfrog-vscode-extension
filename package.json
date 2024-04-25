@@ -79,6 +79,12 @@
         "configuration": {
             "title": "JFrog",
             "properties": {
+                "jfrog.useSpecificScannersVersion": {
+                    "type": "string",
+                    "scope": "application",
+                    "pattern": "^$|^\\d+\\.\\d+\\.\\d+$",
+                    "markdownDescription": "Specifies the JFrog Scanners version to use. (format X.X.X). By default the latest scanners version is used."
+                },
                 "jfrog.xray.exclusions": {
                     "type": "string",
                     "default": "**/*{.git,test,venv,node_modules,target}*",
