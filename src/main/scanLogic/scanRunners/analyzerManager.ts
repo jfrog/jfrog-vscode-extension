@@ -153,7 +153,7 @@ export class AnalyzerManager {
             binaryVars.AM_LOG_DIRECTORY = params.executionLogDirectory;
         }
         // Optional Multi scan id
-        if (params?.msi) {
+        if (params?.msi && params.msi !== '') {
             binaryVars[AnalyzerManager.ENV_MSI] = params.msi;
         }
     }
