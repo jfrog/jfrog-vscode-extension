@@ -79,12 +79,11 @@
         "configuration": {
             "title": "JFrog",
             "properties": {
-                "jfrog.analyzerManagerVersion": {
+                "jfrog.useSpecificScannersVersion": {
                     "type": "string",
-                    "default": "[RELEASE]",
                     "scope": "application",
-                    "pattern": "^\\[RELEASE\\]$|^\\d+\\.\\d+\\.\\d+$",
-                    "markdownDescription": "The version of the JFrog JAS scanners used to scan your project. The default value is [RELEASE], which means the latest version will be used. You can also specify a specific version number. (format X.X.X)."
+                    "pattern": "^$|^\\d+\\.\\d+\\.\\d+$",
+                    "markdownDescription": "Specifies the JFrog Scanners version to use. (format X.X.X). By default the latest scanners version is used."
                 },
                 "jfrog.xray.exclusions": {
                     "type": "string",

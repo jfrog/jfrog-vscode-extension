@@ -66,7 +66,11 @@ export class Configuration {
     }
 
     public static getAnalyzerManagerVersion(): string {
-        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('analyzerManagerVersion', '[RELEASE]');
+        let version: string = vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('useSpecificScannersVersion', '');
+        if (version === '') {
+            version = '[RELEASE]';
+        }
+        return version;
     }
 
     /**
