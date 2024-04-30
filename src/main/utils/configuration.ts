@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { LogLevel } from '../log/logManager';
+import * as fs from 'fs';
+import { LogLevel, LogManager } from '../log/logManager';
 export class Configuration {
     public static jfrogSectionConfigurationKey: string = 'jfrog';
     public static readonly JFROG_IDE_RELEASES_REPO_ENV: string = 'JFROG_IDE_RELEASES_REPO';
@@ -71,6 +72,24 @@ export class Configuration {
             version = '[RELEASE]';
         }
         return version;
+    }
+
+    public static getSastCustomRulesPath(logManager?: LogManager): string {
+        let customRulesPath: string = vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('customRulesPath', '');
+        if (customRulesPath === '') {
+            return '';
+        }
+        let fileExists: boolean = fs.existsSync(customRulesPath);
+        if (!fileExists) {
+            if (logManager) {
+                logManager.logMessage('Custom rules file not found: ' + customRulesPath, 'WARN');
+            }
+            return '';
+        }
+        if (logManager) {
+            logManager.logMessage('Using custom rules from: ' + customRulesPath, 'DEBUG');
+        }
+        return customRulesPath;
     }
 
     /**
