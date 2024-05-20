@@ -5,6 +5,7 @@ import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
 import { StepProgress } from '../../treeDataProviders/utils/stepProgress';
 import { Severity } from '../../types/severity';
 import { ScanResults } from '../../types/workspaceIssuesDetails';
+import { Configuration } from '../../utils/configuration';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { Translators } from '../../utils/translators';
 import { AnalyzerManager } from './analyzerManager';
@@ -26,6 +27,7 @@ import { BinaryEnvParams, JasRunner, RunArgs } from './jasRunner';
  */
 export interface SastScanRequest extends AnalyzeScanRequest {
     language: LanguageType;
+    user_rules: string;
     exclude_patterns: string[];
     excluded_rules: string[];
 }
@@ -92,6 +94,7 @@ export class SastRunner extends JasRunner {
             type: this._scanType,
             roots: this._config.GetSourceRoots(this._scanType),
             language: this._config.GetScanLanguage(),
+            user_rules: Configuration.getSastCustomRulesPath(this._logManager),
             excluded_rules: this._config.getExcludeRules(),
             exclude_patterns: this._config.GetExcludePatterns(this._scanType)
         } as SastScanRequest;

@@ -85,6 +85,11 @@
                     "pattern": "^$|^\\d+\\.\\d+\\.\\d+$",
                     "markdownDescription": "Specifies the JFrog Scanners version to use. (format X.X.X). By default the latest scanners version is used."
                 },
+                "jfrog.customRulesPath": {
+                    "type": "string",
+                    "scope": "resource",
+                    "markdownDescription": "Absolute Path to a local custom rules file. The file should be in JSON format and contain the additional custom rules to be applied during the scan."
+                },
                 "jfrog.xray.exclusions": {
                     "type": "string",
                     "default": "**/*{.git,test,venv,node_modules,target}*",
