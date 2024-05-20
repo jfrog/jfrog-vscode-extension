@@ -15,7 +15,7 @@ jobs:
             git config --global user.name "jfrog-ecosystem"
             git config --global user.email "eco-system@jfrog.com"
       - name: Setup NodeJS
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: "16"
           check-latest: true
