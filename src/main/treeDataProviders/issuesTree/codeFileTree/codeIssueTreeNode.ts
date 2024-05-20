@@ -21,7 +21,7 @@ export abstract class CodeIssueTreeNode extends IssueTreeNode {
         return this._regionWithIssue;
     }
 
-    // For vscode the minimum value (i.e first row/col) is 0. 
+    // For vscode the minimum value (i.e first row/col) is 0.
     // For analyzers, the minimum value is 1. (some uses 0 as well)
     private toVscodePosition(position: vscode.Position): vscode.Position {
         let line: number = position.line > 0 ? position.line - 1 : 0;

@@ -29,7 +29,7 @@ export class Configuration {
     }
 
     public static getBuildsPattern(): string {
-        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('xray.ciIntegration.buildNamePattern') || '';
+        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('view.ciIntegration.buildNamePattern') || '';
     }
 
     public static getExternalResourcesRepository(): string {
