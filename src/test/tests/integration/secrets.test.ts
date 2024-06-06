@@ -18,7 +18,7 @@ import { ScanManager } from '../../../main/scanLogic/scanManager';
 import { PackageType } from '../../../main/types/projectType';
 import { Uri } from 'vscode';
 
-describe('Secrets Scan Integration Tests', async () => {
+describe.only('Secrets Scan Integration Tests', async () => {
     const integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
     const testDataRoot: string = path.join(__dirname, '..', '..', 'resources', 'secretsScan');
 
