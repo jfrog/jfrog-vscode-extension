@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { LogLevel, LogManager } from '../log/logManager';
+import { AnalyzerManager } from '../scanLogic/scanRunners/analyzerManager';
 export class Configuration {
     public static jfrogSectionConfigurationKey: string = 'jfrog';
     public static readonly JFROG_IDE_RELEASES_REPO_ENV: string = 'JFROG_IDE_RELEASES_REPO';
@@ -69,7 +70,7 @@ export class Configuration {
     public static getAnalyzerManagerVersion(): string {
         let version: string = vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('useSpecificScannersVersion', '');
         if (version === '') {
-            version = '[RELEASE]';
+            version = AnalyzerManager.ANALYZER_MANAGER_VERSION;
         }
         return version;
     }
