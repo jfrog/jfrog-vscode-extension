@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import { LogLevel, LogManager } from '../log/logManager';
-import { AnalyzerManager } from '../scanLogic/scanRunners/analyzerManager';
 export class Configuration {
     public static jfrogSectionConfigurationKey: string = 'jfrog';
     public static readonly JFROG_IDE_RELEASES_REPO_ENV: string = 'JFROG_IDE_RELEASES_REPO';
