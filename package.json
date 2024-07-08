@@ -83,7 +83,7 @@
                     "type": "string",
                     "scope": "application",
                     "pattern": "^$|^\\d+\\.\\d+\\.\\d+$",
-                    "markdownDescription": "Specifies the JFrog Scanners version to use. (format X.X.X). By default the latest stable scanners version is used."
+                    "markdownDescription": "Specifies the JFrog Scanners version to use. (format X.X.X). By default the latest scanners version is used."
                 },
                 "jfrog.customRulesPath": {
                     "type": "string",
