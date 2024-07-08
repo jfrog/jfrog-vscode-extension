@@ -56,7 +56,7 @@ export class AnalyzerManager {
     }
 
     private static getAnalyzerManagerVersion(): string {
-        let version: string = AnalyzerManager.getAnalyzerManagerVersion();
+        let version: string = Configuration.getAnalyzerManagerVersion();
         if (version !== '') {
             return version;
         }
