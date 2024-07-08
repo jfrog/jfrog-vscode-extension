@@ -67,11 +67,7 @@ export class Configuration {
     }
 
     public static getAnalyzerManagerVersion(): string {
-        let version: string = vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('useSpecificScannersVersion', '');
-        if (version === '') {
-            version = '[RELEASE]';
-        }
-        return version;
+        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('useSpecificScannersVersion', '');
     }
 
     public static getSastCustomRulesPath(logManager?: LogManager): string {

@@ -17,6 +17,7 @@ import { LogUtils } from '../../log/logUtils';
 export class AnalyzerManager {
     private static readonly RELATIVE_DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1';
     private static readonly BINARY_NAME: string = 'analyzerManager';
+    public static readonly ANALYZER_MANAGER_VERSION: string = '1.8.3';
     public static readonly ANALYZER_MANAGER_PATH: string = Utils.addWinSuffixIfNeeded(
         path.join(ScanUtils.getIssuesPath(), AnalyzerManager.BINARY_NAME, AnalyzerManager.BINARY_NAME)
     );
@@ -46,12 +47,20 @@ export class AnalyzerManager {
         return Utils.addZipSuffix(
             AnalyzerManager.RELATIVE_DOWNLOAD_URL +
                 '/' +
-                Configuration.getAnalyzerManagerVersion() +
+                AnalyzerManager.getAnalyzerManagerVersion() +
                 '/' +
                 Utils.getPlatformAndArch() +
                 '/' +
                 AnalyzerManager.BINARY_NAME
         );
+    }
+
+    private static getAnalyzerManagerVersion(): string {
+        let version: string = AnalyzerManager.getAnalyzerManagerVersion();
+        if (version !== '') {
+            return version;
+        }
+        return AnalyzerManager.ANALYZER_MANAGER_VERSION;
     }
 
     private createJFrogCLient(): JfrogClient {
