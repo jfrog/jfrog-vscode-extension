@@ -305,10 +305,13 @@ export class ApplicabilityRunner extends JasRunner {
                         let fileIssues: FileIssues = this.getOrCreateFileIssues(applicableDetails, location.physicalLocation.artifactLocation.uri);
                         fileIssues.locations.push(location.physicalLocation.region);
                     });
+                    scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
                 } else if (analyzeIssue.kind === 'pass') {
                     nonapplicable.push(this.getCveFromRuleId(analyzeIssue.ruleId));
+                    scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
+                } else {
+                    this._logManager.logMessage(`${this.getCveFromRuleId(analyzeIssue.ruleId)} is not covered by contextual analysis scan`, 'DEBUG');
                 }
-                scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
             });
         }
         // Convert data to a response
