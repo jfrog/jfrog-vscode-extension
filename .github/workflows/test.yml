@@ -11,12 +11,11 @@ on:
 jobs:
   test:
     if: (github.event_name == 'schedule' && github.repository_owner == 'jfrog') || github.event_name == 'push' || (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe to test'))
-    name: ${{ matrix.os }}, node ${{ matrix.node }}
+    name: ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        node: [14, 16]
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
       - uses: actions/checkout@v3
@@ -56,12 +55,6 @@ jobs:
 
       - name: Install JFrog CLI for connectionManager tests
         run: curl -fL https://install-cli.jfrog.io | sh && jf -v
-
-      - name: Setup NodeJS for tests
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node }}
-          check-latest: true
 
       - name: Tests on macOS, Windows
         env:
