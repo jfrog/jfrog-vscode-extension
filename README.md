@@ -80,9 +80,6 @@ Read the [documentation](https://docs.jfrog-applications.jfrog.io/jfrog-applicat
 ## 🔥 Reporting Issues
 Please help us improve by [reporting issues](https://github.com/jfrog/jfrog-vscode-extension/issues) you encounter.
 
-## 💻 Code Contributions
-We welcome community contribution through pull requests.
+## 🫱🏻‍🫲🏼 Contributions
+We welcome contributions from the community through pull requests. To assist in enhancing this project, please review our [Contribution](CONTRIBUTING.md) guide.
 
-### Guidelines
--   If the existing tests do not already cover your changes, please add tests.
--   Please run `npm run format` for formatting the code before submitting the pull request.
