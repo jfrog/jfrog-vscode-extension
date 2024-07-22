@@ -12,8 +12,23 @@ import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { FileScanBundle } from '../../utils/scanUtils';
 import { Utils } from '../../utils/utils';
 import { AnalyzerManager } from './analyzerManager';
-import { AnalyzeIssue, AnalyzeLocation, AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, FileIssues, ScanType } from './analyzerModels';
+import {
+    AnalyzerRule,
+    AnalyzeIssue,
+    AnalyzeLocation,
+    AnalyzeScanRequest,
+    AnalyzerScanResponse,
+    AnalyzerScanRun,
+    FileIssues,
+    ScanType
+} from './analyzerModels';
 import { BinaryEnvParams, JasRunner, RunArgs } from './jasRunner';
+
+enum ApplicabilityStatus {
+    NOT_SCANNED = 'not_scanned',
+    NOT_APPLICABLE = 'not_applicable',
+    APPLICABLE = 'applicable'
+}
 
 /**
  * The request that is sent to the binary to scan applicability
@@ -286,16 +301,25 @@ export class ApplicabilityRunner extends JasRunner {
         const nonapplicable: string[] = [];
         const scanned: Set<string> = new Set<string>();
         const rulesFullDescription: Map<string, string> = new Map<string, string>();
+        const applicabilityStatues: Map<string, ApplicabilityStatus> = new Map<string, ApplicabilityStatus>();
         for (const rule of analyzerScanRun.tool.driver.rules) {
             if (rule.fullDescription) {
                 rulesFullDescription.set(rule.id, rule.fullDescription.text);
+            }
+            if (rule.properties) {
+                applicabilityStatues.set(rule.id, this.getApplicabilityStatusFromRule(rule));
             }
         }
         const issues: AnalyzeIssue[] = analyzerScanRun.results;
         if (issues) {
             // Generate applicable data for all the issues
             issues.forEach((analyzeIssue: AnalyzeIssue) => {
-                if ((!analyzeIssue.kind || analyzeIssue.kind === 'fail') && analyzeIssue.locations) {
+                let status: ApplicabilityStatus | undefined = applicabilityStatues.get(analyzeIssue.ruleId);
+                if (!status || status === ApplicabilityStatus.NOT_SCANNED) {
+                    this._logManager.logMessage(`Rule ${analyzeIssue.ruleId} does not have applicability status`, 'DEBUG');
+                    return;
+                }
+                if (status === ApplicabilityStatus.APPLICABLE) {
                     const applicableDetails: CveApplicableDetails = this.getOrCreateApplicableDetails(
                         analyzeIssue,
                         applicable,
@@ -306,11 +330,9 @@ export class ApplicabilityRunner extends JasRunner {
                         fileIssues.locations.push(location.physicalLocation.region);
                     });
                     scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
-                } else if (analyzeIssue.kind === 'pass') {
+                } else if (status === ApplicabilityStatus.NOT_APPLICABLE) {
                     nonapplicable.push(this.getCveFromRuleId(analyzeIssue.ruleId));
                     scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
-                } else {
-                    this._logManager.logMessage(`${this.getCveFromRuleId(analyzeIssue.ruleId)} is not covered by contextual analysis scan`, 'DEBUG');
                 }
             });
         }
@@ -320,6 +342,21 @@ export class ApplicabilityRunner extends JasRunner {
             applicableCve: Object.fromEntries(applicable.entries()),
             nonapplicableCve: nonapplicable
         } as ApplicabilityScanResponse;
+    }
+
+    public getApplicabilityStatusFromRule(rule: AnalyzerRule): ApplicabilityStatus {
+        let ruleStatus: string | undefined = rule.properties?.applicability;
+        if (ruleStatus) {
+            switch (ruleStatus) {
+                case 'not_applicable':
+                    return ApplicabilityStatus.NOT_APPLICABLE;
+                case 'applicable':
+                    return ApplicabilityStatus.APPLICABLE;
+                default:
+                    this._logManager.logMessage(`Failed to get applicability status from rule properties for rule_id ${rule.id}`, 'DEBUG');
+            }
+        }
+        return ApplicabilityStatus.NOT_SCANNED;
     }
 
     /**

@@ -43,6 +43,7 @@ export interface AnalyzerDriver {
 export interface AnalyzerRule {
     id: string;
     fullDescription?: ResultContent;
+    properties?: { [key: string]: string };
 }
 
 export interface AnalyzeIssue {
