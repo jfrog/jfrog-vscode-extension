@@ -14,6 +14,11 @@
                             "name": "CVE-2021-3807",
                             "shortDescription": {
                                 "text": "Scanner for CVE-2021-3807"
+                            },
+                            "properties": {
+                                "applicability": "not_applicable",
+                                "conclusion": "positive",
+                                "security-severity": "6.9"
                             }
                         },
                         {
@@ -25,17 +30,27 @@
                             "name": "CVE-2021-3918",
                             "shortDescription": {
                                 "text": "Scanner for CVE-2021-3918"
+                            },
+                            "properties": {
+                                "applicability": "not_applicable",
+                                "conclusion": "positive",
+                                "security-severity": "6.9"
                             }
                         },
                         {
                             "id": "applic_CVE-2022-25878",
-                            "fullDescription": {
-                                "text": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`\n* `loadSync`\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present.",
-                                "markdown": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`\n* `loadSync`\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present."
-                            },
                             "name": "CVE-2022-25878",
                             "shortDescription": {
-                                "text": "Scanner for CVE-2022-25878"
+                              "text": "Scanner for CVE-2022-25878"
+                            },
+                            "fullDescription": {
+                              "text": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`\n* `loadSync`\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present.",
+                              "markdown": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`\n* `loadSync`\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present."
+                            },
+                            "properties": {
+                              "applicability": "applicable",
+                              "conclusion": "positive",
+                              "security-severity": "6.9"
                             }
                         }
                     ],
