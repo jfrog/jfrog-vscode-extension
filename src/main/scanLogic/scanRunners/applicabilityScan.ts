@@ -353,7 +353,7 @@ export class ApplicabilityRunner extends JasRunner {
                 case 'applicable':
                     return ApplicabilityStatus.APPLICABLE;
                 default:
-                    this._logManager.logMessage(`Failed to get applicability status from rule properties for rule_id ${rule.id}`, 'DEBUG');
+                    this._logManager.logMessage(`Rule ${rule.id} detected as '${ruleStatus}' applicability status`, 'DEBUG');
             }
         }
         return ApplicabilityStatus.NOT_SCANNED;
