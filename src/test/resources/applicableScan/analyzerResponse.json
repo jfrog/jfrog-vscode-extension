@@ -141,7 +141,6 @@
                             }
                         }
                     ],
-                    "kind": "pass",
                     "ruleId": "applic_CVE-2021-3807"
                 },
                 {
