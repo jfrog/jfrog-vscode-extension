@@ -316,7 +316,6 @@ export class ApplicabilityRunner extends JasRunner {
             issues.forEach((analyzeIssue: AnalyzeIssue) => {
                 let status: ApplicabilityStatus | undefined = applicabilityStatues.get(analyzeIssue.ruleId);
                 if (!status || status === ApplicabilityStatus.NOT_SCANNED) {
-                    this._logManager.logMessage(`Rule ${analyzeIssue.ruleId} does not have applicability status`, 'DEBUG');
                     return;
                 }
                 if (status === ApplicabilityStatus.APPLICABLE) {
