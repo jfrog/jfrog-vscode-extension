@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { IAnalysisStep, IEosPage, PageType } from 'jfrog-ide-webview';
+import { IAnalysisStep, ISastPage, PageType } from 'jfrog-ide-webview';
 import { SastIssue, SastIssueLocation } from '../../../scanLogic/scanRunners/sastScan';
 import { SeverityUtils } from '../../../types/severity';
 import { Translators } from '../../../utils/translators';
@@ -44,10 +44,10 @@ export class SastTreeNode extends CodeIssueTreeNode {
         return this._snippet;
     }
 
-    public getDetailsPage(): IEosPage {
+    public getDetailsPage(): ISastPage {
         return {
             header: this.label,
-            pageType: PageType.Eos,
+            pageType: PageType.Sast,
             severity: SeverityUtils.toWebviewSeverity(this.severity),
             ruleId: this.issueId,
             location: {
@@ -61,6 +61,6 @@ export class SastTreeNode extends CodeIssueTreeNode {
             } as IAnalysisStep,
             description: this._fullDescription,
             analysisStep: this._codeFlows.length > 0 ? this._codeFlows[0] : undefined
-        } as IEosPage;
+        } as ISastPage;
     }
 }
