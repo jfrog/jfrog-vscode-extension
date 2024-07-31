@@ -1,5 +1,6 @@
 import { assert } from 'chai';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 
 import { AnalyzeScanRequest } from '../../../main/scanLogic/scanRunners/analyzerModels';
@@ -33,6 +34,10 @@ describe('Secrets Scan Integration Tests', async () => {
 
         // Get expected partial result that the scan should contain
         let dataPath: string = path.join(testDataRoot, 'expectedScanResponse.json');
+        if (os.platform() === 'win32') {
+            // make the first char uppercase
+            dataPath = dataPath.charAt(0).toUpperCase() + dataPath.slice(1);
+        }
         expectedContent = JSON.parse(fs.readFileSync(dataPath, 'utf8').toString());
         assert.isDefined(expectedContent, 'Failed to read expected SecretsScanResponse content from ' + dataPath);
         // Run scan
