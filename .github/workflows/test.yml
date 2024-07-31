@@ -26,6 +26,10 @@ jobs:
         # Fix 'nvm is not compatible with the npm config "prefix" option' error on macOS
         run: unset npm_config_prefix
         if: runner.os == 'macOS'
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.22.x
       - name: Setup Python3
         uses: actions/setup-python@v4
         with:
