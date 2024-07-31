@@ -114,8 +114,6 @@ export class AnalyzerUtils {
         filePath = filePath.includes('file://') ? filePath.substring('file://'.length) : filePath;
         if (isWindows) {
             filePath = filePath.replace(/['/']/g, '\\');
-            // make the first char uppercase
-            filePath = filePath.charAt(0).toUpperCase() + filePath.slice(1);
         }
         return decodeURI(filePath);
     }
