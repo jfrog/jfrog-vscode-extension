@@ -1,5 +1,6 @@
 import { assert } from 'chai';
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import {
     ApplicabilityRunner,
@@ -31,6 +32,10 @@ describe('Applicability Integration Tests', async () => {
 
     ['npm', 'python'].forEach(async packageType => {
         let directoryToScan: string = path.join(testDataRoot, packageType);
+        if (os.platform() === 'win32') {
+            // make the first char uppercase
+            directoryToScan = directoryToScan.charAt(0).toUpperCase() + directoryToScan.slice(1);
+        }
         runScanAndAssert(packageType, directoryToScan, path.join(directoryToScan, 'expectedScanResponse.json'));
     });
 
