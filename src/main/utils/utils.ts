@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import AdmZip, { IZipEntry } from 'adm-zip';
 
 export class Utils {
-    private static readonly MAX_FILES_EXTRACTED_ZIP: number = 4000;
+    private static readonly MAX_FILES_EXTRACTED_ZIP: number = 5000;
     // 1 GB
     private static readonly MAX_SIZE_EXTRACTED_ZIP_BYTES: number = 1000000000;
     private static readonly COMPRESSION_THRESHOLD_RATIO: number = 100;
