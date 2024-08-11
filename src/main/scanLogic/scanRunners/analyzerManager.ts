@@ -17,7 +17,7 @@ import { LogUtils } from '../../log/logUtils';
 export class AnalyzerManager {
     private static readonly RELATIVE_DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1';
     private static readonly BINARY_NAME: string = 'analyzerManager';
-    public static readonly ANALYZER_MANAGER_VERSION: string = '1.8.10';
+    public static readonly ANALYZER_MANAGER_VERSION: string = '1.8.11';
     public static readonly ANALYZER_MANAGER_PATH: string = Utils.addWinSuffixIfNeeded(
         path.join(ScanUtils.getIssuesPath(), AnalyzerManager.BINARY_NAME, AnalyzerManager.BINARY_NAME)
     );
