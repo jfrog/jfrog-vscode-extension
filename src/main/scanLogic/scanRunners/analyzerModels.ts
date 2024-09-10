@@ -54,6 +54,7 @@ export interface AnalyzeIssue {
     level?: AnalyzerManagerSeverityLevel;
     suppressions?: AnalyzeSuppression[];
     codeFlows?: CodeFlow[];
+    properties?: { [key: string]: string };
 }
 
 export interface AnalyzeSuppression {
@@ -96,6 +97,8 @@ export interface FileRegion {
     startColumn: number;
     endColumn: number;
     snippet?: ResultContent;
+    tokenValidation?: string;
+    metadata?: string;
 }
 
 export interface ResultContent {

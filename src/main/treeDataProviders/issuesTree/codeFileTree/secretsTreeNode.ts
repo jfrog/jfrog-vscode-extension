@@ -13,6 +13,8 @@ import { SecurityIssue } from '../../utils/analyzerUtils';
 export class SecretTreeNode extends CodeIssueTreeNode {
     private _fullDescription?: string;
     private _snippet?: string;
+    private _tokenValidation?: string;
+    private _metadata?: string;
 
     constructor(issue: SecurityIssue, location: FileRegion, parent: CodeFileTreeNode) {
         super(
@@ -25,12 +27,22 @@ export class SecretTreeNode extends CodeIssueTreeNode {
             issue.severity,
             issue.ruleName
         );
+        this._tokenValidation = location.tokenValidation;
+        this._metadata = location.metadata;
         this._snippet = location.snippet?.text;
         this._fullDescription = issue.fullDescription;
     }
 
     public get snippet(): string | undefined {
         return this._snippet;
+    }
+
+    public get tokenValidation(): string | undefined {
+        return this._tokenValidation;
+    }
+
+    public get metadata(): string | undefined {
+        return this._metadata;
     }
 
     public get fullDescription(): string | undefined {
@@ -50,7 +62,9 @@ export class SecretTreeNode extends CodeIssueTreeNode {
                 endRow: this.regionWithIssue.end.line + 1,
                 endColumn: this.regionWithIssue.end.character + 1
             } as IAnalysisStep,
-            description: this._fullDescription
+            description: this._fullDescription,
+            tokenValidation: this._tokenValidation,
+            metadata: this._metadata
         } as ISecretsPage;
     }
 }

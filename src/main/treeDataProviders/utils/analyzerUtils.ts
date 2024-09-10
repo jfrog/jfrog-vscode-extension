@@ -19,6 +19,7 @@ import { ProjectDependencyTreeNode } from '../issuesTree/descriptorTree/projectD
 import { FileTreeNode } from '../issuesTree/fileTreeNode';
 import { IssueTreeNode } from '../issuesTree/issueTreeNode';
 import { IssuesRootTreeNode } from '../issuesTree/issuesRootTreeNode';
+import { TokenStatus } from '../../types/tokenStatus';
 
 export interface FileWithSecurityIssues {
     full_path: string;
@@ -94,7 +95,12 @@ export class AnalyzerUtils {
                 location.physicalLocation.artifactLocation.uri
             );
             let fileIssue: SecurityIssue = AnalyzerUtils.getOrCreateSecurityIssue(fileWithIssues, analyzeIssue, fullDescription);
-            fileIssue.locations.push(location.physicalLocation.region);
+            let newLocation: FileRegion = location.physicalLocation.region;
+            newLocation.tokenValidation = analyzeIssue.properties?.tokenValidation
+                ? (analyzeIssue.properties.tokenValidation.trim() as keyof typeof TokenStatus)
+                : '';
+            newLocation.metadata = analyzeIssue.properties?.metadata ? analyzeIssue.properties.metadata.trim() : '';
+            fileIssue.locations.push(newLocation);
         });
     }
 

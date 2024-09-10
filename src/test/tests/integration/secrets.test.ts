@@ -6,6 +6,7 @@ import * as path from 'path';
 import { AnalyzeScanRequest } from '../../../main/scanLogic/scanRunners/analyzerModels';
 import { SecretsRunner, SecretsScanResponse } from '../../../main/scanLogic/scanRunners/secretsScan';
 import {
+    assertIssuesTokenValidationExist,
     AnalyzerManagerIntegrationEnv,
     assertFileIssuesExist,
     assertIssuesExist,
@@ -86,6 +87,9 @@ describe('Secrets Scan Integration Tests', async () => {
                     assertIssuesFullDescriptionExist(directoryToScan, response.filesWithIssues, expectedContent.filesWithIssues));
 
                 it('Check severity', () => assertIssuesSeverityExist(directoryToScan, response.filesWithIssues, expectedContent.filesWithIssues));
+
+                it('Check token validation', () =>
+                    assertIssuesTokenValidationExist(directoryToScan, response.filesWithIssues, expectedContent.filesWithIssues));
 
                 it('Check snippet', () =>
                     assertIssuesLocationSnippetsExist(directoryToScan, response.filesWithIssues, expectedContent.filesWithIssues));
