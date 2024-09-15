@@ -220,6 +220,9 @@ export class AnalyzerUtils {
         descriptorNode.applicableCve = new Map<string, CveApplicableDetails>(
             dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.applicableCve) : []
         );
+        descriptorNode.nonapplicableCve = new Map<string, CveApplicableDetails>(
+            dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.nonapplicableCve) : []
+        );
         descriptorNode.applicableScanTimeStamp = dependencyScanResults.applicableScanTimestamp;
 
         // Populate related CodeFile nodes with issues and update the descriptor CVE applicability details
@@ -249,8 +252,11 @@ export class AnalyzerUtils {
                         } as IApplicableDetails;
                     } else {
                         // Not applicable
-                        node.severity = SeverityUtils.notApplicable(node.severity);
-                        node.applicableDetails = { isApplicable: false } as IApplicableDetails;
+                        let nonapplicableApplicableDetails : CveApplicableDetails | undefined = descriptorNode.nonapplicableCve?.get(node.labelId);
+                        if (nonapplicableApplicableDetails) {
+                            node.severity = SeverityUtils.notApplicable(node.severity);
+                            node.applicableDetails = { isApplicable: false, searchTarget: nonapplicableApplicableDetails.fullDescription } as IApplicableDetails;
+                        }
                     }
                 }
             }

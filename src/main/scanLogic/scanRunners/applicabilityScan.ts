@@ -52,7 +52,7 @@ export interface ApplicabilityScanResponse {
     // All the cve that have applicable issues
     applicableCve: { [cve_id: string]: CveApplicableDetails };
     // All the cve that have non-applicable issues
-    nonapplicableCve: string[];
+    nonapplicableCve: { [cve_id: string]: CveApplicableDetails };
 }
 
 /**
@@ -268,8 +268,12 @@ export class ApplicabilityRunner extends JasRunner {
         let applicableCvesIdToDetails: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
             Object.entries(scanResponse.applicableCve)
         );
+        let nonapplicableCvesIdToDetails: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
+            Object.entries(scanResponse.nonapplicableCve)
+        );
         let relevantScannedCve: string[] = [];
         let relevantApplicableCve: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
+        let relevantNonApplicableCve: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(); 
 
         for (let scannedCve of scanResponse.scannedCve) {
             if (relevantCve.has(scannedCve)) {
@@ -278,11 +282,18 @@ export class ApplicabilityRunner extends JasRunner {
                 if (potential) {
                     relevantApplicableCve.set(scannedCve, potential);
                 }
+                else {
+                    let nonapplicativeCveDetails: CveApplicableDetails | undefined = nonapplicableCvesIdToDetails.get(scannedCve)
+                    if (nonapplicativeCveDetails) {
+                        relevantNonApplicableCve.set(scannedCve, nonapplicativeCveDetails)
+                    }    
+                }
             }
         }
         return {
             scannedCve: Array.from(relevantScannedCve),
-            applicableCve: Object.fromEntries(relevantApplicableCve.entries())
+            applicableCve: Object.fromEntries(relevantApplicableCve.entries()),
+            nonapplicableCve: Object.fromEntries(relevantNonApplicableCve.entries())
         } as ApplicabilityScanResponse;
     }
 
@@ -298,10 +309,11 @@ export class ApplicabilityRunner extends JasRunner {
         // Prepare
         const analyzerScanRun: AnalyzerScanRun = response.runs[0];
         const applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
-        const nonapplicable: string[] = [];
+        const nonapplicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
         const scanned: Set<string> = new Set<string>();
         const rulesFullDescription: Map<string, string> = new Map<string, string>();
         const applicabilityStatues: Map<string, ApplicabilityStatus> = new Map<string, ApplicabilityStatus>();
+
         for (const rule of analyzerScanRun.tool.driver.rules) {
             if (rule.fullDescription) {
                 rulesFullDescription.set(rule.id, rule.fullDescription.text);
@@ -328,18 +340,21 @@ export class ApplicabilityRunner extends JasRunner {
                         let fileIssues: FileIssues = this.getOrCreateFileIssues(applicableDetails, location.physicalLocation.artifactLocation.uri);
                         fileIssues.locations.push(location.physicalLocation.region);
                     });
-                    scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
                 } else if (status === ApplicabilityStatus.NOT_APPLICABLE) {
-                    nonapplicable.push(this.getCveFromRuleId(analyzeIssue.ruleId));
-                    scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
+                    this.getOrCreateApplicableDetails(
+                        analyzeIssue,
+                        nonapplicable,
+                        rulesFullDescription.get(analyzeIssue.ruleId)
+                    );
                 }
+                scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
             });
         }
         // Convert data to a response
         return {
             scannedCve: Array.from(scanned),
             applicableCve: Object.fromEntries(applicable.entries()),
-            nonapplicableCve: nonapplicable
+            nonapplicableCve: Object.fromEntries(nonapplicable.entries())
         } as ApplicabilityScanResponse;
     }
 
