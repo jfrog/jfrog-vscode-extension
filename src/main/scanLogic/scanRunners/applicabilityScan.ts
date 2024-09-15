@@ -273,7 +273,7 @@ export class ApplicabilityRunner extends JasRunner {
         );
         let relevantScannedCve: string[] = [];
         let relevantApplicableCve: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
-        let relevantNonApplicableCve: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(); 
+        let relevantNonApplicableCve: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
 
         for (let scannedCve of scanResponse.scannedCve) {
             if (relevantCve.has(scannedCve)) {
@@ -281,12 +281,11 @@ export class ApplicabilityRunner extends JasRunner {
                 let potential: CveApplicableDetails | undefined = applicableCvesIdToDetails.get(scannedCve);
                 if (potential) {
                     relevantApplicableCve.set(scannedCve, potential);
-                }
-                else {
-                    let nonapplicativeCveDetails: CveApplicableDetails | undefined = nonapplicableCvesIdToDetails.get(scannedCve)
+                } else {
+                    let nonapplicativeCveDetails: CveApplicableDetails | undefined = nonapplicableCvesIdToDetails.get(scannedCve);
                     if (nonapplicativeCveDetails) {
-                        relevantNonApplicableCve.set(scannedCve, nonapplicativeCveDetails)
-                    }    
+                        relevantNonApplicableCve.set(scannedCve, nonapplicativeCveDetails);
+                    }
                 }
             }
         }
@@ -341,11 +340,7 @@ export class ApplicabilityRunner extends JasRunner {
                         fileIssues.locations.push(location.physicalLocation.region);
                     });
                 } else if (status === ApplicabilityStatus.NOT_APPLICABLE) {
-                    this.getOrCreateApplicableDetails(
-                        analyzeIssue,
-                        nonapplicable,
-                        rulesFullDescription.get(analyzeIssue.ruleId)
-                    );
+                    this.getOrCreateApplicableDetails(analyzeIssue, nonapplicable, rulesFullDescription.get(analyzeIssue.ruleId));
                 }
                 scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
             });

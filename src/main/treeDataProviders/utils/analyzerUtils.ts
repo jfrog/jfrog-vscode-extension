@@ -252,10 +252,13 @@ export class AnalyzerUtils {
                         } as IApplicableDetails;
                     } else {
                         // Not applicable
-                        let nonapplicableApplicableDetails : CveApplicableDetails | undefined = descriptorNode.nonapplicableCve?.get(node.labelId);
+                        let nonapplicableApplicableDetails: CveApplicableDetails | undefined = descriptorNode.nonapplicableCve?.get(node.labelId);
                         if (nonapplicableApplicableDetails) {
                             node.severity = SeverityUtils.notApplicable(node.severity);
-                            node.applicableDetails = { isApplicable: false, searchTarget: nonapplicableApplicableDetails.fullDescription } as IApplicableDetails;
+                            node.applicableDetails = {
+                                isApplicable: false,
+                                searchTarget: nonapplicableApplicableDetails.fullDescription
+                            } as IApplicableDetails;
                         }
                     }
                 }
