@@ -1,3 +1,4 @@
+import * as semver from 'semver';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
 import { IssuesRootTreeNode } from '../../treeDataProviders/issuesTree/issuesRootTreeNode';
@@ -8,6 +9,8 @@ import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { AnalyzerManager } from './analyzerManager';
 import { AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, ScanType } from './analyzerModels';
 import { BinaryEnvParams, JasRunner, RunArgs } from './jasRunner';
+
+export const DYNAMIC_TOKEN_VALIDATION_MIN_XRAY_VERSION: any = semver.coerce('3.101.0');
 
 export interface SecretsScanResponse {
     filesWithIssues: FileWithSecurityIssues[];

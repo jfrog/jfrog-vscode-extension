@@ -69,6 +69,22 @@ export function findLocationNode(location: FileRegion, fileNode: CodeFileTreeNod
     );
 }
 
+export function assertTokenValidationResult(
+    testRoot: IssuesRootTreeNode,
+    expectedFilesWithIssues: FileWithSecurityIssues[],
+    getTestIssueNode: (fileNode: CodeFileTreeNode, location: FileRegion) => SecretTreeNode
+) {
+    expectedFilesWithIssues.forEach((expectedFileIssues: FileWithSecurityIssues) => {
+        let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
+        expectedFileIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+            expectedIssues.locations.forEach((expectedLocation: FileRegion) => {
+                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).metadata, expectedLocation.properties?.metadata);
+                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).tokenValidation, expectedLocation.properties?.tokenValidation);
+            });
+        });
+    });
+}
+
 export function assertFileNodesCreated(testRoot: IssuesRootTreeNode, expectedFilesWithIssues: FileWithSecurityIssues[]) {
     expectedFilesWithIssues.forEach((fileIssues: FileWithSecurityIssues) => {
         assert.isDefined(getTestCodeFileNode(testRoot, fileIssues.full_path));

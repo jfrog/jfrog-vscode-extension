@@ -13,6 +13,7 @@ import { AnalyzerUtils, FileWithSecurityIssues } from '../../main/treeDataProvid
 import { ScanResults } from '../../main/types/workspaceIssuesDetails';
 import { AppsConfigModule } from '../../main/utils/jfrogAppsConfig/jfrogAppsConfig';
 import {
+    assertTokenValidationResult,
     assertFileNodesCreated,
     assertIssueNodesCreated,
     assertIssuesFullDescription,
@@ -85,7 +86,7 @@ describe('Secrets Scan Tests', () => {
         });
 
         it('Check issue count returned from method', () => {
-            assert.equal(populatedIssues, 3);
+            assert.equal(populatedIssues, 4);
         });
 
         it('Check timestamp transferred from data to node', () => {
@@ -106,6 +107,7 @@ describe('Secrets Scan Tests', () => {
             it('Check number of file nodes populated as root children', () => assertSameNumberOfFileNodes(testRoot, expectedFilesWithIssues));
 
             describe('Issues populated as nodes', () => {
+                it('Check token validation', () => assertTokenValidationResult(testRoot, expectedFilesWithIssues, getTestIssueNode));
                 it('Check number of issues populated in file', () => assertSameNumberOfIssueNodes(testRoot, expectedFilesWithIssues));
 
                 it('Check issue nodes created in the file node', () => assertIssueNodesCreated(testRoot, expectedFilesWithIssues, getTestIssueNode));

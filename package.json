@@ -107,6 +107,11 @@
                     "scope": "application",
                     "markdownDescription": "Exclude development dependencies during the scan. Currently, only npm is supported."
                 },
+                "jfrog.tokenValidation": {
+                    "type": "boolean",
+                    "scope": "application",
+                    "markdownDescription": "Enable token validation on secret scanning."
+                },
                 "jfrog.externalResourcesRepository": {
                     "type": "string",
                     "scope": "application",
