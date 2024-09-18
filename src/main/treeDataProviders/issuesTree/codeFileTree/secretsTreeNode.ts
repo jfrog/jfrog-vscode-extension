@@ -27,8 +27,8 @@ export class SecretTreeNode extends CodeIssueTreeNode {
             issue.severity,
             issue.ruleName
         );
-        this._tokenValidation = location.tokenValidation;
-        this._metadata = location.metadata;
+        this._tokenValidation = location.properties?.tokenValidation;
+        this._metadata = location.properties?.metadata;
         this._snippet = location.snippet?.text;
         this._fullDescription = issue.fullDescription;
     }

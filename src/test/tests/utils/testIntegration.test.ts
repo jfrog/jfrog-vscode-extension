@@ -228,8 +228,8 @@ export function assertIssuesTokenValidationExist(
                         responseFilesWithIssues,
                         expectedIssues.ruleId,
                         expectedLocation
-                    ).tokenValidation,
-                    expectedLocation.tokenValidation
+                    ).properties?.tokenValidation,
+                    expectedLocation.properties?.tokenValidation
                 );
                 assert.deepEqual(
                     getTestLocation(
@@ -237,8 +237,8 @@ export function assertIssuesTokenValidationExist(
                         responseFilesWithIssues,
                         expectedIssues.ruleId,
                         expectedLocation
-                    ).metadata,
-                    expectedLocation.metadata
+                    ).properties?.metadata,
+                    expectedLocation.properties?.metadata
                 );
             });
         });

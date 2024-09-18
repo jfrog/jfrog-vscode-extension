@@ -78,8 +78,8 @@ export function assertTokenValidationResult(
         let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
         expectedFileIssues.issues.forEach((expectedIssues: SecurityIssue) => {
             expectedIssues.locations.forEach((expectedLocation: FileRegion) => {
-                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).metadata, expectedLocation.metadata);
-                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).tokenValidation, expectedLocation.tokenValidation);
+                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).metadata, expectedLocation.properties?.metadata);
+                assert.deepEqual(getTestIssueNode(fileNode, expectedLocation).tokenValidation, expectedLocation.properties?.tokenValidation);
             });
         });
     });

@@ -97,8 +97,7 @@ export interface FileRegion {
     startColumn: number;
     endColumn: number;
     snippet?: ResultContent;
-    tokenValidation?: string;
-    metadata?: string;
+    properties: { [key: string]: string };
 }
 
 export interface ResultContent {

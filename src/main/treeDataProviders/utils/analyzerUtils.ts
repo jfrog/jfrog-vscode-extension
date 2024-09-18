@@ -96,10 +96,12 @@ export class AnalyzerUtils {
             );
             let fileIssue: SecurityIssue = AnalyzerUtils.getOrCreateSecurityIssue(fileWithIssues, analyzeIssue, fullDescription);
             let newLocation: FileRegion = location.physicalLocation.region;
-            newLocation.tokenValidation = analyzeIssue.properties?.tokenValidation
-                ? (analyzeIssue.properties.tokenValidation.trim() as keyof typeof TokenStatus)
-                : '';
-            newLocation.metadata = analyzeIssue.properties?.metadata ? analyzeIssue.properties.metadata.trim() : '';
+            let properties: {[key: string]: string} = {
+               "tokenValidation": analyzeIssue.properties?.tokenValidation
+                ? (analyzeIssue.properties.tokenValidation.trim() as keyof typeof TokenStatus) : '',
+                "metadata": analyzeIssue.properties?.metadata ? analyzeIssue.properties.metadata.trim() : ''
+            }
+            newLocation.properties = properties
             fileIssue.locations.push(newLocation);
         });
     }
