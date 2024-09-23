@@ -10,8 +10,6 @@ import { Configuration } from '../../utils/configuration';
 import { Translators } from '../../utils/translators';
 import { BinaryEnvParams } from './jasRunner';
 import { LogUtils } from '../../log/logUtils';
-import { DYNAMIC_TOKEN_VALIDATION_MIN_XRAY_VERSION } from './secretsScan';
-import * as semver from 'semver';
 
 /**
  * Analyzer manager is responsible for running the analyzer on the workspace.
@@ -151,34 +149,8 @@ export class AnalyzerManager {
         };
     }
 
-    private isTokenValidationEnabled(): string {
-        let xraySemver: semver.SemVer = new semver.SemVer(this._connectionManager.xrayVersion);
-        if (xraySemver.compare(DYNAMIC_TOKEN_VALIDATION_MIN_XRAY_VERSION) < 0) {
-            this._logManager.logMessage(
-                'You cannot use dynamic token validation feature on xray version ' +
-                    this._connectionManager.xrayVersion +
-                    ' as it requires xray version ' +
-                    DYNAMIC_TOKEN_VALIDATION_MIN_XRAY_VERSION,
-                'INFO'
-            );
-            return 'false';
-        }
-        if (Configuration.enableTokenValidation()) {
-            return 'true';
-        }
-        let response: Promise<boolean> = this._connectionManager.isTokenValidationPlatformEnabled();
-        let tokenValidation: boolean = false;
-        response.then(res => {
-            tokenValidation = res;
-        });
-        if (tokenValidation || process.env.JF_VALIDATE_SECRETS) {
-            return 'true';
-        }
 
-        return 'false';
-    }
-
-    private populateOptionalInformation(binaryVars: NodeJS.ProcessEnv, params?: BinaryEnvParams) {
+    private async populateOptionalInformation(binaryVars: NodeJS.ProcessEnv, params?: BinaryEnvParams) {
         // Optional proxy information - environment variable
         let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
         let proxyHttpsUrl: string | undefined = process.env['HTTPS_PROXY'];
@@ -190,7 +162,10 @@ export class AnalyzerManager {
             proxyHttpUrl = 'http://' + proxyUrl;
             proxyHttpsUrl = 'https://' + proxyUrl;
         }
-        binaryVars[AnalyzerManager.JF_VALIDATE_SECRETS] = this.isTokenValidationEnabled();
+
+        if (params?.tokenValidation && params.tokenValidation == true) {
+            binaryVars[AnalyzerManager.JF_VALIDATE_SECRETS] = "true"
+        }
         if (proxyHttpUrl) {
             binaryVars[AnalyzerManager.ENV_HTTP_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpUrl);
         }
