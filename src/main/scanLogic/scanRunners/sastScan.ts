@@ -136,9 +136,13 @@ export class SastRunner extends JasRunner {
 
         // Prepare
         let rulesFullDescription: Map<string, string> = new Map<string, string>();
+        let rulesShortDescription: Map<string, string> = new Map<string, string>();
         for (const rule of analyzerScanRun.tool.driver.rules) {
             if (rule.fullDescription) {
                 rulesFullDescription.set(rule.id, rule.fullDescription.text);
+            }
+            if (rule.shortDescription) {
+                rulesShortDescription.set(rule.id, rule.shortDescription.text);
             }
         }
         // Generate response data
@@ -149,7 +153,7 @@ export class SastRunner extends JasRunner {
                 ignoreCount++;
                 return;
             }
-            this.generateIssueData(sastResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId));
+            this.generateIssueData(sastResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId), rulesShortDescription.get(analyzeIssue.ruleId));
         });
         sastResponse.ignoreCount = ignoreCount;
         return sastResponse;
@@ -162,10 +166,10 @@ export class SastRunner extends JasRunner {
      * @param analyzeIssue    - Issue to handle and generate information base on it
      * @param fullDescription - The description of the analyzeIssue
      */
-    public generateIssueData(sastResponse: SastScanResponse, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
+    public generateIssueData(sastResponse: SastScanResponse, analyzeIssue: AnalyzeIssue, fullDescription?: string, shortDescription?: string) {
         analyzeIssue.locations.forEach(location => {
             let fileWithIssues: SastFileIssues = this.getOrCreateSastFileIssues(sastResponse, location.physicalLocation.artifactLocation.uri);
-            let fileIssue: SastIssue = this.getOrCreateSastIssue(fileWithIssues, analyzeIssue, fullDescription);
+            let fileIssue: SastIssue = this.getOrCreateSastIssue(fileWithIssues, analyzeIssue, fullDescription, shortDescription);
             let issueLocation: SastIssueLocation = this.getOrCreateIssueLocation(fileIssue, location.physicalLocation);
             if (analyzeIssue.codeFlows) {
                 this.generateCodeFlowData(fileWithIssues.full_path, issueLocation, analyzeIssue.codeFlows);
@@ -227,7 +231,7 @@ export class SastRunner extends JasRunner {
      * @param fullDescription - the description of the issue
      * @returns - the sast issue
      */
-    private getOrCreateSastIssue(fileWithIssues: SastFileIssues, analyzeIssue: AnalyzeIssue, fullDescription?: string): SastIssue {
+    private getOrCreateSastIssue(fileWithIssues: SastFileIssues, analyzeIssue: AnalyzeIssue, fullDescription?: string, shortDescription?: string): SastIssue {
         let potential: SastIssue | undefined = fileWithIssues.issues.find(issue => issue.ruleId === analyzeIssue.ruleId);
         if (potential) {
             return potential;
@@ -235,7 +239,7 @@ export class SastRunner extends JasRunner {
         let fileIssue: SastIssue = {
             ruleId: analyzeIssue.ruleId,
             severity: Translators.levelToSeverity(analyzeIssue.level),
-            ruleName: analyzeIssue.message.text,
+            ruleName: shortDescription ?? analyzeIssue.message.text,
             fullDescription: fullDescription,
             locations: []
         } as SastIssue;
