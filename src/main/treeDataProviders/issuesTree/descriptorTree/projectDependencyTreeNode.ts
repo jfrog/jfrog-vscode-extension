@@ -19,7 +19,7 @@ export class ProjectDependencyTreeNode extends FileTreeNode {
     private _scannedCve?: Set<string> | undefined;
     // Is applicable if key in here
     private _applicableCve?: Map<string, CveApplicableDetails> | undefined;
-    private _nonapplicableCve?: Map<string, CveApplicableDetails> | undefined;
+    private _notApplicableCve?: Map<string, CveApplicableDetails> | undefined;
     protected _dependencyScanTimeStamp?: number;
     protected _applicableScanTimeStamp?: number;
 
@@ -134,12 +134,12 @@ export class ProjectDependencyTreeNode extends FileTreeNode {
         this._applicableCve = value;
     }
 
-    public get nonapplicableCve(): Map<string, CveApplicableDetails> | undefined {
-        return this._nonapplicableCve;
+    public get notApplicableCve(): Map<string, CveApplicableDetails> | undefined {
+        return this._notApplicableCve;
     }
 
-    public set nonapplicableCve(value: Map<string, CveApplicableDetails> | undefined) {
-        this._nonapplicableCve = value;
+    public set notApplicableCve(value: Map<string, CveApplicableDetails> | undefined) {
+        this._notApplicableCve = value;
     }
 
     public get applicableScanTimeStamp(): number | undefined {

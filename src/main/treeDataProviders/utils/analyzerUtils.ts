@@ -220,7 +220,7 @@ export class AnalyzerUtils {
         descriptorNode.applicableCve = new Map<string, CveApplicableDetails>(
             dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.applicableCve) : []
         );
-        descriptorNode.nonapplicableCve = new Map<string, CveApplicableDetails>(
+        descriptorNode.notApplicableCve = new Map<string, CveApplicableDetails>(
             dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.nonapplicableCve) : []
         );
         descriptorNode.applicableScanTimeStamp = dependencyScanResults.applicableScanTimestamp;
@@ -251,21 +251,20 @@ export class AnalyzerUtils {
                             evidence: evidences
                         } as IApplicableDetails;
                     } else {
-                        // Not applicable
-                        let nonapplicableApplicableDetails: CveApplicableDetails | undefined = descriptorNode.nonapplicableCve?.get(node.labelId);
-                        if (nonapplicableApplicableDetails) {
-                            evidences.push({
-                                reason: nonapplicableApplicableDetails.fixReason,
-                                filePathEvidence: '',
-                                codeEvidence: ''
-                            } as IEvidence);
-                            node.severity = SeverityUtils.notApplicable(node.severity);
-                            node.applicableDetails = {
-                                isApplicable: false,
-                                searchTarget: nonapplicableApplicableDetails.fullDescription,
-                                evidence: evidences
-                            } as IApplicableDetails;
+                        // Not Applicable
+                        let notApplicableApplicableDetails: CveApplicableDetails | undefined = descriptorNode.notApplicableCve?.get(node.labelId);
+                        if (!notApplicableApplicableDetails) {
+                            continue
                         }
+                        evidences.push({
+                            reason: notApplicableApplicableDetails.fixReason
+                        } as IEvidence);
+                        node.severity = SeverityUtils.notApplicable(node.severity);
+                        node.applicableDetails = {
+                            isApplicable: false,
+                            searchTarget: notApplicableApplicableDetails.fullDescription,
+                            evidence: evidences
+                        } as IApplicableDetails;
                     }
                 }
             }

@@ -268,7 +268,7 @@ export class ApplicabilityRunner extends JasRunner {
         let applicableCvesIdToDetails: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
             Object.entries(scanResponse.applicableCve)
         );
-        let nonapplicableCvesIdToDetails: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
+        let notApplicableCvesIdToDetails: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
             Object.entries(scanResponse.nonapplicableCve)
         );
         let relevantScannedCve: string[] = [];
@@ -281,11 +281,11 @@ export class ApplicabilityRunner extends JasRunner {
                 let potential: CveApplicableDetails | undefined = applicableCvesIdToDetails.get(scannedCve);
                 if (potential) {
                     relevantApplicableCve.set(scannedCve, potential);
-                } else {
-                    let nonapplicativeCveDetails: CveApplicableDetails | undefined = nonapplicableCvesIdToDetails.get(scannedCve);
-                    if (nonapplicativeCveDetails) {
-                        relevantNonApplicableCve.set(scannedCve, nonapplicativeCveDetails);
-                    }
+                    continue
+                }
+                potential = notApplicableCvesIdToDetails.get(scannedCve);
+                if (potential) {
+                    relevantNonApplicableCve.set(scannedCve, potential);
                 }
             }
         }
