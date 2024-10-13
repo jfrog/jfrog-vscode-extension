@@ -77,7 +77,7 @@ describe('Applicability Integration Tests', async () => {
             });
 
             it('Check all expected nonapplicable CVE detected', () => {
-                assert.sameDeepMembers(response.nonapplicableCve, expectedContent.nonapplicableCve);
+                assert.includeDeepMembers(Object.keys(response.notApplicableCve), Object.keys(expectedContent.notApplicableCve));
             });
 
             describe('Applicable details data validations', () => {

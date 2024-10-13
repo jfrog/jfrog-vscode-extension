@@ -27,8 +27,14 @@
             "fullDescription": "The scanner checks whether the vulnerable function `open` is called with external input to its 1st (`name`) argument."
         }
     },
-    "nonapplicableCve": [
-        "CVE-2021-3918",
-        "CVE-2019-15605"
-    ]
+    "nonapplicableCve": {
+        "CVE-2021-3918": {
+            "fixReason": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `json-schema.validate` with external input to its 1st (`instance`) argument.\n* `json-schema.checkPropertyChange` with external input to its 2nd (`schema`) argument.\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present.",
+            "fullDescription": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `json-schema.validate` with external input to its 1st (`instance`) argument.\n* `json-schema.checkPropertyChange` with external input to its 2nd (`schema`) argument.\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present."
+        },
+        "CVE-2019-15605": {
+            "fixReason": "The scanner checks whether Express.js, which is the vulnerability's main remote attack vector, is running.",
+            "fullDescription": "The scanner checks whether Express.js, which is the vulnerability's main remote attack vector, is running."
+        }
+    }
 }
