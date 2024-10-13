@@ -221,7 +221,7 @@ export class AnalyzerUtils {
             dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.applicableCve) : []
         );
         descriptorNode.notApplicableCve = new Map<string, CveApplicableDetails>(
-            dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.nonapplicableCve) : []
+            dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.notApplicableCve) : []
         );
         descriptorNode.applicableScanTimeStamp = dependencyScanResults.applicableScanTimestamp;
 

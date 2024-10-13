@@ -52,7 +52,7 @@ export interface ApplicabilityScanResponse {
     // All the cve that have applicable issues
     applicableCve: { [cve_id: string]: CveApplicableDetails };
     // All the cve that have non-applicable issues
-    nonapplicableCve: { [cve_id: string]: CveApplicableDetails };
+    notApplicableCve: { [cve_id: string]: CveApplicableDetails };
 }
 
 /**
@@ -269,11 +269,11 @@ export class ApplicabilityRunner extends JasRunner {
             Object.entries(scanResponse.applicableCve)
         );
         let notApplicableCvesIdToDetails: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
-            Object.entries(scanResponse.nonapplicableCve)
+            Object.entries(scanResponse.notApplicableCve)
         );
         let relevantScannedCve: string[] = [];
         let relevantApplicableCve: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
-        let relevantNonApplicableCve: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
+        let relevantNotApplicableCve: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
 
         for (let scannedCve of scanResponse.scannedCve) {
             if (relevantCve.has(scannedCve)) {
@@ -285,14 +285,14 @@ export class ApplicabilityRunner extends JasRunner {
                 }
                 potential = notApplicableCvesIdToDetails.get(scannedCve);
                 if (potential) {
-                    relevantNonApplicableCve.set(scannedCve, potential);
+                    relevantNotApplicableCve.set(scannedCve, potential);
                 }
             }
         }
         return {
             scannedCve: Array.from(relevantScannedCve),
             applicableCve: Object.fromEntries(relevantApplicableCve.entries()),
-            nonapplicableCve: Object.fromEntries(relevantNonApplicableCve.entries())
+            notApplicableCve: Object.fromEntries(relevantNotApplicableCve.entries())
         } as ApplicabilityScanResponse;
     }
 
@@ -308,7 +308,7 @@ export class ApplicabilityRunner extends JasRunner {
         // Prepare
         const analyzerScanRun: AnalyzerScanRun = response.runs[0];
         const applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
-        const nonapplicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
+        const notApplicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
         const scanned: Set<string> = new Set<string>();
         const rulesFullDescription: Map<string, string> = new Map<string, string>();
         const applicabilityStatues: Map<string, ApplicabilityStatus> = new Map<string, ApplicabilityStatus>();
@@ -340,7 +340,7 @@ export class ApplicabilityRunner extends JasRunner {
                         fileIssues.locations.push(location.physicalLocation.region);
                     });
                 } else if (status === ApplicabilityStatus.NOT_APPLICABLE) {
-                    this.getOrCreateApplicableDetails(analyzeIssue, nonapplicable, rulesFullDescription.get(analyzeIssue.ruleId));
+                    this.getOrCreateApplicableDetails(analyzeIssue, notApplicable, rulesFullDescription.get(analyzeIssue.ruleId));
                 }
                 scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
             });
@@ -349,7 +349,7 @@ export class ApplicabilityRunner extends JasRunner {
         return {
             scannedCve: Array.from(scanned),
             applicableCve: Object.fromEntries(applicable.entries()),
-            nonapplicableCve: Object.fromEntries(nonapplicable.entries())
+            notApplicableCve: Object.fromEntries(notApplicable.entries())
         } as ApplicabilityScanResponse;
     }
 
