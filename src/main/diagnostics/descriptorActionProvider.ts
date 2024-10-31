@@ -115,11 +115,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
         const actions: vscode.CodeAction[] = [];
         let previousCves: Set<string> = new Set<string>();
 
-        if (!dependency || dependency.indirect) {
-            return actions;
-        }
-
-        if (!this.availableUpdateManager(dependency)) {
+        if (!dependency || dependency.indirect || !this.availableUpdateManager(dependency)) {
             return actions;
         }
     
