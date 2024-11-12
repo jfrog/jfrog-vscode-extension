@@ -967,7 +967,7 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
                 .xray()
                 .jasconfig()
                 .getJasConfig();
-            this._logManager.logMessage('Got token validation value:' + response.enable_token_validation_scanning +' from platform', 'DEBUG');
+            this._logManager.logMessage(`Got token validation value: ${response.enable_token_validation_scanning} from platform`, 'DEBUG');
             return response.enable_token_validation_scanning;
         } catch (error) {
             this._logManager.logMessage('Failed getting token validation from platform', 'DEBUG');
