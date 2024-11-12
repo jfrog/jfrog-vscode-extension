@@ -163,7 +163,7 @@ export class AnalyzerManager {
             proxyHttpsUrl = 'https://' + proxyUrl;
         }
 
-        if (params?.tokenValidation && params.tokenValidation == true) {
+        if (params?.tokenValidation && params.tokenValidation === true) {
             binaryVars[AnalyzerManager.JF_VALIDATE_SECRETS] = "true"
         }
         if (proxyHttpUrl) {
