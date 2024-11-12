@@ -40,6 +40,7 @@ interface RunRequest {
 export interface BinaryEnvParams {
     executionLogDirectory?: string;
     msi?: string;
+    tokenValidation?: boolean;
 }
 
 /**

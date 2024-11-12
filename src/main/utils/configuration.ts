@@ -23,6 +23,13 @@ export class Configuration {
     }
 
     /**
+     * Returns true to scan secrets with token validation enabled
+     */
+    public static enableTokenValidation(): boolean | undefined {
+        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('tokenValidation');
+    }
+
+    /**
      * Return true if exclude dev dependencies option is checked on the jfrog extension configuration page.
      */
     public static excludeDevDependencies(): boolean | undefined {

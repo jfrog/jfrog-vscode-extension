@@ -107,6 +107,11 @@
                     "scope": "application",
                     "markdownDescription": "Exclude development dependencies during the scan. Currently, only npm is supported."
                 },
+                "jfrog.tokenValidation": {
+                    "type": "boolean",
+                    "scope": "application",
+                    "markdownDescription": "Enable token validation on secret scanning."
+                },
                 "jfrog.externalResourcesRepository": {
                     "type": "string",
                     "scope": "application",
@@ -327,7 +332,7 @@
     "dependencies": {
         "adm-zip": "~0.5.9",
         "fs-extra": "~10.1.0",
-        "jfrog-client-js": "^2.8.0",
+        "jfrog-client-js": "^2.9.0",
         "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.2.14.tgz",
         "js-yaml": "^4.1.0",
         "json2csv": "~5.0.7",

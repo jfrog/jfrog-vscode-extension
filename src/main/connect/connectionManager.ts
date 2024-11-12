@@ -21,6 +21,7 @@ import { LogLevel, LogManager } from '../log/logManager';
 import { ScanUtils } from '../utils/scanUtils';
 import { ConnectionUtils } from './connectionUtils';
 import { XrayScanClient } from 'jfrog-client-js/dist/src/Xray/XrayScanClient';
+import { IJasConfig } from 'jfrog-client-js/dist/model/Xray/JasConfig/JasConfig';
 
 export enum LoginStatus {
     Success = 'SUCCESS',
@@ -958,5 +959,19 @@ export class ConnectionManager implements ExtensionComponent, vscode.Disposable 
             return;
         }
         this._logManager.logMessage(usagePrefix + 'Usage report sent successfully.', 'DEBUG');
+    }
+
+    public async isTokenValidationPlatformEnabled(): Promise<boolean> {
+        try {
+            let response: IJasConfig = await this.createJfrogClient()
+                .xray()
+                .jasconfig()
+                .getJasConfig();
+            this._logManager.logMessage(`Got token validation value: ${response.enable_token_validation_scanning} from platform`, 'DEBUG');
+            return response.enable_token_validation_scanning;
+        } catch (error) {
+            this._logManager.logMessage('Failed getting token validation from platform', 'DEBUG');
+            return false;
+        }
     }
 }
