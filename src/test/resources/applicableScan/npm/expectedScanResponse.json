@@ -38,7 +38,7 @@
             "fullDescription": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`\n* `loadSync`\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present."
         }
     },
-    "nonapplicableCve": {
+    "notApplicableCve": {
         "CVE-2021-3807": {
             "fixReason": "The scanner checks whether the vulnerable function `ansi-regex` is called.",
             "fullDescription": "The scanner checks whether the vulnerable function `ansi-regex` is called."
