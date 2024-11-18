@@ -24,6 +24,7 @@ export class AnalyzerManager {
 
     private static readonly JFROG_RELEASES_URL: string = 'https://releases.jfrog.io';
     public static readonly JF_RELEASES_REPO: string = 'JF_RELEASES_REPO';
+    public static readonly JF_VALIDATE_SECRETS: string = 'JF_VALIDATE_SECRETS';
 
     public static readonly ENV_PLATFORM_URL: string = 'JF_PLATFORM_URL';
     public static readonly ENV_TOKEN: string = 'JF_TOKEN';
@@ -148,7 +149,8 @@ export class AnalyzerManager {
         };
     }
 
-    private populateOptionalInformation(binaryVars: NodeJS.ProcessEnv, params?: BinaryEnvParams) {
+
+    private async populateOptionalInformation(binaryVars: NodeJS.ProcessEnv, params?: BinaryEnvParams) {
         // Optional proxy information - environment variable
         let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
         let proxyHttpsUrl: string | undefined = process.env['HTTPS_PROXY'];
@@ -159,6 +161,10 @@ export class AnalyzerManager {
             let proxyUrl: string = proxyConfig.host + (proxyConfig.port !== 0 ? ':' + proxyConfig.port : '');
             proxyHttpUrl = 'http://' + proxyUrl;
             proxyHttpsUrl = 'https://' + proxyUrl;
+        }
+
+        if (params?.tokenValidation && params.tokenValidation === true) {
+            binaryVars[AnalyzerManager.JF_VALIDATE_SECRETS] = "true"
         }
         if (proxyHttpUrl) {
             binaryVars[AnalyzerManager.ENV_HTTP_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpUrl);

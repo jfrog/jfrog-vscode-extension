@@ -214,6 +214,37 @@ export function assertIssuesSeverityExist(
     });
 }
 
+export function assertIssuesTokenValidationExist(
+    testDataRoot: string,
+    responseFilesWithIssues: FileWithSecurityIssues[],
+    expectedFilesWithIssues: FileWithSecurityIssues[]
+) {
+    expectedFilesWithIssues.forEach((expectedFileWithIssues: FileWithSecurityIssues) => {
+        expectedFileWithIssues.issues.forEach((expectedIssues: SecurityIssue) => {
+            expectedIssues.locations.forEach((expectedLocation: FileRegion) => {
+                assert.deepEqual(
+                    getTestLocation(
+                        path.join(testDataRoot, expectedFileWithIssues.full_path),
+                        responseFilesWithIssues,
+                        expectedIssues.ruleId,
+                        expectedLocation
+                    ).properties?.tokenValidation,
+                    expectedLocation.properties?.tokenValidation
+                );
+                assert.deepEqual(
+                    getTestLocation(
+                        path.join(testDataRoot, expectedFileWithIssues.full_path),
+                        responseFilesWithIssues,
+                        expectedIssues.ruleId,
+                        expectedLocation
+                    ).properties?.metadata,
+                    expectedLocation.properties?.metadata
+                );
+            });
+        });
+    });
+}
+
 export function assertIssuesLocationSnippetsExist(
     testDataRoot: string,
     responseFilesWithIssues: FileWithSecurityIssues[],

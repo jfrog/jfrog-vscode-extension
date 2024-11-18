@@ -104,6 +104,31 @@
                         }
                     ],
                     "ruleId": "generic"
+                },
+                {
+                    "message": {
+                        "text": "Secret keys were found"
+                    },
+                    "locations": [
+                        {
+                            "physicalLocation": {
+                                "artifactLocation": {
+                                    "uri": "file:///examples/secrets-demo/../applicable_secret.py"
+                                },
+                                "region": {
+                                    "endColumn": 132,
+                                    "endLine": 1,
+                                    "snippet": {
+                                        "text": "sometoken"
+                                    },
+                                    "startColumn": 12,
+                                    "startLine": 1
+                                }
+                            }
+                        }
+                    ],
+                    "ruleId": "generic",
+                    "properties": {"tokenValidation": "Active", "metadata": "somemetadata"}
                 }
             ]
         }

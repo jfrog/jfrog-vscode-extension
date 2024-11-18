@@ -109,6 +109,13 @@ export class ScanManager implements ExtensionComponent {
         if (scanDetails.multiScanId) {
             params = { msi: scanDetails.multiScanId };
         }
+        if (scanDetails.jasRunnerFactory.supportedScans.tokenValidation) {
+            if (params) {
+                params.tokenValidation = scanDetails.jasRunnerFactory.supportedScans.tokenValidation
+            } else {
+                params = {tokenValidation: scanDetails.jasRunnerFactory.supportedScans.tokenValidation}
+            }
+        }
         for (const runner of jasRunners) {
             if (runner.shouldRun()) {
                 scansPromises.push(
