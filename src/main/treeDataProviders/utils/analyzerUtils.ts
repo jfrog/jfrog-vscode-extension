@@ -228,6 +228,9 @@ export class AnalyzerUtils {
         descriptorNode.applicableCve = new Map<string, CveApplicableDetails>(
             dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.applicableCve) : []
         );
+        descriptorNode.notApplicableCve = new Map<string, CveApplicableDetails>(
+            dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.notApplicableCve) : []
+        );
         descriptorNode.applicableScanTimeStamp = dependencyScanResults.applicableScanTimestamp;
 
         // Populate related CodeFile nodes with issues and update the descriptor CVE applicability details
@@ -240,10 +243,10 @@ export class AnalyzerUtils {
             }
             for (const node of nodes) {
                 if (node instanceof CveTreeNode) {
+                    let evidences: IEvidence[] = [];
                     let potential: CveApplicableDetails | undefined = descriptorNode.applicableCve?.get(node.labelId);
                     if (potential) {
                         let details: CveApplicableDetails = potential;
-                        let evidences: IEvidence[] = [];
                         // Populate code file issues for workspace
                         details.fileEvidences.forEach((fileEvidence: FileIssues) => {
                             let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileEvidence.full_path);
@@ -256,9 +259,20 @@ export class AnalyzerUtils {
                             evidence: evidences
                         } as IApplicableDetails;
                     } else {
-                        // Not applicable
+                        // Not Applicable
+                        let notApplicableApplicableDetails: CveApplicableDetails | undefined = descriptorNode.notApplicableCve?.get(node.labelId);
+                        if (!notApplicableApplicableDetails) {
+                            continue
+                        }
+                        evidences.push({
+                            reason: notApplicableApplicableDetails.fixReason
+                        } as IEvidence);
                         node.severity = SeverityUtils.notApplicable(node.severity);
-                        node.applicableDetails = { isApplicable: false } as IApplicableDetails;
+                        node.applicableDetails = {
+                            isApplicable: false,
+                            searchTarget: notApplicableApplicableDetails.fullDescription,
+                            evidence: evidences
+                        } as IApplicableDetails;
                     }
                 }
             }
