@@ -281,7 +281,7 @@ export class ApplicabilityRunner extends JasRunner {
                 let potential: CveApplicableDetails | undefined = applicableCvesIdToDetails.get(scannedCve);
                 if (potential) {
                     relevantApplicableCve.set(scannedCve, potential);
-                    continue
+                    continue;
                 }
                 potential = notApplicableCvesIdToDetails.get(scannedCve);
                 if (potential) {

@@ -149,7 +149,6 @@ export class AnalyzerManager {
         };
     }
 
-
     private async populateOptionalInformation(binaryVars: NodeJS.ProcessEnv, params?: BinaryEnvParams) {
         // Optional proxy information - environment variable
         let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
@@ -164,7 +163,7 @@ export class AnalyzerManager {
         }
 
         if (params?.tokenValidation && params.tokenValidation === true) {
-            binaryVars[AnalyzerManager.JF_VALIDATE_SECRETS] = "true"
+            binaryVars[AnalyzerManager.JF_VALIDATE_SECRETS] = 'true';
         }
         if (proxyHttpUrl) {
             binaryVars[AnalyzerManager.ENV_HTTP_PROXY] = this.addOptionalProxyAuthInformation(proxyHttpUrl);

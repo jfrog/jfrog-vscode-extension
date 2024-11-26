@@ -96,12 +96,13 @@ export class AnalyzerUtils {
             );
             let fileIssue: SecurityIssue = AnalyzerUtils.getOrCreateSecurityIssue(fileWithIssues, analyzeIssue, fullDescription);
             let newLocation: FileRegion = location.physicalLocation.region;
-            let properties: {[key: string]: string} = {
-               "tokenValidation": analyzeIssue.properties?.tokenValidation
-                ? (analyzeIssue.properties.tokenValidation.trim() as keyof typeof TokenStatus) : '',
-                "metadata": analyzeIssue.properties?.metadata ? analyzeIssue.properties.metadata.trim() : ''
-            }
-            newLocation.properties = properties
+            let properties: { [key: string]: string } = {
+                tokenValidation: analyzeIssue.properties?.tokenValidation
+                    ? (analyzeIssue.properties.tokenValidation.trim() as keyof typeof TokenStatus)
+                    : '',
+                metadata: analyzeIssue.properties?.metadata ? analyzeIssue.properties.metadata.trim() : ''
+            };
+            newLocation.properties = properties;
             fileIssue.locations.push(newLocation);
         });
     }
@@ -262,7 +263,7 @@ export class AnalyzerUtils {
                         // Not Applicable
                         let notApplicableApplicableDetails: CveApplicableDetails | undefined = descriptorNode.notApplicableCve?.get(node.labelId);
                         if (!notApplicableApplicableDetails) {
-                            continue
+                            continue;
                         }
                         evidences.push({
                             reason: notApplicableApplicableDetails.fixReason

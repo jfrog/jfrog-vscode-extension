@@ -14,11 +14,11 @@ export class SupportedScans {
     private _tokenValidation?: boolean;
     constructor(private _connectionManager: ConnectionManager, protected _logManager: LogManager) {}
 
-    get tokenValidation(): boolean | undefined { 
-        return this._tokenValidation
+    get tokenValidation(): boolean | undefined {
+        return this._tokenValidation;
     }
 
-    public setTokenValidation(value: boolean| undefined): SupportedScans {
+    public setTokenValidation(value: boolean | undefined): SupportedScans {
         this._tokenValidation = value;
         return this;
     }
@@ -87,8 +87,8 @@ export class SupportedScans {
         );
         requests.push(
             this.isTokenValidationEnabled()
-            .then(res => this.setTokenValidation(res))
-            .catch(err => ScanUtils.onScanError(err, this._logManager, true))
+                .then(res => this.setTokenValidation(res))
+                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
         );
         await Promise.all(requests);
         return this;
@@ -121,10 +121,10 @@ export class SupportedScans {
         return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Sast);
     }
 
-     /**
+    /**
      * Check if token validation scan is enabled
      */
-     public async isTokenValidationEnabled(): Promise<boolean> {
+    public async isTokenValidationEnabled(): Promise<boolean> {
         let xraySemver: semver.SemVer = new semver.SemVer(this._connectionManager.xrayVersion);
         if (xraySemver.compare(DYNAMIC_TOKEN_VALIDATION_MIN_XRAY_VERSION) < 0) {
             this._logManager.logMessage(
