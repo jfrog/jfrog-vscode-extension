@@ -118,7 +118,7 @@ export class DescriptorActionProvider extends AbstractFileActionProvider impleme
         if (!dependency || dependency.indirect || !this.availableUpdateManager(dependency)) {
             return actions;
         }
-    
+
         dependency.getFixedVersionToCves().forEach((cves: Set<string>, fixedVersion: string) => {
             previousCves = new Set([...previousCves, ...cves]);
             actions.push(this.createFixAction(dependency, previousCves, fixedVersion));
