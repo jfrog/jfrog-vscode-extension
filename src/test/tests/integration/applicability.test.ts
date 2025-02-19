@@ -12,6 +12,7 @@ import { FileIssues, FileRegion } from '../../../main/scanLogic/scanRunners/anal
 import { AnalyzerUtils } from '../../../main/treeDataProviders/utils/analyzerUtils';
 import { AnalyzerManagerIntegrationEnv } from '../utils/testIntegration.test';
 import { PackageType } from '../../../main/types/projectType';
+import { Applicability } from '../../../../../jfrog-ide-webview';
 
 describe('Applicability Integration Tests', async () => {
     let integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
@@ -64,7 +65,7 @@ describe('Applicability Integration Tests', async () => {
             });
 
             it('Check response attributes defined', () => {
-                assert.isDefined(response.applicableCve);
+                assert.isDefined(response.cvesWithApplicableStates);
                 assert.isDefined(response.scannedCve);
             });
 
@@ -73,21 +74,32 @@ describe('Applicability Integration Tests', async () => {
             });
 
             it('Check all expected applicable CVE detected', () => {
-                assert.includeDeepMembers(Object.keys(response.applicableCve), Object.keys(expectedContent.applicableCve));
+                const applicableCVesInResponse: string[] = Object.keys(response.cvesWithApplicableStates).filter(key => response.cvesWithApplicableStates[key].applicability === Applicability.APPLICABLE);
+                const expectedApplicableCVesInResponse: string[] =  Object.keys(response.cvesWithApplicableStates).filter(key => response.cvesWithApplicableStates[key].applicability === Applicability.APPLICABLE);
+
+                assert.includeDeepMembers(applicableCVesInResponse, expectedApplicableCVesInResponse);
             });
 
             it('Check all expected notApplicableCve CVE detected', () => {
-                assert.includeDeepMembers(Object.keys(response.notApplicableCve), Object.keys(expectedContent.notApplicableCve));
-            });
+                    const notApplicableCvesInResponse: string[] = Object.keys(response.cvesWithApplicableStates).filter(key => response.cvesWithApplicableStates[key].applicability === Applicability.NOT_APPLICABLE);
+                    const expectedNotApplicableCves: string[] =  Object.keys(response.cvesWithApplicableStates).filter(key => response.cvesWithApplicableStates[key].applicability === Applicability.NOT_APPLICABLE);
+
+                    assert.includeDeepMembers(notApplicableCvesInResponse, expectedNotApplicableCves);
+                });
+
 
             describe('Applicable details data validations', () => {
                 let expectedApplicableCves: Map<string, CveApplicableDetails>;
                 let responseApplicableCves: Map<string, CveApplicableDetails>;
 
                 before(() => {
-                    expectedApplicableCves = new Map<string, CveApplicableDetails>(Object.entries(expectedContent.applicableCve ?? []));
+                    expectedApplicableCves = new Map(
+                        Object.entries(expectedContent.cvesWithApplicableStates).filter(
+                            ([, details]) => details.applicability === Applicability.APPLICABLE
+                        )
+                    );
                     assert.isNotEmpty(expectedApplicableCves);
-                    responseApplicableCves = new Map<string, CveApplicableDetails>(Object.entries(response.applicableCve ?? []));
+                    responseApplicableCves = new Map<string, CveApplicableDetails>(Object.entries(response.cvesWithApplicableStates ?? []));
                 });
 
                 function getResponseApplicableDetails(cve: string): CveApplicableDetails {

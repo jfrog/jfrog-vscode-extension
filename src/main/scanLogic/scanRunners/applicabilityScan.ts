@@ -1,3 +1,4 @@
+import { Applicability } from 'jfrog-ide-webview';
 import { ConnectionManager } from '../../connect/connectionManager';
 import { LogManager } from '../../log/logManager';
 import { CveTreeNode } from '../../treeDataProviders/issuesTree/descriptorTree/cveTreeNode';
@@ -5,7 +6,7 @@ import { ProjectDependencyTreeNode } from '../../treeDataProviders/issuesTree/de
 import { IssueTreeNode } from '../../treeDataProviders/issuesTree/issueTreeNode';
 import { AnalyzerUtils } from '../../treeDataProviders/utils/analyzerUtils';
 import { StepProgress } from '../../treeDataProviders/utils/stepProgress';
-import { PackageType, fromPackageType } from '../../types/projectType';
+import { fromPackageType, PackageType } from '../../types/projectType';
 import { DependencyScanResults } from '../../types/workspaceIssuesDetails';
 import { Configuration } from '../../utils/configuration';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
@@ -13,22 +14,16 @@ import { FileScanBundle } from '../../utils/scanUtils';
 import { Utils } from '../../utils/utils';
 import { AnalyzerManager } from './analyzerManager';
 import {
-    AnalyzerRule,
     AnalyzeIssue,
     AnalyzeLocation,
-    AnalyzeScanRequest,
+    AnalyzerRule,
     AnalyzerScanResponse,
     AnalyzerScanRun,
+    AnalyzeScanRequest,
     FileIssues,
     ScanType
 } from './analyzerModels';
 import { BinaryEnvParams, JasRunner, RunArgs } from './jasRunner';
-
-enum ApplicabilityStatus {
-    NOT_SCANNED = 'not_scanned',
-    NOT_APPLICABLE = 'not_applicable',
-    APPLICABLE = 'applicable'
-}
 
 /**
  * The request that is sent to the binary to scan applicability
@@ -49,16 +44,15 @@ export interface ApplicabilityScanResponse {
     scannedCve: string[];
     // All the indirect cves that should be scanned
     indirectCve: string[];
-    // All the cve that have applicable issues
-    applicableCve: { [cve_id: string]: CveApplicableDetails };
-    // All the cve that have non-applicable issues
-    notApplicableCve: { [cve_id: string]: CveApplicableDetails };
+    // All the cves
+    cvesWithApplicableStates: { [cve_id: string]: CveApplicableDetails };
 }
 
 /**
  * The details about cve applicability result
  */
 export interface CveApplicableDetails {
+    applicability: Applicability
     fixReason: string;
     fileEvidences: FileIssues[];
     fullDescription?: string;
@@ -166,7 +160,7 @@ export class ApplicabilityRunner extends JasRunner {
             this.logStartScanning(request, params?.msi);
             let response: AnalyzerScanResponse | undefined = await this.executeRequest(this._progressManager.checkCancel, request, params);
             let applicableIssues: ApplicabilityScanResponse = this.convertResponse(response);
-            if (applicableIssues?.applicableCve) {
+            if (applicableIssues?.cvesWithApplicableStates) {
                 this.transferApplicableResponseToBundles(applicableIssues, mergedBundles, startApplicableTime);
             }
         }
@@ -241,11 +235,11 @@ export class ApplicabilityRunner extends JasRunner {
         bundles: Map<FileScanBundle, Set<string>>,
         startTime: number
     ) {
-        for (let [bundle, relevantCve] of bundles) {
+        for (let [bundle] of bundles) {
             let descriptorIssues: DependencyScanResults = <DependencyScanResults>bundle.data;
             // Filter only relevant information
             descriptorIssues.applicableScanTimestamp = Date.now();
-            descriptorIssues.applicableIssues = this.filterApplicabilityScanResponse(applicableIssues, relevantCve);
+            descriptorIssues.applicableIssues = applicableIssues;
             // Populate it in bundle
             let issuesCount: number = AnalyzerUtils.populateApplicableIssues(
                 bundle.rootNode,
@@ -257,46 +251,7 @@ export class ApplicabilityRunner extends JasRunner {
         }
     }
 
-    /**
-     * For a given full ApplicableScanResponse scan results, filter the results to only contain information relevant to a given cve list
-     * @param scanResponse - All the applicable information
-     * @param relevantCve  - CVE list to filter information only for them
-     * @returns ApplicableScanResponse with information relevant only for the given relevant CVEs
-     */
-    private filterApplicabilityScanResponse(scanResponse: ApplicabilityScanResponse, relevantCve: Set<string>): ApplicabilityScanResponse {
-        // Map from Applicable CVE ID to CveApplicableDetails
-        let applicableCvesIdToDetails: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
-            Object.entries(scanResponse.applicableCve)
-        );
-        let notApplicableCvesIdToDetails: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
-            Object.entries(scanResponse.notApplicableCve)
-        );
-        let relevantScannedCve: string[] = [];
-        let relevantApplicableCve: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
-        let relevantNotApplicableCve: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
-
-        for (let scannedCve of scanResponse.scannedCve) {
-            if (relevantCve.has(scannedCve)) {
-                relevantScannedCve.push(scannedCve);
-                let potential: CveApplicableDetails | undefined = applicableCvesIdToDetails.get(scannedCve);
-                if (potential) {
-                    relevantApplicableCve.set(scannedCve, potential);
-                    continue;
-                }
-                potential = notApplicableCvesIdToDetails.get(scannedCve);
-                if (potential) {
-                    relevantNotApplicableCve.set(scannedCve, potential);
-                }
-            }
-        }
-        return {
-            scannedCve: Array.from(relevantScannedCve),
-            applicableCve: Object.fromEntries(relevantApplicableCve.entries()),
-            notApplicableCve: Object.fromEntries(relevantNotApplicableCve.entries())
-        } as ApplicabilityScanResponse;
-    }
-
-    /**
+     /**
      * Generate response from the run results
      * @param response - The run results generated from the binary
      * @returns the response generated from the scan run
@@ -307,65 +262,57 @@ export class ApplicabilityRunner extends JasRunner {
         }
         // Prepare
         const analyzerScanRun: AnalyzerScanRun = response.runs[0];
-        const applicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
-        const notApplicable: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
+        const allCvesWithApplicableState: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
         const scanned: Set<string> = new Set<string>();
         const rulesFullDescription: Map<string, string> = new Map<string, string>();
-        const applicabilityStatues: Map<string, ApplicabilityStatus> = new Map<string, ApplicabilityStatus>();
+        const rules: AnalyzerRule[] = this.getUniqueRules(analyzerScanRun.tool.driver.rules);
 
-        for (const rule of analyzerScanRun.tool.driver.rules) {
-            if (rule.fullDescription) {
+        rules.map(rule => {
+            if(rule.fullDescription){
                 rulesFullDescription.set(rule.id, rule.fullDescription.text);
             }
-            if (rule.properties) {
-                applicabilityStatues.set(rule.id, this.getApplicabilityStatusFromRule(rule));
-            }
-        }
-        const issues: AnalyzeIssue[] = analyzerScanRun.results;
-        if (issues) {
+        });
+
+        const issues: Record<string, AnalyzeIssue> = this.mapIssuesByRuleId(analyzerScanRun.results);
+        if (rules) {
             // Generate applicable data for all the issues
-            issues.forEach((analyzeIssue: AnalyzeIssue) => {
-                let status: ApplicabilityStatus | undefined = applicabilityStatues.get(analyzeIssue.ruleId);
-                if (!status || status === ApplicabilityStatus.NOT_SCANNED) {
+            rules.map((currentRule: AnalyzerRule) => {
+                let status: Applicability | undefined = this.getApplicabilityStatusFromRule(currentRule);
+                if (!status) {
                     return;
                 }
-                if (status === ApplicabilityStatus.APPLICABLE) {
-                    const applicableDetails: CveApplicableDetails = this.getOrCreateApplicableDetails(
-                        analyzeIssue,
-                        applicable,
-                        rulesFullDescription.get(analyzeIssue.ruleId)
-                    );
-                    analyzeIssue.locations.forEach((location: AnalyzeLocation) => {
+                const applicableDetails: CveApplicableDetails = this.createApplicableDetails(
+                    issues[currentRule.id],
+                    status,
+                    rulesFullDescription.get(currentRule.id)
+                );
+                if (status === Applicability.APPLICABLE) {
+                    issues[currentRule.id].locations.forEach((location: AnalyzeLocation) => {
                         let fileIssues: FileIssues = this.getOrCreateFileIssues(applicableDetails, location.physicalLocation.artifactLocation.uri);
                         fileIssues.locations.push(location.physicalLocation.region);
                     });
-                } else if (status === ApplicabilityStatus.NOT_APPLICABLE) {
-                    this.getOrCreateApplicableDetails(analyzeIssue, notApplicable, rulesFullDescription.get(analyzeIssue.ruleId));
                 }
-                scanned.add(this.getCveFromRuleId(analyzeIssue.ruleId));
+                allCvesWithApplicableState.set(this.getCveFromRuleId(currentRule.id), applicableDetails);
+                scanned.add(this.getCveFromRuleId(currentRule.id));
             });
         }
-        // Convert data to a response
         return {
             scannedCve: Array.from(scanned),
-            applicableCve: Object.fromEntries(applicable.entries()),
-            notApplicableCve: Object.fromEntries(notApplicable.entries())
+            cvesWithApplicableStates: Object.fromEntries(allCvesWithApplicableState.entries()),
         } as ApplicabilityScanResponse;
     }
 
-    public getApplicabilityStatusFromRule(rule: AnalyzerRule): ApplicabilityStatus {
-        let ruleStatus: string | undefined = rule.properties?.applicability;
+    public getApplicabilityStatusFromRule(rule: AnalyzerRule): Applicability | undefined {
+        const ruleStatus: string | undefined = rule.properties?.applicability;
         if (ruleStatus) {
-            switch (ruleStatus) {
-                case 'not_applicable':
-                    return ApplicabilityStatus.NOT_APPLICABLE;
-                case 'applicable':
-                    return ApplicabilityStatus.APPLICABLE;
-                default:
-                    this._logManager.logMessage(`Rule ${rule.id} detected as '${ruleStatus}' applicability status`, 'DEBUG');
+            // Check if the ruleStatus value is a valid property on the Applicability enum
+            if (Object.values(Applicability).includes(ruleStatus as Applicability)) {
+                return ruleStatus as Applicability;
+            } else {
+                this._logManager.logMessage(`Rule ${rule.id} detected as '${ruleStatus}' applicability status`, 'DEBUG');
             }
         }
-        return ApplicabilityStatus.NOT_SCANNED;
+        return undefined;
     }
 
     /**
@@ -394,29 +341,23 @@ export class ApplicabilityRunner extends JasRunner {
      * Get or create CVE applicable issue if not exists from the applicable list.
      * @param analyzedIssue   - Applicable issue to generate information from
      * @param applicable      - List of all the applicable CVEs
+     * @param ruleId          - The rule id
+     * @param applicability
      * @param fullDescription - Full description of the applicable issue
      * @returns the CveApplicableDetails object for the analyzedIssue CVE
      */
-    private getOrCreateApplicableDetails(
-        analyzedIssue: AnalyzeIssue,
-        applicable: Map<string, CveApplicableDetails>,
-        fullDescription?: string
+    private createApplicableDetails(
+        analyzedIssue: AnalyzeIssue | undefined,
+        applicability: Applicability,
+    fullDescription?: string,
     ): CveApplicableDetails {
-        let ruleId: string = this.getCveFromRuleId(analyzedIssue.ruleId);
-        let cveDetails: CveApplicableDetails | undefined = applicable.get(ruleId);
-        if (cveDetails) {
-            return cveDetails;
-        }
 
-        let details: CveApplicableDetails = {
-            fixReason: analyzedIssue.message.text,
+        return {
+            applicability,
+            fixReason: analyzedIssue?.message.text,
             fileEvidences: [],
             fullDescription: fullDescription
         } as CveApplicableDetails;
-
-        applicable.set(ruleId, details);
-
-        return details;
     }
 
     /**
@@ -431,4 +372,48 @@ export class ApplicabilityRunner extends JasRunner {
         }
         return ruleId;
     }
+
+    /**
+     * Converts the issues to a dictionary with the unique rule
+     * @param issues - the issues from the scan
+     * @returns record of issues identified by rule ids
+     */
+    private mapIssuesByRuleId(issues: AnalyzeIssue[]): Record<string, AnalyzeIssue> {
+        return issues.reduce((issueMap, issue) => {
+          issueMap[issue.ruleId] = issue;
+          return issueMap;
+        }, {} as Record<string, AnalyzeIssue>);
+      }
+
+    /**
+    * Ensures the rules are unique based on 'id'. If multiple rules have the same id
+     * and at least one of them has 'not_applicable' applicability, it filters out
+    * the 'not_applicable' instance.
+    * @param rules - the array of AnalyzerRule objects
+    * @returns array of unique AnalyzerRule objects
+    */
+    private getUniqueRules(rules: AnalyzerRule[]): AnalyzerRule[] {
+        const ruleMap: Map<string, AnalyzerRule> = new Map<string, AnalyzerRule>();
+
+        for (const rule of rules) {
+            const existingRule: AnalyzerRule | undefined = ruleMap.get(rule.id);
+
+            if (!existingRule) {
+                // If no existing rule with the same id, add the rule to the map
+                ruleMap.set(rule.id, rule);
+            } else if (existingRule.properties?.applicability === Applicability.NOT_APPLICABLE) {
+                // If existing rule's applicability is 'not_applicable' and current rule's is not
+                if (rule.properties?.applicability !== Applicability.NOT_APPLICABLE) {
+                    ruleMap.set(rule.id, rule);
+                }
+        }
+    }
+
+    // Covert Map values to an array
+    return Array.from(ruleMap.values()).filter(rule => {
+        const occurrences : number = rules.filter(r => r.id === rule.id).length;
+        // Keep 'not_applicable' rules if there's only one occurrence of the id
+        return !(occurrences > 1 && rule.properties?.applicability === Applicability.NOT_APPLICABLE);
+    });
+}
 }

@@ -1,4 +1,4 @@
-import { IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
+import { Applicability, IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -224,19 +224,12 @@ export class AnalyzerUtils {
         descriptorNode: ProjectDependencyTreeNode,
         dependencyScanResults: DependencyScanResults
     ): number {
-        // Populate descriptor node with data
-        descriptorNode.scannedCve = new Set<string>(dependencyScanResults.applicableIssues?.scannedCve ?? []);
-        descriptorNode.applicableCve = new Map<string, CveApplicableDetails>(
-            dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.applicableCve) : []
-        );
-        descriptorNode.notApplicableCve = new Map<string, CveApplicableDetails>(
-            dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.notApplicableCve) : []
-        );
         descriptorNode.applicableScanTimeStamp = dependencyScanResults.applicableScanTimestamp;
 
+        const cveWithApplicableStates: Map<string,CveApplicableDetails> = new Map<string,CveApplicableDetails>(dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.cvesWithApplicableStates) : []);
         // Populate related CodeFile nodes with issues and update the descriptor CVE applicability details
         let issuesCount: number = 0;
-        descriptorNode.scannedCve.forEach(cve => {
+        dependencyScanResults.applicableIssues?.scannedCve.forEach(cve => {
             // Check if the descriptor has this cve issue
             let nodes: IssueTreeNode[] | undefined = descriptorNode.getIssueById(cve);
             if (!nodes) {
@@ -245,8 +238,8 @@ export class AnalyzerUtils {
             for (const node of nodes) {
                 if (node instanceof CveTreeNode) {
                     let evidences: IEvidence[] = [];
-                    let potential: CveApplicableDetails | undefined = descriptorNode.applicableCve?.get(node.labelId);
-                    if (potential) {
+                    let potential: CveApplicableDetails | undefined = cveWithApplicableStates?.get(node.labelId);
+                    if (potential?.applicability === Applicability.APPLICABLE) {
                         let details: CveApplicableDetails = potential;
                         // Populate code file issues for workspace
                         details.fileEvidences.forEach((fileEvidence: FileIssues) => {
@@ -255,25 +248,23 @@ export class AnalyzerUtils {
                         });
                         // Applicable
                         node.applicableDetails = {
-                            isApplicable: true,
+                            applicability: Applicability.APPLICABLE,
                             searchTarget: details.fullDescription,
                             evidence: evidences
                         } as IApplicableDetails;
-                    } else {
+                    } else if (potential?.applicability === Applicability.NOT_APPLICABLE) {
                         // Not Applicable
-                        let notApplicableApplicableDetails: CveApplicableDetails | undefined = descriptorNode.notApplicableCve?.get(node.labelId);
-                        if (!notApplicableApplicableDetails) {
-                            continue;
-                        }
                         evidences.push({
-                            reason: notApplicableApplicableDetails.fixReason
+                            reason: potential.fixReason
                         } as IEvidence);
                         node.severity = SeverityUtils.notApplicable(node.severity);
                         node.applicableDetails = {
-                            isApplicable: false,
-                            searchTarget: notApplicableApplicableDetails.fullDescription,
+                            applicability: Applicability.NOT_APPLICABLE,
+                            searchTarget: potential.fullDescription,
                             evidence: evidences
                         } as IApplicableDetails;
+                    } else {
+                        node.applicableDetails = potential;
                     }
                 }
             }
