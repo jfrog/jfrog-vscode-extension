@@ -6,6 +6,7 @@ import { IssueTreeNode } from '../issueTreeNode';
 import { CveTreeNode } from './cveTreeNode';
 import { IComponent } from 'jfrog-client-js';
 import { Utils } from '../../../utils/utils';
+import { CveApplicableDetails } from '../../../scanLogic/scanRunners/applicabilityScan';
 
 /**
  * Describes a base class for descriptor/environment dependencies.
@@ -13,6 +14,8 @@ import { Utils } from '../../../utils/utils';
  */
 export class ProjectDependencyTreeNode extends FileTreeNode {
     protected _dependenciesWithIssue: DependencyIssuesTreeNode[] = [];
+    private _scannedCve?: Set<string> | undefined;
+    private _applicableCve?: Map<string, CveApplicableDetails> | undefined;
     protected _dependencyScanTimeStamp?: number;
     protected _applicableScanTimeStamp?: number;
 
@@ -89,6 +92,22 @@ export class ProjectDependencyTreeNode extends FileTreeNode {
             issues.push(...dependency.issues);
         });
         return issues;
+    }
+
+    public get scannedCve(): Set<string> | undefined {
+        return this._scannedCve;
+    }
+
+    public set scannedCve(value: Set<string> | undefined) {
+        this._scannedCve = value;
+    }
+
+    public get applicableCve(): Map<string, CveApplicableDetails> | undefined {
+        return this._applicableCve;
+    }
+
+    public set applicableCve(value: Map<string, CveApplicableDetails> | undefined) {
+        this._applicableCve = value;
     }
 
     public get dependencyScanTimeStamp(): number | undefined {

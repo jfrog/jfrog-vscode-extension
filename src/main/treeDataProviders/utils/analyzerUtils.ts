@@ -225,11 +225,12 @@ export class AnalyzerUtils {
         dependencyScanResults: DependencyScanResults
     ): number {
         descriptorNode.applicableScanTimeStamp = dependencyScanResults.applicableScanTimestamp;
+        descriptorNode.scannedCve = new Set<string>(dependencyScanResults.applicableIssues?.scannedCve ?? []);
+        descriptorNode.applicableCve = new Map<string,CveApplicableDetails>(dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.cvesWithApplicableStates) : []);
 
-        const cveWithApplicableStates: Map<string,CveApplicableDetails> = new Map<string,CveApplicableDetails>(dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.cvesWithApplicableStates) : []);
         // Populate related CodeFile nodes with issues and update the descriptor CVE applicability details
         let issuesCount: number = 0;
-        dependencyScanResults.applicableIssues?.scannedCve.forEach(cve => {
+        descriptorNode.scannedCve.forEach(cve => {
             // Check if the descriptor has this cve issue
             let nodes: IssueTreeNode[] | undefined = descriptorNode.getIssueById(cve);
             if (!nodes) {
@@ -238,7 +239,7 @@ export class AnalyzerUtils {
             for (const node of nodes) {
                 if (node instanceof CveTreeNode) {
                     let evidences: IEvidence[] = [];
-                    let potential: CveApplicableDetails | undefined = cveWithApplicableStates?.get(node.labelId);
+                    let potential: CveApplicableDetails | undefined = descriptorNode.applicableCve?.get(node.labelId);
                     if (potential?.applicability === Applicability.APPLICABLE) {
                         let details: CveApplicableDetails = potential;
                         // Populate code file issues for workspace
@@ -252,19 +253,27 @@ export class AnalyzerUtils {
                             searchTarget: details.fullDescription,
                             evidence: evidences
                         } as IApplicableDetails;
-                    } else if (potential?.applicability === Applicability.NOT_APPLICABLE) {
-                        // Not Applicable
-                        evidences.push({
-                            reason: potential.fixReason
-                        } as IEvidence);
-                        node.severity = SeverityUtils.notApplicable(node.severity);
-                        node.applicableDetails = {
-                            applicability: Applicability.NOT_APPLICABLE,
-                            searchTarget: potential.fullDescription,
-                            evidence: evidences
-                        } as IApplicableDetails;
-                    } else {
-                        node.applicableDetails = potential;
+                    } else if (potential?.applicability) {
+                        if (potential.applicability === Applicability.NOT_APPLICABLE) {
+                            // Not Applicable
+                            node.severity = SeverityUtils.notApplicable(node.severity);
+                        }
+                        if (potential.fixReason) {
+                            evidences.push({
+                                reason: potential.fixReason
+                            } as IEvidence);
+                        }
+                        const applicableDetails: Partial<IApplicableDetails> = {
+                            applicability: potential.applicability,
+                        };
+                        if (potential.fullDescription) {
+                            applicableDetails.searchTarget = potential.fullDescription;
+                        }
+                        if (evidences.length > 0) {
+                            applicableDetails.evidence = evidences;
+                        }
+
+                        node.applicableDetails = applicableDetails as IApplicableDetails;
                     }
                 }
             }

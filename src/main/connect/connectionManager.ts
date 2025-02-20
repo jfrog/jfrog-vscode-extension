@@ -23,7 +23,6 @@ import { ConnectionUtils } from './connectionUtils';
 import { XrayScanClient } from 'jfrog-client-js/dist/src/Xray/XrayScanClient';
 import { IJasConfig } from 'jfrog-client-js/dist/model/Xray/JasConfig/JasConfig';
 
-
 export enum LoginStatus {
     Success = 'SUCCESS',
     Failed = 'FAILED',
