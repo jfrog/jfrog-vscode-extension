@@ -1,6 +1,6 @@
 import { assert, expect } from 'chai';
 import { ICve, IGraphCve, IIssue, IReference, IVulnerableComponent } from 'jfrog-client-js';
-import { ICve as WebICve, IApplicableDetails } from 'jfrog-ide-webview';
+import { ICve as WebICve, IApplicableDetails, Applicability } from 'jfrog-ide-webview';
 import { LogLevel } from '../../main/log/logManager';
 import { IIssueCacheObject } from '../../main/types/issueCacheObject';
 import { Translators } from '../../main/utils/translators';
@@ -42,7 +42,7 @@ describe('Translators Tests', () => {
             cvss_v3_vector: 'vector v3'
         } as IGraphCve;
         let details: IApplicableDetails = {
-            isApplicable: true
+            applicability: Applicability.APPLICABLE
         };
         assertWebCve(Translators.toWebViewICve());
         assertWebCve(Translators.toWebViewICve(cve), cve);

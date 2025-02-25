@@ -263,7 +263,7 @@ export class AnalyzerUtils {
                                 reason: potential.fixReason
                             } as IEvidence);
                         }
-                        const applicableDetails: Partial<IApplicableDetails> = {
+                        const applicableDetails: IApplicableDetails = {
                             applicability: potential.applicability,
                         };
                         if (potential.fullDescription) {

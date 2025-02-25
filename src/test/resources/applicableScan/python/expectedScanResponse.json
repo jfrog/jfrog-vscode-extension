@@ -2,11 +2,15 @@
     "scannedCve": [
         "CVE-2021-3918",
         "CVE-2019-15605",
-        "CVE-2019-20907"
+        "CVE-2019-20907",
+        "CVE-2020-1751",
+        "CVE-2020-1750",
+        "CVE-2018-20225"
     ],
     "indirectCve": [],
-    "applicableCve": {
+    "cvesWithApplicableStates": {
         "CVE-2019-20907": {
+            "applicability": "applicable",
             "fixReason": "The vulnerable function tarfile.open is called with external input",
             "fileEvidences": [
                 {
@@ -25,16 +29,27 @@
                 }
             ],
             "fullDescription": "The scanner checks whether the vulnerable function `open` is called with external input to its 1st (`name`) argument."
-        }
-    },
-    "notApplicableCve": {
+        },
         "CVE-2021-3918": {
+            "applicability": "not_applicable",
             "fixReason": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `json-schema.validate` with external input to its 1st (`instance`) argument.\n* `json-schema.checkPropertyChange` with external input to its 2nd (`schema`) argument.\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present.",
             "fullDescription": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `json-schema.validate` with external input to its 1st (`instance`) argument.\n* `json-schema.checkPropertyChange` with external input to its 2nd (`schema`) argument.\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present."
         },
         "CVE-2019-15605": {
+            "applicability": "not_applicable",
             "fixReason": "The scanner checks whether Express.js, which is the vulnerability's main remote attack vector, is running.",
             "fullDescription": "The scanner checks whether Express.js, which is the vulnerability's main remote attack vector, is running."
         }
+    },
+    "CVE-2020-1751":{
+        "applicability": "missing_context",
+        "fixReason": "\"text\": \"The scanner checks whether any of the following vulnerable functions are called:\\n\\n-  `yaml.full_load()`\\n-  `yaml.load()` only unsafe calls (without specifying `SafeLoader` as the `Loader`class).\",",
+        "fullDescription": "\"text\": \"The scanner checks whether any of the following vulnerable functions are called:\\n\\n-  `yaml.full_load()`\\n-  `yaml.load()` only unsafe calls (without specifying `SafeLoader` as the `Loader`class).\","
+    },
+    "CVE-2020-1750":{
+        "applicability": "not_covered"
+    },
+    "CVE-2018-20225":{
+        "applicability": "undetermined"
     }
 }

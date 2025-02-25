@@ -2,13 +2,17 @@
     "scannedCve": [
         "CVE-2022-25878",
         "CVE-2021-3807",
-        "CVE-2021-3918"
+        "CVE-2021-3918",
+        "CVE-2020-1751",
+        "CVE-2020-1750",
+        "CVE-2018-20225"
     ],
     "indirectCve": [
         "CVE-2021-44228"
     ],
-    "applicableCve": {
+    "cvesWithApplicableStates": {
         "CVE-2022-25878": {
+            "applicability": "applicable",
             "fixReason": "Prototype pollution `Object.freeze` remediation was not detected, The vulnerable function protobufjs.parse is called with external input, The vulnerable function protobufjs.load(Sync) is called",
             "fileEvidences": [
                 {
@@ -36,20 +40,32 @@
                 }
             ],
             "fullDescription": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `util.setProperty` with external input to its 2nd (`path`) or 3rd (`value`) arguments.\n* `ReflectionObject.setParsedOption` with external input to its 2nd (`name`) or 3rd (`value`) arguments.\n* `parse` with external input to its 1st (`source`) argument.\n* `load`\n* `loadSync`\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present."
-        }
-    },
-    "notApplicableCve": {
+        },
         "CVE-2021-3807": {
+            "applicability": "not_applicable",
             "fixReason": "The scanner checks whether the vulnerable function `ansi-regex` is called.",
             "fullDescription": "The scanner checks whether the vulnerable function `ansi-regex` is called."
         },
         "CVE-2021-3918":{
+            "applicability": "not_applicable",
             "fixReason": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `json-schema.validate` with external input to its 1st (`instance`) argument.\n* `json-schema.checkPropertyChange` with external input to its 2nd (`schema`) argument.\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present.",
             "fullDescription": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `json-schema.validate` with external input to its 1st (`instance`) argument.\n* `json-schema.checkPropertyChange` with external input to its 2nd (`schema`) argument.\n\nThe scanner also checks whether the `Object.freeze()` remediation is not present."
         },
         "CVE-2021-44228":{
+            "applicability": "not_applicable",
             "fixReason": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `info` with external input to any of its arguments.\n* `fatal` with external input to any of its arguments.\n* `log` with external input to any of its arguments.\n* `warn` with external input to any of its arguments.\n* `trace` with external input to any of its arguments.\n* `error` with external input to any of its arguments.\n* `debug` with external input to any of its arguments.",
             "fullDescription": "The scanner checks whether any of the following vulnerable functions are called:\n\n* `info` with external input to any of its arguments.\n* `fatal` with external input to any of its arguments.\n* `log` with external input to any of its arguments.\n* `warn` with external input to any of its arguments.\n* `trace` with external input to any of its arguments.\n* `error` with external input to any of its arguments.\n* `debug` with external input to any of its arguments."
+        },
+        "CVE-2020-1751":{
+            "applicability": "missing_context",
+            "fixReason": "\"text\": \"The scanner checks whether any of the following vulnerable functions are called:\\n\\n-  `yaml.full_load()`\\n-  `yaml.load()` only unsafe calls (without specifying `SafeLoader` as the `Loader`class).\",",
+            "fullDescription": "\"text\": \"The scanner checks whether any of the following vulnerable functions are called:\\n\\n-  `yaml.full_load()`\\n-  `yaml.load()` only unsafe calls (without specifying `SafeLoader` as the `Loader`class).\","
+        },
+        "CVE-2020-1750":{
+            "applicability": "not_covered"
+        },
+        "CVE-2018-20225":{
+            "applicability": "undetermined"
         }
     }
 }

@@ -2,7 +2,7 @@ import { assert } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { IEvidence } from 'jfrog-ide-webview';
+import { Applicability, IEvidence } from 'jfrog-ide-webview';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { AnalyzerScanResponse, FileIssues, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
@@ -168,10 +168,9 @@ describe('Applicability Scan Tests', () => {
 
         describe('Not applicable Cve tests', () => {
             let notApplicable: string[];
-            const cveWithApplicableStates: Map<string,CveApplicableDetails> = new Map<string,CveApplicableDetails>(scanResult.applicableIssues ? Object.entries(scanResult.applicableIssues.cvesWithApplicableStates) : []);
-
 
             before(() => {
+                const cveWithApplicableStates: Map<string,CveApplicableDetails> = new Map<string,CveApplicableDetails>(scanResult.applicableIssues ? Object.entries(scanResult.applicableIssues.cvesWithApplicableStates) : []);
                 notApplicable = Array.from(scanResult.applicableIssues.scannedCve ?? []).filter(cve => !cveWithApplicableStates?.has(cve));
             });
 
@@ -190,7 +189,7 @@ describe('Applicability Scan Tests', () => {
             it('Check Cve node marked as not applicable', () => {
                 notApplicable.forEach((cve: string) => {
                     let node: CveTreeNode | undefined = getTestCveNode(cve);
-                    assert.isFalse(node?.applicableDetails?.applicability, 'Cve node ' + cve + ' marked as ' + node?.applicableDetails?.applicability);
+                    assert.isFalse(node?.applicableDetails?.applicability === Applicability.NOT_APPLICABLE, 'Cve node ' + cve + ' marked as ' + node?.applicableDetails?.applicability);
                 });
             });
 
@@ -237,7 +236,7 @@ describe('Applicability Scan Tests', () => {
                     Array.from(applicableCve.keys()).forEach((cve: string) => {
                         let node: CveTreeNode | undefined = getTestCveNode(cve);
                         assert.isTrue(
-                            node?.applicableDetails?.applicability,
+                            node?.applicableDetails?.applicability === Applicability.APPLICABLE,
                             'Cve node ' + cve + ' marked as ' + node?.applicableDetails?.applicability
                         );
                     });
