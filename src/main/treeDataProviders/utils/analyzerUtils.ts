@@ -240,7 +240,9 @@ export class AnalyzerUtils {
                 if (node instanceof CveTreeNode) {
                     let evidences: IEvidence[] = [];
                     let potential: CveApplicableDetails | undefined = descriptorNode.applicableCve?.get(node.labelId);
-                    if (potential?.applicability === Applicability.APPLICABLE) {
+                    if (!potential || !potential.applicability) {
+                        continue
+                    } else if(potential.applicability === Applicability.APPLICABLE) {
                         let details: CveApplicableDetails = potential;
                         // Populate code file issues for workspace
                         details.fileEvidences.forEach((fileEvidence: FileIssues) => {
@@ -253,7 +255,7 @@ export class AnalyzerUtils {
                             searchTarget: details.fullDescription,
                             evidence: evidences
                         } as IApplicableDetails;
-                    } else if (potential?.applicability) {
+                    } else {
                         if (potential.applicability === Applicability.NOT_APPLICABLE) {
                             // Not Applicable
                             node.severity = SeverityUtils.notApplicable(node.severity);
