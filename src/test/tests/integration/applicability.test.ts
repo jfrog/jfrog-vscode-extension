@@ -74,39 +74,59 @@ describe('Applicability Integration Tests', async () => {
             });
 
             it('Check all expected applicable CVE detected', () => {
-                const applicableCvesInResponse: string[] = Object.keys(response.cvesWithApplicableStates).filter(key => response.cvesWithApplicableStates[key].applicability === Applicability.APPLICABLE);
-                const expectedApplicableCvesInResponse: string[] =  Object.keys(expectedContent.cvesWithApplicableStates).filter(key => expectedContent.cvesWithApplicableStates[key].applicability === Applicability.APPLICABLE);
+                const applicableCvesInResponse: string[] = Object.keys(response.cvesWithApplicableStates).filter(
+                    key => response.cvesWithApplicableStates[key].applicability === Applicability.APPLICABLE
+                );
+                const expectedApplicableCvesInResponse: string[] = Object.keys(expectedContent.cvesWithApplicableStates).filter(
+                    key => expectedContent.cvesWithApplicableStates[key].applicability === Applicability.APPLICABLE
+                );
 
                 assert.includeDeepMembers(applicableCvesInResponse, expectedApplicableCvesInResponse);
             });
 
             it('Check all expected notApplicableCve CVE detected', () => {
-                const notApplicableCvesInResponse: string[] = Object.keys(response.cvesWithApplicableStates).filter(key => response.cvesWithApplicableStates[key].applicability === Applicability.NOT_APPLICABLE);
-                const expectedNotApplicableCves: string[] =  Object.keys(expectedContent.cvesWithApplicableStates).filter(key => expectedContent.cvesWithApplicableStates[key].applicability === Applicability.NOT_APPLICABLE);
+                const notApplicableCvesInResponse: string[] = Object.keys(response.cvesWithApplicableStates).filter(
+                    key => response.cvesWithApplicableStates[key].applicability === Applicability.NOT_APPLICABLE
+                );
+                const expectedNotApplicableCves: string[] = Object.keys(expectedContent.cvesWithApplicableStates).filter(
+                    key => expectedContent.cvesWithApplicableStates[key].applicability === Applicability.NOT_APPLICABLE
+                );
 
                 assert.includeDeepMembers(notApplicableCvesInResponse, expectedNotApplicableCves);
-                });
+            });
 
             it('Check all expected notCoveredCve CVE detected', () => {
-                const notCoveredCvesInResponse: string[] = Object.keys(response.cvesWithApplicableStates).filter(key => response.cvesWithApplicableStates[key].applicability === Applicability.NOT_COVERED);
-                const expectedNotCoveredCves: string[] =  Object.keys(expectedContent.cvesWithApplicableStates).filter(key => expectedContent.cvesWithApplicableStates[key].applicability === Applicability.NOT_COVERED);
+                const notCoveredCvesInResponse: string[] = Object.keys(response.cvesWithApplicableStates).filter(
+                    key => response.cvesWithApplicableStates[key].applicability === Applicability.NOT_COVERED
+                );
+                const expectedNotCoveredCves: string[] = Object.keys(expectedContent.cvesWithApplicableStates).filter(
+                    key => expectedContent.cvesWithApplicableStates[key].applicability === Applicability.NOT_COVERED
+                );
 
                 assert.includeDeepMembers(notCoveredCvesInResponse, expectedNotCoveredCves);
-                });
+            });
 
             it('Check all expected missingContextCve CVE detected', () => {
-                const missingContextCvesInResponse: string[] = Object.keys(response.cvesWithApplicableStates).filter(key => response.cvesWithApplicableStates[key].applicability === Applicability.MISSING_CONTEXT);
-                const expectedMissingContextCves: string[] =  Object.keys(expectedContent.cvesWithApplicableStates).filter(key => expectedContent.cvesWithApplicableStates[key].applicability === Applicability.MISSING_CONTEXT);
+                const missingContextCvesInResponse: string[] = Object.keys(response.cvesWithApplicableStates).filter(
+                    key => response.cvesWithApplicableStates[key].applicability === Applicability.MISSING_CONTEXT
+                );
+                const expectedMissingContextCves: string[] = Object.keys(expectedContent.cvesWithApplicableStates).filter(
+                    key => expectedContent.cvesWithApplicableStates[key].applicability === Applicability.MISSING_CONTEXT
+                );
 
                 assert.includeDeepMembers(missingContextCvesInResponse, expectedMissingContextCves);
-                });
+            });
 
-                it('Check all expected undeterminedCve CVE detected', () => {
-                    const undeterminedCvesInResponse: string[] = Object.keys(response.cvesWithApplicableStates).filter(key => response.cvesWithApplicableStates[key].applicability === Applicability.UNDETERMINED);
-                    const expectedUndeterminedCves: string[] =  Object.keys(expectedContent.cvesWithApplicableStates).filter(key => expectedContent.cvesWithApplicableStates[key].applicability === Applicability.UNDETERMINED);
+            it('Check all expected undeterminedCve CVE detected', () => {
+                const undeterminedCvesInResponse: string[] = Object.keys(response.cvesWithApplicableStates).filter(
+                    key => response.cvesWithApplicableStates[key].applicability === Applicability.UNDETERMINED
+                );
+                const expectedUndeterminedCves: string[] = Object.keys(expectedContent.cvesWithApplicableStates).filter(
+                    key => expectedContent.cvesWithApplicableStates[key].applicability === Applicability.UNDETERMINED
+                );
 
-                    assert.includeDeepMembers(undeterminedCvesInResponse, expectedUndeterminedCves);
-                });
+                assert.includeDeepMembers(undeterminedCvesInResponse, expectedUndeterminedCves);
+            });
 
             describe('Applicable details data validations', () => {
                 let expectedApplicableCves: Map<string, CveApplicableDetails>;

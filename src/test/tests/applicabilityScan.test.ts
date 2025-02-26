@@ -170,7 +170,9 @@ describe('Applicability Scan Tests', () => {
             let notApplicable: string[];
 
             before(() => {
-                const cveWithApplicableStates: Map<string,CveApplicableDetails> = new Map<string,CveApplicableDetails>(scanResult.applicableIssues ? Object.entries(scanResult.applicableIssues.cvesWithApplicableStates) : []);
+                const cveWithApplicableStates: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
+                    scanResult.applicableIssues ? Object.entries(scanResult.applicableIssues.cvesWithApplicableStates) : []
+                );
                 notApplicable = Array.from(scanResult.applicableIssues.scannedCve ?? []).filter(cve => !cveWithApplicableStates?.has(cve));
             });
 
@@ -189,7 +191,10 @@ describe('Applicability Scan Tests', () => {
             it('Check Cve node marked as not applicable', () => {
                 notApplicable.forEach((cve: string) => {
                     let node: CveTreeNode | undefined = getTestCveNode(cve);
-                    assert.isFalse(node?.applicableDetails?.applicability === Applicability.NOT_APPLICABLE, 'Cve node ' + cve + ' marked as ' + node?.applicableDetails?.applicability);
+                    assert.isFalse(
+                        node?.applicableDetails?.applicability === Applicability.NOT_APPLICABLE,
+                        'Cve node ' + cve + ' marked as ' + node?.applicableDetails?.applicability
+                    );
                 });
             });
 
@@ -316,7 +321,9 @@ describe('Applicability Scan Tests', () => {
                     });
 
                     it('Check applicable information reference created in descriptor', () => {
-                        const cveWithApplicableStates: Map<string,CveApplicableDetails> = new Map<string,CveApplicableDetails>(scanResult.applicableIssues ? Object.entries(scanResult.applicableIssues.cvesWithApplicableStates) : []);
+                        const cveWithApplicableStates: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
+                            scanResult.applicableIssues ? Object.entries(scanResult.applicableIssues.cvesWithApplicableStates) : []
+                        );
 
                         expectedFilesWithIssues.forEach((expectedFileIssues: FileIssues) => {
                             let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);

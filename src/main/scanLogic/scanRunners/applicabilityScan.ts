@@ -52,7 +52,7 @@ export interface ApplicabilityScanResponse {
  * The details about cve applicability result
  */
 export interface CveApplicableDetails {
-    applicability: Applicability
+    applicability: Applicability;
     fixReason: string;
     fileEvidences: FileIssues[];
     fullDescription?: string;
@@ -251,7 +251,7 @@ export class ApplicabilityRunner extends JasRunner {
         }
     }
 
-     /**
+    /**
      * Generate response from the run results
      * @param response - The run results generated from the binary
      * @returns the response generated from the scan run
@@ -268,7 +268,7 @@ export class ApplicabilityRunner extends JasRunner {
         const rules: AnalyzerRule[] = this.getUniqueRules(analyzerScanRun.tool.driver.rules);
 
         rules.map(rule => {
-            if(rule.fullDescription){
+            if (rule.fullDescription) {
                 rulesFullDescription.set(rule.id, rule.fullDescription.text);
             }
         });
@@ -298,7 +298,7 @@ export class ApplicabilityRunner extends JasRunner {
         }
         return {
             scannedCve: Array.from(scanned),
-            cvesWithApplicableStates: Object.fromEntries(allCvesWithApplicableState.entries()),
+            cvesWithApplicableStates: Object.fromEntries(allCvesWithApplicableState.entries())
         } as ApplicabilityScanResponse;
     }
 
@@ -349,9 +349,8 @@ export class ApplicabilityRunner extends JasRunner {
     private createApplicableDetails(
         analyzedIssue: AnalyzeIssue | undefined,
         applicability: Applicability,
-    fullDescription?: string,
+        fullDescription?: string
     ): CveApplicableDetails {
-
         return {
             applicability,
             fixReason: analyzedIssue?.message.text,
@@ -380,18 +379,18 @@ export class ApplicabilityRunner extends JasRunner {
      */
     private mapIssuesByRuleId(issues: AnalyzeIssue[]): Record<string, AnalyzeIssue> {
         return issues.reduce((issueMap, issue) => {
-          issueMap[issue.ruleId] = issue;
-          return issueMap;
+            issueMap[issue.ruleId] = issue;
+            return issueMap;
         }, {} as Record<string, AnalyzeIssue>);
-      }
+    }
 
     /**
-    * Ensures the rules are unique based on 'id'. If multiple rules have the same id
+     * Ensures the rules are unique based on 'id'. If multiple rules have the same id
      * and at least one of them has 'not_applicable' applicability, it filters out
-    * the 'not_applicable' instance.
-    * @param rules - the array of AnalyzerRule objects
-    * @returns array of unique AnalyzerRule objects
-    */
+     * the 'not_applicable' instance.
+     * @param rules - the array of AnalyzerRule objects
+     * @returns array of unique AnalyzerRule objects
+     */
     private getUniqueRules(rules: AnalyzerRule[]): AnalyzerRule[] {
         const ruleMap: Map<string, AnalyzerRule> = new Map<string, AnalyzerRule>();
 
@@ -406,14 +405,8 @@ export class ApplicabilityRunner extends JasRunner {
                 if (rule.properties?.applicability !== Applicability.NOT_APPLICABLE) {
                     ruleMap.set(rule.id, rule);
                 }
+            }
         }
+        return Array.from(ruleMap.values());
     }
-
-    // Covert Map values to an array
-    return Array.from(ruleMap.values()).filter(rule => {
-        const occurrences : number = rules.filter(r => r.id === rule.id).length;
-        // Keep 'not_applicable' rules if there's only one occurrence of the id
-        return !(occurrences > 1 && rule.properties?.applicability === Applicability.NOT_APPLICABLE);
-    });
-}
 }

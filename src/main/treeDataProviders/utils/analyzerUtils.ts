@@ -226,7 +226,9 @@ export class AnalyzerUtils {
     ): number {
         descriptorNode.applicableScanTimeStamp = dependencyScanResults.applicableScanTimestamp;
         descriptorNode.scannedCve = new Set<string>(dependencyScanResults.applicableIssues?.scannedCve ?? []);
-        descriptorNode.applicableCve = new Map<string,CveApplicableDetails>(dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.cvesWithApplicableStates) : []);
+        descriptorNode.applicableCve = new Map<string, CveApplicableDetails>(
+            dependencyScanResults.applicableIssues ? Object.entries(dependencyScanResults.applicableIssues.cvesWithApplicableStates) : []
+        );
 
         // Populate related CodeFile nodes with issues and update the descriptor CVE applicability details
         let issuesCount: number = 0;
@@ -241,8 +243,9 @@ export class AnalyzerUtils {
                     let evidences: IEvidence[] = [];
                     let potential: CveApplicableDetails | undefined = descriptorNode.applicableCve?.get(node.labelId);
                     if (!potential || !potential.applicability) {
-                        continue
-                    } else if(potential.applicability === Applicability.APPLICABLE) {
+                        continue;
+                    }
+                    if (potential.applicability === Applicability.APPLICABLE) {
                         let details: CveApplicableDetails = potential;
                         // Populate code file issues for workspace
                         details.fileEvidences.forEach((fileEvidence: FileIssues) => {
@@ -266,7 +269,7 @@ export class AnalyzerUtils {
                             } as IEvidence);
                         }
                         const applicableDetails: IApplicableDetails = {
-                            applicability: potential.applicability,
+                            applicability: potential.applicability
                         };
                         if (potential.fullDescription) {
                             applicableDetails.searchTarget = potential.fullDescription;
