@@ -12,7 +12,7 @@ import { FileIssues, FileRegion } from '../../../main/scanLogic/scanRunners/anal
 import { AnalyzerUtils } from '../../../main/treeDataProviders/utils/analyzerUtils';
 import { AnalyzerManagerIntegrationEnv } from '../utils/testIntegration.test';
 import { PackageType } from '../../../main/types/projectType';
-import { Applicability } from '../../../../../jfrog-ide-webview';
+import { Applicability } from 'jfrog-ide-webview';
 
 describe('Applicability Integration Tests', async () => {
     let integrationManager: AnalyzerManagerIntegrationEnv = new AnalyzerManagerIntegrationEnv();
