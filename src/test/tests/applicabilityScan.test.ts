@@ -211,7 +211,11 @@ describe('Applicability Scan Tests', () => {
             let expectedFilesWithIssues: FileIssues[] = [];
 
             before(() => {
-                applicableCve = new Map<string, CveApplicableDetails>(Object.entries(scanResult.applicableIssues.cvesWithApplicableStates));
+                applicableCve = new Map(
+                    Object.entries(scanResult.applicableIssues.cvesWithApplicableStates).filter(
+                        ([, details]) => details.applicability === Applicability.APPLICABLE
+                    )
+                );
                 // Collect all the locations from the test data with issues under the same file to be together under the same data
                 Array.from(applicableCve.values()).forEach((details: CveApplicableDetails) => {
                     details.fileEvidences.forEach((fileEvidence: FileIssues) => {
