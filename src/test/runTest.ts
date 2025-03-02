@@ -2,6 +2,7 @@ import fs from 'fs-extra';
 import path from 'path';
 import { runTests } from 'vscode-test';
 import { TestOptions } from 'vscode-test/out/runTest';
+import { Utils } from '../main/utils/utils';
 
 let targetResourcesDir: string = path.join(__dirname, 'resources');
 
@@ -17,12 +18,19 @@ async function main() {
         const extensionTestsPath: string = path.join(__dirname, 'index');
 
         // Download VS Code, unzip it and run the integration tests
-        await runTests({
+        let testOptions: TestOptions = {
             version: 'insiders',
             extensionDevelopmentPath,
             extensionTestsPath,
-            launchArgs: ['--disable-extensions', '-n', targetResourcesDir]
-        } as TestOptions);
+            launchArgs: ['-n', targetResourcesDir]
+        } as TestOptions;
+
+        if (Utils.isWindows()) {
+            testOptions.platform = 'win32-x64-archive';
+        } else {
+            testOptions.launchArgs?.push('--disable-extensions');
+        }
+        await runTests(testOptions);
     } catch (err) {
         console.error('Failed to run tests', err);
         process.exit(1);
