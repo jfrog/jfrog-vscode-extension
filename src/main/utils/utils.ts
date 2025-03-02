@@ -1,5 +1,5 @@
 import * as pathUtils from 'path';
-import * as vscode from 'vscode';
+import { commands, Command, env, Uri } from 'vscode';
 import * as os from 'os';
 import * as fs from 'fs';
 import AdmZip, { IZipEntry } from 'adm-zip';
@@ -16,11 +16,11 @@ export class Utils {
     }
 
     public static async openSettings(id?: string): Promise<void> {
-        await vscode.commands.executeCommand('workbench.action.openSettings', `@ext:${Utils.getExtensionId()}` + (id ? ` ${id}` : ''));
+        await commands.executeCommand('workbench.action.openSettings', `@ext:${Utils.getExtensionId()}` + (id ? ` ${id}` : ''));
     }
 
     public static async openFeedback(): Promise<void> {
-        await vscode.env.openExternal(vscode.Uri.parse('https://github.com/jfrog/jfrog-vscode-extension/discussions/new/choose'));
+        await env.openExternal(Uri.parse('https://github.com/jfrog/jfrog-vscode-extension/discussions/new/choose'));
     }
 
     public static combineSets(sets: Set<string>[]): Set<string> {
@@ -51,7 +51,7 @@ export class Utils {
         return full;
     }
 
-    public static createNodeCommand(name: string, title: string, args: any[]): vscode.Command {
+    public static createNodeCommand(name: string, title: string, args: any[]): Command {
         return {
             command: name,
             title: title,
