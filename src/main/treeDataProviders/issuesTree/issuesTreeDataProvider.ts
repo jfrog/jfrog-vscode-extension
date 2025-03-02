@@ -268,7 +268,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 let projectNode: ProjectDependencyTreeNode = this.createProjectNode(graphScanResult, root);
                 this._logManager.logMessage("Loading issues for '" + graphScanResult.fullPath + "'", 'DEBUG');
                 DependencyUtils.populateDependencyScanResults(projectNode, graphScanResult);
-                if (projectNode instanceof DescriptorTreeNode && graphScanResult.applicableIssues && graphScanResult.applicableIssues.scannedCve) {
+                if (projectNode && graphScanResult.applicableIssues && graphScanResult.applicableIssues.scannedCve) {
                     AnalyzerUtils.populateApplicableIssues(root, projectNode, graphScanResult);
                 }
                 root.children.push(projectNode);
