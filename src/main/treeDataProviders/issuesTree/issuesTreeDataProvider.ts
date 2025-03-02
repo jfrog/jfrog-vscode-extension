@@ -369,13 +369,13 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
             }
             // File nodes
             if (element instanceof FileTreeNode) {
-                element.command = Utils.createNodeCommand('jfrog.issues.file.open', 'Open file', [element.projectFilePath]);
+                element.command = Utils.createNodeCommand('jfrog.issues.file.open', 'Open file', [decodeURIComponent(element.projectFilePath)]);
             }
             if (element instanceof DependencyIssuesTreeNode) {
                 let directDependenciesLocations: vscode.Range[] = await DependencyUtils.getDirectDependenciesLocations(element);
                 if (directDependenciesLocations?.length > 0) {
                     element.command = Utils.createNodeCommand('jfrog.issues.file.open.location', 'Open location in file', [
-                        element.parent.projectFilePath,
+                        decodeURIComponent(element.parent.projectFilePath),
                         // If there are more than one direct dependency with this indirect jump to the first one
                         directDependenciesLocations[0]
                     ]);
@@ -393,7 +393,7 @@ export class IssuesTreeDataProvider implements vscode.TreeDataProvider<IssuesRoo
                 element instanceof SecretTreeNode
             ) {
                 element.command = Utils.createNodeCommand('jfrog.issues.file.open.details', 'Open file location and show details', [
-                    element.parent.projectFilePath,
+                    decodeURIComponent(element.parent.projectFilePath),
                     element.regionWithIssue,
                     element.getDetailsPage()
                 ]);
