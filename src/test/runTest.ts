@@ -2,7 +2,6 @@ import fs from 'fs-extra';
 import path from 'path';
 import { runTests } from 'vscode-test';
 import { TestOptions } from 'vscode-test/out/runTest';
-import { Utils } from '../main/utils/utils';
 
 let targetResourcesDir: string = path.join(__dirname, 'resources');
 
@@ -22,13 +21,10 @@ async function main() {
             version: 'insiders',
             extensionDevelopmentPath,
             extensionTestsPath,
-            launchArgs: ['-n', targetResourcesDir]
+            launchArgs: ['--disable-extensions', '-n', targetResourcesDir]
         } as TestOptions;
-
-        if (Utils.isWindows()) {
+        if (process.platform === 'win32') {
             testOptions.platform = 'win32-x64-archive';
-        } else {
-            testOptions.launchArgs?.push('--disable-extensions');
         }
         await runTests(testOptions);
     } catch (err) {
