@@ -2,7 +2,7 @@ import { assert } from 'chai';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { IEvidence } from 'jfrog-ide-webview';
+import { Applicability, IEvidence } from 'jfrog-ide-webview';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 import { AnalyzerScanResponse, FileIssues, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
@@ -77,7 +77,7 @@ describe('Applicability Scan Tests', () => {
 
         it('Check response attributes are not exist', () => {
             assert.isUndefined(response.scannedCve);
-            assert.isUndefined(response.applicableCve);
+            assert.isUndefined(response.cvesWithApplicableStates);
         });
     });
 
@@ -170,7 +170,10 @@ describe('Applicability Scan Tests', () => {
             let notApplicable: string[];
 
             before(() => {
-                notApplicable = Array.from(testDescriptor.scannedCve ?? []).filter(cve => !testDescriptor.applicableCve?.has(cve));
+                const cveWithApplicableStates: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
+                    scanResult.applicableIssues ? Object.entries(scanResult.applicableIssues.cvesWithApplicableStates) : []
+                );
+                notApplicable = Array.from(scanResult.applicableIssues.scannedCve ?? []).filter(cve => !cveWithApplicableStates?.has(cve));
             });
 
             it('Check node exists in scannedCve and not in applicableCve', () => {
@@ -188,7 +191,10 @@ describe('Applicability Scan Tests', () => {
             it('Check Cve node marked as not applicable', () => {
                 notApplicable.forEach((cve: string) => {
                     let node: CveTreeNode | undefined = getTestCveNode(cve);
-                    assert.isFalse(node?.applicableDetails?.isApplicable, 'Cve node ' + cve + ' marked as ' + node?.applicableDetails?.isApplicable);
+                    assert.isFalse(
+                        node?.applicableDetails?.applicability === Applicability.NOT_APPLICABLE,
+                        'Cve node ' + cve + ' marked as ' + node?.applicableDetails?.applicability
+                    );
                 });
             });
 
@@ -205,7 +211,11 @@ describe('Applicability Scan Tests', () => {
             let expectedFilesWithIssues: FileIssues[] = [];
 
             before(() => {
-                applicableCve = new Map<string, CveApplicableDetails>(Object.entries(scanResult.applicableIssues.applicableCve));
+                applicableCve = new Map(
+                    Object.entries(scanResult.applicableIssues.cvesWithApplicableStates).filter(
+                        ([, details]) => details.applicability === Applicability.APPLICABLE
+                    )
+                );
                 // Collect all the locations from the test data with issues under the same file to be together under the same data
                 Array.from(applicableCve.values()).forEach((details: CveApplicableDetails) => {
                     details.fileEvidences.forEach((fileEvidence: FileIssues) => {
@@ -235,8 +245,8 @@ describe('Applicability Scan Tests', () => {
                     Array.from(applicableCve.keys()).forEach((cve: string) => {
                         let node: CveTreeNode | undefined = getTestCveNode(cve);
                         assert.isTrue(
-                            node?.applicableDetails?.isApplicable,
-                            'Cve node ' + cve + ' marked as ' + node?.applicableDetails?.isApplicable
+                            node?.applicableDetails?.applicability === Applicability.APPLICABLE,
+                            'Cve node ' + cve + ' marked as ' + node?.applicableDetails?.applicability
                         );
                     });
                 });
@@ -315,10 +325,14 @@ describe('Applicability Scan Tests', () => {
                     });
 
                     it('Check applicable information reference created in descriptor', () => {
+                        const cveWithApplicableStates: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>(
+                            scanResult.applicableIssues ? Object.entries(scanResult.applicableIssues.cvesWithApplicableStates) : []
+                        );
+
                         expectedFilesWithIssues.forEach((expectedFileIssues: FileIssues) => {
                             let fileNode: CodeFileTreeNode = getTestCodeFileNode(testRoot, expectedFileIssues.full_path);
                             expectedFileIssues.locations.forEach((expectedLocation: FileRegion) => {
-                                assert.isDefined(testDescriptor.applicableCve?.get(getTestIssueNode(fileNode, expectedLocation).issueId));
+                                assert.isDefined(cveWithApplicableStates.get(getTestIssueNode(fileNode, expectedLocation).issueId));
                             });
                         });
                     });
