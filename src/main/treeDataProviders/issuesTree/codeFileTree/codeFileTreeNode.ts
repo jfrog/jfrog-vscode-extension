@@ -7,7 +7,7 @@ export class CodeFileTreeNode extends FileTreeNode {
     private _codeIssues: CodeIssueTreeNode[] = [];
 
     constructor(fileFullPath: string, parent?: IssuesRootTreeNode) {
-        super(fileFullPath, parent);
+        super(decodeURIComponent(fileFullPath), parent);
     }
 
     public get issues(): CodeIssueTreeNode[] {
