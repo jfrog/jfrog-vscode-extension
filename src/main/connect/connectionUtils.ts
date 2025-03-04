@@ -427,7 +427,7 @@ export class ConnectionUtils {
         let proxyConfig: IProxyConfig = {} as IProxyConfig;
         let proxyUri: URL = new URL(httpProxy);
         proxyConfig.protocol = proxyUri.protocol;
-        proxyConfig.host = proxyUri.host;
+        proxyConfig.host = proxyUri.hostname;
         if (proxyUri.port) {
             proxyConfig.port = +proxyUri.port;
         }
