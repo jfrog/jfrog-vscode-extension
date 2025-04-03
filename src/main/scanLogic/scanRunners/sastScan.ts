@@ -18,7 +18,8 @@ import {
     CodeFlow,
     FileLocation,
     FileRegion,
-    ScanType
+    ScanType,
+    AnalyzerRule
 } from './analyzerModels';
 import { BinaryEnvParams, JasRunner, RunArgs } from './jasRunner';
 
@@ -143,11 +144,23 @@ export class SastRunner extends JasRunner {
         }
         // Generate response data
         let ignoreCount: number = 0;
+
+        const rulesDict: {
+            [key: string]: AnalyzerRule;
+        } = analyzerScanRun.tool.driver.rules.reduce((acc: { [key: string]: AnalyzerRule }, analyzerRule: AnalyzerRule) => {
+            acc[analyzerRule.id] = analyzerRule;
+            return acc;
+        }, {});
+
         analyzerScanRun.results?.forEach((analyzeIssue: AnalyzeIssue) => {
             if (analyzeIssue.suppressions && analyzeIssue.suppressions.length > 0) {
                 // Suppress issue
                 ignoreCount++;
                 return;
+            }
+            const rule: AnalyzerRule = rulesDict[analyzeIssue.ruleId];
+            if (rule?.shortDescription?.text) {
+                analyzeIssue.message.text = rule.shortDescription.text;
             }
             this.generateIssueData(sastResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId));
         });
