@@ -13,13 +13,13 @@ import {
     AnalyzeIssue,
     AnalyzeLocation,
     AnalyzeScanRequest,
-    AnalyzerRule,
     AnalyzerScanResponse,
     AnalyzerScanRun,
     CodeFlow,
     FileLocation,
     FileRegion,
-    ScanType
+    ScanType,
+    AnalyzerRule
 } from './analyzerModels';
 import { BinaryEnvParams, JasRunner, RunArgs } from './jasRunner';
 
@@ -158,7 +158,6 @@ export class SastRunner extends JasRunner {
                 ignoreCount++;
                 return;
             }
-
             const rule: AnalyzerRule = rulesDict[analyzeIssue.ruleId];
             if (rule?.shortDescription?.text) {
                 analyzeIssue.message.text = rule.shortDescription.text;
