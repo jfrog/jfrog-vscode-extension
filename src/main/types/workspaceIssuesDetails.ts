@@ -84,7 +84,7 @@ export class ScanResults {
     }
 
     public get ignoreIssueCount(): number {
-        return (this.secretsScan?.ignoreCount ?? 0) + (this.sastScan?.ignoreCount ?? 0);
+        return (this.secretsScan?.ignoreCount ?? 0) + (this.sastScan?.ignoreCount ?? 0) + (this.iacScan?.ignoreCount ?? 0);
     }
 
     public get iacIssueCount(): number {
