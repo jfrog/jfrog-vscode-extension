@@ -6,11 +6,12 @@ import { StepProgress } from '../../treeDataProviders/utils/stepProgress';
 import { ScanResults } from '../../types/workspaceIssuesDetails';
 import { AppsConfigModule } from '../../utils/jfrogAppsConfig/jfrogAppsConfig';
 import { AnalyzerManager } from './analyzerManager';
-import { AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, ScanType } from './analyzerModels';
+import { AnalyzeIssue, AnalyzeScanRequest, AnalyzerScanResponse, AnalyzerScanRun, ScanType } from './analyzerModels';
 import { BinaryEnvParams, JasRunner, RunArgs } from './jasRunner';
 
 export interface IacScanResponse {
     filesWithIssues: FileWithSecurityIssues[];
+    ignoreCount?: number;
 }
 
 /**
@@ -78,10 +79,16 @@ export class IacRunner extends JasRunner {
                 rulesFullDescription.set(rule.id, rule.fullDescription.text);
             }
         }
-        // Generate response data
-        analyzerScanRun.results?.forEach(analyzeIssue =>
-            AnalyzerUtils.generateIssueData(iacResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId))
-        );
+        let ignoreCount: number = 0;
+        analyzerScanRun.results?.forEach((analyzeIssue: AnalyzeIssue) => {
+            if (analyzeIssue.suppressions && analyzeIssue.suppressions.length > 0) {
+                // Suppress issue
+                ignoreCount++;
+                return;
+            }
+            AnalyzerUtils.generateIssueData(iacResponse, analyzeIssue, rulesFullDescription.get(analyzeIssue.ruleId));
+        });
+        iacResponse.ignoreCount = ignoreCount;
 
         return iacResponse;
     }
