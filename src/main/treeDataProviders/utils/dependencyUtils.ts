@@ -412,7 +412,16 @@ export class DependencyUtils {
                     });
             });
         }
-        return projectNode.dependenciesWithIssue.length;
+        // count unique issues
+        let unique: Set<string> = new Set<string>();
+        projectNode.dependenciesWithIssue.forEach(dependency => {
+            dependency.issues.forEach(issue => {
+                if (issue instanceof CveTreeNode) {
+                    unique.add(issue.issueId);
+                }
+            });
+        });
+        return unique.size;
     }
 
     /**
