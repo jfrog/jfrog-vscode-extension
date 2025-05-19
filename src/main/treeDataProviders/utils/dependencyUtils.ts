@@ -272,7 +272,9 @@ export class DependencyUtils {
         scanManager.logManager.logMessage(
             'Found ' +
                 issuesCount +
-                ' unique CVE issues for descriptor ' +
+                ' unique CVE issues (in ' +
+                projectNode.dependenciesWithIssue.length +
+                ' dependencies) for descriptor ' +
                 dependencyIssues.fullPath +
                 ' (elapsed ' +
                 (dependencyIssues.graphScanTimestamp - startGraphScan) / 1000 +
