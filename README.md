@@ -75,7 +75,7 @@ Secures your IaC files. Critical to keeping your cloud deployment safe and secur
 - Track the status of the code while it is being built, tested, and scanned on the CI server.
 
 ## 📖 Documentation
-Read the [documentation](https://docs.jfrog-applications.jfrog.io/jfrog-applications/ide/visual-studio-code) to get started.
+Read the [documentation](https://jfrog.com/help/r/jfrog-security-user-guide/shift-left-on-security/ides/visual-studio-code) to get started.
 
 ## 🔥 Reporting Issues
 Please help us improve by [reporting issues](https://github.com/jfrog/jfrog-vscode-extension/issues) you encounter.
