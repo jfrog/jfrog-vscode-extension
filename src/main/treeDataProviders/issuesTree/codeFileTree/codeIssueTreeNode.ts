@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { Severity } from '../../../types/severity';
 import { IssueTreeNode } from '../issueTreeNode';
 import { CodeFileTreeNode } from './codeFileTreeNode';
+import { ContextKeys } from '../../../constants/contextKeys';
 
 export abstract class CodeIssueTreeNode extends IssueTreeNode {
     private _regionWithIssue: vscode.Range;
@@ -11,6 +12,16 @@ export abstract class CodeIssueTreeNode extends IssueTreeNode {
         super(issueId, severity ?? Severity.Unknown, label ?? issueId, vscode.TreeItemCollapsibleState.None);
         this._regionWithIssue = new vscode.Range(this.toVscodePosition(region.start), this.toVscodePosition(region.end));
         this.description = 'line = ' + region.start.line + ', column = ' + region.start.character;
+
+        this.contextValue += ContextKeys.VSCODE_AUTOFIX;
+        if (this.isCopilotInstalled()) {
+            this.contextValue += ContextKeys.COPILOT_INSTALLED;
+        }
+    }
+
+    private isCopilotInstalled() {
+        const copilotExtension = vscode.extensions.getExtension('GitHub.copilot');
+        return copilotExtension !== undefined;
     }
 
     public get parent(): CodeFileTreeNode {
@@ -28,4 +39,6 @@ export abstract class CodeIssueTreeNode extends IssueTreeNode {
         let col: number = position.character > 0 ? position.character - 1 : 0;
         return new vscode.Position(line, col);
     }
+
+    public abstract getDetailsPage(): any;
 }
