@@ -220,6 +220,12 @@
                 "enablement": "viewItem =~ /jfrog.item.copy.to.clipboard/"
             },
             {
+                "title": "Ask Copilot to Fix",
+                "command": "jfrog.vscode.autofix",
+                "when": "viewItem =~ /jfrog.item.vscode.autofix/",
+                "enablement": "viewItem =~ /jfrog.copilot.installed/"
+            },
+            {
                 "command": "jfrog.issues.cache.delete",
                 "title": "Delete cache",
                 "category": "JFrog"
@@ -304,6 +310,10 @@
                 {
                     "command": "jfrog.xray.copyToClipboard",
                     "when": "viewItem =~ /jfrog.item.copy.to.clipboard/"
+                },
+                {
+                    "command": "jfrog.vscode.autofix",
+                    "when": "viewItem =~ /jfrog.item.vscode.autofix/"
                 }
             ]
         },
