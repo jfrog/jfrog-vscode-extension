@@ -153,7 +153,7 @@ export class CommandManager implements ExtensionComponent {
     private doVscodeAutofix(node: vscode.TreeItem) {
         if (node instanceof CodeIssueTreeNode) {
             try {
-                const prompt = `Here is a vulnerability details page. Please suggest a fix for the vulnerability: ${JSON.stringify(
+                const prompt: string = `Here is a vulnerability details page. Please suggest a fix for the vulnerability: ${JSON.stringify(
                     node.getDetailsPage()
                 )}`;
                 vscode.commands.executeCommand('workbench.action.chat.open', prompt);

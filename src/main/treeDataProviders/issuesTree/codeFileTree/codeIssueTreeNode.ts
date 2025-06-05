@@ -20,7 +20,7 @@ export abstract class CodeIssueTreeNode extends IssueTreeNode {
     }
 
     private isCopilotInstalled() {
-        const copilotExtension = vscode.extensions.getExtension('GitHub.copilot');
+        const copilotExtension: vscode.Extension<any> | undefined = vscode.extensions.getExtension('GitHub.copilot');
         return copilotExtension !== undefined;
     }
 
