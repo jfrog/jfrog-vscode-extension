@@ -305,8 +305,6 @@ describe('Applicability Scan Tests', () => {
                         if (!(issueLocation instanceof ApplicableTreeNode)) {
                             assert.fail('expected node to be ApplicableTreeNode issue for location ' + location + ' in node: ' + issueLocation);
                         }
-
-                        assert.fail("Context keys: " + issueLocation?.contextValue);
                         return <ApplicableTreeNode>issueLocation;
                     }
 
