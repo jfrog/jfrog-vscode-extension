@@ -6,7 +6,7 @@ const tag = process.env.GITHUB_REF.split('/')[2];
 const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
 octokit.repos
     .listReleases({
-        owner: 'eyalk',
+        owner: 'eyalk007',
         repo: 'jfrog-vscode-extension'
     })
     .then(async releases => {
