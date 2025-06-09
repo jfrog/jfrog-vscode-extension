@@ -9,20 +9,25 @@ octokit.repos
         owner: 'jfrog',
         repo: 'jfrog-vscode-extension'
     })
-    .then(releases => {
+    .then(async releases => {
         const release = releases.data.find(release => release.tag_name === tag);
         const vsixFileName = 'jfrog-vscode-extension-' + tag + '.vsix';
         const vsixFilePath = '../' + vsixFileName;
+        const fileData = fs.readFileSync(vsixFilePath);
+        const contentLength = fs.statSync(vsixFilePath).size;
+        
         core.info('Uploading ' + vsixFileName);
-        octokit.repos.uploadReleaseAsset({
-            file: fs.createReadStream(vsixFilePath),
-            headers: {
-                'content-length': fs.statSync(vsixFilePath).size,
-                'content-type': 'application/zip'
-            },
+        await octokit.rest.repos.uploadReleaseAsset({
+            owner: 'jfrog',
+            repo: 'jfrog-vscode-extension',
+            release_id: release.id,
             name: vsixFileName,
-            url: release.upload_url
-        });
+            data: fileData,
+            headers: {
+                'content-length': contentLength,
+                'content-type': 'application/zip'
+            }
+        })
     })
     .catch(error => {
         core.error(error);
