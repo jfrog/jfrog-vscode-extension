@@ -6,7 +6,7 @@ const tag = process.env.GITHUB_REF.split('/')[2];
 const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
 octokit.repos
     .listReleases({
-        owner: 'jfrog',
+        owner: 'eyalk',
         repo: 'jfrog-vscode-extension'
     })
     .then(async releases => {
@@ -20,8 +20,9 @@ octokit.repos
         await octokit.repos.uploadReleaseAsset({
             owner: 'jfrog',
             repo: 'jfrog-vscode-extension',
-            release_id: release.id,
+            id: release.id,
             name: vsixFileName,
+            url: release.upload_url,
             data: fileData,
             headers: {
                 'content-length': contentLength,
