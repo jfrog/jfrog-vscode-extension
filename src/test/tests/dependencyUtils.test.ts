@@ -18,7 +18,7 @@ import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesT
 import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { IssueTreeNode } from '../../main/treeDataProviders/issuesTree/issueTreeNode';
 
-describe('Dependency Utils Tests', () => {
+describe.only('Dependency Utils Tests', () => {
     let logManager: LogManager = new LogManager().activate();
 
     const scanResponses: string = path.join(__dirname, '..', 'resources', 'scanResponses');
@@ -31,6 +31,7 @@ describe('Dependency Utils Tests', () => {
             name: 'No issues response',
             response: {} as IGraphResponse,
             expectedTree: {},
+            expectedCveCount: 0,
             expectedComponentsWithIssueCount: 0,
             expectedTotalIssueCount: 0,
             expectedDirect: []
@@ -39,6 +40,7 @@ describe('Dependency Utils Tests', () => {
             name: 'Vulnerabilities response',
             response: getGraphResponse('scanGraphVulnerabilities'),
             expectedTree: Object.fromEntries(expectedImpactedTree.entries()),
+            expectedCveCount: 3,
             expectedComponentsWithIssueCount: 4,
             expectedTotalIssueCount: 5,
             expectedDirect: ['A:1.0.0', 'B:1.0.0', 'C:2.0.0']
@@ -47,6 +49,7 @@ describe('Dependency Utils Tests', () => {
             name: 'Violations response',
             response: getGraphResponse('scanGraphViolations'),
             expectedTree: Object.fromEntries(expectedImpactedTree.entries()),
+            expectedCveCount: 3,
             expectedComponentsWithIssueCount: 4,
             expectedTotalIssueCount: 5,
             expectedDirect: ['A:1.0.0', 'B:1.0.0', 'C:2.0.0']
@@ -155,7 +158,7 @@ describe('Dependency Utils Tests', () => {
             } as DependencyScanResults;
             let node: DescriptorTreeNode = new DescriptorTreeNode('path');
             let issuesFound: number = DependencyUtils.populateDependencyScanResults(node, scanResult);
-            assert.equal(issuesFound, test.expectedComponentsWithIssueCount);
+            assert.equal(issuesFound, test.expectedCveCount);
             assert.lengthOf(node.dependenciesWithIssue, test.expectedComponentsWithIssueCount);
             assert.lengthOf(node.issues, test.expectedTotalIssueCount);
             if (issuesFound > 0) {
