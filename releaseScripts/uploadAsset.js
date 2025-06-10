@@ -4,12 +4,12 @@ const fs = require('fs');
 
 const tag = process.env.GITHUB_REF.split('/')[2];
 const octokit = github.getOctokit(process.env.GITHUB_TOKEN);
-octokit.repos
-    .listReleases({
-        owner: 'eyalk007',
-        repo: 'jfrog-vscode-extension'
-    })
-    .then(async releases => {
+
+octokit.repos.listReleases({
+    owner: 'jfrog',
+    repo: 'jfrog-vscode-extension'
+})
+    .then(releases => {
         const release = releases.data.find(release => release.tag_name === tag);
         const vsixFileName = 'jfrog-vscode-extension-' + tag + '.vsix';
         const vsixFilePath = '../' + vsixFileName;
@@ -17,7 +17,8 @@ octokit.repos
         const contentLength = fs.statSync(vsixFilePath).size;
 
         core.info('Uploading ' + vsixFileName);
-        await octokit.repos.uploadReleaseAsset({
+
+        return octokit.repos.uploadReleaseAsset({
             owner: 'jfrog',
             repo: 'jfrog-vscode-extension',
             id: release.id,
@@ -28,8 +29,13 @@ octokit.repos
                 'content-length': contentLength,
                 'content-type': 'application/zip'
             }
-        })
+        });
+    })
+    .then(() => {
+        core.info('Upload complete!');
     })
     .catch(error => {
         core.error(error);
     });
+
+
