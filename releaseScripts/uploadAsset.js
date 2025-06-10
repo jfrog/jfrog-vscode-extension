@@ -13,8 +13,8 @@ octokit.repos.listReleases({
         const release = releases.data.find(release => release.tag_name === tag);
         const vsixFileName = 'jfrog-vscode-extension-' + tag + '.vsix';
         const vsixFilePath = '../' + vsixFileName;
-        const fileData = fs.readFileSync(vsixFilePath);
-        const contentLength = fs.statSync(vsixFilePath).size;
+        const vsixFileData = fs.readFileSync(vsixFilePath);
+        const vsixContentLength = fs.statSync(vsixFilePath).size;
 
         core.info('Uploading ' + vsixFileName);
 
@@ -24,9 +24,9 @@ octokit.repos.listReleases({
             id: release.id,
             name: vsixFileName,
             url: release.upload_url,
-            data: fileData,
+            data: vsixFileData,
             headers: {
-                'content-length': contentLength,
+                'content-length': vsixContentLength,
                 'content-type': 'application/zip'
             }
         });
