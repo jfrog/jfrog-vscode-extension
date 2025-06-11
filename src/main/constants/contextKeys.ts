@@ -10,6 +10,8 @@ export class ContextKeys {
     public static COPY_TO_CLIPBOARD_ENABLED: string = 'jfrog.item.copy.to.clipboard';
     public static FIRST_SCAN_STATUS: string = 'jfrog.firstScanInWorkspace';
     public static SET_CONTEXT: string = 'setContext';
+    public static VSCODE_AUTOFIX: string = 'jfrog.item.vscode.autofix';
+    public static COPILOT_INSTALLED: string = 'jfrog.copilot.installed';
 }
 
 export enum SessionStatus {

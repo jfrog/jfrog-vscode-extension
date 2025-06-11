@@ -16,6 +16,7 @@ import { DependencyUpdateManager } from '../dependencyUpdate/dependencyUpdateMan
 import { Utils } from '../utils/utils';
 import { WebviewPage } from 'jfrog-ide-webview';
 import { WebviewManager } from '../webview/webviewManager';
+import { CodeIssueTreeNode } from '../treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
 
 /**
  * Register and execute all commands in the extension.
@@ -43,6 +44,7 @@ export class CommandManager implements ExtensionComponent {
         this.registerCommand(context, 'jfrog.open.settings', () => Utils.openSettings());
         this.registerCommand(context, 'jfrog.open.feedback', () => Utils.openFeedback());
         this.registerCommand(context, 'jfrog.xray.copyToClipboard', node => this.doCopyToClipboard(node));
+        this.registerCommand(context, 'jfrog.vscode.autofix', node => this.doVscodeAutofix(node));
         this.registerCommand(context, 'jfrog.xray.showOutput', () => this.showOutput());
         this.registerCommand(context, 'jfrog.scan.refresh', () => this.doRefresh());
         this.registerCommand(context, 'jfrog.xray.update.dependency', () => this.doRefresh());
@@ -142,6 +144,22 @@ export class CommandManager implements ExtensionComponent {
         }
         if (text) {
             vscode.env.clipboard.writeText(text?.toString());
+        }
+    }
+
+    /**
+     * Send the data for the issue to copilot with a prompt asking it to fix the issue.
+     */
+    private doVscodeAutofix(node: vscode.TreeItem) {
+        if (node instanceof CodeIssueTreeNode) {
+            try {
+                const prompt: string = `Here is a vulnerability details page. Please suggest a fix for the vulnerability: ${JSON.stringify(
+                    node.getDetailsPage()
+                )}`;
+                vscode.commands.executeCommand('workbench.action.chat.open', prompt);
+            } catch (error) {
+                this._logManager.logMessage(`Error calling copilot: ${error}`, 'ERR');
+            }
         }
     }
 
