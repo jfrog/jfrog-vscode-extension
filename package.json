@@ -2,7 +2,7 @@
     "name": "jfrog-vscode-extension",
     "displayName": "JFrog",
     "description": "Security scanning for your Go, npm, Pypi, Maven and NuGet projects.",
-    "version": "2.13.6",
+    "version": "2.14.0",
     "license": "Apache-2.0",
     "icon": "resources/extensionIcon.png",
     "repository": {
@@ -220,6 +220,12 @@
                 "enablement": "viewItem =~ /jfrog.item.copy.to.clipboard/"
             },
             {
+                "title": "Ask Copilot to Fix",
+                "command": "jfrog.vscode.autofix",
+                "when": "viewItem =~ /jfrog.item.vscode.autofix/",
+                "enablement": "viewItem =~ /jfrog.copilot.installed/"
+            },
+            {
                 "command": "jfrog.issues.cache.delete",
                 "title": "Delete cache",
                 "category": "JFrog"
@@ -304,6 +310,10 @@
                 {
                     "command": "jfrog.xray.copyToClipboard",
                     "when": "viewItem =~ /jfrog.item.copy.to.clipboard/"
+                },
+                {
+                    "command": "jfrog.vscode.autofix",
+                    "when": "viewItem =~ /jfrog.item.vscode.autofix/"
                 }
             ]
         },

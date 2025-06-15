@@ -17,7 +17,7 @@ import { LogUtils } from '../../log/logUtils';
 export class AnalyzerManager {
     private static readonly RELATIVE_DOWNLOAD_URL: string = '/xsc-gen-exe-analyzer-manager-local/v1';
     private static readonly BINARY_NAME: string = 'analyzerManager';
-    public static readonly ANALYZER_MANAGER_VERSION: string = '1.15.2';
+    public static readonly ANALYZER_MANAGER_VERSION: string = '1.20.1';
     public static readonly ANALYZER_MANAGER_PATH: string = Utils.addWinSuffixIfNeeded(
         path.join(ScanUtils.getIssuesPath(), AnalyzerManager.BINARY_NAME, AnalyzerManager.BINARY_NAME)
     );
@@ -151,15 +151,14 @@ export class AnalyzerManager {
 
     private async populateOptionalInformation(binaryVars: NodeJS.ProcessEnv, params?: BinaryEnvParams) {
         // Optional proxy information - environment variable
-        let proxyHttpUrl: string | undefined = process.env['HTTP_PROXY'];
-        let proxyHttpsUrl: string | undefined = process.env['HTTPS_PROXY'];
+        let proxyHttpUrl: string | undefined = process.env[AnalyzerManager.ENV_HTTP_PROXY];
+        let proxyHttpsUrl: string | undefined = process.env[AnalyzerManager.ENV_HTTPS_PROXY];
         // Optional proxy information - vscode configuration override
         let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
         if (optional) {
             let proxyConfig: IProxyConfig = <IProxyConfig>optional;
-            let proxyUrl: string = proxyConfig.host + (proxyConfig.port !== 0 ? ':' + proxyConfig.port : '');
-            proxyHttpUrl = 'http://' + proxyUrl;
-            proxyHttpsUrl = 'https://' + proxyUrl;
+            proxyHttpsUrl = proxyConfig.protocol == 'https:' ? AnalyzerManager.toProxyUrl(proxyConfig) : proxyHttpsUrl;
+            proxyHttpUrl = proxyConfig.protocol == 'http:' ? AnalyzerManager.toProxyUrl(proxyConfig) : proxyHttpUrl;
         }
 
         if (params?.tokenValidation && params.tokenValidation === true) {
@@ -179,6 +178,10 @@ export class AnalyzerManager {
         if (params?.msi && params.msi !== '') {
             binaryVars[AnalyzerManager.ENV_MSI] = params.msi;
         }
+    }
+
+    private static toProxyUrl(proxyConfig: IProxyConfig): string {
+        return proxyConfig.protocol + '//' + proxyConfig.host + (proxyConfig.port ? ':' + proxyConfig.port : '');
     }
 
     /**

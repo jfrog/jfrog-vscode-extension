@@ -173,7 +173,7 @@ export class MavenUtils {
             checkCanceled();
             try {
                 logManager.logMessage('Analyzing pom.xml at ' + ProjectTree.pomPath, 'INFO');
-                ProjectTree.runMavenDependencyTree();
+                logManager.logMessage(ProjectTree.runMavenDependencyTree(), 'DEBUG');
                 let mavenRoot: MavenTreeNode = new MavenTreeNode(ProjectTree.pomPath, logManager, root);
                 await mavenRoot.refreshDependencies(ProjectTree);
                 if (mavenRoot.children.length === 0) {
@@ -290,7 +290,7 @@ export class MavenUtils {
         let prototypeTree: PomTree[] = [];
         let pomIdCache: Map<string, [string, string]> = new Map<string, [string, string]>();
         if (!MavenUtils.mavenGavReaderInstalled) {
-            MavenUtils.installMavenGavReader();
+            logManager.logMessage(MavenUtils.installMavenGavReader(), 'DEBUG');
         }
         pomArray
             .sort((pomPath1, pomPath2) => pomPath1.fsPath.length - pomPath2.fsPath.length)
@@ -396,8 +396,11 @@ export class MavenUtils {
     /**
      * Install Maven GAV Reader to maven local repository.
      */
-    public static installMavenGavReader() {
-        ScanUtils.executeCmd(`mvn org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file -Dfile="${MavenUtils.MAVEN_GAV_READER}"`);
+    public static installMavenGavReader(): string {
+        const output: string = ScanUtils.executeCmd(
+            `mvn org.apache.maven.plugins:maven-install-plugin:2.5.2:install-file -Dfile="${MavenUtils.MAVEN_GAV_READER}"`
+        );
         MavenUtils.mavenGavReaderInstalled = true;
+        return output;
     }
 }

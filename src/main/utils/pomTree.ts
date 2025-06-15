@@ -72,8 +72,8 @@ export class PomTree {
         }
         return;
     }
-    public runMavenDependencyTree(): void {
-        ScanUtils.executeCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog_vscode/maven`, this.pomLocation);
+    public runMavenDependencyTree(): string {
+        return ScanUtils.executeCmd(`mvn dependency:tree -DappendOutput=true -DoutputFile=.jfrog_vscode/maven`, this.pomLocation).toString();
     }
 
     public async getRawDependencies(logManager: LogManager): Promise<string[] | undefined> {
