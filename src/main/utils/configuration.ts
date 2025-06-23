@@ -4,6 +4,7 @@ import { LogLevel, LogManager } from '../log/logManager';
 export class Configuration {
     public static jfrogSectionConfigurationKey: string = 'jfrog';
     public static readonly JFROG_IDE_RELEASES_REPO_ENV: string = 'JFROG_IDE_RELEASES_REPO';
+    public static readonly JFROG_IDE_CUSTOM_AM_VERSION: string = 'CUSTOM_AM_VERSION';
 
     /**
      * Get scan exclude pattern. This pattern is used to exclude specific file descriptors (go.mod, package.json, etc.) from being scanned by Xray.
@@ -74,7 +75,7 @@ export class Configuration {
     }
 
     public static getAnalyzerManagerVersion(): string {
-        return vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('useSpecificScannersVersion', '');
+        return process.env[this.JFROG_IDE_CUSTOM_AM_VERSION] || vscode.workspace.getConfiguration(this.jfrogSectionConfigurationKey).get('useSpecificScannersVersion', '') ;
     }
 
     public static getSastCustomRulesPath(logManager?: LogManager): string {
