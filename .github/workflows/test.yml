@@ -46,7 +46,7 @@ jobs:
 
       - name: Install
         run: npm i --ignore-scripts
-
+        
       # Make sure no new dependencies were installed after running 'npm i'
       - name: Make sure branch is clean
         run: git diff --exit-code
@@ -62,16 +62,16 @@ jobs:
 
       - name: Tests on macOS, Windows
         env:
-          JFROG_IDE_PLATFORM_URL: ${{ secrets.FROGBOT_URL }}
-          JFROG_IDE_ACCESS_TOKEN: ${{ secrets.FROGBOT_ACCESS_TOKEN }}
+          JFROG_IDE_PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+          JFROG_IDE_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
         run: npm t
         if: runner.os != 'Linux'
 
       - name: Tests on Linux
         env:
-          JFROG_IDE_PLATFORM_URL: ${{ secrets.FROGBOT_URL }}
-          JFROG_IDE_ACCESS_TOKEN: ${{ secrets.FROGBOT_ACCESS_TOKEN }}
+          JFROG_IDE_PLATFORM_URL: ${{ secrets.PLATFORM_URL }}
+          JFROG_IDE_ACCESS_TOKEN: ${{ secrets.PLATFORM_ADMIN_TOKEN }}
         # Run tests with Virtual frame buffer to allow running VS-Code without a display
         run: xvfb-run npm t
         if: runner.os == 'Linux'
-
+        
