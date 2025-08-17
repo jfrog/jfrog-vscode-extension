@@ -90,6 +90,7 @@ export class AnalyzerUtils {
      */
     public static generateIssueData(response: { filesWithIssues: FileWithSecurityIssues[] }, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
         analyzeIssue.locations.forEach(location => {
+            if (location?.physicalLocation?.artifactLocation?.uri) {
             let fileWithIssues: FileWithSecurityIssues = AnalyzerUtils.getOrCreateFileWithSecurityIssues(
                 response,
                 location.physicalLocation.artifactLocation.uri
@@ -104,6 +105,7 @@ export class AnalyzerUtils {
             };
             newLocation.properties = properties;
             fileIssue.locations.push(newLocation);
+        }
         });
     }
 

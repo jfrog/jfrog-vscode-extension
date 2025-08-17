@@ -200,6 +200,7 @@ export class SastRunner extends JasRunner {
                 // The last location in the threadFlow should match the location of the issue
                 let potential: AnalyzeLocation = threadFlow.locations[threadFlow.locations.length - 1].location;
                 if (
+                    potential?.physicalLocation?.artifactLocation?.uri &&
                     potential.physicalLocation.artifactLocation.uri === filePath &&
                     AnalyzerUtils.isSameRegion(potential.physicalLocation.region, issueLocation.region)
                 ) {
