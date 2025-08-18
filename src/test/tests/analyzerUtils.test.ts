@@ -45,7 +45,7 @@ describe('Analyzer Utils Tests', async () => {
     describe('Empty/Invalid location.physicalLocation validation tests for generateIssueData', () => {
         it('Should handle invalid physicalLocation scenarios without errors', () => {
             const response: { filesWithIssues: any[] } = { filesWithIssues: [] };
-            const analyzeIssue = {
+            const analyzeIssue: any = {
                 locations: [
                     { physicalLocation: null },
                     { physicalLocation: undefined },
@@ -79,7 +79,7 @@ describe('Analyzer Utils Tests', async () => {
 
         it('Should process valid locations correctly', () => {
             const response: { filesWithIssues: any[] } = { filesWithIssues: [] };
-            const analyzeIssue = {
+            const analyzeIssue: any = {
                 locations: [
                     {
                         physicalLocation: {

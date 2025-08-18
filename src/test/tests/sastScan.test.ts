@@ -141,12 +141,12 @@ describe('Sast Tests', () => {
         });
 
         it('Should handle invalid physicalLocation scenarios in threadFlow without errors', () => {
-            const filePath = '/test/file.js';
-            const issueLocation = {
+            const filePath: string = '/test/file.js';
+            const issueLocation: any = {
                 region: { startLine: 1, endLine: 1, startColumn: 1, endColumn: 1 }
             } as any;
 
-            const codeFlows = [
+            const codeFlows: any = [
                 {
                     threadFlows: [
                         {
@@ -189,12 +189,12 @@ describe('Sast Tests', () => {
         });
 
         it('Should process valid threadFlow locations correctly', () => {
-            const filePath = '/test/file.js';
-            const issueLocation = {
+            const filePath: string = '/test/file.js';
+            const issueLocation: any = {
                 region: { startLine: 1, endLine: 1, startColumn: 1, endColumn: 1 }
             } as any;
 
-            const codeFlows = [
+            const codeFlows: any = [
                 {
                     threadFlows: [
                         {

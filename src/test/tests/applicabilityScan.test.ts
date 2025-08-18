@@ -378,7 +378,7 @@ describe('Applicability Scan Tests', () => {
 
     describe('Empty/Invalid location.physicalLocation validation tests', () => {
         it('Should handle invalid physicalLocation scenarios without errors', () => {
-            const combinedLocations = [
+            const combinedLocations: any[] = [
                 { physicalLocation: null },
                 { physicalLocation: undefined },
                 {
@@ -401,7 +401,7 @@ describe('Applicability Scan Tests', () => {
                 }
             ] as any[];
 
-            let invalidLocationsProcessed = 0;
+            let invalidLocationsProcessed: number = 0;
 
             assert.doesNotThrow(() => {
                 combinedLocations.forEach((location: any) => {
@@ -415,7 +415,7 @@ describe('Applicability Scan Tests', () => {
         });
 
         it('Should process valid locations correctly', () => {
-            const combinedLocations = [
+            const combinedLocations: any[] = [
                 {
                     physicalLocation: {
                         artifactLocation: { uri: '/valid/path/file1.js' },
@@ -430,7 +430,7 @@ describe('Applicability Scan Tests', () => {
                 }
             ] as any[];
 
-            let validLocationsProcessed = 0;
+            let validLocationsProcessed: number = 0;
 
             assert.doesNotThrow(() => {
                 combinedLocations.forEach((location: any) => {

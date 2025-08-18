@@ -91,21 +91,21 @@ export class AnalyzerUtils {
     public static generateIssueData(response: { filesWithIssues: FileWithSecurityIssues[] }, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
         analyzeIssue.locations.forEach(location => {
             if (location?.physicalLocation?.artifactLocation?.uri) {
-            let fileWithIssues: FileWithSecurityIssues = AnalyzerUtils.getOrCreateFileWithSecurityIssues(
-                response,
-                location.physicalLocation.artifactLocation.uri
-            );
-            let fileIssue: SecurityIssue = AnalyzerUtils.getOrCreateSecurityIssue(fileWithIssues, analyzeIssue, fullDescription);
-            let newLocation: FileRegion = location.physicalLocation.region;
-            let properties: { [key: string]: string } = {
-                tokenValidation: analyzeIssue.properties?.tokenValidation
-                    ? (analyzeIssue.properties.tokenValidation.trim() as keyof typeof TokenStatus)
-                    : '',
-                metadata: analyzeIssue.properties?.metadata ? analyzeIssue.properties.metadata.trim() : ''
-            };
-            newLocation.properties = properties;
-            fileIssue.locations.push(newLocation);
-        }
+                let fileWithIssues: FileWithSecurityIssues = AnalyzerUtils.getOrCreateFileWithSecurityIssues(
+                    response,
+                    location.physicalLocation.artifactLocation.uri
+                );
+                let fileIssue: SecurityIssue = AnalyzerUtils.getOrCreateSecurityIssue(fileWithIssues, analyzeIssue, fullDescription);
+                let newLocation: FileRegion = location.physicalLocation.region;
+                let properties: { [key: string]: string } = {
+                    tokenValidation: analyzeIssue.properties?.tokenValidation
+                        ? (analyzeIssue.properties.tokenValidation.trim() as keyof typeof TokenStatus)
+                        : '',
+                    metadata: analyzeIssue.properties?.metadata ? analyzeIssue.properties.metadata.trim() : ''
+                };
+                newLocation.properties = properties;
+                fileIssue.locations.push(newLocation);
+            }
         });
     }
 
