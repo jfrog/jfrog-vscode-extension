@@ -136,6 +136,9 @@ export class AnalyzerUtils {
      * @returns true if the regions match false otherwise
      */
     public static isSameRegion(region: FileRegion, other: FileRegion): boolean {
+        if (!region || !other) {
+            return false;
+        }
         return (
             region.startLine === other.startLine &&
             region.endLine === other.endLine &&
