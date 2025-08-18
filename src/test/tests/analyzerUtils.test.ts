@@ -41,4 +41,68 @@ describe('Analyzer Utils Tests', async () => {
             assert.deepEqual(result, testCase);
         });
     });
+
+    describe('Empty/Invalid location.physicalLocation validation tests for generateIssueData', () => {
+        it('Should handle invalid physicalLocation scenarios without errors', () => {
+            const response: { filesWithIssues: any[] } = { filesWithIssues: [] };
+            const analyzeIssue = {
+                locations: [
+                    { physicalLocation: null },
+                    { physicalLocation: undefined },
+                    {
+                        physicalLocation: {
+                            artifactLocation: null,
+                            region: { startLine: 1, endLine: 1, startColumn: 1, endColumn: 1 }
+                        }
+                    },
+                    {
+                        physicalLocation: {
+                            artifactLocation: { uri: null },
+                            region: { startLine: 2, endLine: 2, startColumn: 1, endColumn: 1 }
+                        }
+                    },
+                    {
+                        physicalLocation: {
+                            artifactLocation: { uri: '' },
+                            region: { startLine: 3, endLine: 3, startColumn: 1, endColumn: 1 }
+                        }
+                    }
+                ]
+            } as any;
+
+            assert.doesNotThrow(() => {
+                AnalyzerUtils.generateIssueData(response, analyzeIssue, 'test description');
+            });
+
+            assert.equal(response.filesWithIssues.length, 0);
+        });
+
+        it('Should process valid locations correctly', () => {
+            const response: { filesWithIssues: any[] } = { filesWithIssues: [] };
+            const analyzeIssue = {
+                locations: [
+                    {
+                        physicalLocation: {
+                            artifactLocation: { uri: '/valid/path/file1.js' },
+                            region: { startLine: 1, endLine: 1, startColumn: 1, endColumn: 1 }
+                        }
+                    },
+                    {
+                        physicalLocation: {
+                            artifactLocation: { uri: '/valid/path/file2.js' },
+                            region: { startLine: 2, endLine: 2, startColumn: 1, endColumn: 1 }
+                        }
+                    }
+                ]
+            } as any;
+
+            assert.doesNotThrow(() => {
+                AnalyzerUtils.generateIssueData(response, analyzeIssue, 'test description');
+            });
+
+            assert.equal(response.filesWithIssues.length, 2);
+            assert.equal(response.filesWithIssues[0].full_path, '/valid/path/file1.js');
+            assert.equal(response.filesWithIssues[1].full_path, '/valid/path/file2.js');
+        });
+    });
 });

@@ -132,4 +132,98 @@ describe('Sast Tests', () => {
             {} as AnalyzerManager
         );
     }
+
+    describe('Empty/Invalid location.physicalLocation validation tests for generateCodeFlowData', () => {
+        let runner: SastRunner;
+
+        beforeEach(() => {
+            runner = getDummyRunner();
+        });
+
+        it('Should handle invalid physicalLocation scenarios in threadFlow without errors', () => {
+            const filePath = '/test/file.js';
+            const issueLocation = {
+                region: { startLine: 1, endLine: 1, startColumn: 1, endColumn: 1 }
+            } as any;
+
+            const codeFlows = [
+                {
+                    threadFlows: [
+                        {
+                            locations: [
+                                { location: { physicalLocation: null } },
+                                { location: { physicalLocation: undefined } },
+                                {
+                                    location: {
+                                        physicalLocation: {
+                                            artifactLocation: null,
+                                            region: { startLine: 1, endLine: 1, startColumn: 1, endColumn: 1 }
+                                        }
+                                    }
+                                },
+                                {
+                                    location: {
+                                        physicalLocation: {
+                                            artifactLocation: { uri: null },
+                                            region: { startLine: 2, endLine: 2, startColumn: 1, endColumn: 1 }
+                                        }
+                                    }
+                                },
+                                {
+                                    location: {
+                                        physicalLocation: {
+                                            artifactLocation: { uri: '' },
+                                            region: { startLine: 3, endLine: 3, startColumn: 1, endColumn: 1 }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ] as any;
+
+            assert.doesNotThrow(() => {
+                (runner as any).generateCodeFlowData(filePath, issueLocation, codeFlows);
+            });
+        });
+
+        it('Should process valid threadFlow locations correctly', () => {
+            const filePath = '/test/file.js';
+            const issueLocation = {
+                region: { startLine: 1, endLine: 1, startColumn: 1, endColumn: 1 }
+            } as any;
+
+            const codeFlows = [
+                {
+                    threadFlows: [
+                        {
+                            locations: [
+                                {
+                                    location: {
+                                        physicalLocation: {
+                                            artifactLocation: { uri: 'file:///test/file1.js' },
+                                            region: { startLine: 1, endLine: 1, startColumn: 1, endColumn: 1 }
+                                        }
+                                    }
+                                },
+                                {
+                                    location: {
+                                        physicalLocation: {
+                                            artifactLocation: { uri: 'file:///test/file2.js' },
+                                            region: { startLine: 2, endLine: 2, startColumn: 1, endColumn: 1 }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ] as any;
+
+            assert.doesNotThrow(() => {
+                (runner as any).generateCodeFlowData(filePath, issueLocation, codeFlows);
+            });
+        });
+    });
 });
