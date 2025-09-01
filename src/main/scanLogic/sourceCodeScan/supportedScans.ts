@@ -97,8 +97,8 @@ export class SupportedScans {
         );
         requests.push(
             this.isAgenticSupported()
-            .then(res => this.setAgenticCoding(res))
-            .catch(err => ScanUtils.onScanError(err, this._logManager, true))
+                .then(res => this.setAgenticCoding(res))
+                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
         );
         await Promise.all(requests);
         return this;
@@ -134,9 +134,9 @@ export class SupportedScans {
     /**
      * Check if Agentic coding is supported for the user
      */
-        public async isAgenticSupported(): Promise<boolean> {
-            return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Agentic);
-        }
+    public async isAgenticSupported(): Promise<boolean> {
+        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Agentic);
+    }
 
     /**
      * Check if token validation scan is enabled

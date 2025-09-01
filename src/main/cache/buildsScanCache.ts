@@ -18,7 +18,7 @@ export class BuildsScanCache {
     private readonly buildsDir: string;
 
     constructor(private _projectKey: string, private _url: string, private _logger: LogManager) {
-        this.buildsDir = path.resolve(BuildsScanCache.CACHE_BASE_PATH, ScanUtils.Hash('sha1', this._projectKey + '_' + this._url));
+        this.buildsDir = path.resolve(BuildsScanCache.CACHE_BASE_PATH, ScanUtils.Hash('sha256', this._projectKey + '_' + this._url));
         Utils.createDirIfNotExists(this.buildsDir);
         this.cleanUpOldBuilds();
     }
@@ -77,6 +77,6 @@ export class BuildsScanCache {
         if (projectKey) {
             buildIdentifier += '_' + projectKey;
         }
-        return path.resolve(this.buildsDir, timestamp + '_' + type.toString() + ScanUtils.Hash('sha1', buildIdentifier) + '.zip');
+        return path.resolve(this.buildsDir, timestamp + '_' + type.toString() + ScanUtils.Hash('sha256', buildIdentifier) + '.zip');
     }
 }

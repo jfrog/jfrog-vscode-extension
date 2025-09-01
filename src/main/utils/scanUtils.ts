@@ -281,12 +281,17 @@ export class ScanUtils {
         return tmp.dirSync({} as tmp.DirOptions).name;
     }
 
+    private static readonly SECURE_HASH_ALGORITHMS: readonly string[] = ['sha256', 'sha384', 'sha512'];
+
     /**
      * @param algorithm - The hash's algorithm to use
      * @param data - The data to hash
      * @returns hashed data in Hex
      */
     static Hash(algorithm: string, data: crypto.BinaryLike): string {
+        if (!ScanUtils.SECURE_HASH_ALGORITHMS.includes(algorithm.toLowerCase())) {
+            throw new Error(`Insecure hash algorithm '${algorithm}' is not allowed. Use one of: ${ScanUtils.SECURE_HASH_ALGORITHMS.join(', ')}`);
+        }
         return crypto
             .createHash(algorithm)
             .update(data)
