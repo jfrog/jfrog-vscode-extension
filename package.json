@@ -223,7 +223,7 @@
                 "title": "Ask Copilot to Fix",
                 "command": "jfrog.vscode.autofix",
                 "when": "viewItem =~ /jfrog.item.vscode.autofix/",
-                "enablement": "viewItem =~ /jfrog.copilot.installed/"
+                "enablement": "viewItem =~ /jfrog.copilot.installed/ && jfrog.agneticCodingEnabled"
             },
             {
                 "command": "jfrog.issues.cache.delete",

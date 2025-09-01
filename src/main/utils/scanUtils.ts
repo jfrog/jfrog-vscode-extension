@@ -225,6 +225,10 @@ export class ScanUtils {
         vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ContextKeys.SCAN_IN_PROGRESS, state);
     }
 
+    public static setAgneticCodingEnabled(state: boolean) {
+        vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ContextKeys.AGNETIC_CODING_ENABLED, state);
+    }
+
     public static setFirstScanForWorkspace(state: boolean) {
         vscode.commands.executeCommand(ContextKeys.SET_CONTEXT, ContextKeys.FIRST_SCAN_STATUS, state);
     }
