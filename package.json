@@ -223,7 +223,7 @@
                 "title": "Ask Copilot to Fix",
                 "command": "jfrog.vscode.autofix",
                 "when": "viewItem =~ /jfrog.item.vscode.autofix/",
-                "enablement": "viewItem =~ /jfrog.copilot.installed/"
+                "enablement": "viewItem =~ /jfrog.copilot.installed/ && jfrog.agneticCodingEnabled"
             },
             {
                 "command": "jfrog.issues.cache.delete",
@@ -343,7 +343,7 @@
         "adm-zip": "~0.5.9",
         "fs-extra": "~10.1.0",
         "jfrog-client-js": "^2.9.0",
-        "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.4.2.tgz",
+        "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.4.3.tgz",
         "js-yaml": "^4.1.0",
         "json2csv": "~5.0.7",
         "nuget-deps-tree": "^0.4.3",

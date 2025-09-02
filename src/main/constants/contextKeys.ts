@@ -6,6 +6,7 @@ export class ContextKeys {
     public static UPDATE_DEPENDENCY_ENABLED: string = 'jfrog.xray.updateDependency.enabled';
     public static SESSION_STATUS: string = 'jfrog.connection.status';
     public static SCAN_IN_PROGRESS: string = 'jfrog.scanInProgress';
+    public static AGENTIC_CODING_ENABLED: string = 'jfrog.agneticCodingEnabled';
     public static VIEW_TYPE: string = 'jfrog.view.type';
     public static COPY_TO_CLIPBOARD_ENABLED: string = 'jfrog.item.copy.to.clipboard';
     public static FIRST_SCAN_STATUS: string = 'jfrog.firstScanInWorkspace';

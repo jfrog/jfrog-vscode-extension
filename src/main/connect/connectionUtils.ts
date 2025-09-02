@@ -22,7 +22,8 @@ export enum EntitlementScanFeature {
     Applicability = 'contextual_analysis',
     Sast = 'sast',
     Iac = 'iac_scanners',
-    Secrets = 'secrets_detection'
+    Secrets = 'secrets_detection',
+    Agentic = 'agentic_coding'
 }
 
 export class ConnectionUtils {

@@ -59,6 +59,11 @@ export class SupportedScans {
         return this;
     }
 
+    public setAgenticCoding(value: boolean | undefined): SupportedScans {
+        ScanUtils.setAgneticCodingEnabled(value ?? false);
+        return this;
+    }
+
     public hasSupportedScan(): boolean {
         return this.applicability || this.sast || this.iac || this.secrets || false;
     }
@@ -90,6 +95,11 @@ export class SupportedScans {
                 .then(res => this.setTokenValidation(res))
                 .catch(err => ScanUtils.onScanError(err, this._logManager, true))
         );
+        requests.push(
+            this.isAgenticSupported()
+                .then(res => this.setAgenticCoding(res))
+                .catch(err => ScanUtils.onScanError(err, this._logManager, true))
+        );
         await Promise.all(requests);
         return this;
     }
@@ -119,6 +129,13 @@ export class SupportedScans {
      */
     public async isSastSupported(): Promise<boolean> {
         return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Sast);
+    }
+
+    /**
+     * Check if Agentic coding is supported for the user
+     */
+    public async isAgenticSupported(): Promise<boolean> {
+        return await ConnectionUtils.testXrayEntitlementForFeature(this._connectionManager.createJfrogClient(), EntitlementScanFeature.Agentic);
     }
 
     /**
