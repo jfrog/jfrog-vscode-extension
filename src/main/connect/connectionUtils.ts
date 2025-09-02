@@ -23,7 +23,7 @@ export enum EntitlementScanFeature {
     Sast = 'sast',
     Iac = 'iac_scanners',
     Secrets = 'secrets_detection',
-    Agentic = 'agentic_coding'
+    Agentic = 'vsc_ask_copilot_to_fix'
 }
 
 export class ConnectionUtils {
