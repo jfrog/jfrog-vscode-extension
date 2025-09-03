@@ -153,9 +153,28 @@ export class CommandManager implements ExtensionComponent {
     private doVscodeAutofix(node: vscode.TreeItem) {
         if (node instanceof CodeIssueTreeNode) {
             try {
-                const prompt: string = `Here is a vulnerability details page. Please suggest a fix for the vulnerability: ${JSON.stringify(
-                    node.getDetailsPage()
-                )}`;
+                let issue_details: any  = node.getDetailsPage();
+                let prompt: string = '';
+                if (issue_details['cve'] && issue_details['component'] && issue_details['version'] && issue_details['infectedVersion']) {
+                    // cve
+                    const base_propmpt: string = `The code contains ${issue_details['component']} (version: ${issue_details['version']}) as dependency with a known vulnerability ${issue_details['cve']['id']}.\nThe provided package name is in lower case, please use after correcting the upper/lower case letters. Propose the following fixes:`;
+                    const upgrade_fix: string = `1) Upgrade the version of the dependency by consulting get_curation_package_status tool to check whether an alternative version will be acceptable The tool MUST return Approved status in order to proceed. Recommended to start from these versions: ${issue_details['infectedVersion']} . Make sure to use the correct format of the package name according to package manager naming convention`;
+                    prompt = `${base_propmpt}\n${upgrade_fix}`;
+                    if (
+                        issue_details['cve']['applicableData'] &&
+                        issue_details['extendedInformation'] &&
+                        issue_details['extendedInformation']['remediation']
+                    ) {
+                        const remediation: string = `2) Remediate the use of the dependency in the source code according to the following instructions: \`${
+                            issue_details['extendedInformation']['remediation']
+                        }\`. Use the following vulnerable API use location evidence in the source code (only fix the source code related to the following location!): \`${JSON.stringify(
+                            issue_details['cve']['applicableData']['evidence']
+                        )}\``;
+                        prompt = `${prompt}\n${remediation}`;
+                    }
+                } else {
+                    prompt = `Here is a vulnerability details page. Please suggest a fix for the vulnerability: ${JSON.stringify(issue_details)}`;
+                }
                 vscode.commands.executeCommand('workbench.action.chat.open', prompt);
             } catch (error) {
                 this._logManager.logMessage(`Error calling copilot: ${error}`, 'ERR');
