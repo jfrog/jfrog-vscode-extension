@@ -153,7 +153,7 @@ export class CommandManager implements ExtensionComponent {
     private doVscodeAutofix(node: vscode.TreeItem) {
         if (node instanceof CodeIssueTreeNode) {
             try {
-                let issue_details: object  = node.getDetailsPage();
+                let issue_details: any  = node.getDetailsPage();
                 let prompt: string = '';
                 if (issue_details['cve'] && issue_details['component'] && issue_details['version'] && issue_details['infectedVersion']) {
                     // cve
