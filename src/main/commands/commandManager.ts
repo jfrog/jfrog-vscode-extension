@@ -155,7 +155,7 @@ export class CommandManager implements ExtensionComponent {
             try {
                 let issue_details = node.getDetailsPage();
                 let prompt: string = "";
-                if (issue_details["cve"] && issue_details["component"] && issue_details["version"]) {
+                if (issue_details["cve"] && issue_details["component"] && issue_details["version"] && issue_details["infectedVersion"]) {
                     // cve
                     const base_propmpt = `The code contains ${issue_details["component"]} (version: ${issue_details["version"]}) as dependency with a known vulnerability ${issue_details["cve"]["id"]}.\nThe provided package name is in lower case, please use after correcting the upper/lower case letters. Propose the following fixes:`;
                     const upgrade_fix = `1) Upgrade the version of the dependency by consulting get_curation_package_status tool to check whether an alternative version will be acceptable The tool MUST return Approved status in order to proceed. Recommended to start from these versions: ${issue_details["infectedVersion"]} . Make sure to use the correct format of the package name according to package manager naming convention`;
