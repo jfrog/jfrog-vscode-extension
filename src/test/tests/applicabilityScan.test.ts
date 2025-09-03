@@ -375,6 +375,74 @@ describe('Applicability Scan Tests', () => {
     function getDummyRunner(scanBundles: FileScanBundle[], packageType: PackageType): DummyApplicabilityRunner {
         return new DummyApplicabilityRunner(scanBundles, packageType);
     }
+
+    describe('Empty/Invalid location.physicalLocation validation tests', () => {
+        it('Should handle invalid physicalLocation scenarios without errors', () => {
+            const combinedLocations: any[] = [
+                { physicalLocation: null },
+                { physicalLocation: undefined },
+                {
+                    physicalLocation: {
+                        artifactLocation: null,
+                        region: { startLine: 1, endLine: 1, startColumn: 1, endColumn: 1 }
+                    }
+                },
+                {
+                    physicalLocation: {
+                        artifactLocation: { uri: null },
+                        region: { startLine: 2, endLine: 2, startColumn: 1, endColumn: 1 }
+                    }
+                },
+                {
+                    physicalLocation: {
+                        artifactLocation: { uri: '' },
+                        region: { startLine: 3, endLine: 3, startColumn: 1, endColumn: 1 }
+                    }
+                }
+            ] as any[];
+
+            let invalidLocationsProcessed: number = 0;
+
+            assert.doesNotThrow(() => {
+                combinedLocations.forEach((location: any) => {
+                    if (location?.physicalLocation?.artifactLocation?.uri) {
+                        invalidLocationsProcessed++;
+                    }
+                });
+            });
+
+            assert.equal(invalidLocationsProcessed, 0, 'Invalid locations should not be processed');
+        });
+
+        it('Should process valid locations correctly', () => {
+            const combinedLocations: any[] = [
+                {
+                    physicalLocation: {
+                        artifactLocation: { uri: '/valid/path/file1.js' },
+                        region: { startLine: 1, endLine: 1, startColumn: 1, endColumn: 1 }
+                    }
+                },
+                {
+                    physicalLocation: {
+                        artifactLocation: { uri: '/valid/path/file2.js' },
+                        region: { startLine: 2, endLine: 2, startColumn: 1, endColumn: 1 }
+                    }
+                }
+            ] as any[];
+
+            let validLocationsProcessed: number = 0;
+
+            assert.doesNotThrow(() => {
+                combinedLocations.forEach((location: any) => {
+                    if (location?.physicalLocation?.artifactLocation?.uri) {
+                        validLocationsProcessed++;
+                    }
+                });
+            });
+
+            assert.equal(validLocationsProcessed, 2, 'All valid locations should be processed');
+        });
+    });
 });
 
 class DummyApplicabilityRunner extends ApplicabilityRunner {

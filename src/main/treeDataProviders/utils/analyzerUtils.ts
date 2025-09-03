@@ -90,20 +90,22 @@ export class AnalyzerUtils {
      */
     public static generateIssueData(response: { filesWithIssues: FileWithSecurityIssues[] }, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
         analyzeIssue.locations.forEach(location => {
-            let fileWithIssues: FileWithSecurityIssues = AnalyzerUtils.getOrCreateFileWithSecurityIssues(
-                response,
-                location.physicalLocation.artifactLocation.uri
-            );
-            let fileIssue: SecurityIssue = AnalyzerUtils.getOrCreateSecurityIssue(fileWithIssues, analyzeIssue, fullDescription);
-            let newLocation: FileRegion = location.physicalLocation.region;
-            let properties: { [key: string]: string } = {
-                tokenValidation: analyzeIssue.properties?.tokenValidation
-                    ? (analyzeIssue.properties.tokenValidation.trim() as keyof typeof TokenStatus)
-                    : '',
-                metadata: analyzeIssue.properties?.metadata ? analyzeIssue.properties.metadata.trim() : ''
-            };
-            newLocation.properties = properties;
-            fileIssue.locations.push(newLocation);
+            if (location?.physicalLocation?.artifactLocation?.uri) {
+                let fileWithIssues: FileWithSecurityIssues = AnalyzerUtils.getOrCreateFileWithSecurityIssues(
+                    response,
+                    location.physicalLocation.artifactLocation.uri
+                );
+                let fileIssue: SecurityIssue = AnalyzerUtils.getOrCreateSecurityIssue(fileWithIssues, analyzeIssue, fullDescription);
+                let newLocation: FileRegion = location.physicalLocation.region;
+                let properties: { [key: string]: string } = {
+                    tokenValidation: analyzeIssue.properties?.tokenValidation
+                        ? (analyzeIssue.properties.tokenValidation.trim() as keyof typeof TokenStatus)
+                        : '',
+                    metadata: analyzeIssue.properties?.metadata ? analyzeIssue.properties.metadata.trim() : ''
+                };
+                newLocation.properties = properties;
+                fileIssue.locations.push(newLocation);
+            }
         });
     }
 
@@ -134,6 +136,9 @@ export class AnalyzerUtils {
      * @returns true if the regions match false otherwise
      */
     public static isSameRegion(region: FileRegion, other: FileRegion): boolean {
+        if (!region || !other) {
+            return false;
+        }
         return (
             region.startLine === other.startLine &&
             region.endLine === other.endLine &&
