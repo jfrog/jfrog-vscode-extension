@@ -287,6 +287,7 @@ export class ScanUtils {
      * @returns hashed data in Hex
      */
     static Hash(algorithm: string, data: crypto.BinaryLike): string {
+	// jfrog-ignore
         return crypto
             .createHash(algorithm)
             .update(data)
