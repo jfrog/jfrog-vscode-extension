@@ -127,7 +127,7 @@ export class SastRunner extends JasRunner {
      * @returns the response generated from the scan run
      */
     public generateScanResponse(response?: AnalyzerScanResponse): SastScanResponse {
-        if (!response || response.runs.length === 0) {
+        if (!response || !response.runs || response.runs.length === 0) {
             return {} as SastScanResponse;
         }
         let analyzerScanRun: AnalyzerScanRun = response.runs[0];
