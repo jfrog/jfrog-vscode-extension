@@ -257,7 +257,7 @@ export class ApplicabilityRunner extends JasRunner {
      * @returns the response generated from the scan run
      */
     public convertResponse(response: AnalyzerScanResponse | undefined): ApplicabilityScanResponse {
-        if (!response) {
+        if (!response || !response.runs || response.runs.length === 0) {
             return {} as ApplicabilityScanResponse;
         }
 
@@ -265,7 +265,7 @@ export class ApplicabilityRunner extends JasRunner {
         const allCvesWithApplicableState: Map<string, CveApplicableDetails> = new Map<string, CveApplicableDetails>();
         const scanned: Set<string> = new Set<string>();
         const rulesFullDescription: Map<string, string> = new Map<string, string>();
-        const rules: AnalyzerRule[] = this.getUniqueRules(analyzerScanRun.tool.driver.rules);
+        const rules: AnalyzerRule[] = this.getUniqueRules(analyzerScanRun.tool.driver.rules ?? []);
 
         rules.forEach(rule => {
             if (rule.fullDescription) {

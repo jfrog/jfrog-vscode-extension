@@ -67,7 +67,7 @@ export class SecretsRunner extends JasRunner {
      * @returns the response generated from the scan run
      */
     public convertResponse(response?: AnalyzerScanResponse): SecretsScanResponse {
-        if (!response) {
+        if (!response || !response.runs || response.runs.length === 0) {
             return {} as SecretsScanResponse;
         }
         let analyzerScanRun: AnalyzerScanRun = response.runs[0];
@@ -77,7 +77,7 @@ export class SecretsRunner extends JasRunner {
 
         // Get the full descriptions of all rules
         let rulesFullDescription: Map<string, string> = new Map<string, string>();
-        for (const rule of analyzerScanRun.tool.driver.rules) {
+        for (const rule of analyzerScanRun.tool.driver.rules ?? []) {
             if (rule.fullDescription) {
                 rulesFullDescription.set(rule.id, rule.fullDescription.text);
             }

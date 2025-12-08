@@ -127,7 +127,7 @@ export class SastRunner extends JasRunner {
      * @returns the response generated from the scan run
      */
     public generateScanResponse(response?: AnalyzerScanResponse): SastScanResponse {
-        if (!response) {
+        if (!response || !response.runs || response.runs.length === 0) {
             return {} as SastScanResponse;
         }
         let analyzerScanRun: AnalyzerScanRun = response.runs[0];
@@ -137,7 +137,7 @@ export class SastRunner extends JasRunner {
 
         // Prepare
         let rulesFullDescription: Map<string, string> = new Map<string, string>();
-        for (const rule of analyzerScanRun.tool.driver.rules) {
+        for (const rule of analyzerScanRun.tool.driver.rules ?? []) {
             if (rule.fullDescription) {
                 rulesFullDescription.set(rule.id, rule.fullDescription.text);
             }
@@ -147,7 +147,7 @@ export class SastRunner extends JasRunner {
 
         const rulesDict: {
             [key: string]: AnalyzerRule;
-        } = analyzerScanRun.tool.driver.rules.reduce((acc: { [key: string]: AnalyzerRule }, analyzerRule: AnalyzerRule) => {
+        } = (analyzerScanRun.tool.driver.rules ?? []).reduce((acc: { [key: string]: AnalyzerRule }, analyzerRule: AnalyzerRule) => {
             acc[analyzerRule.id] = analyzerRule;
             return acc;
         }, {});
