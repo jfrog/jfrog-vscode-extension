@@ -13,6 +13,7 @@ import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTr
 import { PackageType } from '../types/projectType';
 import { EntryIssuesData, ScanResults } from '../types/workspaceIssuesDetails';
 import { Configuration } from './configuration';
+import { Utils } from './utils';
 
 export class ScanUtils {
     public static readonly DESCRIPTOR_SELECTOR_PATTERN: string =
@@ -184,11 +185,18 @@ export class ScanUtils {
                         if (error) {
                             reject(error);
                         } else {
-                            stderr.trim()
-                                ? errIfStderrNotEmpty
-                                    ? reject(new Error(stderr.trim()))
-                                    : resolve(stderr.trim())
-                                : resolve(stdout.trim());
+                            let out: string = stdout.trim();
+                            let err: string = stderr.trim();
+                            let msg: string = Utils.combineStdoutAndStderr(out, err);
+                            if (err) {
+                                if (errIfStderrNotEmpty) {
+                                    reject(new Error(msg));
+                                } else {
+                                    resolve(msg);
+                                }
+                            } else {
+                                resolve(msg);
+                            }
                         }
                     }
                 );
