@@ -33,6 +33,18 @@ export class Utils {
         return result;
     }
 
+    public static combineStdoutAndStderr(stdout: string, stderr: string): string {
+        let out: string = stdout.trim();
+        let err: string = stderr.trim();
+        if (err) {
+            if (out.length > 0) {
+                out = 'Stdout:\n' + out + '\nStderr:\n';
+            }
+            return out + err;
+        }
+        return out;
+    }
+
     /**
      *  @returns the last segment of a path.
      */
