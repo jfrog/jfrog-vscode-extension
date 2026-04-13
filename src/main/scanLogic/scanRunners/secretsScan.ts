@@ -90,7 +90,7 @@ export class SecretsRunner extends JasRunner {
                 ignoreCount++;
                 return;
             }
-            if (analyzeIssue.locations.length === 0 || analyzeIssue.kind === 'informational') {
+            if (analyzeIssue.locations?.length === 0 || analyzeIssue.kind === 'informational') {
                 // We only care about issues that have locations and are not informational
                 return;
             }
