@@ -47,6 +47,54 @@ describe('Connection Manager Tests', () => {
         assert.deepEqual(proxyAuthorization, 'testProxyAuthorization');
     });
 
+    describe('getProxyConfig', () => {
+        afterEach(async () => {
+            await vscode.workspace.getConfiguration().update('http.proxy', undefined, true);
+            await vscode.workspace.getConfiguration().update('http.proxySupport', undefined, true);
+            delete process.env['HTTP_PROXY'];
+            delete process.env['HTTPS_PROXY'];
+        });
+
+        it('Returns proxy config from VS Code http.proxy setting', async () => {
+            await vscode.workspace.getConfiguration().update('http.proxy', 'http://proxy.example.com:8080', true);
+            const result: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
+            assert.isObject(result);
+            const proxyConfig: IProxyConfig = result as IProxyConfig;
+            assert.equal(proxyConfig.host, 'proxy.example.com');
+            assert.equal(proxyConfig.port, 8080);
+        });
+
+        it('Falls back to HTTPS_PROXY env var when http.proxy setting is not configured', () => {
+            process.env['HTTPS_PROXY'] = 'http://envproxy.example.com:3128';
+            const result: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
+            assert.isObject(result);
+            const proxyConfig: IProxyConfig = result as IProxyConfig;
+            assert.equal(proxyConfig.host, 'envproxy.example.com');
+            assert.equal(proxyConfig.port, 3128);
+        });
+
+        it('Falls back to HTTP_PROXY env var when http.proxy and HTTPS_PROXY are not set', () => {
+            process.env['HTTP_PROXY'] = 'http://httpenvproxy.example.com:8888';
+            const result: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
+            assert.isObject(result);
+            const proxyConfig: IProxyConfig = result as IProxyConfig;
+            assert.equal(proxyConfig.host, 'httpenvproxy.example.com');
+            assert.equal(proxyConfig.port, 8888);
+        });
+
+        it('Returns false when no proxy is configured', () => {
+            const result: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
+            assert.isFalse(result);
+        });
+
+        it('Returns false when proxySupport is off', async () => {
+            await vscode.workspace.getConfiguration().update('http.proxy', 'http://proxy.example.com:8080', true);
+            await vscode.workspace.getConfiguration().update('http.proxySupport', 'off', true);
+            const result: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
+            assert.isFalse(result);
+        });
+    });
+
     describe('Populate credentials from env', async () => {
         [
             {

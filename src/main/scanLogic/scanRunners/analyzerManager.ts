@@ -157,8 +157,11 @@ export class AnalyzerManager {
         let optional: IProxyConfig | boolean = ConnectionUtils.getProxyConfig();
         if (optional) {
             let proxyConfig: IProxyConfig = <IProxyConfig>optional;
-            proxyHttpsUrl = proxyConfig.protocol == 'https:' ? AnalyzerManager.toProxyUrl(proxyConfig) : proxyHttpsUrl;
-            proxyHttpUrl = proxyConfig.protocol == 'http:' ? AnalyzerManager.toProxyUrl(proxyConfig) : proxyHttpUrl;
+            // An HTTP proxy (http://) handles both HTTP and HTTPS traffic via CONNECT tunneling,
+            // so always set both proxy env vars from the single VS Code proxy configuration.
+            const proxyUrl: string = AnalyzerManager.toProxyUrl(proxyConfig);
+            proxyHttpsUrl = proxyUrl;
+            proxyHttpUrl = proxyUrl;
         }
 
         if (params?.tokenValidation && params.tokenValidation === true) {

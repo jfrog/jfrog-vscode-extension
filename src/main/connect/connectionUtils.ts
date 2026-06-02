@@ -422,11 +422,22 @@ export class ConnectionUtils {
         let httpProxy: string | undefined = vscode.workspace.getConfiguration().get('http.proxy');
 
         if (!httpProxy) {
+            // Fall back to environment variables when no explicit VS Code proxy setting is configured
+            httpProxy = process.env['HTTPS_PROXY'] ?? process.env['HTTP_PROXY'];
+        }
+
+        if (!httpProxy) {
+            return false;
+        }
+
+        let proxyUri: URL;
+        try {
+            proxyUri = new URL(httpProxy);
+        } catch {
             return false;
         }
 
         let proxyConfig: IProxyConfig = {} as IProxyConfig;
-        let proxyUri: URL = new URL(httpProxy);
         proxyConfig.protocol = proxyUri.protocol;
         proxyConfig.host = proxyUri.hostname;
         if (proxyUri.port) {

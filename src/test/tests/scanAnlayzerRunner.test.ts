@@ -2,6 +2,7 @@ import { assert } from 'chai';
 import * as fs from 'fs';
 import { describe } from 'mocha';
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
 
@@ -84,6 +85,11 @@ describe('Analyzer BinaryRunner tests', async () => {
         })(connection, logManager);
     }
 
+    afterEach(() => {
+        delete process.env['HTTP_PROXY'];
+        delete process.env['HTTPS_PROXY'];
+    });
+
     [
         {
             name: 'With password credentials',
@@ -122,7 +128,7 @@ describe('Analyzer BinaryRunner tests', async () => {
             user: '',
             pass: '',
             token: 'access-token',
-            proxy: 'proxyUrlEnvVarValue',
+            proxy: 'http://proxy.example.com:8080',
             logPath: undefined
         },
         {
@@ -138,8 +144,14 @@ describe('Analyzer BinaryRunner tests', async () => {
     ].forEach(test => {
         it('Create environment variables for execution - ' + test.name, () => {
             let runner: AnalyzerManager = createDummyAnalyzerManager(createBinaryRunnerConnectionManager(test.url, test.user, test.pass, test.token));
-            process.env['HTTP_PROXY'] = test.proxy;
-            process.env['HTTPS_PROXY'] = test.proxy;
+            
+            if (test.proxy !== undefined) {
+                process.env['HTTP_PROXY'] = test.proxy;
+                process.env['HTTPS_PROXY'] = test.proxy;
+            } else {
+                delete process.env['HTTP_PROXY'];
+                delete process.env['HTTPS_PROXY'];
+            }
 
             let envVars: NodeJS.ProcessEnv | undefined = runner.createEnvForRun({ executionLogDirectory: test.logPath });
             if (test.shouldFail) {
@@ -160,6 +172,24 @@ describe('Analyzer BinaryRunner tests', async () => {
                 assert.equal(envVars?.[AnalyzerManager.ENV_LOG_DIR], test.logPath);
             }
         });
+    });
+
+    it('Create environment variables for execution - With VS Code http.proxy setting (http:// proxy sets both HTTP_PROXY and HTTPS_PROXY)', async () => {
+        const proxyUrl: string = 'http://vscodeproxy.example.com:8080';
+        await vscode.workspace.getConfiguration().update('http.proxy', proxyUrl, true);
+        delete process.env['HTTP_PROXY'];
+        delete process.env['HTTPS_PROXY'];
+
+        try {
+            let runner: AnalyzerManager = createDummyAnalyzerManager(createBinaryRunnerConnectionManager('platformUrl', '', '', 'access-token'));
+            let envVars: NodeJS.ProcessEnv | undefined = runner.createEnvForRun({});
+            assert.isDefined(envVars);
+            // An http:// proxy must be set for both protocols since it handles HTTPS via CONNECT tunneling
+            assert.equal(envVars?.[AnalyzerManager.ENV_HTTP_PROXY], proxyUrl);
+            assert.equal(envVars?.[AnalyzerManager.ENV_HTTPS_PROXY], proxyUrl);
+        } finally {
+            await vscode.workspace.getConfiguration().update('http.proxy', undefined, true);
+        }
     });
 
     [
