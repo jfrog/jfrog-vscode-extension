@@ -3,7 +3,7 @@ import * as path from 'path';
 import { assert } from 'chai';
 import { ConnectionManager } from '../../main/connect/connectionManager';
 import { LogManager } from '../../main/log/logManager';
-import { FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
+import { AnalyzerScanResponse, FileRegion } from '../../main/scanLogic/scanRunners/analyzerModels';
 import { SastRunner, SastScanResponse } from '../../main/scanLogic/scanRunners/sastScan';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
 import { CodeIssueTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeIssueTreeNode';
@@ -118,6 +118,20 @@ describe('Sast Tests', () => {
 
                 it('Check snippet text at location transferred', () => assertIssuesSnippet(testRoot, expectedFilesWithIssues, getTestIssueNode));
             });
+        });
+    });
+
+    describe('Sast scan malformed SARIF', () => {
+        it('generateScanResponse skips results without locations', () => {
+            const response = {
+                runs: [{
+                    tool: { driver: { name: 'sast', rules: [] } },
+                    results: [{ ruleId: 'r1', message: { text: 'no loc' } }]
+                }]
+            } as unknown as AnalyzerScanResponse;
+            const out = getDummyRunner().generateScanResponse(response);
+            assert.isDefined(out.filesWithIssues);
+            assert.equal(out.filesWithIssues.length, 0);
         });
     });
 
