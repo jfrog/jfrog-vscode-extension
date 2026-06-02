@@ -123,13 +123,13 @@ describe('Sast Tests', () => {
 
     describe('Sast scan malformed SARIF', () => {
         it('generateScanResponse skips results without locations', () => {
-            const response = {
+            const response: AnalyzerScanResponse = {
                 runs: [{
                     tool: { driver: { name: 'sast', rules: [] } },
                     results: [{ ruleId: 'r1', message: { text: 'no loc' } }]
                 }]
             } as unknown as AnalyzerScanResponse;
-            const out = getDummyRunner().generateScanResponse(response);
+            const out: SastScanResponse = getDummyRunner().generateScanResponse(response);
             assert.isDefined(out.filesWithIssues);
             assert.equal(out.filesWithIssues.length, 0);
         });
