@@ -212,14 +212,15 @@ export class AnalyzerManager {
         }
         await AnalyzerManager.FINISH_UPDATE_PROMISE;
         try {
-            const envVars: NodeJS.ProcessEnv = { [AnalyzerManager.ENV_PLATFORM_URL]: this._connectionManager.url };
+            const envVars: NodeJS.ProcessEnv = this.createEnvForRun() ?? {
+                [AnalyzerManager.ENV_PLATFORM_URL]: this._connectionManager.url
+            };
             if (!Configuration.getShouldShowJasLogs()) {
                 envVars[AnalyzerManager.ENV_LOG_DIR] = path.join(ScanUtils.getLogsPath());
             }
             // eslint-disable-next-line @typescript-eslint/no-empty-function
-            let versionString: string = await this._binary.run(['version'], () => {}, envVars);
-            // Extract the version from the output
-            const match: RegExpMatchArray | null = versionString.match('analyzer manager version:\\s*(\\S+)');
+            let versionString: string = await this._binary.run(['version'], () => {}, envVars, false);
+            const match: RegExpMatchArray | null = versionString.match(/analyzer manager version:\s*(\S+)/);
             if (match && match.length > 1) {
                 this._version = match[1];
             }
