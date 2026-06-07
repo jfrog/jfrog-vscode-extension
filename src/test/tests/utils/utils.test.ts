@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import { JfrogClient } from 'jfrog-client-js';
 import * as os from 'os';
+import * as path from 'path';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../../../main/cache/scanCacheManager';
@@ -105,4 +106,8 @@ export function getCliHomeDir(): string {
 
 export function setCliHomeDir(newHome: string): void {
     process.env['JFROG_CLI_HOME_DIR'] = newHome;
+}
+
+export function createEmptyCliHomeDir(): string {
+    return fs.mkdtempSync(path.join(os.tmpdir(), 'jfrog-cli-home-'));
 }

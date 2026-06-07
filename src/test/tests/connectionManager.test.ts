@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { ConnectionManager, LoginStatus } from '../../main/connect/connectionManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
 import { LogManager } from '../../main/log/logManager';
-import { createTestConnectionManager, getCliHomeDir, setCliHomeDir } from './utils/utils.test';
+import { createEmptyCliHomeDir, createTestConnectionManager, getCliHomeDir, setCliHomeDir } from './utils/utils.test';
 import { assert } from 'chai';
 import sinon from 'sinon';
 import { SessionStatus } from '../../main/constants/contextKeys';
@@ -136,7 +136,7 @@ describe('Connection Manager Tests', () => {
 
                 // Store previous CLI home, and set to a non existing path so no credentials will be read from the CLI.
                 const previousHome: string = getCliHomeDir();
-                setCliHomeDir(path.resolve('/path/to/nowhere'));
+                setCliHomeDir(createEmptyCliHomeDir());
 
                 // Check credentials not set.
                 assert.isEmpty(await connectionManager.tryGetUrlFromJFrogCli());
@@ -218,7 +218,7 @@ describe('Connection Manager Tests', () => {
 
                 // Store previous CLI home, and set new one to test data.
                 const previousHome: string = getCliHomeDir();
-                setCliHomeDir('/path/to/nowhere');
+                setCliHomeDir(createEmptyCliHomeDir());
 
                 // Assert credentials are empty.
                 assert.isEmpty(await connectionManager.tryGetUrlFromJFrogCli());
