@@ -144,7 +144,7 @@ describe('Analyzer BinaryRunner tests', async () => {
     ].forEach(test => {
         it('Create environment variables for execution - ' + test.name, () => {
             let runner: AnalyzerManager = createDummyAnalyzerManager(createBinaryRunnerConnectionManager(test.url, test.user, test.pass, test.token));
-            
+
             if (test.proxy !== undefined) {
                 process.env['HTTP_PROXY'] = test.proxy;
                 process.env['HTTPS_PROXY'] = test.proxy;

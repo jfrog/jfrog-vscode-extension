@@ -28,10 +28,7 @@ describe('AnalyzerManager.version', () => {
         const runStub: sinon.SinonStub = sinon.stub(Resource.prototype, 'run').resolves('analyzer manager version: 1.30.2\n');
         try {
             const logManager: LogManager = new LogManager().activate();
-            const manager: AnalyzerManager = new AnalyzerManager(
-                createConnectionManager('https://example.jfrog.io', logManager),
-                logManager
-            );
+            const manager: AnalyzerManager = new AnalyzerManager(createConnectionManager('https://example.jfrog.io', logManager), logManager);
             const version: string | undefined = await manager.version();
             assert.equal(version, '1.30.2');
             assert.isTrue(runStub.calledWith(sinon.match.array, sinon.match.func, sinon.match.object, false));

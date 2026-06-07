@@ -289,8 +289,8 @@ export class ApplicabilityRunner extends JasRunner {
             };
 
             if (status === Applicability.APPLICABLE) {
-                const combinedLocations: AnalyzeLocation[] = combinedIssues.flatMap(issue => issue.locations);
-                combinedLocations.forEach((location: AnalyzeLocation) => {
+                const combinedLocations: AnalyzeLocation[] = combinedIssues.flatMap(issue => issue.locations ?? []);
+                combinedLocations?.forEach((location: AnalyzeLocation) => {
                     if (location?.physicalLocation?.artifactLocation?.uri) {
                         let fileIssues: FileIssues = this.getOrCreateFileIssues(applicableDetails, location.physicalLocation.artifactLocation.uri);
                         fileIssues.locations.push(location.physicalLocation.region);
