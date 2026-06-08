@@ -5,6 +5,7 @@ import * as vscode from 'vscode';
 import { assert } from 'chai';
 import * as sinon from 'sinon';
 import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
+import { IssuesRootTreeNode } from '../../main/treeDataProviders/issuesTree/issuesRootTreeNode';
 import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils';
 import { createRootTestNode } from './utils/treeNodeUtils.test';
 
@@ -119,7 +120,7 @@ describe('Analyzer Utils Tests', async () => {
         });
 
         it('getOrCreateCodeFileNode stores mapped drive path when SARIF returns UNC', () => {
-            const root = createRootTestNode(workspaceRoot);
+            const root: IssuesRootTreeNode = createRootTestNode(workspaceRoot);
             const node: CodeFileTreeNode = AnalyzerUtils.getOrCreateCodeFileNode(root, canonicalFile);
 
             assert.equal(node.projectFilePath, mappedFile);
@@ -128,7 +129,7 @@ describe('Analyzer Utils Tests', async () => {
         it('getOrCreateCodeFileNode leaves path unchanged when realpath fails', () => {
             realpathNativeStub.throws(new Error('disconnected share'));
             AnalyzerUtils.clearWorkspaceRealPathCache();
-            const root = createRootTestNode(workspaceRoot);
+            const root: IssuesRootTreeNode = createRootTestNode(workspaceRoot);
             const node: CodeFileTreeNode = AnalyzerUtils.getOrCreateCodeFileNode(root, canonicalFile);
 
             assert.equal(node.projectFilePath, canonicalFile);
