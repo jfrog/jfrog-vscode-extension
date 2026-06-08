@@ -111,3 +111,14 @@ export function setCliHomeDir(newHome: string): void {
 export function createEmptyCliHomeDir(): string {
     return fs.mkdtempSync(path.join(os.tmpdir(), 'jfrog-cli-home-'));
 }
+
+/**
+ * Platform-specific CLI home for tests that isolate from JFrog CLI before live URL resolution.
+ * macOS needs a real empty temp dir; Windows needs a non-existent path so httpbin pings succeed.
+ */
+export function createIsolatedCliHomeDir(): string {
+    if (process.platform === 'win32') {
+        return path.resolve('/path/to/nowhere');
+    }
+    return createEmptyCliHomeDir();
+}
