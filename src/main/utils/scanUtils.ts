@@ -179,7 +179,7 @@ export class ScanUtils {
             try {
                 const childProcess: exec.ChildProcess = exec.exec(
                     command,
-                    { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env } as exec.ExecOptions,
+                    { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env ? { ...process.env, ...env } : env } as exec.ExecOptions,
                     (error: exec.ExecException | null, stdout: string, stderr: string) => {
                         clearInterval(checkCancellationInterval);
                         if (error) {

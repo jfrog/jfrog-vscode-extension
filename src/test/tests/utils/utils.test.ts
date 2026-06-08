@@ -1,7 +1,6 @@
 import * as fs from 'fs';
 import { JfrogClient } from 'jfrog-client-js';
 import * as os from 'os';
-import * as path from 'path';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
 import { ScanCacheManager } from '../../../main/cache/scanCacheManager';
@@ -106,19 +105,4 @@ export function getCliHomeDir(): string {
 
 export function setCliHomeDir(newHome: string): void {
     process.env['JFROG_CLI_HOME_DIR'] = newHome;
-}
-
-export function createEmptyCliHomeDir(): string {
-    return fs.mkdtempSync(path.join(os.tmpdir(), 'jfrog-cli-home-'));
-}
-
-/**
- * Platform-specific CLI home for tests that isolate from JFrog CLI before live URL resolution.
- * macOS needs a real empty temp dir; Windows needs a non-existent path so httpbin pings succeed.
- */
-export function createIsolatedCliHomeDir(): string {
-    if (process.platform === 'win32') {
-        return path.resolve('/path/to/nowhere');
-    }
-    return createEmptyCliHomeDir();
 }

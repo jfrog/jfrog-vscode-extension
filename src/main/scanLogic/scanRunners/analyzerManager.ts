@@ -213,6 +213,7 @@ export class AnalyzerManager {
         await AnalyzerManager.FINISH_UPDATE_PROMISE;
         try {
             const envVars: NodeJS.ProcessEnv = this.createEnvForRun() ?? {
+                ...process.env,
                 [AnalyzerManager.ENV_PLATFORM_URL]: this._connectionManager.url
             };
             if (!Configuration.getShouldShowJasLogs()) {

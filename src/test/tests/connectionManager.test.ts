@@ -5,7 +5,7 @@ import * as vscode from 'vscode';
 import { ConnectionManager, LoginStatus } from '../../main/connect/connectionManager';
 import { ConnectionUtils } from '../../main/connect/connectionUtils';
 import { LogManager } from '../../main/log/logManager';
-import { createIsolatedCliHomeDir, createTestConnectionManager, getCliHomeDir, setCliHomeDir } from './utils/utils.test';
+import { createTestConnectionManager, getCliHomeDir, setCliHomeDir } from './utils/utils.test';
 import { assert } from 'chai';
 import sinon from 'sinon';
 import { SessionStatus } from '../../main/constants/contextKeys';
@@ -95,7 +95,14 @@ describe('Connection Manager Tests', () => {
         });
     });
 
-    describe('Populate credentials from env', async () => {
+    describe('Populate credentials from env', () => {
+        let isPlatformUrlStub: sinon.SinonStub;
+
+        beforeEach(() => {
+            isPlatformUrlStub = sinon.stub(ConnectionUtils, 'isPlatformUrl');
+            sinon.stub(ConnectionUtils, 'validateArtifactoryConnection').resolves(true);
+        });
+
         [
             {
                 inputUrl: 'https://httpbin.org/anything',
@@ -127,16 +134,19 @@ describe('Connection Manager Tests', () => {
                 expectedPlatformUrl: '',
                 expectedXrayUrl: 'https://httpbin.org/status/404/different-xray-url/'
             }
-        ].forEach(async testCase => {
+        ].forEach(testCase => {
             it('Input URL: ' + testCase.inputUrl, async () => {
+                const isXrayInputUrl: boolean = testCase.inputUrl.endsWith('/xray') || testCase.inputUrl.endsWith('/xray/');
+                isPlatformUrlStub.resolves(!!testCase.expectedPlatformUrl && !isXrayInputUrl);
+
                 // Clean up env before tests.
                 process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
                     ConnectionManager.ACCESS_TOKEN_ENV
                 ] = process.env[ConnectionManager.URL_ENV] = '';
 
-                // Store previous CLI home, and set to an isolated path so no credentials will be read from the CLI.
+                // Store previous CLI home, and set to a non existing path so no credentials will be read from the CLI.
                 const previousHome: string = getCliHomeDir();
-                setCliHomeDir(createIsolatedCliHomeDir());
+                setCliHomeDir(path.resolve('/path/to/nowhere'));
 
                 try {
                     // Check credentials not set.
@@ -148,6 +158,9 @@ describe('Connection Manager Tests', () => {
                 } finally {
                     setCliHomeDir(previousHome);
                     connectionManager.deleteCredentialsFromMemory();
+                    process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
+                        ConnectionManager.ACCESS_TOKEN_ENV
+                    ] = process.env[ConnectionManager.URL_ENV] = '';
                 }
             });
         });
@@ -210,7 +223,7 @@ describe('Connection Manager Tests', () => {
                 expectedAccessToken: '',
                 expectedResult: false
             }
-        ].forEach(async testCase => {
+        ].forEach(testCase => {
             it('Credentials type: ' + testCase.serverId, async () => {
                 // Make sure credentials are not set from env.
                 process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
@@ -219,7 +232,7 @@ describe('Connection Manager Tests', () => {
 
                 // Store previous CLI home, and set new one to test data.
                 const previousHome: string = getCliHomeDir();
-                setCliHomeDir(createIsolatedCliHomeDir());
+                setCliHomeDir('/path/to/nowhere');
 
                 try {
                     // Assert credentials are empty.
