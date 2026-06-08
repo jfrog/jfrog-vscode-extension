@@ -3,7 +3,6 @@ import { ScanUtils } from '../scanUtils';
 import { Configuration } from '../configuration';
 import * as fs from 'fs';
 import * as path from 'path';
-import { execSync } from 'child_process';
 
 /**
  *  Enum of npm cli flags
@@ -37,7 +36,7 @@ export class NpmCmd {
     }
 
     public static runNpmVersion(): string {
-        return execSync(`npm ${Flag.Version}`).toString();
+        return ScanUtils.executeCmd(`npm ${Flag.Version}`).toString();
     }
 
     public static isLegacyNpmVersion(): boolean {

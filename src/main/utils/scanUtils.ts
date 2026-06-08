@@ -23,6 +23,7 @@ export class ScanUtils {
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
     // every 0.1 sec
     private static readonly CANCELLATION_CHECK_INTERVAL_MS: number = 100;
+    private static cmdEnv: NodeJS.ProcessEnv | undefined;
 
     public static async scanWithProgress(
         scanCbk: (progress: vscode.Progress<{ message?: string; increment?: number }>, checkCanceled: () => void) => Promise<void>,
@@ -156,8 +157,59 @@ export class ScanUtils {
         }
     }
 
+    /** Visible for tests only — clears cached command environment lookups. */
+    public static clearCmdEnvCache(): void {
+        this.cmdEnv = undefined;
+    }
+
+    /**
+     * Returns an environment for spawning CLI tools. Merges the extension host PATH with the user's
+     * shell PATH so tools installed via nvm, Homebrew, etc. are discoverable when the IDE is not
+     * launched from a terminal.
+     */
+    public static getCmdEnv(extraEnv?: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+        if (!this.cmdEnv) {
+            this.cmdEnv = { ...process.env };
+            const shellPath: string | undefined = this.resolveShellPath();
+            if (shellPath) {
+                this.cmdEnv.PATH = this.mergePaths(this.cmdEnv.PATH || '', shellPath);
+            }
+        }
+        return extraEnv ? { ...this.cmdEnv, ...extraEnv } : this.cmdEnv;
+    }
+
+    private static resolveShellPath(): string | undefined {
+        try {
+            if (process.platform === 'win32') {
+                return exec
+                    .execSync(
+                        "powershell -NoProfile -Command \"[Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')\"",
+                        { encoding: 'utf8' }
+                    )
+                    .trim();
+            }
+            const shell: string = vscode.env.shell || process.env.SHELL || '/bin/bash';
+            return exec.execSync(`${shell} -l -ilc 'echo -n "$PATH"'`, { encoding: 'utf8' }).trim();
+        } catch {
+            return undefined;
+        }
+    }
+
+    private static mergePaths(currentPath: string, shellPath: string): string {
+        const separator: string = process.platform === 'win32' ? ';' : ':';
+        const merged: string[] = [];
+        const seen: Set<string> = new Set<string>();
+        for (const entry of [...shellPath.split(separator), ...currentPath.split(separator)]) {
+            if (entry && !seen.has(entry)) {
+                seen.add(entry);
+                merged.push(entry);
+            }
+        }
+        return merged.join(separator);
+    }
+
     public static executeCmd(command: string, cwd?: string, env?: NodeJS.ProcessEnv | undefined): any {
-        return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env });
+        return exec.execSync(command, { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: this.getCmdEnv(env) });
     }
 
     /**
@@ -179,7 +231,7 @@ export class ScanUtils {
             try {
                 const childProcess: exec.ChildProcess = exec.exec(
                     command,
-                    { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: env ? { ...process.env, ...env } : env } as exec.ExecOptions,
+                    { cwd: cwd, maxBuffer: ScanUtils.SPAWN_PROCESS_BUFFER_SIZE, env: this.getCmdEnv(env) } as exec.ExecOptions,
                     (error: exec.ExecException | null, stdout: string, stderr: string) => {
                         clearInterval(checkCancellationInterval);
                         if (error) {
