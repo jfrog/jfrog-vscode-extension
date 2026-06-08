@@ -1,6 +1,12 @@
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
+import * as vscode from 'vscode';
 import { assert } from 'chai';
+import * as sinon from 'sinon';
+import { CodeFileTreeNode } from '../../main/treeDataProviders/issuesTree/codeFileTree/codeFileTreeNode';
 import { AnalyzerUtils } from '../../main/treeDataProviders/utils/analyzerUtils';
+import { createRootTestNode } from './utils/treeNodeUtils.test';
 
 /**
  * Test functionality of @class AnalyzerUtils.
@@ -36,9 +42,96 @@ describe('Analyzer Utils Tests', async () => {
 
     [path.join('somewhere', 'file'), path.join('somewhere', 'folder', 'file'), path.join(__dirname, 'file')].forEach(testCase => {
         it('Parse location file path test - ' + testCase, () => {
-            let input: string = testCase.replace(/['\\']/g, '/');
-            let result: string = AnalyzerUtils.parseLocationFilePath(`file://${input}`);
+            let sarifUri: string = vscode.Uri.file(testCase).toString();
+            let result: string = AnalyzerUtils.parseLocationFilePath(sarifUri);
             assert.deepEqual(result, testCase);
+        });
+    });
+
+    describe('parseLocationFilePath — Windows UNC SARIF URIs', () => {
+        let platformStub: sinon.SinonStub;
+
+        beforeEach(() => {
+            if (process.platform !== 'win32') {
+                platformStub = sinon.stub(os, 'platform').returns('win32');
+            }
+        });
+
+        afterEach(() => {
+            platformStub?.restore();
+        });
+
+        it('restores double-backslash UNC authority from file:///host/share/path', () => {
+            const sarifUri: string = 'file:///netapp.ozar.main/users/isharelg/system/AWS/workspaces/Lambda/FullVer.py';
+            const expected: string = '\\\\netapp.ozar.main\\users\\isharelg\\system\\AWS\\workspaces\\Lambda\\FullVer.py';
+
+            const result: string = AnalyzerUtils.parseLocationFilePath(sarifUri);
+
+            assert.equal(result, expected);
+        });
+
+        it('handles percent-encoded segments in UNC URIs', () => {
+            const sarifUri: string = 'file:///netapp.ozar.main/users/my%20dir/file.py';
+            const expected: string = '\\\\netapp.ozar.main\\users\\my dir\\file.py';
+
+            const result: string = AnalyzerUtils.parseLocationFilePath(sarifUri);
+
+            assert.equal(result, expected);
+        });
+    });
+
+    describe('remapToWorkspace — mapped drive to UNC canonicalization', () => {
+        let platformStub: sinon.SinonStub;
+        let realpathNativeStub: sinon.SinonStub;
+
+        const workspaceRoot: string = 'P:\\system\\AWS\\workspaces\\Lambda';
+        const canonicalRoot: string = '\\\\netapp.ozar.main\\users\\isharelg\\system\\AWS\\workspaces\\Lambda';
+        const canonicalFile: string = canonicalRoot + '\\FullVer.py';
+        const mappedFile: string = workspaceRoot + '\\FullVer.py';
+
+        beforeEach(() => {
+            if (process.platform !== 'win32') {
+                platformStub = sinon.stub(os, 'platform').returns('win32');
+            }
+            realpathNativeStub = sinon.stub(fs.realpathSync, 'native').callsFake((p: fs.PathLike) => {
+                if (p === workspaceRoot) {
+                    return canonicalRoot;
+                }
+                return p.toString();
+            });
+        });
+
+        afterEach(() => {
+            platformStub?.restore();
+            realpathNativeStub.restore();
+            AnalyzerUtils.clearWorkspaceRealPathCache();
+        });
+
+        it('remapToWorkspace rewrites UNC path under canonical root to mapped drive', () => {
+            const result: string = AnalyzerUtils.remapToWorkspace(canonicalFile, workspaceRoot);
+            assert.equal(result, mappedFile);
+        });
+
+        it('remapToWorkspace is case-insensitive on Windows prefix match', () => {
+            const mixedCaseFile: string = '\\\\NETAPP.OZAR.MAIN\\users\\isharelg\\system\\AWS\\workspaces\\Lambda\\FullVer.py';
+            const result: string = AnalyzerUtils.remapToWorkspace(mixedCaseFile, workspaceRoot);
+            assert.equal(result, mappedFile);
+        });
+
+        it('getOrCreateCodeFileNode stores mapped drive path when SARIF returns UNC', () => {
+            const root = createRootTestNode(workspaceRoot);
+            const node: CodeFileTreeNode = AnalyzerUtils.getOrCreateCodeFileNode(root, canonicalFile);
+
+            assert.equal(node.projectFilePath, mappedFile);
+        });
+
+        it('getOrCreateCodeFileNode leaves path unchanged when realpath fails', () => {
+            realpathNativeStub.throws(new Error('disconnected share'));
+            AnalyzerUtils.clearWorkspaceRealPathCache();
+            const root = createRootTestNode(workspaceRoot);
+            const node: CodeFileTreeNode = AnalyzerUtils.getOrCreateCodeFileNode(root, canonicalFile);
+
+            assert.equal(node.projectFilePath, canonicalFile);
         });
     });
 
