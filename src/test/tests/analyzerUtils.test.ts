@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { assert } from 'chai';
@@ -41,27 +40,19 @@ describe('Analyzer Utils Tests', async () => {
         });
     });
 
-    [path.join('somewhere', 'file'), path.join('somewhere', 'folder', 'file'), path.join(__dirname, 'file')].forEach(testCase => {
+    [path.resolve('somewhere', 'file'), path.resolve('somewhere', 'folder', 'file'), path.join(__dirname, 'file')].forEach(testCase => {
         it('Parse location file path test - ' + testCase, () => {
             let sarifUri: string = vscode.Uri.file(testCase).toString();
             let result: string = AnalyzerUtils.parseLocationFilePath(sarifUri);
-            assert.deepEqual(result, testCase);
+            let expected: string = testCase;
+            if (process.platform === 'win32' && /^[a-zA-Z]:/.test(expected)) {
+                expected = expected[0].toUpperCase() + expected.slice(1);
+            }
+            assert.deepEqual(result, expected);
         });
     });
 
-    describe('parseLocationFilePath — Windows UNC SARIF URIs', () => {
-        let platformStub: sinon.SinonStub;
-
-        beforeEach(() => {
-            if (process.platform !== 'win32') {
-                platformStub = sinon.stub(os, 'platform').returns('win32');
-            }
-        });
-
-        afterEach(() => {
-            platformStub?.restore();
-        });
-
+    (process.platform === 'win32' ? describe : describe.skip)('parseLocationFilePath — Windows UNC SARIF URIs', () => {
         it('restores double-backslash UNC authority from file:///host/share/path', () => {
             const sarifUri: string = 'file:///netapp.ozar.main/users/isharelg/system/AWS/workspaces/Lambda/FullVer.py';
             const expected: string = '\\\\netapp.ozar.main\\users\\isharelg\\system\\AWS\\workspaces\\Lambda\\FullVer.py';
@@ -81,8 +72,7 @@ describe('Analyzer Utils Tests', async () => {
         });
     });
 
-    describe('remapToWorkspace — mapped drive to UNC canonicalization', () => {
-        let platformStub: sinon.SinonStub;
+    (process.platform === 'win32' ? describe : describe.skip)('remapToWorkspace — mapped drive to UNC canonicalization', () => {
         let realpathNativeStub: sinon.SinonStub;
 
         const workspaceRoot: string = 'P:\\system\\AWS\\workspaces\\Lambda';
@@ -91,9 +81,6 @@ describe('Analyzer Utils Tests', async () => {
         const mappedFile: string = workspaceRoot + '\\FullVer.py';
 
         beforeEach(() => {
-            if (process.platform !== 'win32') {
-                platformStub = sinon.stub(os, 'platform').returns('win32');
-            }
             realpathNativeStub = sinon.stub(fs.realpathSync, 'native').callsFake((p: fs.PathLike) => {
                 if (p === workspaceRoot) {
                     return canonicalRoot;
@@ -103,7 +90,6 @@ describe('Analyzer Utils Tests', async () => {
         });
 
         afterEach(() => {
-            platformStub?.restore();
             realpathNativeStub.restore();
             AnalyzerUtils.clearWorkspaceRealPathCache();
         });

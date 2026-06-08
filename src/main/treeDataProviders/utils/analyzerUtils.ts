@@ -175,10 +175,23 @@ export class AnalyzerUtils {
             return filePath;
         }
         if (filePath.includes('://')) {
-            return vscode.Uri.parse(filePath).fsPath;
+            let parsed: string = vscode.Uri.parse(filePath).fsPath;
+            if (os.platform() === 'win32') {
+                // vscode.Uri fsPath uses a single leading backslash for UNC hosts; Windows needs \\server\share.
+                if (/^\\[^\\]/.test(parsed)) {
+                    parsed = '\\' + parsed;
+                }
+                if (/^[a-zA-Z]:/.test(parsed)) {
+                    parsed = parsed[0].toUpperCase() + parsed.slice(1);
+                }
+            }
+            return parsed;
         }
         if (os.platform() === 'win32') {
             filePath = filePath.replace(/\//g, '\\');
+            if (/^[a-zA-Z]:/.test(filePath)) {
+                filePath = filePath[0].toUpperCase() + filePath.slice(1);
+            }
         }
         return decodeURI(filePath);
     }
