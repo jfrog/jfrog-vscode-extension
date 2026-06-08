@@ -1,0 +1,32 @@
+{
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "JFrog Secrets scanner",
+          "rules": [{ "id": "generic", "shortDescription": { "text": "generic" } }]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "generic",
+          "message": { "text": "Finding without locations" },
+          "kind": "fail"
+        },
+        {
+          "ruleId": "generic",
+          "message": { "text": "Valid finding" },
+          "kind": "fail",
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": { "uri": "file:///test/secret.py" },
+                "region": { "startLine": 1, "endLine": 1, "startColumn": 1, "endColumn": 8, "snippet": { "text": "API_KEY" } }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

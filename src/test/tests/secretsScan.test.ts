@@ -207,6 +207,16 @@ describe('Secrets Scan Tests', () => {
         });
     });
 
+    describe('Secrets scan malformed SARIF', () => {
+        it('Results without locations property do not throw', () => {
+            const responsePath: string = path.join(scanSecrets, 'analyzerResponse-missing-locations.json');
+            const response: SecretsScanResponse = getDummyRunner().convertResponse(getAnalyzerScanResponse(responsePath));
+            assert.isDefined(response.filesWithIssues);
+            assert.equal(response.filesWithIssues.length, 1);
+            assert.equal(response.filesWithIssues[0].full_path, 'file:///test/secret.py');
+        });
+    });
+
     function getDummyRunner(): SecretsRunner {
         return new SecretsRunner(
             {} as ScanResults,

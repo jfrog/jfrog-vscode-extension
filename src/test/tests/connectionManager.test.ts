@@ -95,7 +95,14 @@ describe('Connection Manager Tests', () => {
         });
     });
 
-    describe('Populate credentials from env', async () => {
+    describe('Populate credentials from env', () => {
+        let isPlatformUrlStub: sinon.SinonStub;
+
+        beforeEach(() => {
+            isPlatformUrlStub = sinon.stub(ConnectionUtils, 'isPlatformUrl');
+            sinon.stub(ConnectionUtils, 'validateArtifactoryConnection').resolves(true);
+        });
+
         [
             {
                 inputUrl: 'https://httpbin.org/anything',
@@ -127,8 +134,11 @@ describe('Connection Manager Tests', () => {
                 expectedPlatformUrl: '',
                 expectedXrayUrl: 'https://httpbin.org/status/404/different-xray-url/'
             }
-        ].forEach(async testCase => {
+        ].forEach(testCase => {
             it('Input URL: ' + testCase.inputUrl, async () => {
+                const isXrayInputUrl: boolean = testCase.inputUrl.endsWith('/xray') || testCase.inputUrl.endsWith('/xray/');
+                isPlatformUrlStub.resolves(!!testCase.expectedPlatformUrl && !isXrayInputUrl);
+
                 // Clean up env before tests.
                 process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
                     ConnectionManager.ACCESS_TOKEN_ENV
@@ -138,16 +148,20 @@ describe('Connection Manager Tests', () => {
                 const previousHome: string = getCliHomeDir();
                 setCliHomeDir(path.resolve('/path/to/nowhere'));
 
-                // Check credentials not set.
-                assert.isEmpty(await connectionManager.tryGetUrlFromJFrogCli());
-                assert.isFalse(connectionManager.areXrayCredentialsSet());
+                try {
+                    // Check credentials not set.
+                    assert.isEmpty(await connectionManager.tryGetUrlFromJFrogCli());
+                    assert.isFalse(connectionManager.areXrayCredentialsSet());
 
-                await populateCredsAndAssert(testCase, 'admin', 'password', '');
-                await populateCredsAndAssert(testCase, '', '', 'token');
-
-                // Restore old CLI home dir.
-                setCliHomeDir(previousHome);
-                connectionManager.deleteCredentialsFromMemory();
+                    await populateCredsAndAssert(testCase, 'admin', 'password', '');
+                    await populateCredsAndAssert(testCase, '', '', 'token');
+                } finally {
+                    setCliHomeDir(previousHome);
+                    connectionManager.deleteCredentialsFromMemory();
+                    process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
+                        ConnectionManager.ACCESS_TOKEN_ENV
+                    ] = process.env[ConnectionManager.URL_ENV] = '';
+                }
             });
         });
     });
@@ -209,7 +223,7 @@ describe('Connection Manager Tests', () => {
                 expectedAccessToken: '',
                 expectedResult: false
             }
-        ].forEach(async testCase => {
+        ].forEach(testCase => {
             it('Credentials type: ' + testCase.serverId, async () => {
                 // Make sure credentials are not set from env.
                 process.env[ConnectionManager.USERNAME_ENV] = process.env[ConnectionManager.PASSWORD_ENV] = process.env[
@@ -220,27 +234,28 @@ describe('Connection Manager Tests', () => {
                 const previousHome: string = getCliHomeDir();
                 setCliHomeDir('/path/to/nowhere');
 
-                // Assert credentials are empty.
-                assert.isEmpty(await connectionManager.tryGetUrlFromJFrogCli());
-                assert.isFalse(connectionManager.areCompleteCredentialsSet());
+                try {
+                    // Assert credentials are empty.
+                    assert.isEmpty(await connectionManager.tryGetUrlFromJFrogCli());
+                    assert.isFalse(connectionManager.areCompleteCredentialsSet());
 
-                // Set new home to test data.
-                setCliHomeDir(path.join(__dirname, '..', 'resources', 'cliHome'));
+                    // Set new home to test data.
+                    setCliHomeDir(path.join(__dirname, '..', 'resources', 'cliHome'));
 
-                // Use the corresponding server-id to the test case.
-                assert.doesNotThrow(() => execSync('jf c use ' + testCase.serverId.trim()));
+                    // Use the corresponding server-id to the test case.
+                    assert.doesNotThrow(() => execSync('jf c use ' + testCase.serverId.trim()));
 
-                assert.equal(await connectionManager.readCredentialsFromJfrogCli(), testCase.expectedResult);
-                assert.equal(connectionManager.url, testCase.expectedPlatformUrl);
-                assert.equal(connectionManager.rtUrl, testCase.expectedRtUrl);
-                assert.equal(connectionManager.xrayUrl, testCase.expectedXrayUrl);
-                assert.equal(connectionManager.username, testCase.expectedUsername);
-                assert.equal(connectionManager.password, testCase.expectedPassword);
-                assert.equal(connectionManager.accessToken, testCase.expectedAccessToken);
-
-                // Restore old CLI home dir.
-                setCliHomeDir(previousHome);
-                connectionManager.deleteCredentialsFromMemory();
+                    assert.equal(await connectionManager.readCredentialsFromJfrogCli(), testCase.expectedResult);
+                    assert.equal(connectionManager.url, testCase.expectedPlatformUrl);
+                    assert.equal(connectionManager.rtUrl, testCase.expectedRtUrl);
+                    assert.equal(connectionManager.xrayUrl, testCase.expectedXrayUrl);
+                    assert.equal(connectionManager.username, testCase.expectedUsername);
+                    assert.equal(connectionManager.password, testCase.expectedPassword);
+                    assert.equal(connectionManager.accessToken, testCase.expectedAccessToken);
+                } finally {
+                    setCliHomeDir(previousHome);
+                    connectionManager.deleteCredentialsFromMemory();
+                }
             });
         });
     });

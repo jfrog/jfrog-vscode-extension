@@ -158,6 +158,9 @@ export class SastRunner extends JasRunner {
                 ignoreCount++;
                 return;
             }
+            if (!analyzeIssue.locations?.length) {
+                return;
+            }
             const rule: AnalyzerRule = rulesDict[analyzeIssue.ruleId];
             if (rule?.shortDescription?.text) {
                 analyzeIssue.message.text = rule.shortDescription.text;
@@ -176,6 +179,9 @@ export class SastRunner extends JasRunner {
      * @param fullDescription - The description of the analyzeIssue
      */
     public generateIssueData(sastResponse: SastScanResponse, analyzeIssue: AnalyzeIssue, fullDescription?: string) {
+        if (!analyzeIssue?.locations?.length) {
+            return;
+        }
         analyzeIssue.locations.forEach(location => {
             let fileWithIssues: SastFileIssues = this.getOrCreateSastFileIssues(sastResponse, location.physicalLocation.artifactLocation.uri);
             let fileIssue: SastIssue = this.getOrCreateSastIssue(fileWithIssues, analyzeIssue, fullDescription);

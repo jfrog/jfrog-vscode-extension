@@ -50,7 +50,7 @@ export interface AnalyzerRule {
 export interface AnalyzeIssue {
     ruleId: string;
     message: ResultContent;
-    locations: AnalyzeLocation[];
+    locations?: AnalyzeLocation[];
     kind?: ResultKind;
     level?: AnalyzerManagerSeverityLevel;
     suppressions?: AnalyzeSuppression[];
