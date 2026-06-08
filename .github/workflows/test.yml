@@ -37,7 +37,7 @@ jobs:
       - name: Setup NodeJS
         uses: actions/setup-node@v4
         with:
-          node-version: "16"
+          node-version: "20"
           check-latest: true
       - name: Setup Pnpm
         uses: pnpm/action-setup@v3
