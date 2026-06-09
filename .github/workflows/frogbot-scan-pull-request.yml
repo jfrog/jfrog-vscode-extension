@@ -12,15 +12,15 @@ jobs:
     # "frogbot" GitHub environment can approve the pull request to be scanned.
     environment: frogbot
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
       # Install prerequisites
       - name: Setup NodeJS
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: "16.x"
+          node-version: "20"
 
       - uses: jfrog/frogbot@v2
         env:

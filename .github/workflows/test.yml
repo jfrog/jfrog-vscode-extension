@@ -18,7 +18,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           submodules: true
           ref: ${{ github.event.pull_request.head.sha }}
@@ -27,7 +27,7 @@ jobs:
         run: unset npm_config_prefix
         if: runner.os == 'macOS'
       - name: Install Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@v5
         with:
           go-version: 1.22.x
       - name: Setup Python3
@@ -35,7 +35,7 @@ jobs:
         with:
           python-version: "3.x"
       - name: Setup NodeJS
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "20"
           check-latest: true
