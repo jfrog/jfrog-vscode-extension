@@ -15,15 +15,15 @@ jobs:
         # The repository scanning will be triggered periodically on the following branches.
         branch: [ "master" ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           ref: ${{ matrix.branch }}
 
       # Install prerequisites
       - name: Setup NodeJS
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: "16.x"
+          node-version: "20"
 
       - uses: jfrog/frogbot@v2
         env:
