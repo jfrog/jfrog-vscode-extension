@@ -1,4 +1,3 @@
-import { execSync } from 'child_process';
 import fs from 'fs-extra';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -132,7 +131,7 @@ export class GoUtils {
 
     public static verifyGoInstalled(): boolean {
         try {
-            execSync(GoUtils.GO_VERSION);
+            ScanUtils.executeCmd(GoUtils.GO_VERSION);
         } catch (error) {
             return false;
         }

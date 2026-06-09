@@ -211,7 +211,10 @@ export class SastRunner extends JasRunner {
                 ) {
                     let locations: FileLocation[] = threadFlow.locations.map(location => location.location.physicalLocation);
                     for (let fileLocation of locations) {
-                        fileLocation.artifactLocation.uri = AnalyzerUtils.parseLocationFilePath(fileLocation.artifactLocation.uri);
+                        fileLocation.artifactLocation.uri = AnalyzerUtils.resolveAnalyzerFilePath(
+                            fileLocation.artifactLocation.uri,
+                            this._root.workspace.uri.fsPath
+                        );
                     }
                     issueLocation.threadFlows.push(locations);
                 }

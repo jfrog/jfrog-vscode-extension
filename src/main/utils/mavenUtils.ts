@@ -1,4 +1,3 @@
-import * as exec from 'child_process';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { ContextKeys, FocusType } from '../constants/contextKeys';
@@ -347,7 +346,7 @@ export class MavenUtils {
 
     public static verifyMavenInstalled(): boolean {
         try {
-            exec.execSync('mvn -version');
+            ScanUtils.executeCmd('mvn -version');
         } catch (error) {
             return false;
         }

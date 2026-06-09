@@ -96,8 +96,9 @@ export async function cleanUpIntegrationTests() {
 }
 
 function getTestFileIssues(filePath: string, filesWithIssues: FileWithSecurityIssues[]): FileWithSecurityIssues {
+    const normalizedFilePath: string = AnalyzerUtils.parseLocationFilePath(filePath);
     let potential: FileWithSecurityIssues | undefined = filesWithIssues.find(
-        (fileWithIssues: FileWithSecurityIssues) => AnalyzerUtils.parseLocationFilePath(fileWithIssues.full_path) === filePath
+        (fileWithIssues: FileWithSecurityIssues) => AnalyzerUtils.parseLocationFilePath(fileWithIssues.full_path) === normalizedFilePath
     );
     assert.isDefined(potential, 'Response should contain file with issues at path ' + filePath);
     return potential!;

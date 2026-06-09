@@ -1,4 +1,5 @@
 import { Applicability, IApplicableDetails, IEvidence } from 'jfrog-ide-webview';
+import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import * as vscode from 'vscode';
@@ -35,6 +36,55 @@ export interface SecurityIssue {
 }
 
 export class AnalyzerUtils {
+    private static workspaceRealPathCache: Map<string, string | undefined> = new Map();
+
+    /** Visible for tests only — clears cached realpath lookups. */
+    public static clearWorkspaceRealPathCache(): void {
+        this.workspaceRealPathCache.clear();
+    }
+
+    private static getWorkspaceRealPath(workspaceRoot: string): string | undefined {
+        if (this.workspaceRealPathCache.has(workspaceRoot)) {
+            return this.workspaceRealPathCache.get(workspaceRoot);
+        }
+        try {
+            const realRoot: string = fs.realpathSync.native(workspaceRoot);
+            this.workspaceRealPathCache.set(workspaceRoot, realRoot);
+            return realRoot;
+        } catch {
+            this.workspaceRealPathCache.set(workspaceRoot, undefined);
+            return undefined;
+        }
+    }
+
+    /**
+     * When the workspace is opened via a mapped drive, analyzer results may use the
+     * canonical UNC real path. Re-root those paths onto workspaceRoot so VS Code can open them.
+     */
+    public static remapToWorkspace(parsedPath: string, workspaceRoot: string): string {
+        const realRoot: string | undefined = this.getWorkspaceRealPath(workspaceRoot);
+        if (!realRoot || realRoot === workspaceRoot) {
+            return parsedPath;
+        }
+        const normalizedParsed: string = parsedPath.toLowerCase();
+        const normalizedReal: string = realRoot.toLowerCase();
+        if (normalizedParsed === normalizedReal || normalizedParsed.startsWith(normalizedReal + (os.platform() === 'win32' ? '\\' : path.sep))) {
+            return path.join(workspaceRoot, path.relative(realRoot, parsedPath));
+        }
+        return parsedPath;
+    }
+
+    /**
+     * Parse a SARIF/analyzer path and optionally remap it to the workspace folder namespace.
+     */
+    public static resolveAnalyzerFilePath(filePath: string, workspaceRoot?: string): string {
+        let parsed: string = this.parseLocationFilePath(filePath);
+        if (workspaceRoot) {
+            parsed = this.remapToWorkspace(parsed, workspaceRoot);
+        }
+        return parsed;
+    }
+
     /**
      * Get or create issue in a given file if not exists
      * @param fileWithIssues - the file with the issues
@@ -121,13 +171,27 @@ export class AnalyzerUtils {
      * @param filePath - path to remove prefix and decode
      */
     public static parseLocationFilePath(filePath: string): string {
-        let isWindows: boolean = os.platform() === 'win32';
-        if (isWindows) {
-            filePath = filePath.includes('file:///') ? filePath.substring('file:///'.length) : filePath;
+        if (!filePath) {
+            return filePath;
         }
-        filePath = filePath.includes('file://') ? filePath.substring('file://'.length) : filePath;
-        if (isWindows) {
-            filePath = filePath.replace(/['/']/g, '\\');
+        if (filePath.includes('://')) {
+            let parsed: string = vscode.Uri.parse(filePath).fsPath;
+            if (os.platform() === 'win32') {
+                // vscode.Uri fsPath uses a single leading backslash for UNC hosts; Windows needs \\server\share.
+                if (/^\\[^\\]/.test(parsed)) {
+                    parsed = '\\' + parsed;
+                }
+                if (/^[a-zA-Z]:/.test(parsed)) {
+                    parsed = parsed[0].toUpperCase() + parsed.slice(1);
+                }
+            }
+            return parsed;
+        }
+        if (os.platform() === 'win32') {
+            filePath = filePath.replace(/\//g, '\\');
+            if (/^[a-zA-Z]:/.test(filePath)) {
+                filePath = filePath[0].toUpperCase() + filePath.slice(1);
+            }
         }
         return decodeURI(filePath);
     }
@@ -168,7 +232,7 @@ export class AnalyzerUtils {
      * @returns file node
      */
     public static getOrCreateCodeFileNode(root: IssuesRootTreeNode, filePath: string): CodeFileTreeNode {
-        let actualPath: string = this.parseLocationFilePath(filePath);
+        let actualPath: string = this.resolveAnalyzerFilePath(filePath, root.workspace.uri.fsPath);
         let node: FileTreeNode | undefined = root.children.find(child => actualPath == child.projectFilePath);
         if (node instanceof CodeFileTreeNode) {
             return node;
@@ -258,7 +322,14 @@ export class AnalyzerUtils {
                         // Populate code file issues for workspace
                         details.fileEvidences.forEach((fileEvidence: FileIssues) => {
                             let fileNode: CodeFileTreeNode = this.getOrCreateCodeFileNode(root, fileEvidence.full_path);
-                            issuesCount += this.populateEvidence(fileEvidence, details.fixReason, <CveTreeNode>node, evidences, fileNode);
+                            issuesCount += this.populateEvidence(
+                                fileEvidence,
+                                details.fixReason,
+                                <CveTreeNode>node,
+                                evidences,
+                                fileNode,
+                                root.workspace.uri.fsPath
+                            );
                         });
                         // Applicable
                         node.applicableDetails = {
@@ -308,7 +379,8 @@ export class AnalyzerUtils {
         reason: string,
         issueNode: CveTreeNode,
         evidences: IEvidence[],
-        fileNode: CodeFileTreeNode
+        fileNode: CodeFileTreeNode,
+        workspaceRoot: string
     ): number {
         let issuesCount: number = 0;
         fileEvidence.locations.forEach(location => {
@@ -316,7 +388,7 @@ export class AnalyzerUtils {
                 // add evidence for CVE applicability details
                 evidences.push({
                     reason: reason,
-                    filePathEvidence: AnalyzerUtils.parseLocationFilePath(fileEvidence.full_path),
+                    filePathEvidence: AnalyzerUtils.resolveAnalyzerFilePath(fileEvidence.full_path, workspaceRoot),
                     codeEvidence: location.snippet.text
                 } as IEvidence);
                 // Populate nodes
