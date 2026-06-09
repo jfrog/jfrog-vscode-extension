@@ -196,16 +196,13 @@ export class ScanUtils {
     }
 
     private static mergePaths(currentPath: string, shellPath: string): string {
-        const separator: string = process.platform === 'win32' ? ';' : ':';
-        const merged: string[] = [];
         const seen: Set<string> = new Set<string>();
-        for (const entry of [...shellPath.split(separator), ...currentPath.split(separator)]) {
-            if (entry && !seen.has(entry)) {
+        for (const entry of [...shellPath.split(path.delimiter), ...currentPath.split(path.delimiter)]) {
+            if (entry) {
                 seen.add(entry);
-                merged.push(entry);
             }
         }
-        return merged.join(separator);
+        return [...seen].join(path.delimiter);
     }
 
     public static executeCmd(command: string, cwd?: string, env?: NodeJS.ProcessEnv | undefined): any {
