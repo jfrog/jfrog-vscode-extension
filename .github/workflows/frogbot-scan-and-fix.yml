@@ -15,9 +15,11 @@ jobs:
         # The repository scanning will be triggered periodically on the following branches.
         branch: [ "master" ]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           ref: ${{ matrix.branch }}
+          persist-credentials: false
+          allow-unsafe-pr-checkout: true
 
       # Install prerequisites
       - name: Setup NodeJS
