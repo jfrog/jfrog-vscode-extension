@@ -43,30 +43,30 @@ export class BuildsScanCache {
         Utils.saveAsZip(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type), { fileName: type.toString(), content: content });
     }
 
-    public load(timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): any {
-        return Utils.extractZipEntry(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type), type.toString());
-    }
-
     public loadBuildInfo(timestamp: string, buildName: string, buildNumber: string, projectKey: string): any {
-        return this.parseCachedJson(this.load(timestamp, buildName, buildNumber, projectKey, Type.BUILD_INFO));
+        return this.readCachedJson(timestamp, buildName, buildNumber, projectKey, Type.BUILD_INFO);
     }
 
     public loadScanResults(timestamp: string, buildName: string, buildNumber: string, projectKey: string): IDetailsResponse | null {
-        const parsed: any = this.parseCachedJson(this.load(timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS));
+        const parsed: any = this.readCachedJson(timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS);
         if (!parsed) {
             return null;
         }
         return Object.assign({} as IDetailsResponse, parsed);
     }
 
-    private parseCachedJson(raw: any): any {
-        if (!raw) {
-            return null;
-        }
+    private readCachedJson(timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): any {
+        const zipPath: string = this.getZipPath(timestamp, buildName, buildNumber, projectKey, type);
         try {
+            const raw: any = Utils.extractZipEntry(zipPath, type.toString());
+            if (!raw) {
+                return null;
+            }
             return JSON.parse(raw);
-        } catch {
-            this._logger.logMessage('Ignoring invalid CI cache JSON and treating it as a miss', 'DEBUG');
+        } catch (error) {
+            const message: string = error instanceof Error ? error.message : String(error);
+            this._logger.logMessage(`Ignoring invalid CI cache at '${zipPath}' and treating it as a miss: ${message}`, 'DEBUG');
+            Utils.removeFileIfExists(zipPath);
             return null;
         }
     }

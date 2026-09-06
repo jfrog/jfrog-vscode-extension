@@ -74,14 +74,27 @@ describe('CI cache ZIP encoding Tests', () => {
         it('Treat truncated scan results JSON as a cache miss', () => {
             const truncated: string = scanResultsJson.slice(0, scanResultsJson.indexOf('"is_eol"') + '"is_eol"'.length);
             cache.save(truncated, timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS);
+            const zipPath: string = cache.getZipPath(timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS);
 
             assert.isNull(cache.loadScanResults(timestamp, buildName, buildNumber, projectKey));
+            assert.isFalse(fs.existsSync(zipPath));
         });
 
         it('Treat truncated build info JSON as a cache miss', () => {
             cache.save('{"name":"zhl-vscode"', timestamp, buildName, buildNumber, projectKey, Type.BUILD_INFO);
+            const zipPath: string = cache.getZipPath(timestamp, buildName, buildNumber, projectKey, Type.BUILD_INFO);
 
             assert.isNull(cache.loadBuildInfo(timestamp, buildName, buildNumber, projectKey));
+            assert.isFalse(fs.existsSync(zipPath));
+        });
+
+        it('Treat a corrupt scan-results ZIP as a cache miss and delete it', () => {
+            cache.save(scanResultsJson, timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS);
+            const zipPath: string = cache.getZipPath(timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS);
+            fs.writeFileSync(zipPath, 'not a zip');
+
+            assert.isNull(cache.loadScanResults(timestamp, buildName, buildNumber, projectKey));
+            assert.isFalse(fs.existsSync(zipPath));
         });
     });
 });
