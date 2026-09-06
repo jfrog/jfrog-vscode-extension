@@ -48,19 +48,27 @@ export class BuildsScanCache {
     }
 
     public loadBuildInfo(timestamp: string, buildName: string, buildNumber: string, projectKey: string): any {
-        let build: any = this.load(timestamp, buildName, buildNumber, projectKey, Type.BUILD_INFO);
-        if (!build) {
-            return null;
-        }
-        return JSON.parse(build);
+        return this.parseCachedJson(this.load(timestamp, buildName, buildNumber, projectKey, Type.BUILD_INFO));
     }
 
     public loadScanResults(timestamp: string, buildName: string, buildNumber: string, projectKey: string): IDetailsResponse | null {
-        let response: any = this.load(timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS);
-        if (!response) {
+        const parsed: any = this.parseCachedJson(this.load(timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS));
+        if (!parsed) {
             return null;
         }
-        return Object.assign({} as IDetailsResponse, JSON.parse(response));
+        return Object.assign({} as IDetailsResponse, parsed);
+    }
+
+    private parseCachedJson(raw: any): any {
+        if (!raw) {
+            return null;
+        }
+        try {
+            return JSON.parse(raw);
+        } catch {
+            this._logger.logMessage('Ignoring invalid CI cache JSON and treating it as a miss', 'DEBUG');
+            return null;
+        }
     }
 
     /**
