@@ -19,7 +19,6 @@ jobs:
         with:
           ref: ${{ matrix.branch }}
           persist-credentials: false
-          allow-unsafe-pr-checkout: true
 
       # Install prerequisites
       - name: Setup NodeJS
