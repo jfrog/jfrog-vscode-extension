@@ -1,7 +1,7 @@
 import fs from 'fs-extra';
+import os from 'os';
 import path from 'path';
-import { runTests } from 'vscode-test';
-import { TestOptions } from 'vscode-test/out/runTest';
+import { runTests, TestOptions } from '@vscode/test-electron';
 
 let targetResourcesDir: string = path.join(__dirname, 'resources');
 
@@ -16,15 +16,23 @@ async function main() {
         // The path to test runner
         const extensionTestsPath: string = path.join(__dirname, 'index');
 
+        const launchArgs: string[] = ['--disable-extensions', '-n', targetResourcesDir];
+        // macOS unix sockets are limited to ~104 bytes; the default .vscode-test path is too long on GHA.
+        if (process.platform === 'darwin') {
+            launchArgs.push('--user-data-dir', path.join(os.tmpdir(), 'vsc-jfrog-test'));
+        }
+
         // Download VS Code, unzip it and run the integration tests
         let testOptions: TestOptions = {
             version: 'insiders',
             extensionDevelopmentPath,
             extensionTestsPath,
-            launchArgs: ['--disable-extensions', '-n', targetResourcesDir]
-        } as TestOptions;
+            launchArgs
+        };
         if (process.platform === 'win32') {
             testOptions.platform = 'win32-x64-archive';
+        } else if (process.platform === 'darwin' && process.arch === 'arm64') {
+            testOptions.platform = 'darwin-arm64';
         }
         await runTests(testOptions);
     } catch (err) {
