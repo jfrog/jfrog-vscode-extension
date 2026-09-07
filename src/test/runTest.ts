@@ -9,6 +9,8 @@ let targetResourcesDir: string = path.join(__dirname, 'resources');
  * Prepare the VS Code test environment and run the integration tests.
  */
 async function main() {
+    let userDataDir: string | undefined;
+    let exitCode: number = 0;
     try {
         // The folder containing the Extension package.json
         const extensionDevelopmentPath: string = path.join(__dirname, '..', '..');
@@ -19,7 +21,8 @@ async function main() {
         const launchArgs: string[] = ['--disable-extensions', '-n', targetResourcesDir];
         // macOS unix sockets are limited to ~104 bytes; the default .vscode-test path is too long on GHA.
         if (process.platform === 'darwin') {
-            launchArgs.push('--user-data-dir', path.join(os.tmpdir(), 'vsc-jfrog-test'));
+            userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vsc-jfrog-'));
+            launchArgs.push('--user-data-dir', userDataDir);
         }
 
         // Download VS Code, unzip it and run the integration tests
@@ -37,7 +40,14 @@ async function main() {
         await runTests(testOptions);
     } catch (err) {
         console.error('Failed to run tests', err);
-        process.exit(1);
+        exitCode = 1;
+    } finally {
+        if (userDataDir) {
+            fs.removeSync(userDataDir);
+        }
+    }
+    if (exitCode !== 0) {
+        process.exit(exitCode);
     }
 }
 
