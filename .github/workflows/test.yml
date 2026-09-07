@@ -18,29 +18,32 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest, macOS-latest]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           submodules: true
           ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+          allow-unsafe-pr-checkout: true
       - name: Setup macOS
         # Fix 'nvm is not compatible with the npm config "prefix" option' error on macOS
         run: unset npm_config_prefix
         if: runner.os == 'macOS'
       - name: Install Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: 1.22.x
+          cache: false
       - name: Setup Python3
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
-          python-version: "3.x"
+          python-version: "3.12"
       - name: Setup NodeJS
         uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "22"
           check-latest: true
       - name: Setup Pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v6
         with:
           version: 8
 

@@ -7,9 +7,10 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           submodules: true
+          persist-credentials: false
       - name: Config Github
         run: |
             git config --global user.name "jfrog-ecosystem"
@@ -17,7 +18,7 @@ jobs:
       - name: Setup NodeJS
         uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "22"
           check-latest: true
 
       # Install and update version
