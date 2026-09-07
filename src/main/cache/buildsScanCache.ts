@@ -57,12 +57,11 @@ export class BuildsScanCache {
 
     private readCachedJson(timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): any {
         const zipPath: string = this.getZipPath(timestamp, buildName, buildNumber, projectKey, type);
+        if (!fs.existsSync(zipPath)) {
+            return null;
+        }
         try {
-            const raw: any = Utils.extractZipEntry(zipPath, type.toString());
-            if (!raw) {
-                return null;
-            }
-            return JSON.parse(raw);
+            return JSON.parse(Utils.extractZipEntry(zipPath, type.toString()));
         } catch (error) {
             const message: string = error instanceof Error ? error.message : String(error);
             this._logger.logMessage(`Ignoring invalid CI cache at '${zipPath}' and treating it as a miss: ${message}`, 'DEBUG');

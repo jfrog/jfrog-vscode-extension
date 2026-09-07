@@ -96,5 +96,13 @@ describe('CI cache ZIP encoding Tests', () => {
             assert.isNull(cache.loadScanResults(timestamp, buildName, buildNumber, projectKey));
             assert.isFalse(fs.existsSync(zipPath));
         });
+
+        it('Treat an empty scan-results ZIP entry as a cache miss and delete it', () => {
+            cache.save('', timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS);
+            const zipPath: string = cache.getZipPath(timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS);
+
+            assert.isNull(cache.loadScanResults(timestamp, buildName, buildNumber, projectKey));
+            assert.isFalse(fs.existsSync(zipPath));
+        });
     });
 });
