@@ -18,7 +18,7 @@ jobs:
       - name: Setup NodeJS
         uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "22"
           check-latest: true
 
       # Install and update version

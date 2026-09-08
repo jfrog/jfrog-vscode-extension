@@ -9,6 +9,7 @@
         "resolveJsonModule": true,
         "esModuleInterop": true,
         "moduleResolution": "node",
+        "skipLibCheck": true,
 
         // Remove comments from js files
         "removeComments": true,
