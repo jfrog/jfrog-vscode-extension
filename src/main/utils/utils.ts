@@ -102,7 +102,7 @@ export class Utils {
     public static saveAsZip(zipPath: string, ...files: { fileName: string; content: string }[]): void {
         let zip: AdmZip = new AdmZip();
         for (let file of files) {
-            zip.addFile(file.fileName, Buffer.alloc(file.content.length, file.content));
+            zip.addFile(file.fileName, Buffer.from(file.content, 'utf8'));
         }
         zip.writeZip(zipPath);
     }

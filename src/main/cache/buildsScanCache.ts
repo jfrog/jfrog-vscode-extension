@@ -43,24 +43,31 @@ export class BuildsScanCache {
         Utils.saveAsZip(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type), { fileName: type.toString(), content: content });
     }
 
-    public load(timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): any {
-        return Utils.extractZipEntry(this.getZipPath(timestamp, buildName, buildNumber, projectKey, type), type.toString());
-    }
-
     public loadBuildInfo(timestamp: string, buildName: string, buildNumber: string, projectKey: string): any {
-        let build: any = this.load(timestamp, buildName, buildNumber, projectKey, Type.BUILD_INFO);
-        if (!build) {
-            return null;
-        }
-        return JSON.parse(build);
+        return this.readCachedJson(timestamp, buildName, buildNumber, projectKey, Type.BUILD_INFO);
     }
 
     public loadScanResults(timestamp: string, buildName: string, buildNumber: string, projectKey: string): IDetailsResponse | null {
-        let response: any = this.load(timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS);
-        if (!response) {
+        const parsed: any = this.readCachedJson(timestamp, buildName, buildNumber, projectKey, Type.BUILD_SCAN_RESULTS);
+        if (!parsed) {
             return null;
         }
-        return Object.assign({} as IDetailsResponse, JSON.parse(response));
+        return Object.assign({} as IDetailsResponse, parsed);
+    }
+
+    private readCachedJson(timestamp: string, buildName: string, buildNumber: string, projectKey: string, type: Type): any {
+        const zipPath: string = this.getZipPath(timestamp, buildName, buildNumber, projectKey, type);
+        if (!fs.existsSync(zipPath)) {
+            return null;
+        }
+        try {
+            return JSON.parse(Utils.extractZipEntry(zipPath, type.toString()));
+        } catch (error) {
+            const message: string = error instanceof Error ? error.message : String(error);
+            this._logger.logMessage(`Ignoring invalid CI cache at '${zipPath}' and treating it as a miss: ${message}`, 'DEBUG');
+            Utils.removeFileIfExists(zipPath);
+            return null;
+        }
     }
 
     /**
