@@ -57,6 +57,11 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # Same SVG/HTTPS README check as `vsce publish` / `ovsx publish` (ovsx uses vsce to pack).
+      - name: Validate Marketplace and Open VSX packaging
+        if: runner.os == 'Linux'
+        run: npx vsce package --out /tmp/marketplace-pack-check.vsix
+
       - name: Pack Maven GAV Reader
         run: mvn clean package -f resources/maven-gav-reader/pom.xml -B
 

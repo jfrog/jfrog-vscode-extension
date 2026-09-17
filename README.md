@@ -4,9 +4,9 @@
 
 # JFrog Extension for VS Code & Eclipse Theia
 
-![JFrog Extension Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/JFrog.jfrog-vscode-extension?label=VS%20Code%20installs&color=blue&style=for-the-badge)
+![JFrog Extension Marketplace Installs](https://vsmarketplacebadges.dev/installs/JFrog.jfrog-vscode-extension.svg?label=VS%20Code%20installs&color=blue&style=for-the-badge)
 
- [![Visual Studio Code Version](https://img.shields.io/visual-studio-marketplace/v/JFrog.jfrog-vscode-extension?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension)
+ [![Visual Studio Code Version](https://vsmarketplacebadges.dev/version/JFrog.jfrog-vscode-extension.svg?style=for-the-badge)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension)
 
 [![Visual Studio Marketplace](https://img.shields.io/badge/Visual%20Studio%20Code-Marketplace-blue.png)](https://marketplace.visualstudio.com/items?itemName=JFrog.jfrog-vscode-extension)  [![Open VSX Registry](https://img.shields.io/badge/Open%20VSX%20Registry-Marketplace-blue.png)](https://open-vsx.org/extension/JFrog/jfrog-vscode-extension)
 [![Scanned by Frogbot](https://raw.github.com/jfrog/frogbot/master/images/frogbot-badge.png)](https://github.com/jfrog/frogbot#readme) [![Test](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml/badge.svg)](https://github.com/jfrog/jfrog-vscode-extension/actions/workflows/test.yml?branch=master)
