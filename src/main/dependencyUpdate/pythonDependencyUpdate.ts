@@ -10,7 +10,9 @@ export class PythonDependencyUpdate extends AbstractDependencyUpdate {
 
     /** @override */
     public isMatched(dependenciesTreeNode: DependencyIssuesTreeNode): boolean {
-        return super.isMatched(dependenciesTreeNode);
+        // replaceVersions understands the requirement syntax of setup.py and requirements.txt only. Running it over the
+        // TOML of a pyproject.toml rewrites text outside the requirement and truncates the file, so it is not offered there.
+        return super.isMatched(dependenciesTreeNode) && !dependenciesTreeNode.getDependencyFilePath().endsWith('pyproject.toml');
     }
 
     /** @override */

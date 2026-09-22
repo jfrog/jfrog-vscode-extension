@@ -36,7 +36,7 @@ describe('Pypi Utils Tests', async () => {
         {} as CacheManager,
         logManager
     );
-    let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements', 'updateToFixedVersion'];
+    let projectDirs: string[] = ['requirements', 'setup', 'setupAndRequirements', 'updateToFixedVersion', 'pyproject', 'setupAndPyproject'];
     let workspaceFolders: vscode.WorkspaceFolder[] = [];
     let tmpDir: vscode.Uri = vscode.Uri.file(ScanUtils.createTmpDir());
     let pythonDependencyUpdate: PythonDependencyUpdate = new PythonDependencyUpdate();
@@ -101,6 +101,131 @@ describe('Pypi Utils Tests', async () => {
         assert.equal(dependencyToVersion.get('someproject8'), '==6.7');
         assert.equal(dependencyToVersion.get('someproject9'), '== 9.8');
         assert.equal(dependencyToVersion.get('someproject10'), '==9.0');
+    });
+
+    it('Match pyproject.toml dependencies with regex', () => {
+        let dependencyToVersion: Map<string, string | undefined> = PypiUtils.getPyprojectDirectDependencies(
+            path.join(tmpDir.fsPath, 'regex', 'pyprojectNoDepFound.toml')
+        );
+        assert.equal(dependencyToVersion.size, 0);
+
+        dependencyToVersion = PypiUtils.getPyprojectDirectDependencies(path.join(tmpDir.fsPath, 'regex', 'pyprojectAllKindOfDepsVariations.toml'));
+        // Only an exact pin is kept as a version, since any other constraint cannot be compared against an installed version.
+        assert.equal(dependencyToVersion.get('fire'), '==0.1.3');
+        assert.equal(dependencyToVersion.get('requests'), '==2.32.4');
+        assert.equal(dependencyToVersion.get('uvicorn'), '==0.30.0');
+        assert.equal(dependencyToVersion.get('django-extensions'), '==3.2.3');
+        assert.equal(dependencyToVersion.get('tomli'), '==2.0.1');
+        assert.equal(dependencyToVersion.get('pyyaml'), '');
+        assert.equal(dependencyToVersion.get('matplotlib'), '');
+        assert.equal(dependencyToVersion.get('newrelic'), '');
+        assert.equal(dependencyToVersion.get('jupyter'), '');
+        assert.equal(dependencyToVersion.get('numpy'), '');
+        // Names are normalized to the form pip reports them in, so 'huggingface_hub' matches the installed 'huggingface-hub'.
+        assert.equal(dependencyToVersion.get('huggingface-hub'), '');
+        // 'pytest' is under [project.optional-dependencies] and must not be reported as a direct dependency.
+        assert.isUndefined(dependencyToVersion.get('pytest'));
+        // A marker must not become a dependency of its own.
+        assert.isUndefined(dependencyToVersion.get('python-version'));
+        assert.equal(dependencyToVersion.size, 11);
+
+        dependencyToVersion = PypiUtils.getPyprojectDirectDependencies(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetry.toml'));
+        assert.equal(dependencyToVersion.get('fire'), '');
+        assert.equal(dependencyToVersion.get('newrelic'), '');
+        assert.isUndefined(dependencyToVersion.get('python'));
+        assert.equal(dependencyToVersion.size, 2);
+    });
+
+    it('Match pyproject.toml project name with regex', () => {
+        let got: string | undefined = PypiUtils.searchPyprojectProjectName(path.join(tmpDir.fsPath, 'regex', 'pyprojectNoDepFound.toml'));
+        assert.equal(got, 'pipgrip');
+        got = PypiUtils.searchPyprojectProjectName(path.join(tmpDir.fsPath, 'regex', 'pyprojectAllKindOfDepsVariations.toml'));
+        assert.equal(got, 'example-project');
+        got = PypiUtils.searchPyprojectProjectName(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetry.toml'));
+        assert.equal(got, 'legacy-poetry');
+    });
+
+    it('Locate pyproject.toml only when it declares a python project', async () => {
+        const toolConfigOnly: vscode.WorkspaceFolder = {
+            uri: vscode.Uri.file(path.join(tmpDir.fsPath, 'pyprojectToolConfig')),
+            name: '',
+            index: 0
+        } as vscode.WorkspaceFolder;
+        const workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            [toolConfigOnly],
+            treesManager.logManager
+        );
+        assert.isUndefined(workspaceDescriptors.get(PackageType.Python));
+    });
+
+    it('Create Pypi Dependencies Tree from pyproject.toml next to a setup.py shim', async () => {
+        const parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('', '', [], '', PackageType.Unknown));
+        const tree: PipDepTree[] | undefined = PypiUtils.runPipDepTree(
+            path.join(workspaceFolders[5].uri.fsPath, getLocalPython()),
+            treesManager.logManager
+        );
+        if (tree === undefined) {
+            assert.fail('Failed to run pipDepTree on the setupAndPyproject project');
+            return;
+        }
+        const workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            [workspaceFolders[5]],
+            treesManager.logManager
+        );
+        assert.lengthOf(workspaceDescriptors.get(PackageType.Python) || [], 2);
+        await PypiUtils.descriptorsToDependencyTrees(
+            workspaceDescriptors.get(PackageType.Python) || [],
+            tree,
+            () => undefined,
+            treesManager.logManager,
+            parent
+        );
+        // The setup.py is a shim that declares nothing, so the dependencies of the project come from the pyproject.toml.
+        const pyproject: PypiTreeNode | undefined = parent.children.find(child => child.label === 'pyproject.toml') as PypiTreeNode | undefined;
+        assert.isDefined(pyproject);
+        // 'newrelic' is declared with a '>=' constraint, and must be scanned just like the pinned 'fire'.
+        assert.sameMembers(
+            pyproject!.children.map(child => child.generalInfo.artifactId),
+            ['fire', 'newrelic']
+        );
+        checkFireDependency(pyproject!);
+    });
+
+    it('Locate pyproject.toml as a python package descriptor', async () => {
+        const workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            [workspaceFolders[4]],
+            treesManager.logManager
+        );
+        const pythonDescriptors: vscode.Uri[] = workspaceDescriptors.get(PackageType.Python) || [];
+        assert.lengthOf(pythonDescriptors, 1);
+        assert.equal(path.basename(pythonDescriptors[0].fsPath), 'pyproject.toml');
+    });
+
+    it('Create Pypi Dependencies Tree from pyproject.toml', async () => {
+        const parent: DependenciesTreeNode = new DependenciesTreeNode(new GeneralInfo('', '', [], '', PackageType.Unknown));
+        const tree: PipDepTree[] | undefined = PypiUtils.runPipDepTree(
+            path.join(workspaceFolders[4].uri.fsPath, getLocalPython()),
+            treesManager.logManager
+        );
+        if (tree === undefined) {
+            assert.fail('Failed to run pipDepTree on the pyproject.toml project');
+            return;
+        }
+        const workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
+            [workspaceFolders[4]],
+            treesManager.logManager
+        );
+        await PypiUtils.descriptorsToDependencyTrees(
+            workspaceDescriptors.get(PackageType.Python) || [],
+            tree,
+            () => undefined,
+            treesManager.logManager,
+            parent
+        );
+        const node: PypiTreeNode | undefined = parent.children.find(child => child.label === 'pyproject.toml') as PypiTreeNode | undefined;
+        assert.isDefined(node);
+        assert.deepEqual(node!.children.length, 2);
+        checkFireDependency(node!);
     });
 
     it('Update python dependency to fixed version ', async () => {
@@ -254,6 +379,12 @@ describe('Pypi Utils Tests', async () => {
 
         exec.execSync(globalPython + ' -m venv .venv', { cwd: workspaceFolders[3].uri.fsPath });
         exec.execSync(localPython + ' -m pip install -r requirements.txt', { cwd: workspaceFolders[3].uri.fsPath });
+
+        exec.execSync(globalPython + ' -m venv .venv', { cwd: workspaceFolders[4].uri.fsPath });
+        exec.execSync(localPython + ' -m pip install .', { cwd: workspaceFolders[4].uri.fsPath });
+
+        exec.execSync(globalPython + ' -m venv .venv', { cwd: workspaceFolders[5].uri.fsPath });
+        exec.execSync(localPython + ' -m pip install .', { cwd: workspaceFolders[5].uri.fsPath });
     }
 
     function getGlobalPython(): string {

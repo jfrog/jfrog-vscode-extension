@@ -17,7 +17,9 @@ import { Utils } from './utils';
 
 export class ScanUtils {
     public static readonly DESCRIPTOR_SELECTOR_PATTERN: string =
-        '**/{go.mod,package.json,pom.xml,setup.py,*requirements*.txt,pnpm-lock.yaml,yarn.lock,*.csproj,*.sln,packages.config}';
+        '**/{go.mod,package.json,pom.xml,setup.py,pyproject.toml,*requirements*.txt,pnpm-lock.yaml,yarn.lock,*.csproj,*.sln,packages.config}';
+
+    private static readonly PYTHON_PROJECT_TABLE_PATTERN: RegExp = /^\s*\[(?:project|tool\.poetry)\]/m;
 
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
@@ -72,7 +74,7 @@ export class ScanUtils {
     }
 
     /**
-     * Find go.mod, pom.xml, package.json, *.sln, setup.py, and requirements*.txt files in workspaces.
+     * Find go.mod, pom.xml, package.json, *.sln, setup.py, pyproject.toml, and requirements*.txt files in workspaces.
      * @param workspaceFolders - Base workspace folders to search
      * @param logManager       - Log manager
      */
@@ -328,10 +330,26 @@ export class ScanUtils {
         if (fsPath.endsWith('.sln') || fsPath.endsWith('.csproj') || fsPath.endsWith('packages.config')) {
             return PackageType.Nuget;
         }
+        if (fsPath.endsWith('pyproject.toml')) {
+            return ScanUtils.declaresPythonProject(fsPath) ? PackageType.Python : undefined;
+        }
         if (fsPath.endsWith('.txt') || fsPath.endsWith('.py')) {
             return PackageType.Python;
         }
         return;
+    }
+
+    /**
+     * Return true if the pyproject.toml declares a Python project, and not only tool configuration such as [tool.black].
+     * A file that cannot be read declares nothing, so that one unreadable file does not abort the descriptor search.
+     * @param pyprojectPath - path to pyproject.toml
+     */
+    private static declaresPythonProject(pyprojectPath: string): boolean {
+        try {
+            return ScanUtils.PYTHON_PROJECT_TABLE_PATTERN.test(fs.readFileSync(pyprojectPath, 'utf8'));
+        } catch (error) {
+            return false;
+        }
     }
 
     static createTmpDir(): string {
