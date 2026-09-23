@@ -7,7 +7,7 @@ import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/dependencies
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { ScanUtils } from './scanUtils';
 import { PipDepTree } from '../types/pipDepTree';
-import { PyprojectPoetryTable, PyprojectToml } from '../types/pyprojectToml';
+import { PyprojectPoetryTable, PyprojectProjectTable, PyprojectToml } from '../types/pyprojectToml';
 import { PythonDescriptor } from '../types/pythonDescriptor';
 import { VirtualEnvPypiTree } from '../treeDataProviders/dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
 
@@ -42,29 +42,49 @@ export class PypiUtils {
     public static readPyproject(pyprojectFile: string): PythonDescriptor | undefined {
         const pyproject: PyprojectToml = toml.parse(fs.readFileSync(pyprojectFile, 'utf8')) as PyprojectToml;
         const poetry: PyprojectPoetryTable | undefined = pyproject.tool?.poetry;
+        // A pyproject.toml that holds only tool configuration, such as [tool.ruff], declares no project to scan.
         if (!pyproject.project && !poetry) {
             return undefined;
         }
-        const directDependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
-        for (const requirement of pyproject.project?.dependencies || []) {
-            const [, name, constraint] = new RegExp(PypiUtils.requirementRegex).exec(requirement.split(';')[0].trim()) || [];
-            if (name) {
-                directDependencies.set(name, this.toExactVersion(constraint));
-            }
-        }
-        for (const [name, constraint] of Object.entries(poetry?.dependencies || {})) {
-            if (name !== 'python') {
-                directDependencies.set(name, this.toExactVersion(typeof constraint === 'string' ? constraint : constraint.version));
-            }
-        }
-        return { path: pyprojectFile, projectName: pyproject.project?.name || poetry?.name, directDependencies };
+        return {
+            path: pyprojectFile,
+            projectName: pyproject.project?.name || poetry?.name,
+            directDependencies: new Map([...this.getProjectTableDependencies(pyproject.project), ...this.getPoetryTableDependencies(poetry)])
+        };
     }
 
+    /** The standard [project] table (PEP 621) lists dependencies as requirement strings, such as 'requests[socks]>=2.0'. */
+    private static getProjectTableDependencies(project: PyprojectProjectTable | undefined): Map<string, string | undefined> {
+        const dependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
+        for (const requirement of project?.dependencies || []) {
+            // Drop the environment marker after ';', then split the name from its optional extras and version constraint.
+            const [, name, constraint] = new RegExp(PypiUtils.requirementRegex).exec(requirement.split(';')[0].trim()) || [];
+            if (name) {
+                dependencies.set(name, this.toExactVersion(constraint));
+            }
+        }
+        return dependencies;
+    }
+
+    /** Poetry before 2.0 declares dependencies in its own table, mapping each name to a constraint or to a table that holds one. */
+    private static getPoetryTableDependencies(poetry: PyprojectPoetryTable | undefined): Map<string, string | undefined> {
+        const dependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
+        for (const [name, constraint] of Object.entries(poetry?.dependencies || {})) {
+            // Poetry declares the supported Python version as a dependency named 'python'.
+            if (name !== 'python') {
+                dependencies.set(name, this.toExactVersion(typeof constraint === 'string' ? constraint : constraint.version));
+            }
+        }
+        return dependencies;
+    }
+
+    /** Only an exact pin can be compared against the installed version. It is written '==1.2.3', or '1.2.3' in Poetry. */
     private static toExactVersion(constraint: string | undefined): string {
         const [, exactVersion] = new RegExp(PypiUtils.exactVersionRegex).exec((constraint || '').trim()) || [];
         return exactVersion ? '==' + exactVersion : '';
     }
 
+    /** Python package names ignore case and treat runs of '-', '_' and '.' as equal (PEP 503), so 'Zope_Interface' is 'zope-interface'. */
     private static normalizePackageName(name: string): string {
         return name.toLowerCase().replace(/[-_.]+/g, '-');
     }
@@ -132,6 +152,7 @@ export class PypiUtils {
         checkCanceled: () => void,
         parent: DependenciesTreeNode
     ): Promise<void> {
+        // Read before resolving the interpreter, so that a workspace with nothing to scan gets no virtual environment errors.
         const pythonDescriptors: PythonDescriptor[] = this.readDescriptors(descriptors || [], logManager);
         if (pythonDescriptors.length === 0) {
             logManager.logMessage('No setup.py, pyproject.toml or requirements.txt files to scan in workspaces.', 'DEBUG');
@@ -257,6 +278,7 @@ export class PypiUtils {
             try {
                 return this.readPyproject(descriptorPath);
             } catch (error) {
+                // One unreadable pyproject.toml must not stop the other descriptors of the workspace from being scanned.
                 logManager.logMessage(`Skipping '${descriptorPath}', failed to read it: ${(<any>error).message}`, 'WARN');
                 return undefined;
             }
@@ -278,6 +300,7 @@ export class PypiUtils {
         logManager: LogManager,
         parent: DependenciesTreeNode
     ): Promise<PypiTreeNode[]> {
+        // A descriptor that declares no project name of its own, such as requirements.txt, falls back to the one in setup.py.
         const setupPyProjectName: string | undefined = this.getSetupPyProjectName(pythonDescriptors);
         const trees: PypiTreeNode[] = [];
         for (const pythonDescriptor of pythonDescriptors) {
@@ -331,6 +354,7 @@ export class PypiUtils {
         if (dependencies.size === 0) {
             return directDependencies;
         }
+        // pip reports some installed names dotted ('ruamel.yaml') and others dashed ('zope-interface'), so names are compared normalized.
         const versionByName: Map<string, string | undefined> = new Map(
             [...dependencies].map(([name, version]) => [this.normalizePackageName(name), version])
         );

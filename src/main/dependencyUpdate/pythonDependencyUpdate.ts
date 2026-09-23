@@ -10,11 +10,8 @@ export class PythonDependencyUpdate extends AbstractDependencyUpdate {
 
     /** @override */
     public isMatched(dependenciesTreeNode: DependencyIssuesTreeNode): boolean {
-        return super.isMatched(dependenciesTreeNode) && this.canReplaceVersionsIn(dependenciesTreeNode.getDependencyFilePath());
-    }
-
-    private canReplaceVersionsIn(descriptorPath: string): boolean {
-        return !descriptorPath.endsWith('pyproject.toml');
+        // replaceVersions edits requirement strings with a regex that does not understand TOML, and would corrupt a pyproject.toml.
+        return super.isMatched(dependenciesTreeNode) && !dependenciesTreeNode.getDependencyFilePath().endsWith('pyproject.toml');
     }
 
     /** @override */
