@@ -220,6 +220,36 @@ describe('Pypi Utils Tests', async () => {
         );
     });
 
+    it('Attribute a descriptor without a project name to the only project of the workspace', async () => {
+        const workspace: string = path.join(tmpDir.fsPath, 'subdirectoryProject');
+        const installedDependency: (key: string) => PipDepTree = (key: string) => ({
+            key: key,
+            package_name: key,
+            installed_version: '1.0.0',
+            required_version: '',
+            dependencies: []
+        });
+        const scanRootRequirements: (projects: string[]) => Promise<string[]> = async (projects: string[]) => {
+            const trees: PypiTreeNode[] = await PypiUtils.descriptorsToDependencyTrees(
+                [
+                    { path: path.join(workspace, 'requirements.txt'), directDependencies: new Map([['fire', '']]) },
+                    ...projects.map(project => ({
+                        path: path.join(workspace, project, 'pyproject.toml'),
+                        projectName: project,
+                        directDependencies: new Map<string, string | undefined>()
+                    }))
+                ],
+                projects.map(project => ({ ...installedDependency(project), dependencies: [installedDependency('fire')] })),
+                () => undefined,
+                treesManager.logManager,
+                new DependenciesTreeNode(new GeneralInfo('', '', [], '', PackageType.Unknown))
+            );
+            return trees[0].children.map(child => child.label as string);
+        };
+        assert.deepEqual(await scanRootRequirements(['app']), ['fire']);
+        assert.deepEqual(await scanRootRequirements(['app', 'svc']), []);
+    });
+
     it('Offer the fixed version update only where it can be written safely', () => {
         const isUpdateOffered: (descriptor: string) => boolean = (descriptor: string) =>
             pythonDependencyUpdate.isMatched(

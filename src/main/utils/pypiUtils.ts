@@ -350,7 +350,7 @@ export class PypiUtils {
 
     /**
      * A descriptor that declares no project name, such as requirements.txt, belongs to the project declared closest above it,
-     * because pip nests the dependencies of an installed project under that project.
+     * or to the workspace's only project when none encloses it, because pip nests the dependencies of an installed project under it.
      * @example requirements/dev.txt belongs to the project of setup.py, and svc/requirements.txt to the one of svc/pyproject.toml
      */
     private static getProjectName(pythonDescriptor: PythonDescriptor, pythonDescriptors: PythonDescriptor[]): string | undefined {
@@ -368,7 +368,12 @@ export class PypiUtils {
                 closestProjectName = candidate.projectName;
             }
         }
-        return closestProjectName;
+        if (closestProjectName) {
+            return closestProjectName;
+        }
+        const projectNames: Set<string> = new Set();
+        pythonDescriptors.forEach(candidate => candidate.projectName && projectNames.add(candidate.projectName));
+        return projectNames.size === 1 ? [...projectNames][0] : undefined;
     }
 
     /**
