@@ -17,7 +17,7 @@ import { createScanCacheManager } from './utils/utils.test';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { PackageType } from '../../main/types/projectType';
 import { PipDepTree } from '../../main/types/pipDepTree';
-import { ParsedPythonDescriptor } from '../../main/types/parsedPythonDescriptor';
+import { PythonDescriptor } from '../../main/types/pythonDescriptor';
 import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { IComponent } from 'jfrog-client-js';
 import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
@@ -183,7 +183,7 @@ describe('Pypi Utils Tests', async () => {
     });
 
     it('Skip a pyproject.toml that declares no python project or cannot be read', () => {
-        const parsedDescriptors: ParsedPythonDescriptor[] = PypiUtils.parseDescriptors(
+        const pythonDescriptors: PythonDescriptor[] = PypiUtils.parseDescriptors(
             [
                 vscode.Uri.file(path.join(tmpDir.fsPath, 'pyprojectToolConfig', 'pyproject.toml')),
                 vscode.Uri.file(path.join(tmpDir.fsPath, 'pyprojectInvalid', 'pyproject.toml')),
@@ -193,7 +193,7 @@ describe('Pypi Utils Tests', async () => {
             treesManager.logManager
         );
         assert.deepEqual(
-            parsedDescriptors.map(parsedDescriptor => parsedDescriptor.path),
+            pythonDescriptors.map(pythonDescriptor => pythonDescriptor.path),
             [path.join(tmpDir.fsPath, 'pyproject', 'pyproject.toml')]
         );
     });
@@ -234,9 +234,9 @@ describe('Pypi Utils Tests', async () => {
             [workspaceFolders[4]],
             treesManager.logManager
         );
-        const parsedDescriptors: vscode.Uri[] = workspaceDescriptors.get(PackageType.Python) || [];
-        assert.lengthOf(parsedDescriptors, 1);
-        assert.equal(path.basename(parsedDescriptors[0].fsPath), 'pyproject.toml');
+        const pythonDescriptors: vscode.Uri[] = workspaceDescriptors.get(PackageType.Python) || [];
+        assert.lengthOf(pythonDescriptors, 1);
+        assert.equal(path.basename(pythonDescriptors[0].fsPath), 'pyproject.toml');
     });
 
     it('Create Pypi Dependencies Tree from pyproject.toml', async () => {

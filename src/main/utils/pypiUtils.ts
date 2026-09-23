@@ -8,7 +8,7 @@ import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/depe
 import { ScanUtils } from './scanUtils';
 import { PipDepTree } from '../types/pipDepTree';
 import { PyprojectPoetryTable, PyprojectToml } from '../types/pyprojectToml';
-import { ParsedPythonDescriptor } from '../types/parsedPythonDescriptor';
+import { PythonDescriptor } from '../types/pythonDescriptor';
 import { VirtualEnvPypiTree } from '../treeDataProviders/dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
 
 export class PypiUtils {
@@ -39,7 +39,7 @@ export class PypiUtils {
         return this.matchPythonDependencies(match[1]);
     }
 
-    public static parsePyproject(pyprojectFile: string): ParsedPythonDescriptor | undefined {
+    public static parsePyproject(pyprojectFile: string): PythonDescriptor | undefined {
         const pyproject: PyprojectToml = parseToml(fs.readFileSync(pyprojectFile, 'utf8')) as PyprojectToml;
         const poetry: PyprojectPoetryTable | undefined = pyproject.tool?.poetry;
         // A pyproject.toml that holds only tool configuration, such as [tool.ruff], declares no project to scan.
@@ -158,8 +158,8 @@ export class PypiUtils {
         parent: DependenciesTreeNode
     ): Promise<void> {
         // Parse before resolving the interpreter, so that a workspace with nothing to scan gets no virtual environment errors.
-        const parsedDescriptors: ParsedPythonDescriptor[] = this.parseDescriptors(descriptors || [], logManager);
-        if (parsedDescriptors.length === 0) {
+        const pythonDescriptors: PythonDescriptor[] = this.parseDescriptors(descriptors || [], logManager);
+        if (pythonDescriptors.length === 0) {
             logManager.logMessage('No setup.py, pyproject.toml or requirements.txt files to scan in workspaces.', 'DEBUG');
             return;
         }
@@ -180,7 +180,7 @@ export class PypiUtils {
         if (!pipDepTree) {
             return;
         }
-        await this.descriptorsToDependencyTrees(parsedDescriptors, pipDepTree, checkCanceled, logManager, parent);
+        await this.descriptorsToDependencyTrees(pythonDescriptors, pipDepTree, checkCanceled, logManager, parent);
         this.workspaceToDependencyTree(workspace, pythonPath, pipDepTree, parent);
     }
 
@@ -260,18 +260,18 @@ export class PypiUtils {
      * @param descriptors - Paths to setup.py, pyproject.toml and requirements*.txt files
      * @param logManager  - LogManager for the operation
      */
-    public static parseDescriptors(descriptors: vscode.Uri[], logManager: LogManager): ParsedPythonDescriptor[] {
-        const parsedDescriptors: ParsedPythonDescriptor[] = [];
+    public static parseDescriptors(descriptors: vscode.Uri[], logManager: LogManager): PythonDescriptor[] {
+        const pythonDescriptors: PythonDescriptor[] = [];
         for (const descriptor of descriptors) {
-            const parsedDescriptor: ParsedPythonDescriptor | undefined = this.parseDescriptor(descriptor.fsPath, logManager);
-            if (parsedDescriptor) {
-                parsedDescriptors.push(parsedDescriptor);
+            const pythonDescriptor: PythonDescriptor | undefined = this.parseDescriptor(descriptor.fsPath, logManager);
+            if (pythonDescriptor) {
+                pythonDescriptors.push(pythonDescriptor);
             }
         }
-        return parsedDescriptors;
+        return pythonDescriptors;
     }
 
-    private static parseDescriptor(descriptorPath: string, logManager: LogManager): ParsedPythonDescriptor | undefined {
+    private static parseDescriptor(descriptorPath: string, logManager: LogManager): PythonDescriptor | undefined {
         switch (path.basename(descriptorPath)) {
             case 'setup.py':
                 return {
@@ -294,13 +294,13 @@ export class PypiUtils {
 
     /**
      * Create a dependency tree for each descriptor based on its dependencies declaration.
-     * @param parsedDescriptors - Descriptors parsed by parseDescriptors
+     * @param pythonDescriptors - Descriptors parsed by parseDescriptors
      * @param pipDepTree - project dependency tree
      * @param parent - Parent of all the descriptors
      * @returns All descriptors dependency trees
      */
     public static async descriptorsToDependencyTrees(
-        parsedDescriptors: ParsedPythonDescriptor[],
+        pythonDescriptors: PythonDescriptor[],
         pipDepTree: PipDepTree[],
         checkCanceled: () => void,
         logManager: LogManager,
@@ -308,14 +308,14 @@ export class PypiUtils {
     ): Promise<PypiTreeNode[]> {
         // A descriptor that declares no project name, such as requirements.txt, uses the one declared by the workspace's
         // setup.py or pyproject.toml, because pip nests the dependencies of an installed project under that project.
-        const workspaceProjectName: string | undefined = parsedDescriptors.find(parsedDescriptor => parsedDescriptor.projectName)?.projectName;
+        const workspaceProjectName: string | undefined = pythonDescriptors.find(pythonDescriptor => pythonDescriptor.projectName)?.projectName;
         const trees: PypiTreeNode[] = [];
-        for (const parsedDescriptor of parsedDescriptors) {
+        for (const pythonDescriptor of pythonDescriptors) {
             checkCanceled();
-            logManager.logMessage(`Analyzing '${parsedDescriptor.path}' file`, 'INFO');
-            let root: PypiTreeNode = new PypiTreeNode(parsedDescriptor.path, parent);
+            logManager.logMessage(`Analyzing '${pythonDescriptor.path}' file`, 'INFO');
+            let root: PypiTreeNode = new PypiTreeNode(pythonDescriptor.path, parent);
             root.refreshDependencies(
-                this.filterDependencies(parsedDescriptor.directDependencies, pipDepTree, false, parsedDescriptor.projectName || workspaceProjectName)
+                this.filterDependencies(pythonDescriptor.directDependencies, pipDepTree, false, pythonDescriptor.projectName || workspaceProjectName)
             );
             trees.push(root);
         }
