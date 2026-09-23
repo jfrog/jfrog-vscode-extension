@@ -17,7 +17,7 @@ import { createScanCacheManager } from './utils/utils.test';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { PackageType } from '../../main/types/projectType';
 import { PipDepTree } from '../../main/types/pipDepTree';
-import { PythonDescriptor } from '../../main/types/pythonDescriptor';
+import { ParsedPythonDescriptor } from '../../main/types/parsedPythonDescriptor';
 import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { IComponent } from 'jfrog-client-js';
 import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
@@ -105,12 +105,13 @@ describe('Pypi Utils Tests', async () => {
     });
 
     it('Parse pyproject.toml dependencies', () => {
-        let dependencyToVersion: Map<string, string | undefined> = PypiUtils.readPyproject(
+        let dependencyToVersion: Map<string, string | undefined> = PypiUtils.parsePyproject(
             path.join(tmpDir.fsPath, 'regex', 'pyprojectNoDepFound.toml')
         )!.directDependencies;
         assert.equal(dependencyToVersion.size, 0);
 
-        dependencyToVersion = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectAllKindOfDepsVariations.toml'))!.directDependencies;
+        dependencyToVersion = PypiUtils.parsePyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectAllKindOfDepsVariations.toml'))!
+            .directDependencies;
         assert.equal(dependencyToVersion.get('fire'), '==0.1.3');
         assert.equal(dependencyToVersion.get('requests'), '==2.32.4');
         assert.equal(dependencyToVersion.get('uvicorn'), '==0.30.0');
@@ -127,7 +128,7 @@ describe('Pypi Utils Tests', async () => {
         assert.isUndefined(dependencyToVersion.get('httpx'));
         assert.equal(dependencyToVersion.size, 11);
 
-        dependencyToVersion = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetry.toml'))!.directDependencies;
+        dependencyToVersion = PypiUtils.parsePyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetry.toml'))!.directDependencies;
         assert.equal(dependencyToVersion.get('fire'), '==0.1.3');
         assert.equal(dependencyToVersion.get('newrelic'), '==2.0.0.1');
         assert.equal(dependencyToVersion.get('zope.interface'), '');
@@ -136,23 +137,23 @@ describe('Pypi Utils Tests', async () => {
         assert.isUndefined(dependencyToVersion.get('requests'));
         assert.equal(dependencyToVersion.size, 4);
 
-        dependencyToVersion = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectWithBom.toml'))!.directDependencies;
+        dependencyToVersion = PypiUtils.parsePyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectWithBom.toml'))!.directDependencies;
         assert.equal(dependencyToVersion.get('requests'), '==2.32.4');
 
-        dependencyToVersion = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetryWithProjectTable.toml'))!.directDependencies;
+        dependencyToVersion = PypiUtils.parsePyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetryWithProjectTable.toml'))!.directDependencies;
         assert.deepEqual([...dependencyToVersion], [['requests', '==2.32.4']]);
 
-        dependencyToVersion = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetryWithEmptyProjectTable.toml'))!
+        dependencyToVersion = PypiUtils.parsePyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetryWithEmptyProjectTable.toml'))!
             .directDependencies;
         assert.deepEqual([...dependencyToVersion], [['fire', '==0.1.3']]);
     });
 
     it('Parse pyproject.toml project name', () => {
-        let got: string | undefined = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectNoDepFound.toml'))?.projectName;
+        let got: string | undefined = PypiUtils.parsePyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectNoDepFound.toml'))?.projectName;
         assert.equal(got, 'pipgrip');
-        got = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectAllKindOfDepsVariations.toml'))?.projectName;
+        got = PypiUtils.parsePyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectAllKindOfDepsVariations.toml'))?.projectName;
         assert.equal(got, 'Example_Project');
-        got = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetry.toml'))?.projectName;
+        got = PypiUtils.parsePyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetry.toml'))?.projectName;
         assert.equal(got, 'legacy-poetry');
     });
 
@@ -182,7 +183,7 @@ describe('Pypi Utils Tests', async () => {
     });
 
     it('Skip a pyproject.toml that declares no python project or cannot be read', () => {
-        const pythonDescriptors: PythonDescriptor[] = PypiUtils.readDescriptors(
+        const parsedDescriptors: ParsedPythonDescriptor[] = PypiUtils.parseDescriptors(
             [
                 vscode.Uri.file(path.join(tmpDir.fsPath, 'pyprojectToolConfig', 'pyproject.toml')),
                 vscode.Uri.file(path.join(tmpDir.fsPath, 'pyprojectInvalid', 'pyproject.toml')),
@@ -192,7 +193,7 @@ describe('Pypi Utils Tests', async () => {
             treesManager.logManager
         );
         assert.deepEqual(
-            pythonDescriptors.map(pythonDescriptor => pythonDescriptor.path),
+            parsedDescriptors.map(parsedDescriptor => parsedDescriptor.path),
             [path.join(tmpDir.fsPath, 'pyproject', 'pyproject.toml')]
         );
     });
@@ -213,7 +214,7 @@ describe('Pypi Utils Tests', async () => {
         );
         assert.lengthOf(workspaceDescriptors.get(PackageType.Python) || [], 2);
         await PypiUtils.descriptorsToDependencyTrees(
-            PypiUtils.readDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
+            PypiUtils.parseDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
             tree,
             () => undefined,
             treesManager.logManager,
@@ -233,9 +234,9 @@ describe('Pypi Utils Tests', async () => {
             [workspaceFolders[4]],
             treesManager.logManager
         );
-        const pythonDescriptors: vscode.Uri[] = workspaceDescriptors.get(PackageType.Python) || [];
-        assert.lengthOf(pythonDescriptors, 1);
-        assert.equal(path.basename(pythonDescriptors[0].fsPath), 'pyproject.toml');
+        const parsedDescriptors: vscode.Uri[] = workspaceDescriptors.get(PackageType.Python) || [];
+        assert.lengthOf(parsedDescriptors, 1);
+        assert.equal(path.basename(parsedDescriptors[0].fsPath), 'pyproject.toml');
     });
 
     it('Create Pypi Dependencies Tree from pyproject.toml', async () => {
@@ -253,7 +254,7 @@ describe('Pypi Utils Tests', async () => {
             treesManager.logManager
         );
         await PypiUtils.descriptorsToDependencyTrees(
-            PypiUtils.readDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
+            PypiUtils.parseDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
             tree,
             () => undefined,
             treesManager.logManager,
@@ -331,7 +332,7 @@ describe('Pypi Utils Tests', async () => {
             treesManager.logManager
         );
         await PypiUtils.descriptorsToDependencyTrees(
-            PypiUtils.readDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
+            PypiUtils.parseDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
             tree,
             () => undefined,
             treesManager.logManager,
@@ -352,7 +353,7 @@ describe('Pypi Utils Tests', async () => {
         }
         workspaceDescriptors = await ScanUtils.locatePackageDescriptors([workspaceFolders[1]], treesManager.logManager);
         await PypiUtils.descriptorsToDependencyTrees(
-            PypiUtils.readDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
+            PypiUtils.parseDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
             tree,
             () => undefined,
             treesManager.logManager,
@@ -372,7 +373,7 @@ describe('Pypi Utils Tests', async () => {
         }
         workspaceDescriptors = await ScanUtils.locatePackageDescriptors([workspaceFolders[2]], treesManager.logManager);
         await PypiUtils.descriptorsToDependencyTrees(
-            PypiUtils.readDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
+            PypiUtils.parseDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
             tree,
             () => undefined,
             treesManager.logManager,
@@ -448,7 +449,7 @@ describe('Pypi Utils Tests', async () => {
             treesManager.logManager
         );
         await PypiUtils.descriptorsToDependencyTrees(
-            PypiUtils.readDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
+            PypiUtils.parseDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
             tree,
             () => undefined,
             treesManager.logManager,
