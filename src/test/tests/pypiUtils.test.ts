@@ -135,6 +135,9 @@ describe('Pypi Utils Tests', async () => {
         assert.isUndefined(dependencyToVersion.get('python'));
         assert.isUndefined(dependencyToVersion.get('requests'));
         assert.equal(dependencyToVersion.size, 4);
+
+        dependencyToVersion = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectWithBom.toml'))!.directDependencies;
+        assert.equal(dependencyToVersion.get('requests'), '==2.32.4');
     });
 
     it('Parse pyproject.toml project name', () => {
