@@ -1,11 +1,13 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import { parse } from 'smol-toml';
 import { LogManager } from '../log/logManager';
 import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { ScanUtils } from './scanUtils';
 import { PipDepTree } from '../types/pipDepTree';
+import { PyprojectToml } from '../types/pyprojectToml';
 import { VirtualEnvPypiTree } from '../treeDataProviders/dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
 
 export class PypiUtils {
@@ -17,12 +19,8 @@ export class PypiUtils {
     public static readonly removeFlagCommentRegex: RegExp = /^(?:(?!#|-e).)*$/gms;
     public static readonly setupPyProjectNameRegex: RegExp = /name=\s*(?:"|')(.*)(?:"|')/gm;
     public static readonly installReqRegex: RegExp = /install_requires\s*=\s*\[([^\]]+)\]/gm;
-    public static readonly pyprojectNameRegex: RegExp = /^\s*name\s*=\s*["']([^"']*)["']/m;
-    public static readonly pyprojectDependenciesRegex: RegExp = /^\s*dependencies\s*=\s*\[/m;
-    public static readonly tomlStringRegex: RegExp = /["']([^"']*)["']/g;
     public static readonly requirementRegex: RegExp = /^([\w\-.]+)\s*(?:\[[^\]]*\])?\s*\(?([^)]*)\)?$/;
-    public static readonly exactVersionRegex: RegExp = /^==\s*([\w\-.]+)$/;
-    private static readonly tomlTableHeaderRegex: RegExp = /^\s*\[/m;
+    public static readonly exactVersionRegex: RegExp = /^(?:==)?\s*([\w\-.]+)$/;
 
     public static searchProjectName(setupPyFile: string): string {
         const content: string = fs.readFileSync(setupPyFile, 'utf8');
@@ -40,101 +38,40 @@ export class PypiUtils {
         return this.matchPythonDependencies(match[1]);
     }
 
-    /**
-     * Get the direct dependencies declared in a pyproject.toml file.
-     * Both the standard [project] dependencies array and Poetry's legacy [tool.poetry.dependencies] table are read,
-     * since a project may declare its dependencies in either of them.
-     * @param pyprojectFile - pyproject.toml file
-     */
     public static getPyprojectDirectDependencies(pyprojectFile: string): Map<string, string | undefined> {
-        const content: string = fs.readFileSync(pyprojectFile, 'utf8');
+        const pyproject: PyprojectToml = this.readPyproject(pyprojectFile);
         const dependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
-        const declared: string = this.extractDependenciesArray(this.extractTomlTable(content, 'project'));
-        for (const [, requirement] of declared.matchAll(new RegExp(PypiUtils.tomlStringRegex))) {
-            this.addRequirement(dependencies, requirement);
-        }
-        for (const line of this.extractTomlTable(content, 'tool.poetry.dependencies').split('\n')) {
-            const name: string = line.split('=')[0].trim();
-            if (name === '' || name.startsWith('#') || name === 'python') {
-                continue;
+        for (const requirement of pyproject.project?.dependencies || []) {
+            const [, name, constraint] = new RegExp(PypiUtils.requirementRegex).exec(requirement.split(';')[0].trim()) || [];
+            if (name) {
+                dependencies.set(this.normalizePackageName(name), this.toExactVersion(constraint));
             }
-            dependencies.set(this.normalizePackageName(name), '');
+        }
+        for (const [name, constraint] of Object.entries(pyproject.tool?.poetry?.dependencies || {})) {
+            if (name !== 'python') {
+                dependencies.set(
+                    this.normalizePackageName(name),
+                    this.toExactVersion(typeof constraint === 'string' ? constraint : constraint.version)
+                );
+            }
         }
         return dependencies;
     }
 
-    /**
-     * Add a PEP 508 requirement, such as 'requests[socks] (==2.32.4) ; python_version < "3.11"', to the direct dependencies.
-     * A version is kept only for an exact pin, because any other constraint cannot be compared against an installed version.
-     * @param dependencies - Direct dependencies collected so far
-     * @param requirement  - A single entry of the pyproject.toml dependencies array
-     */
-    private static addRequirement(dependencies: Map<string, string | undefined>, requirement: string): void {
-        const [, name, constraint] = new RegExp(PypiUtils.requirementRegex).exec(requirement.split(';')[0].trim()) || [];
-        if (!name) {
-            return;
-        }
-        const [, exactVersion] = new RegExp(PypiUtils.exactVersionRegex).exec(constraint.trim()) || [];
-        dependencies.set(this.normalizePackageName(name), exactVersion ? '==' + exactVersion : '');
-    }
-
-    /**
-     * Return the project name declared in pyproject.toml, normalized to the name pip reports for the installed project.
-     * @param pyprojectFile - pyproject.toml file
-     */
     public static searchPyprojectProjectName(pyprojectFile: string): string | undefined {
-        const content: string = fs.readFileSync(pyprojectFile, 'utf8');
-        for (const table of ['project', 'tool.poetry']) {
-            const [, name] = new RegExp(PypiUtils.pyprojectNameRegex).exec(this.extractTomlTable(content, table)) || [];
-            if (name) {
-                return this.normalizePackageName(name);
-            }
-        }
-        return;
+        const pyproject: PyprojectToml = this.readPyproject(pyprojectFile);
+        return pyproject.project?.name || pyproject.tool?.poetry?.name;
     }
 
-    /**
-     * Return the body of a pyproject.toml table - the text between its header and the next table header.
-     * @param content - pyproject.toml content
-     * @param table   - Table name, for example 'project' or 'tool.poetry.dependencies'
-     */
-    private static extractTomlTable(content: string, table: string): string {
-        const header: RegExpExecArray | null = new RegExp(`^\\s*\\[${table.replace(/\./g, '\\.')}\\]\\s*(?:#.*)?$`, 'm').exec(content);
-        if (!header) {
-            return '';
-        }
-        const body: string = content.substring(header.index + header[0].length);
-        const nextHeader: RegExpExecArray | null = new RegExp(PypiUtils.tomlTableHeaderRegex).exec(body);
-        return nextHeader ? body.substring(0, nextHeader.index) : body;
+    private static readPyproject(pyprojectFile: string): PyprojectToml {
+        return parse(fs.readFileSync(pyprojectFile, 'utf8')) as PyprojectToml;
     }
 
-    /**
-     * Return the content of the 'dependencies' array of a pyproject.toml table.
-     * Brackets are counted rather than matched by regex, so that extras such as "requests[socks]" do not end the array early.
-     * @param tableBody - Body of the table holding the array
-     */
-    private static extractDependenciesArray(tableBody: string): string {
-        const arrayStart: RegExpExecArray | null = new RegExp(PypiUtils.pyprojectDependenciesRegex).exec(tableBody);
-        if (!arrayStart) {
-            return '';
-        }
-        const from: number = arrayStart.index + arrayStart[0].length;
-        let depth: number = 1;
-        for (let i: number = from; i < tableBody.length; i++) {
-            if (tableBody[i] === '[') {
-                depth++;
-            } else if (tableBody[i] === ']' && --depth === 0) {
-                return tableBody.substring(from, i);
-            }
-        }
-        return tableBody.substring(from);
+    private static toExactVersion(constraint: string | undefined): string {
+        const [, exactVersion] = new RegExp(PypiUtils.exactVersionRegex).exec((constraint || '').trim()) || [];
+        return exactVersion ? '==' + exactVersion : '';
     }
 
-    /**
-     * Normalize a package name to the name pip reports for it, so that 'huggingface_hub' matches the installed 'huggingface-hub'.
-     * See https://peps.python.org/pep-0503/#normalized-names
-     * @param name - Package name as declared in the descriptor
-     */
     private static normalizePackageName(name: string): string {
         return name.toLowerCase().replace(/[-_.]+/g, '-');
     }
@@ -351,27 +288,21 @@ export class PypiUtils {
      * @param projectName  Name of the project as written in setup.py or pyproject.toml.
      */
     private static filterDescriptorDependencies(descriptorPath: string, pipDepTree: PipDepTree[], projectName?: string): PipDepTree[] {
-        const isSetupPy: boolean = descriptorPath.endsWith('setup.py');
         let dependencies: Map<string, string | undefined>;
-        let declaredProjectName: string | undefined = projectName;
-        if (isSetupPy) {
+        let descriptorProjectName: string | undefined = projectName;
+        if (descriptorPath.endsWith('setup.py')) {
             dependencies = this.getSetupPyDirectDependencies(descriptorPath);
-            declaredProjectName = this.searchProjectName(descriptorPath);
+            descriptorProjectName = this.searchProjectName(descriptorPath);
         } else if (descriptorPath.endsWith('pyproject.toml')) {
             dependencies = this.getPyprojectDirectDependencies(descriptorPath);
-            declaredProjectName = this.searchPyprojectProjectName(descriptorPath);
+            descriptorProjectName = this.searchPyprojectProjectName(descriptorPath);
         } else {
             dependencies = this.getRequirementsTxtDirectDependencies(descriptorPath);
         }
         if (!dependencies) {
             return pipDepTree;
         }
-        return this.filterDependencies(
-            dependencies,
-            pipDepTree,
-            false,
-            declaredProjectName ? this.normalizePackageName(declaredProjectName) : undefined
-        );
+        return this.filterDependencies(dependencies, pipDepTree, false, descriptorProjectName && this.normalizePackageName(descriptorProjectName));
     }
 
     /**

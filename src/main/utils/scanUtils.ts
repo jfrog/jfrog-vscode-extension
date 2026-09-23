@@ -6,11 +6,13 @@ import * as os from 'os';
 import * as path from 'path';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
+import { parse } from 'smol-toml';
 import { ContextKeys } from '../constants/contextKeys';
 import { LogManager } from '../log/logManager';
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
 import { PackageType } from '../types/projectType';
+import { PyprojectToml } from '../types/pyprojectToml';
 import { EntryIssuesData, ScanResults } from '../types/workspaceIssuesDetails';
 import { Configuration } from './configuration';
 import { Utils } from './utils';
@@ -18,8 +20,6 @@ import { Utils } from './utils';
 export class ScanUtils {
     public static readonly DESCRIPTOR_SELECTOR_PATTERN: string =
         '**/{go.mod,package.json,pom.xml,setup.py,pyproject.toml,*requirements*.txt,pnpm-lock.yaml,yarn.lock,*.csproj,*.sln,packages.config}';
-
-    private static readonly PYTHON_PROJECT_TABLE_PATTERN: RegExp = /^\s*\[(?:project|tool\.poetry)\]/m;
 
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
@@ -339,14 +339,10 @@ export class ScanUtils {
         return;
     }
 
-    /**
-     * Return true if the pyproject.toml declares a Python project, and not only tool configuration such as [tool.black].
-     * A file that cannot be read declares nothing, so that one unreadable file does not abort the descriptor search.
-     * @param pyprojectPath - path to pyproject.toml
-     */
     private static declaresPythonProject(pyprojectPath: string): boolean {
         try {
-            return ScanUtils.PYTHON_PROJECT_TABLE_PATTERN.test(fs.readFileSync(pyprojectPath, 'utf8'));
+            const pyproject: PyprojectToml = parse(fs.readFileSync(pyprojectPath, 'utf8')) as PyprojectToml;
+            return pyproject.project !== undefined || pyproject.tool?.poetry !== undefined;
         } catch (error) {
             return false;
         }

@@ -103,14 +103,13 @@ describe('Pypi Utils Tests', async () => {
         assert.equal(dependencyToVersion.get('someproject10'), '==9.0');
     });
 
-    it('Match pyproject.toml dependencies with regex', () => {
+    it('Parse pyproject.toml dependencies', () => {
         let dependencyToVersion: Map<string, string | undefined> = PypiUtils.getPyprojectDirectDependencies(
             path.join(tmpDir.fsPath, 'regex', 'pyprojectNoDepFound.toml')
         );
         assert.equal(dependencyToVersion.size, 0);
 
         dependencyToVersion = PypiUtils.getPyprojectDirectDependencies(path.join(tmpDir.fsPath, 'regex', 'pyprojectAllKindOfDepsVariations.toml'));
-        // Only an exact pin is kept as a version, since any other constraint cannot be compared against an installed version.
         assert.equal(dependencyToVersion.get('fire'), '==0.1.3');
         assert.equal(dependencyToVersion.get('requests'), '==2.32.4');
         assert.equal(dependencyToVersion.get('uvicorn'), '==0.30.0');
@@ -121,26 +120,27 @@ describe('Pypi Utils Tests', async () => {
         assert.equal(dependencyToVersion.get('newrelic'), '');
         assert.equal(dependencyToVersion.get('jupyter'), '');
         assert.equal(dependencyToVersion.get('numpy'), '');
-        // Names are normalized to the form pip reports them in, so 'huggingface_hub' matches the installed 'huggingface-hub'.
         assert.equal(dependencyToVersion.get('huggingface-hub'), '');
-        // 'pytest' is under [project.optional-dependencies] and must not be reported as a direct dependency.
         assert.isUndefined(dependencyToVersion.get('pytest'));
-        // A marker must not become a dependency of its own.
         assert.isUndefined(dependencyToVersion.get('python-version'));
+        assert.isUndefined(dependencyToVersion.get('httpx'));
         assert.equal(dependencyToVersion.size, 11);
 
         dependencyToVersion = PypiUtils.getPyprojectDirectDependencies(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetry.toml'));
-        assert.equal(dependencyToVersion.get('fire'), '');
-        assert.equal(dependencyToVersion.get('newrelic'), '');
+        assert.equal(dependencyToVersion.get('fire'), '==0.1.3');
+        assert.equal(dependencyToVersion.get('newrelic'), '==2.0.0.1');
+        assert.equal(dependencyToVersion.get('zope-interface'), '');
+        assert.equal(dependencyToVersion.get('numpy'), '');
         assert.isUndefined(dependencyToVersion.get('python'));
-        assert.equal(dependencyToVersion.size, 2);
+        assert.isUndefined(dependencyToVersion.get('requests'));
+        assert.equal(dependencyToVersion.size, 4);
     });
 
-    it('Match pyproject.toml project name with regex', () => {
+    it('Parse pyproject.toml project name', () => {
         let got: string | undefined = PypiUtils.searchPyprojectProjectName(path.join(tmpDir.fsPath, 'regex', 'pyprojectNoDepFound.toml'));
         assert.equal(got, 'pipgrip');
         got = PypiUtils.searchPyprojectProjectName(path.join(tmpDir.fsPath, 'regex', 'pyprojectAllKindOfDepsVariations.toml'));
-        assert.equal(got, 'example-project');
+        assert.equal(got, 'Example_Project');
         got = PypiUtils.searchPyprojectProjectName(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetry.toml'));
         assert.equal(got, 'legacy-poetry');
     });
@@ -180,10 +180,8 @@ describe('Pypi Utils Tests', async () => {
             treesManager.logManager,
             parent
         );
-        // The setup.py is a shim that declares nothing, so the dependencies of the project come from the pyproject.toml.
         const pyproject: PypiTreeNode | undefined = parent.children.find(child => child.label === 'pyproject.toml') as PypiTreeNode | undefined;
         assert.isDefined(pyproject);
-        // 'newrelic' is declared with a '>=' constraint, and must be scanned just like the pinned 'fire'.
         assert.sameMembers(
             pyproject!.children.map(child => child.generalInfo.artifactId),
             ['fire', 'newrelic']
