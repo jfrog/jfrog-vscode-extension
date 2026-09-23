@@ -17,6 +17,7 @@ import { createScanCacheManager } from './utils/utils.test';
 import { CacheManager } from '../../main/cache/cacheManager';
 import { PackageType } from '../../main/types/projectType';
 import { PipDepTree } from '../../main/types/pipDepTree';
+import { PythonDescriptor } from '../../main/types/pythonDescriptor';
 import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { IComponent } from 'jfrog-client-js';
 import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
@@ -104,12 +105,12 @@ describe('Pypi Utils Tests', async () => {
     });
 
     it('Parse pyproject.toml dependencies', () => {
-        let dependencyToVersion: Map<string, string | undefined> = PypiUtils.getPyprojectDirectDependencies(
+        let dependencyToVersion: Map<string, string | undefined> = PypiUtils.readPyproject(
             path.join(tmpDir.fsPath, 'regex', 'pyprojectNoDepFound.toml')
-        );
+        )!.directDependencies;
         assert.equal(dependencyToVersion.size, 0);
 
-        dependencyToVersion = PypiUtils.getPyprojectDirectDependencies(path.join(tmpDir.fsPath, 'regex', 'pyprojectAllKindOfDepsVariations.toml'));
+        dependencyToVersion = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectAllKindOfDepsVariations.toml'))!.directDependencies;
         assert.equal(dependencyToVersion.get('fire'), '==0.1.3');
         assert.equal(dependencyToVersion.get('requests'), '==2.32.4');
         assert.equal(dependencyToVersion.get('uvicorn'), '==0.30.0');
@@ -120,16 +121,16 @@ describe('Pypi Utils Tests', async () => {
         assert.equal(dependencyToVersion.get('newrelic'), '');
         assert.equal(dependencyToVersion.get('jupyter'), '');
         assert.equal(dependencyToVersion.get('numpy'), '');
-        assert.equal(dependencyToVersion.get('huggingface-hub'), '');
+        assert.equal(dependencyToVersion.get('huggingface_hub'), '');
         assert.isUndefined(dependencyToVersion.get('pytest'));
-        assert.isUndefined(dependencyToVersion.get('python-version'));
+        assert.isUndefined(dependencyToVersion.get('python_version'));
         assert.isUndefined(dependencyToVersion.get('httpx'));
         assert.equal(dependencyToVersion.size, 11);
 
-        dependencyToVersion = PypiUtils.getPyprojectDirectDependencies(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetry.toml'));
+        dependencyToVersion = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetry.toml'))!.directDependencies;
         assert.equal(dependencyToVersion.get('fire'), '==0.1.3');
         assert.equal(dependencyToVersion.get('newrelic'), '==2.0.0.1');
-        assert.equal(dependencyToVersion.get('zope-interface'), '');
+        assert.equal(dependencyToVersion.get('zope.interface'), '');
         assert.equal(dependencyToVersion.get('numpy'), '');
         assert.isUndefined(dependencyToVersion.get('python'));
         assert.isUndefined(dependencyToVersion.get('requests'));
@@ -137,25 +138,53 @@ describe('Pypi Utils Tests', async () => {
     });
 
     it('Parse pyproject.toml project name', () => {
-        let got: string | undefined = PypiUtils.searchPyprojectProjectName(path.join(tmpDir.fsPath, 'regex', 'pyprojectNoDepFound.toml'));
+        let got: string | undefined = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectNoDepFound.toml'))?.projectName;
         assert.equal(got, 'pipgrip');
-        got = PypiUtils.searchPyprojectProjectName(path.join(tmpDir.fsPath, 'regex', 'pyprojectAllKindOfDepsVariations.toml'));
+        got = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectAllKindOfDepsVariations.toml'))?.projectName;
         assert.equal(got, 'Example_Project');
-        got = PypiUtils.searchPyprojectProjectName(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetry.toml'));
+        got = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetry.toml'))?.projectName;
         assert.equal(got, 'legacy-poetry');
     });
 
-    it('Locate pyproject.toml only when it declares a python project', async () => {
-        const toolConfigOnly: vscode.WorkspaceFolder = {
-            uri: vscode.Uri.file(path.join(tmpDir.fsPath, 'pyprojectToolConfig')),
-            name: '',
-            index: 0
-        } as vscode.WorkspaceFolder;
-        const workspaceDescriptors: Map<PackageType, vscode.Uri[]> = await ScanUtils.locatePackageDescriptors(
-            [toolConfigOnly],
+    it('Match declared dependencies to installed packages by normalized name', () => {
+        const installed: PipDepTree[] = [
+            { key: 'ruamel.yaml', package_name: 'ruamel.yaml', installed_version: '0.18.6', required_version: '', dependencies: [] },
+            { key: 'zope-interface', package_name: 'zope.interface', installed_version: '6.0', required_version: '', dependencies: [] },
+            {
+                key: 'acme.core',
+                package_name: 'acme.core',
+                installed_version: '1.0.0',
+                required_version: '',
+                dependencies: [
+                    { key: 'huggingface-hub', package_name: 'huggingface-hub', installed_version: '1.0.0', required_version: '', dependencies: [] }
+                ]
+            }
+        ];
+        const declared: Map<string, string | undefined> = new Map([
+            ['ruamel_yaml', ''],
+            ['zope.interface', ''],
+            ['huggingface_hub', '']
+        ]);
+        assert.sameMembers(
+            PypiUtils.filterDependencies(declared, installed, false, 'acme-core').map(dependency => dependency.key),
+            ['ruamel.yaml', 'zope-interface', 'huggingface-hub']
+        );
+    });
+
+    it('Skip a pyproject.toml that declares no python project or cannot be read', () => {
+        const pythonDescriptors: PythonDescriptor[] = PypiUtils.readDescriptors(
+            [
+                vscode.Uri.file(path.join(tmpDir.fsPath, 'pyprojectToolConfig', 'pyproject.toml')),
+                vscode.Uri.file(path.join(tmpDir.fsPath, 'pyprojectInvalid', 'pyproject.toml')),
+                vscode.Uri.file(path.join(tmpDir.fsPath, 'pyprojectWrongShape', 'pyproject.toml')),
+                vscode.Uri.file(path.join(tmpDir.fsPath, 'pyproject', 'pyproject.toml'))
+            ],
             treesManager.logManager
         );
-        assert.isUndefined(workspaceDescriptors.get(PackageType.Python));
+        assert.deepEqual(
+            pythonDescriptors.map(pythonDescriptor => pythonDescriptor.path),
+            [path.join(tmpDir.fsPath, 'pyproject', 'pyproject.toml')]
+        );
     });
 
     it('Create Pypi Dependencies Tree from pyproject.toml next to a setup.py shim', async () => {
@@ -174,7 +203,7 @@ describe('Pypi Utils Tests', async () => {
         );
         assert.lengthOf(workspaceDescriptors.get(PackageType.Python) || [], 2);
         await PypiUtils.descriptorsToDependencyTrees(
-            workspaceDescriptors.get(PackageType.Python) || [],
+            PypiUtils.readDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
             tree,
             () => undefined,
             treesManager.logManager,
@@ -214,7 +243,7 @@ describe('Pypi Utils Tests', async () => {
             treesManager.logManager
         );
         await PypiUtils.descriptorsToDependencyTrees(
-            workspaceDescriptors.get(PackageType.Python) || [],
+            PypiUtils.readDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
             tree,
             () => undefined,
             treesManager.logManager,
@@ -292,7 +321,7 @@ describe('Pypi Utils Tests', async () => {
             treesManager.logManager
         );
         await PypiUtils.descriptorsToDependencyTrees(
-            workspaceDescriptors.get(PackageType.Python) || [],
+            PypiUtils.readDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
             tree,
             () => undefined,
             treesManager.logManager,
@@ -313,7 +342,7 @@ describe('Pypi Utils Tests', async () => {
         }
         workspaceDescriptors = await ScanUtils.locatePackageDescriptors([workspaceFolders[1]], treesManager.logManager);
         await PypiUtils.descriptorsToDependencyTrees(
-            workspaceDescriptors.get(PackageType.Python) || [],
+            PypiUtils.readDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
             tree,
             () => undefined,
             treesManager.logManager,
@@ -333,7 +362,7 @@ describe('Pypi Utils Tests', async () => {
         }
         workspaceDescriptors = await ScanUtils.locatePackageDescriptors([workspaceFolders[2]], treesManager.logManager);
         await PypiUtils.descriptorsToDependencyTrees(
-            workspaceDescriptors.get(PackageType.Python) || [],
+            PypiUtils.readDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
             tree,
             () => undefined,
             treesManager.logManager,
@@ -409,7 +438,7 @@ describe('Pypi Utils Tests', async () => {
             treesManager.logManager
         );
         await PypiUtils.descriptorsToDependencyTrees(
-            workspaceDescriptors.get(PackageType.Python) || [],
+            PypiUtils.readDescriptors(workspaceDescriptors.get(PackageType.Python) || [], treesManager.logManager),
             tree,
             () => undefined,
             treesManager.logManager,

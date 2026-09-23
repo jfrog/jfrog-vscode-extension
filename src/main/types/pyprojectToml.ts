@@ -1,12 +1,16 @@
 export interface PyprojectToml {
-    project?: {
-        name?: string;
-        dependencies?: string[];
-    };
+    project?: PyprojectProjectTable;
     tool?: {
-        poetry?: {
-            name?: string;
-            dependencies?: { [name: string]: string | { version?: string } };
-        };
+        poetry?: PyprojectPoetryTable;
     };
+}
+
+export interface PyprojectProjectTable {
+    name?: string;
+    dependencies?: string[];
+}
+
+export interface PyprojectPoetryTable {
+    name?: string;
+    dependencies?: { [name: string]: string | { version?: string } };
 }

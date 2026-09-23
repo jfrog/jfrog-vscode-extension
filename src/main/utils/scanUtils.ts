@@ -6,13 +6,11 @@ import * as os from 'os';
 import * as path from 'path';
 import * as tmp from 'tmp';
 import * as vscode from 'vscode';
-import { parse } from 'smol-toml';
 import { ContextKeys } from '../constants/contextKeys';
 import { LogManager } from '../log/logManager';
 import { FileTreeNode } from '../treeDataProviders/issuesTree/fileTreeNode';
 import { IssuesRootTreeNode } from '../treeDataProviders/issuesTree/issuesRootTreeNode';
 import { PackageType } from '../types/projectType';
-import { PyprojectToml } from '../types/pyprojectToml';
 import { EntryIssuesData, ScanResults } from '../types/workspaceIssuesDetails';
 import { Configuration } from './configuration';
 import { Utils } from './utils';
@@ -330,22 +328,10 @@ export class ScanUtils {
         if (fsPath.endsWith('.sln') || fsPath.endsWith('.csproj') || fsPath.endsWith('packages.config')) {
             return PackageType.Nuget;
         }
-        if (fsPath.endsWith('pyproject.toml')) {
-            return ScanUtils.declaresPythonProject(fsPath) ? PackageType.Python : undefined;
-        }
-        if (fsPath.endsWith('.txt') || fsPath.endsWith('.py')) {
+        if (fsPath.endsWith('.txt') || fsPath.endsWith('.py') || fsPath.endsWith('pyproject.toml')) {
             return PackageType.Python;
         }
         return;
-    }
-
-    private static declaresPythonProject(pyprojectPath: string): boolean {
-        try {
-            const pyproject: PyprojectToml = parse(fs.readFileSync(pyprojectPath, 'utf8')) as PyprojectToml;
-            return pyproject.project !== undefined || pyproject.tool?.poetry !== undefined;
-        } catch (error) {
-            return false;
-        }
     }
 
     static createTmpDir(): string {
