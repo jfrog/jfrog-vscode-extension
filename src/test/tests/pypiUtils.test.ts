@@ -138,6 +138,13 @@ describe('Pypi Utils Tests', async () => {
 
         dependencyToVersion = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectWithBom.toml'))!.directDependencies;
         assert.equal(dependencyToVersion.get('requests'), '==2.32.4');
+
+        dependencyToVersion = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetryWithProjectTable.toml'))!.directDependencies;
+        assert.deepEqual([...dependencyToVersion], [['requests', '==2.32.4']]);
+
+        dependencyToVersion = PypiUtils.readPyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetryWithEmptyProjectTable.toml'))!
+            .directDependencies;
+        assert.deepEqual([...dependencyToVersion], [['fire', '==0.1.3']]);
     });
 
     it('Parse pyproject.toml project name', () => {
