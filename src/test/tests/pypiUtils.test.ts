@@ -146,6 +146,9 @@ describe('Pypi Utils Tests', async () => {
         dependencyToVersion = PypiUtils.parsePyproject(path.join(tmpDir.fsPath, 'regex', 'pyprojectPoetryWithEmptyProjectTable.toml'))!
             .directDependencies;
         assert.deepEqual([...dependencyToVersion], [['fire', '==0.1.3']]);
+
+        dependencyToVersion = PypiUtils.parsePyproject(path.join(tmpDir.fsPath, 'pyprojectWrongShape', 'pyproject.toml'))!.directDependencies;
+        assert.deepEqual([...dependencyToVersion], [['fire', '==0.1.3']]);
     });
 
     it('Parse pyproject.toml project name', () => {
@@ -182,12 +185,61 @@ describe('Pypi Utils Tests', async () => {
         );
     });
 
-    it('Skip a pyproject.toml that declares no python project or cannot be read', () => {
+    it('Attribute a descriptor without a project name to the closest project above it', async () => {
+        const workspace: string = path.join(tmpDir.fsPath, 'monorepo');
+        const installedDependency: (key: string) => PipDepTree = (key: string) => ({
+            key: key,
+            package_name: key,
+            installed_version: '1.0.0',
+            required_version: '',
+            dependencies: []
+        });
+        const installed: PipDepTree[] = [
+            { ...installedDependency('root-app'), dependencies: [installedDependency('newrelic')] },
+            { ...installedDependency('svc-app'), dependencies: [installedDependency('fire')] }
+        ];
+        const trees: PypiTreeNode[] = await PypiUtils.descriptorsToDependencyTrees(
+            [
+                { path: path.join(workspace, 'setup.py'), projectName: 'root-app', directDependencies: new Map() },
+                { path: path.join(workspace, 'svc', 'pyproject.toml'), projectName: 'svc-app', directDependencies: new Map() },
+                { path: path.join(workspace, 'svc', 'requirements.txt'), directDependencies: new Map([['fire', '']]) },
+                { path: path.join(workspace, 'requirements', 'dev.txt'), directDependencies: new Map([['newrelic', '']]) }
+            ],
+            installed,
+            () => undefined,
+            treesManager.logManager,
+            new DependenciesTreeNode(new GeneralInfo('', '', [], '', PackageType.Unknown))
+        );
+        assert.deepEqual(
+            trees[2].children.map(child => child.label),
+            ['fire']
+        );
+        assert.deepEqual(
+            trees[3].children.map(child => child.label),
+            ['newrelic']
+        );
+    });
+
+    it('Offer the fixed version update only where it can be written safely', () => {
+        const isUpdateOffered: (descriptor: string) => boolean = (descriptor: string) =>
+            pythonDependencyUpdate.isMatched(
+                new DependencyIssuesTreeNode(
+                    'artifactId',
+                    { package_type: 'PYPI', package_name: 'fire' } as IComponent,
+                    false,
+                    new ProjectDependencyTreeNode(path.join(tmpDir.fsPath, descriptor), PackageType.Python)
+                )
+            );
+        assert.isTrue(isUpdateOffered(path.join('requirements', 'requirements.txt')));
+        assert.isTrue(isUpdateOffered(path.join('setup', 'setup.py')));
+        assert.isFalse(isUpdateOffered(path.join('pyproject', 'pyproject.toml')));
+    });
+
+    it('Skip a descriptor that fails to parse or a pyproject.toml that declares no python project', () => {
         const pythonDescriptors: PythonDescriptor[] = PypiUtils.parseDescriptors(
             [
                 vscode.Uri.file(path.join(tmpDir.fsPath, 'pyprojectToolConfig', 'pyproject.toml')),
                 vscode.Uri.file(path.join(tmpDir.fsPath, 'pyprojectInvalid', 'pyproject.toml')),
-                vscode.Uri.file(path.join(tmpDir.fsPath, 'pyprojectWrongShape', 'pyproject.toml')),
                 vscode.Uri.file(path.join(tmpDir.fsPath, 'pyproject', 'pyproject.toml'))
             ],
             treesManager.logManager

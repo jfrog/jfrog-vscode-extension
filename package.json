@@ -15,7 +15,7 @@
     },
     "publisher": "JFrog",
     "engines": {
-        "vscode": "^1.80.0"
+        "vscode": "^1.82.0"
     },
     "categories": [
         "Other"

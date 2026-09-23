@@ -59,6 +59,9 @@ export class PypiUtils {
     private static getProjectTableDependencies(requirements: string[]): Map<string, string | undefined> {
         const dependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
         for (const requirement of requirements) {
+            if (typeof requirement !== 'string') {
+                continue;
+            }
             // Drop the environment marker after ';', then split the name from its optional extras and version constraint.
             const [, name, constraint] = new RegExp(PypiUtils.requirementRegex).exec(requirement.split(';')[0].trim()) || [];
             if (name) {
@@ -256,7 +259,7 @@ export class PypiUtils {
     }
 
     /**
-     * Parse the descriptors, skipping a pyproject.toml that declares no Python project or cannot be read.
+     * Parse the descriptors, skipping any that fails to parse and a pyproject.toml that declares no Python project.
      * @param descriptors - Paths to setup.py, pyproject.toml and requirements*.txt files
      * @param logManager  - LogManager for the operation
      */
@@ -272,23 +275,23 @@ export class PypiUtils {
     }
 
     private static parseDescriptor(descriptorPath: string, logManager: LogManager): PythonDescriptor | undefined {
-        switch (path.basename(descriptorPath)) {
-            case 'setup.py':
-                return {
-                    path: descriptorPath,
-                    projectName: this.searchProjectName(descriptorPath),
-                    directDependencies: this.getSetupPyDirectDependencies(descriptorPath)
-                };
-            case 'pyproject.toml':
-                try {
+        try {
+            switch (path.basename(descriptorPath)) {
+                case 'setup.py':
+                    return {
+                        path: descriptorPath,
+                        projectName: this.searchProjectName(descriptorPath),
+                        directDependencies: this.getSetupPyDirectDependencies(descriptorPath)
+                    };
+                case 'pyproject.toml':
                     return this.parsePyproject(descriptorPath);
-                } catch (error) {
-                    // One unreadable pyproject.toml must not stop the other descriptors of the workspace from being scanned.
-                    logManager.logMessage(`Skipping '${descriptorPath}', failed to read it: ${(<any>error).message}`, 'WARN');
-                    return undefined;
-                }
-            default:
-                return { path: descriptorPath, directDependencies: this.getRequirementsTxtDirectDependencies(descriptorPath) };
+                default:
+                    return { path: descriptorPath, directDependencies: this.getRequirementsTxtDirectDependencies(descriptorPath) };
+            }
+        } catch (error) {
+            // One descriptor that fails to parse must not stop the other descriptors of the workspace from being scanned.
+            logManager.logMessage(`Skipping '${descriptorPath}', failed to parse it: ${(<any>error).message}`, 'WARN');
+            return undefined;
         }
     }
 
@@ -306,16 +309,18 @@ export class PypiUtils {
         logManager: LogManager,
         parent: DependenciesTreeNode
     ): Promise<PypiTreeNode[]> {
-        // A descriptor that declares no project name, such as requirements.txt, uses the one declared by the workspace's
-        // setup.py or pyproject.toml, because pip nests the dependencies of an installed project under that project.
-        const workspaceProjectName: string | undefined = pythonDescriptors.find(pythonDescriptor => pythonDescriptor.projectName)?.projectName;
         const trees: PypiTreeNode[] = [];
         for (const pythonDescriptor of pythonDescriptors) {
             checkCanceled();
             logManager.logMessage(`Analyzing '${pythonDescriptor.path}' file`, 'INFO');
             let root: PypiTreeNode = new PypiTreeNode(pythonDescriptor.path, parent);
             root.refreshDependencies(
-                this.filterDependencies(pythonDescriptor.directDependencies, pipDepTree, false, pythonDescriptor.projectName || workspaceProjectName)
+                this.filterDependencies(
+                    pythonDescriptor.directDependencies,
+                    pipDepTree,
+                    false,
+                    this.getProjectName(pythonDescriptor, pythonDescriptors)
+                )
             );
             trees.push(root);
         }
@@ -341,6 +346,29 @@ export class PypiUtils {
         if (!parent.children.includes(root)) {
             parent.children.push(root);
         }
+    }
+
+    /**
+     * A descriptor that declares no project name, such as requirements.txt, belongs to the project declared closest above it,
+     * because pip nests the dependencies of an installed project under that project.
+     * @example requirements/dev.txt belongs to the project of setup.py, and svc/requirements.txt to the one of svc/pyproject.toml
+     */
+    private static getProjectName(pythonDescriptor: PythonDescriptor, pythonDescriptors: PythonDescriptor[]): string | undefined {
+        if (pythonDescriptor.projectName) {
+            return pythonDescriptor.projectName;
+        }
+        const descriptorDirectory: string = path.dirname(pythonDescriptor.path);
+        let closestDirectory: string = '';
+        let closestProjectName: string | undefined;
+        for (const candidate of pythonDescriptors) {
+            const candidateDirectory: string = path.dirname(candidate.path);
+            const isEnclosing: boolean = descriptorDirectory === candidateDirectory || descriptorDirectory.startsWith(candidateDirectory + path.sep);
+            if (candidate.projectName && isEnclosing && candidateDirectory.length > closestDirectory.length) {
+                closestDirectory = candidateDirectory;
+                closestProjectName = candidate.projectName;
+            }
+        }
+        return closestProjectName;
     }
 
     /**
