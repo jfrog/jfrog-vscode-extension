@@ -1,0 +1,8 @@
+[project]
+name = "poetry-two"
+version = "0.1.0"
+dependencies = ["requests==2.32.4"]
+
+[tool.poetry.dependencies]
+fire = "0.1.3"
+requests = { version = "2.32.4", optional = false }

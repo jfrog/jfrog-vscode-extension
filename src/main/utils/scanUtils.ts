@@ -17,7 +17,7 @@ import { Utils } from './utils';
 
 export class ScanUtils {
     public static readonly DESCRIPTOR_SELECTOR_PATTERN: string =
-        '**/{go.mod,package.json,pom.xml,setup.py,*requirements*.txt,pnpm-lock.yaml,yarn.lock,*.csproj,*.sln,packages.config}';
+        '**/{go.mod,package.json,pom.xml,setup.py,pyproject.toml,*requirements*.txt,pnpm-lock.yaml,yarn.lock,*.csproj,*.sln,packages.config}';
 
     public static readonly RESOURCES_DIR: string = ScanUtils.getResourcesDir();
     public static readonly SPAWN_PROCESS_BUFFER_SIZE: number = 104857600;
@@ -72,7 +72,7 @@ export class ScanUtils {
     }
 
     /**
-     * Find go.mod, pom.xml, package.json, *.sln, setup.py, and requirements*.txt files in workspaces.
+     * Find go.mod, pom.xml, package.json, *.sln, setup.py, pyproject.toml, and requirements*.txt files in workspaces.
      * @param workspaceFolders - Base workspace folders to search
      * @param logManager       - Log manager
      */
@@ -328,7 +328,7 @@ export class ScanUtils {
         if (fsPath.endsWith('.sln') || fsPath.endsWith('.csproj') || fsPath.endsWith('packages.config')) {
             return PackageType.Nuget;
         }
-        if (fsPath.endsWith('.txt') || fsPath.endsWith('.py')) {
+        if (fsPath.endsWith('.txt') || fsPath.endsWith('.py') || fsPath.endsWith('pyproject.toml')) {
             return PackageType.Python;
         }
         return;

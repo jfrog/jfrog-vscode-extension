@@ -2,6 +2,7 @@ import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descri
 import { PackageType } from '../types/projectType';
 import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 import * as fs from 'fs';
+import * as path from 'path';
 
 export class PythonDependencyUpdate extends AbstractDependencyUpdate {
     constructor() {
@@ -10,7 +11,10 @@ export class PythonDependencyUpdate extends AbstractDependencyUpdate {
 
     /** @override */
     public isMatched(dependenciesTreeNode: DependencyIssuesTreeNode): boolean {
-        return super.isMatched(dependenciesTreeNode);
+        // "Update to fixed version" writes the new version into the descriptor with replaceVersions, whose regex only handles
+        // setup.py and requirements.txt lines. On a pyproject.toml it would corrupt the TOML, so the update is not offered there.
+        const isDeclaredInPyproject: boolean = path.basename(dependenciesTreeNode.getDependencyFilePath()) === 'pyproject.toml';
+        return super.isMatched(dependenciesTreeNode) && !isDeclaredInPyproject;
     }
 
     /** @override */

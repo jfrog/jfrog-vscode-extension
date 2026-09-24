@@ -1,0 +1,7 @@
+[project]
+name = "poetry-two-empty"
+version = "0.1.0"
+dependencies = []
+
+[tool.poetry.dependencies]
+fire = "0.1.3"

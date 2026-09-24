@@ -1,0 +1,5 @@
+[tool.black]
+line-length = 140
+
+[tool.ruff]
+target-version = "py311"

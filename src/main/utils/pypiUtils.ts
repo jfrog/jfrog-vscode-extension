@@ -1,11 +1,14 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
 import * as fs from 'fs';
+import { parse as parseToml } from 'smol-toml';
 import { LogManager } from '../log/logManager';
 import { PypiTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/pypiTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
 import { ScanUtils } from './scanUtils';
 import { PipDepTree } from '../types/pipDepTree';
+import { PyprojectPoetryTable, PyprojectToml } from '../types/pyprojectToml';
+import { PythonDescriptor } from '../types/pythonDescriptor';
 import { VirtualEnvPypiTree } from '../treeDataProviders/dependenciesTree/dependenciesRoot/virtualEnvPypiTree';
 
 export class PypiUtils {
@@ -17,6 +20,8 @@ export class PypiUtils {
     public static readonly removeFlagCommentRegex: RegExp = /^(?:(?!#|-e).)*$/gms;
     public static readonly setupPyProjectNameRegex: RegExp = /name=\s*(?:"|')(.*)(?:"|')/gm;
     public static readonly installReqRegex: RegExp = /install_requires\s*=\s*\[([^\]]+)\]/gm;
+    public static readonly requirementRegex: RegExp = /^([\w\-.]+)\s*(?:\[[^\]]*\])?\s*\(?([^)]*)\)?$/;
+    public static readonly exactVersionRegex: RegExp = /^(?:==)?\s*([\w\-.]+)$/;
 
     public static searchProjectName(setupPyFile: string): string {
         const content: string = fs.readFileSync(setupPyFile, 'utf8');
@@ -32,6 +37,64 @@ export class PypiUtils {
             return new Map<string, string | undefined>();
         }
         return this.matchPythonDependencies(match[1]);
+    }
+
+    public static parsePyproject(pyprojectFile: string): PythonDescriptor | undefined {
+        const pyproject: PyprojectToml = parseToml(fs.readFileSync(pyprojectFile, 'utf8')) as PyprojectToml;
+        const poetry: PyprojectPoetryTable | undefined = pyproject.tool?.poetry;
+        // A pyproject.toml that holds only tool configuration, such as [tool.ruff], declares no project to scan.
+        if (!pyproject.project && !poetry) {
+            return undefined;
+        }
+        // As in Poetry, [tool.poetry.dependencies] counts only when [project] lists no dependencies.
+        const requirements: string[] | undefined = pyproject.project?.dependencies;
+        const directDependencies: Map<string, string | undefined> =
+            Array.isArray(requirements) && requirements.length > 0
+                ? this.getProjectTableDependencies(requirements)
+                : this.getPoetryTableDependencies(poetry);
+        return { path: pyprojectFile, projectName: pyproject.project?.name || poetry?.name, directDependencies };
+    }
+
+    /** The standard [project] table (PEP 621) lists dependencies as requirement strings, such as 'requests[socks]>=2.0'. */
+    private static getProjectTableDependencies(requirements: string[]): Map<string, string | undefined> {
+        const dependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
+        for (const requirement of requirements) {
+            if (typeof requirement !== 'string') {
+                continue;
+            }
+            // Drop the environment marker after ';', then split the name from its optional extras and version constraint.
+            const [, name, constraint] = new RegExp(PypiUtils.requirementRegex).exec(requirement.split(';')[0].trim()) || [];
+            if (name) {
+                dependencies.set(name, this.toExactVersion(constraint));
+            }
+        }
+        return dependencies;
+    }
+
+    /** Poetry before 2.0 declares dependencies in its own table, mapping each name to a constraint or to a table that holds one. */
+    private static getPoetryTableDependencies(poetry: PyprojectPoetryTable | undefined): Map<string, string | undefined> {
+        const dependencies: Map<string, string | undefined> = new Map<string, string | undefined>();
+        for (const [name, constraint] of Object.entries(poetry?.dependencies || {})) {
+            // Poetry declares the supported Python version as a dependency named 'python'.
+            if (name !== 'python') {
+                dependencies.set(name, this.toExactVersion(typeof constraint === 'string' ? constraint : constraint.version));
+            }
+        }
+        return dependencies;
+    }
+
+    /** Only an exact pin can be compared against the installed version. It is written '==1.2.3', or '1.2.3' in Poetry. */
+    private static toExactVersion(constraint: string | undefined): string {
+        const [, exactVersion] = new RegExp(PypiUtils.exactVersionRegex).exec((constraint || '').trim()) || [];
+        return exactVersion ? '==' + exactVersion : '';
+    }
+
+    /**
+     * Python package names ignore case and treat runs of '-', '_' and '.' as equal (PEP 503).
+     * @example normalizePackageName('Zope_Interface') === normalizePackageName('zope.interface') // both are 'zope-interface'
+     */
+    private static normalizePackageName(name: string): string {
+        return name.toLowerCase().replace(/[-_.]+/g, '-');
     }
 
     private static matchPythonDependencies(rawDependencies: string): Map<string, string | undefined> {
@@ -85,7 +148,7 @@ export class PypiUtils {
 
     /**
      * @param workspace        - Base workspace folders
-     * @param descriptors      - Paths to setup.py and requirements*.txt files
+     * @param descriptors      - Paths to setup.py, pyproject.toml and requirements*.txt files
      * @param logManager       - LogManager for the operation
      * @param checkCanceled    - method to check if cancel
      * @param parent           - The base tree node
@@ -97,8 +160,10 @@ export class PypiUtils {
         checkCanceled: () => void,
         parent: DependenciesTreeNode
     ): Promise<void> {
-        if (!descriptors) {
-            logManager.logMessage('No setup.py or requirements.txt files found in workspaces.', 'DEBUG');
+        // Parse before resolving the interpreter, so that a workspace with nothing to scan gets no virtual environment errors.
+        const pythonDescriptors: PythonDescriptor[] = this.parseDescriptors(descriptors || [], logManager);
+        if (pythonDescriptors.length === 0) {
+            logManager.logMessage('No setup.py, pyproject.toml or requirements.txt files to scan in workspaces.', 'DEBUG');
             return;
         }
         const pythonPath: string | undefined = await this.getPythonInterpreterPath(logManager);
@@ -118,7 +183,7 @@ export class PypiUtils {
         if (!pipDepTree) {
             return;
         }
-        await this.descriptorsToDependencyTrees(descriptors, pipDepTree, checkCanceled, logManager, parent);
+        await this.descriptorsToDependencyTrees(pythonDescriptors, pipDepTree, checkCanceled, logManager, parent);
         this.workspaceToDependencyTree(workspace, pythonPath, pipDepTree, parent);
     }
 
@@ -194,26 +259,69 @@ export class PypiUtils {
     }
 
     /**
-     * Create a dependency tree for each descriptor path based on its dependencies declaration.
-     * @param descriptors - Path to descriptors
+     * Parse the descriptors, skipping any that fails to parse and a pyproject.toml that declares no Python project.
+     * @param descriptors - Paths to setup.py, pyproject.toml and requirements*.txt files
+     * @param logManager  - LogManager for the operation
+     */
+    public static parseDescriptors(descriptors: vscode.Uri[], logManager: LogManager): PythonDescriptor[] {
+        const pythonDescriptors: PythonDescriptor[] = [];
+        for (const descriptor of descriptors) {
+            const pythonDescriptor: PythonDescriptor | undefined = this.parseDescriptor(descriptor.fsPath, logManager);
+            if (pythonDescriptor) {
+                pythonDescriptors.push(pythonDescriptor);
+            }
+        }
+        return pythonDescriptors;
+    }
+
+    private static parseDescriptor(descriptorPath: string, logManager: LogManager): PythonDescriptor | undefined {
+        try {
+            switch (path.basename(descriptorPath)) {
+                case 'setup.py':
+                    return {
+                        path: descriptorPath,
+                        projectName: this.searchProjectName(descriptorPath),
+                        directDependencies: this.getSetupPyDirectDependencies(descriptorPath)
+                    };
+                case 'pyproject.toml':
+                    return this.parsePyproject(descriptorPath);
+                default:
+                    return { path: descriptorPath, directDependencies: this.getRequirementsTxtDirectDependencies(descriptorPath) };
+            }
+        } catch (error) {
+            // One descriptor that fails to parse must not stop the other descriptors of the workspace from being scanned.
+            logManager.logMessage(`Skipping '${descriptorPath}', failed to parse it: ${(<any>error).message}`, 'WARN');
+            return undefined;
+        }
+    }
+
+    /**
+     * Create a dependency tree for each descriptor based on its dependencies declaration.
+     * @param pythonDescriptors - Descriptors parsed by parseDescriptors
      * @param pipDepTree - project dependency tree
      * @param parent - Parent of all the descriptors
      * @returns All descriptors dependency trees
      */
     public static async descriptorsToDependencyTrees(
-        descriptors: vscode.Uri[],
+        pythonDescriptors: PythonDescriptor[],
         pipDepTree: PipDepTree[],
         checkCanceled: () => void,
         logManager: LogManager,
         parent: DependenciesTreeNode
     ): Promise<PypiTreeNode[]> {
-        const projectName: string | undefined = this.getProjectName(descriptors);
         const trees: PypiTreeNode[] = [];
-        for (const descriptor of descriptors) {
+        for (const pythonDescriptor of pythonDescriptors) {
             checkCanceled();
-            logManager.logMessage(`Analyzing '${descriptor.fsPath}' file`, 'INFO');
-            let root: PypiTreeNode = new PypiTreeNode(descriptor.fsPath, parent);
-            root.refreshDependencies(this.filterDescriptorDependencies(descriptor.fsPath, pipDepTree, projectName));
+            logManager.logMessage(`Analyzing '${pythonDescriptor.path}' file`, 'INFO');
+            let root: PypiTreeNode = new PypiTreeNode(pythonDescriptor.path, parent);
+            root.refreshDependencies(
+                this.filterDependencies(
+                    pythonDescriptor.directDependencies,
+                    pipDepTree,
+                    false,
+                    this.getProjectName(pythonDescriptor, pythonDescriptors)
+                )
+            );
             trees.push(root);
         }
         return trees;
@@ -241,19 +349,31 @@ export class PypiUtils {
     }
 
     /**
-     *  Get the dependencies of the descriptor from those of the environment.
-     * @param pipDepTree - virtual environment dependencies tree (json format).
-     * @param projectName  Name of the project as written in setup.py.
+     * A descriptor that declares no project name, such as requirements.txt, belongs to the project declared closest above it,
+     * or to the workspace's only project when none encloses it, because pip nests the dependencies of an installed project under it.
+     * @example requirements/dev.txt belongs to the project of setup.py, and svc/requirements.txt to the one of svc/pyproject.toml
      */
-    private static filterDescriptorDependencies(descriptorPath: string, pipDepTree: PipDepTree[], projectName?: string): PipDepTree[] {
-        const isSetupPy: boolean = descriptorPath.endsWith('setup.py');
-        const dependencies: Map<string, string | undefined> = isSetupPy
-            ? this.getSetupPyDirectDependencies(descriptorPath)
-            : this.getRequirementsTxtDirectDependencies(descriptorPath);
-        if (!dependencies) {
-            return pipDepTree;
+    private static getProjectName(pythonDescriptor: PythonDescriptor, pythonDescriptors: PythonDescriptor[]): string | undefined {
+        if (pythonDescriptor.projectName) {
+            return pythonDescriptor.projectName;
         }
-        return this.filterDependencies(dependencies, pipDepTree, false, projectName);
+        const descriptorDirectory: string = path.dirname(pythonDescriptor.path);
+        let closestDirectory: string = '';
+        let closestProjectName: string | undefined;
+        for (const candidate of pythonDescriptors) {
+            const candidateDirectory: string = path.dirname(candidate.path);
+            const isEnclosing: boolean = descriptorDirectory === candidateDirectory || descriptorDirectory.startsWith(candidateDirectory + path.sep);
+            if (candidate.projectName && isEnclosing && candidateDirectory.length > closestDirectory.length) {
+                closestDirectory = candidateDirectory;
+                closestProjectName = candidate.projectName;
+            }
+        }
+        if (closestProjectName) {
+            return closestProjectName;
+        }
+        const projectNames: Set<string> = new Set();
+        pythonDescriptors.forEach(candidate => candidate.projectName && projectNames.add(candidate.projectName));
+        return projectNames.size === 1 ? [...projectNames][0] : undefined;
     }
 
     /**
@@ -274,16 +394,21 @@ export class PypiUtils {
         if (dependencies.size === 0) {
             return directDependencies;
         }
+        // pip reports some installed names dotted ('ruamel.yaml') and others dashed ('zope-interface'), so names are compared normalized.
+        const versionByName: Map<string, string | undefined> = new Map(
+            [...dependencies].map(([name, version]) => [this.normalizePackageName(name), version])
+        );
         for (const dep of pipDepTree) {
-            if (dep.key === projectName) {
+            const name: string = this.normalizePackageName(dep.key);
+            if (projectName && name === this.normalizePackageName(projectName)) {
                 // If a project name is provided, it resides at level 0 of the tree containing all its dependencies.
                 directDependencies.push(...this.filterDependencies(dependencies, dep.dependencies, isSetupPy));
             }
-            if (!dependencies.has(dep.key)) {
+            if (!versionByName.has(name)) {
                 // Dependency is not a direct dependency.
                 continue;
             }
-            const version: string | undefined = dependencies.get(dep.key);
+            const version: string | undefined = versionByName.get(name);
             if (version && !this.isVersionsEqual(dep, version, isSetupPy)) {
                 continue;
             }
@@ -297,14 +422,6 @@ export class PypiUtils {
             return dependencyFromPipDepTree.required_version === depFromDescriptor;
         }
         return depFromDescriptor.endsWith(dependencyFromPipDepTree.installed_version);
-    }
-
-    private static getProjectName(descriptors: vscode.Uri[]): string | undefined {
-        const setupPy: vscode.Uri | undefined = descriptors.find(descriptor => descriptor.fsPath.endsWith('setup.py'));
-        if (!setupPy) {
-            return;
-        }
-        return this.searchProjectName(setupPy.fsPath);
     }
 
     public static getRequirementsTxtDirectDependencies(path: string): Map<string, string | undefined> {
