@@ -1,0 +1,60 @@
+import { assert } from 'chai';
+import { parseBerryLocator } from '../../main/utils/yarn/yarnBerryLocator';
+import { YarnBerryStrategy } from '../../main/utils/yarn/yarnBerryStrategy';
+import { YarnClassicStrategy } from '../../main/utils/yarn/yarnClassicStrategy';
+
+describe('Yarn Berry strategy', () => {
+    it('Parse npm locators', () => {
+        assert.deepEqual(parseBerryLocator('minimist@npm:1.2.8'), { name: 'minimist', version: '1.2.8' });
+        assert.deepEqual(parseBerryLocator('@babel/core@npm:7.29.7'), { name: '@babel/core', version: '7.29.7' });
+        assert.deepEqual(parseBerryLocator('pkg@npm:1.0.0-beta.1'), { name: 'pkg', version: '1.0.0-beta.1' });
+    });
+
+    it('Parse virtual locator', () => {
+        assert.deepEqual(parseBerryLocator('jest-config@virtual:bf7a8695861ccc96c7503a95daba2b038c9b3eca#npm:26.6.3'), {
+            name: 'jest-config',
+            version: '26.6.3'
+        });
+    });
+
+    it('Parse patch locator', () => {
+        assert.deepEqual(parseBerryLocator('resolve@patch:resolve@npm%3A1.22.0#optional!builtin<compat/resolve>::version=1.22.0&hash=9bd1a5'), {
+            name: 'resolve',
+            version: '1.22.0'
+        });
+    });
+
+    it('Ignore non npm locators', () => {
+        assert.isUndefined(parseBerryLocator('tiny@workspace:.'));
+        assert.isUndefined(parseBerryLocator('pkg@portal:../pkg::locator=tiny%40workspace%3A.'));
+        assert.isUndefined(parseBerryLocator('pkg@https://github.com/org/pkg.git#commit=abc'));
+    });
+
+    it('Parse yarn info output', () => {
+        const output: string = [
+            '{"value":"@cnakazawa/watch@npm:1.0.4","children":{"Version":"1.0.4","Dependencies":[{"descriptor":"minimist@npm:^1.2.0","locator":"minimist@npm:1.2.8"}]}}',
+            '{"value":"minimist@npm:1.2.0","children":{"Version":"1.2.0"}}',
+            '{"value":"minimist@npm:1.2.8","children":{"Version":"1.2.8"}}',
+            '{"value":"resolve@npm:1.22.0","children":{"Version":"1.22.0"}}',
+            '{"value":"resolve@patch:resolve@npm%3A1.22.0#optional!builtin<compat/resolve>::version=1.22.0&hash=9bd1a5","children":{"Version":"1.22.0"}}',
+            '{"value":"tiny@workspace:.","children":{"Version":"1.0.0"}}',
+            ''
+        ].join('\n');
+        assert.deepEqual(YarnBerryStrategy.parseDependencies(output), [
+            { name: '@cnakazawa/watch', version: '1.0.4' },
+            { name: 'minimist', version: '1.2.0' },
+            { name: 'minimist', version: '1.2.8' },
+            { name: 'resolve', version: '1.22.0' }
+        ]);
+    });
+
+    it('Ignore non JSON lines in yarn info output', () => {
+        const output: string = 'Some warning\n{"value":"minimist@npm:1.2.0","children":{"Version":"1.2.0"}}\n';
+        assert.deepEqual(YarnBerryStrategy.parseDependencies(output), [{ name: 'minimist', version: '1.2.0' }]);
+    });
+
+    it('Upgrade command', () => {
+        assert.equal(new YarnBerryStrategy().getUpgradeCommand('minimist', '1.2.8'), 'yarn up minimist@1.2.8');
+        assert.equal(new YarnClassicStrategy().getUpgradeCommand('minimist', '1.2.8'), 'yarn upgrade minimist@1.2.8');
+    });
+});

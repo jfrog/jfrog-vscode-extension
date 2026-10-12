@@ -1,6 +1,7 @@
 import { DependencyIssuesTreeNode } from '../treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { PackageType } from '../types/projectType';
 import { ScanUtils } from '../utils/scanUtils';
+import { YarnUtils } from '../utils/yarnUtils';
 import { AbstractDependencyUpdate } from './abstractDependencyUpdate';
 
 export class YarnDependencyUpdate extends AbstractDependencyUpdate {
@@ -16,6 +17,6 @@ export class YarnDependencyUpdate extends AbstractDependencyUpdate {
     /** @override */
     public update(dependenciesTreeNode: DependencyIssuesTreeNode, version: string): void {
         const workspace: string = dependenciesTreeNode.getDependencyProjectPath();
-        ScanUtils.executeCmd('yarn upgrade ' + dependenciesTreeNode.name + '@' + version, workspace);
+        ScanUtils.executeCmd(YarnUtils.getStrategy(workspace).getUpgradeCommand(dependenciesTreeNode.name, version), workspace);
     }
 }

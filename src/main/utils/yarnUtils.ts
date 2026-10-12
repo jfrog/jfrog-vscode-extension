@@ -4,11 +4,11 @@ import * as vscode from 'vscode';
 import { LogManager } from '../log/logManager';
 import { YarnTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesRoot/yarnTree';
 import { DependenciesTreeNode } from '../treeDataProviders/dependenciesTree/dependenciesTreeNode';
-import { GeneralInfo } from '../types/generalInfo';
-import { NpmUtils, ProjectDetails } from './npmUtils';
 import { ScanUtils } from './scanUtils';
-import { PackageType } from '../types/projectType';
 import { BuildTreeErrorType } from '../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
+import { YarnStrategy } from './yarn/yarnStrategy';
+import { YarnClassicStrategy } from './yarn/yarnClassicStrategy';
+import { YarnBerryStrategy } from './yarn/yarnBerryStrategy';
 
 export class YarnUtils {
     public static readonly DOCUMENT_SELECTOR: vscode.DocumentSelector = { scheme: 'file', pattern: '**/yarn.lock' };
@@ -67,38 +67,32 @@ export class YarnUtils {
         for (let yarnLock of yarnLocks) {
             checkCanceled();
             let root: YarnTreeNode = new YarnTreeNode(yarnLock.fsPath, logManager, parent);
-            // In yarn, the version may vary in different workspaces. Therefore we run 'yarn --version' for each workspace.
-            root.buildError = YarnUtils.isVersionSupported(parent, logManager, path.dirname(yarnLock.fsPath));
-            if (root.buildError) {
+            let strategy: YarnStrategy;
+            try {
+                // In yarn, the version may vary in different workspaces. Therefore we run 'yarn --version' for each workspace.
+                strategy = YarnUtils.getStrategy(path.dirname(yarnLock.fsPath));
+            } catch (error) {
+                logManager.logError(new Error('Could not scan Yarn project dependencies, because Yarn is not installed.'), true);
+                root.buildError = BuildTreeErrorType.NotInstalled;
                 return;
             }
             checkCanceled();
 
-            root.loadYarnDependencies();
+            root.loadYarnDependencies(strategy);
         }
     }
 
-    public static isVersionSupported(parent: DependenciesTreeNode, logManager: LogManager, workspaceFolder: string): BuildTreeErrorType | undefined {
-        try {
-            let version: string = ScanUtils.executeCmd('yarn --version', workspaceFolder).toString();
-            let yarnSemver: semver.SemVer = new semver.SemVer(version);
-            if (yarnSemver.compare('2.0.0') >= 0) {
-                logManager.logError(new Error('Could not scan Yarn project dependencies, because currently only Yarn 1 is supported.'), true);
-                let yarnProject: ProjectDetails = NpmUtils.getProjectDetailsFromPackageJson(workspaceFolder);
-                let generalInfo: GeneralInfo = new GeneralInfo(
-                    yarnProject.projectName || workspaceFolder,
-                    yarnProject.projectVersion,
-                    [],
-                    workspaceFolder,
-                    PackageType.Yarn
-                );
-                new DependenciesTreeNode(generalInfo, vscode.TreeItemCollapsibleState.None, parent);
-                return BuildTreeErrorType.NotSupported;
-            }
-        } catch (error) {
-            logManager.logError(new Error('Could not scan Yarn project dependencies, because Yarn is not installed.'), true);
-            return BuildTreeErrorType.NotInstalled;
-        }
-        return undefined;
+    /**
+     * @param workspaceFolder - The folder containing the yarn.lock
+     * @returns The strategy matching the Yarn version that runs in the workspace folder
+     * @throws if Yarn is not installed
+     */
+    public static getStrategy(workspaceFolder: string): YarnStrategy {
+        const version: semver.SemVer = new semver.SemVer(
+            ScanUtils.executeCmd('yarn --version', workspaceFolder)
+                .toString()
+                .trim()
+        );
+        return version.major >= 2 ? new YarnBerryStrategy() : new YarnClassicStrategy();
     }
 }
