@@ -13,7 +13,8 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { PackageType } from '../../main/types/projectType';
 import { YarnBerryStrategy } from '../../main/utils/yarn/yarnBerryStrategy';
 import { YarnClassicStrategy } from '../../main/utils/yarn/yarnClassicStrategy';
-import { YarnUtils } from '../../main/utils/yarnUtils';
+import * as semver from 'semver';
+import { YarnUtils, YarnVersionMismatchError } from '../../main/utils/yarnUtils';
 
 /**
  * Integration tests for Yarn Berry (v2+) projects. The Yarn version of each project is selected by the 'packageManager'
@@ -127,6 +128,33 @@ describe('Yarn Berry Utils Tests', function() {
                     'yarn up minimist@1.2.8'
                 );
             });
+        });
+    });
+
+    describe('Declared Yarn version', () => {
+        const yarn4Dir: string = path.join(berryDir, 'yarn4');
+        const classicDir: string = path.join(__dirname, '..', 'resources', 'yarn', 'project-3');
+
+        it('Yarn 1 is active in a project that declares Yarn 4', () => {
+            assert.throws(
+                () => YarnUtils.verifyDeclaredVersion(yarn4Dir, new semver.SemVer('1.22.22')),
+                YarnVersionMismatchError,
+                'packageManager": "yarn@4.18.1'
+            );
+            assert.throws(() => YarnUtils.verifyDeclaredVersion(yarn4Dir, new semver.SemVer('1.22.22')), 'corepack enable');
+        });
+
+        it('Declared version is active', () => {
+            YarnUtils.verifyDeclaredVersion(yarn4Dir, new semver.SemVer('4.18.1'));
+        });
+
+        it('Project does not declare a version', () => {
+            YarnUtils.verifyDeclaredVersion(classicDir, new semver.SemVer('1.22.22'));
+            YarnUtils.verifyDeclaredVersion(classicDir, new semver.SemVer('4.18.1'));
+        });
+
+        it('Missing package.json', () => {
+            YarnUtils.verifyDeclaredVersion(path.join(berryDir, 'missing'), new semver.SemVer('1.22.22'));
         });
     });
 
