@@ -11,12 +11,11 @@ import { YarnDependency, YarnStrategy } from '../../../utils/yarn/yarnStrategy';
 
 export class YarnTreeNode extends RootNode {
     private static readonly COMPONENT_PREFIX: string = 'npm://';
+    private _strategy?: YarnStrategy;
 
     constructor(workspaceFolder: string, private _logManager: LogManager, parent?: DependenciesTreeNode) {
         super(workspaceFolder, PackageType.Yarn, parent);
     }
-
-    private _strategy?: YarnStrategy;
 
     public loadYarnDependencies(strategy: YarnStrategy) {
         this._strategy = strategy;

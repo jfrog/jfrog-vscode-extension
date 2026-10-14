@@ -2,7 +2,7 @@ import { assert } from 'chai';
 import { IImpactGraph } from 'jfrog-ide-webview';
 import { LogManager } from '../../main/log/logManager';
 import { RootNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
-import { YarnBerryImpactGraphCreator, YarnBerryInfoEntry } from '../../main/treeDataProviders/utils/yarnBerryImpactGraph';
+import { YarnBerryImpactGraphCreator, YarnBerryInfoEntry } from '../../main/utils/yarn/yarnBerryImpactGraph';
 
 function entry(value: string, version: string, dependencies: string[] = []): YarnBerryInfoEntry {
     return { value, children: { Version: version, Dependencies: dependencies.map(locator => ({ descriptor: locator, locator })) } };

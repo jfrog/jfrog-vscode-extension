@@ -77,11 +77,12 @@ export class YarnUtils {
             } catch (error) {
                 if (error instanceof YarnVersionMismatchError) {
                     logManager.logError(error, true);
+                    root.buildError = BuildTreeErrorType.NotSupported;
                 } else {
                     logManager.logError(new Error('Could not scan Yarn project dependencies, because Yarn is not installed.'), true);
+                    root.buildError = BuildTreeErrorType.NotInstalled;
                 }
-                root.buildError = BuildTreeErrorType.NotInstalled;
-                return;
+                continue;
             }
             checkCanceled();
 

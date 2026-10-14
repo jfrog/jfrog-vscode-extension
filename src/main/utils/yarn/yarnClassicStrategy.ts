@@ -29,11 +29,6 @@ export class YarnClassicStrategy implements YarnStrategy {
         return 'yarn upgrade ' + dependencyName + '@' + version;
     }
 
-    /**
-     * Parse all yarn list's dependencies into a flat list.
-     * @param children - Child dependencies in Yarn list form
-     * @param dependencies - The list to populate
-     */
     private collectDependencies(children: any[] | undefined, dependencies: YarnDependency[]): void {
         if (!children) {
             return;
@@ -51,10 +46,6 @@ export class YarnClassicStrategy implements YarnStrategy {
         }
     }
 
-    /**
-     * Return true if the child dependencies contain any non shadowed dependency.
-     * @param childDependencies - Child dependencies at 'yarn list' results
-     */
     private hasRealChildren(childDependencies: any[]): boolean {
         if (!childDependencies) {
             return false;

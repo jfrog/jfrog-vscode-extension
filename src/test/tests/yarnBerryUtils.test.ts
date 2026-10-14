@@ -3,26 +3,29 @@ import * as fs from 'fs-extra';
 import { IComponent } from 'jfrog-client-js';
 import * as os from 'os';
 import * as path from 'path';
+import * as semver from 'semver';
 import * as vscode from 'vscode';
 import { YarnDependencyUpdate } from '../../main/dependencyUpdate/yarnDependencyUpdate';
 import { LogManager } from '../../main/log/logManager';
 import { DependenciesTreeNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesTreeNode';
+import { BuildTreeErrorType } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { DependencyIssuesTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/dependencyIssuesTreeNode';
 import { ProjectDependencyTreeNode } from '../../main/treeDataProviders/issuesTree/descriptorTree/projectDependencyTreeNode';
 import { GeneralInfo } from '../../main/types/generalInfo';
 import { PackageType } from '../../main/types/projectType';
 import { YarnBerryStrategy } from '../../main/utils/yarn/yarnBerryStrategy';
 import { YarnClassicStrategy } from '../../main/utils/yarn/yarnClassicStrategy';
-import * as semver from 'semver';
 import { YarnUtils, YarnVersionMismatchError } from '../../main/utils/yarnUtils';
 
 /**
  * Integration tests for Yarn Berry (v2+) projects. The Yarn version of each project is selected by the 'packageManager'
- * field in its package.json, which requires Corepack to be enabled ('corepack enable'). The tests are skipped otherwise.
+ * field in its package.json, which requires Corepack to be enabled ('corepack enable'). The tests are skipped otherwise,
+ * unless running in CI, where a missing Corepack fails the tests.
  */
 describe('Yarn Berry Utils Tests', function() {
     const logManager: LogManager = new LogManager().activate();
     const berryDir: string = path.join(__dirname, '..', 'resources', 'yarn-berry');
+    const classicDir: string = path.join(__dirname, '..', 'resources', 'yarn', 'project-3');
     const projects: { dir: string; name: string }[] = [
         { dir: 'yarn3', name: 'berry-project3' },
         { dir: 'yarn4', name: 'berry-project4' }
@@ -59,10 +62,15 @@ describe('Yarn Berry Utils Tests', function() {
     projects.forEach(project => {
         describe(project.dir, function() {
             before(function() {
-                if (!isBerry(path.join(berryDir, project.dir))) {
-                    logManager.logMessage('Skipping Yarn Berry tests: ' + project.dir + ' did not resolve to Yarn 2+ (is Corepack enabled?)', 'INFO');
-                    this.skip();
+                if (isBerry(path.join(berryDir, project.dir))) {
+                    return;
                 }
+                const message: string = project.dir + ' did not resolve to Yarn 2+ (is Corepack enabled?)';
+                if (process.env.CI) {
+                    throw new Error(message);
+                }
+                logManager.logMessage('Skipping Yarn Berry tests: ' + message, 'INFO');
+                this.skip();
             });
 
             it('Select Berry strategy', () => {
@@ -133,7 +141,20 @@ describe('Yarn Berry Utils Tests', function() {
 
     describe('Declared Yarn version', () => {
         const yarn4Dir: string = path.join(berryDir, 'yarn4');
-        const classicDir: string = path.join(__dirname, '..', 'resources', 'yarn', 'project-3');
+
+        it('Declared version mismatch is reported as not supported', async function() {
+            let mismatch: boolean = false;
+            try {
+                YarnUtils.getStrategy(yarn4Dir);
+            } catch (error) {
+                mismatch = error instanceof YarnVersionMismatchError;
+            }
+            if (!mismatch) {
+                this.skip();
+            }
+            const root: any = await buildTree('yarn4');
+            assert.equal(root.buildError, BuildTreeErrorType.NotSupported);
+        });
 
         it('Yarn 1 is active in a project that declares Yarn 4', () => {
             assert.throws(
@@ -159,13 +180,7 @@ describe('Yarn Berry Utils Tests', function() {
     });
 
     it('Yarn classic project keeps using the classic strategy', function() {
-        const classicDir: string = path.join(__dirname, '..', 'resources', 'yarn', 'project-3');
-        let strategy: any;
-        try {
-            strategy = YarnUtils.getStrategy(classicDir);
-        } catch (error) {
-            this.skip();
-        }
+        const strategy: any = YarnUtils.getStrategy(classicDir);
         if (strategy instanceof YarnBerryStrategy) {
             this.skip();
         }

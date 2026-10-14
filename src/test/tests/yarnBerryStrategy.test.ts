@@ -48,6 +48,19 @@ describe('Yarn Berry strategy', () => {
         ]);
     });
 
+    it('Deduplicate virtual and patched locators of the same package', () => {
+        const output: string = [
+            '{"value":"jest-config@virtual:aaa#npm:26.6.3"}',
+            '{"value":"jest-config@virtual:bbb#npm:26.6.3"}',
+            '{"value":"resolve@patch:resolve@npm%3A1.22.0#optional!builtin<compat/resolve>::version=1.22.0&hash=9bd1a5"}',
+            '{"value":"resolve@npm:1.22.0"}'
+        ].join('\n');
+        assert.deepEqual(YarnBerryStrategy.parseDependencies(output), [
+            { name: 'jest-config', version: '26.6.3' },
+            { name: 'resolve', version: '1.22.0' }
+        ]);
+    });
+
     it('Ignore non JSON lines in yarn info output', () => {
         const output: string = 'Some warning\n{"value":"minimist@npm:1.2.0","children":{"Version":"1.2.0"}}\n';
         assert.deepEqual(YarnBerryStrategy.parseDependencies(output), [{ name: 'minimist', version: '1.2.0' }]);

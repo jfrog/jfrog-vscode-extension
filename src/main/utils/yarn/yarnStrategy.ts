@@ -6,10 +6,8 @@ export interface YarnDependency {
     version: string;
 }
 
-/**
- * Yarn Classic (v1) and Yarn Berry (v2+) expose different commands and output formats.
- * Each version family implements this interface.
- */
+export const YARN_BERRY_INFO_COMMAND: string = 'yarn info --all --recursive --json';
+
 export interface YarnStrategy {
     /**
      * @param workspaceFolder - The folder containing the yarn.lock

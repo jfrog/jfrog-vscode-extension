@@ -1,22 +1,15 @@
 import { IImpactGraph, IImpactGraphNode } from 'jfrog-ide-webview';
 import { LogManager } from '../../log/logManager';
-import { ScanUtils } from '../../utils/scanUtils';
-import { parseBerryLocator } from '../../utils/yarn/yarnBerryLocator';
-import { YarnDependency } from '../../utils/yarn/yarnStrategy';
-import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
+import { RootNode } from '../../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
+import { ScanUtils } from '../scanUtils';
+import { parseBerryLocator } from './yarnBerryLocator';
+import { YARN_BERRY_INFO_COMMAND, YarnDependency } from './yarnStrategy';
 
-/**
- * An entry in the "yarn info --all --recursive --json" output.
- */
 export interface YarnBerryInfoEntry {
     value: string;
     children: { Version?: string; Dependencies?: { descriptor: string; locator: string }[] };
 }
 
-/**
- * Creates an impact graph based on the dependency graph of "yarn info --all --recursive --json" in Yarn Berry (v2+).
- * Workspaces other than the root one are shown as direct children of the project.
- */
 export class YarnBerryImpactGraphCreator {
     private static readonly WORKSPACE: string = '@workspace:';
     private static readonly UNVERSIONED_WORKSPACE: string = '0.0.0-use.local';
@@ -72,9 +65,6 @@ export class YarnBerryImpactGraphCreator {
         } as IImpactGraph;
     }
 
-    /**
-     * Collects the paths from the given nodes to the requested dependency version, limited by '{@link RootNode.IMPACT_PATHS_LIMIT}'.
-     */
     private expand(ids: string[], edges: Map<string, string[]>, canReachTarget: Set<string>, ancestors: Set<string>): IImpactGraphNode[] {
         const nodes: IImpactGraphNode[] = [];
         for (const id of ids) {
@@ -127,9 +117,8 @@ export class YarnBerryImpactGraphCreator {
     }
 
     protected runYarnInfo(): YarnBerryInfoEntry[] {
-        const cmd: string = 'yarn info --all --recursive --json';
-        this._logManager.debug('Running ' + cmd + ' at ' + this._workspaceFolder);
-        return ScanUtils.executeCmd(cmd, this._workspaceFolder)
+        this._logManager.debug('Running ' + YARN_BERRY_INFO_COMMAND + ' at ' + this._workspaceFolder);
+        return ScanUtils.executeCmd(YARN_BERRY_INFO_COMMAND, this._workspaceFolder)
             .toString()
             .split('\n')
             .filter((line: string) => line.trim().startsWith('{'))
