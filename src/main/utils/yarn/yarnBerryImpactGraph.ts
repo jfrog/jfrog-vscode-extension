@@ -1,9 +1,7 @@
 import { IImpactGraph, IImpactGraphNode } from 'jfrog-ide-webview';
-import { LogManager } from '../../log/logManager';
 import { RootNode } from '../../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
-import { ScanUtils } from '../scanUtils';
 import { parseBerryLocator } from './yarnBerryLocator';
-import { YARN_BERRY_INFO_COMMAND, YarnDependency } from './yarnStrategy';
+import { YarnDependency } from './yarnStrategy';
 
 export interface YarnBerryInfoEntry {
     value: string;
@@ -22,8 +20,7 @@ export class YarnBerryImpactGraphCreator {
         private _dependencyName: string,
         private _dependencyVersion: string,
         private _projectName: string,
-        private _workspaceFolder: string,
-        private _logManager: LogManager
+        private _infoEntries: YarnBerryInfoEntry[]
     ) {
         this._targetId = this._dependencyName + ':' + this._dependencyVersion;
     }
@@ -33,7 +30,7 @@ export class YarnBerryImpactGraphCreator {
         const edges: Map<string, string[]> = new Map();
         const rootDependencies: string[] = [];
         const workspaces: string[] = [];
-        for (const entry of this.runYarnInfo()) {
+        for (const entry of this._infoEntries) {
             const isWorkspace: boolean = entry.value.includes(YarnBerryImpactGraphCreator.WORKSPACE);
             const id: string | undefined = isWorkspace ? this.getWorkspaceId(entry) : this.getDependencyId(entry.value);
             if (!id) {
@@ -114,14 +111,5 @@ export class YarnBerryImpactGraphCreator {
         const name: string = entry.value.substring(0, entry.value.lastIndexOf(YarnBerryImpactGraphCreator.WORKSPACE));
         const version: string | undefined = entry.children.Version;
         return version && version !== YarnBerryImpactGraphCreator.UNVERSIONED_WORKSPACE ? name + ':' + version : name;
-    }
-
-    protected runYarnInfo(): YarnBerryInfoEntry[] {
-        this._logManager.debug('Running ' + YARN_BERRY_INFO_COMMAND + ' at ' + this._workspaceFolder);
-        return ScanUtils.executeCmd(YARN_BERRY_INFO_COMMAND, this._workspaceFolder)
-            .toString()
-            .split('\n')
-            .filter((line: string) => line.trim().startsWith('{'))
-            .map((line: string) => JSON.parse(line));
     }
 }

@@ -33,7 +33,7 @@ Yarn 1, 2, 3 and 4 projects are supported. The Yarn version that runs in the pro
 Limitations for Yarn 2, 3 and 4:
 
 - Dependencies are not marked as production or development.
-- A monorepo is shown as one dependency list per `yarn.lock`. Workspaces appear as children of the project in the impact graph.
+- A monorepo is shown as one dependency list per `yarn.lock`. Workspaces appear as children of the project in the impact graph, so dependencies of a non-root workspace are shown as indirect and cannot be updated in a click.
 - Dependency aliases (`npm:` redirects) are resolved to the real package. Git, portal and link dependencies are not scanned.
 </details>
 

@@ -1,6 +1,6 @@
 import { YarnDependency } from './yarnStrategy';
 
-const NPM_LOCATOR: RegExp = /^(@?[^@]+)@npm:([^@:]+)$/;
+const NPM_LOCATOR: RegExp = /^(@?[^@]+)@npm:([^@:]+)(?:::.*)?$/;
 const PATCH_LOCATOR: RegExp = /^(@?[^@]+)@patch:@?[^@]+@npm%3A([^#]+)#/;
 const VIRTUAL_PART: RegExp = /@virtual:[^#]*#/;
 

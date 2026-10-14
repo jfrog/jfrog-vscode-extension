@@ -1,6 +1,5 @@
 import { assert } from 'chai';
 import { IImpactGraph } from 'jfrog-ide-webview';
-import { LogManager } from '../../main/log/logManager';
 import { RootNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
 import { YarnBerryImpactGraphCreator, YarnBerryInfoEntry } from '../../main/utils/yarn/yarnBerryImpactGraph';
 
@@ -97,15 +96,5 @@ describe('Yarn Berry impact graph', () => {
 });
 
 function create(name: string, version: string, entries: YarnBerryInfoEntry[]): IImpactGraph {
-    return new YarnBerryImpactGraphMock(name, version, 'tiny:1.0.0', entries).create();
-}
-
-class YarnBerryImpactGraphMock extends YarnBerryImpactGraphCreator {
-    constructor(name: string, version: string, projectName: string, private _entries: YarnBerryInfoEntry[]) {
-        super(name, version, projectName, '', new LogManager().activate());
-    }
-
-    protected runYarnInfo(): YarnBerryInfoEntry[] {
-        return this._entries;
-    }
+    return new YarnBerryImpactGraphCreator(name, version, 'tiny:1.0.0', entries).create();
 }

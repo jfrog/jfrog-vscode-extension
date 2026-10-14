@@ -1,25 +1,20 @@
 import { IImpactGraph } from 'jfrog-ide-webview';
-import { LogManager } from '../../log/logManager';
 import { ScanUtils } from '../scanUtils';
-import { YarnBerryImpactGraphCreator } from './yarnBerryImpactGraph';
+import { YarnBerryImpactGraphCreator, YarnBerryInfoEntry } from './yarnBerryImpactGraph';
 import { parseBerryLocator } from './yarnBerryLocator';
 import { YARN_BERRY_INFO_COMMAND, YarnDependency, YarnStrategy } from './yarnStrategy';
 
 export class YarnBerryStrategy implements YarnStrategy {
+    private _infoEntries?: YarnBerryInfoEntry[];
+
     /** @override */
     public listDependencies(workspaceFolder: string): YarnDependency[] {
-        return YarnBerryStrategy.parseDependencies(ScanUtils.executeCmd(YARN_BERRY_INFO_COMMAND, workspaceFolder).toString());
+        return YarnBerryStrategy.toDependencies(this.getInfoEntries(workspaceFolder));
     }
 
     /** @override */
-    public createImpactGraph(
-        dependencyName: string,
-        dependencyVersion: string,
-        projectName: string,
-        workspaceFolder: string,
-        logManager: LogManager
-    ): IImpactGraph {
-        return new YarnBerryImpactGraphCreator(dependencyName, dependencyVersion, projectName, workspaceFolder, logManager).create();
+    public createImpactGraph(dependencyName: string, dependencyVersion: string, projectName: string, workspaceFolder: string): IImpactGraph {
+        return new YarnBerryImpactGraphCreator(dependencyName, dependencyVersion, projectName, this.getInfoEntries(workspaceFolder)).create();
     }
 
     /** @override */
@@ -28,17 +23,32 @@ export class YarnBerryStrategy implements YarnStrategy {
     }
 
     public static parseDependencies(output: string): YarnDependency[] {
+        return YarnBerryStrategy.toDependencies(YarnBerryStrategy.parseInfoOutput(output));
+    }
+
+    public static parseInfoOutput(output: string): YarnBerryInfoEntry[] {
+        return output
+            .split('\n')
+            .filter((line: string) => line.trim().startsWith('{'))
+            .map((line: string) => JSON.parse(line));
+    }
+
+    private static toDependencies(entries: YarnBerryInfoEntry[]): YarnDependency[] {
         const dependencies: Map<string, YarnDependency> = new Map();
-        for (const line of output.split('\n')) {
-            if (!line.trim().startsWith('{')) {
-                continue;
-            }
-            const value: unknown = JSON.parse(line)?.value;
-            const dependency: YarnDependency | undefined = typeof value === 'string' ? parseBerryLocator(value) : undefined;
+        for (const entry of entries) {
+            const dependency: YarnDependency | undefined = typeof entry?.value === 'string' ? parseBerryLocator(entry.value) : undefined;
             if (dependency) {
                 dependencies.set(dependency.name + ':' + dependency.version, dependency);
             }
         }
         return [...dependencies.values()];
+    }
+
+    // Cached since the impact graph is created once per vulnerable component
+    private getInfoEntries(workspaceFolder: string): YarnBerryInfoEntry[] {
+        if (!this._infoEntries) {
+            this._infoEntries = YarnBerryStrategy.parseInfoOutput(ScanUtils.executeCmd(YARN_BERRY_INFO_COMMAND, workspaceFolder).toString());
+        }
+        return this._infoEntries;
     }
 }

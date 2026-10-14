@@ -1,4 +1,6 @@
 import { assert } from 'chai';
+import * as sinon from 'sinon';
+import { ScanUtils } from '../../main/utils/scanUtils';
 import { parseBerryLocator } from '../../main/utils/yarn/yarnBerryLocator';
 import { YarnBerryStrategy } from '../../main/utils/yarn/yarnBerryStrategy';
 import { YarnClassicStrategy } from '../../main/utils/yarn/yarnClassicStrategy';
@@ -8,6 +10,13 @@ describe('Yarn Berry strategy', () => {
         assert.deepEqual(parseBerryLocator('minimist@npm:1.2.8'), { name: 'minimist', version: '1.2.8' });
         assert.deepEqual(parseBerryLocator('@babel/core@npm:7.29.7'), { name: '@babel/core', version: '7.29.7' });
         assert.deepEqual(parseBerryLocator('pkg@npm:1.0.0-beta.1'), { name: 'pkg', version: '1.0.0-beta.1' });
+    });
+
+    it('Parse npm locator with bindings', () => {
+        assert.deepEqual(
+            parseBerryLocator('@scope/pkg@npm:1.2.3::__archiveUrl=https%3A%2F%2Facme.jfrog.io%2Fartifactory%2Fapi%2Fnpm%2Fnpm%2Fpkg-1.2.3.tgz'),
+            { name: '@scope/pkg', version: '1.2.3' }
+        );
     });
 
     it('Parse virtual locator', () => {
@@ -64,6 +73,31 @@ describe('Yarn Berry strategy', () => {
     it('Ignore non JSON lines in yarn info output', () => {
         const output: string = 'Some warning\n{"value":"minimist@npm:1.2.0","children":{"Version":"1.2.0"}}\n';
         assert.deepEqual(YarnBerryStrategy.parseDependencies(output), [{ name: 'minimist', version: '1.2.0' }]);
+    });
+
+    it('Run yarn info once for the dependency list and all impact graphs', () => {
+        const strategy: YarnBerryStrategy = new YarnBerryStrategy();
+        const executeCmd: sinon.SinonStub = sinon
+            .stub(ScanUtils, 'executeCmd')
+            .returns(
+                Buffer.from(
+                    [
+                        '{"value":"minimist@npm:1.2.0","children":{"Version":"1.2.0"}}',
+                        '{"value":"tiny@workspace:.","children":{"Version":"1.0.0","Dependencies":[{"descriptor":"minimist@npm:^1.2.0","locator":"minimist@npm:1.2.0"}]}}'
+                    ].join('\n')
+                )
+            );
+        try {
+            assert.deepEqual(strategy.listDependencies(''), [{ name: 'minimist', version: '1.2.0' }]);
+            assert.deepEqual(strategy.createImpactGraph('minimist', '1.2.0', 'tiny:1.0.0', '').root, {
+                name: 'tiny:1.0.0',
+                children: [{ name: 'minimist:1.2.0' }]
+            });
+            strategy.createImpactGraph('minimist', '1.2.0', 'tiny:1.0.0', '');
+            assert.equal(executeCmd.callCount, 1);
+        } finally {
+            executeCmd.restore();
+        }
     });
 
     it('Upgrade command', () => {
