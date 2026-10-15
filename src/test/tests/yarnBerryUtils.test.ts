@@ -4,6 +4,7 @@ import { IComponent } from 'jfrog-client-js';
 import * as os from 'os';
 import * as path from 'path';
 import * as semver from 'semver';
+import * as sinon from 'sinon';
 import * as vscode from 'vscode';
 import { YarnDependencyUpdate } from '../../main/dependencyUpdate/yarnDependencyUpdate';
 import { LogManager } from '../../main/log/logManager';
@@ -15,15 +16,39 @@ import { GeneralInfo } from '../../main/types/generalInfo';
 import { PackageType } from '../../main/types/projectType';
 import { YarnBerryStrategy } from '../../main/utils/yarn/yarnBerryStrategy';
 import { YarnClassicStrategy } from '../../main/utils/yarn/yarnClassicStrategy';
+import { ScanUtils } from '../../main/utils/scanUtils';
 import { YarnUtils, YarnVersionMismatchError } from '../../main/utils/yarnUtils';
 
 /**
  * Integration tests for Yarn Berry (v2+) projects. The Yarn version of each project is selected by the 'packageManager'
- * field in its package.json, which requires Corepack to be enabled ('corepack enable'). The tests are skipped otherwise,
- * unless running in CI, where a missing Corepack fails the tests.
+ * field in its package.json through Corepack, whose Yarn shims are installed into a temp folder that comes first in PATH.
+ * The tests are skipped if Corepack is not available, unless running in CI, where a missing Corepack fails the tests.
  */
 describe('Yarn Berry Utils Tests', function() {
     const logManager: LogManager = new LogManager().activate();
+    const corepackDir: string = fs.mkdtempSync(path.join(os.tmpdir(), 'corepack-yarn-'));
+    let getCmdEnv: sinon.SinonStub | undefined;
+
+    before(function() {
+        this.timeout(60000);
+        try {
+            ScanUtils.executeCmd(`corepack enable --install-directory "${corepackDir}" yarn`);
+        } catch (error) {
+            logManager.logMessage('Could not install the Corepack Yarn shims: ' + error, 'INFO');
+            return;
+        }
+        const env: NodeJS.ProcessEnv = { ...ScanUtils.getCmdEnv(), COREPACK_ENABLE_DOWNLOAD_PROMPT: '0', COREPACK_ENABLE_AUTO_PIN: '0' };
+        for (const key of Object.keys(env).filter(key => key.toUpperCase() === 'PATH')) {
+            env[key] = corepackDir + path.delimiter + env[key];
+        }
+        getCmdEnv = sinon.stub(ScanUtils, 'getCmdEnv').callsFake((extraEnv?: NodeJS.ProcessEnv) => ({ ...env, ...extraEnv }));
+    });
+
+    after(() => {
+        getCmdEnv?.restore();
+        fs.removeSync(corepackDir);
+    });
+
     const berryDir: string = path.join(__dirname, '..', 'resources', 'yarn-berry');
     const classicDir: string = path.join(__dirname, '..', 'resources', 'yarn', 'project-3');
     const projects: { dir: string; name: string }[] = [
@@ -44,11 +69,11 @@ describe('Yarn Berry Utils Tests', function() {
         'supports-preserve-symlinks-flag:1.0.0'
     ];
 
-    function isBerry(projectDir: string): boolean {
+    function getNotBerryReason(projectDir: string): string | undefined {
         try {
-            return YarnUtils.getStrategy(projectDir) instanceof YarnBerryStrategy;
+            return YarnUtils.getStrategy(projectDir) instanceof YarnBerryStrategy ? undefined : 'Yarn 1 is active';
         } catch (error) {
-            return false;
+            return String(error);
         }
     }
 
@@ -62,10 +87,12 @@ describe('Yarn Berry Utils Tests', function() {
     projects.forEach(project => {
         describe(project.dir, function() {
             before(function() {
-                if (isBerry(path.join(berryDir, project.dir))) {
+                this.timeout(60000);
+                const reason: string | undefined = getNotBerryReason(path.join(berryDir, project.dir));
+                if (!reason) {
                     return;
                 }
-                const message: string = project.dir + ' did not resolve to Yarn 2+ (is Corepack enabled?)';
+                const message: string = project.dir + ' did not resolve to Yarn 2+ (is Corepack available?): ' + reason;
                 if (process.env.CI) {
                     throw new Error(message);
                 }

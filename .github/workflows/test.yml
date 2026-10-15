@@ -42,9 +42,6 @@ jobs:
         with:
           node-version: "22"
           check-latest: true
-      - name: Enable Corepack
-        # Selects the Yarn version declared in the 'packageManager' field of the Yarn Berry test projects
-        run: corepack enable
       - name: Setup Pnpm
         uses: pnpm/action-setup@v6
         with:
