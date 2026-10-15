@@ -1,6 +1,6 @@
 import { IImpactGraph } from 'jfrog-ide-webview';
 import { LogManager } from '../../log/logManager';
-import { YarnImpactGraphCreator } from '../../treeDataProviders/utils/yarnImpactGraph';
+import { YarnImpactGraphCreator } from './yarnClassicImpactGraph';
 import { ScanUtils } from '../scanUtils';
 import { YarnDependency, YarnStrategy } from './yarnStrategy';
 
