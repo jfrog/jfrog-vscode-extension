@@ -1,8 +1,13 @@
 import { IImpactGraph } from 'jfrog-ide-webview';
+import * as fs from 'fs';
+import * as path from 'path';
 import { ScanUtils } from '../scanUtils';
 import { YarnBerryImpactGraphCreator, YarnBerryInfoEntry } from './yarnBerryImpactGraph';
 import { parseBerryLocator } from './yarnBerryLocator';
-import { YARN_BERRY_INFO_COMMAND, YarnDependency, YarnStrategy } from './yarnStrategy';
+import { YarnDependency, YarnStrategy } from './yarnStrategy';
+
+const YARN_BERRY_INFO_COMMAND: string = 'yarn info --all --recursive --json';
+const DEPENDENCY_SECTIONS: string[] = ['dependencies', 'devDependencies', 'optionalDependencies', 'peerDependencies'];
 
 export class YarnBerryStrategy implements YarnStrategy {
     private _infoEntries?: YarnBerryInfoEntry[];
@@ -18,8 +23,9 @@ export class YarnBerryStrategy implements YarnStrategy {
     }
 
     /** @override */
-    public getUpgradeCommand(dependencyName: string, version: string): string {
-        return 'yarn up ' + dependencyName + '@' + version;
+    public getUpgradeCommand(dependencyName: string, version: string, workspaceFolder: string): string {
+        const alias: string | undefined = YarnBerryStrategy.findAlias(dependencyName, workspaceFolder);
+        return alias ? 'yarn up ' + alias + '@npm:' + dependencyName + '@' + version : 'yarn up ' + dependencyName + '@' + version;
     }
 
     public static parseDependencies(output: string): YarnDependency[] {
@@ -42,6 +48,25 @@ export class YarnBerryStrategy implements YarnStrategy {
             }
         }
         return [...dependencies.values()];
+    }
+
+    /**
+     * 'yarn up' matches manifest names, so a package declared under an alias ("alias": "npm:name@range") is upgraded by its alias.
+     */
+    private static findAlias(dependencyName: string, workspaceFolder: string): string | undefined {
+        const packageJson: any = JSON.parse(fs.readFileSync(path.join(workspaceFolder, 'package.json'), 'utf8'));
+        let alias: string | undefined;
+        for (const section of DEPENDENCY_SECTIONS) {
+            for (const [name, range] of Object.entries<any>(packageJson[section] ?? {})) {
+                if (name === dependencyName) {
+                    return undefined;
+                }
+                if (!alias && typeof range === 'string' && range.startsWith('npm:' + dependencyName + '@')) {
+                    alias = name;
+                }
+            }
+        }
+        return alias;
     }
 
     // Cached since the impact graph is created once per vulnerable component

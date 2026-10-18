@@ -1,4 +1,7 @@
 import { assert } from 'chai';
+import * as fs from 'fs-extra';
+import * as os from 'os';
+import * as path from 'path';
 import * as sinon from 'sinon';
 import { ScanUtils } from '../../main/utils/scanUtils';
 import { parseBerryLocator } from '../../main/utils/yarn/yarnBerryLocator';
@@ -101,7 +104,23 @@ describe('Yarn Berry strategy', () => {
     });
 
     it('Upgrade command', () => {
-        assert.equal(new YarnBerryStrategy().getUpgradeCommand('minimist', '1.2.8'), 'yarn up minimist@1.2.8');
+        const workspace: string = path.join(__dirname, '..', 'resources', 'yarn-berry', 'yarn3');
+        assert.equal(new YarnBerryStrategy().getUpgradeCommand('minimist', '1.2.8', workspace), 'yarn up minimist@1.2.8');
         assert.equal(new YarnClassicStrategy().getUpgradeCommand('minimist', '1.2.8'), 'yarn upgrade minimist@1.2.8');
+    });
+
+    it('Upgrade command of an aliased dependency', () => {
+        const workspace: string = fs.mkdtempSync(path.join(os.tmpdir(), 'yarn-berry-alias-'));
+        try {
+            fs.writeJsonSync(path.join(workspace, 'package.json'), { dependencies: { 'minimist-legacy': 'npm:minimist@1.2.0' } });
+            assert.equal(new YarnBerryStrategy().getUpgradeCommand('minimist', '1.2.8', workspace), 'yarn up minimist-legacy@npm:minimist@1.2.8');
+            fs.writeJsonSync(path.join(workspace, 'package.json'), {
+                devDependencies: { 'minimist-dev': 'npm:minimist@1.2.0' },
+                dependencies: { minimist: '1.2.0', 'minimist-legacy': 'npm:minimist@1.2.0' }
+            });
+            assert.equal(new YarnBerryStrategy().getUpgradeCommand('minimist', '1.2.8', workspace), 'yarn up minimist@1.2.8');
+        } finally {
+            fs.removeSync(workspace);
+        }
     });
 });

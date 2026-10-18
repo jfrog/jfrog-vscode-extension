@@ -1,6 +1,6 @@
 import { IImpactGraph, IImpactGraphNode } from 'jfrog-ide-webview';
 import { RootNode } from '../../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
-import { parseBerryLocator } from './yarnBerryLocator';
+import { devirtualizeBerryLocator, getBerryLocatorName, parseBerryLocator } from './yarnBerryLocator';
 import { YarnDependency } from './yarnStrategy';
 
 export interface YarnBerryInfoEntry {
@@ -27,27 +27,27 @@ export class YarnBerryImpactGraphCreator {
 
     public create(): IImpactGraph {
         this._pathsCount = 0;
+        const ids: Map<string, string> = new Map(
+            this._infoEntries.map((entry: YarnBerryInfoEntry): [string, string] => [devirtualizeBerryLocator(entry.value), this.getNodeId(entry)])
+        );
         const edges: Map<string, string[]> = new Map();
-        const rootDependencies: string[] = [];
-        const workspaces: string[] = [];
+        const rootDependencies: Set<string> = new Set();
+        const workspaces: Set<string> = new Set();
         for (const entry of this._infoEntries) {
-            const isWorkspace: boolean = entry.value.includes(YarnBerryImpactGraphCreator.WORKSPACE);
-            const id: string | undefined = isWorkspace ? this.getWorkspaceId(entry) : this.getDependencyId(entry.value);
-            if (!id) {
-                continue;
-            }
+            const locator: string = devirtualizeBerryLocator(entry.value);
             const dependencies: string[] = (entry.children.Dependencies ?? [])
-                .map(dependency => this.getDependencyId(dependency.locator))
+                .map(dependency => devirtualizeBerryLocator(dependency.locator))
+                .filter(dependency => !dependency.includes(YarnBerryImpactGraphCreator.WORKSPACE))
+                .map(dependency => ids.get(dependency))
                 .filter((dependencyId): dependencyId is string => dependencyId !== undefined);
-            edges.set(id, [...new Set([...(edges.get(id) ?? []), ...dependencies])]);
-            if (!isWorkspace) {
+            if (locator.endsWith(YarnBerryImpactGraphCreator.ROOT_WORKSPACE)) {
+                dependencies.forEach(dependency => rootDependencies.add(dependency));
                 continue;
             }
-            if (entry.value.endsWith(YarnBerryImpactGraphCreator.ROOT_WORKSPACE)) {
-                rootDependencies.push(...dependencies);
-                edges.delete(id);
-            } else {
-                workspaces.push(id);
+            const id: string = ids.get(locator) as string;
+            edges.set(id, [...new Set([...(edges.get(id) ?? []), ...dependencies])]);
+            if (locator.includes(YarnBerryImpactGraphCreator.WORKSPACE)) {
+                workspaces.add(id);
             }
         }
 
@@ -102,14 +102,14 @@ export class YarnBerryImpactGraphCreator {
         return reaching;
     }
 
-    private getDependencyId(locator: string): string | undefined {
-        const dependency: YarnDependency | undefined = parseBerryLocator(locator);
-        return dependency ? dependency.name + ':' + dependency.version : undefined;
-    }
-
-    private getWorkspaceId(entry: YarnBerryInfoEntry): string {
-        const name: string = entry.value.substring(0, entry.value.lastIndexOf(YarnBerryImpactGraphCreator.WORKSPACE));
+    private getNodeId(entry: YarnBerryInfoEntry): string {
+        const locator: string = devirtualizeBerryLocator(entry.value);
         const version: string | undefined = entry.children.Version;
-        return version && version !== YarnBerryImpactGraphCreator.UNVERSIONED_WORKSPACE ? name + ':' + version : name;
+        if (locator.includes(YarnBerryImpactGraphCreator.WORKSPACE)) {
+            const name: string = locator.substring(0, locator.lastIndexOf(YarnBerryImpactGraphCreator.WORKSPACE));
+            return name + ':' + (version && version !== YarnBerryImpactGraphCreator.UNVERSIONED_WORKSPACE ? version : '0.0.0');
+        }
+        const dependency: YarnDependency | undefined = parseBerryLocator(locator);
+        return dependency ? dependency.name + ':' + dependency.version : getBerryLocatorName(locator) + ':' + (version ?? '0.0.0');
     }
 }

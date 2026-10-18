@@ -6,8 +6,6 @@ export interface YarnDependency {
     version: string;
 }
 
-export const YARN_BERRY_INFO_COMMAND: string = 'yarn info --all --recursive --json';
-
 export interface YarnStrategy {
     /**
      * @param workspaceFolder - The folder containing the yarn.lock
@@ -23,5 +21,5 @@ export interface YarnStrategy {
         logManager: LogManager
     ): IImpactGraph;
 
-    getUpgradeCommand(dependencyName: string, version: string): string;
+    getUpgradeCommand(dependencyName: string, version: string, workspaceFolder: string): string;
 }

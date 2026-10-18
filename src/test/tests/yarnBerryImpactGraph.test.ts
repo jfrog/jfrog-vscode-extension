@@ -62,6 +62,51 @@ describe('Yarn Berry impact graph', () => {
         });
     });
 
+    it('Git and portal dependencies are part of the impact paths', () => {
+        const entries: YarnBerryInfoEntry[] = [
+            entry('mkdirp@https://github.com/isaacs/node-mkdirp.git#commit=abc', '0.5.1', ['minimist@npm:0.0.8']),
+            entry('pkg@portal:../pkg::locator=tiny%40workspace%3A.', '1.0.0', ['minimist@npm:0.0.8']),
+            entry('minimist@npm:0.0.8', '0.0.8'),
+            entry('tiny@workspace:.', '1.0.0', [
+                'mkdirp@https://github.com/isaacs/node-mkdirp.git#commit=abc',
+                'pkg@portal:../pkg::locator=tiny%40workspace%3A.'
+            ])
+        ];
+        assert.deepEqual(create('minimist', '0.0.8', entries), {
+            root: {
+                name: 'tiny:1.0.0',
+                children: [
+                    { name: 'mkdirp:0.5.1', children: [{ name: 'minimist:0.0.8' }] },
+                    { name: 'pkg:1.0.0', children: [{ name: 'minimist:0.0.8' }] }
+                ]
+            },
+            pathsLimit: undefined
+        });
+    });
+
+    it('Duplicate root dependencies are shown once', () => {
+        const entries: YarnBerryInfoEntry[] = [
+            entry('minimist@npm:1.2.0', '1.2.0'),
+            entry('tiny@workspace:.', '1.0.0', ['minimist@npm:1.2.0', 'minimist@npm:1.2.0'])
+        ];
+        assert.deepEqual(create('minimist', '1.2.0', entries), {
+            root: { name: 'tiny:1.0.0', children: [{ name: 'minimist:1.2.0' }] },
+            pathsLimit: undefined
+        });
+    });
+
+    it('Unversioned workspace', () => {
+        const entries: YarnBerryInfoEntry[] = [
+            entry('minimist@npm:1.2.0', '1.2.0'),
+            entry('lib@workspace:packages/lib', '0.0.0-use.local', ['minimist@npm:1.2.0']),
+            entry('tiny@workspace:.', '1.0.0', ['lib@workspace:packages/lib'])
+        ];
+        assert.deepEqual(create('minimist', '1.2.0', entries), {
+            root: { name: 'tiny:1.0.0', children: [{ name: 'lib:0.0.0', children: [{ name: 'minimist:1.2.0' }] }] },
+            pathsLimit: undefined
+        });
+    });
+
     it('Dependency cycles', () => {
         const entries: YarnBerryInfoEntry[] = [
             entry('a@npm:1.0.0', '1.0.0', ['b@npm:1.0.0']),

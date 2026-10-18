@@ -158,10 +158,8 @@ describe('Yarn Berry Utils Tests', function() {
             });
 
             it('Upgrade command', () => {
-                assert.equal(
-                    YarnUtils.getStrategy(path.join(berryDir, project.dir)).getUpgradeCommand('minimist', '1.2.8'),
-                    'yarn up minimist@1.2.8'
-                );
+                const workspace: string = path.join(berryDir, project.dir);
+                assert.equal(YarnUtils.getStrategy(workspace).getUpgradeCommand('minimist', '1.2.8', workspace), 'yarn up minimist@1.2.8');
             });
         });
     });
@@ -169,18 +167,14 @@ describe('Yarn Berry Utils Tests', function() {
     describe('Declared Yarn version', () => {
         const yarn4Dir: string = path.join(berryDir, 'yarn4');
 
-        it('Declared version mismatch is reported as not supported', async function() {
-            let mismatch: boolean = false;
+        it('Declared version mismatch is reported as not supported', async () => {
+            const getStrategy: sinon.SinonStub = sinon.stub(YarnUtils, 'getStrategy').throws(new YarnVersionMismatchError('mismatch'));
             try {
-                YarnUtils.getStrategy(yarn4Dir);
-            } catch (error) {
-                mismatch = error instanceof YarnVersionMismatchError;
+                const root: any = await buildTree('yarn4');
+                assert.equal(root.buildError, BuildTreeErrorType.NotSupported);
+            } finally {
+                getStrategy.restore();
             }
-            if (!mismatch) {
-                this.skip();
-            }
-            const root: any = await buildTree('yarn4');
-            assert.equal(root.buildError, BuildTreeErrorType.NotSupported);
         });
 
         it('Yarn 1 is active in a project that declares Yarn 4', () => {

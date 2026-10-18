@@ -11,10 +11,18 @@ const VIRTUAL_PART: RegExp = /@virtual:[^#]*#/;
  * @returns The npm dependency, or undefined for locators that are not npm packages (workspace, link, git, etc.)
  */
 export function parseBerryLocator(locator: string): YarnDependency | undefined {
-    const normalized: string = locator.replace(VIRTUAL_PART, '@');
+    const normalized: string = devirtualizeBerryLocator(locator);
     const match: RegExpMatchArray | null = normalized.match(NPM_LOCATOR) ?? normalized.match(PATCH_LOCATOR);
     if (!match) {
         return undefined;
     }
     return { name: match[1], version: match[2] };
+}
+
+export function devirtualizeBerryLocator(locator: string): string {
+    return locator.replace(VIRTUAL_PART, '@');
+}
+
+export function getBerryLocatorName(locator: string): string {
+    return locator.substring(0, locator.indexOf('@', 1));
 }
