@@ -27,6 +27,17 @@ Scans your project dependencies for security issues and shows you which dependen
 </details>
 
 <details>
+  <summary>Yarn support</summary>
+Yarn 1, 2, 3 and 4 projects are supported. The Yarn version that runs in the project folder is used, so projects that pin a version with the `packageManager` field require [Corepack](https://nodejs.org/api/corepack.html) to be enabled (`corepack enable`).
+
+Limitations for Yarn 2, 3 and 4:
+
+- Dependencies are not marked as production or development.
+- A monorepo is shown as one dependency list per `yarn.lock`. Workspaces appear as children of the project in the impact graph, so dependencies of a non-root workspace are shown as indirect and cannot be updated in a click.
+- Dependency aliases (`npm:` redirects) are resolved to the real package. Git, portal and link dependencies are not scanned.
+</details>
+
+<details>
   <summary>CVE Research and Enrichment</summary>
 For selected security issues, get leverage-enhanced CVE data that is provided by our JFrog Security Research team.
 Prioritize the CVEs based on:

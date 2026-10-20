@@ -1,6 +1,6 @@
 import { IImpactGraph, IImpactGraphNode } from 'jfrog-ide-webview';
-import { RootNode } from '../dependenciesTree/dependenciesRoot/rootTree';
-import { ScanUtils } from '../../utils/scanUtils';
+import { RootNode } from '../../treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
+import { ScanUtils } from '../scanUtils';
 import { LogManager } from '../../log/logManager';
 
 export type YarnWhyItem = StepItem | InfoItem;

@@ -1,0 +1,14 @@
+{
+  "name": "berry-project4",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "@cnakazawa/watch": "1.0.4",
+    "minimist": "1.2.0",
+    "resolve": "1.22.0"
+  },
+  "devDependencies": {
+    "progress": "2.0.3"
+  },
+  "packageManager": "yarn@4.18.1+sha512.b2e1e7524f654f2749d32b4ebcb4622473cb5bcbc485df2007e12a154e50162a4d795526768bc5f5b8f81717bfd79deb2472813d86fb5ae2eb551fa9c872b08f"
+}

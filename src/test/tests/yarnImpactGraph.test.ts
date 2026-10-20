@@ -1,5 +1,5 @@
 import { IImpactGraph } from 'jfrog-ide-webview';
-import { YarnImpactGraphCreator, YarnWhyItem } from '../../main/treeDataProviders/utils/yarnImpactGraph';
+import { YarnImpactGraphCreator, YarnWhyItem } from '../../main/utils/yarn/yarnClassicImpactGraph';
 import { assert } from 'chai';
 import { LogManager } from '../../main/log/logManager';
 import { RootNode } from '../../main/treeDataProviders/dependenciesTree/dependenciesRoot/rootTree';
