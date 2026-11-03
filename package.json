@@ -340,7 +340,7 @@
         "package": "vsce package"
     },
     "dependencies": {
-        "adm-zip": "~0.5.9",
+        "adm-zip": "^0.6.1",
         "fs-extra": "~10.1.0",
         "jfrog-client-js": "^2.9.0",
         "jfrog-ide-webview": "https://releases.jfrog.io/artifactory/ide-webview-npm/jfrog-ide-webview/-/jfrog-ide-webview-0.4.3.tgz",
