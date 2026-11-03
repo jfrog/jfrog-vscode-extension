@@ -19,8 +19,9 @@ async function main() {
         const extensionTestsPath: string = path.join(__dirname, 'index');
 
         const launchArgs: string[] = ['--disable-extensions', '-n', targetResourcesDir];
-        // macOS unix sockets are limited to ~104 bytes; the default .vscode-test path is too long on GHA.
-        if (process.platform === 'darwin') {
+        // Unix domain sockets are limited to ~104-108 bytes; the default .vscode-test path can exceed that
+        // on GHA runners, especially when a reusable workflow checks the repo out to a deeply nested path.
+        if (process.platform === 'darwin' || process.platform === 'linux') {
             userDataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'vsc-jfrog-'));
             launchArgs.push('--user-data-dir', userDataDir);
         }
