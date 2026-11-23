@@ -40,8 +40,9 @@ describe('External Resources Repository Integration Tests', async () => {
         }
     });
 
-    it('Should download the analyzer  manager from releases-proxy instead of direct releases.jfrog.io', async () => {
-        process.env[Configuration.JFROG_IDE_RELEASES_REPO_ENV] = 'releases-proxy';
+    it('Should download the analyzer manager from air-gap-vs-code instead of direct releases.jfrog.io', async () => {
+        process.env[Configuration.JFROG_IDE_RELEASES_REPO_ENV] = 'air-gap-vs-code';
+        process.env[Configuration.JFROG_IDE_CUSTOM_AM_VERSION] = '1.17.1'// This is the version we use in the test resources.
         // Prepare
         await integrationManager.initialize(testDataRoot);
         const runner: SecretsRunner = integrationManager.entitledJasRunnerFactory.createSecretsRunners()[0];
